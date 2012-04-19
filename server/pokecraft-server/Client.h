@@ -73,7 +73,7 @@ private slots:
 	void errorOutput(QString errorString);
 	void kicked();
 	void normalOutput(QString message);
-	void send_player_informations(Player_private_and_public_informations player_informations);
+	void send_player_informations();
 	void disconnectNextStep();
 	void serverCommand(QString command,QString extraText);
 	void local_sendPM(QString text,QString pseudo);

@@ -56,7 +56,7 @@ signals:
 	void sendPacket(const QByteArray &data);
 	void isReadyToStop();
 	//login linked signals
-	void send_player_informations(const Player_private_and_public_informations &player_informations);
+	void send_player_informations();
 	void isLogged();
 	void put_on_the_map(const quint32 &player_id,const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	//random linked signals

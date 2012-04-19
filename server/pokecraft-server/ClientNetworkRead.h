@@ -15,13 +15,13 @@ class ClientNetworkRead : public QObject
 public:
 	explicit ClientNetworkRead();
 	void setSocket(QTcpSocket * socket);
-	void setPlayerNumber(quint16 * current_player_number,quint16 * max_player_number);
+	void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
 	void stopRead();
 	void fake_send_protocol();
 public slots:
 	void readyRead();
-	void send_player_informations(Player_private_and_public_informations player_informations);
-	void fake_receive_data(QByteArray data);
+	void send_player_informations();
+	void fake_receive_data(const QByteArray &data);
 	//normal slots
 	void askIfIsReadyToStop();
 private slots:
@@ -56,7 +56,6 @@ private:
 	bool is_logged;
 	bool have_send_protocol;
 	bool is_logging_in_progess;
-	Player_private_and_public_informations player_informations;
 	bool stopIt;
 	// for max player
 	quint16 * current_player_number;
@@ -65,6 +64,11 @@ private:
 	void dataClear();
 	bool checkStringIntegrity(const QByteArray & data);
 	QTcpSocket * socket;
+	GeneralData *generalData;
+	Player_private_and_public_informations *player_informations;
+	//to prevent memory presure
+	quint8 previousMovedUnit;
+	quint8 direction;
 };
 
 #endif // CLIENTNETWORKREAD_H
