@@ -308,8 +308,6 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 			emit error("Wrong size in move packet");
 			return;
 		}
-		quint8 previousMovedUnit;
-		quint8 direction;
 		in >> previousMovedUnit;
 		in >> direction;
 		if(direction<1 || direction>8)
@@ -365,15 +363,16 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 						emit sendChatText((Chat_type)chatType,text);
 					else
 					{
-						if(text.contains(QRegExp("^/[a-z]+( [^ ].*)?$")))
+						QRegExp commandRegExp("^/([a-z]+)( [^ ].*)$");
+						if(text.contains(commandRegExp))
 						{
-							if(player_informations.public_informations.type==Player_type_gm || player_informations.public_informations.type==Player_type_dev)
+							if(player_informations->public_informations.type==Player_type_gm || player_informations->public_informations.type==Player_type_dev)
 							{
 								QString command=text;
-								command.replace(QRegExp("^/([a-z]+)( [^ ].*)?$"),"\\1");
-								if(text.contains(QRegExp("^/[a-z]+( [^ ].*)$")))
+								command.replace(commandRegExp,"\\1");
+								if(text.contains(commandRegExp))
 								{
-									text.replace(QRegExp("^/([a-z]+)( [^ ].*)$"),"\\2");
+									text.replace(commandRegExp,"\\2");
 									text.replace(QRegExp("^ (.*)$"),"\\1");
 								}
 								else
@@ -524,20 +523,19 @@ bool ClientNetworkRead::checkStringIntegrity(const QByteArray & data)
 	return true;
 }
 
-void ClientNetworkRead::setPlayerNumber(quint16 * current_player_number,quint16 * max_player_number)
+void ClientNetworkRead::setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations)
 {
-	this->current_player_number=current_player_number;
-	this->max_player_number=max_player_number;
+	this->generalData=generalData;
+	this->player_informations=player_informations;
 }
 
-void ClientNetworkRead::send_player_informations(Player_private_and_public_informations player_informations)
+void ClientNetworkRead::send_player_informations()
 {
-	this->player_informations=player_informations;
 	is_logged=true;
 }
 
 /// \warning it need be complete protocol trame
-void ClientNetworkRead::fake_receive_data(QByteArray data)
+void ClientNetworkRead::fake_receive_data(const QByteArray &data)
 {
 	parseInputAfterLogin(data);
 }

@@ -58,7 +58,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	clientNetworkWrite->setSocket(socket);
 
 	//set variables
-	clientNetworkRead->setPlayerNumber(&generalData->connected_players,&generalData->max_players);
+	clientNetworkRead->setVariable(generalData,&player_informations);
 	clientBroadCast->setVariable(generalData,&player_informations);
 	clientMapManagement->setVariable(generalData);
 	clientHeavyLoad->setVariable(generalData,&player_informations);
@@ -70,9 +70,9 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	connect(clientHeavyLoad,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);
 
 	//connect the player information
-	connect(clientHeavyLoad,	SIGNAL(send_player_informations(Player_private_and_public_informations)),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(send_player_informations(Player_private_and_public_informations)),			this,			SLOT(send_player_informations(Player_private_and_public_informations)),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(send_player_informations(Player_private_and_public_informations)),			clientNetworkRead,	SLOT(send_player_informations(Player_private_and_public_informations)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,QString,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,QString,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
@@ -291,7 +291,7 @@ void Client::normalOutput(QString message)
 	DebugClass::debugConsole(QString("%1:%2 %3").arg(remote_ip).arg(port).arg(message));
 }
 
-void Client::send_player_informations(Player_private_and_public_informations player_informations)
+void Client::send_player_informations()
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	normalOutput("load the normal player id: "+QString::number(player_informations.public_informations.id));

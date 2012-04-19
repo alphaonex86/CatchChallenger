@@ -82,7 +82,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				orentation=3;
 			}
 			emit sendPacket(outputData);
-			emit send_player_informations(*player_informations);
+			emit send_player_informations();
 			emit isLogged();
 			emit put_on_the_map(
 				player_informations->public_informations.id,
@@ -108,7 +108,7 @@ void ClientHeavyLoad::fakeLogin(const quint32 &last_fake_player_id,const quint16
 	player_informations->public_informations.skin=skin;//useless for serveur benchmark
 	player_informations->public_informations.type=Player_type_normal;
 	player_informations->cash=0;
-	emit send_player_informations(*player_informations);
+	emit send_player_informations();
 	emit isLogged();
 	//remplace x and y by real spawn point
 	emit put_on_the_map(last_fake_player_id,map,x,y,orientation,POKECRAFT_SERVER_NORMAL_SPEED);
