@@ -62,7 +62,7 @@ private:
 	QTcpServer *server;
 	/// \brief To lunch event only when the event loop is setup
 	QTimer *lunchInitFunction;
-	Client::GeneralData generalData;
+	GeneralData generalData;
 	QList<Client *> client_list;
 	QString listenIpAndPort(QString server_ip,quint16 server_port);
 	void internal_stop();
@@ -106,7 +106,7 @@ signals:
 	void new_player_is_connected(const Player_private_and_public_informations &player);
 	void player_is_disconnected(const QString &pseudo);
 	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
-	void error(const QString error);
+	void error(const QString &error);
 	void benchmark_result(const int &latency,const double &TX_speed,const double &RX_speed,const double &TX_size,const double &RX_size,const double &second);
 	void try_start_benchmark(const quint16 &second,const quint16 &number_of_client);
 	void destroyAllBots();

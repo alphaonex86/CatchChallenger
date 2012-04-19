@@ -5,8 +5,15 @@
 #include <QList>
 #include <QStringList>
 #include <QString>
+#include <QSqlDatabase>
+#include <QTimer>
+#include <QMutex>
 
 #include "../pokecraft-general/GeneralStructures.h"
+
+class EventThreader;
+class Map_custom;
+class ClientBroadCast;
 
 struct Map_border_temp
 {
@@ -38,6 +45,33 @@ struct Map_player_info
 	int x,y;
 	bool loaded;
 	QString skin;
+};
+
+struct GeneralData
+{
+	//connection
+	quint16 max_players;
+	quint16 connected_players;
+	QList<quint32> connected_players_id_list;
+	bool instant_player_number;
+	// files
+	QStringList cached_files_name;
+	QList<QByteArray> cached_files_data;
+	QList<quint32> cached_files_mtime;
+	//bd
+	QSqlDatabase *db;//use pointer here to init in correct thread
+	//instant variable
+	qint64 cache_max_file_size;
+	qint64 cache_max_size;
+	qint64 cache_size;
+	//general data
+	QTimer *timer_update_number_connected;
+	QList<EventThreader *> eventThreaderList;
+	QList<Map_custom *> map_list;
+	QTimer *timer_player_map;
+	//interconnected thread
+	QList<ClientBroadCast *> clientBroadCastList;
+	QMutex clientBroadCastListMutex;
 };
 
 #endif // STRUCTURES_SERVER_H

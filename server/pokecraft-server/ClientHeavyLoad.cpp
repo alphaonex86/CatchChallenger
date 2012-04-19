@@ -244,6 +244,7 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &fileName,const quint32 &mt
 					*cached_files_name << fileName;
 					*cached_files_data << content;
 					*cached_files_mtime << localMtime;
+					cache_size+=content.size();
 					put_in_cache=true;
 				}
 			}
