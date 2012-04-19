@@ -43,7 +43,7 @@ public:
 	bool				have_diff;
 	Direction			last_direction;
 	Direction			last_direction_diff;
-	void mapError(QString errorString);
+	void mapError(const QString &errorString);
 	void stop();
 	Map_player_info getMapPlayerInfo();
 	void propagate();
