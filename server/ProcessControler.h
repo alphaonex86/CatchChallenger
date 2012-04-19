@@ -27,6 +27,7 @@ private slots:
 	void server_need_be_stopped();
 	void server_need_be_restarted();
 	void benchmark_result(int latency,double TX_speed,double RX_speed,double TX_size,double RX_size,double second);
+	void error(const QString &error);
 signals:
 	void record_latency();
 };

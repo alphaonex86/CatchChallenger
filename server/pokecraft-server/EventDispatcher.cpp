@@ -153,10 +153,10 @@ void EventDispatcher::start_internal_server()
 	generalData.db->setPassword(mysql_pass);
 	if(!generalData.db->open())
 	{
-		DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %2").arg(generalData.db->lastError().driverText()).arg(mysql_login).arg(generalData.db->lastError().databaseText()));
+		DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(generalData.db->lastError().driverText()).arg(mysql_login).arg(generalData.db->lastError().databaseText()));
 		server->close();
 		stat=Down;
-		emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %2").arg(generalData.db->lastError().driverText()).arg(mysql_login).arg(generalData.db->lastError().databaseText()));
+		emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(generalData.db->lastError().driverText()).arg(mysql_login).arg(generalData.db->lastError().databaseText()));
 		return;
 	}
 	DebugClass::debugConsole(QString("Connected to mysql at %1").arg(mysql_host));

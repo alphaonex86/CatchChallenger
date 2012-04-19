@@ -18,6 +18,10 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	clientNetworkRead=new ClientNetworkRead();
 	clientNetworkWrite=new ClientNetworkWrite();
 
+
+	player_informations.public_informations.pseudo="";
+	player_informations.public_informations.id=0;
+
 	stopIt=false;
 	pass_in_destructor=true;
 
@@ -55,7 +59,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 
 	//set number of player
 	clientNetworkRead->setPlayerNumber(&generalData->connected_players,&generalData->max_players);
-	clientBroadCast->setVariable(&generalData->connected_players,&generalData->max_players,&generalData->clientBroadCastList);
+	clientBroadCast->setVariable(generalData,&player_informations);
 	clientMapManagement->setVariable(&generalData->map_list,generalData->eventThreaderList.at(3));
 
 	//set heavy load
@@ -77,7 +81,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	connect(clientHeavyLoad,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);
 
 	//connect the player information
-	connect(clientHeavyLoad,	SIGNAL(send_player_informations(Player_private_and_public_informations)),			clientBroadCast,	SLOT(send_player_informations(Player_private_and_public_informations)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(send_player_informations(Player_private_and_public_informations)),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations(Player_private_and_public_informations)),			this,			SLOT(send_player_informations(Player_private_and_public_informations)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations(Player_private_and_public_informations)),			clientNetworkRead,	SLOT(send_player_informations(Player_private_and_public_informations)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,QString,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,QString,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);

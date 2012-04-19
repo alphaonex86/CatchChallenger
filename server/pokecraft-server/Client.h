@@ -26,32 +26,6 @@ class Client : public QObject
 {
 	Q_OBJECT
 public:
-	struct GeneralData
-	{
-		//connection
-		quint16 max_players;
-		quint16 connected_players;
-		QList<quint32> connected_players_id_list;
-		bool instant_player_number;
-		// files
-		QStringList cached_files_name;
-		QList<QByteArray> cached_files_data;
-		QList<quint32> cached_files_mtime;
-		//bd
-		QSqlDatabase *db;//use pointer here to init in correct thread
-		//instant variable
-		qint64 cache_max_file_size;
-		qint64 cache_max_size;
-		qint64 cache_size;
-		//general data
-		QTimer *timer_update_number_connected;
-		QList<EventThreader *> eventThreaderList;
-		QList<Map_custom *> map_list;
-		QTimer *timer_player_map;
-		//interconnected thread
-		QList<ClientBroadCast *> clientBroadCastList;
-		QMutex clientBroadCastListMutex;
-	};
 	explicit Client(QTcpSocket *socket,GeneralData *generalData);
 	~Client();
 	quint32 id;
