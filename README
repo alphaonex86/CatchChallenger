@@ -1,0 +1,9 @@
+The client and server is under GPL3. And part of the project:
+http://pokecraft.first-world.info/
+
+But the license of the datapack is not decided. And actually have possible legal issue.
+
+=================== Todo =====================
+Do correct client into QML2.
+Resolve and restore latency check on the server. Optimize and resolve the benchmark problem.
+Define the datapack format, create the story, ...

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="12" height="11" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="../../Tileset/normal1.tsx"/>
+ <tileset firstgid="1025" source="../../Tileset/invisible.tsx"/>
+ <tileset firstgid="1041" source="../../Tileset/normal2.tsx"/>
+ <tileset firstgid="2065" source="../../Tileset/normal4.tsx"/>
+ <layer name="Walkable" width="12" height="11">
+  <data encoding="base64" compression="zlib">
+   eJz7y8DA8JcMfBdKMyDx72JR58NNHCbHDaMYE3eyMjB0sSL4pAIAN79t4w==
+  </data>
+ </layer>
+ <layer name="Collisions" width="12" height="11">
+  <data encoding="base64" compression="zlib">
+   eJzbycDAsBeI9wHxLii9FwnvQpLfDcS6nAwMekB8hoOB4RaQfw+I7wJxH5DfDxW7C8W3gdgXqNYPiN8A5UCgG0j3APE6IF4PFQOBPC4GhnwuBqJBAVBtAJL6XqBZckB75DmJ078WqN4OqNYej/r9rMS7BwTuo6n3ZmFg8GEhXn82UG0OCeppAQCkTByO
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="12" height="11">
+  <data encoding="base64" compression="zlib">
+   eJzj5WRg4APiNRwMRAFdoFo9TgQ/G6gvB4tePy4GBn8u4swUAJqXB1Sbj6Q+F497DDhxyw0WEI3kxhg87rVjIl49SG0cE/FuIEUtDAAAXKUHcQ==
+  </data>
+ </layer>
+ <objectgroup name="Tp" width="12" height="11">
+  <object name="dfgdfg" type="tp on push" gid="1025" x="144" y="176">
+   <properties>
+    <property name="map" value="world/0.0"/>
+    <property name="orientation" value="bottom"/>
+    <property name="x" value="11"/>
+    <property name="y" value="18"/>
+   </properties>
+  </object>
+  <object type="tp on push" gid="1025" x="128" y="176">
+   <properties>
+    <property name="map" value="world/0.0"/>
+    <property name="orientation" value="bottom"/>
+    <property name="x" value="11"/>
+    <property name="y" value="18"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup name="Object" width="12" height="11"/>
+</map>
