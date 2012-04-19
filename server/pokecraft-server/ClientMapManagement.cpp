@@ -463,7 +463,8 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 		moveThePlayer_list_size=moveThePlayer_returnList.size();
 		while(moveThePlayer_index<moveThePlayer_list_size)
 		{
-			moveThePlayer_returnList[moveThePlayer_index]->moveClient(player_id,previousMovedUnit,(Direction)direction);
+			if(moveThePlayer_returnList[moveThePlayer_index]->player_id!=player_id)
+				moveThePlayer_returnList[moveThePlayer_index]->moveClient(player_id,previousMovedUnit,(Direction)direction);
 			moveThePlayer_index++;
 		}
 		last_direction=direction;
@@ -527,12 +528,6 @@ void ClientMapManagement::moveClient(const quint32 &player_id,const quint8 &move
 	#endif
 	moveClient_tempMov.movedUnit=movedUnit;
 	moveClient_tempMov.direction=direction;
-
-	if(to_send_map_management_move.contains(player_id))
-	{
-		to_send_map_management_move[player_id] << moveClient_tempMov;
-		return;
-	}
 	to_send_map_management_move[player_id] << moveClient_tempMov;
 }
 
@@ -690,7 +685,7 @@ Map_custom * ClientMapManagement::getMap(const QString & mapName)
 	return generalData->map_list.last();
 }
 
-void ClientMapManagement::mapError(QString errorString)
+void ClientMapManagement::mapError(const QString &errorString)
 {
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
