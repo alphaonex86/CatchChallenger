@@ -19,6 +19,7 @@ EventDispatcher::EventDispatcher()
 	generalData.cache_max_file_size=1*1024*1024;
 	generalData.cache_max_size=128*1024*1024;
 	generalData.cache_size=0;
+	generalData.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 
 	generalData.eventThreaderList << new EventThreader();//broad cast (0)
 	generalData.eventThreaderList << new EventThreader();//map management (1)
@@ -214,6 +215,7 @@ void EventDispatcher::stop_benchmark()
 		return;
 	}
 	DebugClass::debugConsole("Stop the benchmark");
+	generalData.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	double TX_speed=0;
 	double RX_speed=0;
 	double TX_size=0;
@@ -488,10 +490,11 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	}
 	DebugClass::debugConsole(QString("benchmark spawn: x: %1, y: %2").arg(x).arg(y));
 	stat=Up;
+	generalData.mapBasePath=":/internal/benchmark-map/";
 	int index=0;
 	while(index<number_of_client)
 	{
-		addBot(x,y,bool_Walkable,width,height,true,"map.tmx");
+		addBot(x,y,bool_Walkable,width,height,"map.tmx");
 		if(index==0)
 		{
 			//fake_clients.last()->show_details();
@@ -554,7 +557,7 @@ void EventDispatcher::serverCommand(QString command,QString extraText)
 			int index=0;
 			while(index<number_player)
 			{
-				addBot(map_player_info.x,map_player_info.y,map_player_info.map.bool_Walkable,map_player_info.map.width,map_player_info.map.height,false,map_player_info.map_file_path,map_player_info.skin);
+				addBot(map_player_info.x,map_player_info.y,map_player_info.map.bool_Walkable,map_player_info.map.width,map_player_info.map.height,map_player_info.map_file_path,map_player_info.skin);
 				index++;
 			}
 		}
@@ -569,10 +572,10 @@ void EventDispatcher::serverCommand(QString command,QString extraText)
 		DebugClass::debugConsole(QString("unknow command: %1").arg(command));
 }
 
-void EventDispatcher::addBot(quint16 x,quint16 y,bool *bool_Walkable,quint16 width,quint16 height,bool benchmark,QString map,QString skin)
+void EventDispatcher::addBot(quint16 x,quint16 y,bool *bool_Walkable,quint16 width,quint16 height,QString map,QString skin)
 {
 	client_list << new Client(NULL,&generalData);
-	client_list.last()->fakeLogin(65535-fake_clients.size(),x,y,map,(Orientation)Direction_look_at_top,benchmark,skin);
+	client_list.last()->fakeLogin(65535-fake_clients.size(),x,y,map,(Orientation)Direction_look_at_top,skin);
 	fake_clients << new FakeBot(x,y,bool_Walkable,width,height,Direction_look_at_top);
 	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
 	connect(client_list.last(),SIGNAL(fake_send_data(QByteArray)),fake_clients.last(),SLOT(fake_send_data(QByteArray)),Qt::QueuedConnection);

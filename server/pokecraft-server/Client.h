@@ -34,7 +34,7 @@ public:
 	void externalRemoveLookupPlayer(quint32 id);
 	QString getPseudo();
 	bool is_ready_to_stop;
-	void fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,bool benchmark,QString skin);
+	void fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,QString skin);
 	Map_player_info getMapPlayerInfo();
 private:
 	bool ask_is_ready_to_stop;

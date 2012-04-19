@@ -72,6 +72,7 @@ struct GeneralData
 	//interconnected thread
 	QList<ClientBroadCast *> clientBroadCastList;
 	QMutex clientBroadCastListMutex;
+	QString mapBasePath;
 };
 
 #endif // STRUCTURES_SERVER_H

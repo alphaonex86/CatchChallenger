@@ -27,7 +27,7 @@ class ClientMapManagement : public QObject
 public:
 	explicit ClientMapManagement();
 	~ClientMapManagement();
-	void setVariable(QList<Map_custom *> *map_list,EventThreader* map_loader_thread);
+	void setVariable(GeneralData *generalData);
 	//add clients linked
 	void insertClient(const quint32 &player_id,const QString &map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed);
 	void moveClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction);
@@ -44,7 +44,6 @@ public:
 	Direction			last_direction;
 	Direction			last_direction_diff;
 	void mapError(QString errorString);
-	void setBasePath(const QString &basePath);
 	void stop();
 	Map_player_info getMapPlayerInfo();
 	void propagate();
@@ -66,8 +65,7 @@ public slots:
 	void askIfIsReadyToStop();
 private:
 	//internal var
-	QList<Map_custom *> *		map_list;
-	EventThreader*			map_loader_thread;
+	GeneralData *generalData;
 	//stuff to send
 	QList<map_management_insert>	to_send_map_management_insert;
 
@@ -87,7 +85,6 @@ private:
 	bool propagated;
 	//temp variable
 	Map_custom * old_map;
-	QString basePath;
 	volatile bool stopIt;
 	QSemaphore wait_the_end;
 	quint16 purgeBuffer_player_affected;
