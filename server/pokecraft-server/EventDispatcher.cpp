@@ -554,8 +554,10 @@ void EventDispatcher::serverCommand(QString command,QString extraText)
 					return;
 				}
 			}
+			if(number_player>(generalData.max_players-client_list.size()))
+				number_player=generalData.max_players-client_list.size();
 			int index=0;
-			while(index<number_player)
+			while(index<number_player && client_list.size()<generalData.max_players)
 			{
 				addBot(map_player_info.x,map_player_info.y,map_player_info.map.bool_Walkable,map_player_info.map.width,map_player_info.map.height,map_player_info.map_file_path,map_player_info.skin);
 				index++;
