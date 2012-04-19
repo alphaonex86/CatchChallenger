@@ -5,8 +5,6 @@ ClientNetworkRead::ClientNetworkRead()
 	is_logged=false;
 	have_send_protocol=false;
 	is_logging_in_progess=false;
-	current_player_number=NULL;
-	max_player_number=NULL;
 	stopIt=false;
 	socket=NULL;
 }
@@ -144,14 +142,14 @@ void ClientNetworkRead::parseInput(const QByteArray & inputData)
 		{
 			QString protocol;
 			in >> protocol;
-			if((*current_player_number)>=(*max_player_number))
+			if(generalData->connected_players>=generalData->max_players)
 			{
 				out << (quint8)0xC1;
 				out << (quint8)queryNumber;
 				out << (quint8)3;
 				out << QString("Server full");
 				emit sendPacket(outputData);
-				emit error(QString("Server full (%1/%2)").arg(*current_player_number).arg(*max_player_number));
+				emit error(QString("Server full (%1/%2)").arg(generalData->connected_players).arg(generalData->max_players));
 				return;
 			}
 			if(protocol=="pkmn-0.0.0.1")

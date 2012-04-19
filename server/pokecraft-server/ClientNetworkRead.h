@@ -57,9 +57,6 @@ private:
 	bool have_send_protocol;
 	bool is_logging_in_progess;
 	bool stopIt;
-	// for max player
-	quint16 * current_player_number;
-	quint16 * max_player_number;
 	// function
 	void dataClear();
 	bool checkStringIntegrity(const QByteArray & data);

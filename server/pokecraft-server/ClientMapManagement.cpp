@@ -1,5 +1,11 @@
 #include "ClientMapManagement.h"
 
+/** \todo do client near list for the local player
+  the list is limited to 50
+  if is greater, then truncate to have the near player, truncate to have all near player grouped by distance where a group not do the list greater
+  each Xs update the local player list
+*/
+
 ClientMapManagement::ClientMapManagement()
 {
 	current_map=NULL;
