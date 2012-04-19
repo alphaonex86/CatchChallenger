@@ -26,9 +26,9 @@ public:
 	Map_final_temp map_to_send;
 signals:
 	void map_content_loaded();
-	void error(QString errorString);
+	void error(const QString &errorString);
 public slots:
-	void tryLoadMap(QString fileName);
+	void tryLoadMap(const QString &fileName);
 private:
 	QMutex mutex;
 	QByteArray decompress(const QByteArray &data, int expectedSize);

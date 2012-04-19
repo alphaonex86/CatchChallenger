@@ -52,11 +52,11 @@ signals:
 	//map signals
 	void needLoadMap(const QString & mapName);
 	//normal signals
-	void error(QString error);
-	void message(QString message);
+	void error(const QString &error);
+	void message(const QString &message);
 	void isReadyToStop();
-	void sendPacket(QByteArray data);
-	void updatePlayerPosition(const QString & map,quint16 x,quint16 y,Orientation orientation);
+	void sendPacket(const QByteArray &data);
+	void updatePlayerPosition(const QString & map,const quint16 &x,const quint16 &y,const Orientation &orientation);
 public slots:
 	//map slots
 	void put_on_the_map(const quint32 &player_id,const QString & map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
@@ -74,8 +74,6 @@ private:
 	QHash<quint32, QList<map_management_movement> >		to_send_map_management_move;
 
 	QList<quint32>			to_send_map_management_remove;
-	//to prevent thread bug
-	QMutex mutex;
 	//info linked
 	Orientation			at_start_orientation;
 	QString				at_start_map_name;

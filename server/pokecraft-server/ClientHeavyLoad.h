@@ -67,16 +67,16 @@ private:
 	void listDatapack(QString suffix,const QStringList &files);
 signals:
 	//normal signals
-	void error(QString error);
-	void message(QString message);
-	void sendPacket(QByteArray data);
+	void error(const QString &error);
+	void message(const QString &message);
+	void sendPacket(const QByteArray &data);
 	void isReadyToStop();
 	//login linked signals
-	void send_player_informations(Player_private_and_public_informations player_informations);
+	void send_player_informations(const Player_private_and_public_informations &player_informations);
 	void isLogged();
-	void put_on_the_map(quint32 player_id,QString map,quint16 x,quint16 y,Orientation orientation,quint16 speed);
+	void put_on_the_map(const quint32 &player_id,const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	//random linked signals
-	void setRandomSeedList(QByteArray randomData);
+	void setRandomSeedList(const QByteArray &randomData);
 protected:
 	bool is_logged;
 };

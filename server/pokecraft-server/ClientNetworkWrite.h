@@ -13,7 +13,7 @@ public:
 	~ClientNetworkWrite();
 	void setSocket(QTcpSocket * socket);
 public slots:
-	void sendPacket(QByteArray data);
+	void sendPacket(const QByteArray &data);
 	//normal slots
 	void askIfIsReadyToStop();
 private:
@@ -22,9 +22,9 @@ private:
 	qint64 byteWriten;
 signals:
 	void isReadyToStop();
-	void fake_send_data(QByteArray data);
-	void error(QString error);
-	void message(QString message);
+	void fake_send_data(const QByteArray &data);
+	void error(const QString &error);
+	void message(const QString &message);
 };
 
 #endif // CLIENTNETWORKWRITE_H
