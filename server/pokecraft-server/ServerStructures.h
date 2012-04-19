@@ -55,7 +55,7 @@ struct GeneralData
 	QList<quint32> connected_players_id_list;
 	bool instant_player_number;
 	// files
-	QStringList cached_files_name;
+	QStringList cached_files_name;/// \todo see if not search facility like QHash
 	QList<QByteArray> cached_files_data;
 	QList<quint32> cached_files_mtime;
 	//bd

@@ -57,22 +57,11 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	clientNetworkRead->setSocket(socket);
 	clientNetworkWrite->setSocket(socket);
 
-	//set number of player
+	//set variables
 	clientNetworkRead->setPlayerNumber(&generalData->connected_players,&generalData->max_players);
 	clientBroadCast->setVariable(generalData,&player_informations);
 	clientMapManagement->setVariable(&generalData->map_list,generalData->eventThreaderList.at(3));
-
-	//set heavy load
-	clientHeavyLoad->setVariable(
-				generalData->db,
-				&generalData->cached_files_name,
-				&generalData->cached_files_data,
-				&generalData->cached_files_mtime,
-				&generalData->cache_max_file_size,
-				&generalData->cache_max_size,
-				&generalData->cache_size,
-				&generalData->connected_players_id_list
-				);
+	clientHeavyLoad->setVariable(generalData,&player_informations);
 
 	//connect the write
 	connect(clientNetworkRead,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);

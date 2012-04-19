@@ -17,27 +17,13 @@ ClientHeavyLoad::~ClientHeavyLoad()
 {
 }
 
-void ClientHeavyLoad::setVariable(
-	QSqlDatabase *db,
-	QStringList *cached_files_name,
-	QList<QByteArray> *cached_files_data,
-	QList<quint32> *cached_files_mtime,
-	qint64 *cache_max_file_size,
-	qint64 *cache_max_size,
-	qint64 *cache_size,
-	QList<quint32> *connected_players_id_list)
+void ClientHeavyLoad::setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations)
 {
-	this->db=db;
-	this->cached_files_name=cached_files_name;
-	this->cached_files_data=cached_files_data;
-	this->cached_files_mtime=cached_files_mtime;
-	this->cache_max_file_size=cache_max_file_size;
-	this->cache_max_size=cache_max_size;
-	this->cache_size=cache_size;
-	this->connected_players_id_list=connected_players_id_list;
+	this->generalData=generalData;
+	this->player_informations=player_informations;
 }
 
-void ClientHeavyLoad::askLogin(quint8 query_id,QString login,QByteArray hash)
+void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash)
 {
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -65,7 +51,7 @@ void ClientHeavyLoad::askLogin(quint8 query_id,QString login,QByteArray hash)
 	else
 	{
 		loginQuery.next();
-		if(connected_players_id_list->contains(loginQuery.value(0).toUInt()))
+		if(generalData->connected_players_id_list.contains(loginQuery.value(0).toUInt()))
 		{
 			out << (quint8)0xC1;
 			out << (quint8)query_id;
@@ -76,19 +62,19 @@ void ClientHeavyLoad::askLogin(quint8 query_id,QString login,QByteArray hash)
 		}
 		else
 		{
-			(*connected_players_id_list) << loginQuery.value(0).toUInt();
+			generalData->connected_players_id_list << loginQuery.value(0).toUInt();
 			out << (quint8)0xC1;
 			out << (quint8)query_id;
 			out << (quint8)02;
 			out << (quint32)loginQuery.value(0).toUInt();
 			is_logged=true;
-			player_informations.public_informations.clan=loginQuery.value(10).toUInt();
-			player_informations.public_informations.description="";
-			player_informations.public_informations.id=loginQuery.value(0).toUInt();
-			player_informations.public_informations.pseudo=loginQuery.value(1).toString();
-			player_informations.public_informations.skin=loginQuery.value(4).toString();
-			player_informations.public_informations.type=(Player_type)loginQuery.value(9).toUInt();
-			player_informations.cash=0;
+			player_informations->public_informations.clan=loginQuery.value(10).toUInt();
+			player_informations->public_informations.description="";
+			player_informations->public_informations.id=loginQuery.value(0).toUInt();
+			player_informations->public_informations.pseudo=loginQuery.value(1).toString();
+			player_informations->public_informations.skin=loginQuery.value(4).toString();
+			player_informations->public_informations.type=(Player_type)loginQuery.value(9).toUInt();
+			player_informations->cash=0;
 			int orentation=loginQuery.value(7).toInt();
 			if(orentation<1 || orentation>8)
 			{
@@ -96,10 +82,10 @@ void ClientHeavyLoad::askLogin(quint8 query_id,QString login,QByteArray hash)
 				orentation=3;
 			}
 			emit sendPacket(outputData);
-			emit send_player_informations(player_informations);
+			emit send_player_informations(*player_informations);
 			emit isLogged();
 			emit put_on_the_map(
-				player_informations.public_informations.id,
+				player_informations->public_informations.id,
 				loginQuery.value(8).toString(),//map_name
 				loginQuery.value(5).toInt(),//position_x
 				loginQuery.value(6).toInt(),//position_y
@@ -110,31 +96,31 @@ void ClientHeavyLoad::askLogin(quint8 query_id,QString login,QByteArray hash)
 	}
 }
 
-void ClientHeavyLoad::fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,QString skin)
+void ClientHeavyLoad::fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,const QString &map,const Orientation &orientation,const QString &skin)
 {
 	fake_mode=true;
-	(*connected_players_id_list) << last_fake_player_id;
+	generalData->connected_players_id_list << last_fake_player_id;
 	is_logged=true;
-	player_informations.public_informations.clan=0;
-	player_informations.public_informations.description="Bot";
-	player_informations.public_informations.id=last_fake_player_id;
-	player_informations.public_informations.pseudo=QString("bot_%1").arg(last_fake_player_id);
-	player_informations.public_informations.skin=skin;//useless for serveur benchmark
-	player_informations.public_informations.type=Player_type_normal;
-	player_informations.cash=0;
-	emit send_player_informations(player_informations);
+	player_informations->public_informations.clan=0;
+	player_informations->public_informations.description="Bot";
+	player_informations->public_informations.id=last_fake_player_id;
+	player_informations->public_informations.pseudo=QString("bot_%1").arg(last_fake_player_id);
+	player_informations->public_informations.skin=skin;//useless for serveur benchmark
+	player_informations->public_informations.type=Player_type_normal;
+	player_informations->cash=0;
+	emit send_player_informations(*player_informations);
 	emit isLogged();
 	//remplace x and y by real spawn point
 	emit put_on_the_map(last_fake_player_id,map,x,y,orientation,POKECRAFT_SERVER_NORMAL_SPEED);
 }
 
-void ClientHeavyLoad::askRandomSeedList(quint8 query_id)
+void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)
 {
 	QByteArray randomData;
 	QDataStream randomDataStream(&randomData, QIODevice::WriteOnly);
 	randomDataStream.setVersion(QDataStream::Qt_4_4);
 	int index=0;
-	while(index<512)
+	while(index<POKECRAFT_SERVER_RANDOM_LIST_SIZE)
 	{
 		randomDataStream << quint8(rand()%256);
 		index++;
@@ -152,11 +138,11 @@ void ClientHeavyLoad::askRandomSeedList(quint8 query_id)
 void ClientHeavyLoad::askIfIsReadyToStop()
 {
 	if(is_logged)
-		connected_players_id_list->removeOne(player_informations.public_informations.id);
+		generalData->connected_players_id_list.removeOne(player_informations->public_informations.id);
 	emit isReadyToStop();
 }
 
-void ClientHeavyLoad::datapackList(quint8 query_id,QStringList files,QList<quint32> timestamps)
+void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps)
 {
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -187,7 +173,7 @@ void ClientHeavyLoad::datapackList(quint8 query_id,QStringList files,QList<quint
 		}
 		else
 		{
-			if(sendFileIfNeeded(fileName,mtime,true))
+			if(sendFileIfNeeded(datapack_base_name+fileName,fileName,mtime,true))
 				out << (quint8)0x01;
 			else
 				out << (quint8)0x02;
@@ -199,22 +185,21 @@ void ClientHeavyLoad::datapackList(quint8 query_id,QStringList files,QList<quint
 	emit sendPacket(outputData);
 }
 
-bool ClientHeavyLoad::sendFileIfNeeded(const QString &fileName,const quint32 &mtime,const bool &checkMtime)
+bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime)
 {
-	QString path=datapack_base_name+fileName;
-	QFile file(path);
-	int index=cached_files_name->indexOf(fileName);
+	QFile file(filePath);
+	int index=generalData->cached_files_name.indexOf(fileName);
 	if(index!=-1)
 	{
-		if(!checkMtime || mtime!=cached_files_mtime->at(index))
+		if(!checkMtime || mtime!=generalData->cached_files_mtime.at(index))
 		{
 			emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
 				     .arg(fileName)
 				     .arg(checkMtime)
 				     .arg(mtime)
-				     .arg(cached_files_mtime->at(index))
+				     .arg(generalData->cached_files_mtime.at(index))
 			);
-			sendFile(fileName,cached_files_data->at(index),cached_files_mtime->at(index));
+			sendFile(fileName,generalData->cached_files_data.at(index),generalData->cached_files_mtime.at(index));
 		}
 		/*else
 			emit message(QString("File already update: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
@@ -232,19 +217,19 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &fileName,const quint32 &mt
 			quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
 			QByteArray content=file.readAll();
 			bool put_in_cache=false;
-			if(file.size()>*cache_max_file_size)
+			if(file.size()>generalData->cache_max_file_size)
 				emit message("File too big: "+fileName);
 			else
 			{
-				if(*cache_size+content.size()>*cache_max_size)
+				if(generalData->cache_size+content.size()>generalData->cache_max_size)
 					emit message("Cache too small");
 				else
 				{
 					//emit message(QString("cache server generated for the file: %1").arg(fileName));
-					*cached_files_name << fileName;
-					*cached_files_data << content;
-					*cached_files_mtime << localMtime;
-					cache_size+=content.size();
+					generalData->cached_files_name << fileName;
+					generalData->cached_files_data << content;
+					generalData->cached_files_mtime << localMtime;
+					generalData->cache_size+=content.size();
 					put_in_cache=true;
 				}
 			}
@@ -270,13 +255,13 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &fileName,const quint32 &mt
 		}
 		else
 		{
-			emit message("Unable to open: "+path+", error: "+file.errorString());
+			emit message("Unable to open: "+filePath+", error: "+file.errorString());
 			return false;
 		}
 	}
 }
 
-void ClientHeavyLoad::listDatapack(QString suffix,const QStringList &files)
+void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &files)
 {
 	//do source check
 	QDir finalDatapackFolder(datapack_base_name+suffix);
@@ -300,7 +285,7 @@ void ClientHeavyLoad::listDatapack(QString suffix,const QStringList &files)
 	}
 }
 
-void ClientHeavyLoad::updatePlayerPosition(QString map,quint16 x,quint16 y,Orientation orientation)
+void ClientHeavyLoad::updatePlayerPosition(const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation)
 {
 	if(!is_logged || fake_mode)
 		return;
@@ -310,13 +295,13 @@ void ClientHeavyLoad::updatePlayerPosition(QString map,quint16 x,quint16 y,Orien
 			.arg(x)
 			.arg(y)
 			.arg(orientation)
-			.arg(player_informations.public_informations.id));
+			.arg(player_informations->public_informations.id));
 	DebugClass::debugConsole(QString("UPDATE `player` SET `map_name`='%1',`position_x`='%2',`position_y`='%3',`orientation`='%4' WHERE `id`=%5")
 			 .arg(SQL_text_quote(map))
 			 .arg(x)
 			 .arg(y)
 			 .arg(orientation)
-			 .arg(player_informations.public_informations.id));
+			 .arg(player_informations->public_informations.id));
 }
 
 void ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime)
