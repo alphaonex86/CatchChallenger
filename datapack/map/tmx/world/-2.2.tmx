@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="dayMonster" value="32,25,3-6:29,20,4-7;214,10,4-7:56,25,3-6;172,20,4-8"/>
+  <property name="nightMonster" value="32,25,3-6:29,20,3-6;214,10,4-7:56,25,3-6;165,20,4-8"/>
+  <property name="type" value="outside"/>
+  <property name="wildProbability" value="7"/>
+ </properties>
+ <tileset firstgid="1" source="../../Tileset/normal1.tsx"/>
+ <tileset firstgid="1025" source="../../Tileset/normal8.tsx"/>
+ <tileset firstgid="2049" source="../../Tileset/normal12.tsx"/>
+ <tileset firstgid="3073" source="../../Tileset/bots.tsx"/>
+ <tileset firstgid="3115" source="../../Tileset/invisible.tsx"/>
+ <tileset firstgid="3131" source="../../Tileset/normal2.tsx"/>
+ <tileset firstgid="4155" source="../../Tileset/normal6.tsx"/>
+ <layer name="Walkable" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjZmBgYEbDLEg0DDNREcPsWQjEi+iEFyPZexCID9EJHx61d9TeYWYv0wi0l2kE+Xcg0/NAhfNIit9Re+lj70irF0btHd72sgyQvQMdzg+B+BEB/IQKdj4F4sdI9iJjJhzixLiNEEa2EwCxYGEz
+  </data>
+ </layer>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJzt08ttwkAUQNFREDZb6ICAIW3gD6QNwAbaAGygEJykEQKN5FNG7gIESMaeSWZYRH7SkVg85i6slz4IsdOkaQnxiBbacNBB17reS4/+Mr3KxW/ed+HBR4A+BtZ5x63o7w55f4QxQkSYYGq4O+f9BZaIkWCFtWS3afOd0EIbji3XlZm8bo+OCw8+gpyuxzuBAj+nO6Qzwhghopzub+ZWd05ngSViJHfqmp7/1i26Bx13lDVF96DjjrKm6B5M3VHRPZR3VHbv3d3VhXjHHoe6/Jt+g7tDHwM8N9S6H7Q+8YVvhW5IJ8IEU8wUu1X2LdioZfz31sTsJlhhjY1i12G/gy6eFLpbdlO84BVvil2TU3bLrqnuVpKuOb33A31wdcs=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzbEJAAAIwDDxdg8XP3AQXBLo3AgAAABG5a7r35cGHDMGSQ==
+  </data>
+ </layer>
+</map>
