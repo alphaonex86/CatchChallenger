@@ -7,6 +7,7 @@ ProcessControler::ProcessControler()
 	connect(&eventDispatcher,SIGNAL(need_be_stopped()),this,SLOT(server_need_be_stopped()));
 	connect(&eventDispatcher,SIGNAL(need_be_restarted()),this,SLOT(server_need_be_restarted()));
 	connect(&eventDispatcher,SIGNAL(benchmark_result(int,double,double,double,double,double)),this,SLOT(benchmark_result(int,double,double,double,double,double)));
+	connect(&eventDispatcher,SIGNAL(error(QString)),this,SLOT(error(QString)));
 	need_be_restarted=false;
 	need_be_closed=false;
 	eventDispatcher.start_server();
@@ -31,6 +32,11 @@ void ProcessControler::server_is_started(bool is_started)
 			eventDispatcher.start_server();
 		}
 	}
+}
+
+void ProcessControler::error(const QString &error)
+{
+	QCoreApplication::quit();
 }
 
 void ProcessControler::server_need_be_stopped()
