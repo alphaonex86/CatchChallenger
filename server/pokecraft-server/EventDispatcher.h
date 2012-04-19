@@ -86,7 +86,7 @@ private:
 	QString mysql_login;
 	QString mysql_pass;
 	void removeBots();
-	void addBot(quint16 x,quint16 y,bool *bool_Walkable,quint16 width,quint16 height,bool benchmark,QString map,QString skin="");
+	void addBot(quint16 x,quint16 y,bool *bool_Walkable,quint16 width,quint16 height,QString map,QString skin="");
 	QTimer nextStep;//all function call singal sync, then not pointer needed
 	QList<FakeBot *> fake_clients;
 private slots:

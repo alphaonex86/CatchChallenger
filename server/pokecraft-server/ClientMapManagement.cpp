@@ -5,7 +5,6 @@ ClientMapManagement::ClientMapManagement()
 	current_map=NULL;
 	stopIt=false;
 	propagated=false;
-	basePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	firstInsert=true;
 }
 
@@ -13,11 +12,6 @@ ClientMapManagement::~ClientMapManagement()
 {
 	stopIt=true;
 	wait_the_end.acquire();
-}
-
-void ClientMapManagement::setBasePath(const QString &basePath)
-{
-	this->basePath=basePath;
 }
 
 void ClientMapManagement::stop()
@@ -41,10 +35,9 @@ Map_player_info ClientMapManagement::getMapPlayerInfo()
 	return temp;
 }
 
-void ClientMapManagement::setVariable(QList<Map_custom *> *map_list,EventThreader* map_loader_thread)
+void ClientMapManagement::setVariable(GeneralData *generalData)
 {
-	this->map_loader_thread=map_loader_thread;
-	this->map_list=map_list;
+	this->generalData=generalData;
 }
 
 void ClientMapManagement::askIfIsReadyToStop()
@@ -110,7 +103,7 @@ void ClientMapManagement::unloadMapIfNeeded(Map_custom * map)
 	//not more client, can unload the map
 	if(map->clients.size()==0)
 	{
-		map_list->removeOne(map);
+		generalData->map_list.removeOne(map);
 		/// \note auto unregistred on other map by destructor
 		delete map;
 	}
@@ -683,18 +676,18 @@ void ClientMapManagement::purgeBuffer()
 Map_custom * ClientMapManagement::getMap(const QString & mapName)
 {
 	int index=0;
-	int map_list_size=map_list->size();
+	int map_list_size=generalData->map_list.size();
 	while(index<map_list_size)
 	{
 		//current map found in already loaded
-		if(map_list->at(index)->mapName()==mapName)
-			return map_list->at(index);
+		if(generalData->map_list.at(index)->mapName()==mapName)
+			return generalData->map_list.at(index);
 		index++;
 	}
-	*map_list << new Map_custom(map_loader_thread,map_list);
-	map_list->last()->moveToThread(this->thread());
-	map_list->last()->loadMap(mapName,basePath);
-	return map_list->last();
+	generalData->map_list << new Map_custom(generalData->eventThreaderList.at(3),&generalData->map_list);
+	generalData->map_list.last()->moveToThread(generalData->eventThreaderList.at(3));
+	generalData->map_list.last()->loadMap(mapName,generalData->mapBasePath);
+	return generalData->map_list.last();
 }
 
 void ClientMapManagement::mapError(QString errorString)

@@ -60,7 +60,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	//set variables
 	clientNetworkRead->setPlayerNumber(&generalData->connected_players,&generalData->max_players);
 	clientBroadCast->setVariable(generalData,&player_informations);
-	clientMapManagement->setVariable(&generalData->map_list,generalData->eventThreaderList.at(3));
+	clientMapManagement->setVariable(generalData);
 	clientHeavyLoad->setVariable(generalData,&player_informations);
 
 	//connect the write
@@ -310,14 +310,12 @@ QString Client::getPseudo()
 	return player_informations.public_informations.pseudo;
 }
 
-void Client::fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,bool benchmark,QString skin)
+void Client::fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,QString skin)
 {
 	remote_ip=QString("bot_%1").arg(last_fake_player_id);
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	normalOutput("Fake connected client");
 	#endif
-	if(benchmark)
-		clientMapManagement->setBasePath(":/internal/benchmark-map/");
 	clientNetworkRead->fake_send_protocol();
 	emit send_fakeLogin(last_fake_player_id,x,y,map,orientation,skin);
 }
