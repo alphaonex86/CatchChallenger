@@ -18,7 +18,7 @@ class FakeBot : public QObject, public MoveClient
 {
 	Q_OBJECT
 public:
-	explicit FakeBot(quint16 x,quint16 y,bool *bool_Walkable,quint16 width,quint16 height,Direction last_direction);
+	explicit FakeBot(const quint16 &x,const quint16 &y,bool *bool_Walkable,const quint16 &width,const quint16 &height,const Direction &last_direction);
 	~FakeBot();
 	void start_step();
 	void show_details();
@@ -28,20 +28,20 @@ private:
 	bool *bool_Walkable;
 	quint16 x,y,width,height;
 	bool details;
-	void send_player_move(quint8 moved_unit,Direction the_direction);
-	QByteArray calculate_player_move(quint8 moved_unit,Direction the_direction);
-	QString directionToString(Direction direction);
+	void send_player_move(const quint8 &moved_unit,const Direction &the_direction);
+	QByteArray calculate_player_move(const quint8 &moved_unit,const Direction &the_direction);
+	QString directionToString(const Direction &direction);
 	quint64 TX_size,RX_size;
-	void raw_trame(QByteArray data);
-	void newDirection(Direction the_direction);
+	void raw_trame(const QByteArray &data);
+	void newDirection(const Direction &the_direction);
 	int index_loop,loop_size;
 	QSemaphore wait_to_stop;
 	bool do_step;
 signals:
-	void fake_receive_data(QByteArray data);
+	void fake_receive_data(const QByteArray &data);
 	void disconnected();
 public slots:
-	void fake_send_data(QByteArray data);
+	void fake_send_data(const QByteArray &data);
 	void stop_step();
 	void stop();
 	void doStep();

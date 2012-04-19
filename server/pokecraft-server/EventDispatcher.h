@@ -103,12 +103,12 @@ signals:
 	void need_be_restarted();
 	void need_be_started();
 	void is_started(bool);
-	void new_player_is_connected(Player_private_and_public_informations player);
-	void player_is_disconnected(QString pseudo);
-	void new_chat_message(QString pseudo,Chat_type type,QString text);
-	void error(QString error);
-	void benchmark_result(int latency,double TX_speed,double RX_speed,double TX_size,double RX_size,double second);
-	void try_start_benchmark(quint16 second,quint16 number_of_client);
+	void new_player_is_connected(const Player_private_and_public_informations &player);
+	void player_is_disconnected(const QString &pseudo);
+	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
+	void error(const QString error);
+	void benchmark_result(const int &latency,const double &TX_speed,const double &RX_speed,const double &TX_size,const double &RX_size,const double &second);
+	void try_start_benchmark(const quint16 &second,const quint16 &number_of_client);
 	void destroyAllBots();
 };
 

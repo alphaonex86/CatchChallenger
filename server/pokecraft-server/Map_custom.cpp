@@ -65,13 +65,15 @@ void Map_custom::loadMap(const QString &fileName,const QString &basePath)
 	emit tryLoadMap(basePath+fileName);
 }
 
-bool Map_custom::is_walkalble(quint16 x,quint16 y)
+bool Map_custom::is_walkalble(const quint16 &x,const quint16 &y)
 {
+	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
 	if((width-1)<x || (height-1)<y)
 	{
 		emit error("out of the map, for ask if is walkable");
 		return false;
 	}
+	#endif
 	return bool_Walkable[x+y*width];
 }
 
@@ -144,7 +146,7 @@ void Map_custom::map_content_loaded()
 	map_loader=NULL;
 }
 
-void Map_custom::check_client_position(int index)
+void Map_custom::check_client_position(const int &index)
 {
 	if(clients.at(index)->x>width || clients.at(index)->y>height)
 	{
@@ -155,7 +157,7 @@ void Map_custom::check_client_position(int index)
 	}
 }
 
-void Map_custom::error(QString errorString)
+void Map_custom::error(const QString &errorString)
 {
 	int index=0;
 	int clients_size=clients.size();
@@ -178,7 +180,7 @@ QString Map_custom::mapName()
 	return fileName;
 }
 
-Map_custom * Map_custom::searchOtherMap(QString fileName)
+Map_custom * Map_custom::searchOtherMap(const QString &fileName)
 {
 	int index=0;
 	int map_list_size=map_list->size();
@@ -217,7 +219,7 @@ Map_custom * Map_custom::searchOtherMap(QString fileName)
 	return NULL;
 }
 
-QString Map_custom::directionToString(Direction direction)
+QString Map_custom::directionToString(const Direction &direction)
 {
 	switch(direction)
 	{

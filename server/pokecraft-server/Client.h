@@ -111,13 +111,13 @@ signals:
 	void updatePlayerNumber();
 	void stop_server();
 	void restart_server();
-	void new_player_is_connected(Player_private_and_public_informations player);
-	void player_is_disconnected(QString pseudo);
-	void new_chat_message(QString pseudo,Chat_type type,QString text);
+	void new_player_is_connected(const Player_private_and_public_informations &player);
+	void player_is_disconnected(const QString &pseudo);
+	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
 	void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,QString skin);
-	void fake_send_data(QByteArray data);
-	void fake_send_received_data(QByteArray data);
-	void emit_serverCommand(QString,QString);
+	void fake_send_data(const QByteArray &data);
+	void fake_send_received_data(const QByteArray &data);
+	void emit_serverCommand(const QString&,const QString&);
 	void try_initAll();
 public slots:
 	void disconnectClient();

@@ -50,10 +50,10 @@ public slots:
 	void send_instant_player_number();
 signals:
 	//normal signals
-	void error(QString error);
+	void error(const QString &error);
 	void kicked();
-	void message(QString message);
-	void sendPacket(QByteArray data);
+	void message(const QString &message);
+	void sendPacket(const QByteArray &data);
 	void isReadyToStop();
 	void try_internal_disconnect();
 private:

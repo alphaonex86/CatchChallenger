@@ -51,11 +51,11 @@ public:
 	QList<Map_custom *> linked_map_object;
 	QStringList map_not_loaded;
 	QList<ClientMapManagement *> clients;
-	void check_client_position(int index);
-	bool is_walkalble(quint16 x,quint16 y);
+	void check_client_position(const int &index);
+	bool is_walkalble(const quint16 &x,const quint16 &y);
 	/* put into macro
 	static bool is_walkalble(const quint16 &width,const QByteArray &null_data,const QByteArray &Walkable,const QByteArray &Collisions,const QByteArray &Water,quint16 x,quint16 y); */
-	static QString directionToString(Direction direction);
+	static QString directionToString(const Direction &direction);
 	Map_final_temp map_final;
 private:
 	QString fileName;
@@ -67,14 +67,14 @@ private:
 	EventThreader* map_loader_thread;
 	QList<Map_custom *> *map_list;
 	//internal map manipulation
-	Map_custom * searchOtherMap(QString fileName);
+	Map_custom * searchOtherMap(const QString &fileName);
 	bool *bool_Walkable,*bool_Water;
 	quint64 temp_map_point;
 private slots:
 	void map_content_loaded();
-	void error(QString errorString);
+	void error(const QString &errorString);
 signals:
-	void tryLoadMap(QString fileName);
+	void tryLoadMap(const QString &fileName);
 };
 
 #endif // MAP_CUSTOM_H

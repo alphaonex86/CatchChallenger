@@ -1,6 +1,6 @@
 #include "FakeBot.h"
 
-FakeBot::FakeBot(quint16 x,quint16 y,bool *bool_Walkable,quint16 width,quint16 height,Direction last_direction)
+FakeBot::FakeBot(const quint16 &x,const quint16 &y,bool *bool_Walkable,const quint16 &width,const quint16 &height,const Direction &last_direction)
 {
 	details=false;
 	this->bool_Walkable=bool_Walkable;
@@ -78,12 +78,12 @@ void FakeBot::show_details()
 	DebugClass::debugConsole(QString("FakeBot::show_details(), x: %1, y:%2").arg(x).arg(y));
 }
 
-void FakeBot::fake_send_data(QByteArray data)
+void FakeBot::fake_send_data(const QByteArray &data)
 {
 	RX_size+=data.size();
 }
 
-void FakeBot::newDirection(Direction the_direction)
+void FakeBot::newDirection(const Direction &the_direction)
 {
 	MoveClient::newDirection(the_direction);
 	switch(the_direction)
@@ -107,7 +107,7 @@ void FakeBot::newDirection(Direction the_direction)
 		DebugClass::debugConsole(QString("FakeBot::newDirection(), after %3, x: %1, y:%2, last_step: %4").arg(x).arg(y).arg(Map_custom::directionToString(the_direction)).arg(last_step));
 }
 
-QByteArray FakeBot::calculate_player_move(quint8 moved_unit,Direction the_direction)
+QByteArray FakeBot::calculate_player_move(const quint8 &moved_unit,const Direction &the_direction)
 {
 	if(details)
 		DebugClass::debugConsole(QString("FakeBot::calculate_player_move(), moved_unit: %1, the_direction: %2").arg(moved_unit).arg(Map_custom::directionToString(the_direction)));
@@ -120,12 +120,12 @@ QByteArray FakeBot::calculate_player_move(quint8 moved_unit,Direction the_direct
 	return outputData;
 }
 
-void FakeBot::send_player_move(quint8 moved_unit,Direction the_direction)
+void FakeBot::send_player_move(const quint8 &moved_unit,const Direction &the_direction)
 {
 	raw_trame(calculate_player_move(moved_unit,the_direction));
 }
 
-void FakeBot::raw_trame(QByteArray data)
+void FakeBot::raw_trame(const QByteArray &data)
 {
 	TX_size+=data.size();
 	emit fake_receive_data(data);

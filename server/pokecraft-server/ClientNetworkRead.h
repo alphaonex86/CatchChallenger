@@ -29,24 +29,24 @@ private slots:
 	void parseInputAfterLogin(const QByteArray & inputData);
 signals:
 	//normal signals
-	void error(QString error);
-	void message(QString message);
-	void sendPacket(QByteArray data);
+	void error(const QString &error);
+	void message(const QString &message);
+	void sendPacket(const QByteArray &data);
 	void isReadyToStop();
 	//packet parsed (heavy)
-	void askLogin(quint8 query_id,QString login,QByteArray hash);
-	void askRandomSeedList(quint8 query_id);
-	void datapackList(quint8 query_id,QStringList files,QList<quint32> timestamps);
+	void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
+	void askRandomSeedList(const quint8 &query_id);
+	void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
 	//packet parsed (map management)
-	void moveThePlayer(quint8 previousMovedUnit,Direction direction);
+	void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	//packet parsed (broadcast)
-	void sendPM(QString text,QString pseudo);
-	void sendChatText(Chat_type chatType,QString text);
-	void addPlayersInformationToWatch(QList<quint32> player_ids,quint8 type_player_query);
-	void removePlayersInformationToWatch(QList<quint32> player_ids);
-	void sendBroadCastCommand(QString command,QString extraText);
+	void sendPM(const QString &text,const QString &pseudo);
+	void sendChatText(const Chat_type &chatType,const QString &text);
+	void addPlayersInformationToWatch(const QList<quint32> &player_ids,const quint8 &type_player_query);
+	void removePlayersInformationToWatch(const QList<quint32> &player_ids);
+	void sendBroadCastCommand(const QString &command,const QString &extraText);
 	//to manipulate the server for restart and stop
-	void serverCommand(QString command,QString extraText);
+	void serverCommand(const QString &command,const QString &extraText);
 private:
 	// for data
 	bool haveData;

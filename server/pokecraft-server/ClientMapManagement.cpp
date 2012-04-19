@@ -12,7 +12,6 @@ ClientMapManagement::ClientMapManagement()
 ClientMapManagement::~ClientMapManagement()
 {
 	stopIt=true;
-	QMutexLocker lock(&mutex);
 	wait_the_end.acquire();
 }
 
@@ -51,11 +50,10 @@ void ClientMapManagement::setVariable(QList<Map_custom *> *map_list,EventThreade
 void ClientMapManagement::askIfIsReadyToStop()
 {
 	stopIt=true;
-	QMutexLocker lock(&mutex);
-	wait_the_end.release();
 	if(current_map==NULL)
 	{
 		emit isReadyToStop();
+		wait_the_end.release();
 		return;
 	}
 	unloadFromCurrentMap();
@@ -82,6 +80,7 @@ void ClientMapManagement::askIfIsReadyToStop()
 	unloadMapIfNeeded(current_map);
 	current_map=NULL;
 	emit isReadyToStop();
+	wait_the_end.release();
 }
 
 void ClientMapManagement::unloadFromCurrentMap()
@@ -568,7 +567,6 @@ void ClientMapManagement::purgeBuffer()
 		return;
 	if(stopIt)
 		return;
-	QMutexLocker lock(&mutex);
 
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	emit message("purgeBuffer() runing....");

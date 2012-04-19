@@ -31,7 +31,7 @@ Map_loader::~Map_loader()
 	{QMutexLocker lock(&mutex);}
 }
 
-void Map_loader::tryLoadMap(QString fileName)
+void Map_loader::tryLoadMap(const QString &fileName)
 {
 	QMutexLocker lock(&mutex);
 	QFile mapFile(fileName);
