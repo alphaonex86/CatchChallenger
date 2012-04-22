@@ -15,7 +15,6 @@
 #include "ClientNetworkRead.h"
 #include "ClientNetworkWrite.h"
 #include "EventThreader.h"
-#include "Map_custom.h"
 #include "../pokecraft-general/GeneralStructures.h"
 #include "../VariableServer.h"
 
@@ -34,7 +33,7 @@ public:
 	void externalRemoveLookupPlayer(quint32 id);
 	QString getPseudo();
 	bool is_ready_to_stop;
-	void fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,QString skin);
+	void fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin);
 	Map_player_info getMapPlayerInfo();
 private:
 	bool ask_is_ready_to_stop;
@@ -88,7 +87,7 @@ signals:
 	void new_player_is_connected(const Player_private_and_public_informations &player);
 	void player_is_disconnected(const QString &pseudo);
 	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
-	void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,QString skin);
+	void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin);
 	void fake_send_data(const QByteArray &data);
 	void fake_send_received_data(const QByteArray &data);
 	void emit_serverCommand(const QString&,const QString&);

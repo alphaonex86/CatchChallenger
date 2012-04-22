@@ -33,7 +33,7 @@ public slots:
 	void askRandomSeedList(const quint8 &query_id);
 	void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
 	void updatePlayerPosition(const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation);
-	void fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,const QString &map,const Orientation &orientation,const QString &skin);
+	void fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,Map_final *map,const Orientation &orientation,const QString &skin);
 	//normal slots
 	void askIfIsReadyToStop();
 private:
@@ -58,7 +58,7 @@ signals:
 	//login linked signals
 	void send_player_informations();
 	void isLogged();
-	void put_on_the_map(const quint32 &player_id,const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	void put_on_the_map(const quint32 &player_id,Map_final* map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	//random linked signals
 	void setRandomSeedList(const QByteArray &randomData);
 protected:

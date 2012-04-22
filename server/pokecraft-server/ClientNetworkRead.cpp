@@ -27,8 +27,8 @@ void ClientNetworkRead::setSocket(QTcpSocket * socket)
 	if(socket!=NULL)
 	{
 		dataClear();
-		this->socket->flush();
-		connect(socket,SIGNAL(readyRead()),this,SLOT(readyRead()));
+		//this->socket->flush();
+		connect(socket,SIGNAL(readyRead()),this,SLOT(readyRead()),Qt::QueuedConnection);
 	}
 }
 

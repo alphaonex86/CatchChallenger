@@ -28,16 +28,9 @@ void ClientMapManagement::stop()
 Map_player_info ClientMapManagement::getMapPlayerInfo()
 {
 	Map_player_info temp;
-	if(current_map==NULL)
-		temp.loaded=false;
-	else
-	{
-		temp.map		= current_map->map_final;
-		temp.map_file_path	= current_map->mapName();
-		temp.x			= x;
-		temp.y			= y;
-		temp.loaded		= true;
-	}
+	temp.map		= current_map;
+	temp.x			= x;
+	temp.y			= y;
 	return temp;
 }
 
@@ -63,20 +56,19 @@ void ClientMapManagement::askIfIsReadyToStop()
 	if(last_direction>4)
 		last_direction=Direction((quint8)last_direction-4);
 	Orientation orientation=(Orientation)last_direction;
-	if(current_map->mapName()!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
+	if(current_map->map_file!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
 	{
-		emit updatePlayerPosition(current_map->mapName(),x,y,orientation);
+		emit updatePlayerPosition(current_map->map_file,x,y,orientation);
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
 		DebugClass::debugConsole(
-					QString("current_map->mapName(): %1,x: %2,y: %3, orientation: %4")
-					.arg(current_map->mapName())
+					QString("current_map->map_file: %1,x: %2,y: %3, orientation: %4")
+					.arg(current_map->map_file)
 					.arg(x)
 					.arg(y)
 					.arg(orientation)
 					);
 		#endif
 	}
-	unloadMapIfNeeded(current_map);
 	current_map=NULL;
 	emit isReadyToStop();
 	wait_the_end.release();
@@ -92,49 +84,35 @@ void ClientMapManagement::unloadFromCurrentMap()
 		return;
 	}
 	//tell at all other client the disconnect of this
-	if(current_map->map_loaded)
+	int index_maps_clients=0;
+	int list_size_maps_clients=current_map->clients.size();
+	while(index_maps_clients<list_size_maps_clients)
 	{
-		int index_maps_clients=0;
-		int list_size_maps_clients=current_map->clients.size();
-		while(index_maps_clients<list_size_maps_clients)
-		{
-			current_map->clients.at(index_maps_clients)->removeClient(player_id);
-			index_maps_clients++;
-		}
+		current_map->clients.at(index_maps_clients)->removeAnotherClient(player_id);
+		index_maps_clients++;
 	}
 }
 
-void ClientMapManagement::unloadMapIfNeeded(Map_custom * map)
-{
-	//not more client, can unload the map
-	if(map->clients.size()==0)
-	{
-		generalData->map_list.removeOne(map);
-		/// \note auto unregistred on other map by destructor
-		delete map;
-	}
-}
-
-void ClientMapManagement::put_on_the_map(const quint32 &player_id,const QString & map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
 	have_diff=false;
 	at_start_x=x;
 	at_start_y=y;
 	at_start_orientation=orientation;
 	last_direction=(Direction)orientation;
-	at_start_map_name=map;
+	at_start_map_name=map->map_file;
 	this->player_id=player_id;
 	this->x=x;
 	this->y=y;
 	propagated=false;
 	this->speed=speed;
-	current_map=getMap(map);
+	current_map=map;
 	current_map->clients << this;
-	propagate();
+//	propagate();
 }
 
 //x and y can be negative, it's the offset
-void ClientMapManagement::put_on_the_map_by_diff(const QString & map,const qint16 &x_offset_or_real,const qint16 &y_offset_or_real)
+/*void ClientMapManagement::put_on_the_map_by_diff(const QString & map,const qint16 &x_offset_or_real,const qint16 &y_offset_or_real)
 {
 	emit message(QString("try load map by diff for for player: %1, transmited (x,y): %2,%3").arg(player_id).arg(x_offset_or_real).arg(y_offset_or_real));
 	have_diff=true;
@@ -146,13 +124,13 @@ void ClientMapManagement::put_on_the_map_by_diff(const QString & map,const qint1
 	propagate();
 	//set to 0 or map max size
 	//moveThePlayer() to check colision and do real move
-}
+}*/
 
-void ClientMapManagement::propagate()
+/*void ClientMapManagement::propagate()
 {
 	if(current_map==NULL)
 	{
-		DebugClass::debugConsole(QString("current_map==NULL and should not: %1").arg(player_id));
+		emit message(QString("current_map==NULL and should not: %1").arg(player_id));
 		return;
 	}
 	if(current_map->map_loaded)
@@ -180,7 +158,7 @@ void ClientMapManagement::propagate()
 						emit message(QString("propagate(): enter and parse Direction_move_at_top"));
 					previousMovedUnit=y;
 					y=current_map->height;//useless but it's y=0 + offset stored into y
-					x+=current_map->map_border_bottom.x;
+					x+=current_map->border_bottom.x;
 				break;
 				case Direction_move_at_right:
 					if(x<0)
@@ -192,7 +170,7 @@ void ClientMapManagement::propagate()
 						emit message(QString("propagate(): enter and parse Direction_move_at_right"));
 					previousMovedUnit=x;
 					x=-1;//spawn out of map to check the next tile
-					y+=current_map->map_border_left.y;
+					y+=current_map->border_left.y;
 				break;
 				case Direction_move_at_bottom:
 					if(y<0)
@@ -204,7 +182,7 @@ void ClientMapManagement::propagate()
 						emit message(QString("propagate(): enter and parse Direction_move_at_bottom"));
 					previousMovedUnit=y;
 					y=-1;//spawn out of map to check the next tile
-					x+=current_map->map_border_top.x;
+					x+=current_map->border_top.x;
 				break;
 				case Direction_move_at_left:
 					if(x<0)
@@ -216,7 +194,7 @@ void ClientMapManagement::propagate()
 						emit message(QString("propagate(): enter and parse Direction_move_at_left"));
 					previousMovedUnit=x;
 					x=current_map->width;//it's x=height + offset stored into x, then x=x+height
-					y+=current_map->map_border_right.y;
+					y+=current_map->border_right.y;
 				break;
 				default:
 					emit error(QString("propagate(): direction not managed"));
@@ -239,13 +217,13 @@ void ClientMapManagement::propagate()
 			{
 				ClientMapManagement *other_client=current_map->clients.at(index_maps_clients);
 				if(other_client!=this)
-					other_client->insertClient(player_id,current_map->mapName(),x,y,last_direction,speed);
+					other_client->insertAnotherClient(player_id,current_map->map_file,x,y,last_direction,speed);
 				if(other_client!=this || firstInsert)
 				{
 					if(other_client==this)
 						firstInsert=false;
-					insertClient(other_client->player_id,
-					     other_client->current_map->mapName(),
+					insertAnotherClient(other_client->player_id,
+					     other_client->current_map->map_file,
 					     other_client->x,
 					     other_client->y,
 					     other_client->last_direction,
@@ -260,12 +238,12 @@ void ClientMapManagement::propagate()
 	}
 	else
 		emit message(QString("map not loaded: %1, (x,y): %2,%3").arg(player_id).arg(x).arg(y));
-}
+}*/
 
 /* call before the map chaning, then on the old map
   move and remove all player from the current map and other player view
   */
-void ClientMapManagement::preMapMove(const quint8 &previousMovedUnit,const Direction &direction)
+/*void ClientMapManagement::preMapMove(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	QList<ClientMapManagement *> previousClient;
 	old_map=current_map;
@@ -276,17 +254,17 @@ void ClientMapManagement::preMapMove(const quint8 &previousMovedUnit,const Direc
 	list_size=previousClient.size();
 	while(index<list_size)
 	{
-		previousClient.at(index)->moveClient(player_id,previousMovedUnit,direction);
-		previousClient.at(index)->removeClient(player_id);
+		previousClient.at(index)->moveAnotherClient(player_id,previousMovedUnit,direction);
+		previousClient.at(index)->removeAnotherClient(player_id);
 		index++;
 	}
 	last_direction_diff=direction;
-}
+}*/
 
 /* call after the map chaning, then on the new map
   just insert from the new map, because the move will be call into propagate() by moveThePlayer()
   */
-void ClientMapManagement::postMapMove()
+/*void ClientMapManagement::postMapMove()
 {
 	if(stopIt)
 		return;
@@ -304,12 +282,12 @@ void ClientMapManagement::postMapMove()
 			emit message(QString("insertClient(): Wrong x,y: %1,%2").arg(x).arg(y));
 			return;
 		}
-		MapMove_nearClient.at(index)->insertClient(player_id,current_map->mapName(),x,y,(Direction)last_direction,speed);
+		MapMove_nearClient.at(index)->insertAnotherClient(player_id,current_map->map_file,x,y,(Direction)last_direction,speed);
 		index++;
 	}
 	current_map->clients << this;
 	unloadMapIfNeeded(old_map);
-}
+}*/
 
 /*void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
@@ -319,179 +297,162 @@ void ClientMapManagement::postMapMove()
 /// \note The second heavy function
 void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction,bool with_diff)
 {
-	if(stopIt)
+/*	if(stopIt)
 		return;
-	if(current_map==NULL)
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4, direction: %5").arg(x).arg(y).arg(player_id).arg(previousMovedUnit).arg(Map_custom::directionToString((Direction)direction)));
+	#endif
+	moveThePlayer_index_move=0;
+	if(last_direction==direction && with_diff==false)
 	{
-		emit message(QString("internal error, map pointer == NULL, for player: %1").arg(player_id));
+		emit error(QString("Previous action is same direction: %1").arg(last_direction));
 		return;
 	}
-	if(current_map->map_loaded)
+	switch(last_direction)
 	{
-		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-		emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4, direction: %5").arg(x).arg(y).arg(player_id).arg(previousMovedUnit).arg(Map_custom::directionToString((Direction)direction)));
-		#endif
-		moveThePlayer_index_move=0;
-		if(last_direction==direction && with_diff==false)
-		{
-			emit error(QString("Previous action is same direction: %1").arg(last_direction));
-			return;
-		}
-		switch(last_direction)
-		{
-			case Direction_move_at_top:
-				if(previousMovedUnit==0)
-					emit error(QString("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
-				while(moveThePlayer_index_move<previousMovedUnit)
+		case Direction_move_at_top:
+			if(previousMovedUnit==0)
+				emit error(QString("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
+			while(moveThePlayer_index_move<previousMovedUnit)
+			{
+				if(0==y)
 				{
-					if(0==y)
+					if(current_map->border_top.map==NULL)
+						emit error(QString("moveThePlayer(), out of map: %1 by top").arg(current_map->map_file));
+					else
 					{
-						if(current_map->map_border_top.fileName.isEmpty())
-							emit error(QString("moveThePlayer(), out of map: %1, file name: \"%2\"").arg(current_map->mapName()).arg(current_map->map_border_top.fileName));
-						else
-						{
-							preMapMove(previousMovedUnit,direction);
-							emit message(QString("moveThePlayer(): move at top, out of map: %1, file name: \"%2\", current_map->map_border_top.y_offset: %3-%4=%5").arg(current_map->mapName()).arg(current_map->map_border_top.fileName).arg(x).arg(current_map->map_border_top.x).arg(x-current_map->map_border_top.x));
-							put_on_the_map_by_diff(current_map->map_border_top.fileName,x-current_map->map_border_top.x,previousMovedUnit-moveThePlayer_index_move);
-						}
-						return;
+						preMapMove(previousMovedUnit,direction);
+						emit message(QString("moveThePlayer(): move at top, out of map: %1, file name: \"%2\", current_map->border_top.y_offset: %3-%4=%5").arg(current_map->map_file).arg(current_map->border_top.map->map_file).arg(x).arg(current_map->border_top.x_offset).arg(x-current_map->border_top.x_offset));
+						//put_on_the_map_by_diff(current_map->border_top.map,x-current_map->border_top.x_offset,previousMovedUnit-moveThePlayer_index_move);
 					}
-					y--;
-					if(!current_map->is_walkalble(x,y))
-					{
-						emit error(QString("move at top, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->mapName()));
-						return;
-					}
-					moveThePlayer_index_move++;
+					return;
 				}
-			break;
-			case Direction_look_at_top:
-				if(previousMovedUnit>0 && with_diff==false)
-					emit error(QString("Direction_look_at_top: Previous action is not moving: %1").arg(last_direction));
-			break;
-			case Direction_move_at_right:
-				if(previousMovedUnit==0)
-					emit error(QString("Direction_move_at_right: Previous action is moving: %1").arg(last_direction));
-				while(moveThePlayer_index_move<previousMovedUnit)
+				y--;
+				if(!current_map->bool_Walkable[x+y*width])
 				{
-					if((current_map->width-1)==x)
-					{
-						if(current_map->map_border_right.fileName.isEmpty())
-							emit error(QString("moveThePlayer(): move at right, out of map: %1, file name: \"%2\"").arg(current_map->mapName()).arg(current_map->map_border_right.fileName));
-						else
-						{
-							preMapMove(previousMovedUnit,direction);
-							emit message(QString("moveThePlayer(): move at right, out of map: %1, file name: \"%2\", current_map->map_border_right.y_offset: %3-%4=%5").arg(current_map->mapName()).arg(current_map->map_border_right.fileName).arg(y).arg(current_map->map_border_right.y).arg(y-current_map->map_border_right.y));
-							put_on_the_map_by_diff(current_map->map_border_right.fileName,previousMovedUnit-moveThePlayer_index_move,y-current_map->map_border_right.y);
-						}
-						return;
-					}
-					x++;
-					if(!current_map->is_walkalble(x,y))
-					{
-						emit error(QString("move at right, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->mapName()));
-						return;
-					}
-					moveThePlayer_index_move++;
+					emit error(QString("move at top, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
+					return;
 				}
-			break;
-			case Direction_look_at_right:
-				if(previousMovedUnit>0 && with_diff==false)
-					emit error(QString("Direction_look_at_right: Previous action is not moving: %1").arg(last_direction));
-			break;
-			case Direction_move_at_bottom:
-				if(previousMovedUnit==0)
-					emit error(QString("Direction_move_at_bottom: Previous action is moving: %1").arg(last_direction));
-				while(moveThePlayer_index_move<previousMovedUnit)
+				moveThePlayer_index_move++;
+			}
+		break;
+		case Direction_look_at_top:
+			if(previousMovedUnit>0 && with_diff==false)
+				emit error(QString("Direction_look_at_top: Previous action is not moving: %1").arg(last_direction));
+		break;
+		case Direction_move_at_right:
+			if(previousMovedUnit==0)
+				emit error(QString("Direction_move_at_right: Previous action is moving: %1").arg(last_direction));
+			while(moveThePlayer_index_move<previousMovedUnit)
+			{
+				if((current_map->width-1)==x)
 				{
-					if((current_map->height-1)==y)
+					if(current_map->border_right.fileName.isEmpty())
+						emit error(QString("moveThePlayer(): move at right, out of map: %1, file name: \"%2\"").arg(current_map->map_file).arg(current_map->border_right.fileName));
+					else
 					{
-						if(current_map->map_border_bottom.fileName.isEmpty())
-							emit error(QString("moveThePlayer(): move at bottom, out of map: %1, file name: \"%2\"").arg(current_map->mapName()).arg(current_map->map_border_bottom.fileName));
-						else
-						{
-							preMapMove(previousMovedUnit,direction);
-							emit message(QString("moveThePlayer(): move at bottom, out of map: %1, file name: \"%2\", current_map->map_border_bottom.y_offset: %3-%4=%5").arg(current_map->mapName()).arg(current_map->map_border_bottom.fileName).arg(x).arg(current_map->map_border_bottom.x).arg(x-current_map->map_border_bottom.x));
-							put_on_the_map_by_diff(current_map->map_border_bottom.fileName,x-current_map->map_border_bottom.x,previousMovedUnit-moveThePlayer_index_move);
-						}
-						return;
+						preMapMove(previousMovedUnit,direction);
+						emit message(QString("moveThePlayer(): move at right, out of map: %1, file name: \"%2\", current_map->border_right.y_offset: %3-%4=%5").arg(current_map->map_file).arg(current_map->border_right.fileName).arg(y).arg(current_map->border_right.y).arg(y-current_map->border_right.y));
+						put_on_the_map_by_diff(current_map->border_right.fileName,previousMovedUnit-moveThePlayer_index_move,y-current_map->border_right.y);
 					}
-					y++;
-					if(!current_map->is_walkalble(x,y))
-					{
-						emit error(QString("move at bottom, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->mapName()));
-						return;
-					}
-					moveThePlayer_index_move++;
+					return;
 				}
-			break;
-			case Direction_look_at_bottom:
-				if(previousMovedUnit>0 && with_diff==false)
-					emit error(QString("Direction_look_at_bottom: Previous action is not moving: %1").arg(last_direction));
-			break;
-			case Direction_move_at_left:
-				if(previousMovedUnit==0)
-					emit error(QString("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
-				while(moveThePlayer_index_move<previousMovedUnit)
+				x++;
+				if(!current_map->bool_Walkable[x+y*width])
 				{
-					if(0==x)
-					{
-						if(current_map->map_border_left.fileName.isEmpty())
-							emit error(QString("moveThePlayer(): move at left, out of map: %1, file name: \"%2\"").arg(current_map->mapName()).arg(current_map->map_border_left.fileName));
-						else
-						{
-							preMapMove(previousMovedUnit,direction);
-							emit message(QString("moveThePlayer(): move at left, out of map: %1, file name: \"%2\", current_map->map_border_left.y_offset: %3-%4=%5").arg(current_map->mapName()).arg(current_map->map_border_left.fileName).arg(y).arg(current_map->map_border_left.y).arg(y-current_map->map_border_left.y));
-							put_on_the_map_by_diff(current_map->map_border_left.fileName,previousMovedUnit-moveThePlayer_index_move,y-current_map->map_border_left.y);
-						}
-						return;
-					}
-					x--;
-					if(!current_map->is_walkalble(x,y))
-					{
-						emit error(QString("move at left, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->mapName()));
-						return;
-					}
-					moveThePlayer_index_move++;
+					emit error(QString("move at right, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
+					return;
 				}
-			break;
-			case Direction_look_at_left:
-				if(previousMovedUnit>0 && with_diff==false)
-					emit error(QString("Direction_look_at_left: Previous action is not moving: %1").arg(last_direction));
-			break;
-			default:
-				emit error(QString("moveThePlayer(): direction not managed"));
-			break;
-		}
-		moveThePlayer_returnList.clear();
-		getNearClient(moveThePlayer_returnList);
-		moveThePlayer_index=0;
-		moveThePlayer_list_size=moveThePlayer_returnList.size();
-		while(moveThePlayer_index<moveThePlayer_list_size)
-		{
-			if(moveThePlayer_returnList[moveThePlayer_index]->player_id!=player_id)
-				moveThePlayer_returnList[moveThePlayer_index]->moveClient(player_id,previousMovedUnit,(Direction)direction);
-			moveThePlayer_index++;
-		}
-		last_direction=direction;
-		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-		emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(Map_custom::directionToString((Direction)direction)).arg(moveThePlayer_list_size));
-		#endif
+				moveThePlayer_index_move++;
+			}
+		break;
+		case Direction_look_at_right:
+			if(previousMovedUnit>0 && with_diff==false)
+				emit error(QString("Direction_look_at_right: Previous action is not moving: %1").arg(last_direction));
+		break;
+		case Direction_move_at_bottom:
+			if(previousMovedUnit==0)
+				emit error(QString("Direction_move_at_bottom: Previous action is moving: %1").arg(last_direction));
+			while(moveThePlayer_index_move<previousMovedUnit)
+			{
+				if((current_map->height-1)==y)
+				{
+					if(current_map->border_bottom.fileName.isEmpty())
+						emit error(QString("moveThePlayer(): move at bottom, out of map: %1, file name: \"%2\"").arg(current_map->map_file).arg(current_map->border_bottom.fileName));
+					else
+					{
+						preMapMove(previousMovedUnit,direction);
+						emit message(QString("moveThePlayer(): move at bottom, out of map: %1, file name: \"%2\", current_map->border_bottom.y_offset: %3-%4=%5").arg(current_map->map_file).arg(current_map->border_bottom.fileName).arg(x).arg(current_map->border_bottom.x).arg(x-current_map->border_bottom.x));
+						put_on_the_map_by_diff(current_map->border_bottom.fileName,x-current_map->border_bottom.x,previousMovedUnit-moveThePlayer_index_move);
+					}
+					return;
+				}
+				y++;
+				if(!current_map->bool_Walkable[x+y*width])
+				{
+					emit error(QString("move at bottom, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
+					return;
+				}
+				moveThePlayer_index_move++;
+			}
+		break;
+		case Direction_look_at_bottom:
+			if(previousMovedUnit>0 && with_diff==false)
+				emit error(QString("Direction_look_at_bottom: Previous action is not moving: %1").arg(last_direction));
+		break;
+		case Direction_move_at_left:
+			if(previousMovedUnit==0)
+				emit error(QString("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
+			while(moveThePlayer_index_move<previousMovedUnit)
+			{
+				if(0==x)
+				{
+					if(current_map->border_left.fileName.isEmpty())
+						emit error(QString("moveThePlayer(): move at left, out of map: %1, file name: \"%2\"").arg(current_map->map_file).arg(current_map->border_left.fileName));
+					else
+					{
+						preMapMove(previousMovedUnit,direction);
+						emit message(QString("moveThePlayer(): move at left, out of map: %1, file name: \"%2\", current_map->border_left.y_offset: %3-%4=%5").arg(current_map->map_file).arg(current_map->border_left.fileName).arg(y).arg(current_map->border_left.y).arg(y-current_map->border_left.y));
+						put_on_the_map_by_diff(current_map->border_left.fileName,previousMovedUnit-moveThePlayer_index_move,y-current_map->border_left.y);
+					}
+					return;
+				}
+				x--;
+				if(!current_map->bool_Walkable[x+y*width])
+				{
+					emit error(QString("move at left, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
+					return;
+				}
+				moveThePlayer_index_move++;
+			}
+		break;
+		case Direction_look_at_left:
+			if(previousMovedUnit>0 && with_diff==false)
+				emit error(QString("Direction_look_at_left: Previous action is not moving: %1").arg(last_direction));
+		break;
+		default:
+			emit error(QString("moveThePlayer(): direction not managed"));
+		break;
 	}
-	else
+	moveThePlayer_returnList.clear();
+	getNearClient(moveThePlayer_returnList);
+	moveThePlayer_index=0;
+	moveThePlayer_list_size=moveThePlayer_returnList.size();
+	while(moveThePlayer_index<moveThePlayer_list_size)
 	{
-/*		map_management_movement temp;
-		temp.movedUnit=previousMovedUnit;
-		temp.direction=(Direction)direction;
-		delayed_map_management_move << temp;*/
+		if(moveThePlayer_returnList[moveThePlayer_index]->player_id!=player_id)
+			moveThePlayer_returnList[moveThePlayer_index]->moveAnotherClient(player_id,previousMovedUnit,(Direction)direction);
+		moveThePlayer_index++;
 	}
+	last_direction=direction;
+	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
+	emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(Map_custom::directionToString((Direction)direction)).arg(moveThePlayer_list_size));
+	#endif*/
 }
 
 //send client only on near map loaded and not the current player
 void ClientMapManagement::getNearClient(QList<ClientMapManagement *> & returnList)
 {
-	if(!current_map->map_loaded)
-		return;
 	returnList << current_map->clients;
 	/// \todo uncomment and fix this code
 	/*
@@ -505,17 +466,17 @@ void ClientMapManagement::getNearClient(QList<ClientMapManagement *> & returnLis
 	}*/
 }
 
-void ClientMapManagement::insertClient(const quint32 &player_id,const QString &map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
+bool ClientMapManagement::insertAnotherClient(const quint32 &player_id,const QString &map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
 {
 	if(current_map==NULL)
 	{
 		emit message("internal error, map pointer == NULL at insertClient()");
-		return;
+		return true;
 	}
 	if(x>(current_map->width-1) || y>(current_map->height-1))
 	{
 		emit message(QString("insertClient(): Wrong x,y: %1,%2").arg(x).arg(y));
-		return;
+		return false;
 	}
 	insertClient_temp.fileName=map;
 	insertClient_temp.id=player_id;
@@ -524,10 +485,11 @@ void ClientMapManagement::insertClient(const quint32 &player_id,const QString &m
 	insertClient_temp.y=y;
 	insertClient_temp.speed=speed;
 	to_send_map_management_insert << insertClient_temp;
+	return true;
 }
 
 /// \note The first heavy function
-void ClientMapManagement::moveClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction)
+void ClientMapManagement::moveAnotherClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 	emit message(QString("moveClient(%1,%2,%3)").arg(player_id).arg(movedUnit).arg(Map_custom::directionToString((Direction)direction)));
@@ -537,7 +499,7 @@ void ClientMapManagement::moveClient(const quint32 &player_id,const quint8 &move
 	to_send_map_management_move[player_id] << moveClient_tempMov;
 }
 
-void ClientMapManagement::removeClient(const quint32 &player_id)
+void ClientMapManagement::removeAnotherClient(const quint32 &player_id)
 {
 	if(current_map==NULL)
 	{
@@ -646,8 +608,8 @@ void ClientMapManagement::purgeBuffer()
 		outLoop << i.key();
 		outLoop << (quint8)0x02;
 		purgeBuffer_list_size_internal=i.value().size();
-		if(purgeBuffer_list_size_internal==0)
-			DebugClass::debugConsole(QString("for player: %1, list_size_internal==0").arg(this->player_id));
+/*		if(purgeBuffer_list_size_internal==0)
+			DebugClass::debugConsole(QString("for player: %1, list_size_internal==0").arg(this->player_id));*/
 		outLoop << (quint8)purgeBuffer_list_size_internal;
 		purgeBuffer_indexMovement=0;
 		while(purgeBuffer_indexMovement<purgeBuffer_list_size_internal)
@@ -674,32 +636,3 @@ void ClientMapManagement::purgeBuffer()
 	emit sendPacket(purgeBuffer_outputData);
 }
 
-Map_custom * ClientMapManagement::getMap(const QString & mapName)
-{
-	int index=0;
-	int map_list_size=generalData->map_list.size();
-	while(index<map_list_size)
-	{
-		//current map found in already loaded
-		if(generalData->map_list.at(index)->mapName()==mapName)
-			return generalData->map_list.at(index);
-		index++;
-	}
-	generalData->map_list << new Map_custom(generalData->eventThreaderList.at(3),&generalData->map_list);
-	generalData->map_list.last()->moveToThread(generalData->eventThreaderList.at(3));
-	generalData->map_list.last()->loadMap(mapName,generalData->mapBasePath);
-	return generalData->map_list.last();
-}
-
-void ClientMapManagement::mapError(const QString &errorString)
-{
-	QByteArray outputData;
-	QDataStream out(&outputData, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC2;
-	out << (quint32)0x00000008;
-	out << (quint8)0x03;
-	out << "Unable to load the current map";
-	emit sendPacket(outputData);
-	emit error(errorString);
-}
