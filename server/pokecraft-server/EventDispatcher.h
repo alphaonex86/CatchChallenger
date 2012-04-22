@@ -8,6 +8,7 @@
 #include <QByteArray>
 #include <QSqlDatabase>
 #include <QSqlError>
+#include <QDir>
 
 #include "../pokecraft-general/DebugClass.h"
 #include "ServerStructures.h"
@@ -30,8 +31,6 @@ public:
 	bool isInBenchmark();
 	quint16 player_current();
 	quint16 player_max();
-	qint64 cache_current();
-	qint64 cache_max();
 	QStringList getLatency();
 	quint32 getTotalLatency();
 	void start_benchmark(quint16 second,quint16 number_of_client);
@@ -44,6 +43,11 @@ public slots:
 	/*void send_system_message(QString text);
 	void send_pm_message(QString pseudo,QString text);*/
 private:
+	void preload_the_data();
+	void preload_the_map();
+	void unload_the_data();
+	void unload_the_map();
+	QStringList listFolder(const QString& folder,const QString& suffix);
 	QString server_ip;
 	bool pvp;
 	quint16 server_port;
@@ -86,9 +90,15 @@ private:
 	QString mysql_login;
 	QString mysql_pass;
 	void removeBots();
-	void addBot(quint16 x,quint16 y,bool *bool_Walkable,quint16 width,quint16 height,QString map,QString skin="");
+	void addBot(quint16 x,quint16 y,Map_final *map,QString skin="");
 	QTimer nextStep;//all function call singal sync, then not pointer needed
 	QList<FakeBot *> fake_clients;
+	struct Map_semi
+	{
+		//conversion x,y to position: x+y*width
+		Map_final * map;
+		Map_semi_border border;
+	};
 private slots:
 	void newConnection();
 	void removeOneClient();

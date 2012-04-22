@@ -63,10 +63,6 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		else
 		{
 			generalData->connected_players_id_list << loginQuery.value(0).toUInt();
-			out << (quint8)0xC1;
-			out << (quint8)query_id;
-			out << (quint8)02;
-			out << (quint32)loginQuery.value(0).toUInt();
 			is_logged=true;
 			player_informations->public_informations.clan=loginQuery.value(10).toUInt();
 			player_informations->public_informations.description="";
@@ -81,22 +77,38 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit message(QString("Wrong orientation corrected: %1").arg(orentation));
 				orentation=3;
 			}
-			emit sendPacket(outputData);
-			emit send_player_informations();
-			emit isLogged();
-			emit put_on_the_map(
-				player_informations->public_informations.id,
-				loginQuery.value(8).toString(),//map_name
-				loginQuery.value(5).toInt(),//position_x
-				loginQuery.value(6).toInt(),//position_y
-				(Orientation)orentation,
-				POKECRAFT_SERVER_NORMAL_SPEED //speed in ms for each tile (step)
-			);
+			if(generalData->map_list.contains(loginQuery.value(8).toString()))
+			{
+				out << (quint8)0xC1;
+				out << (quint8)query_id;
+				out << (quint8)02;
+				out << (quint32)loginQuery.value(0).toUInt();
+				emit sendPacket(outputData);
+				emit send_player_informations();
+				emit isLogged();
+				emit put_on_the_map(
+					player_informations->public_informations.id,
+					&generalData->map_list[loginQuery.value(8).toString()],//map pointer
+					loginQuery.value(5).toInt(),//position_x
+					loginQuery.value(6).toInt(),//position_y
+					(Orientation)orentation,
+					POKECRAFT_SERVER_NORMAL_SPEED //speed in ms for each tile (step delay)
+				);
+			}
+			else
+			{
+				out << (quint8)0xC1;
+				out << (quint8)query_id;
+				out << (quint8)01;
+				out << QString("Map not found");
+				emit sendPacket(outputData);
+				emit error("Map not found: "+loginQuery.value(8).toString());
+			}
 		}
 	}
 }
 
-void ClientHeavyLoad::fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,const QString &map,const Orientation &orientation,const QString &skin)
+void ClientHeavyLoad::fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,Map_final *map,const Orientation &orientation,const QString &skin)
 {
 	fake_mode=true;
 	generalData->connected_players_id_list << last_fake_player_id;
@@ -188,76 +200,24 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime)
 {
 	QFile file(filePath);
-	int index=generalData->cached_files_name.indexOf(fileName);
-	if(index!=-1)
+	if(file.open(QIODevice::ReadOnly))
 	{
-		if(!checkMtime || mtime!=generalData->cached_files_mtime.at(index))
-		{
-			emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
-				     .arg(fileName)
-				     .arg(checkMtime)
-				     .arg(mtime)
-				     .arg(generalData->cached_files_mtime.at(index))
-			);
-			sendFile(fileName,generalData->cached_files_data.at(index),generalData->cached_files_mtime.at(index));
-		}
-		/*else
-			emit message(QString("File already update: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
-				     .arg(fileName)
-				     .arg(checkMtime)
-				     .arg(mtime)
-				     .arg(cached_files_mtime->at(index))
-				     );*/
+		quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
+		QByteArray content=file.readAll();
+		emit message(QString("send the file without cache: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
+			     .arg(fileName)
+			     .arg(checkMtime)
+			     .arg(mtime)
+			     .arg(localMtime)
+		);
+		sendFile(fileName,content,localMtime);
+		file.close();
 		return true;
 	}
 	else
 	{
-		if(file.open(QIODevice::ReadOnly))
-		{
-			quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
-			QByteArray content=file.readAll();
-			bool put_in_cache=false;
-			if(file.size()>generalData->cache_max_file_size)
-				emit message("File too big: "+fileName);
-			else
-			{
-				if(generalData->cache_size+content.size()>generalData->cache_max_size)
-					emit message("Cache too small");
-				else
-				{
-					//emit message(QString("cache server generated for the file: %1").arg(fileName));
-					generalData->cached_files_name << fileName;
-					generalData->cached_files_data << content;
-					generalData->cached_files_mtime << localMtime;
-					generalData->cache_size+=content.size();
-					put_in_cache=true;
-				}
-			}
-			if(!checkMtime || mtime!=localMtime)
-			{
-				emit message(QString("send the file without cache: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
-					     .arg(fileName)
-					     .arg(checkMtime)
-					     .arg(mtime)
-					     .arg(localMtime)
-				);
-				sendFile(fileName,content,localMtime);
-			}
-			/*else
-				emit message(QString("File already update without cache: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
-					     .arg(fileName)
-					     .arg(checkMtime)
-					     .arg(mtime)
-					     .arg(localMtime)
-					     );*/
-			file.close();
-			return true;
-		}
-		else
-		{
-			emit message("Unable to open: "+filePath+", error: "+file.errorString());
-			return false;
-		}
+		emit message("Unable to open: "+filePath+", error: "+file.errorString());
+		return false;
 	}
 }
 
@@ -285,25 +245,6 @@ void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &file
 	}
 }
 
-void ClientHeavyLoad::updatePlayerPosition(const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation)
-{
-	if(!is_logged || fake_mode)
-		return;
-	QSqlQuery loginQuery;
-	loginQuery.exec(QString("UPDATE `player` SET `map_name`='%1',`position_x`='%2',`position_y`='%3',`orientation`='%4' WHERE `id`=%5")
-			.arg(SQL_text_quote(map))
-			.arg(x)
-			.arg(y)
-			.arg(orientation)
-			.arg(player_informations->public_informations.id));
-	DebugClass::debugConsole(QString("UPDATE `player` SET `map_name`='%1',`position_x`='%2',`position_y`='%3',`orientation`='%4' WHERE `id`=%5")
-			 .arg(SQL_text_quote(map))
-			 .arg(x)
-			 .arg(y)
-			 .arg(orientation)
-			 .arg(player_informations->public_informations.id));
-}
-
 void ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime)
 {
 	QByteArray outputData;
@@ -321,4 +262,23 @@ void ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content
 QString ClientHeavyLoad::SQL_text_quote(QString text)
 {
 	return text.replace("'","\\'");
+}
+
+void ClientHeavyLoad::updatePlayerPosition(const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation)
+{
+	if(!is_logged || fake_mode)
+		return;
+	QSqlQuery loginQuery;
+	loginQuery.exec(QString("UPDATE `player` SET `map_name`='%1',`position_x`='%2',`position_y`='%3',`orientation`='%4' WHERE `id`=%5")
+			.arg(SQL_text_quote(map))
+			.arg(x)
+			.arg(y)
+			.arg(orientation)
+			.arg(player_informations->public_informations.id));
+	DebugClass::debugConsole(QString("UPDATE `player` SET `map_name`='%1',`position_x`='%2',`position_y`='%3',`orientation`='%4' WHERE `id`=%5")
+			 .arg(SQL_text_quote(map))
+			 .arg(x)
+			 .arg(y)
+			 .arg(orientation)
+			 .arg(player_informations->public_informations.id));
 }

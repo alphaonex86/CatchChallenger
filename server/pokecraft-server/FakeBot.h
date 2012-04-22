@@ -10,23 +10,24 @@
 #include <time.h>
 
 #include "../pokecraft-general/DebugClass.h"
-#include "Map_custom.h"
 #include "../pokecraft-general/GeneralStructures.h"
+#include "../pokecraft-server/ServerStructures.h"
 #include "../pokecraft-general/MoveClient.h"
 
 class FakeBot : public QObject, public MoveClient
 {
 	Q_OBJECT
 public:
-	explicit FakeBot(const quint16 &x,const quint16 &y,bool *bool_Walkable,const quint16 &width,const quint16 &height,const Direction &last_direction);
+	explicit FakeBot(const quint16 &x,const quint16 &y,Map_final *map,const Direction &last_direction);
 	~FakeBot();
 	void start_step();
 	void show_details();
 	quint64 get_TX_size();
 	quint64 get_RX_size();
 private:
-	bool *bool_Walkable;
-	quint16 x,y,width,height;
+	bool *walkable;
+	quint16 width,height;
+	quint16 x,y;
 	bool details;
 	void send_player_move(const quint8 &moved_unit,const Direction &the_direction);
 	QByteArray calculate_player_move(const quint8 &moved_unit,const Direction &the_direction);

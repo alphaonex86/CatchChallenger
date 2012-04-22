@@ -22,7 +22,6 @@ SOURCES += main.cpp\
     pokecraft-server/ClientNetworkRead.cpp \
     pokecraft-server/ClientBroadCast.cpp \
     pokecraft-server/ClientMapManagement.cpp \
-    pokecraft-server/Map_custom.cpp \
     pokecraft-server/Map_loader.cpp \
     pokecraft-client/pokecraft-client-chat.cpp \
     pokecraft-server/LatencyChecker.cpp \
@@ -40,7 +39,6 @@ HEADERS += \
     pokecraft-server/ClientNetworkRead.h \
     pokecraft-server/ClientBroadCast.h \
     pokecraft-server/ClientMapManagement.h \
-    pokecraft-server/Map_custom.h \
     pokecraft-server/Map_loader.h \
     pokecraft-general/GeneralStructures.h \
     pokecraft-client/pokecraft-client-chat.h \

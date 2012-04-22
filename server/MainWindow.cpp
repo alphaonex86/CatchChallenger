@@ -184,18 +184,10 @@ void MainWindow::update_the_info()
 		ui->label_player->setText(QString("%1/%2").arg(player_current).arg(player_max));
 		ui->progressBar_player->setMaximum(player_max);
 		ui->progressBar_player->setValue(player_current);
-
-		qint64 cache_current,cache_max;
-		cache_current=eventDispatcher.cache_current();
-		cache_max=eventDispatcher.cache_max();
-		ui->label_cache->setText(QString("%1/%2").arg(sizeToString(cache_current)).arg(sizeToString(cache_max)));
-		ui->progressBar_cache->setMaximum(cache_max);
-		ui->progressBar_cache->setValue(cache_current);
 	}
 	else
 	{
 		ui->progressBar_player->setValue(0);
-		ui->progressBar_cache->setValue(0);
 	}
 	QStringList latencyList=eventDispatcher.getLatency();
 	int index=0;
@@ -279,7 +271,6 @@ void MainWindow::benchmark_result(int latency,double TX_speed,double RX_speed,do
 void MainWindow::clean_updated_info()
 {
 	ui->label_player->setText("?/?");
-	ui->label_cache->setText("?/?");
 	ui->listLatency->clear();
 }
 

@@ -23,15 +23,13 @@ class Map_loader : public QObject
 public:
 	explicit Map_loader();
 	~Map_loader();
+
 	Map_final_temp map_to_send;
-signals:
-	void map_content_loaded();
-	void error(const QString &errorString);
-public slots:
-	void tryLoadMap(const QString &fileName);
+	QString errorString();
+	bool tryLoadMap(const QString &fileName);
 private:
-	QMutex mutex;
 	QByteArray decompress(const QByteArray &data, int expectedSize);
+	QString error;
 };
 
 #endif // MAP_LOADER_H

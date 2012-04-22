@@ -1,6 +1,7 @@
 #include "Client.h"
 
-//never cross the signals from and to the different client, complexity ^2
+/// \warning never cross the signals from and to the different client, complexity ^2
+/// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 
 Client::Client(QTcpSocket *socket,GeneralData *generalData)
 {
@@ -11,6 +12,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	qRegisterMetaType<Chat_type>("Chat_type");
 	qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
 	qRegisterMetaType<Direction>("Direction");
+	qRegisterMetaType<Map_final*>("Map_final*");
 
 	clientBroadCast=new ClientBroadCast();
 	clientHeavyLoad=new ClientHeavyLoad();
@@ -21,6 +23,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 
 	player_informations.public_informations.pseudo="";
 	player_informations.public_informations.id=0;
+	player_informations.is_fake=false;
 
 	stopIt=false;
 	pass_in_destructor=true;
@@ -39,7 +42,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 		remote_ip="NA";
 		port=9999;
 		connect(clientNetworkWrite,	SIGNAL(fake_send_data(QByteArray)),		this,			SIGNAL(fake_send_data(QByteArray)));
-		connect(this,			SIGNAL(fake_send_received_data(QByteArray)),	clientNetworkRead,	SLOT(fake_receive_data(QByteArray)));
+		connect(this,			SIGNAL(fake_send_received_data(QByteArray)),	clientNetworkRead,	SLOT(fake_receive_data(QByteArray)),Qt::QueuedConnection);
 		this->socket			= NULL;
 	}
 	is_logged=false;
@@ -73,7 +76,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,QString,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,QString,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
 	connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),
@@ -82,10 +85,8 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 		clientHeavyLoad,SLOT(askRandomSeedList(quint8)),Qt::QueuedConnection);
 	connect(clientNetworkRead,SIGNAL(datapackList(quint8,QStringList,QList<quint32>)),
 		clientHeavyLoad,SLOT(datapackList(quint8,QStringList,QList<quint32>)),Qt::QueuedConnection);
-	connect(clientMapManagement,SIGNAL(updatePlayerPosition(QString,quint16,quint16,Orientation)),
-		clientHeavyLoad,SLOT(updatePlayerPosition(QString,quint16,quint16,Orientation)),Qt::QueuedConnection);
-	connect(this,SIGNAL(send_fakeLogin(quint32,quint16,quint16,QString,Orientation,QString)),
-		clientHeavyLoad,SLOT(fakeLogin(quint32,quint16,quint16,QString,Orientation,QString)),Qt::QueuedConnection);
+	connect(this,SIGNAL(send_fakeLogin(quint32,quint16,quint16,Map_final *,Orientation,QString)),
+		clientHeavyLoad,SLOT(fakeLogin(quint32,quint16,quint16,Map_final *,Orientation,QString)),Qt::QueuedConnection);
 
 	//packet parsed (map management)
 	connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientMapManagement,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
@@ -206,14 +207,20 @@ void Client::disconnectClient()
 		is_logged=false;
 	}
 	disconnectStep=disconnectNextStepValue_before_stop_the_thread_1;
-	connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+	connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+	connect(clientMapManagement,SIGNAL(updatePlayerPosition(QString,quint16,quint16,Orientation)),
+		clientHeavyLoad,SLOT(updatePlayerPosition(QString,quint16,quint16,Orientation)),Qt::QueuedConnection);
 	//connect to quit
+	connect(clientMapManagement,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientBroadCast,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-	connect(clientMapManagement,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientNetworkWrite,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	emit askIfIsReadyToStop();
+
+	emit player_is_disconnected(player_informations.public_informations.pseudo);
+	if(generalData->instant_player_number)
+		emit updatePlayerNumber();
 }
 
 void Client::disconnectNextStep()
@@ -223,42 +230,40 @@ void Client::disconnectNextStep()
 	switch(disconnectStep)
 	{
 		case disconnectNextStepValue_before_stop_the_thread_1:
-			emit player_is_disconnected(player_informations.public_informations.pseudo);
-			if(generalData->instant_player_number)
-				emit updatePlayerNumber();
+
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_2;
-			delete clientNetworkWrite;
-			clientNetworkWrite=NULL;
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()));
+			delete clientMapManagement;
+			clientMapManagement=NULL;
+			connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_2:
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_3;
-			delete clientNetworkRead;
-			clientNetworkRead=NULL;
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
-			emit askIfIsReadyToStop();
-		break;
-		case disconnectNextStepValue_before_stop_the_thread_3:
-			disconnectStep=disconnectNextStepValue_before_stop_the_thread_4;
 			delete clientBroadCast;
 			clientBroadCast=NULL;
 			connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
-		case disconnectNextStepValue_before_stop_the_thread_4:
-			disconnectStep=disconnectNextStepValue_before_stop_the_thread_5;
+		case disconnectNextStepValue_before_stop_the_thread_3:
+			disconnectStep=disconnectNextStepValue_before_stop_the_thread_4;
 			delete clientHeavyLoad;
 			clientHeavyLoad=NULL;
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
+			connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()));
+			emit askIfIsReadyToStop();
+		break;
+		case disconnectNextStepValue_before_stop_the_thread_4:
+			disconnectStep=disconnectNextStepValue_before_stop_the_thread_5;
+			delete clientNetworkRead;
+			clientNetworkRead=NULL;
+			connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_5:
 			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 			normalOutput("disconnectNextStepValue_before_stop_the_thread_5");
 			#endif
-			delete clientMapManagement;
-			clientMapManagement=NULL;
+			delete clientNetworkWrite;
+			clientNetworkWrite=NULL;
 			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 			normalOutput("disconnectNextStepValue_before_stop_the_thread_5");
 			#endif
@@ -310,8 +315,9 @@ QString Client::getPseudo()
 	return player_informations.public_informations.pseudo;
 }
 
-void Client::fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,QString map,Orientation orientation,QString skin)
+void Client::fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin)
 {
+	player_informations.is_fake=true;
 	remote_ip=QString("bot_%1").arg(last_fake_player_id);
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	normalOutput("Fake connected client");
@@ -350,7 +356,6 @@ void Client::local_sendChatText(Chat_type chatType,QString text)
 Map_player_info Client::getMapPlayerInfo()
 {
 	Map_player_info temp=clientMapManagement->getMapPlayerInfo();
-	if(temp.loaded)
-		temp.skin=player_informations.public_informations.skin;
+	temp.skin=player_informations.public_informations.skin;
 	return temp;
 }
