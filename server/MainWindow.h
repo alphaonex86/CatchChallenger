@@ -65,7 +65,6 @@ private slots:
 	void on_server_ip_editingFinished();
 	void on_pvp_stateChanged(int arg1);
 	void on_server_port_valueChanged(int arg1);
-	void on_instant_player_number_stateChanged(int arg1);
 	void on_rates_xp_normal_valueChanged(double arg1);
 	void on_rates_xp_premium_valueChanged(double arg1);
 	void on_rates_gold_normal_valueChanged(double arg1);
@@ -82,7 +81,8 @@ private slots:
 	void on_db_pass_editingFinished();
 	void on_db_base_editingFinished();
 	void on_pushButton_server_benchmark_clicked();
-
+	void on_MapVisibilityAlgorithm_currentIndexChanged(int index);
+	void on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1);
 signals:
 	void record_latency();
 };
