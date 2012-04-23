@@ -16,10 +16,16 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 
 	clientBroadCast=new ClientBroadCast();
 	clientHeavyLoad=new ClientHeavyLoad();
-	clientMapManagement=new ClientMapManagement();
 	clientNetworkRead=new ClientNetworkRead();
 	clientNetworkWrite=new ClientNetworkWrite();
 
+	switch(generalData->mapVisibilityAlgorithm)
+	{
+		default:
+		case MapVisibilityAlgorithm_simple:
+			clientMapManagement=new MapVisibilityAlgorithm_Simple();
+		break;
+	}
 
 	player_informations.public_informations.pseudo="";
 	player_informations.public_informations.id=0;
@@ -112,9 +118,6 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkWrite,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-
-	connect(this,SIGNAL(try_initAll()),this,SLOT(initAll()),Qt::QueuedConnection);
-	emit try_initAll();
 }
 
 Client::~Client()
@@ -134,30 +137,6 @@ Client::~Client()
 		delete socket;
 		socket=NULL;
 	}
-}
-
-void Client::initAll()
-{
-	disconnect(this,SIGNAL(try_initAll()),this,SLOT(initAll()));
-	//update player info
-	if(generalData->timer_update_number_connected==NULL)
-	{
-		generalData->timer_update_number_connected=new QTimer();
-		generalData->timer_update_number_connected->setSingleShot(true);
-		generalData->timer_update_number_connected->setInterval(500);
-		if(!generalData->instant_player_number)
-			generalData->timer_update_number_connected->start();
-	}
-	if(generalData->timer_player_map==NULL)
-	{
-		generalData->timer_player_map=new QTimer();
-		generalData->timer_player_map->start(POKECRAFT_SERVER_TIME_TO_SEND_MOVEMENT);
-	}
-	connect(generalData->timer_player_map,	SIGNAL(timeout()),clientMapManagement,SLOT(purgeBuffer()),Qt::QueuedConnection);
-	if(generalData->instant_player_number)
-		connect(this,SIGNAL(updatePlayerNumber()),clientBroadCast,SLOT(send_instant_player_number()),Qt::QueuedConnection);
-	else
-		connect(generalData->timer_update_number_connected,SIGNAL(timeout()),clientBroadCast,SLOT(receive_instant_player_number()),Qt::QueuedConnection);
 }
 
 /// \brief new error at connexion
@@ -200,10 +179,11 @@ void Client::disconnectClient()
 	clientHeavyLoad->disconnect();
 	clientMapManagement->disconnect();
 	clientNetworkWrite->disconnect();
-	clientMapManagement->stop();
+	//QCoreApplication::processEvents();//useless because the ready to stop signal will be parsed after all
 	if(is_logged)
 	{
 		generalData->connected_players--;
+		generalData->player_updater.removeConnectedPlayer();
 		is_logged=false;
 	}
 	disconnectStep=disconnectNextStepValue_before_stop_the_thread_1;
@@ -219,8 +199,6 @@ void Client::disconnectClient()
 	emit askIfIsReadyToStop();
 
 	emit player_is_disconnected(player_informations.public_informations.pseudo);
-	if(generalData->instant_player_number)
-		emit updatePlayerNumber();
 }
 
 void Client::disconnectNextStep()
@@ -306,8 +284,7 @@ void Client::send_player_informations()
 	this->id=player_informations.public_informations.id;
 	is_logged=true;
 	generalData->connected_players++;
-	if(generalData->instant_player_number)
-		emit updatePlayerNumber();
+	generalData->player_updater.addConnectedPlayer();
 }
 
 QString Client::getPseudo()

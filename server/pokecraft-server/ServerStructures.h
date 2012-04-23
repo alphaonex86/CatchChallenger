@@ -12,33 +12,39 @@
 #include <QVariant>
 
 #include "../pokecraft-general/GeneralStructures.h"
+#include "PlayerUpdater.h"
 
 class EventThreader;
 class Map_custom;
 class ClientBroadCast;
 class ClientMapManagement;
 
-struct Map_semi_border_content
+struct Map_semi_border_content_top_bottom
 {
 	QString fileName;
 	qint32 x_offset;//can be negative, it's an offset!
+};
+
+struct Map_semi_border_content_left_right
+{
+	QString fileName;
 	qint32 y_offset;//can be negative, it's an offset!
 };
 
 struct Map_semi_border
 {
-	Map_semi_border_content top;
-	Map_semi_border_content bottom;
-	Map_semi_border_content left;
-	Map_semi_border_content right;
+	Map_semi_border_content_top_bottom top;
+	Map_semi_border_content_top_bottom bottom;
+	Map_semi_border_content_left_right left;
+	Map_semi_border_content_left_right right;
 };
 
 struct Map_final_temp
 {
 	Map_semi_border border;
 	//QStringList other_map;//border and not
-	quint16 width;
-	quint16 height;
+	quint32 width;
+	quint32 height;
 	QHash<QString,QVariant> property;
 
 	struct Map_final_parsed_layer
@@ -62,16 +68,20 @@ struct Map_final
 
 	struct Map_final_border
 	{
-		struct Map_final_border_content
+		struct Map_final_border_content_top_bottom
 		{
 			Map_final *map;
 			qint32 x_offset;
+		};
+		struct Map_final_border_content_left_right
+		{
+			Map_final *map;
 			qint32 y_offset;
 		};
-		Map_final_border_content top;
-		Map_final_border_content bottom;
-		Map_final_border_content left;
-		Map_final_border_content right;
+		Map_final_border_content_top_bottom top;
+		Map_final_border_content_top_bottom bottom;
+		Map_final_border_content_left_right left;
+		Map_final_border_content_left_right right;
 	};
 	Map_final_border border;
 
@@ -94,23 +104,24 @@ struct Map_player_info
 	QString skin;
 };
 
+enum MapVisibilityAlgorithm
+{
+	MapVisibilityAlgorithm_simple
+};
+
 struct GeneralData
 {
 	//connection
 	quint16 max_players;
 	quint16 connected_players;
+	PlayerUpdater player_updater;
 	QList<quint32> connected_players_id_list;
-	bool instant_player_number;
 	quint16 max_players_displayed,max_view_range;
-
-	// files
-	QStringList cached_files_name;/// \todo see if not search facility like QHash
 
 	//bd
 	QSqlDatabase *db;//use pointer here to init in correct thread
 
 	//general data
-	QTimer *timer_update_number_connected;
 	QList<EventThreader *> eventThreaderList;
 	QTimer *timer_player_map;
 
@@ -120,8 +131,19 @@ struct GeneralData
 
 	//map
 	QString mapBasePath;
-	QHash<QString,Map_final> map_list;
-	QHash<quint32,Map_final *> map_list_by_visibility_group;
+	QHash<QString,Map_final *> map_list;
+	QTimer timer_to_send_insert_move_remove;
+	MapVisibilityAlgorithm mapVisibilityAlgorithm;
+
+	struct MapVisibility_simple
+	{
+		quint16 max;
+	};
+	struct MapVisibility
+	{
+		MapVisibility_simple simple;
+	};
+	MapVisibility mapVisibility;
 };
 
 #endif // STRUCTURES_SERVER_H

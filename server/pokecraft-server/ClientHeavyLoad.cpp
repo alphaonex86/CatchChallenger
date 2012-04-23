@@ -88,7 +88,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit isLogged();
 				emit put_on_the_map(
 					player_informations->public_informations.id,
-					&generalData->map_list[loginQuery.value(8).toString()],//map pointer
+					generalData->map_list[loginQuery.value(8).toString()],//map pointer
 					loginQuery.value(5).toInt(),//position_x
 					loginQuery.value(6).toInt(),//position_y
 					(Orientation)orentation,
@@ -200,9 +200,11 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime)
 {
 	QFile file(filePath);
+	quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
+	if(localMtime==mtime)
+		return false;
 	if(file.open(QIODevice::ReadOnly))
 	{
-		quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
 		QByteArray content=file.readAll();
 		emit message(QString("send the file without cache: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
 			     .arg(fileName)

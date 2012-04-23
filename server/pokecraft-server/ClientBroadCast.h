@@ -34,7 +34,7 @@ public slots:
 	void sendPM(const QString &text,const QString &pseudo);
 	void receiveChatText(const Chat_type &chatType,const QString &text,const quint32 &sender_player_id);
 	void sendChatText(const Chat_type &chatType,const QString &text);
-	void receive_instant_player_number();
+	void receive_instant_player_number(qint32 connected_players);
 	void kick();
 	void sendBroadCastCommand(const QString &command,const QString &extraText);
 	//after login
@@ -47,8 +47,6 @@ public slots:
 	void removePlayersInformationToWatch(const QList<quint32> &player_ids);
 	//void receiveQueryPlayersInformation(QList<quint32> player_ids);
 	void askPlayersInformation(const QList<quint32> &player_ids);
-	//relayed signals
-	void send_instant_player_number();
 signals:
 	//normal signals
 	void error(const QString &error);
@@ -65,6 +63,7 @@ private:
 	QList<Player_private_and_public_informations> players_informations_to_push;
 	GeneralData *generalData;
 	QSemaphore disconnection;
+	qint32 connected_players;
 private slots:
 	void receivePlayersInformation(const Player_private_and_public_informations &player_informations);
 	void internal_disconnect();

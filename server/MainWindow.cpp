@@ -5,7 +5,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
 {
+	settings=new QSettings(QCoreApplication::applicationDirPath()+"/server.properties",QSettings::IniFormat);
 	ui->setupUi(this);
+	on_MapVisibilityAlgorithm_currentIndexChanged(0);
 	updateActionButton();
 	qRegisterMetaType<Chat_type>("Chat_type");
 	connect(&eventDispatcher,SIGNAL(is_started(bool)),this,SLOT(server_is_started(bool)));
@@ -26,7 +28,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	need_be_closed=false;
 	ui->tabWidget->setCurrentIndex(0);
 	internal_currentLatency=0;
-	settings=new QSettings(QCoreApplication::applicationDirPath()+"/server.properties",QSettings::IniFormat);
 	load_settings();
 }
 
@@ -284,8 +285,17 @@ void MainWindow::load_settings()
 		settings->setValue("pvp",true);
 	if(!settings->contains("server-port"))
 		settings->setValue("server-port",42489);
-	if(!settings->contains("instant_player_number"))
-		settings->setValue("instant_player_number",true);
+
+	settings->beginGroup("MapVisibilityAlgorithm");
+	if(!settings->contains("MapVisibilityAlgorithm"))
+		settings->setValue("MapVisibilityAlgorithm",0);
+
+		settings->beginGroup("Simple");
+		if(!settings->contains("Max"))
+			settings->setValue("Max",50);
+		settings->endGroup();
+
+	settings->endGroup();
 
 	settings->beginGroup("rates");
 	if(!settings->contains("xp_normal"))
@@ -330,7 +340,16 @@ void MainWindow::load_settings()
 	ui->server_ip->setText(settings->value("server-ip").toString());
 	ui->pvp->setChecked(settings->value("pvp").toBool());
 	ui->server_port->setValue(settings->value("server-port").toUInt());
-	ui->instant_player_number->setChecked(settings->value("instant_player_number").toBool());
+
+	settings->beginGroup("MapVisibilityAlgorithm");
+		if(settings->value("MapVisibilityAlgorithm").toInt()<ui->MapVisibilityAlgorithm->count() && settings->value("MapVisibilityAlgorithm").toInt()>=0)
+			ui->MapVisibilityAlgorithm->setCurrentIndex(settings->value("MapVisibilityAlgorithm").toUInt());
+
+		settings->beginGroup("Simple");
+		ui->MapVisibilityAlgorithmSimpleMax->setValue(settings->value("Max").toUInt());
+		settings->endGroup();
+
+	settings->endGroup();
 
 	settings->beginGroup("rates");
 	double rates_xp_normal=settings->value("xp_normal").toReal();
@@ -394,12 +413,6 @@ void MainWindow::on_pvp_stateChanged(int arg1)
 void MainWindow::on_server_port_valueChanged(int arg1)
 {
 	settings->setValue("server-port",arg1);
-}
-
-void MainWindow::on_instant_player_number_stateChanged(int arg1)
-{
-	Q_UNUSED(arg1)
-	settings->setValue("instant_player_number",ui->instant_player_number->isChecked());
 }
 
 void MainWindow::on_rates_xp_normal_valueChanged(double arg1)
@@ -511,4 +524,22 @@ void MainWindow::on_pushButton_server_benchmark_clicked()
 {
 	eventDispatcher.start_benchmark(ui->benchmark_seconds->value(),ui->benchmark_clients->value());
 	updateActionButton();
+}
+
+void MainWindow::on_MapVisibilityAlgorithm_currentIndexChanged(int index)
+{
+	if(index==0)
+		ui->groupBoxMapVisibilityAlgorithmSimple->setEnabled(true);
+	settings->beginGroup("MapVisibilityAlgorithm");
+	settings->setValue("MapVisibilityAlgorithm",index);
+	settings->endGroup();
+}
+
+void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
+{
+	settings->beginGroup("MapVisibilityAlgorithm");
+	settings->beginGroup("Simple");
+	settings->setValue("Max",arg1);
+	settings->endGroup();
+	settings->endGroup();
 }

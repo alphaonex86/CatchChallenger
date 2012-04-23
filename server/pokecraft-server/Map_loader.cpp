@@ -60,26 +60,42 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 		error=QString("\"map\" root balise not found for the xml file");
 		return false;
 	}
+
+	//get the width
 	if(!root.hasAttribute("width"))
 	{
 		error=QString("the root node has not the attribute \"width\"");
 		return false;
 	}
-	map_to_send.width=root.attribute("width").toInt(&ok);
-	if(!root.hasAttribute("width"))
+	map_to_send.width=root.attribute("width").toUInt(&ok);
+	if(!ok)
 	{
 		error=QString("the root node has wrong attribute \"width\"");
 		return false;
 	}
+
+	//get the height
 	if(!root.hasAttribute("height"))
 	{
-		error=QString("the root node has not the attribute \"width\"");
+		error=QString("the root node has not the attribute \"height\"");
 		return false;
 	}
-	map_to_send.height=root.attribute("height").toInt(&ok);
-	if(!root.hasAttribute("height"))
+	map_to_send.height=root.attribute("height").toUInt(&ok);
+	if(!ok)
 	{
 		error=QString("the root node has wrong attribute \"height\"");
+		return false;
+	}
+
+	//check the size
+	if(map_to_send.width<1 || map_to_send.width>32000)
+	{
+		error=QString("the width should be greater or equal than 1, and lower or equal than 32000");
+		return false;
+	}
+	if(map_to_send.height<1 || map_to_send.height>32000)
+	{
+		error=QString("the height should be greater or equal than 1, and lower or equal than 32000");
 		return false;
 	}
 
@@ -191,7 +207,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											{
 												map_to_send.border.left.fileName=value.at(index_map).toString();
 												map_to_send.border.left.y_offset=object_y;
-												map_to_send.border.left.x_offset=0;
 												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
 												DebugClass::debugConsole(QString("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
 												#endif
@@ -206,7 +221,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											{
 												map_to_send.border.right.fileName=value.at(index_map).toString();
 												map_to_send.border.right.y_offset=object_y;
-												map_to_send.border.right.x_offset=0;
 												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
 												DebugClass::debugConsole(QString("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
 												#endif
@@ -222,7 +236,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											{
 												map_to_send.border.top.fileName=value.at(index_map).toString();
 												map_to_send.border.top.x_offset=object_x;
-												map_to_send.border.top.y_offset=0;
 												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
 												DebugClass::debugConsole(QString("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
 												#endif
@@ -238,7 +251,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											{
 												map_to_send.border.bottom.fileName=value.at(index_map).toString();
 												map_to_send.border.bottom.x_offset=object_x;
-												map_to_send.border.bottom.y_offset=0;
 												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
 												DebugClass::debugConsole(QString("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
 												#endif
@@ -334,7 +346,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 				    const QByteArray latin1Text = text.toLatin1();
 				#endif
 				QByteArray data=decompress(QByteArray::fromBase64(latin1Text),map_to_send.height*map_to_send.width*4);
-				if(data.size()!=map_to_send.height*map_to_send.width*4)
+				if((quint32)data.size()!=map_to_send.height*map_to_send.width*4)
 				{
 					error=QString("map binary size (%1) != %2x%3x4").arg(data.size()).arg(map_to_send.height).arg(map_to_send.width);
 					return false;
@@ -362,25 +374,25 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 	map_to_send.parsed_layer.walkable	= new bool[map_to_send.width*map_to_send.height];
 	map_to_send.parsed_layer.water		= new bool[map_to_send.width*map_to_send.height];
 
-	int x=0;
-	int y=0;
+	quint32 x=0;
+	quint32 y=0;
 	bool walkable=false,water=false,collisions=false;
 	while(x<map_to_send.width)
 	{
 		y=0;
 		while(y<map_to_send.height)
 		{
-			if(x*4+y*map_to_send.width*4<Walkable.size())
+			if(x*4+y*map_to_send.width*4<(quint32)Walkable.size())
 				walkable=Walkable.mid(x*4+y*map_to_send.width*4,4)!=null_data;
 			else//if layer not found
 				walkable=false;
 
-			if(x*4+y*map_to_send.width*4<Water.size())
+			if(x*4+y*map_to_send.width*4<(quint32)Water.size())
 				water=Water.mid(x*4+y*map_to_send.width*4,4)!=null_data;
 			else//if layer not found
 				water=false;
 
-			if(x*4+y*map_to_send.width*4<Collisions.size())
+			if(x*4+y*map_to_send.width*4<(quint32)Collisions.size())
 				collisions=Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data;
 			else//if layer not found
 				collisions=false;
