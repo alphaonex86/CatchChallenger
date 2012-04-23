@@ -3,6 +3,7 @@
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
 #include <utime.h>
+#include <sys/stat.h>
 #endif
 
 Pokecraft_client::Pokecraft_client()
@@ -161,7 +162,7 @@ void Pokecraft_client::errorOutput(QString error,QString detailedError)
 
 void Pokecraft_client::parseInput(QByteArray inputData)
 {
-	DebugClass::debugConsole(QString("parseInput(): inputData: %1").arg(QString(inputData.toHex())));
+	//DebugClass::debugConsole(QString("parseInput(): inputData: %1").arg(QString(inputData.toHex())));
 	QDataStream in(inputData);
 	in.setVersion(QDataStream::Qt_4_4);
 	if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -194,7 +195,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
                         }
                         quint32 subIdent;
                         in >> subIdent;
-			if(subIdent!=0x00000009)
+			if(subIdent!=0x0009)
 			{
 				errorOutput(QString(__FILE__)+QString::number(__LINE__)+QString("have not send the login, mainIdent: %1, subIdent: %2").arg(mainIdent).arg(subIdent));
 				return;
@@ -448,7 +449,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 			switch(subIdent)
 			{
 				//update of the player info
-				case 0x00000002:
+				case 0x0002:
 				{
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 					{
@@ -529,7 +530,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				}
 				break;
 				//file as input
-				case 0x00000003:
+				case 0x0003:
 				{
 					if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 					{
@@ -598,7 +599,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				}
 				break;
 				//chat as input
-				case 0x00000005:
+				case 0x0005:
 				{
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)+sizeof(quint8)))
 					{
@@ -620,7 +621,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				}
 				break;
 				//kicked/ban and reason
-				case 0x00000008:
+				case 0x0008:
 				{
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 					{
@@ -654,7 +655,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				}
 				break;
 				//Player number
-				case 0x00000009:
+				case 0x0009:
 				{
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16)*2)
 					{
@@ -799,7 +800,7 @@ void Pokecraft_client::sendChatText(quint8 chatType,QString text)
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0x42;
-	out << (quint32)0x00000003;
+	out << (quint32)0x0003;
 	out << chatType;
 	out << text;
 	sendData(outputData);
@@ -816,7 +817,7 @@ void Pokecraft_client::sendPM(QString text,QString pseudo)
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0x42;
-	out << (quint32)0x00000003;
+	out << (quint32)0x0003;
 	out << (quint8)0x06;
 	out << text;
 	out << pseudo;
@@ -857,7 +858,7 @@ void Pokecraft_client::add_player_watching(QList<quint32> ids)
 		QDataStream out(&outputData, QIODevice::WriteOnly);
 		out.setVersion(QDataStream::Qt_4_4);
 		out << (quint8)0x42;
-		out << (quint32)0x0000000A;
+		out << (quint32)0x000A;
 		out << (quint8)0x01;
 		out << (quint16)new_ids.size();
 		int index=0;
@@ -890,7 +891,7 @@ void Pokecraft_client::remove_player_watching(QList<quint32> ids)
 		QDataStream out(&outputData, QIODevice::WriteOnly);
 		out.setVersion(QDataStream::Qt_4_4);
 		out << (quint8)0x42;
-		out << (quint32)0x0000000B;
+		out << (quint32)0x000B;
 		out << (quint16)new_ids.size();
 		int index=0;
 		while(index<new_ids.size())
@@ -971,14 +972,16 @@ void Pokecraft_client::sendDatapackContent()
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0x02;
-	out << (quint32)0x0000000C;
+	out << (quint32)0x000C;
 	out << datapack_content_query_number;
 	out << (quint32)datapackFilesList.size();
 	int index=0;
 	while(index<datapackFilesList.size())
 	{
 		out << datapackFilesList.at(index);
-		out << (quint32)QFileInfo(datapack_base_name+datapackFilesList.at(index)).lastModified().toTime_t();
+		struct stat info;
+		stat(QString(datapack_base_name+datapackFilesList.at(index)).toLatin1().data(),&info);
+		out << (quint32)info.st_mtime;
 		index++;
 	}
 	sendData(outputData);

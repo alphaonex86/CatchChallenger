@@ -248,11 +248,11 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 		in >> queryNumber;
 		switch(subIdent)
 		{
-			case 0x00000005:
+			case 0x0005:
 				emit(askRandomSeedList(queryNumber));
 				return;
 			break;
-			case 0x0000000C:
+			case 0x000C:
 			{
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 				{
@@ -324,7 +324,7 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 		in >> subIdent;
 		switch(subIdent)
 		{
-			case 0x00000003:
+			case 0x0003:
 			{
 				if((inputData.size()-in.device()->pos())<=((int)sizeof(quint8)))
 				{
@@ -403,7 +403,7 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 				return;
 			}
 			break;
-			case 0x0000000A:
+			case 0x000A:
 			{
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 				{
@@ -447,7 +447,7 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 				return;
 			}
 			break;
-			case 0x0000000B:
+			case 0x000B:
 			{
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 				{

@@ -21,12 +21,14 @@ SOURCES += main.cpp\
     pokecraft-server/ClientNetworkWrite.cpp \
     pokecraft-server/ClientNetworkRead.cpp \
     pokecraft-server/ClientBroadCast.cpp \
-    pokecraft-server/ClientMapManagement.cpp \
+    pokecraft-server/ClientMapManagement/ClientMapManagement.cpp \
     pokecraft-server/Map_loader.cpp \
     pokecraft-client/pokecraft-client-chat.cpp \
     pokecraft-server/LatencyChecker.cpp \
     pokecraft-server/FakeBot.cpp \
-    pokecraft-general/MoveClient.cpp
+    pokecraft-general/MoveClient.cpp \
+    pokecraft-server/PlayerUpdater.cpp \
+    pokecraft-server/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp
 
 HEADERS += \
     pokecraft-server/EventDispatcher.h \
@@ -38,7 +40,7 @@ HEADERS += \
     pokecraft-server/ClientNetworkWrite.h \
     pokecraft-server/ClientNetworkRead.h \
     pokecraft-server/ClientBroadCast.h \
-    pokecraft-server/ClientMapManagement.h \
+    pokecraft-server/ClientMapManagement/ClientMapManagement.h \
     pokecraft-server/Map_loader.h \
     pokecraft-general/GeneralStructures.h \
     pokecraft-client/pokecraft-client-chat.h \
@@ -46,7 +48,9 @@ HEADERS += \
     VariableServer.h \
     pokecraft-server/FakeBot.h \
     pokecraft-general/MoveClient.h \
-    pokecraft-client/ClientStructures.h
+    pokecraft-client/ClientStructures.h \
+    pokecraft-server/PlayerUpdater.h \
+    pokecraft-server/ClientMapManagement/MapVisibilityAlgorithm_Simple.h
 
 HEADERS  += MainWindow.h
 

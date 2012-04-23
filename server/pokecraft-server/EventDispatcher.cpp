@@ -8,7 +8,6 @@ EventDispatcher::EventDispatcher()
 {
 	generalData.connected_players=0;
 	generalData.db=NULL;
-	generalData.timer_update_number_connected=NULL;
 	generalData.timer_player_map=NULL;
 	server=NULL;
 	lunchInitFunction=NULL;
@@ -19,6 +18,8 @@ EventDispatcher::EventDispatcher()
 	generalData.max_players_displayed=30;
 	generalData.max_view_range=40;
 	generalData.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
+	generalData.mapVisibilityAlgorithm=MapVisibilityAlgorithm_simple;
+	generalData.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_TIME_TO_SEND_MOVEMENT);
 
 	generalData.eventThreaderList << new EventThreader();//broad cast (0)
 	generalData.eventThreaderList << new EventThreader();//map management (1)
@@ -26,6 +27,8 @@ EventDispatcher::EventDispatcher()
 	generalData.eventThreaderList << new EventThreader();//heavy load (3)
 	generalData.eventThreaderList << new EventThreader();//event dispatcher (4)
 	generalData.eventThreaderList << new EventThreader();//bots (5)
+
+	generalData.player_updater.moveToThread(generalData.eventThreaderList.at(0));
 
 	QStringList names;
 	names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher" << "benchmark";
@@ -132,33 +135,28 @@ void EventDispatcher::preload_the_map()
 		if(map_temp.tryLoadMap(generalData.mapBasePath+returnList.at(index)))
 		{
 			DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
-			Map_final new_final_map;
-			new_final_map.width			= map_temp.map_to_send.width;
-			new_final_map.height			= map_temp.map_to_send.height;
-			new_final_map.property			= map_temp.map_to_send.property;
-			new_final_map.parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
-			new_final_map.parsed_layer.water	= map_temp.map_to_send.parsed_layer.water;
-			new_final_map.map_file			= returnList.at(index);
+			generalData.map_list[returnList.at(index)]=new Map_final;
+			generalData.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
+			generalData.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
+			generalData.map_list[returnList.at(index)]->property			= map_temp.map_to_send.property;
+			generalData.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
+			generalData.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
+			generalData.map_list[returnList.at(index)]->map_file			= returnList.at(index);
 			map_name << returnList.at(index);
-			generalData.map_list[returnList.at(index)]=new_final_map;
 
 			Map_semi map_semi;
-			map_semi.map				= &generalData.map_list[returnList.at(index)];
+			map_semi.map				= generalData.map_list[returnList.at(index)];
 
 			map_semi.border.top.fileName		= map_temp.map_to_send.border.top.fileName;
 			map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
-			map_semi.border.top.y_offset		= map_temp.map_to_send.border.top.y_offset;
 
 			map_semi.border.bottom.fileName		= map_temp.map_to_send.border.bottom.fileName;
 			map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
-			map_semi.border.bottom.y_offset		= map_temp.map_to_send.border.bottom.y_offset;
 
 			map_semi.border.left.fileName		= map_temp.map_to_send.border.left.fileName;
-			map_semi.border.left.x_offset		= map_temp.map_to_send.border.left.x_offset;
 			map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
 
 			map_semi.border.right.fileName		= map_temp.map_to_send.border.right.fileName;
-			map_semi.border.right.x_offset		= map_temp.map_to_send.border.right.x_offset;
 			map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
 			semi_loaded_map << map_semi;
 		}
@@ -173,86 +171,24 @@ void EventDispatcher::preload_the_map()
 	while(index<size)
 	{
 		if(semi_loaded_map.at(index).border.bottom.fileName!="" && generalData.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
-		{
-			semi_loaded_map[index].map->border.bottom.map=&generalData.map_list[semi_loaded_map.at(index).border.bottom.fileName];
-			semi_loaded_map[index].map->border.bottom.x_offset=semi_loaded_map[index].border.bottom.x_offset;
-			semi_loaded_map[index].map->border.bottom.y_offset=semi_loaded_map[index].border.bottom.y_offset;
-		}
+			semi_loaded_map[index].map->border.bottom.map=generalData.map_list[semi_loaded_map.at(index).border.bottom.fileName];
 		else
 			semi_loaded_map[index].map->border.bottom.map=NULL;
 
 		if(semi_loaded_map.at(index).border.top.fileName!="" && generalData.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
-		{
-			semi_loaded_map[index].map->border.top.map=&generalData.map_list[semi_loaded_map.at(index).border.top.fileName];
-			semi_loaded_map[index].map->border.top.x_offset=semi_loaded_map[index].border.top.x_offset;
-			semi_loaded_map[index].map->border.top.y_offset=semi_loaded_map[index].border.top.y_offset;
-		}
+			semi_loaded_map[index].map->border.top.map=generalData.map_list[semi_loaded_map.at(index).border.top.fileName];
 		else
 			semi_loaded_map[index].map->border.top.map=NULL;
 
 		if(semi_loaded_map.at(index).border.left.fileName!="" && generalData.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
-		{
-			semi_loaded_map[index].map->border.left.map=&generalData.map_list[semi_loaded_map.at(index).border.left.fileName];
-			semi_loaded_map[index].map->border.left.x_offset=semi_loaded_map[index].border.left.x_offset;
-			semi_loaded_map[index].map->border.left.y_offset=semi_loaded_map[index].border.left.y_offset;
-		}
+			semi_loaded_map[index].map->border.left.map=generalData.map_list[semi_loaded_map.at(index).border.left.fileName];
 		else
 			semi_loaded_map[index].map->border.left.map=NULL;
 
 		if(semi_loaded_map.at(index).border.right.fileName!="" && generalData.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
-		{
-			semi_loaded_map[index].map->border.right.map=&generalData.map_list[semi_loaded_map.at(index).border.right.fileName];
-			semi_loaded_map[index].map->border.right.x_offset=semi_loaded_map[index].border.right.x_offset;
-			semi_loaded_map[index].map->border.right.y_offset=semi_loaded_map[index].border.right.y_offset;
-		}
+			semi_loaded_map[index].map->border.right.map=generalData.map_list[semi_loaded_map.at(index).border.right.fileName];
 		else
 			semi_loaded_map[index].map->border.right.map=NULL;
-
-		index++;
-	}
-
-	//resolv the near map
-	size=semi_loaded_map.size();
-	index=0;
-	while(index<size)
-	{
-		generalData.map_list[map_name.at(index)].near_map << &generalData.map_list[map_name.at(index)];
-
-		if(generalData.map_list[map_name.at(index)].border.bottom.map!=NULL && !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.bottom.map))
-		{
-			generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.bottom.map;
-			if(generalData.map_list[map_name.at(index)].border.left.map!=NULL && !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.left.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.left.map;
-			if(generalData.map_list[map_name.at(index)].border.right.map!=NULL && !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.right.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.right.map;
-		}
-
-		if(generalData.map_list[map_name.at(index)].border.top.map!=NULL && !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.top.map))
-		{
-			generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.top.map;
-			if(generalData.map_list[map_name.at(index)].border.left.map!=NULL &&  !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.left.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.left.map;
-			if(generalData.map_list[map_name.at(index)].border.right.map!=NULL &&  !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.right.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.right.map;
-		}
-
-		if(generalData.map_list[map_name.at(index)].border.right.map!=NULL && !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.right.map))
-		{
-			generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.right.map;
-			if(generalData.map_list[map_name.at(index)].border.top.map!=NULL &&  !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.top.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.top.map;
-			if(generalData.map_list[map_name.at(index)].border.bottom.map!=NULL &&  !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.bottom.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.bottom.map;
-		}
-
-		if(generalData.map_list[map_name.at(index)].border.left.map!=NULL && !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.left.map))
-		{
-			generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.left.map;
-			if(generalData.map_list[map_name.at(index)].border.top.map!=NULL &&  !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.top.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.top.map;
-			if(generalData.map_list[map_name.at(index)].border.bottom.map!=NULL &&  !generalData.map_list[map_name.at(index)].near_map.contains(generalData.map_list[map_name.at(index)].border.bottom.map))
-				generalData.map_list[map_name.at(index)].near_map << generalData.map_list[map_name.at(index)].border.bottom.map;
-		}
 
 		index++;
 	}
@@ -262,38 +198,108 @@ void EventDispatcher::preload_the_map()
 	index=0;
 	while(index<size)
 	{
-		if(generalData.map_list[map_name.at(index)].border.bottom.map!=NULL && generalData.map_list[map_name.at(index)].border.bottom.map->border.top.map!=(&generalData.map_list[map_name.at(index)]))
+		if(generalData.map_list[map_name.at(index)]->border.bottom.map!=NULL && generalData.map_list[map_name.at(index)]->border.bottom.map->border.top.map!=generalData.map_list[map_name.at(index)])
 		{
-			if(generalData.map_list[map_name.at(index)].border.bottom.map->border.top.map==NULL)
-				DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have not a top map").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.bottom.map->map_file));
+			if(generalData.map_list[map_name.at(index)]->border.bottom.map->border.top.map==NULL)
+				DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have not a top map").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.bottom.map->map_file));
 			else
-				DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.bottom.map->map_file).arg(generalData.map_list[map_name.at(index)].border.bottom.map->border.top.map->map_file));
-			generalData.map_list[map_name.at(index)].border.bottom.map=NULL;
+				DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.bottom.map->map_file).arg(generalData.map_list[map_name.at(index)]->border.bottom.map->border.top.map->map_file));
+			generalData.map_list[map_name.at(index)]->border.bottom.map=NULL;
 		}
-		if(generalData.map_list[map_name.at(index)].border.top.map!=NULL && generalData.map_list[map_name.at(index)].border.top.map->border.bottom.map!=(&generalData.map_list[map_name.at(index)]))
+		if(generalData.map_list[map_name.at(index)]->border.top.map!=NULL && generalData.map_list[map_name.at(index)]->border.top.map->border.bottom.map!=generalData.map_list[map_name.at(index)])
 		{
-			if(generalData.map_list[map_name.at(index)].border.top.map->border.bottom.map==NULL)
-				DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have not a bottom map").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.top.map->map_file));
+			if(generalData.map_list[map_name.at(index)]->border.top.map->border.bottom.map==NULL)
+				DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have not a bottom map").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.top.map->map_file));
 			else
-				DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.top.map->map_file).arg(generalData.map_list[map_name.at(index)].border.top.map->border.bottom.map->map_file));
-			generalData.map_list[map_name.at(index)].border.top.map=NULL;
+				DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.top.map->map_file).arg(generalData.map_list[map_name.at(index)]->border.top.map->border.bottom.map->map_file));
+			generalData.map_list[map_name.at(index)]->border.top.map=NULL;
 		}
-		if(generalData.map_list[map_name.at(index)].border.left.map!=NULL && generalData.map_list[map_name.at(index)].border.left.map->border.right.map!=(&generalData.map_list[map_name.at(index)]))
+		if(generalData.map_list[map_name.at(index)]->border.left.map!=NULL && generalData.map_list[map_name.at(index)]->border.left.map->border.right.map!=generalData.map_list[map_name.at(index)])
 		{
-			if(generalData.map_list[map_name.at(index)].border.left.map->border.right.map==NULL)
-				DebugClass::debugConsole(QString("the map %1 left bottom map: %2, the map %2 have not a right map").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.left.map->map_file));
+			if(generalData.map_list[map_name.at(index)]->border.left.map->border.right.map==NULL)
+				DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have not a right map").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.left.map->map_file));
 			else
-				DebugClass::debugConsole(QString("the map %1 left bottom map: %2, the map %2 have this right map: %3").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.left.map->map_file).arg(generalData.map_list[map_name.at(index)].border.left.map->border.right.map->map_file));
-			generalData.map_list[map_name.at(index)].border.left.map=NULL;
+				DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have this right map: %3").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.left.map->map_file).arg(generalData.map_list[map_name.at(index)]->border.left.map->border.right.map->map_file));
+			generalData.map_list[map_name.at(index)]->border.left.map=NULL;
 		}
-		if(generalData.map_list[map_name.at(index)].border.right.map!=NULL && generalData.map_list[map_name.at(index)].border.right.map->border.left.map!=(&generalData.map_list[map_name.at(index)]))
+		if(generalData.map_list[map_name.at(index)]->border.right.map!=NULL && generalData.map_list[map_name.at(index)]->border.right.map->border.left.map!=generalData.map_list[map_name.at(index)])
 		{
-			if(generalData.map_list[map_name.at(index)].border.right.map->border.left.map==NULL)
-				DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have not a left map").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.right.map->map_file));
+			if(generalData.map_list[map_name.at(index)]->border.right.map->border.left.map==NULL)
+				DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have not a left map").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.right.map->map_file));
 			else
-				DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have this left map: %3").arg(generalData.map_list[map_name.at(index)].map_file).arg(generalData.map_list[map_name.at(index)].border.right.map->map_file).arg(generalData.map_list[map_name.at(index)].border.right.map->border.left.map->map_file));
-			generalData.map_list[map_name.at(index)].border.right.map=NULL;
+				DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have this left map: %3").arg(generalData.map_list[map_name.at(index)]->map_file).arg(generalData.map_list[map_name.at(index)]->border.right.map->map_file).arg(generalData.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
+			generalData.map_list[map_name.at(index)]->border.right.map=NULL;
 		}
+		index++;
+	}
+
+	//resolv the near map
+	size=semi_loaded_map.size();
+	index=0;
+	while(index<size)
+	{
+		generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)];
+
+		if(generalData.map_list[map_name.at(index)]->border.bottom.map!=NULL && !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.bottom.map))
+		{
+			generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.bottom.map;
+			if(generalData.map_list[map_name.at(index)]->border.left.map!=NULL && !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.left.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.left.map;
+			if(generalData.map_list[map_name.at(index)]->border.right.map!=NULL && !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.right.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.right.map;
+		}
+
+		if(generalData.map_list[map_name.at(index)]->border.top.map!=NULL && !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.top.map))
+		{
+			generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.top.map;
+			if(generalData.map_list[map_name.at(index)]->border.left.map!=NULL &&  !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.left.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.left.map;
+			if(generalData.map_list[map_name.at(index)]->border.right.map!=NULL &&  !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.right.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.right.map;
+		}
+
+		if(generalData.map_list[map_name.at(index)]->border.right.map!=NULL && !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.right.map))
+		{
+			generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.right.map;
+			if(generalData.map_list[map_name.at(index)]->border.top.map!=NULL &&  !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.top.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.top.map;
+			if(generalData.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.bottom.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.bottom.map;
+		}
+
+		if(generalData.map_list[map_name.at(index)]->border.left.map!=NULL && !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.left.map))
+		{
+			generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.left.map;
+			if(generalData.map_list[map_name.at(index)]->border.top.map!=NULL &&  !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.top.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.top.map;
+			if(generalData.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !generalData.map_list[map_name.at(index)]->near_map.contains(generalData.map_list[map_name.at(index)]->border.bottom.map))
+				generalData.map_list[map_name.at(index)]->near_map << generalData.map_list[map_name.at(index)]->border.bottom.map;
+		}
+
+		index++;
+	}
+
+	//resolv the offset to change of map
+	size=semi_loaded_map.size();
+	index=0;
+	while(index<size)
+	{
+		if(generalData.map_list[map_name.at(index)]->border.bottom.map!=NULL)
+			generalData.map_list[map_name.at(index)]->border.bottom.x_offset=semi_loaded_map.at(index).border.bottom.x_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.bottom.fileName)).border.top.x_offset;
+		else
+			generalData.map_list[map_name.at(index)]->border.bottom.x_offset=0;
+		if(generalData.map_list[map_name.at(index)]->border.top.map!=NULL)
+			generalData.map_list[map_name.at(index)]->border.top.x_offset=semi_loaded_map.at(index).border.top.x_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.top.fileName)).border.bottom.x_offset;
+		else
+			generalData.map_list[map_name.at(index)]->border.top.x_offset=0;
+		if(generalData.map_list[map_name.at(index)]->border.left.map!=NULL)
+			generalData.map_list[map_name.at(index)]->border.left.y_offset=semi_loaded_map.at(index).border.left.y_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.left.fileName)).border.right.y_offset;
+		else
+			generalData.map_list[map_name.at(index)]->border.left.y_offset=0;
+		if(generalData.map_list[map_name.at(index)]->border.right.map!=NULL)
+			generalData.map_list[map_name.at(index)]->border.right.y_offset=semi_loaded_map.at(index).border.right.y_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset;
+		else
+			generalData.map_list[map_name.at(index)]->border.right.y_offset=0;
 		index++;
 	}
 
@@ -308,7 +314,6 @@ void EventDispatcher::unload_the_data()
 void EventDispatcher::unload_the_map()
 {
 	generalData.map_list.clear();
-	generalData.map_list_by_visibility_group.clear();
 }
 
 QStringList EventDispatcher::listFolder(const QString& folder,const QString& suffix)
@@ -540,6 +545,7 @@ void EventDispatcher::load_settings()
 {
 	QSettings *settings;
 	settings=new QSettings(QCoreApplication::applicationDirPath()+"/server.properties",QSettings::IniFormat);
+
 	if(!settings->contains("max-players"))
 		settings->setValue("max-players",200);
 	if(!settings->contains("server-ip"))
@@ -548,8 +554,18 @@ void EventDispatcher::load_settings()
 		settings->setValue("pvp",true);
 	if(!settings->contains("server-port"))
 		settings->setValue("server-port",42489);
-	if(!settings->contains("instant_player_number"))
-		settings->setValue("instant_player_number",true);
+
+	settings->beginGroup("MapVisibilityAlgorithm");
+	if(!settings->contains("MapVisibilityAlgorithm"))
+		settings->setValue("MapVisibilityAlgorithm",0);
+
+		settings->beginGroup("Simple");
+		if(!settings->contains("Max"))
+			settings->setValue("Max",50);
+		settings->endGroup();
+
+	settings->endGroup();
+
 	settings->beginGroup("rates");
 	if(!settings->contains("xp_normal"))
 		settings->setValue("xp_normal",1.0);
@@ -564,6 +580,7 @@ void EventDispatcher::load_settings()
 	if(!settings->contains("shiny_premium"))
 		settings->setValue("shiny_premium",0.0002);
 	settings->endGroup();
+
 	settings->beginGroup("chat");
 	if(!settings->contains("allow-all"))
 		settings->setValue("allow-all",true);
@@ -576,6 +593,7 @@ void EventDispatcher::load_settings()
 	if(!settings->contains("allow-clan"))
 		settings->setValue("allow-clan",true);
 	settings->endGroup();
+
 	settings->beginGroup("db");
 	if(!settings->contains("host"))
 		settings->setValue("host","localhost");
@@ -591,7 +609,31 @@ void EventDispatcher::load_settings()
 	server_ip				= settings->value("server-ip").toString();
 	pvp					= settings->value("pvp").toBool();
 	server_port				= settings->value("server-port").toUInt();
-	generalData.instant_player_number	= settings->value("instant_player_number").toBool();
+
+	settings->beginGroup("MapVisibilityAlgorithm");
+	bool ok;
+	quint16 val=settings->value("MapVisibilityAlgorithm",0).toUInt(&ok);
+	if(ok)
+	{
+		switch(val)
+		{
+			case 0:
+			default:
+			generalData.mapVisibilityAlgorithm=MapVisibilityAlgorithm_simple;
+			break;
+		}
+	}
+
+	settings->beginGroup("Simple");
+	generalData.mapVisibility.simple.max=settings->value("Max").toUInt(&ok);
+	if(!ok)
+		generalData.mapVisibility.simple.max=50;
+	else if(generalData.mapVisibility.simple.max>generalData.max_players)
+		generalData.mapVisibility.simple.max=generalData.max_players;
+	settings->endGroup();
+
+	settings->endGroup();
+
 	settings->beginGroup("rates");
 	rates_xp_normal				= settings->value("xp_normal").toReal();
 	rates_xp_premium			= settings->value("xp_premium").toReal();
@@ -600,6 +642,7 @@ void EventDispatcher::load_settings()
 	rates_shiny_normal			= settings->value("shiny_normal").toReal();
 	rates_shiny_premium			= settings->value("shiny_premium").toReal();
 	settings->endGroup();
+
 	settings->beginGroup("chat");
 	char_allow_all				= settings->value("allow-all").toBool();
 	char_allow_local			= settings->value("allow-local").toBool();
@@ -607,6 +650,7 @@ void EventDispatcher::load_settings()
 	char_allow_aliance			= settings->value("allow-aliance").toBool();
 	char_allow_clan				= settings->value("allow-clan").toBool();
 	settings->endGroup();
+
 	// --------------------------------------------------
 	if(generalData.max_players<=0)
 		generalData.max_players	= 200;
@@ -692,7 +736,7 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	int index=0;
 	while(index<number_of_client)
 	{
-		addBot(x,y,&generalData.map_list["map.tmx"]);
+		addBot(x,y,generalData.map_list["map.tmx"]);
 		if(index==0)
 		{
 			//fake_clients.last()->show_details();

@@ -13,6 +13,7 @@ void ClientBroadCast::setVariable(GeneralData *generalData,Player_private_and_pu
 {
 	this->generalData	=generalData;
 	this->player_informations=player_informations;
+	connect(&generalData->player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
 }
 
 void ClientBroadCast::disconnect()
@@ -51,7 +52,7 @@ void ClientBroadCast::receivePM(const QString &text,const quint32 &player_id)
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0xC2;
-	out << (quint32)0x00000005;
+	out << (quint32)0x0005;
 	out << player_id;//id player here
 	out << (quint8)0x06;
 	out << text;
@@ -91,7 +92,7 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0xC2;
-	out << (quint32)0x00000005;
+	out << (quint32)0x0005;
 	out << sender_player_id;
 	out << (quint8)chatType;
 	out << text;
@@ -168,7 +169,7 @@ void ClientBroadCast::send_players_informations(const QList<Player_private_and_p
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0xC2;
-	out << (quint32)0x00000002;
+	out << (quint32)0x0002;
 	out << (quint16)players_informations.size();
 	int index=0;
 	int list_size=players_informations.size();
@@ -201,7 +202,7 @@ void ClientBroadCast::send_players_informations(const QList<Player_public_inform
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0xC2;
-	out << (quint32)0x00000002;
+	out << (quint32)0x0002;
 	out << (quint16)players_informations.size();
 	int index=0;
 	int list_size=players_informations.size();
@@ -218,13 +219,16 @@ void ClientBroadCast::send_players_informations(const QList<Player_public_inform
 	emit sendPacket(outputData);
 }
 
-void ClientBroadCast::receive_instant_player_number()
+void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 {
+	if(this->connected_players==connected_players)
+		return;
+	this->connected_players=connected_players;
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0xC2;
-	out << (quint32)0x00000009;
+	out << (quint32)0x0009;
 	out << generalData->connected_players;
 	out << generalData->max_players;
 	emit sendPacket(outputData);
@@ -311,15 +315,3 @@ void ClientBroadCast::receivePlayersInformation(const Player_private_and_public_
 	//update the player info on all which have ask to look it by: addPlayersInformationToWatch()
 }
 
-//relayed signals
-void ClientBroadCast::send_instant_player_number()
-{
-	int index=0;
-	int list_size=generalData->clientBroadCastList.size();
-	while(index<list_size)
-	{
-		/// \bug crash here, multi-thread problem
-		generalData->clientBroadCastList.at(index)->receive_instant_player_number();
-		index++;
-	}
-}
