@@ -40,6 +40,8 @@ protected:
 	virtual void moveClient(const quint8 &movedUnit,const Direction &direction) = 0;
 	virtual void removeClient() = 0;
 	virtual void changeMap(Map_final *old_map,Map_final *new_map) = 0;
+	//drop all clients
+	void dropAllClients();
 	//info linked
 	qint16				x,y;//can be negative because offset to insert on map diff can be put into
 	Map_final*			current_map;

@@ -253,7 +253,7 @@ void ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0xC2;
-	out << (quint32)0x00000003;
+	out << (quint16)0x0003;
 	out << fileName;
 	out << (quint32)content.size();
 	out << mtime;

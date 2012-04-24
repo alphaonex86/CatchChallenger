@@ -17,7 +17,6 @@ Pokecraft_client::Pokecraft_client()
 	connect(&socket,SIGNAL(disconnected()),					this,SLOT(disconnected()));
 	disconnected();
 	dataClear();
-	last_subIdent=0;
 }
 
 Pokecraft_client::~Pokecraft_client()
@@ -122,6 +121,7 @@ void Pokecraft_client::disconnected()
 	wait_datapack_content=false;
 	haveData=false;
 	lastQueryNumber=1;
+	last_subIdent=0;
 	dataClear();
 	resetAll();
 }
@@ -188,12 +188,11 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 		}
 		else if(!is_logged)
 		{
-                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                         {
                                 errorOutput(QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("have not send the login, mainIdent: %1").arg(mainIdent));
                                 return;
-                        }
-                        quint32 subIdent;
+			}
                         in >> subIdent;
 			if(subIdent!=0x0009)
 			{
@@ -440,7 +439,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 		break;
 		case 0xC2:
 		{
-			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 			{
 				errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
 				return;
@@ -800,7 +799,7 @@ void Pokecraft_client::sendChatText(quint8 chatType,QString text)
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0x42;
-	out << (quint32)0x0003;
+	out << (quint16)0x0003;
 	out << chatType;
 	out << text;
 	sendData(outputData);
@@ -817,7 +816,7 @@ void Pokecraft_client::sendPM(QString text,QString pseudo)
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0x42;
-	out << (quint32)0x0003;
+	out << (quint16)0x0003;
 	out << (quint8)0x06;
 	out << text;
 	out << pseudo;
@@ -858,7 +857,7 @@ void Pokecraft_client::add_player_watching(QList<quint32> ids)
 		QDataStream out(&outputData, QIODevice::WriteOnly);
 		out.setVersion(QDataStream::Qt_4_4);
 		out << (quint8)0x42;
-		out << (quint32)0x000A;
+		out << (quint16)0x000A;
 		out << (quint8)0x01;
 		out << (quint16)new_ids.size();
 		int index=0;
@@ -891,7 +890,7 @@ void Pokecraft_client::remove_player_watching(QList<quint32> ids)
 		QDataStream out(&outputData, QIODevice::WriteOnly);
 		out.setVersion(QDataStream::Qt_4_4);
 		out << (quint8)0x42;
-		out << (quint32)0x000B;
+		out << (quint16)0x000B;
 		out << (quint16)new_ids.size();
 		int index=0;
 		while(index<new_ids.size())
@@ -972,7 +971,7 @@ void Pokecraft_client::sendDatapackContent()
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint8)0x02;
-	out << (quint32)0x000C;
+	out << (quint16)0x000C;
 	out << datapack_content_query_number;
 	out << (quint32)datapackFilesList.size();
 	int index=0;

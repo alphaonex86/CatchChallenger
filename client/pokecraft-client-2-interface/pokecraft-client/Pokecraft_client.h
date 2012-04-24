@@ -94,12 +94,12 @@ private:
 	bool wait_datapack_content;
 	QStringList datapackFilesList;
 	quint8 last_mainIdent;
-	quint32 last_subIdent;
+	quint16 last_subIdent;
 	QByteArray last_query;
 	//for the inputData parsing
 	quint8 mainIdent;
 	quint8 queryNumberReturned;
-	quint32 subIdent;
+	quint16 subIdent;
 	quint8 returnCode;
 signals:
 	void stateChanged(QAbstractSocket::SocketState socketState);
