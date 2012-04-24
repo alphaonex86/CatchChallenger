@@ -11,10 +11,10 @@ public:
 	void reinsertAllClient(const int &loop_size);
 protected:
 	//add clients linked
-	void insertClient(const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
-	void moveClient(const quint8 &movedUnit,const Direction &direction);
+	void insertClient();
+	void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged);
 	void removeClient();
-	void changeMap(Map_final *old_map,Map_final *new_map);
+	void mapVisiblity_unloadFromTheMap();
 private:
 	int index,loop_size;
 	ClientMapManagement *current_client;

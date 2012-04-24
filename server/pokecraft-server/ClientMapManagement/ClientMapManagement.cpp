@@ -75,7 +75,7 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map
 	at_start_x=x;
 	at_start_y=y;
 	at_start_orientation=orientation;
-	last_direction=(Direction)orientation;
+	last_direction=static_cast<Direction>(orientation);
 	at_start_map_name=map->map_file;
 
 	//store the current information about player on the map
@@ -99,193 +99,10 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map
 	#endif
 
 	//call MapVisibilityAlgorithm to insert
-	insertClient(x,y,orientation,speed);
+	insertClient();
 
 	loadOnTheMap();
 }
-
-//x and y can be negative, it's the offset
-/*void ClientMapManagement::put_on_the_map_by_diff(const QString & map,const qint16 &x_offset_or_real,const qint16 &y_offset_or_real)
-{
-	emit message(QString("try load map by diff for for player: %1, transmited (x,y): %2,%3").arg(player_id).arg(x_offset_or_real).arg(y_offset_or_real));
-	have_diff=true;
-	this->x=x_offset_or_real;
-	this->y=y_offset_or_real;
-	propagated=false;
-	current_map=getMap(map);
-	current_map->clients << this;
-	propagate();
-	//set to 0 or map max size
-	//moveThePlayer() to check colision and do real move
-}*/
-
-/*void ClientMapManagement::propagate()
-{
-	if(current_map==NULL)
-	{
-		emit message(QString("current_map==NULL and should not: %1").arg(player_id));
-		return;
-	}
-	if(current_map->map_loaded)
-	{
-		if(propagated)
-		{
-			emit message(QString("already propagated: %1, (x,y): %2,%3").arg(player_id).arg(x).arg(y));
-			return;
-		}
-		propagated=true;
-		if(have_diff)
-		{
-			quint8 previousMovedUnit=0;
-			have_diff=false;
-			switch(last_direction)
-			{
-				/// \todo check if the map is corresponding
-				case Direction_move_at_top:
-					if(y<0)
-					{
-						emit error(QString("propagate(): y can't be negative at Direction_move_at_top"));
-						return;
-					}
-					else
-						emit message(QString("propagate(): enter and parse Direction_move_at_top"));
-					previousMovedUnit=y;
-					y=current_map->height;//useless but it's y=0 + offset stored into y
-					x+=current_map->border.bottom.x;
-				break;
-				case Direction_move_at_right:
-					if(x<0)
-					{
-						emit error(QString("propagate(): x can't be negative at Direction_move_at_right"));
-						return;
-					}
-					else
-						emit message(QString("propagate(): enter and parse Direction_move_at_right"));
-					previousMovedUnit=x;
-					x=-1;//spawn out of map to check the next tile
-					y+=current_map->border.left.y;
-				break;
-				case Direction_move_at_bottom:
-					if(y<0)
-					{
-						emit error(QString("propagate(): x can't be negative at Direction_move_at_bottom"));
-						return;
-					}
-					else
-						emit message(QString("propagate(): enter and parse Direction_move_at_bottom"));
-					previousMovedUnit=y;
-					y=-1;//spawn out of map to check the next tile
-					x+=current_map->border.top.x;
-				break;
-				case Direction_move_at_left:
-					if(x<0)
-					{
-						emit error(QString("propagate(): x can't be negative at Direction_move_at_left"));
-						return;
-					}
-					else
-						emit message(QString("propagate(): enter and parse Direction_move_at_left"));
-					previousMovedUnit=x;
-					x=current_map->width;//it's x=height + offset stored into x, then x=x+height
-					y+=current_map->border.right.y;
-				break;
-				default:
-					emit error(QString("propagate(): direction not managed"));
-				break;
-			}
-			moveThePlayer(previousMovedUnit,last_direction,true);
-			if(x<0 || y<0 || x>=current_map->width || y>=current_map->height)
-				emit error(QString("internet error, out of the map: (x,y): %1,%2").arg(x).arg(y));
-			else
-				emit message(QString("new pos for the player: %1, (x,y): %2,%3").arg(player_id).arg(x).arg(y));
-			last_direction=last_direction_diff;
-			postMapMove();
-		}
-		else
-		{
-			current_map->check_client_position(current_map->clients.size()-1);
-			int index_maps_clients=0;
-			int list_size_map_custom=current_map->clients.size();
-			while(index_maps_clients<list_size_map_custom)
-			{
-				ClientMapManagement *other_client=current_map->clients.at(index_maps_clients);
-				if(other_client!=this)
-					other_client->insertAnotherClient(player_id,current_map->map_file,x,y,last_direction,speed);
-				if(other_client!=this || firstInsert)
-				{
-					if(other_client==this)
-						firstInsert=false;
-					insertAnotherClient(other_client->player_id,
-					     other_client->current_map->map_file,
-					     other_client->x,
-					     other_client->y,
-					     other_client->last_direction,
-					     other_client->speed);
-				}
-				index_maps_clients++;
-			}
-			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-			emit message(QString("normal insert: %1, (x,y): %2,%3").arg(player_id).arg(x).arg(y));
-			#endif
-		}
-	}
-	else
-		emit message(QString("map not loaded: %1, (x,y): %2,%3").arg(player_id).arg(x).arg(y));
-}*/
-
-/* call before the map chaning, then on the old map
-  move and remove all player from the current map and other player view
-  */
-/*void ClientMapManagement::preMapMove(const quint8 &previousMovedUnit,const Direction &direction)
-{
-	QList<ClientMapManagement *> previousClient;
-	old_map=current_map;
-	old_map->clients.removeOne(this);
-	MapMove_nearClient.clear();
-	getNearClient(MapMove_nearClient);
-	index=0;
-	list_size=previousClient.size();
-	while(index<list_size)
-	{
-		previousClient.at(index)->moveAnotherClient(player_id,previousMovedUnit,direction);
-		previousClient.at(index)->removeAnotherClient(player_id);
-		index++;
-	}
-	last_direction_diff=direction;
-}*/
-
-/* call after the map chaning, then on the new map
-  just insert from the new map, because the move will be call into propagate() by moveThePlayer()
-  */
-/*void ClientMapManagement::postMapMove()
-{
-	if(stopIt)
-		return;
-	MapMove_nearClient.clear();
-	getNearClient(MapMove_nearClient);
-	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	emit message(QString("postMapMove start: %1, getNearClient: %2, x,y: %3,%4, last_direction: %5, speed: %6").arg(player_id).arg(MapMove_nearClient.size()).arg(x).arg(y).arg((int)last_direction).arg(speed));
-	#endif // DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	index=0;
-	postMapMove_size=MapMove_nearClient.size();
-	while(index<postMapMove_size)
-	{
-		if(x<0 || x>(current_map->width-1) || y<0 || y>(current_map->height-1))
-		{
-			emit message(QString("insertClient(): Wrong x,y: %1,%2").arg(x).arg(y));
-			return;
-		}
-		MapMove_nearClient.at(index)->insertAnotherClient(player_id,current_map->map_file,x,y,(Direction)last_direction,speed);
-		index++;
-	}
-	current_map->clients << this;
-	unloadMapIfNeeded(old_map);
-}*/
-
-/*void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
-{
-	moveThePlayer(previousMovedUnit,direction,false);
-}*/
 
 /// \note The second heavy function
 void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
@@ -299,6 +116,7 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 		emit error(QString("Previous action is same direction: %1").arg(last_direction));
 		return;
 	}
+	mapHaveChanged=false;
 	switch(last_direction)
 	{
 		case Direction_move_at_top:
@@ -318,9 +136,10 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 					}
 					else
 					{
+						mapHaveChanged=true;
 						emit message(QString("moveThePlayer(): move at top, leave the map: %1, enter to the map: %2, the enter add x offset=%3").arg(current_map->map_file).arg(current_map->border.top.map->map_file).arg(x-current_map->border.top.x_offset));
 						unloadFromTheMap();
-						changeMap(current_map,current_map->border.top.map);
+						mapVisiblity_unloadFromTheMap();
 						y=current_map->border.top.map->height;
 						x+=current_map->border.top.x_offset;
 						current_map=current_map->border.top.map;
@@ -362,9 +181,10 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 					}
 					else
 					{
+						mapHaveChanged=true;
 						emit message(QString("moveThePlayer(): move at right, leave the map: %1, enter to the map: %2, the enter add y offset=%3").arg(current_map->map_file).arg(current_map->border.right.map->map_file).arg(y-current_map->border.right.y_offset));
 						unloadFromTheMap();
-						changeMap(current_map,current_map->border.right.map);
+						mapVisiblity_unloadFromTheMap();
 						y=0;
 						x+=current_map->border.right.y_offset;
 						current_map=current_map->border.right.map;
@@ -406,9 +226,10 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 					}
 					else
 					{
+						mapHaveChanged=true;
 						emit message(QString("moveThePlayer(): move at bottom, leave the map: %1, enter to the map: %2, the enter add x offset=%3").arg(current_map->map_file).arg(current_map->border.bottom.map->map_file).arg(x-current_map->border.bottom.x_offset));
 						unloadFromTheMap();
-						changeMap(current_map,current_map->border.bottom.map);
+						mapVisiblity_unloadFromTheMap();
 						y=0;
 						x+=current_map->border.bottom.x_offset;
 						current_map=current_map->border.bottom.map;
@@ -450,9 +271,10 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 					}
 					else
 					{
+						mapHaveChanged=true;
 						emit message(QString("moveThePlayer(): move at left, leave the map: %1, enter to the map: %2, the enter add y offset=%3").arg(current_map->map_file).arg(current_map->border.left.map->map_file).arg(y-current_map->border.left.y_offset));
 						unloadFromTheMap();
-						changeMap(current_map,current_map->border.left.map);
+						mapVisiblity_unloadFromTheMap();
 						y=current_map->border.left.map->width;
 						x+=current_map->border.left.y_offset;
 						current_map=current_map->border.left.map;
@@ -484,7 +306,7 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 	}
 	last_direction=direction;
 
-	moveClient(previousMovedUnit,direction);
+	moveClient(previousMovedUnit,direction,mapHaveChanged);
 }
 
 void ClientMapManagement::loadOnTheMap()
@@ -498,21 +320,6 @@ void ClientMapManagement::unloadFromTheMap()
 {
 	current_map->clients.removeOne(this);
 }
-
-//send client only on near map loaded and not the current player
-/*QList<ClientMapManagement *> ClientMapManagement::getNearClient()
-{
-	returnList << current_map->clients;
-	/// \todo uncomment and fix this code
-	getNearClient_index=0;
-	getNearClient_list_size=current_map->clients.size();
-	while(getNearClient_index<getNearClient_list_size)
-	{
-		if(current_map->clients.at(getNearClient_index)!=this)
-			returnList << current_map->clients.at(getNearClient_index);
-		getNearClient_index++;
-	}
-}*/
 
 void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
 {
