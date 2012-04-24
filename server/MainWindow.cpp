@@ -289,12 +289,11 @@ void MainWindow::load_settings()
 	settings->beginGroup("MapVisibilityAlgorithm");
 	if(!settings->contains("MapVisibilityAlgorithm"))
 		settings->setValue("MapVisibilityAlgorithm",0);
+	settings->endGroup();
 
-		settings->beginGroup("Simple");
-		if(!settings->contains("Max"))
-			settings->setValue("Max",50);
-		settings->endGroup();
-
+	settings->beginGroup("MapVisibilityAlgorithm-Simple");
+	if(!settings->contains("Max"))
+		settings->setValue("Max",50);
 	settings->endGroup();
 
 	settings->beginGroup("rates");
@@ -341,15 +340,17 @@ void MainWindow::load_settings()
 	ui->pvp->setChecked(settings->value("pvp").toBool());
 	ui->server_port->setValue(settings->value("server-port").toUInt());
 
+	quint32 tempValue=0;
 	settings->beginGroup("MapVisibilityAlgorithm");
-		if(settings->value("MapVisibilityAlgorithm").toInt()<ui->MapVisibilityAlgorithm->count() && settings->value("MapVisibilityAlgorithm").toInt()>=0)
-			ui->MapVisibilityAlgorithm->setCurrentIndex(settings->value("MapVisibilityAlgorithm").toUInt());
-
-		settings->beginGroup("Simple");
-		ui->MapVisibilityAlgorithmSimpleMax->setValue(settings->value("Max").toUInt());
-		settings->endGroup();
-
+	tempValue=settings->value("MapVisibilityAlgorithm").toUInt();
 	settings->endGroup();
+	if(tempValue<(quint32)ui->MapVisibilityAlgorithm->count())
+		ui->MapVisibilityAlgorithm->setCurrentIndex(tempValue);
+
+	settings->beginGroup("MapVisibilityAlgorithm-Simple");
+	tempValue=settings->value("Max").toUInt();
+	settings->endGroup();
+	ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
 
 	settings->beginGroup("rates");
 	double rates_xp_normal=settings->value("xp_normal").toReal();
@@ -537,9 +538,7 @@ void MainWindow::on_MapVisibilityAlgorithm_currentIndexChanged(int index)
 
 void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
 {
-	settings->beginGroup("MapVisibilityAlgorithm");
-	settings->beginGroup("Simple");
+	settings->beginGroup("MapVisibilityAlgorithm-Simple");
 	settings->setValue("Max",arg1);
-	settings->endGroup();
 	settings->endGroup();
 }
