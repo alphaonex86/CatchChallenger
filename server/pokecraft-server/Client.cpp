@@ -187,15 +187,17 @@ void Client::disconnectClient()
 		is_logged=false;
 	}
 	disconnectStep=disconnectNextStepValue_before_stop_the_thread_1;
-	connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+
 	connect(clientMapManagement,SIGNAL(updatePlayerPosition(QString,quint16,quint16,Orientation)),
 		clientHeavyLoad,SLOT(updatePlayerPosition(QString,quint16,quint16,Orientation)),Qt::QueuedConnection);
 	//connect to quit
+	connect(clientNetworkRead,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientMapManagement,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientBroadCast,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-	connect(clientNetworkRead,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientNetworkWrite,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
+
+	connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
 	emit askIfIsReadyToStop();
 
 	emit player_is_disconnected(player_informations.public_informations.pseudo);
@@ -208,43 +210,43 @@ void Client::disconnectNextStep()
 	switch(disconnectStep)
 	{
 		case disconnectNextStepValue_before_stop_the_thread_1:
-
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_2;
-			delete clientMapManagement;
-			clientMapManagement=NULL;
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
+			connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_2:
+
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_3;
-			delete clientBroadCast;
-			clientBroadCast=NULL;
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
+			connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_3:
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_4;
-			delete clientHeavyLoad;
-			clientHeavyLoad=NULL;
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()));
+			connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_4:
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_5;
-			delete clientNetworkRead;
-			clientNetworkRead=NULL;
 			connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
+
 		case disconnectNextStepValue_before_stop_the_thread_5:
 			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 			normalOutput("disconnectNextStepValue_before_stop_the_thread_5");
 			#endif
+
+			delete clientHeavyLoad;
+			clientHeavyLoad=NULL;
+			delete clientBroadCast;
+			clientBroadCast=NULL;
 			delete clientNetworkWrite;
 			clientNetworkWrite=NULL;
-			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-			normalOutput("disconnectNextStepValue_before_stop_the_thread_5");
-			#endif
+			delete clientMapManagement;
+			clientMapManagement=NULL;
+			delete clientNetworkRead;
+			clientNetworkRead=NULL;
+
 			emit isReadyToDelete();
 			is_ready_to_stop=true;
 			wait_the_end.release();
