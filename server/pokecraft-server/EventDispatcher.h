@@ -9,6 +9,7 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QDir>
+#include <QSemaphore>
 
 #include "../pokecraft-general/DebugClass.h"
 #include "ServerStructures.h"
@@ -99,6 +100,8 @@ private:
 		Map_final * map;
 		Map_semi_border border;
 	};
+	bool stopIt;
+	QSemaphore waitTheEnd;
 private slots:
 	void newConnection();
 	void removeOneClient();
@@ -107,7 +110,10 @@ private slots:
 	void start_internal_server();
 	void serverCommand(QString command,QString extraText);
 	void initAll();
+	void destructor();
+	void stop_internal_server();
 signals:
+	void try_stop_server();
 	void try_initAll();
 	void need_be_stopped();
 	void need_be_restarted();
@@ -120,6 +126,7 @@ signals:
 	void benchmark_result(const int &latency,const double &TX_speed,const double &RX_speed,const double &TX_size,const double &RX_size,const double &second);
 	void try_start_benchmark(const quint16 &second,const quint16 &number_of_client);
 	void destroyAllBots();
+	void call_destructor();
 };
 
 #endif // EVENTDISPATCHER_H

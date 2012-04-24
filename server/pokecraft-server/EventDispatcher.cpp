@@ -10,6 +10,7 @@ EventDispatcher::EventDispatcher()
 	generalData.db=NULL;
 	generalData.timer_player_map=NULL;
 	server=NULL;
+	stopIt=false;
 	lunchInitFunction=NULL;
 	timer_benchmark_stop=NULL;
 	bool_Walkable=NULL;
@@ -36,8 +37,9 @@ EventDispatcher::EventDispatcher()
 
 	qRegisterMetaType<Chat_type>("Chat_type");
 
-	connect(this,SIGNAL(try_start_benchmark(quint16,quint16)),this,SLOT(start_internal_benchmark(quint16,quint16)));
-	connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()));
+	connect(this,SIGNAL(try_start_benchmark(quint16,quint16)),this,SLOT(start_internal_benchmark(quint16,quint16)),Qt::QueuedConnection);
+	connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
+	connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
 
 	in_benchmark_mode=false;
 	stat=Down;
@@ -52,7 +54,15 @@ EventDispatcher::EventDispatcher()
 
 EventDispatcher::~EventDispatcher()
 {
-	//removeBots();->do into the thread
+	stopIt=true;
+	connect(this,SIGNAL(call_destructor()),this,SLOT(destructor()),Qt::QueuedConnection);
+	emit call_destructor();
+	waitTheEnd.acquire();
+}
+
+void EventDispatcher::destructor()
+{
+	removeBots();
 	lunchInitFunction->deleteLater();
 	timer_benchmark_stop->deleteLater();
 	int index=0;
@@ -90,6 +100,7 @@ EventDispatcher::~EventDispatcher()
 		delete bool_Water;
 		bool_Water=NULL;
 	}
+	waitTheEnd.release();
 }
 
 void EventDispatcher::initAll()
@@ -130,38 +141,42 @@ void EventDispatcher::preload_the_map()
 	//load the map
 	int size=returnList.size();
 	int index=0;
+	QRegExp mapFilter("\\.tmx$");
 	while(index<size)
 	{
-		if(map_temp.tryLoadMap(generalData.mapBasePath+returnList.at(index)))
+		if(returnList.at(index).contains(mapFilter))
 		{
-			DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
-			generalData.map_list[returnList.at(index)]=new Map_final;
-			generalData.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
-			generalData.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
-			generalData.map_list[returnList.at(index)]->property			= map_temp.map_to_send.property;
-			generalData.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
-			generalData.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
-			generalData.map_list[returnList.at(index)]->map_file			= returnList.at(index);
-			map_name << returnList.at(index);
+			if(map_temp.tryLoadMap(generalData.mapBasePath+returnList.at(index)))
+			{
+				DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
+				generalData.map_list[returnList.at(index)]=new Map_final;
+				generalData.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
+				generalData.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
+				generalData.map_list[returnList.at(index)]->property			= map_temp.map_to_send.property;
+				generalData.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
+				generalData.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
+				generalData.map_list[returnList.at(index)]->map_file			= returnList.at(index);
+				map_name << returnList.at(index);
 
-			Map_semi map_semi;
-			map_semi.map				= generalData.map_list[returnList.at(index)];
+				Map_semi map_semi;
+				map_semi.map				= generalData.map_list[returnList.at(index)];
 
-			map_semi.border.top.fileName		= map_temp.map_to_send.border.top.fileName;
-			map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
+				map_semi.border.top.fileName		= map_temp.map_to_send.border.top.fileName;
+				map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
 
-			map_semi.border.bottom.fileName		= map_temp.map_to_send.border.bottom.fileName;
-			map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
+				map_semi.border.bottom.fileName		= map_temp.map_to_send.border.bottom.fileName;
+				map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
 
-			map_semi.border.left.fileName		= map_temp.map_to_send.border.left.fileName;
-			map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
+				map_semi.border.left.fileName		= map_temp.map_to_send.border.left.fileName;
+				map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
 
-			map_semi.border.right.fileName		= map_temp.map_to_send.border.right.fileName;
-			map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
-			semi_loaded_map << map_semi;
+				map_semi.border.right.fileName		= map_temp.map_to_send.border.right.fileName;
+				map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
+				semi_loaded_map << map_semi;
+			}
+			else
+				DebugClass::debugConsole(QString("error at loading: %1, error: %2").arg(returnList.at(index)).arg(map_temp.errorString()));
 		}
-		else
-			DebugClass::debugConsole(QString("error at loading: %1, error: %2").arg(returnList.at(index)).arg(map_temp.errorString()));
 		index++;
 	}
 
@@ -461,31 +476,8 @@ void EventDispatcher::stop_benchmark()
 
 void EventDispatcher::stop_server()
 {
-	if(stat!=Up)
-	{
-		DebugClass::debugConsole("Is in wrong stat for stopping");
-		return;
-	}
-	DebugClass::debugConsole("Try stop");
-	stat=InDown;
-	removeBots();
-	if(server!=NULL)
-	{
-		disconnect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
-		server->close();
-	}
-	if(client_list.size()<=0)
-		internal_stop();
-	else
-	{
-		int index=0;
-		while(index<client_list.size())
-		{
-			client_list.at(index)->disconnectClient();
-			index++;
-		}
-	}
-	unload_the_data();
+	stopIt=true;
+	emit try_stop_server();
 }
 
 void EventDispatcher::removeBots()
@@ -497,7 +489,7 @@ void EventDispatcher::removeBots()
 	{
 		tempClient=fake_clients.at(index);
 		tempClient->stop();
-		delete tempClient;
+		tempClient->deleteLater();
 		index++;
 	}
 	fake_clients.clear();
@@ -558,12 +550,11 @@ void EventDispatcher::load_settings()
 	settings->beginGroup("MapVisibilityAlgorithm");
 	if(!settings->contains("MapVisibilityAlgorithm"))
 		settings->setValue("MapVisibilityAlgorithm",0);
+	settings->endGroup();
 
-		settings->beginGroup("Simple");
-		if(!settings->contains("Max"))
-			settings->setValue("Max",50);
-		settings->endGroup();
-
+	settings->beginGroup("MapVisibilityAlgorithm-Simple");
+	if(!settings->contains("Max"))
+		settings->setValue("Max",50);
 	settings->endGroup();
 
 	settings->beginGroup("rates");
@@ -623,15 +614,14 @@ void EventDispatcher::load_settings()
 			break;
 		}
 	}
+	settings->endGroup();
 
-	settings->beginGroup("Simple");
+	settings->beginGroup("MapVisibilityAlgorithm-Simple");
 	generalData.mapVisibility.simple.max=settings->value("Max").toUInt(&ok);
 	if(!ok)
 		generalData.mapVisibility.simple.max=50;
 	else if(generalData.mapVisibility.simple.max>generalData.max_players)
 		generalData.mapVisibility.simple.max=generalData.max_players;
-	settings->endGroup();
-
 	settings->endGroup();
 
 	settings->beginGroup("rates");
@@ -736,6 +726,8 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	int index=0;
 	while(index<number_of_client)
 	{
+		if(stopIt)
+			return;
 		addBot(x,y,generalData.map_list["map.tmx"]);
 		if(index==0)
 		{
@@ -796,6 +788,8 @@ void EventDispatcher::serverCommand(QString command,QString extraText)
 			int index=0;
 			while(index<number_player && client_list.size()<generalData.max_players)
 			{
+				if(stopIt)
+					return;
 				addBot(map_player_info.x,map_player_info.y,map_player_info.map,map_player_info.skin);
 				index++;
 			}
@@ -825,4 +819,34 @@ void EventDispatcher::addBot(quint16 x,quint16 y,Map_final *map,QString skin)
 	connect_the_last_client();
 	fake_clients.last()->moveToThread(generalData.eventThreaderList.at(5));
 	fake_clients.last()->start_step();
+}
+
+void EventDispatcher::stop_internal_server()
+{
+	if(stat!=Up)
+	{
+		if(stat!=Down)
+			DebugClass::debugConsole("Is in wrong stat for stopping: "+QString::number((int)stat));
+		return;
+	}
+	DebugClass::debugConsole("Try stop");
+	stat=InDown;
+	removeBots();
+	if(server!=NULL)
+	{
+		disconnect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
+		server->close();
+	}
+	if(client_list.size()<=0)
+		internal_stop();
+	else
+	{
+		int index=0;
+		while(index<client_list.size())
+		{
+			client_list.at(index)->disconnectClient();
+			index++;
+		}
+	}
+	unload_the_data();
 }

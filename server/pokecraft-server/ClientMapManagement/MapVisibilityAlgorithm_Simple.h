@@ -8,7 +8,7 @@ class MapVisibilityAlgorithm_Simple : public ClientMapManagement
 public:
 	explicit MapVisibilityAlgorithm_Simple();
 	~MapVisibilityAlgorithm_Simple();
-	void reinsertAllClient();
+	void reinsertAllClient(const int &loop_size);
 protected:
 	//add clients linked
 	void insertClient(const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
@@ -17,6 +17,7 @@ protected:
 	void changeMap(Map_final *old_map,Map_final *new_map);
 private:
 	int index,loop_size;
+	ClientMapManagement *current_client;
 };
 
 #endif // MAPVISIBILITYALGORITHM_SIMPLE_H

@@ -6,15 +6,10 @@
 #include <QString>
 #include <QSemaphore>
 #include <QTimer>
-#if defined(POKECRAFT_SERVER_MAP_MANAGEMENT_LIST_TYPE_QT_QHASH) || defined(POKECRAFT_SERVER_MAP_MANAGEMENT_LIST_TYPE_QT_QHASH2)
 #include <QHash>
 #include <QHashIterator>
-#endif
-#if defined(POKECRAFT_SERVER_MAP_MANAGEMENT_LIST_TYPE_STL_LIST) || defined(POKECRAFT_SERVER_MAP_MANAGEMENT_LIST_TYPE_QT_QHASH2)
-#include <list>
-using namespace std;
-#endif
 
+#include "../../pokecraft-general/DebugClass.h"
 #include "../ServerStructures.h"
 #include "../EventThreader.h"
 #include "../../VariableServer.h"
@@ -34,24 +29,30 @@ public:
 	void insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed);
 	void moveAnotherClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction);
 	void removeAnotherClient(const quint32 &player_id);
+	//drop all clients
+	void dropAllClients();
+
+	//public to access to info from other object to register
+	//info linked
+	qint16				x,y;//can be negative because offset to insert on map diff can be put into
+	Map_final*			current_map;
+	//cache
+	quint32	player_id;//to save at the close, and have cache
+	//map vector informations
+	Direction			last_direction;
+	quint16				speed;
 protected:
 	//pass to the Map management visibility algorithm
 	virtual void insertClient(const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed) = 0;
 	virtual void moveClient(const quint8 &movedUnit,const Direction &direction) = 0;
 	virtual void removeClient() = 0;
 	virtual void changeMap(Map_final *old_map,Map_final *new_map) = 0;
-	//drop all clients
-	void dropAllClients();
-	//info linked
-	qint16				x,y;//can be negative because offset to insert on map diff can be put into
-	Map_final*			current_map;
 	//internal var
 	GeneralData *generalData;
-	//cache
-	quint32	player_id;//to save at the close, and have cache
-	//map vector informations
-	Direction			last_direction;
-	quint16				speed;
+	//to stop
+	QSemaphore wait_the_end;
+	//debug function
+	QString directionToString(const Direction &direction);
 signals:
 	//normal signals
 	void error(const QString &error);
@@ -80,7 +81,6 @@ private:
 
 	//related to stop
 	volatile bool stopIt;
-	QSemaphore wait_the_end;
 
 	//temp variable for purge buffer
 	quint16 purgeBuffer_player_affected;

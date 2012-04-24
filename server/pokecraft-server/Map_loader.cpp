@@ -453,7 +453,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 			x=0;
 			while(x<map_to_send.width)
 			{
-				line += QString::number(map_to_send.bool_Walkable[x+y*map_to_send.width]);
+				line += QString::number(map_to_send.parsed_layer.walkable[x+y*map_to_send.width]);
 				x++;
 			}
 			line.replace("0","_");

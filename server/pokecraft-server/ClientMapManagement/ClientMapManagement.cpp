@@ -15,7 +15,6 @@ ClientMapManagement::ClientMapManagement()
 ClientMapManagement::~ClientMapManagement()
 {
 	stopIt=true;
-	wait_the_end.acquire();
 }
 
 Map_player_info ClientMapManagement::getMapPlayerInfo()
@@ -85,7 +84,6 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map
 	this->y=y;
 	this->speed=speed;
 	current_map=map;
-	loadOnTheMap();
 
 	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
 	if(this->x>(current_map->width-1))
@@ -102,6 +100,8 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map
 
 	//call MapVisibilityAlgorithm to insert
 	insertClient(x,y,orientation,speed);
+
+	loadOnTheMap();
 }
 
 //x and y can be negative, it's the offset
@@ -291,7 +291,7 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map
 void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4, direction: %5").arg(x).arg(y).arg(player_id).arg(previousMovedUnit).arg(Map_custom::directionToString((Direction)direction)));
+	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4, direction: %5").arg(x).arg(y).arg(player_id).arg(previousMovedUnit).arg(directionToString((Direction)direction)));
 	#endif
 	moveThePlayer_index_move=0;
 	if(last_direction==direction)
@@ -484,9 +484,6 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 	}
 	last_direction=direction;
 
-	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-	emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(Map_custom::directionToString((Direction)direction)).arg(moveThePlayer_list_size));
-	#endif
 	moveClient(previousMovedUnit,direction);
 }
 
@@ -533,7 +530,7 @@ void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map
 void ClientMapManagement::moveAnotherClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	emit message(QString("moveClient(%1,%2,%3)").arg(player_id).arg(movedUnit).arg(Map_custom::directionToString((Direction)direction)));
+	emit message(QString("moveClient(%1,%2,%3)").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)));
 	#endif
 	moveClient_tempMov.movedUnit=movedUnit;
 	moveClient_tempMov.direction=direction;
@@ -622,7 +619,7 @@ void ClientMapManagement::purgeBuffer()
 						.arg(to_send_map_management_insert.at(purgeBuffer_index).fileName)
 						.arg(to_send_map_management_insert.at(purgeBuffer_index).x)
 						.arg(to_send_map_management_insert.at(purgeBuffer_index).y)
-						.arg(Map_custom::directionToString(to_send_map_management_insert.at(purgeBuffer_index).direction))
+						.arg(directionToString(to_send_map_management_insert.at(purgeBuffer_index).direction))
 						.arg(player_id)
 						 );
 			#endif
@@ -682,3 +679,36 @@ void ClientMapManagement::purgeBuffer()
 	emit sendPacket(purgeBuffer_outputData);
 }
 
+QString ClientMapManagement::directionToString(const Direction &direction)
+{
+	switch(direction)
+	{
+		case Direction_look_at_top:
+			return "look at top";
+		break;
+		case Direction_look_at_right:
+			return "look at right";
+		break;
+		case Direction_look_at_bottom:
+			return "look at bottom";
+		break;
+		case Direction_look_at_left:
+			return "look at left";
+		break;
+		case Direction_move_at_top:
+			return "move at top";
+		break;
+		case Direction_move_at_right:
+			return "move at right";
+		break;
+		case Direction_move_at_bottom:
+			return "move at bottom";
+		break;
+		case Direction_move_at_left:
+			return "move at left";
+		break;
+		default:
+		break;
+	}
+	return "???";
+}
