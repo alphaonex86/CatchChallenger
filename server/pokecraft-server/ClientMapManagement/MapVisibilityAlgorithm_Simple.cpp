@@ -10,26 +10,32 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 
 void MapVisibilityAlgorithm_Simple::insertClient(const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
-	if(generalData->connected_players<generalData->mapVisibility.simple.max)
+	if(current_map->clients.size()<=generalData->mapVisibility.simple.max)
 	{
 		//insert the new client
+		index=0;
+		loop_size=current_map->clients.size();
+		while(index<loop_size)
+		{
+			current_map->clients.at(index)->insertAnotherClient(player_id,current_map,x,y,static_cast<Direction>(orientation),speed);
+			index++;
+		}
 	}
 	else
 	{
 		//drop all show client because it have excess the limit
+		dropAllClients();
 	}
 }
 
 void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction)
 {
-#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(Map_custom::directionToString((Direction)direction)).arg(moveThePlayer_list_size));
-#endif
+
 }
 
 void MapVisibilityAlgorithm_Simple::removeClient()
 {
-	if(generalData->connected_players==(generalData->mapVisibility.simple.max+1))
+	if(current_map->clients.size()==(generalData->mapVisibility.simple.max))
 	{
 		//insert all the client because it start to be visible
 		index=0;
@@ -40,7 +46,11 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 			index++;
 		}
 	}
-	else //is already visible, remove it
+	//nothing removed because all clients are already hide
+	else if(current_map->clients.size()>(generalData->mapVisibility.simple.max+1))
+	{
+	}
+	else //normal working
 	{
 		index=0;
 		loop_size=current_map->clients.size();

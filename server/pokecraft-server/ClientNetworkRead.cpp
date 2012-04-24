@@ -223,7 +223,7 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 	emit message(QString("parseInputAfterLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
 	quint8 mainIdent;
-	quint32 subIdent;
+	quint16 subIdent;
 	quint8 queryNumber;
 	QDataStream in(inputData);
 	in.setVersion(QDataStream::Qt_4_4);

@@ -484,6 +484,9 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 	}
 	last_direction=direction;
 
+	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
+	emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(Map_custom::directionToString((Direction)direction)).arg(moveThePlayer_list_size));
+	#endif
 	moveClient(previousMovedUnit,direction);
 }
 
@@ -546,6 +549,18 @@ void ClientMapManagement::removeAnotherClient(const quint32 &player_id)
 		to_send_map_management_move.remove(player_id);
 		to_send_map_management_remove << player_id;
 	}
+}
+
+void ClientMapManagement::dropAllClients()
+{
+	to_send_map_management_insert.clear();
+	to_send_map_management_move.clear();
+	to_send_map_management_remove.clear();
+	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_4_4);
+	out << (quint8)0xC2;
+	out << (quint16)0x000A;
+	emit sendPacket(purgeBuffer_outputData);
 }
 
 void ClientMapManagement::purgeBuffer()
