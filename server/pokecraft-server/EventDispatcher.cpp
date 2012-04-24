@@ -722,13 +722,14 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	DebugClass::debugConsole(QString("benchmark spawn: x: %1, y: %2").arg(x).arg(y));
 	generalData.mapBasePath=":/internal/benchmark-map/";
 	preload_the_data();
-	stat=Up;
+
+	Map_final * benchmark_map=generalData.map_list["map.tmx"];
 	int index=0;
 	while(index<number_of_client)
 	{
 		if(stopIt)
 			return;
-		addBot(x,y,generalData.map_list["map.tmx"]);
+		addBot(x,y,benchmark_map);
 		if(index==0)
 		{
 			//fake_clients.last()->show_details();
@@ -736,6 +737,7 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 		}
 		index++;
 	}
+	stat=Up;
 	timer_benchmark_stop->start();
 }
 
