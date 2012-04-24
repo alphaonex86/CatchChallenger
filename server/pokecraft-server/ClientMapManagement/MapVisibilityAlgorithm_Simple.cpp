@@ -9,7 +9,7 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 	wait_the_end.acquire();
 }
 
-void MapVisibilityAlgorithm_Simple::insertClient(const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void MapVisibilityAlgorithm_Simple::insertClient()
 {
 	loop_size=current_map->clients.size();
 	if(loop_size<=generalData->mapVisibility.simple.max)
@@ -20,7 +20,7 @@ void MapVisibilityAlgorithm_Simple::insertClient(const quint16 &x,const quint16 
 		{
 			//register on other clients
 			current_client=current_map->clients.at(index);
-			current_client->insertAnotherClient(player_id,current_map,x,y,static_cast<Direction>(orientation),speed);
+			current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 			//register the other client on him self
 			insertAnotherClient(current_client->player_id,current_client->current_map,current_client->x,current_client->y,current_client->last_direction,current_client->speed);
 			index++;
@@ -38,32 +38,65 @@ void MapVisibilityAlgorithm_Simple::insertClient(const quint16 &x,const quint16 
 		}
 	}
 	//auto insert to know where it have spawn
-	insertAnotherClient(player_id,current_map,x,y,static_cast<Direction>(orientation),speed);
+	insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 }
 
-void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction)
+void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged)
 {
 	loop_size=current_map->clients.size();
-
-	//here to know how player is affected
-	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-	emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(directionToString((Direction)direction)).arg(loop_size-1));
-	#endif
-
-	//normal operation
-	if(loop_size<=generalData->mapVisibility.simple.max)
+	if(mapHaveChanged)
 	{
-		index=0;
-		while(index<loop_size)
+		if(loop_size<=generalData->mapVisibility.simple.max)
 		{
-			current_client=current_map->clients.at(index);
-			if(current_client!=this)
-				current_client->moveAnotherClient(player_id,movedUnit,direction);
-			index++;
+			//insert the new client
+			index=0;
+			while(index<loop_size)
+			{
+				//register on other clients
+				current_client=current_map->clients.at(index);
+				if(current_client!=this)
+				{
+					current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
+					//register the other client on him self
+					insertAnotherClient(current_client->player_id,current_client->current_map,current_client->x,current_client->y,current_client->last_direction,current_client->speed);
+				}
+				index++;
+			}
+		}
+		else
+		{
+			//drop all show client because it have excess the limit
+			//drop on all client
+			index=0;
+			while(index<loop_size)
+			{
+				current_map->clients.at(index)->dropAllClients();
+				index++;
+			}
 		}
 	}
-	else //all client is dropped due to over load on the map
+	else
 	{
+		//here to know how player is affected
+		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
+		emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(directionToString((Direction)direction)).arg(loop_size-1));
+		#endif
+
+		//normal operation
+		if(loop_size<=generalData->mapVisibility.simple.max)
+		{
+			index=0;
+			while(index<loop_size)
+			{
+				current_client=current_map->clients.at(index);
+				if(current_client!=this)
+					current_client->moveAnotherClient(player_id,movedUnit,direction);
+				index++;
+			}
+		}
+		else //all client is dropped due to over load on the map
+		{
+		}
 	}
 }
 
@@ -95,8 +128,9 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 	}
 }
 
-void MapVisibilityAlgorithm_Simple::changeMap(Map_final *old_map,Map_final *new_map)
+void MapVisibilityAlgorithm_Simple::mapVisiblity_unloadFromTheMap()
 {
+	removeClient();
 }
 
 void MapVisibilityAlgorithm_Simple::reinsertAllClient(const int &loop_size)

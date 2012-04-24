@@ -43,10 +43,10 @@ public:
 	quint16				speed;
 protected:
 	//pass to the Map management visibility algorithm
-	virtual void insertClient(const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed) = 0;
-	virtual void moveClient(const quint8 &movedUnit,const Direction &direction) = 0;
+	virtual void insertClient() = 0;
+	virtual void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged) = 0;
 	virtual void removeClient() = 0;
-	virtual void changeMap(Map_final *old_map,Map_final *new_map) = 0;
+	virtual void mapVisiblity_unloadFromTheMap() = 0;
 	//internal var
 	GeneralData *generalData;
 	//to stop
@@ -104,9 +104,11 @@ private:
 
 	//map start related
 	quint16				at_start_x,at_start_y;
-	//map load/unload
+	//map load/unload and change
 	void				loadOnTheMap();
 	void				unloadFromTheMap();
+	bool				mapHaveChanged;
+
 };
 
 #endif // CLIENTMAPMANAGEMENT_H
