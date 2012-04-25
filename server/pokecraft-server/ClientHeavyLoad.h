@@ -36,6 +36,7 @@ public slots:
 	void fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,Map_final *map,const Orientation &orientation,const QString &skin);
 	//normal slots
 	void askIfIsReadyToStop();
+	void stop();
 private:
 	bool fake_mode;
 	GeneralData *generalData;

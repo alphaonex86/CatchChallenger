@@ -154,6 +154,11 @@ void ClientHeavyLoad::askIfIsReadyToStop()
 	emit isReadyToStop();
 }
 
+void ClientHeavyLoad::stop()
+{
+	deleteLater();
+}
+
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps)
 {
 	QByteArray outputData;

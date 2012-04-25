@@ -31,9 +31,6 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	player_informations.public_informations.id=0;
 	player_informations.is_fake=false;
 
-	stopIt=false;
-	pass_in_destructor=true;
-
 	if(socket!=NULL)
 	{
 		remote_ip=socket->peerAddress().toString();
@@ -80,9 +77,9 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 
 	//connect the player information
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
 	connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),
@@ -118,16 +115,14 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkWrite,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
+
+	stopped_object=0;
 }
 
+//need be call after isReadyToDelete() emited
 Client::~Client()
 {
-	stopIt=true;
 	disconnectClient();
-	wait_the_end.acquire();
-	if(!pass_in_destructor)
-		return;
-	pass_in_destructor=false;
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	normalOutput("Destroyed client");
 	#endif
@@ -137,11 +132,6 @@ Client::~Client()
 		delete socket;
 		socket=NULL;
 	}
-	clientHeavyLoad->deleteLater();
-	clientBroadCast->deleteLater();
-	clientNetworkWrite->deleteLater();
-	clientMapManagement->deleteLater();
-	clientNetworkRead->deleteLater();
 }
 
 /// \brief new error at connexion
@@ -184,25 +174,22 @@ void Client::disconnectClient()
 	clientHeavyLoad->disconnect();
 	clientMapManagement->disconnect();
 	clientNetworkWrite->disconnect();
-	//QCoreApplication::processEvents();//useless because the ready to stop signal will be parsed after all
-	if(is_logged)
-	{
-		generalData->connected_players--;
-		generalData->player_updater.removeConnectedPlayer();
-		is_logged=false;
-	}
-	disconnectStep=disconnectNextStepValue_before_stop_the_thread_1;
 
+	//connect to save
 	connect(clientMapManagement,SIGNAL(updatePlayerPosition(QString,quint16,quint16,Orientation)),
 		clientHeavyLoad,SLOT(updatePlayerPosition(QString,quint16,quint16,Orientation)),Qt::QueuedConnection);
+
 	//connect to quit
 	connect(clientNetworkRead,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientMapManagement,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientBroadCast,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
 	connect(clientNetworkWrite,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-
 	connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+	connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+	connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+	connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+	connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
 	emit askIfIsReadyToStop();
 
 	emit player_is_disconnected(player_informations.public_informations.pseudo);
@@ -212,46 +199,35 @@ void Client::disconnectNextStep()
 {
 	if(is_ready_to_stop)
 		return;
-	switch(disconnectStep)
+	stopped_object++;
+	if(stopped_object==5)
 	{
-		case disconnectNextStepValue_before_stop_the_thread_1:
-			disconnectStep=disconnectNextStepValue_before_stop_the_thread_2;
-			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()));
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
-			emit askIfIsReadyToStop();
-		break;
-		case disconnectNextStepValue_before_stop_the_thread_2:
+		//remove the player
+		generalData->connected_players--;
+		generalData->player_updater.removeConnectedPlayer();
+		is_logged=false;
 
-			disconnectStep=disconnectNextStepValue_before_stop_the_thread_3;
-			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
-			emit askIfIsReadyToStop();
-		break;
-		case disconnectNextStepValue_before_stop_the_thread_3:
-			disconnectStep=disconnectNextStepValue_before_stop_the_thread_4;
-			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
-			emit askIfIsReadyToStop();
-		break;
-		case disconnectNextStepValue_before_stop_the_thread_4:
-			disconnectStep=disconnectNextStepValue_before_stop_the_thread_5;
-			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
-			connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
-			emit askIfIsReadyToStop();
-		break;
+		//reconnect to real stop
+		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()));
+		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
+		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
+		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
+		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
+		connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(stop()),Qt::QueuedConnection);
+		connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(stop()),Qt::QueuedConnection);
+		connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(stop()),Qt::QueuedConnection);
+		connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(stop()),Qt::QueuedConnection);
+		connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(stop()),Qt::QueuedConnection);
+		emit askIfIsReadyToStop();
 
-		case disconnectNextStepValue_before_stop_the_thread_5:
-			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-			normalOutput("disconnectNextStepValue_before_stop_the_thread_5");
-			#endif
-
-			emit isReadyToDelete();
-			is_ready_to_stop=true;
-			wait_the_end.release();
-		break;
-		default:
-		break;
+		//now the object is not usable
+		clientBroadCast=NULL;
+		clientHeavyLoad=NULL;
+		clientMapManagement=NULL;
+		clientNetworkRead=NULL;
+		clientNetworkWrite=NULL;
 	}
+
 }
 
 void Client::errorOutput(QString errorString)
@@ -285,6 +261,12 @@ void Client::send_player_informations()
 	is_logged=true;
 	generalData->connected_players++;
 	generalData->player_updater.addConnectedPlayer();
+
+	//remove the useless connection
+	disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));
+	disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()));
+	disconnect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)));
+
 }
 
 QString Client::getPseudo()

@@ -81,7 +81,13 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 
 void ClientBroadCast::askIfIsReadyToStop()
 {
+	generalData->clientBroadCastList.removeOne(this);
 	emit isReadyToStop();
+}
+
+void ClientBroadCast::stop()
+{
+	deleteLater();
 }
 
 void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &text,const quint32 &sender_player_id)

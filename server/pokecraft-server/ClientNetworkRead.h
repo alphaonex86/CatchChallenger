@@ -24,6 +24,7 @@ public slots:
 	void fake_receive_data(const QByteArray &data);
 	//normal slots
 	void askIfIsReadyToStop();
+	void stop();
 private slots:
 	void parseInput(const QByteArray & inputData);
 	void parseInputAfterLogin(const QByteArray & inputData);

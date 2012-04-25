@@ -6,7 +6,6 @@ MapVisibilityAlgorithm_Simple::MapVisibilityAlgorithm_Simple()
 
 MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 {
-	wait_the_end.acquire();
 }
 
 void MapVisibilityAlgorithm_Simple::insertClient()

@@ -49,8 +49,6 @@ protected:
 	virtual void mapVisiblity_unloadFromTheMap() = 0;
 	//internal var
 	GeneralData *generalData;
-	//to stop
-	QSemaphore wait_the_end;
 	//debug function
 	QString directionToString(const Direction &direction);
 	// stuff to send
@@ -71,6 +69,7 @@ public slots:
 	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	//normal slots
 	void askIfIsReadyToStop();
+	void stop();
 private slots:
 	void purgeBuffer();
 private:
