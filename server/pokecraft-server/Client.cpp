@@ -137,6 +137,16 @@ Client::~Client()
 		delete socket;
 		socket=NULL;
 	}
+	delete clientHeavyLoad;
+	clientHeavyLoad=NULL;
+	delete clientBroadCast;
+	clientBroadCast=NULL;
+	delete clientNetworkWrite;
+	clientNetworkWrite=NULL;
+	delete clientMapManagement;
+	clientMapManagement=NULL;
+	delete clientNetworkRead;
+	clientNetworkRead=NULL;
 }
 
 /// \brief new error at connexion
@@ -211,22 +221,26 @@ void Client::disconnectNextStep()
 	{
 		case disconnectNextStepValue_before_stop_the_thread_1:
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_2;
+			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()));
 			connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_2:
 
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_3;
+			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
 			connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_3:
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_4;
+			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
 			connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
 		case disconnectNextStepValue_before_stop_the_thread_4:
 			disconnectStep=disconnectNextStepValue_before_stop_the_thread_5;
+			disconnect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
 			connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
 			emit askIfIsReadyToStop();
 		break;
@@ -235,17 +249,6 @@ void Client::disconnectNextStep()
 			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 			normalOutput("disconnectNextStepValue_before_stop_the_thread_5");
 			#endif
-
-			delete clientHeavyLoad;
-			clientHeavyLoad=NULL;
-			delete clientBroadCast;
-			clientBroadCast=NULL;
-			delete clientNetworkWrite;
-			clientNetworkWrite=NULL;
-			delete clientMapManagement;
-			clientMapManagement=NULL;
-			delete clientNetworkRead;
-			clientNetworkRead=NULL;
 
 			emit isReadyToDelete();
 			is_ready_to_stop=true;
