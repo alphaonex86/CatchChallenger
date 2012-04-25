@@ -37,6 +37,11 @@ void ClientNetworkRead::askIfIsReadyToStop()
 	emit isReadyToStop();
 }
 
+void ClientNetworkRead::stop()
+{
+	deleteLater();
+}
+
 void ClientNetworkRead::readyRead()
 {
 	if(stopIt)

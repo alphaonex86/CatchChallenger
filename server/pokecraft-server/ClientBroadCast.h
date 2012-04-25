@@ -43,6 +43,7 @@ public slots:
 	void send_player_informations();
 	//normal slots
 	void askIfIsReadyToStop();
+	void stop();
 	void sendSystemMessage(const QString &text,const bool &important=false);
 	//player watching
 	void addPlayersInformationToWatch(const QList<quint32> &player_ids,const quint8 &type_player_query);

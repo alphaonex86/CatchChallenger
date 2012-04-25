@@ -38,7 +38,6 @@ void ClientMapManagement::askIfIsReadyToStop()
 	if(current_map==NULL)
 	{
 		emit isReadyToStop();
-		wait_the_end.release();
 		return;
 	}
 	unloadFromTheMap();
@@ -66,7 +65,11 @@ void ClientMapManagement::askIfIsReadyToStop()
 	}
 	current_map=NULL;
 	emit isReadyToStop();
-	wait_the_end.release();
+}
+
+void ClientMapManagement::stop()
+{
+	deleteLater();
 }
 
 void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)

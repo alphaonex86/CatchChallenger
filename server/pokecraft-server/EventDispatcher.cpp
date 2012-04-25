@@ -54,6 +54,7 @@ EventDispatcher::EventDispatcher()
 	waitTheEnd.release();
 }
 
+//call only when the server is down
 EventDispatcher::~EventDispatcher()
 {
 	stopIt=true;

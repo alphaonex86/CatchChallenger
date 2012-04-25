@@ -28,21 +28,18 @@ class Client : public QObject
 public:
 	explicit Client(QTcpSocket *socket,GeneralData *generalData);
 	~Client();
+	//cache
 	quint32 id;
-	void externalPacketSend(QByteArray data);
-	void externalAddLookupPlayer(quint32 id);
-	void externalRemoveLookupPlayer(quint32 id);
+	//to get some info
 	QString getPseudo();
-	bool is_ready_to_stop;
-	void fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin);
 	Map_player_info getMapPlayerInfo();
+	//to prevent remove before the right moment
+	bool is_ready_to_stop;
+	//do a fake login
+	void fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin);
 private:
 	bool ask_is_ready_to_stop;
-	QByteArray random_seed;
-	QString code_map_layer;
 	bool is_logged;
-	//Map object pointer where you are registered
-	QString map_name;
 	//-------------------
 	GeneralData *generalData;
 	Player_private_and_public_informations player_informations;
@@ -51,44 +48,46 @@ private:
 	ClientMapManagement *clientMapManagement;
 	ClientNetworkRead *clientNetworkRead;
 	ClientNetworkWrite *clientNetworkWrite;
-	enum disconnectNextStepValue
-	{
-		disconnectNextStepValue_before_stop_the_thread_1,
-		disconnectNextStepValue_before_stop_the_thread_2,
-		disconnectNextStepValue_before_stop_the_thread_3,
-		disconnectNextStepValue_before_stop_the_thread_4,
-		disconnectNextStepValue_before_stop_the_thread_5
-	};
-	disconnectNextStepValue disconnectStep;
-	void connectToBroadCast();
-	void disconnectToBroadCast();
+
 	//socket related
 	QTcpSocket *socket;
 	QString remote_ip;
 	quint16 port;
-	bool stopIt,pass_in_destructor;
-	QSemaphore wait_the_end;
+
+	quint8 stopped_object;
 private slots:
+	//socket related
 	void connectionError(QAbstractSocket::SocketError);
+	//normal management related
 	void errorOutput(QString errorString);
 	void kicked();
 	void normalOutput(QString message);
+	//internal management related
 	void send_player_informations();
+	//remove and stop related
 	void disconnectNextStep();
+
+	//??? in private slot?
 	void serverCommand(QString command,QString extraText);
 	void local_sendPM(QString text,QString pseudo);
 	void local_sendChatText(Chat_type chatType,QString text);
 signals:
+	//remove and stop related
 	void askIfIsReadyToStop();
 	void isReadyToDelete();
-	void stop_server();
-	void restart_server();
+
+	//to pass to the event manager to display the information
 	void new_player_is_connected(const Player_private_and_public_informations &player);
 	void player_is_disconnected(const QString &pseudo);
 	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
+
+	//to async the message
 	void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin);
 	void fake_send_data(const QByteArray &data);
 	void fake_send_received_data(const QByteArray &data);
+	void try_ask_stop();
+
+	//to send to event manger to have command
 	void emit_serverCommand(const QString&,const QString&);
 public slots:
 	void disconnectClient();

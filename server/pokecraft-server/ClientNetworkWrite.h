@@ -16,6 +16,7 @@ public slots:
 	void sendPacket(const QByteArray &data);
 	//normal slots
 	void askIfIsReadyToStop();
+	void stop();
 private:
 	QTcpSocket * socket;
 	QByteArray block;
