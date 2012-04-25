@@ -449,7 +449,7 @@ void ClientMapManagement::purgeBuffer()
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 		emit message(
 			QString("move player_id: %1, for player: %2")
-			.arg(i.key())
+			.arg(i_move.key())
 			.arg(player_id)
 			 );
 		#endif

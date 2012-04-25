@@ -53,7 +53,7 @@ protected:
 	QSemaphore wait_the_end;
 	//debug function
 	QString directionToString(const Direction &direction);
-	//stuff to send
+	// stuff to send
 	QHash<quint32, map_management_insert>			to_send_map_management_insert;
 	QHash<quint32, QList<map_management_movement> >		to_send_map_management_move;
 	QSet<quint32>						to_send_map_management_remove;
