@@ -48,7 +48,6 @@ enum Direction
 
 struct map_management_insert
 {
-	quint32 id;
 	QString fileName;
 	quint16 x;
 	quint16 y;

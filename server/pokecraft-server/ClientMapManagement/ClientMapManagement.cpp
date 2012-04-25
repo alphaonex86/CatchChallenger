@@ -325,20 +325,21 @@ void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map
 {
 	map_management_insert insertClient_temp;
 	insertClient_temp.fileName=map->map_file;
-	insertClient_temp.id=player_id;
 	insertClient_temp.direction=direction;
 	insertClient_temp.x=x;
 	insertClient_temp.y=y;
 	insertClient_temp.speed=speed;
-	to_send_map_management_insert << insertClient_temp;
+	to_send_map_management_insert[player_id]=insertClient_temp;
 }
 
 /// \note The first heavy function
+/// \todo put extra check to check if into remove
 void ClientMapManagement::moveAnotherClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 	emit message(QString("moveClient(%1,%2,%3)").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)));
 	#endif
+
 	moveClient_tempMov.movedUnit=movedUnit;
 	moveClient_tempMov.direction=direction;
 	to_send_map_management_move[player_id] << moveClient_tempMov;
@@ -346,13 +347,16 @@ void ClientMapManagement::moveAnotherClient(const quint32 &player_id,const quint
 
 void ClientMapManagement::removeAnotherClient(const quint32 &player_id)
 {
+	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
 	if(to_send_map_management_remove.contains(player_id))
-		emit message("try dual remove");
-	else
 	{
-		to_send_map_management_move.remove(player_id);
-		to_send_map_management_remove << player_id;
+		emit message("try dual remove");
+		return;
 	}
+	#endif
+
+	to_send_map_management_move.remove(player_id);
+	to_send_map_management_remove << player_id;
 }
 
 void ClientMapManagement::dropAllClients()
@@ -388,90 +392,84 @@ void ClientMapManagement::purgeBuffer()
 	QDataStream outLoop(&purgeBuffer_outputDataLoop, QIODevice::WriteOnly);
 	outLoop.setVersion(QDataStream::Qt_4_4);
 
-	purgeBuffer_list_size=to_send_map_management_remove.size();
-	if(purgeBuffer_list_size>0)
+	i_remove = to_send_map_management_remove.constBegin();
+	i_remove_end = to_send_map_management_remove.constEnd();
+	while (i_remove != i_remove_end)
 	{
-		purgeBuffer_index=0;
-		while(purgeBuffer_index<purgeBuffer_list_size)
-		{
-			if(stopIt)
-				return;
-			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-			emit message(
-						QString("player_id to remove: %1, for player: %2")
-						.arg(to_send_map_management_remove.at(purgeBuffer_index))
-						.arg(player_id)
-						 );
-			#endif
-			outLoop << to_send_map_management_remove.at(purgeBuffer_index);
-			outLoop << (quint8)0x03;
-			purgeBuffer_index++;
-			purgeBuffer_player_affected++;
-		}
-		to_send_map_management_remove.clear();
+		if(stopIt)
+			return;
+		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+		emit message(
+			QString("player_id to remove: %1, for player: %2")
+			.arg(*i_remove)
+			.arg(player_id)
+			 );
+		#endif
+		outLoop << *i_remove;
+		outLoop << (quint8)0x03;
+		purgeBuffer_player_affected++;
 	}
+	to_send_map_management_remove.clear();
 
-	purgeBuffer_list_size=to_send_map_management_insert.size();
-	if(purgeBuffer_list_size>0)
+	i_insert = to_send_map_management_insert.constBegin();
+	i_insert_end = to_send_map_management_insert.constEnd();
+	while (i_insert != i_insert_end)
 	{
-		purgeBuffer_index=0;
-		while(purgeBuffer_index<purgeBuffer_list_size)
-		{
-			if(stopIt)
-				return;
-			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-			emit message(
-						QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6")
-						.arg(to_send_map_management_insert.at(purgeBuffer_index).id)
-						.arg(to_send_map_management_insert.at(purgeBuffer_index).fileName)
-						.arg(to_send_map_management_insert.at(purgeBuffer_index).x)
-						.arg(to_send_map_management_insert.at(purgeBuffer_index).y)
-						.arg(directionToString(to_send_map_management_insert.at(purgeBuffer_index).direction))
-						.arg(player_id)
-						 );
-			#endif
-			outLoop << to_send_map_management_insert.at(purgeBuffer_index).id;
-			outLoop << (quint8)0x01;
-			outLoop << to_send_map_management_insert.at(purgeBuffer_index).fileName;
-			outLoop << to_send_map_management_insert.at(purgeBuffer_index).x;
-			outLoop << to_send_map_management_insert.at(purgeBuffer_index).y;
-			outLoop << (quint8)to_send_map_management_insert.at(purgeBuffer_index).direction;
-			outLoop << to_send_map_management_insert.at(purgeBuffer_index).speed;
-			purgeBuffer_index++;
-			purgeBuffer_player_affected++;
-		}
-		to_send_map_management_insert.clear();
+		if(stopIt)
+			return;
+		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+		emit message(
+			QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6")
+			.arg(i_insert.key())
+			.arg(i_insert.value().fileName)
+			.arg(i_insert.value().x)
+			.arg(i_insert.value().y)
+			.arg(directionToString(i_insert.value().direction))
+			.arg(player_id)
+			 );
+		#endif
+		outLoop << i_insert.key();
+		outLoop << (quint8)0x01;
+		outLoop << i_insert.value().fileName;
+		outLoop << i_insert.value().x;
+		outLoop << i_insert.value().y;
+		outLoop << (quint8)i_insert.value().direction;
+		outLoop << i_insert.value().speed;
+		i_insert++;
+		purgeBuffer_player_affected++;
 	}
+	to_send_map_management_insert.clear();
 
 	purgeBuffer_list_size_internal=0;
 	purgeBuffer_indexMovement=0;
-	QHash<quint32, QList<map_management_movement> >::const_iterator i = to_send_map_management_move.constBegin();
-	while (i != to_send_map_management_move.constEnd())
+	i_move = to_send_map_management_move.constBegin();
+	i_move_end = to_send_map_management_move.constEnd();
+	while (i_move != i_move_end)
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 		emit message(
-					QString("move player_id: %1, for player: %2")
-					.arg(i.key())
-					.arg(player_id)
-					 );
+			QString("move player_id: %1, for player: %2")
+			.arg(i.key())
+			.arg(player_id)
+			 );
 		#endif
-		outLoop << i.key();
+		outLoop << i_move.key();
 		outLoop << (quint8)0x02;
-		purgeBuffer_list_size_internal=i.value().size();
+		purgeBuffer_list_size_internal=i_move.value().size();
 /*		if(purgeBuffer_list_size_internal==0)
 			DebugClass::debugConsole(QString("for player: %1, list_size_internal==0").arg(this->player_id));*/
 		outLoop << (quint8)purgeBuffer_list_size_internal;
 		purgeBuffer_indexMovement=0;
 		while(purgeBuffer_indexMovement<purgeBuffer_list_size_internal)
 		{
-			outLoop << i.value().at(purgeBuffer_indexMovement).movedUnit;
-			outLoop << (quint8)i.value().at(purgeBuffer_indexMovement).direction;
+			outLoop << i_move.value().at(purgeBuffer_indexMovement).movedUnit;
+			outLoop << (quint8)i_move.value().at(purgeBuffer_indexMovement).direction;
 			purgeBuffer_indexMovement++;
 		}
 		purgeBuffer_player_affected++;
 		if(stopIt)
 			return;
-		++i;
+		++i_move;
 	}
 	to_send_map_management_move.clear();
 

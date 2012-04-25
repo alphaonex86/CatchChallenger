@@ -13,6 +13,8 @@
 #include "../pokecraft-general/GeneralStructures.h"
 #include "../VariableServer.h"
 
+/// \warning here, 0 random should be call
+/// \warning here only the call with global scope need be do
 class ClientBroadCast : public QObject
 {
 	Q_OBJECT

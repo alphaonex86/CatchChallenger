@@ -26,9 +26,9 @@ public:
 	/// \bug is not thread safe, and called by another thread, error can occure
 	Map_player_info getMapPlayerInfo();
 	//to change the info on another client
-	void insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed);
-	void moveAnotherClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction);
-	void removeAnotherClient(const quint32 &player_id);
+	virtual void insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed);
+	virtual void moveAnotherClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction);
+	virtual void removeAnotherClient(const quint32 &player_id);
 	//drop all clients
 	void dropAllClients();
 
@@ -53,6 +53,10 @@ protected:
 	QSemaphore wait_the_end;
 	//debug function
 	QString directionToString(const Direction &direction);
+	//stuff to send
+	QHash<quint32, map_management_insert>			to_send_map_management_insert;
+	QHash<quint32, QList<map_management_movement> >		to_send_map_management_move;
+	QSet<quint32>						to_send_map_management_remove;
 signals:
 	//normal signals
 	void error(const QString &error);
@@ -70,11 +74,6 @@ public slots:
 private slots:
 	void purgeBuffer();
 private:
-	//stuff to send
-	QList<map_management_insert>				to_send_map_management_insert;//NOT switch to QHash<quint32, map_management_insert >, because never search by id
-	QHash<quint32, QList<map_management_movement> >		to_send_map_management_move;
-	QList<quint32>						to_send_map_management_remove;
-
 	//info linked
 	Orientation			at_start_orientation;
 	QString				at_start_map_name;
@@ -91,6 +90,12 @@ private:
 	int purgeBuffer_list_size_internal;
 	int purgeBuffer_indexMovement;
 	map_management_move purgeBuffer_move;
+	QHash<quint32, QList<map_management_movement> >::const_iterator i_move;
+	QHash<quint32, QList<map_management_movement> >::const_iterator i_move_end;
+	QHash<quint32, map_management_insert>::const_iterator i_insert;
+	QHash<quint32, map_management_insert>::const_iterator i_insert_end;
+	QSet<quint32>::const_iterator i_remove;
+	QSet<quint32>::const_iterator i_remove_end;
 
 	//temp variable to move on the map
 	map_management_movement moveClient_tempMov;
