@@ -639,7 +639,7 @@ void EventDispatcher::removeOneClient()
 	Client *client=qobject_cast<Client *>(QObject::sender());
 	if(client==NULL)
 	{
-		DebugClass::debugConsole("NULL client at disconnection");
+		DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
 		return;
 	}
 	if(!client->is_ready_to_stop)
@@ -648,7 +648,7 @@ void EventDispatcher::removeOneClient()
 		return;
 	}
 	client_list.removeOne(client);
-	delete client;//client->deleteLater();
+	client->deleteLater();
 	check_if_now_stopped();
 }
 
@@ -657,11 +657,11 @@ void EventDispatcher::removeOneBot()
 	FakeBot *client=qobject_cast<FakeBot *>(QObject::sender());
 	if(client==NULL)
 	{
-		DebugClass::debugConsole("NULL client at disconnection");
+		DebugClass::debugConsole("removeOneBot(): NULL client at disconnection");
 		return;
 	}
 	fake_clients.removeOne(client);
-	delete client;//client->deleteLater();
+	client->deleteLater();
 	check_if_now_stopped();
 }
 
@@ -674,7 +674,6 @@ void EventDispatcher::removeBots()
 		fake_clients.at(index)->stop();
 		fake_clients.at(index)->disconnect();
 		disconnect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()));
-		connect(fake_clients.last(),SIGNAL(disconnected()),client_list.last(),SLOT(disconnectClient()),Qt::QueuedConnection);
 		connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
 		//delete after the signal
 		index++;
@@ -690,8 +689,8 @@ void EventDispatcher::addBot(quint16 x,quint16 y,Map_final *map,QString skin)
 	fake_clients << new FakeBot(x,y,map,Direction_look_at_top);
 	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
 	connect(client_list.last(),SIGNAL(fake_send_data(QByteArray)),fake_clients.last(),SLOT(fake_send_data(QByteArray)),Qt::QueuedConnection);
-	connect(client_list.last(),SIGNAL(isReadyToDelete()),fake_clients.last(),SLOT(stop()),Qt::QueuedConnection);
-	connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),fake_clients.last(),SLOT(stop()),Qt::QueuedConnection);
+	connect(client_list.last(),SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
+	//connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SLOT(removeOneClient()),Qt::QueuedConnection);
 	connect(fake_clients.last(),SIGNAL(fake_receive_data(QByteArray)),client_list.last(),SLOT(fake_receive_data(QByteArray)));
 	connect_the_last_client();
 	fake_clients.last()->moveToThread(generalData.eventThreaderList.at(5));
