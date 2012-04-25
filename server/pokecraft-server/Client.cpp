@@ -312,11 +312,6 @@ void Client::serverCommand(QString command,QString extraText)
 	emit emit_serverCommand(command,extraText);
 }
 
-void Client::askUpdatePlayerNumber()
-{
-	emit updatePlayerNumber();
-}
-
 void Client::fake_receive_data(QByteArray data)
 {
 	emit fake_send_received_data(data);

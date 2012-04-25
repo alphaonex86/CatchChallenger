@@ -19,7 +19,7 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 		while(index<loop_size)
 		{
 			//register on other clients
-			current_client=current_map->clients.at(index);
+			current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 			current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 			//register the other client on him self
 			insertAnotherClient(current_client->player_id,current_client->current_map,current_client->x,current_client->y,current_client->last_direction,current_client->speed);
@@ -53,7 +53,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 			while(index<loop_size)
 			{
 				//register on other clients
-				current_client=current_map->clients.at(index);
+				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 				if(current_client!=this)
 				{
 					current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
@@ -88,9 +88,13 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 			index=0;
 			while(index<loop_size)
 			{
-				current_client=current_map->clients.at(index);
+				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 				if(current_client!=this)
+					#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
+					current_client->moveAnotherClient(player_id,current_map,movedUnit,direction);
+					#else
 					current_client->moveAnotherClient(player_id,movedUnit,direction);
+					#endif
 				index++;
 			}
 		}
@@ -138,13 +142,14 @@ void MapVisibilityAlgorithm_Simple::reinsertAllClient(const int &loop_size)
 	index=0;
 	while(index<loop_size)
 	{
-		current_client=current_map->clients.at(index);
+		current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 		if(current_client!=this)
 			current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 		index++;
 	}
 }
 
+#ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
 //remove the move/remove
 void MapVisibilityAlgorithm_Simple::insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
 {
@@ -152,7 +157,27 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const quint32 &player_id
 	to_send_map_management_move.remove(player_id);
 	ClientMapManagement::insertAnotherClient(player_id,map,x,y,direction,speed);
 }
+#endif
 
+#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
+void MapVisibilityAlgorithm_Simple::moveAnotherClient(const quint32 &player_id,const Map_final *map,const quint8 &movedUnit,const Direction &direction)
+{
+	if(overMove.contains(player_id))
+	{
+		to_send_map_management_remove.remove(player_id);
+		ClientMapManagement::insertAnotherClient(player_id,map,x,y,direction,speed);
+	}
+	else if((to_send_map_management_move[player_id].size()*2+1)>=(4+map->map_file.size()+2+2+1+2))
+	{
+		to_send_map_management_move.remove(player_id);
+		overMove << player_id;
+	}
+	else
+		ClientMapManagement::moveAnotherClient(player_id,movedUnit,direction);
+}
+#endif
+
+#ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
 //remove the move/insert
 void MapVisibilityAlgorithm_Simple::removeAnotherClient(const quint32 &player_id)
 {
@@ -160,3 +185,4 @@ void MapVisibilityAlgorithm_Simple::removeAnotherClient(const quint32 &player_id
 	to_send_map_management_move.remove(player_id);
 	ClientMapManagement::removeAnotherClient(player_id);
 }
+#endif

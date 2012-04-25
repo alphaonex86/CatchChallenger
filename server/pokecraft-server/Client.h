@@ -81,7 +81,6 @@ private slots:
 signals:
 	void askIfIsReadyToStop();
 	void isReadyToDelete();
-	void updatePlayerNumber();
 	void stop_server();
 	void restart_server();
 	void new_player_is_connected(const Player_private_and_public_informations &player);
@@ -93,7 +92,6 @@ signals:
 	void emit_serverCommand(const QString&,const QString&);
 public slots:
 	void disconnectClient();
-	void askUpdatePlayerNumber();
 	/// \warning it need be complete protocol trame
 	void fake_receive_data(QByteArray data);
 };

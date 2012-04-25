@@ -27,6 +27,7 @@ class EventDispatcher : public QObject
 public:
 	explicit EventDispatcher();
 	~EventDispatcher();
+	//stat function
 	bool isListen();
 	bool isStopped();
 	bool isInBenchmark();
@@ -34,16 +35,17 @@ public:
 	quint16 player_max();
 	QStringList getLatency();
 	quint32 getTotalLatency();
-	void start_benchmark(quint16 second,quint16 number_of_client);
+
 public slots:
 	//to manipulate the server for restart and stop
 	void start_server();
 	void stop_server();
-	void load_settings();
+	void start_benchmark(quint16 second,quint16 number_of_client);
 	//todo
 	/*void send_system_message(QString text);
 	void send_pm_message(QString pseudo,QString text);*/
 private:
+	void load_settings();
 	void preload_the_data();
 	void preload_the_map();
 	void unload_the_data();
@@ -70,7 +72,6 @@ private:
 	GeneralData generalData;
 	QList<Client *> client_list;
 	QString listenIpAndPort(QString server_ip,quint16 server_port);
-	void internal_stop();
 	enum ServerStat
 	{
 		Down=0,
@@ -103,15 +104,22 @@ private:
 	bool stopIt;
 	QSemaphore waitTheEnd;
 private slots:
+	//new connection
 	void newConnection();
+	//remove all finished client
 	void removeOneClient();
+	void removeOneBot();
+	//parse general order from the client
+	void serverCommand(QString command,QString extraText);
+	//init, constructor, destructor
+	void initAll();//call before all
+	void destructor();//call after the server is closed
+	//starting function
+	void stop_internal_server();
 	void stop_benchmark();
+	void check_if_now_stopped();
 	void start_internal_benchmark(quint16 second,quint16 number_of_client);
 	void start_internal_server();
-	void serverCommand(QString command,QString extraText);
-	void initAll();
-	void destructor();
-	void stop_internal_server();
 signals:
 	void try_stop_server();
 	void try_initAll();
