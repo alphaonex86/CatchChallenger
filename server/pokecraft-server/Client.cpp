@@ -137,16 +137,11 @@ Client::~Client()
 		delete socket;
 		socket=NULL;
 	}
-	delete clientHeavyLoad;
-	clientHeavyLoad=NULL;
-	delete clientBroadCast;
-	clientBroadCast=NULL;
-	delete clientNetworkWrite;
-	clientNetworkWrite=NULL;
-	delete clientMapManagement;
-	clientMapManagement=NULL;
-	delete clientNetworkRead;
-	clientNetworkRead=NULL;
+	clientHeavyLoad->deleteLater();
+	clientBroadCast->deleteLater();
+	clientNetworkWrite->deleteLater();
+	clientMapManagement->deleteLater();
+	clientNetworkRead->deleteLater();
 }
 
 /// \brief new error at connexion
