@@ -69,8 +69,8 @@ void FakeBot::stop_step()
 void FakeBot::stop()
 {
 	stop_step();
-	emit disconnected();
 	wait_to_stop.release();
+	emit disconnected();
 }
 
 void FakeBot::show_details()

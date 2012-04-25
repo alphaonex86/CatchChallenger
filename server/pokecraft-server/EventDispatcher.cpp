@@ -515,8 +515,6 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	int index=0;
 	while(index<number_of_client)
 	{
-		if(stopIt)
-			return;
 		addBot(x,y,benchmark_map);
 		if(index==0)
 		{
@@ -525,9 +523,9 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 		}
 		index++;
 	}
-	waitTheEnd.acquire();
-	stat=Up;
 	timer_benchmark_stop->start();
+	stat=Up;
+	waitTheEnd.acquire();
 }
 
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
@@ -602,7 +600,9 @@ void EventDispatcher::check_if_now_stopped()
 		delete server;
 		server=NULL;
 	}
+	stopIt=false;
 	emit is_started(false);
+	waitTheEnd.release();
 }
 
 //call by normal stop
@@ -672,6 +672,10 @@ void EventDispatcher::removeBots()
 	while(index<list_size)
 	{
 		fake_clients.at(index)->stop();
+		fake_clients.at(index)->disconnect();
+		disconnect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()));
+		connect(fake_clients.last(),SIGNAL(disconnected()),client_list.last(),SLOT(disconnectClient()),Qt::QueuedConnection);
+		connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
 		//delete after the signal
 		index++;
 	}
@@ -689,8 +693,6 @@ void EventDispatcher::addBot(quint16 x,quint16 y,Map_final *map,QString skin)
 	connect(client_list.last(),SIGNAL(isReadyToDelete()),fake_clients.last(),SLOT(stop()),Qt::QueuedConnection);
 	connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),fake_clients.last(),SLOT(stop()),Qt::QueuedConnection);
 	connect(fake_clients.last(),SIGNAL(fake_receive_data(QByteArray)),client_list.last(),SLOT(fake_receive_data(QByteArray)));
-	connect(fake_clients.last(),SIGNAL(disconnected()),client_list.last(),SLOT(disconnectClient()),Qt::QueuedConnection);
-	connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
 	connect_the_last_client();
 	fake_clients.last()->moveToThread(generalData.eventThreaderList.at(5));
 	fake_clients.last()->start_step();
