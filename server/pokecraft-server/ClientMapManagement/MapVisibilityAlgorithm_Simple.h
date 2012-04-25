@@ -18,6 +18,10 @@ protected:
 private:
 	int index,loop_size;
 	ClientMapManagement *current_client;
+	//overwrite
+	//remove the move/remove
+	void insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed);
+	void removeAnotherClient(const quint32 &player_id);
 };
 
 #endif // MAPVISIBILITYALGORITHM_SIMPLE_H

@@ -20,7 +20,7 @@ EventDispatcher::EventDispatcher()
 	generalData.max_view_range=40;
 	generalData.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	generalData.mapVisibilityAlgorithm=MapVisibilityAlgorithm_simple;
-	generalData.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_TIME_TO_SEND_MOVEMENT);
+	generalData.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
 	generalData.eventThreaderList << new EventThreader();//broad cast (0)
 	generalData.eventThreaderList << new EventThreader();//map management (1)

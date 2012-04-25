@@ -144,3 +144,19 @@ void MapVisibilityAlgorithm_Simple::reinsertAllClient(const int &loop_size)
 		index++;
 	}
 }
+
+//remove the move/remove
+void MapVisibilityAlgorithm_Simple::insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
+{
+	to_send_map_management_remove.remove(player_id);
+	to_send_map_management_move.remove(player_id);
+	ClientMapManagement::insertAnotherClient(player_id,map,x,y,direction,speed);
+}
+
+//remove the move/insert
+void MapVisibilityAlgorithm_Simple::removeAnotherClient(const quint32 &player_id)
+{
+	to_send_map_management_insert.remove(player_id);
+	to_send_map_management_move.remove(player_id);
+	ClientMapManagement::removeAnotherClient(player_id);
+}

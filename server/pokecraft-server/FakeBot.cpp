@@ -1,5 +1,6 @@
 #include "FakeBot.h"
 
+/// \todo ask player information at the insert
 FakeBot::FakeBot(const quint16 &x,const quint16 &y,Map_final *map,const Direction &last_direction)
 {
 	details=false;
