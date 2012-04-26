@@ -10,6 +10,7 @@
 #include <QMutex>
 #include <QHash>
 #include <QVariant>
+#include <QSet>
 
 #include "../pokecraft-general/GeneralStructures.h"
 #include "PlayerUpdater.h"
@@ -115,7 +116,7 @@ struct GeneralData
 	quint16 max_players;
 	quint16 connected_players;
 	PlayerUpdater player_updater;
-	QList<quint32> connected_players_id_list;
+	QSet<quint32> connected_players_id_list;
 	quint16 max_players_displayed,max_view_range;
 
 	//bd

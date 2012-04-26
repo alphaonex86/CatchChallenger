@@ -5,6 +5,7 @@
   if is greater, then truncate to have the near player, truncate to have all near player grouped by distance where a group not do the list greater
   each Xs update the local player list
 */
+/** Never reserve the list, because it have square memory usage, and use more cpu */
 
 ClientMapManagement::ClientMapManagement()
 {
@@ -326,6 +327,9 @@ void ClientMapManagement::unloadFromTheMap()
 
 void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
 {
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+	emit message(QString("insertAnotherClient(%1,%2,%3)").arg(player_id).arg(x).arg(y));
+	#endif
 	map_management_insert insertClient_temp;
 	insertClient_temp.fileName=map->map_file;
 	insertClient_temp.direction=direction;
@@ -356,6 +360,9 @@ void ClientMapManagement::removeAnotherClient(const quint32 &player_id)
 		emit message("try dual remove");
 		return;
 	}
+	#endif
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+	emit message(QString("removeAnotherClient(%1,%2,%3)").arg(player_id));
 	#endif
 
 	to_send_map_management_move.remove(player_id);
@@ -399,8 +406,6 @@ void ClientMapManagement::purgeBuffer()
 	i_remove_end = to_send_map_management_remove.constEnd();
 	while (i_remove != i_remove_end)
 	{
-		if(stopIt)
-			return;
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 		emit message(
 			QString("player_id to remove: %1, for player: %2")
@@ -410,7 +415,8 @@ void ClientMapManagement::purgeBuffer()
 		#endif
 		outLoop << *i_remove;
 		outLoop << (quint8)0x03;
-		purgeBuffer_player_affected++;
+		++purgeBuffer_player_affected;
+		++i_remove;
 	}
 	to_send_map_management_remove.clear();
 
@@ -418,8 +424,6 @@ void ClientMapManagement::purgeBuffer()
 	i_insert_end = to_send_map_management_insert.constEnd();
 	while (i_insert != i_insert_end)
 	{
-		if(stopIt)
-			return;
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 		emit message(
 			QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6")
@@ -438,8 +442,8 @@ void ClientMapManagement::purgeBuffer()
 		outLoop << i_insert.value().y;
 		outLoop << (quint8)i_insert.value().direction;
 		outLoop << i_insert.value().speed;
-		i_insert++;
-		purgeBuffer_player_affected++;
+		++purgeBuffer_player_affected;
+		++i_insert;
 	}
 	to_send_map_management_insert.clear();
 
@@ -469,15 +473,10 @@ void ClientMapManagement::purgeBuffer()
 			outLoop << (quint8)i_move.value().at(purgeBuffer_indexMovement).direction;
 			purgeBuffer_indexMovement++;
 		}
-		purgeBuffer_player_affected++;
-		if(stopIt)
-			return;
+		++purgeBuffer_player_affected;
 		++i_move;
 	}
 	to_send_map_management_move.clear();
-
-	if(stopIt)
-		return;
 
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 	emit message(QString("player_affected: %1").arg(purgeBuffer_player_affected));

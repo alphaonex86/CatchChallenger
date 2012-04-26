@@ -150,7 +150,7 @@ void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)
 void ClientHeavyLoad::askIfIsReadyToStop()
 {
 	if(is_logged)
-		generalData->connected_players_id_list.removeOne(player_informations->public_informations.id);
+		generalData->connected_players_id_list.remove(player_informations->public_informations.id);
 	emit isReadyToStop();
 }
 
