@@ -10,11 +10,8 @@ EventDispatcher::EventDispatcher()
 	generalData.db=NULL;
 	generalData.timer_player_map=NULL;
 	server=NULL;
-	stopIt=false;
 	lunchInitFunction=NULL;
 	timer_benchmark_stop=NULL;
-	bool_Walkable=NULL;
-	bool_Water=NULL;
 
 	generalData.max_players_displayed=30;
 	generalData.max_view_range=40;
@@ -50,21 +47,11 @@ EventDispatcher::EventDispatcher()
 
 	nextStep.start(POKECRAFT_SERVER_NORMAL_SPEED);
 	srand(time(NULL));
-
-	waitTheEnd.release();
 }
 
-//call only when the server is down
+/** call only when the server is down
+ * \warning this function is thread safe because it quit all thread before remove */
 EventDispatcher::~EventDispatcher()
-{
-	stopIt=true;
-	stop_server();
-	waitTheEnd.acquire();
-	connect(this,SIGNAL(call_destructor()),this,SLOT(destructor()),Qt::BlockingQueuedConnection);
-	emit call_destructor();
-}
-
-void EventDispatcher::destructor()
 {
 	lunchInitFunction->deleteLater();
 	timer_benchmark_stop->deleteLater();
@@ -93,17 +80,6 @@ void EventDispatcher::destructor()
 		delete server;
 		server=NULL;
 	}
-	if(bool_Walkable!=NULL)
-	{
-		delete bool_Walkable;
-		bool_Walkable=NULL;
-	}
-	if(bool_Water!=NULL)
-	{
-		delete bool_Water;
-		bool_Water=NULL;
-	}
-	waitTheEnd.release();
 }
 
 void EventDispatcher::initAll()
@@ -487,7 +463,6 @@ void EventDispatcher::start_internal_server()
 	}
 	DebugClass::debugConsole(QString("Connected to mysql at %1").arg(mysql_host));
 	preload_the_data();
-	waitTheEnd.acquire();
 	stat=Up;
 	connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
 	emit is_started(true);
@@ -526,7 +501,6 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	}
 	timer_benchmark_stop->start();
 	stat=Up;
-	waitTheEnd.acquire();
 }
 
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
@@ -538,6 +512,14 @@ void EventDispatcher::unload_the_data()
 
 void EventDispatcher::unload_the_map()
 {
+	QHash<QString,Map_final *>::const_iterator i_insert = generalData.map_list.constBegin();
+	QHash<QString,Map_final *>::const_iterator i_insert_end = generalData.map_list.constEnd();
+	while (i_insert != i_insert_end)
+	{
+		delete i_insert.value()->parsed_layer.walkable;
+		delete i_insert.value()->parsed_layer.water;
+		i_insert++;
+	}
 	generalData.map_list.clear();
 }
 
@@ -585,25 +567,13 @@ void EventDispatcher::check_if_now_stopped()
 		generalData.db->close();
 	//server.close();
 	stat=Down;
-	if(bool_Walkable!=NULL)
-	{
-		delete bool_Walkable;
-		bool_Walkable=NULL;
-	}
-	if(bool_Water!=NULL)
-	{
-		delete bool_Water;
-		bool_Water=NULL;
-	}
 	if(server!=NULL)
 	{
 		server->close();
 		delete server;
 		server=NULL;
 	}
-	stopIt=false;
 	emit is_started(false);
-	waitTheEnd.release();
 }
 
 //call by normal stop
@@ -749,8 +719,6 @@ void EventDispatcher::serverCommand(QString command,QString extraText)
 			int index=0;
 			while(index<number_player && client_list.size()<generalData.max_players)
 			{
-				if(stopIt)
-					return;
 				addBot(map_player_info.x,map_player_info.y,map_player_info.map,map_player_info.skin);
 				index++;
 			}
@@ -866,7 +834,6 @@ void EventDispatcher::start_server()
 
 void EventDispatcher::stop_server()
 {
-	stopIt=true;
 	emit try_stop_server();
 }
 
