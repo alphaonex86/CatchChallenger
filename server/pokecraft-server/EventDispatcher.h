@@ -45,13 +45,26 @@ public slots:
 	/*void send_system_message(QString text);
 	void send_pm_message(QString pseudo,QString text);*/
 private:
+	//to load/unload the content
+	struct Map_semi
+	{
+		//conversion x,y to position: x+y*width
+		Map_final * map;
+		Map_semi_border border;
+	};
 	void load_settings();
 	void preload_the_data();
 	void preload_the_map();
 	void unload_the_data();
 	void unload_the_map();
+	//internal usefull function
 	QStringList listFolder(const QString& folder,const QString& suffix);
+	QString listenIpAndPort(QString server_ip,quint16 server_port);
+	void connect_the_last_client();
+	//store about the network
 	QString server_ip;
+	QTcpServer *server;
+	//the settings
 	bool pvp;
 	quint16 server_port;
 	qreal rates_xp_normal;
@@ -65,13 +78,27 @@ private:
 	bool char_allow_private;
 	bool char_allow_aliance;
 	bool char_allow_clan;
+	QString mysql_host;
+	QString mysql_db;
+	QString mysql_login;
+	QString mysql_pass;
+	//store benchmark related
 	bool in_benchmark_mode;
-	QTcpServer *server;
+	int benchmark_latency;
+	QTimer *timer_benchmark_stop;
+	QTime time_benchmark_first_client;
+	LatencyChecker latencyChecker;
+
 	/// \brief To lunch event only when the event loop is setup
 	QTimer *lunchInitFunction;
+
+	//shared into all the program
 	GeneralData generalData;
+
+	//to keep client list
 	QList<Client *> client_list;
-	QString listenIpAndPort(QString server_ip,quint16 server_port);
+
+	//stat
 	enum ServerStat
 	{
 		Down=0,
@@ -80,29 +107,12 @@ private:
 		InDown=3
 	};
 	ServerStat stat;
-	void connect_the_last_client();
-	int benchmark_latency;
-	QTimer *timer_benchmark_stop;
-	QTime time_benchmark_first_client;
-	LatencyChecker latencyChecker;
-	bool *bool_Walkable;
-	bool *bool_Water;
-	QString mysql_host;
-	QString mysql_db;
-	QString mysql_login;
-	QString mysql_pass;
+
+	//bot related
 	void removeBots();
 	void addBot(quint16 x,quint16 y,Map_final *map,QString skin="");
 	QTimer nextStep;//all function call singal sync, then not pointer needed
 	QList<FakeBot *> fake_clients;
-	struct Map_semi
-	{
-		//conversion x,y to position: x+y*width
-		Map_final * map;
-		Map_semi_border border;
-	};
-	bool stopIt;
-	QSemaphore waitTheEnd;
 private slots:
 	//new connection
 	void newConnection();
@@ -113,7 +123,6 @@ private slots:
 	void serverCommand(QString command,QString extraText);
 	//init, constructor, destructor
 	void initAll();//call before all
-	void destructor();//call after the server is closed
 	//starting function
 	void stop_internal_server();
 	void stop_benchmark();
@@ -121,20 +130,22 @@ private slots:
 	void start_internal_benchmark(quint16 second,quint16 number_of_client);
 	void start_internal_server();
 signals:
+	//async the call
 	void try_stop_server();
 	void try_initAll();
 	void need_be_stopped();
 	void need_be_restarted();
 	void need_be_started();
+	void try_start_benchmark(const quint16 &second,const quint16 &number_of_client);
+	//stat
 	void is_started(bool);
+	//stat player
 	void new_player_is_connected(const Player_private_and_public_informations &player);
 	void player_is_disconnected(const QString &pseudo);
 	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
 	void error(const QString &error);
+	//benchmark
 	void benchmark_result(const int &latency,const double &TX_speed,const double &RX_speed,const double &TX_size,const double &RX_size,const double &second);
-	void try_start_benchmark(const quint16 &second,const quint16 &number_of_client);
-	void destroyAllBots();
-	void call_destructor();
 };
 
 #endif // EVENTDISPATCHER_H
