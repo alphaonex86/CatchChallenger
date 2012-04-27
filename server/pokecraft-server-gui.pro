@@ -31,6 +31,7 @@ SOURCES += main.cpp\
     pokecraft-server/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp
 
 HEADERS += \
+    VariableServer.h \
     pokecraft-server/EventDispatcher.h \
     pokecraft-general/DebugClass.h \
     pokecraft-server/ServerStructures.h \
@@ -45,7 +46,6 @@ HEADERS += \
     pokecraft-general/GeneralStructures.h \
     pokecraft-client/pokecraft-client-chat.h \
     pokecraft-server/LatencyChecker.h \
-    VariableServer.h \
     pokecraft-server/FakeBot.h \
     pokecraft-general/MoveClient.h \
     pokecraft-client/ClientStructures.h \
