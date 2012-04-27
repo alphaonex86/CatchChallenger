@@ -11,7 +11,7 @@
 #include <QDir>
 #include <QSemaphore>
 
-#include "../pokecraft-general/DebugClass.h"
+#include "../../pokecraft-general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "Client.h"
 #include "Map_loader.h"

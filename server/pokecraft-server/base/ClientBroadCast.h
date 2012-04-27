@@ -9,9 +9,9 @@
 #include <QSemaphore>
 
 #include "ServerStructures.h"
-#include "../pokecraft-general/DebugClass.h"
-#include "../pokecraft-general/GeneralStructures.h"
-#include "../VariableServer.h"
+#include "../../pokecraft-general/base/DebugClass.h"
+#include "../../pokecraft-general/base/GeneralStructures.h"
+#include "../../VariableServer.h"
 
 /// \warning here, 0 random should be call
 /// \warning here only the call with global scope need be do

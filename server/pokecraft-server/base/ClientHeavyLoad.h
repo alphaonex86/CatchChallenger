@@ -18,8 +18,8 @@
 #include <QDir>
 
 #include "ServerStructures.h"
-#include "../VariableServer.h"
-#include "../pokecraft-general/DebugClass.h"
+#include "../../VariableServer.h"
+#include "../../pokecraft-general/base/DebugClass.h"
 
 class ClientHeavyLoad : public QObject
 {

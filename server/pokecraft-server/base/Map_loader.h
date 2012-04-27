@@ -13,8 +13,8 @@
 #include <QTime>
 #include <QMutexLocker>
 
-#include "../pokecraft-general/DebugClass.h"
-#include "../VariableServer.h"
+#include "../../pokecraft-general/base/DebugClass.h"
+#include "../../VariableServer.h"
 #include "ServerStructures.h"
 
 class Map_loader : public QObject

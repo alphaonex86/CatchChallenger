@@ -1,6 +1,6 @@
 #include <QObject>
 
-#include "../pokecraft-general/GeneralStructures.h"
+#include "../../pokecraft-general/base/GeneralStructures.h"
 
 #ifndef POKECRAFT_CLIENT_CHAT_H
 #define POKECRAFT_CLIENT_CHAT_H

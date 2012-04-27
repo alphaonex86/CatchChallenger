@@ -7,7 +7,7 @@
 #include <QSemaphore>
 #include <QTimer>
 
-#include "../pokecraft-general/DebugClass.h"
+#include "../../pokecraft-general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "ClientBroadCast.h"
 #include "ClientHeavyLoad.h"
@@ -15,8 +15,8 @@
 #include "ClientNetworkRead.h"
 #include "ClientNetworkWrite.h"
 #include "EventThreader.h"
-#include "../pokecraft-general/GeneralStructures.h"
-#include "../VariableServer.h"
+#include "../../pokecraft-general/base/GeneralStructures.h"
+#include "../../VariableServer.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple.h"
 
 #ifndef CLIENT_H

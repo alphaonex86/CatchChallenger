@@ -9,7 +9,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 
-#include "../pokecraft-general/DebugClass.h"
+#include "../../pokecraft-general/base/DebugClass.h"
 #include "EventThreader.h"
 
 class LatencyChecker : public QObject
