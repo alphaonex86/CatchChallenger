@@ -40,7 +40,7 @@ struct Map_semi_border
 	Map_semi_border_content_left_right right;
 };
 
-struct Map_final_temp
+struct Map_to_send
 {
 	Map_semi_border border;
 	//QStringList other_map;//border and not
@@ -54,6 +54,14 @@ struct Map_final_temp
 		bool *water;
 	};
 	Map_final_parsed_layer parsed_layer;
+
+	struct Temp_teleport
+	{
+		quint32 source_x,source_y;
+		quint32 destination_x,destination_y;
+		QString map;
+	};
+	QList<Temp_teleport> teleport;
 };
 
 /** conversion x,y to position: x+y*width */
@@ -87,12 +95,16 @@ struct Map_final
 	Map_final_border border;
 
 	QList<Map_final *> near_map;//not only the border
-	QHash<quint32,Map_final *> other_linked_map;//the int (x+y*width) is position
+	struct Teleporter
+	{
+		quint32 x,y;
+		Map_final *map;
+	};
+	QHash<quint32,Teleporter> teleporter;//the int (x+y*width) is position
 
 	QString map_file;
 	quint16 width;
 	quint16 height;
-	QHash<QString,QVariant> property;
 	quint32 group;
 
 	QList<ClientMapManagement *> clients;//manipulated by thread of ClientMapManagement()
