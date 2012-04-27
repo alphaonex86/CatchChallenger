@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/internal">
-        <file>benchmark-map/map.tmx</file>
-        <file>benchmark-map/texture.png</file>
-        <file>benchmark-map/texture.tsx</file>
-    </qresource>
-</RCC>
