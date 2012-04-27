@@ -120,7 +120,6 @@ void EventDispatcher::preload_the_map()
 				generalData.map_list[returnList.at(index)]=new Map_final;
 				generalData.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
 				generalData.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
-				generalData.map_list[returnList.at(index)]->property			= map_temp.map_to_send.property;
 				generalData.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
 				generalData.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
 				generalData.map_list[returnList.at(index)]->map_file			= returnList.at(index);
@@ -140,6 +139,9 @@ void EventDispatcher::preload_the_map()
 
 				map_semi.border.right.fileName		= map_temp.map_to_send.border.right.fileName;
 				map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
+
+				map_semi.old_map=map_temp.map_to_send;
+
 				semi_loaded_map << map_semi;
 			}
 			else
@@ -173,6 +175,40 @@ void EventDispatcher::preload_the_map()
 		else
 			semi_loaded_map[index].map->border.right.map=NULL;
 
+		index++;
+	}
+
+	//resolv the teleported into their pointer
+	size=semi_loaded_map.size();
+	index=0;
+	while(index<size)
+	{
+		int sub_index=0;
+		while(index<semi_loaded_map[index].old_map.teleport.size())
+		{
+			if(generalData.map_list.contains(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
+					&& semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x<generalData.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->width
+					&& semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y<generalData.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->height
+				)
+			{
+				int virtual_position=semi_loaded_map[index].old_map.teleport.at(sub_index).source_x+semi_loaded_map[index].old_map.teleport.at(sub_index).source_y*semi_loaded_map[index].map->width;
+				semi_loaded_map[index].map->teleporter[virtual_position].map=generalData.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
+				semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
+				semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
+				DebugClass::debugConsole(QString("add the teleporter on the map: %1, to %2 (%3,%4)")
+					 .arg(semi_loaded_map[index].map->map_file)
+					 .arg(semi_loaded_map[index].map->teleporter[virtual_position].map->map_file)
+					 .arg(semi_loaded_map[index].map->teleporter[virtual_position].x)
+					 .arg(semi_loaded_map[index].map->teleporter[virtual_position].y));
+			}
+			else
+				DebugClass::debugConsole(QString("wrong teleporter on the map: %1, to %2 (%3,%4)")
+					 .arg(semi_loaded_map[index].map->map_file)
+					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
+					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
+					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+			sub_index++;
+		}
 		index++;
 	}
 
