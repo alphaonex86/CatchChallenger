@@ -114,9 +114,9 @@ void EventDispatcher::preload_the_map()
 	{
 		if(returnList.at(index).contains(mapFilter))
 		{
+			DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
 			if(map_temp.tryLoadMap(generalData.mapBasePath+returnList.at(index)))
 			{
-				DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
 				generalData.map_list[returnList.at(index)]=new Map_final;
 				generalData.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
 				generalData.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
@@ -184,7 +184,7 @@ void EventDispatcher::preload_the_map()
 	while(index<size)
 	{
 		int sub_index=0;
-		while(index<semi_loaded_map[index].old_map.teleport.size())
+		while(sub_index<semi_loaded_map[index].old_map.teleport.size())
 		{
 			if(generalData.map_list.contains(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
 					&& semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x<generalData.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->width
@@ -195,15 +195,12 @@ void EventDispatcher::preload_the_map()
 				semi_loaded_map[index].map->teleporter[virtual_position].map=generalData.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
 				semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
 				semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
-				DebugClass::debugConsole(QString("add the teleporter on the map: %1, to %2 (%3,%4)")
-					 .arg(semi_loaded_map[index].map->map_file)
-					 .arg(semi_loaded_map[index].map->teleporter[virtual_position].map->map_file)
-					 .arg(semi_loaded_map[index].map->teleporter[virtual_position].x)
-					 .arg(semi_loaded_map[index].map->teleporter[virtual_position].y));
 			}
 			else
-				DebugClass::debugConsole(QString("wrong teleporter on the map: %1, to %2 (%3,%4)")
+				DebugClass::debugConsole(QString("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
 					 .arg(semi_loaded_map[index].map->map_file)
+					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
+					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
 					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
 					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
 					 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
