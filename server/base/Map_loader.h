@@ -24,7 +24,7 @@ public:
 	explicit Map_loader();
 	~Map_loader();
 
-	Map_final_temp map_to_send;
+	Map_to_send map_to_send;
 	QString errorString();
 	bool tryLoadMap(const QString &fileName);
 private:

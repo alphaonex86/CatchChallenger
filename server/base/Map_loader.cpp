@@ -35,7 +35,7 @@ Map_loader::~Map_loader()
 
 bool Map_loader::tryLoadMap(const QString &fileName)
 {
-	Map_final_temp map_to_send;
+	Map_to_send map_to_send;
 
 	QFile mapFile(fileName);
 	QByteArray xmlContent,Walkable,Collisions,Water;
@@ -140,12 +140,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 		if(!child.isElement())
 		{
 			error=QString("Is Element: child.tagName(): %1").arg(child.tagName());
-			return false;
+			continue;
 		}
 		else if(!child.hasAttribute("name"))
 		{
 			error=QString("Has not attribute \"name\": child.tagName(): %1").arg(child.tagName());
-			return false;
+			continue;
 		}
 		else
 		{
@@ -156,17 +156,22 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 				{
 					if(SubChild.isElement() && SubChild.hasAttribute("x") && SubChild.hasAttribute("x"))
 					{
-						int object_x=SubChild.attribute("x").toInt(&ok)/16;
+						quint32 object_x=SubChild.attribute("x").toUInt(&ok)/16;
 						if(!ok)
 						{
 							error=QString("Missing coord: %1").arg(child.tagName());
-							return false;
+							continue;
 						}
-						int object_y=SubChild.attribute("y").toInt(&ok)/16;
+						quint32 object_y=SubChild.attribute("y").toUInt(&ok)/16;
 						if(!ok)
 						{
 							error=QString("Missing coord: %1").arg(child.tagName());
-							return false;
+							continue;
+						}
+						if(object_x>map_to_send.width || object_y>map_to_send.height)
+						{
+							error=QString("Object out of the map: %1").arg(child.tagName());
+							continue;
 						}
 						if(SubChild.hasAttribute("type"))
 						{
@@ -178,98 +183,90 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 										 .arg(object_y)
 										 );
 							#endif
-							if(type=="border-left" || type=="border-right" || type=="border-top" || type=="border-bottom")
+
+							QDomElement prop=SubChild.firstChildElement("properties");
+							if(!prop.isNull())
 							{
-								QDomElement prop=SubChild.firstChildElement("properties");
-								if(!prop.isNull())
+								QHash<QString,QVariant> property_text;
+								QDomElement property=prop.firstChildElement("property");
+								while(!property.isNull())
 								{
-									QStringList name;
-									QList<QVariant> value;
-									QDomElement property=prop.firstChildElement("property");
-									while(!property.isNull())
-									{
-										if(property.hasAttribute("name") && property.hasAttribute("value"))
-										{
-											name << property.attribute("name");
-											value << property.attribute("value");
-										}
-										property = property.nextSiblingElement("property");
-									}
-									int index_map=name.indexOf("map");
-									if(index_map!=-1)
+									if(property.hasAttribute("name") && property.hasAttribute("value"))
+										property_text[property.attribute("name")]=property.attribute("value");
+									property = property.nextSiblingElement("property");
+								}
+								if(type=="border-left" || type=="border-right" || type=="border-top" || type=="border-bottom")
+								{
+									if(property_text.contains("map"))
 									{
 										if(type=="border-left")//border left
 										{
-											//quint16 y_value=value.at(index_y).toUInt(&ok);
-											if(!ok)
-												DebugClass::debugConsole(QString("Not a number: child.tagName(): %1").arg(child.tagName()));
-											else
-											{
-												map_to_send.border.left.fileName=value.at(index_map).toString();
-												map_to_send.border.left.y_offset=object_y;
-												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
-												DebugClass::debugConsole(QString("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
-												#endif
-											}
+											map_to_send.border.left.fileName=property_text["map"].toString();
+											map_to_send.border.left.y_offset=object_y;
+											#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
+											DebugClass::debugConsole(QString("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
+											#endif
 										}
 										else if(type=="border-right")//border right
 										{
-											//quint16 y_value=value.at(index_y).toUInt(&ok);
-											if(!ok)
-												DebugClass::debugConsole(QString("Not a number: child.tagName(): %1").arg(child.tagName()));
-											else
-											{
-												map_to_send.border.right.fileName=value.at(index_map).toString();
-												map_to_send.border.right.y_offset=object_y;
-												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
-												DebugClass::debugConsole(QString("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
-												#endif
-											}
+											map_to_send.border.right.fileName=property_text["map"].toString();
+											map_to_send.border.right.y_offset=object_y;
+											#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
+											DebugClass::debugConsole(QString("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
+											#endif
 										}
 										else if(type=="border-top")//border top
 										{
-
-											//quint16 x_value=value.at(index_x).toUInt(&ok);
-											if(!ok)
-												DebugClass::debugConsole(QString("Not a number: child.tagName(): %1").arg(child.tagName()));
-											else
-											{
-												map_to_send.border.top.fileName=value.at(index_map).toString();
-												map_to_send.border.top.x_offset=object_x;
-												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
-												DebugClass::debugConsole(QString("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
-												#endif
-											}
+											map_to_send.border.top.fileName=property_text["map"].toString();
+											map_to_send.border.top.x_offset=object_x;
+											#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
+											DebugClass::debugConsole(QString("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
+											#endif
 										}
 										else if(type=="border-bottom")//border bottom
 										{
-
-											//quint16 x_value=value.at(index_x).toUInt(&ok);
-											if(!ok)
-												DebugClass::debugConsole(QString("Not a number: child.tagName(): %1").arg(child.tagName()));
-											else
-											{
-												map_to_send.border.bottom.fileName=value.at(index_map).toString();
-												map_to_send.border.bottom.x_offset=object_x;
-												#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
-												DebugClass::debugConsole(QString("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
-												#endif
-											}
+											map_to_send.border.bottom.fileName=property_text["map"].toString();
+											map_to_send.border.bottom.x_offset=object_x;
+											#ifdef DEBUG_MESSAGE_CLIENT_MAP_BORDER
+											DebugClass::debugConsole(QString("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
+											#endif
 										}
 										else
 											DebugClass::debugConsole(QString("Not at middle of border: child.tagName(): %1, object_x: %2, object_y: %3")
-
-														 .arg(child.tagName())
-														 .arg(object_x)
-														 .arg(object_y)
-														 );
+												 .arg(child.tagName())
+												 .arg(object_x)
+												 .arg(object_y)
+												 );
 									}
 									else
 										DebugClass::debugConsole(QString("Missing border properties: child.tagName(): %1").arg(child.tagName()));
 								}
-								else
-									DebugClass::debugConsole(QString("Missing balise properties: child.tagName(): %1").arg(child.tagName()));
+								else if(type=="teleport on push" || type=="teleport on it" || type=="door")
+								{
+									if(property_text.contains("map") && property_text.contains("x") && property_text.contains("y"))
+									{
+										Map_to_send::Temp_teleport new_tp;
+										new_tp.destination_x = property_text["x"].toUInt(&ok);
+										if(ok)
+										{
+											new_tp.destination_y = property_text["y"].toUInt(&ok);
+											if(ok)
+											{
+												new_tp.source_x=object_x;
+												new_tp.source_y=object_y;
+												new_tp.map=property_text["map"].toString();
+												map_to_send.teleport << new_tp;
+												#ifdef DEBUG_MESSAGE_CLIENT_MAP_OBJECT
+												DebugClass::debugConsole(QString("Teleporter type: %1, to: %2 (%3,%4)").arg(type).arg(new_tp.map).arg(new_tp.source_x).arg(new_tp.source_y));
+												#endif
+											}
+										}
+									}
+								}
 							}
+							else
+								DebugClass::debugConsole(QString("Missing balise properties: child.tagName(): %1").arg(child.tagName()));
+
 						}
 						else
 							DebugClass::debugConsole(QString("Missing attribute type missing: child.tagName(): %1").arg(child.tagName()));
