@@ -7,7 +7,7 @@
 #include <QStringList>
 
 #include "ServerStructures.h"
-#include "../pokecraft-general/DebugClass.h"
+#include "../../pokecraft-general/base/DebugClass.h"
 
 class ClientNetworkRead : public QObject
 {

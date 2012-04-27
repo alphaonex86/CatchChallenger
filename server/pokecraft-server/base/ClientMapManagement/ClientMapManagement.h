@@ -9,10 +9,10 @@
 #include <QHash>
 #include <QHashIterator>
 
-#include "../../pokecraft-general/DebugClass.h"
+#include "../../../pokecraft-general/base/DebugClass.h"
 #include "../ServerStructures.h"
 #include "../EventThreader.h"
-#include "../../VariableServer.h"
+#include "../../../VariableServer.h"
 
 class Map_custom;
 

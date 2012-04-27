@@ -10,10 +10,10 @@
 #include <QTimer>
 #include <QTime>
 
-#include "pokecraft-server/EventDispatcher.h"
-#include "pokecraft-general/DebugClass.h"
-#include "pokecraft-general/GeneralStructures.h"
-#include "pokecraft-client/pokecraft-client-chat.h"
+#include "pokecraft-server/base/EventDispatcher.h"
+#include "pokecraft-general/base/DebugClass.h"
+#include "pokecraft-general/base/GeneralStructures.h"
+#include "pokecraft-client/base/pokecraft-client-chat.h"
 
 namespace Ui {
 	class MainWindow;

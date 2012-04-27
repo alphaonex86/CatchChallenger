@@ -12,7 +12,7 @@
 #include <QVariant>
 #include <QSet>
 
-#include "../pokecraft-general/GeneralStructures.h"
+#include "../../pokecraft-general/base/GeneralStructures.h"
 #include "PlayerUpdater.h"
 
 class EventThreader;

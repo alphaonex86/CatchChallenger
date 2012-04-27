@@ -9,10 +9,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../pokecraft-general/DebugClass.h"
-#include "../pokecraft-general/GeneralStructures.h"
-#include "../pokecraft-server/ServerStructures.h"
-#include "../pokecraft-general/MoveClient.h"
+#include "../../pokecraft-general/base/DebugClass.h"
+#include "../../pokecraft-general/base/GeneralStructures.h"
+#include "../../pokecraft-server/base/ServerStructures.h"
+#include "../../pokecraft-general/base/MoveClient.h"
 
 class FakeBot : public QObject, public MoveClient
 {
