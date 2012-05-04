@@ -66,7 +66,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	//set variables
 	clientNetworkRead->setVariable(generalData,&player_informations);
 	clientBroadCast->setVariable(generalData,&player_informations);
-	clientMapManagement->setVariable(generalData);
+	clientMapManagement->setVariable(generalData,&player_informations);
 	clientHeavyLoad->setVariable(generalData,&player_informations);
 
 	//connect the write
