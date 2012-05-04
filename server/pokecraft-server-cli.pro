@@ -7,6 +7,9 @@
 QT       += core network xml sql
 QT       -= gui
 
+#QMAKE_CFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
+#QMAKE_CXXFLAGS="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops"
+
 TARGET = pokecraft-server-cli
 CONFIG   += console
 CONFIG   -= app_bundle

@@ -294,6 +294,8 @@ void MainWindow::load_settings()
 	settings->beginGroup("MapVisibilityAlgorithm-Simple");
 	if(!settings->contains("Max"))
 		settings->setValue("Max",50);
+	if(!settings->contains("Reshow"))
+		settings->setValue("Reshow",30);
 	settings->endGroup();
 
 	settings->beginGroup("rates");
@@ -347,10 +349,18 @@ void MainWindow::load_settings()
 	if(tempValue<(quint32)ui->MapVisibilityAlgorithm->count())
 		ui->MapVisibilityAlgorithm->setCurrentIndex(tempValue);
 
+	quint32 reshow=0;
 	settings->beginGroup("MapVisibilityAlgorithm-Simple");
 	tempValue=settings->value("Max").toUInt();
+	reshow=settings->value("Reshow").toUInt();
+	if(reshow>tempValue)
+	{
+		reshow=tempValue;
+		settings->setValue("Reshow",reshow);
+	}
 	settings->endGroup();
 	ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
+	ui->MapVisibilityAlgorithmSimpleMax->setValue(reshow);
 
 	settings->beginGroup("rates");
 	double rates_xp_normal=settings->value("xp_normal").toReal();
@@ -540,5 +550,14 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
 {
 	settings->beginGroup("MapVisibilityAlgorithm-Simple");
 	settings->setValue("Max",arg1);
+	settings->endGroup();
+	ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(arg1);
+}
+
+
+void MainWindow::on_MapVisibilityAlgorithmSimpleReshow_editingFinished()
+{
+	settings->beginGroup("MapVisibilityAlgorithm-Simple");
+	settings->setValue("Reshow",ui->MapVisibilityAlgorithmSimpleReshow->value());
 	settings->endGroup();
 }

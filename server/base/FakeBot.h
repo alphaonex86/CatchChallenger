@@ -25,8 +25,7 @@ public:
 	quint64 get_TX_size();
 	quint64 get_RX_size();
 private:
-	bool *walkable;
-	quint16 width,height;
+	Map_final *map;
 	quint16 x,y;
 	bool details;
 	void send_player_move(const quint8 &moved_unit,const Direction &the_direction);

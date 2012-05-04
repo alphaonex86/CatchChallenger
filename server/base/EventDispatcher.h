@@ -56,8 +56,10 @@ private:
 	void load_settings();
 	void preload_the_data();
 	void preload_the_map();
+	void preload_the_visibility_algorithm();
 	void unload_the_data();
 	void unload_the_map();
+	void unload_the_visibility_algorithm();
 	//internal usefull function
 	QStringList listFolder(const QString& folder,const QString& suffix);
 	QString listenIpAndPort(QString server_ip,quint16 server_port);
