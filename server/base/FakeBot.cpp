@@ -6,9 +6,6 @@ FakeBot::FakeBot(const quint16 &x,const quint16 &y,Map_final *map,const Directio
 	details=false;
 	this->x=x;
 	this->y=y;
-	this->walkable=map->parsed_layer.walkable;
-	this->width=map->width;
-	this->height=map->height;
 	this->last_direction=last_direction;
 	TX_size=0;
 	RX_size=0;
@@ -34,13 +31,13 @@ void FakeBot::start_step()
 void FakeBot::random_new_step()
 {
 	QList<Direction> directions_allowed;
-	if(walkable[x-1+y*width] && x>0)
+	if(map->parsed_layer.walkable[x-1+y*map->width] && x>0)
 		directions_allowed << Direction_move_at_left;
-	if(walkable[x+1+y*width] && x<width)
+	if(map->parsed_layer.walkable[x+1+y*map->width] && x<map->width)
 		directions_allowed << Direction_move_at_right;
-	if(walkable[x+(y-1)*width] && y>0)
+	if(map->parsed_layer.walkable[x+(y-1)*map->width] && y>0)
 		directions_allowed << Direction_move_at_top;
-	if(walkable[x+(y+1)*width] && y<height)
+	if(map->parsed_layer.walkable[x+(y+1)*map->width] && y<map->height)
 		directions_allowed << Direction_move_at_bottom;
 	loop_size=directions_allowed.size();
 	if(loop_size<=0)
