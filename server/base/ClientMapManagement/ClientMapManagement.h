@@ -13,16 +13,17 @@
 #include "../ServerStructures.h"
 #include "../EventThreader.h"
 #include "../../VariableServer.h"
+#include "MapBasicMove.h"
 
 class Map_custom;
 
-class ClientMapManagement : public QObject
+class ClientMapManagement : public MapBasicMove
 {
 	Q_OBJECT
 public:
 	explicit ClientMapManagement();
 	~ClientMapManagement();
-	void setVariable(GeneralData *generalData);
+	void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
 	/// \bug is not thread safe, and called by another thread, error can occure
 	Map_player_info getMapPlayerInfo();
 	//to change the info on another client
@@ -31,27 +32,12 @@ public:
 	virtual void removeAnotherClient(const quint32 &player_id);
 	//drop all clients
 	void dropAllClients();
-
-	//public to access to info from other object to register
-	//info linked
-	qint16				x,y;//can be negative because offset to insert on map diff can be put into
-	Map_final*			current_map;
-	//cache
-	quint32	player_id;//to save at the close, and have cache
-	//map vector informations
-	Direction			last_direction;
-	quint16				speed;
 protected:
 	//pass to the Map management visibility algorithm
 	virtual void insertClient() = 0;
 	virtual void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged) = 0;
 	virtual void removeClient() = 0;
 	virtual void mapVisiblity_unloadFromTheMap() = 0;
-	virtual void mapTeleporterUsed();
-	//internal var
-	GeneralData *generalData;
-	//debug function
-	QString directionToString(const Direction &direction);
 	// stuff to send
 	QHash<quint32, map_management_insert>			to_send_map_management_insert;
 	QHash<quint32, QList<map_management_movement> >		to_send_map_management_move;
@@ -70,16 +56,12 @@ public slots:
 	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	//normal slots
 	void askIfIsReadyToStop();
-	void stop();
 private slots:
 	void purgeBuffer();
 private:
 	//info linked
 	Orientation			at_start_orientation;
 	QString				at_start_map_name;
-
-	//related to stop
-	volatile bool stopIt;
 
 	//temp variable for purge buffer
 	quint16 purgeBuffer_player_affected;

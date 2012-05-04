@@ -4,6 +4,7 @@
 FakeBot::FakeBot(const quint16 &x,const quint16 &y,Map_final *map,const Direction &last_direction)
 {
 	details=false;
+	this->map=map;
 	this->x=x;
 	this->y=y;
 	this->last_direction=last_direction;

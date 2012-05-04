@@ -26,12 +26,14 @@ SOURCES += main-cli.cpp \
     base/ClientNetworkWrite.cpp \
     base/ClientNetworkRead.cpp \
     base/ClientBroadCast.cpp \
-    base/ClientMapManagement/ClientMapManagement.cpp \
+    base/ClientLocalCalcule.cpp \
     base/Map_loader.cpp \
     base/PlayerUpdater.cpp \
-    base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
     base/LatencyChecker.cpp \
     base/FakeBot.cpp \
+    base/ClientMapManagement/ClientMapManagement.cpp \
+    base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
+    base/ClientMapManagement/MapBasicMove.cpp \
     ../general/base/DebugClass.cpp \
     ../general/base/MoveClient.cpp \
     ../general/base/ChatParsing.cpp
@@ -47,12 +49,14 @@ HEADERS += \
     base/ClientNetworkWrite.h \
     base/ClientNetworkRead.h \
     base/ClientBroadCast.h \
-    base/ClientMapManagement/ClientMapManagement.h \
+    base/ClientLocalCalcule.h \
     base/Map_loader.h \
     base/LatencyChecker.h \
     base/FakeBot.h \
     base/PlayerUpdater.h \
+    base/ClientMapManagement/ClientMapManagement.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
+    base/ClientMapManagement/MapBasicMove.h \
     ../client/base/ClientStructures.h \
     ../general/base/MoveClient.h \
     ../general/base/DebugClass.h \
