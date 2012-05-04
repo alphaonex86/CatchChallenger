@@ -13,10 +13,10 @@ EventDispatcher::EventDispatcher()
 	lunchInitFunction=NULL;
 	timer_benchmark_stop=NULL;
 
-	generalData.max_players_displayed=30;
-	generalData.max_view_range=40;
 	generalData.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	generalData.mapVisibilityAlgorithm=MapVisibilityAlgorithm_simple;
+	generalData.mapVisibility.simple.max=30;
+	generalData.mapVisibility.simple.reshow=20;
 	generalData.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
 	generalData.eventThreaderList << new EventThreader();//broad cast (0)
@@ -96,6 +96,7 @@ void EventDispatcher::initAll()
 void EventDispatcher::preload_the_data()
 {
 	preload_the_map();
+	preload_the_visibility_algorithm();
 }
 
 void EventDispatcher::preload_the_map()
@@ -322,6 +323,22 @@ void EventDispatcher::preload_the_map()
 	DebugClass::debugConsole(QString("finish preload the map"));
 }
 
+void EventDispatcher::preload_the_visibility_algorithm()
+{
+	QHash<QString,Map_final *>::const_iterator i = generalData.map_list.constBegin();
+	QHash<QString,Map_final *>::const_iterator i_end = generalData.map_list.constEnd();
+	switch(generalData.mapVisibilityAlgorithm)
+	{
+		case MapVisibilityAlgorithm_simple:
+		while (i != i_end)
+		{
+			i.value()->mapVisibility.simple.show=true;
+			i++;
+		}
+		break;
+	}
+}
+
 void EventDispatcher::load_settings()
 {
 	QSettings *settings;
@@ -344,6 +361,8 @@ void EventDispatcher::load_settings()
 	settings->beginGroup("MapVisibilityAlgorithm-Simple");
 	if(!settings->contains("Max"))
 		settings->setValue("Max",50);
+	if(!settings->contains("Reshow"))
+		settings->setValue("Reshow",30);
 	settings->endGroup();
 
 	settings->beginGroup("rates");
@@ -385,13 +404,15 @@ void EventDispatcher::load_settings()
 		settings->setValue("db","pokecraft");
 	settings->endGroup();
 	// --------------------------------------------------
-	generalData.max_players			= settings->value("max-players").toUInt();
+	bool ok;
+	generalData.max_players			= settings->value("max-players").toUInt(&ok);
+	if(!ok || generalData.max_players==0)
+		generalData.max_players=200;
 	server_ip				= settings->value("server-ip").toString();
 	pvp					= settings->value("pvp").toBool();
 	server_port				= settings->value("server-port").toUInt();
 
 	settings->beginGroup("MapVisibilityAlgorithm");
-	bool ok;
 	quint16 val=settings->value("MapVisibilityAlgorithm",0).toUInt(&ok);
 	if(ok)
 	{
@@ -411,6 +432,11 @@ void EventDispatcher::load_settings()
 		generalData.mapVisibility.simple.max=50;
 	else if(generalData.mapVisibility.simple.max>generalData.max_players)
 		generalData.mapVisibility.simple.max=generalData.max_players;
+	generalData.mapVisibility.simple.reshow=settings->value("Reshow").toUInt(&ok);
+	if(!ok)
+		generalData.mapVisibility.simple.max=30;
+	else if(generalData.mapVisibility.simple.reshow>generalData.mapVisibility.simple.max)
+		generalData.mapVisibility.simple.reshow=generalData.mapVisibility.simple.max;
 	settings->endGroup();
 
 	settings->beginGroup("rates");
@@ -541,19 +567,25 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 void EventDispatcher::unload_the_data()
 {
 	unload_the_map();
+	unload_the_visibility_algorithm();
 }
 
 void EventDispatcher::unload_the_map()
 {
-	QHash<QString,Map_final *>::const_iterator i_insert = generalData.map_list.constBegin();
-	QHash<QString,Map_final *>::const_iterator i_insert_end = generalData.map_list.constEnd();
-	while (i_insert != i_insert_end)
+	QHash<QString,Map_final *>::const_iterator i = generalData.map_list.constBegin();
+	QHash<QString,Map_final *>::const_iterator i_end = generalData.map_list.constEnd();
+	while (i != i_end)
 	{
-		delete i_insert.value()->parsed_layer.walkable;
-		delete i_insert.value()->parsed_layer.water;
-		i_insert++;
+		delete i.value()->parsed_layer.walkable;
+		delete i.value()->parsed_layer.water;
+		delete i.value();
+		i++;
 	}
 	generalData.map_list.clear();
+}
+
+void EventDispatcher::unload_the_visibility_algorithm()
+{
 }
 
 //call by stop benchmark
