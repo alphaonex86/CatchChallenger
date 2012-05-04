@@ -108,6 +108,16 @@ struct Map_final
 	quint32 group;
 
 	QList<ClientMapManagement *> clients;//manipulated by thread of ClientMapManagement()
+
+	struct MapVisibility_simple
+	{
+		bool show;
+	};
+	struct MapVisibility
+	{
+		MapVisibility_simple simple;
+	};
+	MapVisibility mapVisibility;
 };
 
 struct Map_player_info
@@ -129,7 +139,6 @@ struct GeneralData
 	quint16 connected_players;
 	PlayerUpdater player_updater;
 	QSet<quint32> connected_players_id_list;
-	quint16 max_players_displayed,max_view_range;
 
 	//bd
 	QSqlDatabase *db;//use pointer here to init in correct thread
@@ -146,11 +155,13 @@ struct GeneralData
 	QString mapBasePath;
 	QHash<QString,Map_final *> map_list;
 	QTimer timer_to_send_insert_move_remove;
-	MapVisibilityAlgorithm mapVisibilityAlgorithm;
 
+	//visibility algorithm
+	MapVisibilityAlgorithm mapVisibilityAlgorithm;
 	struct MapVisibility_simple
 	{
 		quint16 max;
+		quint16 reshow;
 	};
 	struct MapVisibility
 	{

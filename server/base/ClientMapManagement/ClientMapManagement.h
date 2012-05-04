@@ -47,6 +47,7 @@ protected:
 	virtual void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged) = 0;
 	virtual void removeClient() = 0;
 	virtual void mapVisiblity_unloadFromTheMap() = 0;
+	virtual void mapTeleporterUsed();
 	//internal var
 	GeneralData *generalData;
 	//debug function
@@ -98,13 +99,10 @@ private:
 
 	//temp variable to move on the map
 	map_management_movement moveClient_tempMov;
+	map_management_insert insertClient_temp;//can have lot of due to over move
 
 	//temp variable for put on map
 	int moveThePlayer_index_move;
-
-	//cache
-	bool *walkable;
-	quint16 width;
 
 	//map start related
 	quint16				at_start_x,at_start_y;

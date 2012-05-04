@@ -108,6 +108,28 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map
 	loadOnTheMap();
 }
 
+void ClientMapManagement::mapTeleporterUsed()
+{
+	const Map_final::Teleporter &teleporter=current_map->teleporter[x+y*current_map->width];
+	if(teleporter.map==current_map)
+	{
+		x=teleporter.x;
+		y=teleporter.y;
+		emit message(QString("moveThePlayer(): pass on local teleporter (%1,%2)").arg(x).arg(y));
+	}
+	else
+	{
+		mapHaveChanged=true;
+		unloadFromTheMap();
+		mapVisiblity_unloadFromTheMap();
+		x=teleporter.x;
+		y=teleporter.y;
+		current_map=teleporter.map;
+		emit message(QString("moveThePlayer(): pass on remote teleporter %1 (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
+		loadOnTheMap();
+	}
+}
+
 /// \note The second heavy function
 void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
@@ -153,11 +175,13 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 				}
 				else
 					y--;
-				if(!walkable[x+y*width])
+				if(!current_map->parsed_layer.walkable[x+y*current_map->width])
 				{
 					emit error(QString("move at top, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
 					return;
 				}
+				if(current_map->teleporter.contains(x+y*current_map->width))
+					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -198,11 +222,13 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 				}
 				else
 					x++;
-				if(!walkable[x+y*width])
+				if(!current_map->parsed_layer.walkable[x+y*current_map->width])
 				{
 					emit error(QString("move at right, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
 					return;
 				}
+				if(current_map->teleporter.contains(x+y*current_map->width))
+					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -243,11 +269,13 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 				}
 				else
 					y++;
-				if(!walkable[x+y*width])
+				if(!current_map->parsed_layer.walkable[x+y*current_map->width])
 				{
 					emit error(QString("move at bottom, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
 					return;
 				}
+				if(current_map->teleporter.contains(x+y*current_map->width))
+					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -288,11 +316,13 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 				}
 				else
 					x--;
-				if(!walkable[x+y*width])
+				if(!current_map->parsed_layer.walkable[x+y*current_map->width])
 				{
 					emit error(QString("move at left, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
 					return;
 				}
+				if(current_map->teleporter.contains(x+y*current_map->width))
+					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -315,8 +345,6 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 
 void ClientMapManagement::loadOnTheMap()
 {
-	walkable=current_map->parsed_layer.walkable;
-	width=current_map->width;
 	current_map->clients << this;
 }
 
@@ -330,7 +358,6 @@ void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 	emit message(QString("insertAnotherClient(%1,%2,%3)").arg(player_id).arg(x).arg(y));
 	#endif
-	map_management_insert insertClient_temp;
 	insertClient_temp.fileName=map->map_file;
 	insertClient_temp.direction=direction;
 	insertClient_temp.x=x;
@@ -383,6 +410,7 @@ void ClientMapManagement::dropAllClients()
 
 void ClientMapManagement::purgeBuffer()
 {
+	/// \todo suspend when is into fighting
 	if(to_send_map_management_insert.size()==0 && to_send_map_management_move.size()==0 && to_send_map_management_remove.size()==0)
 		return;
 	if(stopIt)
@@ -402,24 +430,7 @@ void ClientMapManagement::purgeBuffer()
 	QDataStream outLoop(&purgeBuffer_outputDataLoop, QIODevice::WriteOnly);
 	outLoop.setVersion(QDataStream::Qt_4_4);
 
-	i_remove = to_send_map_management_remove.constBegin();
-	i_remove_end = to_send_map_management_remove.constEnd();
-	while (i_remove != i_remove_end)
-	{
-		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-		emit message(
-			QString("player_id to remove: %1, for player: %2")
-			.arg(*i_remove)
-			.arg(player_id)
-			 );
-		#endif
-		outLoop << *i_remove;
-		outLoop << (quint8)0x03;
-		++purgeBuffer_player_affected;
-		++i_remove;
-	}
-	to_send_map_management_remove.clear();
-
+	//////////////////////////// insert //////////////////////////
 	i_insert = to_send_map_management_insert.constBegin();
 	i_insert_end = to_send_map_management_insert.constEnd();
 	while (i_insert != i_insert_end)
@@ -435,8 +446,8 @@ void ClientMapManagement::purgeBuffer()
 			.arg(player_id)
 			 );
 		#endif
-		outLoop << i_insert.key();
 		outLoop << (quint8)0x01;
+		outLoop << i_insert.key();
 		outLoop << i_insert.value().fileName;
 		outLoop << i_insert.value().x;
 		outLoop << i_insert.value().y;
@@ -447,6 +458,7 @@ void ClientMapManagement::purgeBuffer()
 	}
 	to_send_map_management_insert.clear();
 
+	//////////////////////////// move //////////////////////////
 	purgeBuffer_list_size_internal=0;
 	purgeBuffer_indexMovement=0;
 	i_move = to_send_map_management_move.constBegin();
@@ -460,8 +472,8 @@ void ClientMapManagement::purgeBuffer()
 			.arg(player_id)
 			 );
 		#endif
-		outLoop << i_move.key();
 		outLoop << (quint8)0x02;
+		outLoop << i_move.key();
 		purgeBuffer_list_size_internal=i_move.value().size();
 /*		if(purgeBuffer_list_size_internal==0)
 			DebugClass::debugConsole(QString("for player: %1, list_size_internal==0").arg(this->player_id));*/
@@ -478,6 +490,25 @@ void ClientMapManagement::purgeBuffer()
 	}
 	to_send_map_management_move.clear();
 
+	//////////////////////////// remove //////////////////////////
+	i_remove = to_send_map_management_remove.constBegin();
+	i_remove_end = to_send_map_management_remove.constEnd();
+	while (i_remove != i_remove_end)
+	{
+		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+		emit message(
+			QString("player_id to remove: %1, for player: %2")
+			.arg(i_remove.value())
+			.arg(player_id)
+			 );
+		#endif
+		outLoop << (quint8)0x03;
+		outLoop << (quint32)(*i_remove);
+		++purgeBuffer_player_affected;
+		++i_remove;
+	}
+	to_send_map_management_remove.clear();
+	
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 	emit message(QString("player_affected: %1").arg(purgeBuffer_player_affected));
 	#endif

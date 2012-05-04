@@ -27,13 +27,17 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 	}
 	else
 	{
-		//drop all show client because it have excess the limit
-		//drop on all client
-		index=0;
-		while(index<loop_size)
+		if(current_map->mapVisibility.simple.show)
 		{
-			current_map->clients.at(index)->dropAllClients();
-			index++;
+			current_map->mapVisibility.simple.show=false;
+			//drop all show client because it have excess the limit
+			//drop on all client
+			index=0;
+			while(index<loop_size)
+			{
+				current_map->clients.at(index)->dropAllClients();
+				index++;
+			}
 		}
 	}
 	//auto insert to know where it have spawn
@@ -106,8 +110,9 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 void MapVisibilityAlgorithm_Simple::removeClient()
 {
 	loop_size=current_map->clients.size();
-	if(loop_size==(generalData->mapVisibility.simple.max))
+	if(loop_size==(generalData->mapVisibility.simple.reshow) && current_map->mapVisibility.simple.show==false)
 	{
+		current_map->mapVisibility.simple.show=true;
 		//insert all the client because it start to be visible
 		index=0;
 		while(index<loop_size)
@@ -166,7 +171,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClient(const quint32 &player_id,c
 		to_send_map_management_remove.remove(player_id);
 		ClientMapManagement::insertAnotherClient(player_id,map,x,y,direction,speed);
 	}
-	else if((to_send_map_management_move[player_id].size()*2+1)>=(4+map->map_file.size()+2+2+1+2))
+	else if((to_send_map_management_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))>=(sizeof(quint32)+map->map_file.size()*sizeof(quint16)+sizeof(quint16)+sizeof(quint16)+sizeof(quint8)+sizeof(quint16)))
 	{
 		to_send_map_management_move.remove(player_id);
 		overMove << player_id;

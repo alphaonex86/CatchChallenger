@@ -83,6 +83,7 @@ private slots:
 	void on_pushButton_server_benchmark_clicked();
 	void on_MapVisibilityAlgorithm_currentIndexChanged(int index);
 	void on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1);
+	void on_MapVisibilityAlgorithmSimpleReshow_editingFinished();
 signals:
 	void record_latency();
 };
