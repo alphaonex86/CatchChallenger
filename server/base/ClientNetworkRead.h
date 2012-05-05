@@ -8,6 +8,7 @@
 
 #include "ServerStructures.h"
 #include "../general/base/DebugClass.h"
+#include "../general/base/GeneralVariable.h"
 
 class ClientNetworkRead : public QObject
 {
@@ -26,7 +27,7 @@ public slots:
 	void askIfIsReadyToStop();
 	void stop();
 private slots:
-	void parseInput(const QByteArray & inputData);
+	void parseInputBeforeLogin(const QByteArray & inputData);
 	void parseInputAfterLogin(const QByteArray & inputData);
 signals:
 	//normal signals
@@ -67,6 +68,10 @@ private:
 	//to prevent memory presure
 	quint8 previousMovedUnit;
 	quint8 direction;
+	//to parse the netwrok stream
+	quint8 mainIdent;
+	quint16 subIdent;
+	quint8 queryNumber;
 };
 
 #endif // CLIENTNETWORKREAD_H

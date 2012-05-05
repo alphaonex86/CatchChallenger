@@ -3,6 +3,8 @@
 
 #include <QString>
 #include <QDebug>
+#include <QMutex>
+#include <QMutexLocker>
 
 class DebugClass
 {

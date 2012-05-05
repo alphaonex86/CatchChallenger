@@ -16,7 +16,9 @@
 #include "ClientMapManagement/MapBasicMove.h"
 
 /** \brief Do here only the calcule local to the client
- * That's mean map collision, monster event into grass, fight, object usage, ...*/
+ * That's mean map collision, monster event into grass, fight, object usage, ...
+ * no access to other client -> broadcast, no file/db access, no visibility calcule, ...
+ * Only here you need use the random list */
 class ClientLocalCalcule : public MapBasicMove
 {
 	Q_OBJECT
