@@ -235,6 +235,8 @@ void Client::disconnectNextStep()
 		clientMapManagement=NULL;
 		clientNetworkRead=NULL;
 		clientNetworkWrite=NULL;
+
+		emit isReadyToDelete();
 	}
 
 }

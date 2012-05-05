@@ -32,6 +32,8 @@ void ClientMapManagement::setVariable(GeneralData *generalData,Player_private_an
 
 void ClientMapManagement::extraStop()
 {
+	disconnect(&generalData->timer_to_send_insert_move_remove,SIGNAL(timeout()),this,SLOT(purgeBuffer()));
+
 	//call MapVisibilityAlgorithm to remove
 	removeClient();
 
