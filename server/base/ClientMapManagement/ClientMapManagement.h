@@ -22,8 +22,8 @@ class ClientMapManagement : public MapBasicMove
 	Q_OBJECT
 public:
 	explicit ClientMapManagement();
-	~ClientMapManagement();
-	void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
+	virtual ~ClientMapManagement();
+	virtual void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
 	/// \bug is not thread safe, and called by another thread, error can occure
 	Map_player_info getMapPlayerInfo();
 	//to change the info on another client
@@ -31,7 +31,7 @@ public:
 	virtual void moveAnotherClient(const quint32 &player_id,const quint8 &movedUnit,const Direction &direction);
 	virtual void removeAnotherClient(const quint32 &player_id);
 	//drop all clients
-	void dropAllClients();
+	virtual void dropAllClients();
 protected:
 	//pass to the Map management visibility algorithm
 	virtual void insertClient() = 0;
@@ -52,11 +52,11 @@ signals:
 	void updatePlayerPosition(const QString & map,const quint16 &x,const quint16 &y,const Orientation &orientation);
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
-	void put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	virtual void put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 private slots:
-	void purgeBuffer();
-	void extraStop();
+	virtual void purgeBuffer();
+	virtual void extraStop();
 private:
 	//info linked
 	Orientation			at_start_orientation;
@@ -88,8 +88,8 @@ private:
 	//map start related
 	quint16				at_start_x,at_start_y;
 	//map load/unload and change
-	void				loadOnTheMap();
-	void				unloadFromTheMap();
+	virtual void			loadOnTheMap();
+	virtual void			unloadFromTheMap();
 	bool				mapHaveChanged;
 
 };
