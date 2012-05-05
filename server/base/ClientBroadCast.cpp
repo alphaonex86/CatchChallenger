@@ -2,6 +2,7 @@
 
 ClientBroadCast::ClientBroadCast()
 {
+	connected_players=0;
 	connect(this,SIGNAL(try_internal_disconnect()),this,SLOT(internal_disconnect()),Qt::QueuedConnection);
 }
 
