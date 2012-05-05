@@ -130,6 +130,7 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 		index=0;
 		while(index<loop_size)
 		{
+			//current_map -> wrong pointer
 			current_map->clients.at(index)->removeAnotherClient(player_id);
 			index++;
 		}
