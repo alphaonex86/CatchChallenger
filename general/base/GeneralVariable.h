@@ -1,0 +1,6 @@
+#ifndef GENERALVARIABLE_H
+#define GENERALVARIABLE_H
+
+#define PROTOCOL_HEADER "pokecraft-0.0.0.1"
+
+#endif // GENERALVARIABLE_H

@@ -93,7 +93,7 @@ void ClientNetworkRead::readyRead()
 			if(is_logged)
 				parseInputAfterLogin(data);
 			else
-				parseInput(data);
+				parseInputBeforeLogin(data);
 			dataClear();
 		}
 		if(stopIt)
@@ -101,11 +101,9 @@ void ClientNetworkRead::readyRead()
 	}
 }
 
-void ClientNetworkRead::parseInput(const QByteArray & inputData)
+void ClientNetworkRead::parseInputBeforeLogin(const QByteArray & inputData)
 {
-	emit message(QString("parseInput(): inputData: %1").arg(QString(inputData.toHex())));
-	quint8 mainIdent;
-	quint8 queryNumber;
+	emit message(QString("parseInputBeforeLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	QDataStream in(inputData);
 	in.setVersion(QDataStream::Qt_4_4);
 	if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -117,107 +115,105 @@ void ClientNetworkRead::parseInput(const QByteArray & inputData)
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	if(mainIdent!=01)
-	{
-		if(!have_send_protocol)
-		{
-			emit error("have not send the protocol");
-			return;
-		}
-		else if(mainIdent!=03)
-		{
-			if(!is_logged)
-			{
-				emit error("have not send the login");
-				return;
-			}
-		}
-	}
 	switch(mainIdent)
 	{
-		case 0x01:
-		if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+		case 0x02:
+		if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)+sizeof(quint32)))
 		{
-			emit error(QString("wrong size with the main ident: %1").arg(mainIdent));
+			QString("wrong size with the main ident: %1").arg(mainIdent);
 			return;
 		}
+		in >> subIdent;
 		in >> queryNumber;
-		if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
-			return;
+		switch(subIdent)
 		{
-			QString protocol;
-			in >> protocol;
-			if(generalData->connected_players>=generalData->max_players)
-			{
-				out << (quint8)0xC1;
-				out << (quint8)queryNumber;
-				out << (quint8)3;
-				out << QString("Server full");
-				emit sendPacket(outputData);
-				emit error(QString("Server full (%1/%2)").arg(generalData->connected_players).arg(generalData->max_players));
-				return;
-			}
-			if(protocol=="pkmn-0.0.0.1")
-			{
-				out << (quint8)0xC1;
-				out << (quint8)queryNumber;
-				out << (quint8)1;
-				emit sendPacket(outputData);
-				have_send_protocol=true;
-				emit message("Protocol sended and replied");
-			}
-			else
-			{
-				out << (quint8)0xC1;
-				out << (quint8)queryNumber;
-				out << (quint8)2;
-				emit sendPacket(outputData);
-				emit error("Wrong protocol");
-				return;
-			}
-		}
-		break;
-		case 0x03:
-		if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-		{
-			emit error("wrong size");
-			return;
-		}
-		in >> queryNumber;
-		if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
-			return;
-		{
-			QString login;
-			in >> login;
-			if((inputData.size()-in.device()->pos())!=20)
-				emit error(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainIdent).arg(inputData.size()-in.device()->pos()));
-			else if(is_logging_in_progess)
-			{
-				out << (quint8)0xC1;
-				out << (quint8)queryNumber;
-				out << (quint8)1;
-				emit sendPacket(outputData);
-				emit error("Loggin in progress");
-			}
-			else if(is_logged)
-			{
-				out << (quint8)0xC1;
-				out << (quint8)queryNumber;
-				out << (quint8)1;
-				emit sendPacket(outputData);
-				emit error("Already logged");
-			}
-			else
-			{
-				is_logging_in_progess=true;
-				QByteArray hash;
-				hash=inputData.right(inputData.size()-in.device()->pos());
-				emit askLogin(queryNumber,login,hash);
-				emit message("Logged");
-			}
+			case 0x0001:
+				if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
+					return;
+				{
+					QString protocol;
+					in >> protocol;
+					if(generalData->connected_players>=generalData->max_players)
+					{
+						out << (quint8)0xC1;
+						out << (quint8)queryNumber;
+						out << (quint8)3;
+						out << QString("Server full");
+						emit sendPacket(outputData);
+						emit error(QString("Server full (%1/%2)").arg(generalData->connected_players).arg(generalData->max_players));
+						return;
+					}
+					if(protocol==PROTOCOL_HEADER)
+					{
+						out << (quint8)0xC1;
+						out << (quint8)queryNumber;
+						out << (quint8)1;
+						emit sendPacket(outputData);
+						have_send_protocol=true;
+						emit message("Protocol sended and replied");
+					}
+					else
+					{
+						out << (quint8)0xC1;
+						out << (quint8)queryNumber;
+						out << (quint8)2;
+						emit sendPacket(outputData);
+						emit error("Wrong protocol");
+						return;
+					}
+				}
+			break;
+			case 0x0002:
+				if(!have_send_protocol)
+				{
+					emit error("send login before the protocol");
+					return;
+				}
+				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+				{
+					emit error("wrong size");
+					return;
+				}
+				if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
+					return;
+				{
+					QString login;
+					in >> login;
+					if((inputData.size()-in.device()->pos())!=20)
+						emit error(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainIdent).arg(inputData.size()-in.device()->pos()));
+					else if(is_logging_in_progess)
+					{
+						out << (quint8)0xC1;
+						out << (quint8)queryNumber;
+						out << (quint8)1;
+						emit sendPacket(outputData);
+						emit error("Loggin in progress");
+					}
+					else if(is_logged)
+					{
+						out << (quint8)0xC1;
+						out << (quint8)queryNumber;
+						out << (quint8)1;
+						emit sendPacket(outputData);
+						emit error("Already logged");
+					}
+					else
+					{
+						is_logging_in_progess=true;
+						QByteArray hash;
+						hash=inputData.right(inputData.size()-in.device()->pos());
+						emit askLogin(queryNumber,login,hash);
+						emit message("Logged");
+					}
+				}
+			break;
+			default:
+				emit error("wrong data before login with mainIdent: "+QString::number(mainIdent)+", subIdent: "+QString::number(subIdent));
+			break;
 		}
 		break;
 		default:
+			emit error("wrong data before login with mainIdent: "+QString::number(mainIdent));
 		break;
 	}
 }
@@ -227,9 +223,6 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputAfterLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
-	quint8 mainIdent;
-	quint16 subIdent;
-	quint8 queryNumber;
 	QDataStream in(inputData);
 	in.setVersion(QDataStream::Qt_4_4);
 	if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -243,7 +236,7 @@ void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
 	out.setVersion(QDataStream::Qt_4_4);
 	switch(mainIdent)
 	{
-		case 02:
+		case 0x02:
 		if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)+sizeof(quint32)))
 		{
 			QString("wrong size with the main ident: %1").arg(mainIdent);
