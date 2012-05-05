@@ -15,12 +15,14 @@
 #include "../VariableServer.h"
 #include "ClientMapManagement/MapBasicMove.h"
 
+/** \brief Do here only the calcule local to the client
+ * That's mean map collision, monster event into grass, fight, object usage, ...*/
 class ClientLocalCalcule : public MapBasicMove
 {
 	Q_OBJECT
 public:
 	explicit ClientLocalCalcule();
-	~ClientLocalCalcule();
+	virtual ~ClientLocalCalcule();
 private:
 	bool checkCollision();
 public slots:

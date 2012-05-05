@@ -18,6 +18,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	clientHeavyLoad=new ClientHeavyLoad();
 	clientNetworkRead=new ClientNetworkRead();
 	clientNetworkWrite=new ClientNetworkWrite();
+	clientLocalCalcule=new ClientLocalCalcule();
 
 	switch(generalData->mapVisibilityAlgorithm)
 	{
@@ -53,11 +54,11 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	ask_is_ready_to_stop=false;
 	this->generalData		= generalData;
 
-
 	clientBroadCast->moveToThread(generalData->eventThreaderList.at(0));
 	clientHeavyLoad->moveToThread(generalData->eventThreaderList.at(3));
 	clientMapManagement->moveToThread(generalData->eventThreaderList.at(1));
 	clientNetworkRead->moveToThread(generalData->eventThreaderList.at(2));
+	clientLocalCalcule->moveToThread(generalData->eventThreaderList.at(6));
 
 	//set the socket
 	clientNetworkRead->setSocket(socket);
@@ -68,17 +69,20 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	clientBroadCast->setVariable(generalData,&player_informations);
 	clientMapManagement->setVariable(generalData,&player_informations);
 	clientHeavyLoad->setVariable(generalData,&player_informations);
+	clientLocalCalcule->setVariable(generalData,&player_informations);
 
 	//connect the write
 	connect(clientNetworkRead,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);
 	connect(clientMapManagement,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);
 	connect(clientBroadCast,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);
+	connect(clientLocalCalcule,	SIGNAL(sendPacket(QByteArray)),clientNetworkWrite,SLOT(sendPacket(QByteArray)),Qt::QueuedConnection);
 
 	//connect the player information
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientLocalCalcule,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
@@ -93,6 +97,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 
 	//packet parsed (map management)
 	connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientMapManagement,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
+	connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientLocalCalcule,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
 	//packet parsed (broadcast)
 	connect(clientNetworkRead,	SIGNAL(sendChatText(Chat_type,QString)),			clientBroadCast,	SLOT(sendChatText(Chat_type,QString)),				Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(sendPM(QString,QString)),				clientBroadCast,	SLOT(sendPM(QString,QString)),					Qt::QueuedConnection);
@@ -110,11 +115,13 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	connect(clientMapManagement,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkWrite,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
+	connect(clientLocalCalcule,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
 	connect(clientBroadCast,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	connect(clientNetworkWrite,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
+	connect(clientLocalCalcule,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 
 	stopped_object=0;
 }
@@ -213,11 +220,13 @@ void Client::disconnectNextStep()
 		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
 		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
 		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
+		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(stop()),Qt::QueuedConnection);
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(stop()),Qt::QueuedConnection);
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(stop()),Qt::QueuedConnection);
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(stop()),Qt::QueuedConnection);
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(stop()),Qt::QueuedConnection);
+		connect(this,SIGNAL(askIfIsReadyToStop()),clientLocalCalcule,SLOT(stop()),Qt::QueuedConnection);
 		emit askIfIsReadyToStop();
 
 		//now the object is not usable
