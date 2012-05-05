@@ -642,6 +642,7 @@ void EventDispatcher::check_if_now_stopped()
 		delete server;
 		server=NULL;
 	}
+	unload_the_data();
 	emit is_started(false);
 }
 
