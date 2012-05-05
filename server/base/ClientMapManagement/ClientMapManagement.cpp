@@ -9,15 +9,10 @@
 
 ClientMapManagement::ClientMapManagement()
 {
-	current_map=NULL;
-	player_informations=NULL;
-	generalData=NULL;
-	stopIt=false;
 }
 
 ClientMapManagement::~ClientMapManagement()
 {
-	stopIt=true;
 }
 
 Map_player_info ClientMapManagement::getMapPlayerInfo()
@@ -35,34 +30,32 @@ void ClientMapManagement::setVariable(GeneralData *generalData,Player_private_an
 	connect(&generalData->timer_to_send_insert_move_remove,	SIGNAL(timeout()),this,SLOT(purgeBuffer()),Qt::QueuedConnection);
 }
 
-void ClientMapManagement::askIfIsReadyToStop()
+void ClientMapManagement::extraStop()
 {
-	if(current_map!=NULL)
+	//call MapVisibilityAlgorithm to remove
+	removeClient();
+
+	to_send_map_management_insert.clear();
+	to_send_map_management_move.clear();
+	to_send_map_management_remove.clear();
+
+	//virtual stop the player
+	if(last_direction>4)
+		last_direction=Direction((quint8)last_direction-4);
+	Orientation orientation=(Orientation)last_direction;
+	if(current_map->map_file!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
 	{
-		//call MapVisibilityAlgorithm to remove
-		removeClient();
-		to_send_map_management_insert.clear();
-		to_send_map_management_move.clear();
-		to_send_map_management_remove.clear();
-		//virtual stop the player
-		if(last_direction>4)
-			last_direction=Direction((quint8)last_direction-4);
-		Orientation orientation=(Orientation)last_direction;
-		if(current_map->map_file!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
-		{
-			emit updatePlayerPosition(current_map->map_file,x,y,orientation);
-			#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-			DebugClass::debugConsole(
-						QString("current_map->map_file: %1,x: %2,y: %3, orientation: %4")
-						.arg(current_map->map_file)
-						.arg(x)
-						.arg(y)
-						.arg(orientation)
-						);
-			#endif
-		}
+		emit updatePlayerPosition(current_map->map_file,x,y,orientation);
+		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
+		DebugClass::debugConsole(
+					QString("current_map->map_file: %1,x: %2,y: %3, orientation: %4")
+					.arg(current_map->map_file)
+					.arg(x)
+					.arg(y)
+					.arg(orientation)
+					);
+		#endif
 	}
-	MapBasicMove::askIfIsReadyToStop();
 }
 
 void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
@@ -248,7 +241,7 @@ void ClientMapManagement::purgeBuffer()
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 		emit message(
 			QString("player_id to remove: %1, for player: %2")
-			.arg(i_remove.value())
+			.arg((quint32)(*i_remove))
 			.arg(player_id)
 			 );
 		#endif
