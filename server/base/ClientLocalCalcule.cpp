@@ -9,15 +9,10 @@
 
 ClientLocalCalcule::ClientLocalCalcule()
 {
-	current_map=NULL;
-	player_informations=NULL;
-	generalData=NULL;
-	stopIt=false;
 }
 
 ClientLocalCalcule::~ClientLocalCalcule()
 {
-	stopIt=true;
 }
 
 bool ClientLocalCalcule::checkCollision()

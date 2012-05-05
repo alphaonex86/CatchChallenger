@@ -21,7 +21,7 @@ class MapBasicMove : public QObject
 	Q_OBJECT
 public:
 	explicit MapBasicMove();
-	~MapBasicMove();
+	virtual ~MapBasicMove();
 	virtual void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
 	//info linked
 	qint16				x,y;//can be negative because offset to insert on map diff can be put into
@@ -60,10 +60,10 @@ signals:
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
 	virtual void put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
-	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction) = 0;
+	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	//normal slots
-	void askIfIsReadyToStop();
-	void stop();
+	virtual void askIfIsReadyToStop();
+	virtual void stop();
 private:
 	//temp variable for put on map
 	int moveThePlayer_index_move;
