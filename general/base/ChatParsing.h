@@ -1,6 +1,6 @@
 #include <QObject>
 
-#include "../general/base/GeneralStructures.h"
+#include "GeneralStructures.h"
 
 #ifndef CHAT_PARSING_H
 #define CHAT_PARSING_H
