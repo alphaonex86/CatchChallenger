@@ -125,14 +125,15 @@ void ClientMapManagement::moveAnotherClient(const quint32 &player_id,const quint
 void ClientMapManagement::removeAnotherClient(const quint32 &player_id)
 {
 	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
-	if(to_send_map_management_remove.contains(player_id))
+	if(!stopIt && to_send_map_management_remove.contains(player_id))
 	{
 		emit message("try dual remove");
 		return;
 	}
 	#endif
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	emit message(QString("removeAnotherClient(%1,%2,%3)").arg(player_id));
+	if(!stopIt)
+		emit message(QString("removeAnotherClient(%1,%2,%3)").arg(player_id));
 	#endif
 
 	to_send_map_management_move.remove(player_id);

@@ -14,6 +14,7 @@
 #include "ClientMapManagement/ClientMapManagement.h"
 #include "ClientNetworkRead.h"
 #include "ClientNetworkWrite.h"
+#include "ClientLocalCalcule.h"
 #include "EventThreader.h"
 #include "../general/base/GeneralStructures.h"
 #include "../VariableServer.h"
@@ -48,6 +49,7 @@ private:
 	ClientMapManagement *clientMapManagement;
 	ClientNetworkRead *clientNetworkRead;
 	ClientNetworkWrite *clientNetworkWrite;
+	ClientLocalCalcule *clientLocalCalcule;
 
 	//socket related
 	QTcpSocket *socket;

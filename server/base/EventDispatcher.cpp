@@ -25,6 +25,7 @@ EventDispatcher::EventDispatcher()
 	generalData.eventThreaderList << new EventThreader();//heavy load (3)
 	generalData.eventThreaderList << new EventThreader();//event dispatcher (4)
 	generalData.eventThreaderList << new EventThreader();//bots (5)
+	generalData.eventThreaderList << new EventThreader();//local calcule (6)
 
 	generalData.player_updater.moveToThread(generalData.eventThreaderList.at(0));
 
@@ -434,7 +435,7 @@ void EventDispatcher::load_settings()
 		generalData.mapVisibility.simple.max=generalData.max_players;
 	generalData.mapVisibility.simple.reshow=settings->value("Reshow").toUInt(&ok);
 	if(!ok)
-		generalData.mapVisibility.simple.max=30;
+		generalData.mapVisibility.simple.reshow=30;
 	else if(generalData.mapVisibility.simple.reshow>generalData.mapVisibility.simple.max)
 		generalData.mapVisibility.simple.reshow=generalData.mapVisibility.simple.max;
 	settings->endGroup();
@@ -468,6 +469,9 @@ void EventDispatcher::load_settings()
 	mysql_login=settings->value("login").toString();
 	mysql_pass=settings->value("pass").toString();
 	settings->endGroup();
+	DebugClass::debugConsole("generalData.max_players: "+QString::number(generalData.max_players));
+	DebugClass::debugConsole("generalData.mapVisibility.simple.max: "+QString::number(generalData.mapVisibility.simple.max));
+	DebugClass::debugConsole("generalData.mapVisibility.simple.reshow: "+QString::number(generalData.mapVisibility.simple.reshow));
 	delete settings;
 }
 
