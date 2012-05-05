@@ -58,7 +58,8 @@ HEADERS += \
     ../general/base/MoveClient.h \
     ../general/base/DebugClass.h \
     ../general/base/GeneralStructures.h \
-    ../general/base/ChatParsing.h
+    ../general/base/ChatParsing.h \
+    ../general/base/GeneralVariable.h
 
 HEADERS  += MainWindow.h
 

@@ -15,8 +15,9 @@
 #include <QDateTime>
 #include <QCryptographicHash>
 
-#include "../pokecraft-general/DebugClass.h"
-#include "../pokecraft-general/GeneralStructures.h"
+#include "../../general/base/DebugClass.h"
+#include "../../general/base/GeneralStructures.h"
+#include "../../general/base/GeneralVariable.h"
 #include "ClientStructures.h"
 
 class Pokecraft_client : public QObject

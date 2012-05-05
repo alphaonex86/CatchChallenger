@@ -226,8 +226,8 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
 					return;
 				}
-				in >> player_id;
 				in >> type;
+				in >> player_id;
 				switch(type)
 				{
 					case 0x01:
@@ -715,9 +715,10 @@ void Pokecraft_client::sendProtocol()
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	quint8 query_number=queryNumber();
-	out << (quint8)0x01;
+	out << (quint8)0x02;
+	out << (quint16)0x0001;
 	out << (quint8)query_number;
-	out << QString("pkmn-0.0.0.1");
+	out << QString(PROTOCOL_HEADER);
 	sendData(outputData);
 	add_to_query_list(query_number,query_type_protocol);
 }
@@ -743,7 +744,8 @@ void Pokecraft_client::tryLogin(QString login,QString pass)
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	quint8 query_number=queryNumber();
-	out << (quint8)0x03;
+	out << (quint8)0x02;
+	out << (quint16)0x0002;
 	out << (quint8)query_number;
 	out << login;
 	QCryptographicHash hash(QCryptographicHash::Sha1);
