@@ -28,6 +28,8 @@ void MapBasicMove::setVariable(GeneralData *generalData,Player_private_and_publi
 
 void MapBasicMove::askIfIsReadyToStop()
 {
+	if(stopIt)
+		return;
 	stopIt=true;
 	if(current_map==NULL)
 	{

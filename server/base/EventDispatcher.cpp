@@ -668,7 +668,10 @@ void EventDispatcher::stop_internal_server()
 		client_list.at(index)->disconnectClient();
 		index++;
 	}
-	unload_the_data();
+
+	/* commented because it need be unloaded after all the player
+	unload_the_data();*/
+
 	check_if_now_stopped();
 }
 
