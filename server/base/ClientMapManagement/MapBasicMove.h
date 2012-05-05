@@ -43,6 +43,7 @@ protected:
 	//related to stop
 	volatile bool stopCurrentMethod;
 	volatile bool stopIt;
+	virtual void extraStop();
 
 	//debug function
 	QString directionToString(const Direction &direction);

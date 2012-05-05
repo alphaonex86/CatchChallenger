@@ -35,8 +35,15 @@ void MapBasicMove::askIfIsReadyToStop()
 		return;
 	}
 	unloadFromTheMap();
+
+	extraStop();
+
 	current_map=NULL;
 	emit isReadyToStop();
+}
+
+void MapBasicMove::extraStop()
+{
 }
 
 void MapBasicMove::stop()
@@ -68,8 +75,6 @@ void MapBasicMove::put_on_the_map(const quint32 &player_id,Map_final *map,const 
 		this->y=current_map->height-1;
 	}
 	#endif
-
-	loadOnTheMap();
 }
 
 void MapBasicMove::mapTeleporterUsed()
