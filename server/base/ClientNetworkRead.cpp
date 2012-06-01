@@ -103,7 +103,9 @@ void ClientNetworkRead::readyRead()
 
 void ClientNetworkRead::parseInputBeforeLogin(const QByteArray & inputData)
 {
+	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputBeforeLogin(): inputData: %1").arg(QString(inputData.toHex())));
+	#endif
 	QDataStream in(inputData);
 	in.setVersion(QDataStream::Qt_4_4);
 	if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -135,29 +137,29 @@ void ClientNetworkRead::parseInputBeforeLogin(const QByteArray & inputData)
 					in >> protocol;
 					if(generalData->connected_players>=generalData->max_players)
 					{
-						out << (quint8)0xC1;
-						out << (quint8)queryNumber;
-						out << (quint8)3;
+						out << (quint8)queryNumber;	//query number
+						out << (quint8)0x03;		//server full
 						out << QString("Server full");
-						emit sendPacket(outputData);
+						emit sendPacket(0xC1,0x00,true,outputData);
 						emit error(QString("Server full (%1/%2)").arg(generalData->connected_players).arg(generalData->max_players));
 						return;
 					}
 					if(protocol==PROTOCOL_HEADER)
 					{
-						out << (quint8)0xC1;
-						out << (quint8)queryNumber;
-						out << (quint8)1;
-						emit sendPacket(outputData);
+						out << (quint8)queryNumber;	//query number
+						out << (quint8)0x01;		//protocol supported
+						/*out << (quint8)0x00;		//raw (no compression)
+						out << (quint8)0x01;		//upload size type: small (client -> server)
+						out << (quint8)0x01;		//upload size type: small (client -> server)*/
+						emit sendPacket(0xC1,0x00,true,outputData);
 						have_send_protocol=true;
 						emit message("Protocol sended and replied");
 					}
 					else
 					{
-						out << (quint8)0xC1;
-						out << (quint8)queryNumber;
-						out << (quint8)2;
-						emit sendPacket(outputData);
+						out << (quint8)queryNumber;	//query number
+						out << (quint8)0x02;		//protocol not supported
+						emit sendPacket(0xC1,0x00,true,outputData);
 						emit error("Wrong protocol");
 						return;
 					}
@@ -183,18 +185,16 @@ void ClientNetworkRead::parseInputBeforeLogin(const QByteArray & inputData)
 						emit error(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainIdent).arg(inputData.size()-in.device()->pos()));
 					else if(is_logging_in_progess)
 					{
-						out << (quint8)0xC1;
 						out << (quint8)queryNumber;
 						out << (quint8)1;
-						emit sendPacket(outputData);
+						emit sendPacket(0xC1,0x00,true,outputData);
 						emit error("Loggin in progress");
 					}
 					else if(is_logged)
 					{
-						out << (quint8)0xC1;
 						out << (quint8)queryNumber;
 						out << (quint8)1;
-						emit sendPacket(outputData);
+						emit sendPacket(0xC1,0x00,true,outputData);
 						emit error("Already logged");
 					}
 					else

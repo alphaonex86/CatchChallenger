@@ -52,12 +52,10 @@ void ClientBroadCast::receivePM(const QString &text,const quint32 &player_id)
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC2;
-	out << (quint16)0x0005;
 	out << player_id;//id player here
 	out << (quint8)0x06;
 	out << text;
-	emit sendPacket(outputData);
+	emit sendPacket(0xC2,0x0005,true,outputData);
 }
 
 void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
@@ -98,12 +96,10 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC2;
-	out << (quint16)0x0005;
 	out << sender_player_id;
 	out << (quint8)chatType;
 	out << text;
-	emit sendPacket(outputData);
+	emit sendPacket(0xC2,0x0005,true,outputData);
 }
 
 void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text)
@@ -175,8 +171,6 @@ void ClientBroadCast::send_players_informations(const QList<Player_private_and_p
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC2;
-	out << (quint16)0x0002;
 	out << (quint16)players_informations.size();
 	int index=0;
 	int list_size=players_informations.size();
@@ -192,7 +186,7 @@ void ClientBroadCast::send_players_informations(const QList<Player_private_and_p
 			out << players_informations.at(index).cash;
 		index++;
 	}
-	emit sendPacket(outputData);
+	emit sendPacket(0xC2,0x0002,true,outputData);
 }
 
 void ClientBroadCast::send_players_informations(const QList<Player_public_informations> &players_informations)
@@ -208,8 +202,6 @@ void ClientBroadCast::send_players_informations(const QList<Player_public_inform
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC2;
-	out << (quint16)0x0002;
 	out << (quint16)players_informations.size();
 	int index=0;
 	int list_size=players_informations.size();
@@ -223,7 +215,7 @@ void ClientBroadCast::send_players_informations(const QList<Player_public_inform
 		out << players_informations.at(index).skin;
 		index++;
 	}
-	emit sendPacket(outputData);
+	emit sendPacket(0xC2,0x0002,true,outputData);
 }
 
 void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
@@ -234,11 +226,9 @@ void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC2;
-	out << (quint16)0x0009;
 	out << generalData->connected_players;
 	out << generalData->max_players;
-	emit sendPacket(outputData);
+	emit sendPacket(0xC3,0x0000,false,outputData);
 }
 
 void ClientBroadCast::kick()
