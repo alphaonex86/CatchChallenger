@@ -55,7 +55,7 @@ signals:
 	void error(const QString &error);
 	void kicked();
 	void message(const QString &message);
-	void sendPacket(const QByteArray &data);
+	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
 	void isReadyToStop();
 	void try_internal_disconnect();
 private:

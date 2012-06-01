@@ -47,7 +47,7 @@ signals:
 	void error(const QString &error);
 	void message(const QString &message);
 	void isReadyToStop();
-	void sendPacket(const QByteArray &data);
+	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
 	//specific to map signals
 	void updatePlayerPosition(const QString & map,const quint16 &x,const quint16 &y,const Orientation &orientation);
 public slots:

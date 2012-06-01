@@ -29,6 +29,14 @@ EventDispatcher::EventDispatcher()
 
 	generalData.player_updater.moveToThread(generalData.eventThreaderList.at(0));
 
+	//register the main code without sub-code type
+	generalData.mainCodeWithoutSubCodeTypeClientToServer = ProtocolParsing::getMainCodeWithoutSubCodeTypeClientToServer();
+	generalData.mainCodeWithoutSubCodeTypeServerToClient = ProtocolParsing::getMainCodeWithoutSubCodeTypeServerToClient();
+	generalData.sizeOnlyMainCodePacketClientToServer = ProtocolParsing::getSizeOnlyMainCodePacketClientToServer();
+	generalData.sizeOnlyMainCodePacketServerToClient = ProtocolParsing::getSizeOnlyMainCodePacketServerToClient();
+	generalData.sizeMultipleCodePacketClientToServer = ProtocolParsing::getSizeMultipleCodePacketClientToServer();
+	generalData.sizeMultipleCodePacketServerToClient = ProtocolParsing::getSizeMultipleCodePacketServerToClient();
+
 	QStringList names;
 	names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher" << "benchmark";
 	latencyChecker.setLatencyVariable(generalData.eventThreaderList,names);
