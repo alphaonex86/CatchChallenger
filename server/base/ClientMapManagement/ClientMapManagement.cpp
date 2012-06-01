@@ -147,11 +147,7 @@ void ClientMapManagement::dropAllClients()
 	to_send_map_management_insert.clear();
 	to_send_map_management_move.clear();
 	to_send_map_management_remove.clear();
-	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC2;
-	out << (quint16)0x000A;
-	emit sendPacket(purgeBuffer_outputData);
+	emit sendPacket(0xC3,0x0000,false,QByteArray());
 }
 
 void ClientMapManagement::purgeBuffer()
@@ -171,7 +167,6 @@ void ClientMapManagement::purgeBuffer()
 	purgeBuffer_outputData.clear();
 	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC0;
 	purgeBuffer_outputDataLoop.clear();
 	QDataStream outLoop(&purgeBuffer_outputDataLoop, QIODevice::WriteOnly);
 	outLoop.setVersion(QDataStream::Qt_4_4);
@@ -260,5 +255,5 @@ void ClientMapManagement::purgeBuffer()
 	#endif
 	out << purgeBuffer_player_affected;
 	purgeBuffer_outputData+=purgeBuffer_outputDataLoop;
-	emit sendPacket(purgeBuffer_outputData);
+	emit sendPacket(0xC0,0x0000,true,purgeBuffer_outputData);
 }

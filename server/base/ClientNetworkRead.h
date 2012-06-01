@@ -9,6 +9,7 @@
 #include "ServerStructures.h"
 #include "../general/base/DebugClass.h"
 #include "../general/base/GeneralVariable.h"
+#include "../VariableServer.h"
 
 class ClientNetworkRead : public QObject
 {
@@ -33,7 +34,7 @@ signals:
 	//normal signals
 	void error(const QString &error);
 	void message(const QString &message);
-	void sendPacket(const QByteArray &data);
+	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
 	void isReadyToStop();
 	//packet parsed (heavy)
 	void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);

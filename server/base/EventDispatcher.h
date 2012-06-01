@@ -17,6 +17,7 @@
 #include "Map_loader.h"
 #include "FakeBot.h"
 #include "LatencyChecker.h"
+#include "../general/base/ProtocolParsing.h"
 
 #ifndef EVENTDISPATCHER_H
 #define EVENTDISPATCHER_H
