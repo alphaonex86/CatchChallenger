@@ -84,4 +84,18 @@ struct Player_private_and_public_informations
 	bool is_fake;
 };
 
+/// \brief Define the mode of size
+enum PacketSizeMode
+{
+	PacketSizeMode_Small=0x00,
+	PacketSizeMode_Big=0x01
+};
+
+/// \brief Define the mode of transmission: client or server
+enum PacketModeTransmission
+{
+	PacketModeTransmission_Server=0x00,
+	PacketModeTransmission_Client=0x01
+};
+
 #endif // STRUCTURES_GENERAL_H
