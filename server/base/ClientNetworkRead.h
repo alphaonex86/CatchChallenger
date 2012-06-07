@@ -8,16 +8,15 @@
 
 #include "ServerStructures.h"
 #include "../general/base/DebugClass.h"
+#include "../general/base/ProtocolParsing.h"
 #include "../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
-class ClientNetworkRead : public QObject
+class ClientNetworkRead : public ProtocolParsingInput
 {
     Q_OBJECT
 public:
-	explicit ClientNetworkRead();
-	void setSocket(QTcpSocket * socket);
-	void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
+	explicit ClientNetworkRead(GeneralData *generalData,Player_private_and_public_informations *player_informations,QTcpSocket * socket);
 	void stopRead();
 	void fake_send_protocol();
 public slots:
@@ -30,11 +29,13 @@ public slots:
 private slots:
 	void parseInputBeforeLogin(const QByteArray & inputData);
 	void parseInputAfterLogin(const QByteArray & inputData);
+	void parseInputAfterLogin(const quint8 &mainCodeType,const QByteArray &data);
+	void parseInputAfterLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+	void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
+	void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
 signals:
 	//normal signals
-	void error(const QString &error);
-	void message(const QString &message);
-	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
+	void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const bool &packetSize,const QByteArray &data);
 	void isReadyToStop();
 	//packet parsed (heavy)
 	void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
@@ -51,17 +52,12 @@ signals:
 	//to manipulate the server for restart and stop
 	void serverCommand(const QString &command,const QString &extraText);
 private:
-	// for data
-	bool haveData;
-	quint32 dataSize;
-	QByteArray data;
 	// for status
 	bool is_logged;
 	bool have_send_protocol;
 	bool is_logging_in_progess;
 	bool stopIt;
 	// function
-	void dataClear();
 	bool checkStringIntegrity(const QByteArray & data);
 	QTcpSocket * socket;
 	GeneralData *generalData;
@@ -70,8 +66,8 @@ private:
 	quint8 previousMovedUnit;
 	quint8 direction;
 	//to parse the netwrok stream
-	quint8 mainIdent;
-	quint16 subIdent;
+	quint8 mainCodeType;
+	quint16 subCodeType;
 	quint8 queryNumber;
 };
 
