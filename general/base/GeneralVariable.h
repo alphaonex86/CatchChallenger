@@ -3,4 +3,6 @@
 
 #define PROTOCOL_HEADER "pokecraft-0.0.0.1"
 
+#define POKECRAFT_EXTRA_CHECK
+
 #endif // GENERALVARIABLE_H

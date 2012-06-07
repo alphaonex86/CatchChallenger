@@ -16,8 +16,8 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 
 	clientBroadCast=new ClientBroadCast();
 	clientHeavyLoad=new ClientHeavyLoad();
-	clientNetworkRead=new ClientNetworkRead();
-	clientNetworkWrite=new ClientNetworkWrite();
+	clientNetworkRead=new ClientNetworkRead(generalData,&player_informations,socket);
+	clientNetworkWrite=new ClientNetworkWrite(generalData,socket);
 	clientLocalCalcule=new ClientLocalCalcule();
 
 	switch(generalData->mapVisibilityAlgorithm)
@@ -60,13 +60,7 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	clientNetworkRead->moveToThread(generalData->eventThreaderList.at(2));
 	clientLocalCalcule->moveToThread(generalData->eventThreaderList.at(6));
 
-	//set the socket
-	clientNetworkRead->setSocket(socket);
-	clientNetworkWrite->setSocket(socket);
-
 	//set variables
-	clientNetworkRead->setVariable(generalData,&player_informations);
-	clientNetworkWrite->setVariable(generalData);
 	clientBroadCast->setVariable(generalData,&player_informations);
 	clientMapManagement->setVariable(generalData,&player_informations);
 	clientHeavyLoad->setVariable(generalData,&player_informations);

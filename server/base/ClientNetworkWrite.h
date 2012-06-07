@@ -7,17 +7,16 @@
 
 #include "ServerStructures.h"
 #include "../general/base/DebugClass.h"
+#include "../general/base/ProtocolParsing.h"
 #include "../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
-class ClientNetworkWrite : public QObject
+class ClientNetworkWrite : public ProtocolParsingOutput
 {
     Q_OBJECT
 public:
-	explicit ClientNetworkWrite();
+	explicit ClientNetworkWrite(GeneralData *generalData,QTcpSocket * socket);
 	~ClientNetworkWrite();
-	void setSocket(QTcpSocket * socket);
-	void setVariable(GeneralData *generalData);
 public slots:
 	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
 	//normal slots
@@ -30,9 +29,6 @@ private:
 	GeneralData *generalData;
 signals:
 	void isReadyToStop();
-	void fake_send_data(const QByteArray &data);
-	void error(const QString &error);
-	void message(const QString &message);
 };
 
 #endif // CLIENTNETWORKWRITE_H
