@@ -168,13 +168,6 @@ struct GeneralData
 		MapVisibility_simple simple;
 	};
 	MapVisibility mapVisibility;
-
-	QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;
-	QSet<quint8> mainCodeWithoutSubCodeTypeServerToClient;
-	QHash<quint8,quint16> sizeOnlyMainCodePacketClientToServer;
-	QHash<quint8,quint16> sizeOnlyMainCodePacketServerToClient;
-	QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacketClientToServer;
-	QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacketServerToClient;
 };
 
 #endif // STRUCTURES_SERVER_H
