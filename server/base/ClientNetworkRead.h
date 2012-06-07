@@ -27,8 +27,7 @@ public slots:
 	void askIfIsReadyToStop();
 	void stop();
 private slots:
-	void parseInputBeforeLogin(const QByteArray & inputData);
-	void parseInputAfterLogin(const QByteArray & inputData);
+	void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData);
 	void parseInputAfterLogin(const quint8 &mainCodeType,const QByteArray &data);
 	void parseInputAfterLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
 	void parseMessage(const quint8 &mainCodeType,const QByteArray &data);

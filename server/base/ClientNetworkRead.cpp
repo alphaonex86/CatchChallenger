@@ -44,19 +44,13 @@ void ClientNetworkRead::readyRead()
 	ProtocolParsingInput::parseIncommingData();
 }
 
-void ClientNetworkRead::parseInputBeforeLogin(const QByteArray & inputData)
+void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputBeforeLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
 	QDataStream in(inputData);
 	in.setVersion(QDataStream::Qt_4_4);
-	if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-	{
-		emit error("wrong size to get the ident");
-		return;
-	}
-	in >> mainCodeType;
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
@@ -69,7 +63,6 @@ void ClientNetworkRead::parseInputBeforeLogin(const QByteArray & inputData)
 			return;
 		}
 		in >> subCodeType;
-		in >> queryNumber;
 		switch(subCodeType)
 		{
 			case 0x0001:
@@ -163,37 +156,44 @@ void ClientNetworkRead::parseInputBeforeLogin(const QByteArray & inputData)
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
+	if(!is_logged)
+	{
+		emit error("is not logged");
+		return;
+	}
+	parseInputAfterLogin(mainCodeType,data);
 }
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
+	if(!is_logged)
+		parseInputBeforeLogin(mainCodeType,subCodeType,data);
+	else
+		parseInputAfterLogin(mainCodeType,subCodeType,data);
 }
 
-void ClientNetworkRead::parseInputAfterLogin(const QByteArray & inputData)
+void ClientNetworkRead::parseInputAfterLogin(const quint8 &mainCodeType,const QByteArray & inputData)
+{
+}
+
+void ClientNetworkRead::parseInputAfterLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputAfterLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
 	QDataStream in(inputData);
 	in.setVersion(QDataStream::Qt_4_4);
-	if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-	{
-		emit error("wrong size to get the ident");
-		return;
-	}
-	in >> mainCodeType;
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
 	{
 		case 0x02:
-		if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)+sizeof(quint32)))
+		if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
 		{
 			QString("wrong size with the main ident: %1").arg(mainCodeType);
 			return;
 		}
-		in >> subCodeType;
 		in >> queryNumber;
 		switch(subCodeType)
 		{

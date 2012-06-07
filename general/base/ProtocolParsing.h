@@ -33,6 +33,8 @@ protected:
 	virtual void parseIncommingData();
 	virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data) = 0;
 	virtual void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data) = 0;
+	virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
+	virtual void parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
 	// for data
 	bool haveData;
 	bool haveData_dataSize;
@@ -42,7 +44,8 @@ protected:
 	//to parse the netwrok stream
 	quint8 mainCodeType;
 	quint16 subCodeType;
-	bool have_subCodeType,need_subCodeType;
+	quint8 queryNumber;
+	bool have_subCodeType,need_subCodeType,need_query_number;
 	// function
 	void dataClear();
 	//temp data
@@ -51,7 +54,10 @@ protected:
 	static quint32 temp_size_32Bits;
 	/********************** static *********************/
 	//connexion parameters
-	static QSet<quint8> mainCodeWithoutSubCodeType;
+	static QSet<quint8> mainCodeWithoutSubCodeType;//if need sub code or not
+	//if is a query
+	static QSet<quint8> mainCode_IsQuery;
+	//predefined size
 	static QHash<quint8,quint16> sizeOnlyMainCodePacket;
 	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacket;
 
@@ -64,13 +70,20 @@ public:
 	ProtocolParsingOutput(QIODevice * device);
 	friend class ProtocolParsing;
 protected:
-	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const bool &packetSize,const QByteArray &data);
+	virtual bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
+	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 private:
+	bool internalPackOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
 	//temp data
 	static qint64 byteWriten;
 	/********************** static *********************/
 	//connexion parameters
-	static QSet<quint8> mainCodeWithoutSubCodeType;
+	static QSet<quint8> mainCodeWithoutSubCodeType;//if need sub code or not
+	//if is a query
+	static QSet<quint8> mainCode_IsQuery;
+	//predefined size
 	static QHash<quint8,quint16> sizeOnlyMainCodePacket;
 	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacket;
 signals:
