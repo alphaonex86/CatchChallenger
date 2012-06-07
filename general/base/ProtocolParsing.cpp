@@ -2,12 +2,21 @@
 
 //connexion parameters
 PacketSizeMode ProtocolParsing::packetSizeMode;
-QSet<quint8> ProtocolParsingInput::mainCodeWithoutSubCodeType;
+
+QSet<quint8> ProtocolParsingInput::mainCodeWithoutSubCodeType;//if need sub code or not
+//if is a query
+QSet<quint8> ProtocolParsingInput::mainCode_IsQuery;
+//predefined size
 QHash<quint8,quint16> ProtocolParsingInput::sizeOnlyMainCodePacket;
 QHash<quint8,QHash<quint16,quint16> > ProtocolParsingInput::sizeMultipleCodePacket;
-QSet<quint8> ProtocolParsingOutput::mainCodeWithoutSubCodeType;
+
+QSet<quint8> ProtocolParsingOutput::mainCodeWithoutSubCodeType;//if need sub code or not
+//if is a query
+QSet<quint8> ProtocolParsingOutput::mainCode_IsQuery;
+//predefined size
 QHash<quint8,quint16> ProtocolParsingOutput::sizeOnlyMainCodePacket;
 QHash<quint8,QHash<quint16,quint16> > ProtocolParsingOutput::sizeMultipleCodePacket;
+
 //temp data
 qint64 ProtocolParsingOutput::byteWriten;
 quint8 ProtocolParsingInput::temp_size_8Bits;
@@ -36,6 +45,8 @@ void ProtocolParsing::initialiseTheVariable(PacketModeTransmission packetModeTra
 		ProtocolParsingOutput::sizeOnlyMainCodePacket[0xC4]=0;
 		ProtocolParsingOutput::sizeOnlyMainCodePacket[0xC3]=4;
 		ProtocolParsingInput::sizeOnlyMainCodePacket[0x40]=2;
+
+		ProtocolParsingInput::mainCode_IsQuery << 0x02;
 	}
 }
 
@@ -66,6 +77,7 @@ void ProtocolParsingInput::parseIncommingData()
 			haveData=true;
 			haveData_dataSize=false;
 			need_subCodeType=!mainCodeWithoutSubCodeType.contains(mainCodeType);
+			need_query_number=mainCode_IsQuery.contains(mainCodeType);
 			data_size.clear();
 		}
 		if(haveData)
@@ -162,6 +174,12 @@ void ProtocolParsingInput::parseIncommingData()
 				emit error("have not the size here!");
 				return;
 			}
+			if(need_query_number)
+			{
+				if(device->bytesAvailable()<(int)sizeof(quint8))
+					return;
+				in >> queryNumber;
+			}
 			if(dataSize>0)
 			{
 				if((dataSize-data.size())<device->bytesAvailable())
@@ -174,10 +192,21 @@ void ProtocolParsingInput::parseIncommingData()
 			}
 			if(dataSize==(quint32)data.size())
 			{
-				if(need_subCodeType)
-					parseMessage(mainCodeType,data);
+				if(need_query_number)
+				{
+					if(need_subCodeType)
+						parseMessage(mainCodeType,data);
+					else
+						parseMessage(mainCodeType,subCodeType,data);
+				}
 				else
-					parseMessage(mainCodeType,subCodeType,data);
+				{
+					if(need_subCodeType)
+						parseQuery(mainCodeType,queryNumber,data);
+					else
+						parseQuery(mainCodeType,subCodeType,queryNumber,data);
+
+				}
 				dataClear();
 			}
 		}
@@ -191,16 +220,45 @@ void ProtocolParsingInput::dataClear()
 	haveData=false;
 }
 
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const bool &packetSize,const QByteArray &data)
+bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+{
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << subCodeType;
+	out << queryNumber;
+
+	return packOutcommingData(mainCodeType,subCodeType,packetSize,block+data);
+}
+
+bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+{
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << subCodeType;
+
+	return packOutcommingData(mainCodeType,subCodeType,packetSize,block+data);
+}
+
+bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+{
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << queryNumber;
+
+	return packOutcommingData(mainCodeType,subCodeType,packetSize,block+data);
+}
+
+bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
+{
+	return packOutcommingData(mainCodeType,subCodeType,packetSize,block+data);
+}
+
+bool ProtocolParsingOutput::internalPackOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
 {
 	//can't group this block to keep the right header size calculation
 	QByteArray block;
 	QDataStream out(&block, QIODevice::WriteOnly);
 	out << qint32(mainCodeType);
-	if(!mainCodeWithoutSubCodeType.contains(mainCodeType))
-		out << qint32(subCodeType);
-	if(packetSize)
-		out << qint32(data.size()+sizeof(qint32));
 
 	#ifdef POKECRAFT_EXTRA_CHECK
 	if(!mainCodeWithoutSubCodeType.contains(mainCodeType))
