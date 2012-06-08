@@ -16,7 +16,8 @@ protected:
 	void removeClient();
 	void mapVisiblity_unloadFromTheMap();
 private:
-	int index,loop_size;
+	static int index;
+	static int loop_size;
 	MapVisibilityAlgorithm_Simple *current_client;
 	//overwrite
 	//remove the move/remove
@@ -30,7 +31,7 @@ private:
 	void removeAnotherClient(const quint32 &player_id);
 	#endif
 
-	QSet<quint32>						overMove;
+	QSet<quint32> overMove;
 };
 
 #endif // MAPVISIBILITYALGORITHM_SIMPLE_H

@@ -27,7 +27,7 @@ class ClientHeavyLoad : public QObject
 public:
 	explicit ClientHeavyLoad();
 	~ClientHeavyLoad();
-	void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
+	void setVariable(Player_private_and_public_informations *player_informations);
 public slots:
 	virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
 	void askRandomSeedList(const quint8 &query_id);
@@ -39,7 +39,6 @@ public slots:
 	void stop();
 private:
 	bool fake_mode;
-	GeneralData *generalData;
 	QString datapack_base_name;
 	QRegExp right_file_name;
 	// ------------------------------

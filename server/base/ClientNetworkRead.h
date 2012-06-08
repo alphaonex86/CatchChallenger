@@ -16,7 +16,7 @@ class ClientNetworkRead : public ProtocolParsingInput
 {
     Q_OBJECT
 public:
-	explicit ClientNetworkRead(GeneralData *generalData,Player_private_and_public_informations *player_informations,QTcpSocket * socket);
+	explicit ClientNetworkRead(Player_private_and_public_informations *player_informations,QTcpSocket * socket);
 	void stopRead();
 	void fake_send_protocol();
 public slots:
@@ -30,8 +30,15 @@ private slots:
 	void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData);
 	void parseInputAfterLogin(const quint8 &mainCodeType,const QByteArray &data);
 	void parseInputAfterLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+	//have message without reply
 	void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
 	void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+	//have query with reply
+	void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+	void parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+	//send reply
+	bool parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+	bool parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 signals:
 	//normal signals
 	void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const bool &packetSize,const QByteArray &data);
@@ -59,7 +66,6 @@ private:
 	// function
 	bool checkStringIntegrity(const QByteArray & data);
 	QTcpSocket * socket;
-	GeneralData *generalData;
 	Player_private_and_public_informations *player_informations;
 	//to prevent memory presure
 	quint8 previousMovedUnit;

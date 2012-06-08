@@ -1,9 +1,10 @@
 #include "Client.h"
+#include "EventDispatcher.h"
 
 /// \warning never cross the signals from and to the different client, complexity ^2
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 
-Client::Client(QTcpSocket *socket,GeneralData *generalData)
+Client::Client(QTcpSocket *socket)
 {
 	qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
 	qRegisterMetaType<QList<quint32> >("QList<quint32>");
@@ -16,11 +17,11 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 
 	clientBroadCast=new ClientBroadCast();
 	clientHeavyLoad=new ClientHeavyLoad();
-	clientNetworkRead=new ClientNetworkRead(generalData,&player_informations,socket);
-	clientNetworkWrite=new ClientNetworkWrite(generalData,socket);
+	clientNetworkRead=new ClientNetworkRead(&player_informations,socket);
+	clientNetworkWrite=new ClientNetworkWrite(socket);
 	clientLocalCalcule=new ClientLocalCalcule();
 
-	switch(generalData->mapVisibilityAlgorithm)
+	switch(EventDispatcher::generalData.mapVisibilityAlgorithm)
 	{
 		default:
 		case MapVisibilityAlgorithm_simple:
@@ -52,19 +53,18 @@ Client::Client(QTcpSocket *socket,GeneralData *generalData)
 	is_logged=false;
 	is_ready_to_stop=false;
 	ask_is_ready_to_stop=false;
-	this->generalData		= generalData;
 
-	clientBroadCast->moveToThread(generalData->eventThreaderList.at(0));
-	clientHeavyLoad->moveToThread(generalData->eventThreaderList.at(3));
-	clientMapManagement->moveToThread(generalData->eventThreaderList.at(1));
-	clientNetworkRead->moveToThread(generalData->eventThreaderList.at(2));
-	clientLocalCalcule->moveToThread(generalData->eventThreaderList.at(6));
+	clientBroadCast->moveToThread(EventDispatcher::generalData.eventThreaderList.at(0));
+	clientHeavyLoad->moveToThread(EventDispatcher::generalData.eventThreaderList.at(3));
+	clientMapManagement->moveToThread(EventDispatcher::generalData.eventThreaderList.at(1));
+	clientNetworkRead->moveToThread(EventDispatcher::generalData.eventThreaderList.at(2));
+	clientLocalCalcule->moveToThread(EventDispatcher::generalData.eventThreaderList.at(6));
 
 	//set variables
-	clientBroadCast->setVariable(generalData,&player_informations);
-	clientMapManagement->setVariable(generalData,&player_informations);
-	clientHeavyLoad->setVariable(generalData,&player_informations);
-	clientLocalCalcule->setVariable(generalData,&player_informations);
+	clientBroadCast->setVariable(&player_informations);
+	clientMapManagement->setVariable(&player_informations);
+	clientHeavyLoad->setVariable(&player_informations);
+	clientLocalCalcule->setVariable(&player_informations);
 
 	//connect the write
 	connect(clientNetworkRead,	SIGNAL(sendPacket(quint8,quint16,bool,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,bool,QByteArray)),Qt::QueuedConnection);
@@ -205,8 +205,8 @@ void Client::disconnectNextStep()
 	if(stopped_object==5)
 	{
 		//remove the player
-		generalData->connected_players--;
-		generalData->player_updater.removeConnectedPlayer();
+		EventDispatcher::generalData.connected_players--;
+		EventDispatcher::generalData.player_updater.removeConnectedPlayer();
 		is_logged=false;
 
 		//reconnect to real stop
@@ -265,8 +265,8 @@ void Client::send_player_informations()
 	this->player_informations=player_informations;
 	this->id=player_informations.public_informations.id;
 	is_logged=true;
-	generalData->connected_players++;
-	generalData->player_updater.addConnectedPlayer();
+	EventDispatcher::generalData.connected_players++;
+	EventDispatcher::generalData.player_updater.addConnectedPlayer();
 
 	//remove the useless connection
 	disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));

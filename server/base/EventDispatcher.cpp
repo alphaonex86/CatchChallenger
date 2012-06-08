@@ -4,6 +4,8 @@
   When disconnect the fake client, stop the benchmark
   */
 
+GeneralData EventDispatcher::generalData;
+
 EventDispatcher::EventDispatcher()
 {
 	generalData.connected_players=0;
@@ -731,7 +733,7 @@ void EventDispatcher::removeBots()
 
 void EventDispatcher::addBot(quint16 x,quint16 y,Map_final *map,QString skin)
 {
-	client_list << new Client(NULL,&generalData);
+	client_list << new Client(NULL);
 	client_list.last()->fakeLogin(65535-fake_clients.size(),x,y,map,(Orientation)Direction_look_at_top,skin);
 	fake_clients << new FakeBot(x,y,map,Direction_look_at_top);
 	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
@@ -842,7 +844,7 @@ void EventDispatcher::newConnection()
 		QTcpSocket *socket = server->nextPendingConnection();
 		if(socket!=NULL)
 		{
-			client_list << new Client(socket,&generalData);
+			client_list << new Client(socket);
 			connect_the_last_client();
 		}
 		else
