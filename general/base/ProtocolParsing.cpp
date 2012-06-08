@@ -90,16 +90,32 @@ void ProtocolParsingInput::parseIncommingData()
 			in >> mainCodeType;
 			haveData=true;
 			haveData_dataSize=false;
+			have_subCodeType=false;
+			have_query_number=false;
+			is_reply=false;
 			need_subCodeType=!mainCodeWithoutSubCodeType.contains(mainCodeType);
-			need_query_number=mainCode_IsQuery.contains(mainCodeType);
+			need_query_number=false;
 			data_size.clear();
 		}
-		if(haveData)
+
+		if(!have_subCodeType)
 		{
-			if(!haveData_dataSize)
+			if(!need_subCodeType)
 			{
-				if(need_subCodeType)
+				//if is a reply
+				if(mainCodeType==replyCode)
 				{
+					is_reply=true;
+					need_query_number=true;
+					//the size with be resolved later
+				}
+				else
+				{
+					//if is query with reply
+					if(mainCode_IsQuery.contains(mainCodeType))
+						need_query_number=true;
+
+					//check if have defined size
 					if(sizeOnlyMainCodePacket.contains(mainCodeType))
 					{
 						//have fixed size
@@ -107,123 +123,183 @@ void ProtocolParsingInput::parseIncommingData()
 						haveData_dataSize=true;
 					}
 				}
-				else
-				{
-					if(device->bytesAvailable()<(int)sizeof(quint16))//ignore because first int is cuted!
-						return;
-					in >> subCodeType;
-					if(sizeMultipleCodePacket.contains(mainCodeType))
-					{
-						if(sizeMultipleCodePacket[mainCodeType].contains(subCodeType))
-						{
-							//have fixed size
-							dataSize=sizeMultipleCodePacket[mainCodeType][subCodeType];
-							haveData_dataSize=true;
-						}
-					}
-				}
-				if(!haveData_dataSize)
-				{
-					//decode the size here
-					if(packetSizeMode==PacketSizeMode_Small)
-					{
-						QDataStream in_size(data_size);
-						in_size.setVersion(QDataStream::Qt_4_4);
+			}
+			else
+			{
+				if(device->bytesAvailable()<(int)sizeof(quint16))//ignore because first int is cuted!
+					return;
+				in >> subCodeType;
 
-						while(!haveData_dataSize)
-						{
-							switch(data_size.size())
-							{
-								case 0:
-								{
-									if(device->bytesAvailable()<(int)sizeof(quint8))
-										return;
-									data_size+=device->read(sizeof(quint8));
-									in_size >> temp_size_8Bits;
-									if(temp_size_8Bits!=0x00)
-									{
-										dataSize=temp_size_8Bits;
-										haveData_dataSize=true;
-									}
-								}
-								break;
-								case sizeof(quint8):
-								{
-									if(device->bytesAvailable()<(int)sizeof(quint16))
-										return;
-									data_size+=device->read(sizeof(quint16));
-									in_size >> temp_size_16Bits;
-									if(temp_size_16Bits!=0x0000)
-									{
-										dataSize=temp_size_16Bits;
-										haveData_dataSize=true;
-									}
-								}
-								break;
-								case sizeof(quint16):
-								{
-									if(device->bytesAvailable()<(int)sizeof(quint32))
-										return;
-									data_size+=device->read(sizeof(quint32));
-									in_size >> temp_size_32Bits;
-									if(temp_size_32Bits!=0x00000000)
-									{
-										dataSize=temp_size_32Bits;
-										haveData_dataSize=true;
-									}
-									emit error("size is null");
-									return;
-								}
-								break;
-								default:
-								emit error("size not understand, internal bug");
-								return;
-							}
-						}
+				//if is query with reply
+				if(mainCode_IsQuery.contains(mainCodeType))
+					need_query_number=true;
+
+				//check if have defined size
+				if(sizeMultipleCodePacket.contains(mainCodeType))
+				{
+					if(sizeMultipleCodePacket[mainCodeType].contains(subCodeType))
+					{
+						//have fixed size
+						dataSize=sizeMultipleCodePacket[mainCodeType][subCodeType];
+						haveData_dataSize=true;
 					}
 				}
 			}
+
+			//set this parsing step is done
+			have_subCodeType=true;
+		}
+		if(!have_query_number && need_query_number)
+		{
+			if(device->bytesAvailable()<(int)sizeof(quint8))
+				return;
+			in >> queryNumber;
+
+			// it's reply
+			if(is_reply)
+			{
+				if(replySize.contains(queryNumber))
+				{
+					dataSize=replySize[queryNumber];
+					haveData_dataSize=true;
+				}
+			}
+			else // it's query with reply
+			{
+				//size resolved before, into subCodeType step
+			}
+
+			//set this parsing step is done
+			have_query_number=true;
+		}
+		if(!haveData_dataSize)
+		{
 			if(!haveData_dataSize)
 			{
-				emit error("have not the size here!");
-				return;
-			}
-			if(need_query_number)
-			{
-				if(device->bytesAvailable()<(int)sizeof(quint8))
-					return;
-				in >> queryNumber;
-			}
-			if(dataSize>0)
-			{
-				if((dataSize-data.size())<device->bytesAvailable())
+				//decode the size here
+				if(packetSizeMode==PacketSizeMode_Small)
 				{
-					//DebugClass::debugConsole(QString("dataSize(%1)-data.size(%2)=%3").arg(dataSize).arg(data.size()).arg(dataSize-data.size()));
-					data.append(device->read(dataSize-data.size()));
-				}
-				else
-					data.append(device->readAll());
-			}
-			if(dataSize==(quint32)data.size())
-			{
-				if(need_query_number)
-				{
-					if(need_subCodeType)
-						parseMessage(mainCodeType,data);
-					else
-						parseMessage(mainCodeType,subCodeType,data);
-				}
-				else
-				{
-					if(need_subCodeType)
-						parseQuery(mainCodeType,queryNumber,data);
-					else
-						parseQuery(mainCodeType,subCodeType,queryNumber,data);
+					QDataStream in_size(data_size);
+					in_size.setVersion(QDataStream::Qt_4_4);
 
+					while(!haveData_dataSize)
+					{
+						switch(data_size.size())
+						{
+							case 0:
+							{
+								if(device->bytesAvailable()<(int)sizeof(quint8))
+									return;
+								data_size+=device->read(sizeof(quint8));
+								in_size >> temp_size_8Bits;
+								if(temp_size_8Bits!=0x00)
+								{
+									dataSize=temp_size_8Bits;
+									haveData_dataSize=true;
+								}
+							}
+							break;
+							case sizeof(quint8):
+							{
+								if(device->bytesAvailable()<(int)sizeof(quint16))
+									return;
+								data_size+=device->read(sizeof(quint16));
+								in_size >> temp_size_16Bits;
+								if(temp_size_16Bits!=0x0000)
+								{
+									dataSize=temp_size_16Bits;
+									haveData_dataSize=true;
+								}
+							}
+							break;
+							case sizeof(quint16):
+							{
+								if(device->bytesAvailable()<(int)sizeof(quint32))
+									return;
+								data_size+=device->read(sizeof(quint32));
+								in_size >> temp_size_32Bits;
+								if(temp_size_32Bits!=0x00000000)
+								{
+									dataSize=temp_size_32Bits;
+									haveData_dataSize=true;
+								}
+								emit error("size is null");
+								return;
+							}
+							break;
+							default:
+							emit error("size not understand, internal bug");
+							return;
+						}
+					}
 				}
-				dataClear();
 			}
 		}
+		#ifdef POKECRAFT_EXTRA_CHECK
+		if(!haveData_dataSize)
+		{
+			emit error("have not the size here!");
+			return;
+		}
+		#endif
+		if(dataSize>16*1024*1024)
+		{
+			emit error("packet size too big");
+			return;
+		}
+		if(dataSize>0)
+		{
+			if((dataSize-data.size())<=device->bytesAvailable())
+				data.append(device->read(dataSize-data.size()));
+			else
+			{
+				data.append(device->readAll());
+				return;
+			}
+		}
+		#ifdef POKECRAFT_EXTRA_CHECK
+		if(dataSize!=(quint32)data.size())
+		{
+			emit error("wrong data size here");
+			return;
+		}
+		#endif
+		if(!need_query_number)
+		{
+			if(!need_subCodeType)
+				parseMessage(mainCodeType,data);
+			else
+				parseMessage(mainCodeType,subCodeType,data);
+		}
+		else
+		{
+			if(is_reply)
+			{
+				if(!need_subCodeType)
+					parseQuery(mainCodeType,queryNumber,data);
+				else
+					parseQuery(mainCodeType,subCodeType,queryNumber,data);
+			}
+			else
+			{
+				if(!reply_subCodeType.contains(queryNumber))
+				{
+					mainCodeType=reply_mainCodeType[queryNumber];
+					reply_mainCodeType.remove(queryNumber);
+					parseReplyData(mainCodeType,queryNumber,data);
+				}
+				else
+				{
+					mainCodeType=reply_mainCodeType[queryNumber];
+					subCodeType=reply_subCodeType[queryNumber];
+					reply_mainCodeType.remove(queryNumber);
+					reply_subCodeType.remove(queryNumber);
+					parseReplyData(mainCodeType,subCodeType,queryNumber,data);
+				}
+			}
+
+		}
+		dataClear();
 	}
 }
 
@@ -232,6 +308,34 @@ void ProtocolParsingInput::dataClear()
 	data.clear();
 	dataSize=0;
 	haveData=false;
+}
+
+void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
+{
+	if(replyNeedSize.contains(queryNumber))
+	{
+		emit error("Query with this query number already found");
+		return;
+	}
+	if(replySizeOnlyMainCodePacket.contains(mainCodeType))
+		replySize[queryNumber]=replySizeOnlyMainCodePacket[mainCodeType];
+	reply_mainCodeType[queryNumber]=mainCodeType;
+}
+
+void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+{
+	if(replyNeedSize.contains(queryNumber))
+	{
+		emit error("Query with this query number already found");
+		return;
+	}
+	if(replySizeMultipleCodePacket.contains(mainCodeType))
+	{
+		if(replySizeMultipleCodePacket[mainCodeType].contains(subCodeType))
+			replySize[queryNumber]=replySizeMultipleCodePacket[mainCodeType][subCodeType];
+	}
+	reply_mainCodeType[queryNumber]=mainCodeType;
+	reply_subCodeType[queryNumber]=subCodeType;
 }
 
 bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
@@ -260,12 +364,13 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteA
 		QByteArray block;
 		QDataStream out(&block, QIODevice::WriteOnly);
 		out << replyCode;
+		out << queryNumber;
 
-		if(replyNeedSize[queryNumber])
-			block+=encodeSize(data.size());
+		if(!replyNeedSize[queryNumber])
+			out << encodeSize(data.size());
 
 		replyNeedSize.remove(queryNumber);
-		internalPackOutcommingData(replyCode,data);
+		internalPackOutcommingData(data);
 		return;
 	}
 	emit error("query number not found");
@@ -273,27 +378,27 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteA
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
-	if(replyNeedSize.contains(queryNumber))
+	if(replySize.contains(queryNumber))
 	{
 		emit error("Query with this query number already found");
 		return;
 	}
-	replyNeedSize[queryNumber]=!replySizeOnlyMainCodePacket.contains(mainCodeType);
+	if(replySizeOnlyMainCodePacket.contains(mainCodeType))
+		replySize[queryNumber]=replySizeOnlyMainCodePacket[mainCodeType];
 }
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
-	if(replyNeedSize.contains(queryNumber))
+	if(replySize.contains(queryNumber))
 	{
 		emit error("Query with this query number already found");
 		return;
 	}
-	if(!replySizeMultipleCodePacket.contains(mainCodeType))
-		replyNeedSize[queryNumber]=true;
-	else if(!replySizeMultipleCodePacket[mainCodeType].contains(subCodeType))
-		replyNeedSize[queryNumber]=true;
-	else
-		replyNeedSize[queryNumber]=false;
+	if(replySizeMultipleCodePacket.contains(mainCodeType))
+	{
+		if(replySizeMultipleCodePacket[mainCodeType].contains(subCodeType))
+			replySize[queryNumber]=replySizeMultipleCodePacket[mainCodeType][subCodeType];
+	}
 }
 
 bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
@@ -326,13 +431,34 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 	emit newOutputQuery(mainCodeType,queryNumber);
-	packOutcommingData(mainCodeType,data);
+
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << mainCodeType;
+	out << queryNumber;
+
+	if(!sizeOnlyMainCodePacket.contains(mainCodeType))
+		block+=encodeSize(data.size());
+
+	return internalPackOutcommingData(block+data);
 }
 
 bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 	emit newOutputQuery(mainCodeType,subCodeType,queryNumber);
-	packOutcommingData(mainCodeType,subCodeType,data);
+
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << mainCodeType;
+	out << subCodeType;
+	out << queryNumber;
+
+	if(!sizeMultipleCodePacket.contains(mainCodeType))
+		block+=encodeSize(data.size());
+	else if(!sizeMultipleCodePacket[mainCodeType].contains(subCodeType))
+		block+=encodeSize(data.size());
+
+	return internalPackOutcommingData(block+data);
 }
 
 bool ProtocolParsingOutput::internalPackOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
