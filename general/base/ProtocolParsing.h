@@ -57,10 +57,18 @@ protected:
 	static QSet<quint8> mainCodeWithoutSubCodeType;//if need sub code or not
 	//if is a query
 	static QSet<quint8> mainCode_IsQuery;
+	static quint8 replyCode;
 	//predefined size
 	static QHash<quint8,quint16> sizeOnlyMainCodePacket;
 	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacket;
-
+	static QHash<quint8,quint16> replySizeOnlyMainCodePacket;
+	static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacket;
+signals:
+	void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
+	void newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+public slots:
+	void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
+	void newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 };
 
 class ProtocolParsingOutput : public ProtocolParsing
@@ -71,11 +79,13 @@ public:
 	friend class ProtocolParsing;
 protected:
 	virtual bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
-	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
 	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
 	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+	virtual bool postReplyData(const quint8 &queryNumber,const QByteArray &data);
 private:
-	bool internalPackOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
+	bool internalPackOutcommingData(const QByteArray &data);
+	QByteArray encodeSize(quint32 size);
 	//temp data
 	static qint64 byteWriten;
 	/********************** static *********************/
@@ -83,11 +93,21 @@ private:
 	static QSet<quint8> mainCodeWithoutSubCodeType;//if need sub code or not
 	//if is a query
 	static QSet<quint8> mainCode_IsQuery;
+	static quint8 replyCode;
 	//predefined size
 	static QHash<quint8,quint16> sizeOnlyMainCodePacket;
 	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacket;
+	static QHash<quint8,quint16> replySizeOnlyMainCodePacket;
+	static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacket;
+	//query to reply
+	QHash<quint8,bool> replyNeedSize;
 signals:
 	void fake_send_data(const QByteArray &data);
+	void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
+	void newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+public slots:
+	void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
+	void newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 };
 
 #endif // PROTOCOLPARSING_H
