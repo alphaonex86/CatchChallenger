@@ -1,4 +1,8 @@
 #include "MapVisibilityAlgorithm_Simple.h"
+#include "../EventDispatcher.h"
+
+int MapVisibilityAlgorithm_Simple::index;
+int MapVisibilityAlgorithm_Simple::loop_size;
 
 MapVisibilityAlgorithm_Simple::MapVisibilityAlgorithm_Simple()
 {
@@ -11,7 +15,7 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 void MapVisibilityAlgorithm_Simple::insertClient()
 {
 	loop_size=current_map->clients.size();
-	if(loop_size<=generalData->mapVisibility.simple.max)
+	if(loop_size<=EventDispatcher::generalData.mapVisibility.simple.max)
 	{
 		//insert the new client
 		index=0;
@@ -49,7 +53,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 	loop_size=current_map->clients.size();
 	if(mapHaveChanged)
 	{
-		if(loop_size<=generalData->mapVisibility.simple.max)
+		if(loop_size<=EventDispatcher::generalData.mapVisibility.simple.max)
 		{
 			//insert the new client
 			index=0;
@@ -86,7 +90,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 		#endif
 
 		//normal operation
-		if(loop_size<=generalData->mapVisibility.simple.max)
+		if(loop_size<=EventDispatcher::generalData.mapVisibility.simple.max)
 		{
 			index=0;
 			while(index<loop_size)
@@ -110,7 +114,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 void MapVisibilityAlgorithm_Simple::removeClient()
 {
 	loop_size=current_map->clients.size();
-	if(loop_size==(generalData->mapVisibility.simple.reshow) && current_map->mapVisibility.simple.show==false)
+	if(loop_size==(EventDispatcher::generalData.mapVisibility.simple.reshow) && current_map->mapVisibility.simple.show==false)
 	{
 		current_map->mapVisibility.simple.show=true;
 		//insert all the client because it start to be visible
@@ -122,7 +126,7 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 		}
 	}
 	//nothing removed because all clients are already hide
-	else if(loop_size>(generalData->mapVisibility.simple.max+1))
+	else if(loop_size>(EventDispatcher::generalData.mapVisibility.simple.max+1))
 	{
 	}
 	else //normal working

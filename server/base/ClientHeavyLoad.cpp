@@ -1,4 +1,5 @@
 #include "ClientHeavyLoad.h"
+#include "EventDispatcher.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,9 +18,8 @@ ClientHeavyLoad::~ClientHeavyLoad()
 {
 }
 
-void ClientHeavyLoad::setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations)
+void ClientHeavyLoad::setVariable(Player_private_and_public_informations *player_informations)
 {
-	this->generalData=generalData;
 	this->player_informations=player_informations;
 }
 
@@ -49,7 +49,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	else
 	{
 		loginQuery.next();
-		if(generalData->connected_players_id_list.contains(loginQuery.value(0).toUInt()))
+		if(EventDispatcher::generalData.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
 		{
 			out << (quint8)query_id;
 			out << (quint8)0x01;
@@ -59,7 +59,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		}
 		else
 		{
-			generalData->connected_players_id_list << loginQuery.value(0).toUInt();
+			EventDispatcher::generalData.connected_players_id_list << loginQuery.value(0).toUInt();
 			is_logged=true;
 			player_informations->public_informations.clan=loginQuery.value(10).toUInt();
 			player_informations->public_informations.description="";
@@ -74,7 +74,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit message(QString("Wrong orientation corrected: %1").arg(orentation));
 				orentation=3;
 			}
-			if(generalData->map_list.contains(loginQuery.value(8).toString()))
+			if(EventDispatcher::generalData.map_list.contains(loginQuery.value(8).toString()))
 			{
 				out << (quint8)query_id;
 				out << (quint8)02;
@@ -84,7 +84,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit isLogged();
 				emit put_on_the_map(
 					player_informations->public_informations.id,
-					generalData->map_list[loginQuery.value(8).toString()],//map pointer
+					EventDispatcher::generalData.map_list[loginQuery.value(8).toString()],//map pointer
 					loginQuery.value(5).toInt(),//position_x
 					loginQuery.value(6).toInt(),//position_y
 					(Orientation)orentation,
@@ -106,7 +106,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 void ClientHeavyLoad::fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,Map_final *map,const Orientation &orientation,const QString &skin)
 {
 	fake_mode=true;
-	generalData->connected_players_id_list << last_fake_player_id;
+	EventDispatcher::generalData.connected_players_id_list << last_fake_player_id;
 	is_logged=true;
 	player_informations->public_informations.clan=0;
 	player_informations->public_informations.description="Bot";
@@ -145,7 +145,7 @@ void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)
 void ClientHeavyLoad::askIfIsReadyToStop()
 {
 	if(is_logged)
-		generalData->connected_players_id_list.remove(player_informations->public_informations.id);
+		EventDispatcher::generalData.connected_players_id_list.remove(player_informations->public_informations.id);
 	emit isReadyToStop();
 }
 

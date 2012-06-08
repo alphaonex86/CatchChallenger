@@ -23,7 +23,7 @@ class ClientMapManagement : public MapBasicMove
 public:
 	explicit ClientMapManagement();
 	virtual ~ClientMapManagement();
-	virtual void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
+	virtual void setVariable(Player_private_and_public_informations *player_informations);
 	/// \bug is not thread safe, and called by another thread, error can occure
 	Map_player_info getMapPlayerInfo();
 	//to change the info on another client
@@ -61,32 +61,31 @@ private:
 	//info linked
 	Orientation			at_start_orientation;
 	QString				at_start_map_name;
+	quint16				at_start_x,at_start_y;
 
 	//temp variable for purge buffer
-	quint16 purgeBuffer_player_affected;
-	QByteArray purgeBuffer_outputData;
-	QByteArray purgeBuffer_outputDataLoop;
-	int purgeBuffer_index;
-	int purgeBuffer_list_size;
-	int purgeBuffer_list_size_internal;
-	int purgeBuffer_indexMovement;
-	map_management_move purgeBuffer_move;
-	QHash<quint32, QList<map_management_movement> >::const_iterator i_move;
-	QHash<quint32, QList<map_management_movement> >::const_iterator i_move_end;
-	QHash<quint32, map_management_insert>::const_iterator i_insert;
-	QHash<quint32, map_management_insert>::const_iterator i_insert_end;
-	QSet<quint32>::const_iterator i_remove;
-	QSet<quint32>::const_iterator i_remove_end;
+	static quint16 purgeBuffer_player_affected;
+	static QByteArray purgeBuffer_outputData;
+	static QByteArray purgeBuffer_outputDataLoop;
+	static int purgeBuffer_index;
+	static int purgeBuffer_list_size;
+	static int purgeBuffer_list_size_internal;
+	static int purgeBuffer_indexMovement;
+	static map_management_move purgeBuffer_move;
+	static QHash<quint32, QList<map_management_movement> >::const_iterator i_move;
+	static QHash<quint32, QList<map_management_movement> >::const_iterator i_move_end;
+	static QHash<quint32, map_management_insert>::const_iterator i_insert;
+	static QHash<quint32, map_management_insert>::const_iterator i_insert_end;
+	static QSet<quint32>::const_iterator i_remove;
+	static QSet<quint32>::const_iterator i_remove_end;
 
 	//temp variable to move on the map
-	map_management_movement moveClient_tempMov;
-	map_management_insert insertClient_temp;//can have lot of due to over move
+	static map_management_movement moveClient_tempMov;
+	static map_management_insert insertClient_temp;//can have lot of due to over move
 
 	//temp variable for put on map
 	int moveThePlayer_index_move;
 
-	//map start related
-	quint16				at_start_x,at_start_y;
 	//map load/unload and change
 	virtual void			loadOnTheMap();
 	virtual void			unloadFromTheMap();
