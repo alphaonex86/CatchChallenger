@@ -1,9 +1,8 @@
 #include "ClientNetworkWrite.h"
 
-ClientNetworkWrite::ClientNetworkWrite(GeneralData *generalData,QTcpSocket * socket) :
+ClientNetworkWrite::ClientNetworkWrite(QTcpSocket * socket) :
 	ProtocolParsingOutput(socket)
 {
-	this->generalData=generalData;
 	this->socket=socket;
 }
 

@@ -25,7 +25,7 @@ public:
 	QList<quint32> player_ids_to_watch;
 	Player_private_and_public_informations *player_informations;
 	// set the variable
-	void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
+	void setVariable(Player_private_and_public_informations *player_informations);
 	void disconnect();
 	//cache
 	QString pseudo;
@@ -64,7 +64,6 @@ private:
 	void send_players_informations(const QList<Player_public_informations> &players_informations);
 	//local data
 	QList<Player_private_and_public_informations> players_informations_to_push;
-	GeneralData *generalData;
 	QSemaphore disconnection;
 	qint32 connected_players;
 private slots:

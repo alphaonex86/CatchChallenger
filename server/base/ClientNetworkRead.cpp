@@ -1,13 +1,12 @@
 #include "ClientNetworkRead.h"
 
-ClientNetworkRead::ClientNetworkRead(GeneralData *generalData,Player_private_and_public_informations *player_informations,QTcpSocket * socket) :
+ClientNetworkRead::ClientNetworkRead(Player_private_and_public_informations *player_informations,QTcpSocket * socket) :
 	ProtocolParsingInput(socket)
 {
 	is_logged=false;
 	have_send_protocol=false;
 	is_logging_in_progess=false;
 	stopIt=false;
-	this->generalData=generalData;
 	this->player_informations=player_informations;
 	this->socket=socket;
 	if(socket!=NULL)
@@ -46,7 +45,7 @@ void ClientNetworkRead::readyRead()
 
 void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData)
 {
-	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+	/*#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputBeforeLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
 	QDataStream in(inputData);
@@ -86,7 +85,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 						out << (quint8)0x01;		//protocol supported
 						/*out << (quint8)0x00;		//raw (no compression)
 						out << (quint8)0x01;		//upload size type: small (client -> server)
-						out << (quint8)0x01;		//upload size type: small (client -> server)*/
+						out << (quint8)0x01;		//upload size type: small (client -> server)*//*
 						emit sendPacket(0xC1,0x00,true,outputData);
 						have_send_protocol=true;
 						emit message("Protocol sended and replied");
@@ -151,7 +150,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 		default:
 			emit error("wrong data before login with mainIdent: "+QString::number(mainCodeType));
 		break;
-	}
+	}*/
 }
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
@@ -172,13 +171,27 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 		parseInputAfterLogin(mainCodeType,subCodeType,data);
 }
 
-void ClientNetworkRead::parseInputAfterLogin(const quint8 &mainCodeType,const QByteArray & inputData)
+//have query with reply
+void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+{
+}
+
+void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+{
+}
+
+//send reply
+bool ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+{
+}
+
+bool ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 }
 
 void ClientNetworkRead::parseInputAfterLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData)
 {
-	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+/*	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputAfterLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
 	QDataStream in(inputData);
@@ -436,7 +449,7 @@ void ClientNetworkRead::parseInputAfterLogin(const quint8 &mainCodeType,const qu
 		default:
 			emit error("unknow main ident: "+QString::number(mainCodeType));
 		break;
-	}
+	}*/
 }
 
 bool ClientNetworkRead::checkStringIntegrity(const QByteArray & data)
@@ -471,5 +484,5 @@ void ClientNetworkRead::send_player_informations()
 /// \warning it need be complete protocol trame
 void ClientNetworkRead::fake_receive_data(const QByteArray &data)
 {
-	parseInputAfterLogin(data);
+//	parseInputAfterLogin(data);
 }

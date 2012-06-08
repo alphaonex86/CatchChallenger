@@ -27,7 +27,7 @@ class Client : public QObject
 {
 	Q_OBJECT
 public:
-	explicit Client(QTcpSocket *socket,GeneralData *generalData);
+	explicit Client(QTcpSocket *socket);
 	~Client();
 	//cache
 	quint32 id;
@@ -42,7 +42,6 @@ private:
 	bool ask_is_ready_to_stop;
 	bool is_logged;
 	//-------------------
-	GeneralData *generalData;
 	Player_private_and_public_informations player_informations;
 	ClientBroadCast *clientBroadCast;
 	ClientHeavyLoad *clientHeavyLoad;

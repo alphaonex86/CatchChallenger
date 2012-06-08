@@ -22,7 +22,7 @@ class MapBasicMove : public QObject
 public:
 	explicit MapBasicMove();
 	virtual ~MapBasicMove();
-	virtual void setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations);
+	virtual void setVariable(Player_private_and_public_informations *player_informations);
 	//info linked
 	qint16				x,y;//can be negative because offset to insert on map diff can be put into
 	Map_final*			current_map;
@@ -33,7 +33,6 @@ public:
 	quint16				speed;
 protected:
 	//internal var
-	GeneralData *generalData;
 	Player_private_and_public_informations *player_informations;
 
 	//pass to the Map management visibility algorithm
@@ -46,7 +45,7 @@ protected:
 	virtual void extraStop();
 
 	//debug function
-	QString directionToString(const Direction &direction);
+	static QString directionToString(const Direction &direction);
 
 	//map load/unload and change
 	virtual void loadOnTheMap();
@@ -66,7 +65,7 @@ public slots:
 	virtual void stop();
 private:
 	//temp variable for put on map
-	int moveThePlayer_index_move;
+	static int moveThePlayer_index_move;
 };
 
 #endif // MapBasicMove_H

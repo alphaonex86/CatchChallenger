@@ -37,6 +37,8 @@ public:
 	QStringList getLatency();
 	quint32 getTotalLatency();
 
+	//shared into all the program
+	static GeneralData generalData;
 public slots:
 	//to manipulate the server for restart and stop
 	void start_server();
@@ -95,9 +97,6 @@ private:
 
 	/// \brief To lunch event only when the event loop is setup
 	QTimer *lunchInitFunction;
-
-	//shared into all the program
-	GeneralData generalData;
 
 	//to keep client list
 	QList<Client *> client_list;

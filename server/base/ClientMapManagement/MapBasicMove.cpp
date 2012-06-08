@@ -7,11 +7,12 @@
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
 
+int MapBasicMove::moveThePlayer_index_move;
+
 MapBasicMove::MapBasicMove()
 {
 	current_map=NULL;
 	player_informations=NULL;
-	generalData=NULL;
 	stopIt=false;
 }
 
@@ -20,9 +21,8 @@ MapBasicMove::~MapBasicMove()
 	stopIt=true;
 }
 
-void MapBasicMove::setVariable(GeneralData *generalData,Player_private_and_public_informations *player_informations)
+void MapBasicMove::setVariable(Player_private_and_public_informations *player_informations)
 {
-	this->generalData=generalData;
 	this->player_informations=player_informations;
 }
 

@@ -312,7 +312,7 @@ void ProtocolParsingInput::dataClear()
 
 void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
-	if(replyNeedSize.contains(queryNumber))
+	if(reply_mainCodeType.contains(queryNumber))
 	{
 		emit error("Query with this query number already found");
 		return;
@@ -324,7 +324,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 
 void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
-	if(replyNeedSize.contains(queryNumber))
+	if(reply_mainCodeType.contains(queryNumber))
 	{
 		emit error("Query with this query number already found");
 		return;
