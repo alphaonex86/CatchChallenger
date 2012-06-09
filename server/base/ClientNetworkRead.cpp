@@ -1,4 +1,5 @@
 #include "ClientNetworkRead.h"
+#include "EventDispatcher.h"
 
 ClientNetworkRead::ClientNetworkRead(Player_private_and_public_informations *player_informations,QTcpSocket * socket) :
 	ProtocolParsingInput(socket)
@@ -43,9 +44,9 @@ void ClientNetworkRead::readyRead()
 	ProtocolParsingInput::parseIncommingData();
 }
 
-void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData)
+void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData)
 {
-	/*#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputBeforeLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
 	QDataStream in(inputData);
@@ -56,12 +57,6 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 	switch(mainCodeType)
 	{
 		case 0x02:
-		if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)+sizeof(quint32)))
-		{
-			QString("wrong size with the main ident: %1").arg(mainCodeType);
-			return;
-		}
-		in >> subCodeType;
 		switch(subCodeType)
 		{
 			case 0x0001:
@@ -70,31 +65,28 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 				{
 					QString protocol;
 					in >> protocol;
-					if(generalData->connected_players>=generalData->max_players)
+					if(EventDispatcher::generalData.connected_players>=EventDispatcher::generalData.max_players)
 					{
-						out << (quint8)queryNumber;	//query number
 						out << (quint8)0x03;		//server full
 						out << QString("Server full");
-						emit sendPacket(0xC1,0x00,true,outputData);
-						emit error(QString("Server full (%1/%2)").arg(generalData->connected_players).arg(generalData->max_players));
+						emit postReply(queryNumber,outputData);
+						emit error(QString("Server full (%1/%2)").arg(EventDispatcher::generalData.connected_players).arg(EventDispatcher::generalData.max_players));
 						return;
 					}
 					if(protocol==PROTOCOL_HEADER)
 					{
-						out << (quint8)queryNumber;	//query number
 						out << (quint8)0x01;		//protocol supported
 						/*out << (quint8)0x00;		//raw (no compression)
 						out << (quint8)0x01;		//upload size type: small (client -> server)
-						out << (quint8)0x01;		//upload size type: small (client -> server)*//*
-						emit sendPacket(0xC1,0x00,true,outputData);
+						out << (quint8)0x01;		//upload size type: small (client -> server)*/
+						emit postReply(queryNumber,outputData);
 						have_send_protocol=true;
 						emit message("Protocol sended and replied");
 					}
 					else
 					{
-						out << (quint8)queryNumber;	//query number
 						out << (quint8)0x02;		//protocol not supported
-						emit sendPacket(0xC1,0x00,true,outputData);
+						emit postReply(queryNumber,outputData);
 						emit error("Wrong protocol");
 						return;
 					}
@@ -120,16 +112,14 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 						emit error(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainCodeType).arg(inputData.size()-in.device()->pos()));
 					else if(is_logging_in_progess)
 					{
-						out << (quint8)queryNumber;
 						out << (quint8)1;
-						emit sendPacket(0xC1,0x00,true,outputData);
+						emit postReply(queryNumber,outputData);
 						emit error("Loggin in progress");
 					}
 					else if(is_logged)
 					{
-						out << (quint8)queryNumber;
 						out << (quint8)1;
-						emit sendPacket(0xC1,0x00,true,outputData);
+						emit postReply(queryNumber,outputData);
 						emit error("Already logged");
 					}
 					else
@@ -138,7 +128,6 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 						QByteArray hash;
 						hash=inputData.right(inputData.size()-in.device()->pos());
 						emit askLogin(queryNumber,login,hash);
-						emit message("Logged");
 					}
 				}
 			break;
@@ -150,47 +139,71 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 		default:
 			emit error("wrong data before login with mainIdent: "+QString::number(mainCodeType));
 		break;
-	}*/
+	}
 }
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
 	if(!is_logged)
 	{
-		emit error("is not logged");
+		emit error(QString("is not logged, parseMessage(%1)").arg(mainCodeType));
 		return;
 	}
-	parseInputAfterLogin(mainCodeType,data);
+	//do the work here
 }
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
 	if(!is_logged)
-		parseInputBeforeLogin(mainCodeType,subCodeType,data);
-	else
-		parseInputAfterLogin(mainCodeType,subCodeType,data);
+	{
+		emit error(QString("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
+		return;
+	}
+	//do the work here
 }
 
 //have query with reply
 void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+	if(!is_logged)
+	{
+		emit error(QString("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+		return;
+	}
+	//do the work here
 }
 
 void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+	if(!is_logged)
+	{
+		parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
+		return;
+	}
+	//do the work here
 }
 
 //send reply
-bool ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+	if(!is_logged)
+	{
+		emit error(QString("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+		return;
+	}
+	emit error(QString("The server for now not ask anything"));
 }
 
-bool ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+	if(!is_logged)
+	{
+		emit error(QString("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+		return;
+	}
+	emit error(QString("The server for now not ask anything"));
 }
 
-void ClientNetworkRead::parseInputAfterLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData)
-{
 /*	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 	emit message(QString("parseInputAfterLogin(): inputData: %1").arg(QString(inputData.toHex())));
 	#endif
@@ -450,31 +463,6 @@ void ClientNetworkRead::parseInputAfterLogin(const quint8 &mainCodeType,const qu
 			emit error("unknow main ident: "+QString::number(mainCodeType));
 		break;
 	}*/
-}
-
-bool ClientNetworkRead::checkStringIntegrity(const QByteArray & data)
-{
-	if(data.size()<(int)sizeof(qint32))
-	{
-		emit error("header size not suffisient");
-		return false;
-	}
-	qint32 stringSize;
-	QDataStream in(data);
-	in.setVersion(QDataStream::Qt_4_4);
-	in >> stringSize;
-	if(stringSize>65535)
-	{
-		emit error(QString("String size is wrong: %1").arg(stringSize));
-		return false;
-	}
-	if(data.size()<stringSize)
-	{
-		emit error(QString("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
-		return false;
-	}
-	return true;
-}
 
 void ClientNetworkRead::send_player_informations()
 {

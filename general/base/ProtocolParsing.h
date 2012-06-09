@@ -29,6 +29,7 @@ class ProtocolParsingInput : public ProtocolParsing
 public:
 	ProtocolParsingInput(QIODevice * device);
 	friend class ProtocolParsing;
+	bool checkStringIntegrity(const QByteArray & data);
 protected:
 	virtual void parseIncommingData();
 	//have message without reply
@@ -38,8 +39,8 @@ protected:
 	virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
 	virtual void parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
 	//send reply
-	virtual bool parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
-	virtual bool parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
+	virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
+	virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
 	// for data
 	bool haveData;
 	bool haveData_dataSize;
@@ -92,8 +93,8 @@ protected:
 	virtual bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
 	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
 	//send query with reply
-	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+	virtual bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+	virtual bool packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 	//send reply
 	virtual bool postReplyData(const quint8 &queryNumber,const QByteArray &data);
 private:

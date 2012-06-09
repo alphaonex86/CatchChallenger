@@ -53,8 +53,12 @@ signals:
 	//normal signals
 	void error(const QString &error);
 	void message(const QString &message);
-	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
 	void isReadyToStop();
+	//send packet on network
+	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
+	void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
+	//send reply
+	void postReply(const quint8 &queryNumber,const QByteArray &data);
 	//login linked signals
 	void send_player_informations();
 	void isLogged();

@@ -18,7 +18,10 @@ public:
 	explicit ClientNetworkWrite(QTcpSocket * socket);
 	~ClientNetworkWrite();
 public slots:
-	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
+	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
+	void sendPacket(const quint8 &mainIdent,const QByteArray &data);
+	//send reply
+	void postReply(const quint8 &queryNumber,const QByteArray &data);
 	//normal slots
 	void askIfIsReadyToStop();
 	void stop();

@@ -70,6 +70,30 @@ ProtocolParsingInput::ProtocolParsingInput(QIODevice * device) :
 	dataClear();
 }
 
+bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data)
+{
+	if(data.size()<(int)sizeof(qint32))
+	{
+		emit error("header size not suffisient");
+		return false;
+	}
+	qint32 stringSize;
+	QDataStream in(data);
+	in.setVersion(QDataStream::Qt_4_4);
+	in >> stringSize;
+	if(stringSize>65535)
+	{
+		emit error(QString("String size is wrong: %1").arg(stringSize));
+		return false;
+	}
+	if(data.size()<stringSize)
+	{
+		emit error(QString("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
+		return false;
+	}
+	return true;
+}
+
 ProtocolParsingOutput::ProtocolParsingOutput(QIODevice * device) :
 	ProtocolParsing(device)
 {
@@ -338,42 +362,19 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 	reply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
-{
-	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
-	out << subCodeType;
-	out << queryNumber;
-
-	return packOutcommingData(mainCodeType,subCodeType,packetSize,block+data);
-}
-
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
-{
-	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
-	out << subCodeType;
-
-	return packOutcommingData(mainCodeType,subCodeType,packetSize,block+data);
-}
-
 bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteArray &data)
 {
-	if(replyNeedSize.contains(queryNumber))
-	{
-		QByteArray block;
-		QDataStream out(&block, QIODevice::WriteOnly);
-		out << replyCode;
-		out << queryNumber;
+	QByteArray block;
+	QDataStream out(&block, QIODevice::WriteOnly);
+	out << replyCode;
+	out << queryNumber;
 
-		if(!replyNeedSize[queryNumber])
-			out << encodeSize(data.size());
+	if(!replySize.contains(queryNumber))
+		out << encodeSize(data.size());
+	else
+		replySize.remove(queryNumber);
 
-		replyNeedSize.remove(queryNumber);
-		internalPackOutcommingData(data);
-		return;
-	}
-	emit error("query number not found");
+	return internalPackOutcommingData(data);
 }
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
@@ -428,7 +429,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 	return internalPackOutcommingData(block+data);
 }
 
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 	emit newOutputQuery(mainCodeType,queryNumber);
 
@@ -443,7 +444,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 	return internalPackOutcommingData(block+data);
 }
 
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 	emit newOutputQuery(mainCodeType,subCodeType,queryNumber);
 
@@ -461,7 +462,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 	return internalPackOutcommingData(block+data);
 }
 
-bool ProtocolParsingOutput::internalPackOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
+bool ProtocolParsingOutput::internalPackOutcommingData(const QByteArray &data)
 {
 	if(device!=NULL)
 	{
