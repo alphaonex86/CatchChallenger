@@ -55,7 +55,7 @@ void ClientBroadCast::receivePM(const QString &text,const quint32 &player_id)
 	out << player_id;//id player here
 	out << (quint8)0x06;
 	out << text;
-	emit sendPacket(0xC2,0x0005,true,outputData);
+	emit sendPacket(0xC2,0x0005,outputData);
 }
 
 void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
@@ -99,7 +99,7 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
 	out << sender_player_id;
 	out << (quint8)chatType;
 	out << text;
-	emit sendPacket(0xC2,0x0005,true,outputData);
+	emit sendPacket(0xC2,0x0005,outputData);
 }
 
 void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text)
@@ -186,7 +186,7 @@ void ClientBroadCast::send_players_informations(const QList<Player_private_and_p
 			out << players_informations.at(index).cash;
 		index++;
 	}
-	emit sendPacket(0xC2,0x0002,true,outputData);
+	emit sendPacket(0xC2,0x0002,outputData);
 }
 
 void ClientBroadCast::send_players_informations(const QList<Player_public_informations> &players_informations)
@@ -215,7 +215,7 @@ void ClientBroadCast::send_players_informations(const QList<Player_public_inform
 		out << players_informations.at(index).skin;
 		index++;
 	}
-	emit sendPacket(0xC2,0x0002,true,outputData);
+	emit sendPacket(0xC2,0x0002,outputData);
 }
 
 void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
@@ -228,7 +228,7 @@ void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 	out.setVersion(QDataStream::Qt_4_4);
 	out << EventDispatcher::generalData.connected_players;
 	out << EventDispatcher::generalData.max_players;
-	emit sendPacket(0xC3,0x0000,false,outputData);
+	emit sendPacket(0xC3,outputData);
 }
 
 void ClientBroadCast::kick()

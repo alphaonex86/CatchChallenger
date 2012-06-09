@@ -26,10 +26,8 @@ public slots:
 	//normal slots
 	void askIfIsReadyToStop();
 	void stop();
-private slots:
-	void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray & inputData);
-	void parseInputAfterLogin(const quint8 &mainCodeType,const QByteArray &data);
-	void parseInputAfterLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+private:
+	void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
 	//have message without reply
 	void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
 	void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
@@ -37,11 +35,15 @@ private slots:
 	void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
 	void parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 	//send reply
-	bool parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-	bool parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+	void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+	void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 signals:
 	//normal signals
-	void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const bool &packetSize,const QByteArray &data);
+	void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray());
+	void sendPacket(const quint8 &mainCodeType,const QByteArray &data=QByteArray());
+	//send reply
+	void postReply(const quint8 &queryNumber,const QByteArray &data);
+	//normal signals
 	void isReadyToStop();
 	//packet parsed (heavy)
 	void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
@@ -64,7 +66,6 @@ private:
 	bool is_logging_in_progess;
 	bool stopIt;
 	// function
-	bool checkStringIntegrity(const QByteArray & data);
 	QTcpSocket * socket;
 	Player_private_and_public_informations *player_informations;
 	//to prevent memory presure

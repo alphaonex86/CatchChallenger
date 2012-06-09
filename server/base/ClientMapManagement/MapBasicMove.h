@@ -55,7 +55,8 @@ signals:
 	void error(const QString &error);
 	void message(const QString &message);
 	void isReadyToStop();
-	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
+	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
+	void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
 	virtual void put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
