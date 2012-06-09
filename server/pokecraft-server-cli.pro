@@ -36,7 +36,9 @@ SOURCES += main-cli.cpp \
     base/ClientMapManagement/MapBasicMove.cpp \
     ../general/base/DebugClass.cpp \
     ../general/base/MoveClient.cpp \
-    ../general/base/ChatParsing.cpp
+    ../general/base/ChatParsing.cpp \
+    ../general/base/QFakeServer.cpp \
+    ../general/base/QFakeSocket.cpp
 
 HEADERS += \
     ProcessControler.h \
@@ -61,7 +63,9 @@ HEADERS += \
     ../general/base/MoveClient.h \
     ../general/base/DebugClass.h \
     ../general/base/GeneralStructures.h \
-    ../general/base/ChatParsing.h
+    ../general/base/ChatParsing.h \
+    ../general/base/QFakeServer.h \
+    ../general/base/QFakeSocket.h
 
 
 RESOURCES += \

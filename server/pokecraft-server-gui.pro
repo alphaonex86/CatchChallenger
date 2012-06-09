@@ -33,7 +33,10 @@ SOURCES += main.cpp\
     base/ClientMapManagement/MapBasicMove.cpp \
     ../general/base/DebugClass.cpp \
     ../general/base/MoveClient.cpp \
-    ../general/base/ChatParsing.cpp
+    ../general/base/ChatParsing.cpp \
+    ../general/base/ProtocolParsing.cpp \
+    ../general/base/QFakeServer.cpp \
+    ../general/base/QFakeSocket.cpp
 
 
 HEADERS += \
@@ -59,7 +62,10 @@ HEADERS += \
     ../general/base/DebugClass.h \
     ../general/base/GeneralStructures.h \
     ../general/base/ChatParsing.h \
-    ../general/base/GeneralVariable.h
+    ../general/base/GeneralVariable.h \
+    ../general/base/ProtocolParsing.h \
+    ../general/base/QFakeServer.h \
+    ../general/base/QFakeSocket.h
 
 HEADERS  += MainWindow.h
 
