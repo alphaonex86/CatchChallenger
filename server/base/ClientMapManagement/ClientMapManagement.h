@@ -43,11 +43,6 @@ protected:
 	QHash<quint32, QList<map_management_movement> >		to_send_map_management_move;
 	QSet<quint32>						to_send_map_management_remove;
 signals:
-	//normal signals
-	void error(const QString &error);
-	void message(const QString &message);
-	void isReadyToStop();
-	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
 	//specific to map signals
 	void updatePlayerPosition(const QString & map,const quint16 &x,const quint16 &y,const Orientation &orientation);
 public slots:
@@ -82,9 +77,6 @@ private:
 	//temp variable to move on the map
 	static map_management_movement moveClient_tempMov;
 	static map_management_insert insertClient_temp;//can have lot of due to over move
-
-	//temp variable for put on map
-	int moveThePlayer_index_move;
 
 	//map load/unload and change
 	virtual void			loadOnTheMap();

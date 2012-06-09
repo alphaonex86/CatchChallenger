@@ -55,9 +55,11 @@ signals:
 	void error(const QString &error);
 	void kicked();
 	void message(const QString &message);
-	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const bool &packetSize,const QByteArray &data);
 	void isReadyToStop();
 	void try_internal_disconnect();
+	//send packet on network
+	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
+	void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
 private:
 	//player login
 	void send_players_informations(const QList<Player_private_and_public_informations> &players_informations);

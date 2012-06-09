@@ -168,7 +168,7 @@ void ClientMapManagement::dropAllClients()
 	to_send_map_management_insert.clear();
 	to_send_map_management_move.clear();
 	to_send_map_management_remove.clear();
-	emit sendPacket(0xC3,0x0000,false,QByteArray());
+	emit sendPacket(0xC3);
 }
 
 void ClientMapManagement::purgeBuffer()
@@ -276,5 +276,5 @@ void ClientMapManagement::purgeBuffer()
 	#endif
 	out << purgeBuffer_player_affected;
 	purgeBuffer_outputData+=purgeBuffer_outputDataLoop;
-	emit sendPacket(0xC0,0x0000,true,purgeBuffer_outputData);
+	emit sendPacket(0xC0,purgeBuffer_outputData);
 }
