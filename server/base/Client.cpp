@@ -66,12 +66,27 @@ Client::Client(QTcpSocket *socket)
 	clientHeavyLoad->setVariable(&player_informations);
 	clientLocalCalcule->setVariable(&player_informations);
 
-	//connect the write
-	connect(clientNetworkRead,	SIGNAL(sendPacket(quint8,quint16,bool,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,bool,QByteArray)),Qt::QueuedConnection);
-	connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,bool,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,bool,QByteArray)),Qt::QueuedConnection);
-	connect(clientBroadCast,	SIGNAL(sendPacket(quint8,quint16,bool,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,bool,QByteArray)),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(sendPacket(quint8,quint16,bool,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,bool,QByteArray)),Qt::QueuedConnection);
-	connect(clientLocalCalcule,	SIGNAL(sendPacket(quint8,quint16,bool,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,bool,QByteArray)),Qt::QueuedConnection);
+	//connect input/ouput
+	connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint16,quint8)),	clientNetworkWrite,SLOT(newInputQuery(quint8,quint16,quint8)),Qt::QueuedConnection);
+	connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint8)),		clientNetworkWrite,SLOT(newInputQuery(quint8,quint8)),Qt::QueuedConnection);
+	connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint16,quint8)),	clientNetworkRead,SLOT(newOutputQuery(quint8,quint16,quint8)),Qt::QueuedConnection);
+	connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint8)),		clientNetworkRead,SLOT(newOutputQuery(quint8,quint8)),Qt::QueuedConnection);
+
+	//connect the write, to send packet on the network
+	connect(clientNetworkRead,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
+	connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
+	connect(clientBroadCast,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
+	connect(clientLocalCalcule,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
+
+	connect(clientNetworkRead,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
+	connect(clientMapManagement,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
+	connect(clientBroadCast,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
+	connect(clientLocalCalcule,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
+
+	connect(clientNetworkRead,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
 
 	//connect the player information
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);

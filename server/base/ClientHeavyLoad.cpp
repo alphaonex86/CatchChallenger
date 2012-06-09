@@ -31,19 +31,17 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	QSqlQuery loginQuery;
 	if(!loginQuery.exec("SELECT * FROM `player` WHERE `login`=\'"+SQL_text_quote(login)+"\' AND `password`=\'"+SQL_text_quote(hash.toHex())+"\'"))
 	{
-		out << (quint8)query_id;
 		out << (quint8)0x01;
 		out << QString("Mysql error");
-		emit sendPacket(0xC1,0x00,true,outputData);
+		emit postReply(query_id,outputData);
 		emit message(loginQuery.lastQuery()+": "+loginQuery.lastError().text());
 		return;
 	}
 	if(loginQuery.size()==0)
 	{
-		out << (quint8)query_id;
 		out << (quint8)0x01;
 		out << QString("Bad login");
-		emit sendPacket(0xC1,0x00,true,outputData);
+		emit postReply(query_id,outputData);
 		emit error("Bad login for: "+login+", hash: "+hash.toHex());
 	}
 	else
@@ -51,10 +49,9 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		loginQuery.next();
 		if(EventDispatcher::generalData.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
 		{
-			out << (quint8)query_id;
 			out << (quint8)0x01;
 			out << QString("Already logged");
-			emit sendPacket(0xC1,0x00,true,outputData);
+			emit postReply(query_id,outputData);
 			emit error("Already logged");
 		}
 		else
@@ -76,10 +73,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			}
 			if(EventDispatcher::generalData.map_list.contains(loginQuery.value(8).toString()))
 			{
-				out << (quint8)query_id;
 				out << (quint8)02;
 				out << (quint32)loginQuery.value(0).toUInt();
-				emit sendPacket(0xC1,0x00,true,outputData);
+				emit message(QString("Logged: %1").arg(player_informations->public_informations.pseudo));
+				emit postReply(query_id,outputData);
 				emit send_player_informations();
 				emit isLogged();
 				emit put_on_the_map(
@@ -93,10 +90,9 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			}
 			else
 			{
-				out << (quint8)query_id;
 				out << (quint8)01;
 				out << QString("Map not found");
-				emit sendPacket(0xC1,0x00,true,outputData);
+				emit postReply(query_id,outputData);
 				emit error("Map not found: "+loginQuery.value(8).toString());
 			}
 		}
@@ -133,13 +129,7 @@ void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)
 		index++;
 	}
 	emit setRandomSeedList(randomData);
-	QByteArray outputData;
-	QDataStream out(&outputData, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0xC1;
-	out << (quint8)query_id;
-	out << randomData;
-	emit sendPacket(0xC1,0x00,true,outputData);
+	emit postReply(query_id,randomData);
 }
 
 void ClientHeavyLoad::askIfIsReadyToStop()
@@ -159,7 +149,6 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)query_id;
 	int loopIndex=0;
 	int loop_size=files.size();
 	while(loopIndex<loop_size)
@@ -193,7 +182,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 	}
 	//send not in the list
 	listDatapack("",files);
-	emit sendPacket(0xC1,0x00,true,outputData);
+	emit postReply(query_id,outputData);
 }
 
 bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime)
@@ -255,7 +244,7 @@ void ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content
 	out << (quint32)content.size();
 	out << mtime;
 	outputData+=content;
-	emit sendPacket(0xC2,0x0003,true,outputData);
+	emit sendPacket(0xC2,0x0003,outputData);
 }
 
 QString ClientHeavyLoad::SQL_text_quote(QString text)
