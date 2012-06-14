@@ -11,6 +11,7 @@
 #include <QHash>
 #include <QVariant>
 #include <QSet>
+#include <QSqlQuery>
 
 #include "../general/base/GeneralStructures.h"
 #include "PlayerUpdater.h"
@@ -129,45 +130,97 @@ struct Map_player_info
 
 enum MapVisibilityAlgorithm
 {
-	MapVisibilityAlgorithm_simple
+	MapVisibilityAlgorithm_simple,
+	MapVisibilityAlgorithm_none
 };
 
 struct GeneralData
 {
-	//connection
-	quint16 max_players;
-	quint16 connected_players;
-	PlayerUpdater player_updater;
-	QSet<quint32> connected_players_id_list;
-
-	//bd
-	QSqlDatabase *db;//use pointer here to init in correct thread
-
-	//general data
-	QList<EventThreader *> eventThreaderList;
-	QTimer *timer_player_map;
-
-	//interconnected thread
-	QList<ClientBroadCast *> clientBroadCastList;
-	QMutex clientBroadCastListMutex;
-
-	//map
-	QString mapBasePath;
-	QHash<QString,Map_final *> map_list;
-	QTimer timer_to_send_insert_move_remove;
-
-	//visibility algorithm
-	MapVisibilityAlgorithm mapVisibilityAlgorithm;
-	struct MapVisibility_simple
+	struct ServerSettings
 	{
-		quint16 max;
-		quint16 reshow;
+		//the listen, implicit on the client
+		quint16 server_port;
+		QString server_ip;
+
+		//settings of the server shared with the client
+		CommmonServerSettings commmonServerSettings;
+
+		//rates
+		qreal rates_xp_premium;
+		qreal rates_gold_premium;
+		qreal rates_shiny_premium;
+
+		struct Database
+		{
+			enum DatabaseType
+			{
+				DatabaseType_Mysql,
+				DatabaseType_SQLite
+			};
+			DatabaseType type;
+
+			struct Mysql
+			{
+				//mysql settings
+				QString host;
+				QString db;
+				QString login;
+				QString pass;
+			};
+			Mysql mysql;
+		};
+		Database database;
+
+		//connection
+		quint16 max_players;
+
+		//visibility algorithm
+		struct MapVisibility
+		{
+			MapVisibilityAlgorithm mapVisibilityAlgorithm;
+
+			struct MapVisibility_simple
+			{
+				quint16 max;
+				quint16 reshow;
+			};
+			MapVisibility_simple simple;
+		};
+		MapVisibility mapVisibility;
 	};
-	struct MapVisibility
+	ServerSettings serverSettings;
+
+	struct ServerPrivateVariables
 	{
-		MapVisibility_simple simple;
+		//bd
+		QSqlDatabase *db;//use pointer here to init in correct thread
+		QString datapack_basePath;
+		QString datapack_mapPath;
+		QRegExp datapack_rightFileName;
+
+		//sql query
+		QSqlQuery loginQuery;
+		QSqlQuery updateMapPositionQuery;
+
+		//general data
+		QList<EventThreader *> eventThreaderList;
+		QTimer *timer_player_map;
+
+		//interconnected thread
+		QList<ClientBroadCast *> clientBroadCastList;
+		QMutex clientBroadCastListMutex;
+
+		//map
+		QString mapBasePath;
+		QHash<QString,Map_final *> map_list;
+		QTimer timer_to_send_insert_move_remove;
+
+		//connection
+		quint16 connected_players;
+		PlayerUpdater player_updater;
+		QSet<quint32> connected_players_id_list;
 	};
-	MapVisibility mapVisibility;
+	ServerPrivateVariables serverPrivateVariables;
 };
 
 #endif // STRUCTURES_SERVER_H

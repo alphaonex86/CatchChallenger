@@ -28,6 +28,7 @@ class EventDispatcher : public QObject
 public:
 	explicit EventDispatcher();
 	~EventDispatcher();
+	void setSettings(GeneralData::ServerSettings settings);
 	//stat function
 	bool isListen();
 	bool isStopped();
@@ -70,24 +71,6 @@ private:
 	//store about the network
 	QString server_ip;
 	QTcpServer *server;
-	//the settings
-	bool pvp;
-	quint16 server_port;
-	qreal rates_xp_normal;
-	qreal rates_xp_premium;
-	qreal rates_gold_normal;
-	qreal rates_gold_premium;
-	qreal rates_shiny_normal;
-	qreal rates_shiny_premium;
-	bool char_allow_all;
-	bool char_allow_local;
-	bool char_allow_private;
-	bool char_allow_aliance;
-	bool char_allow_clan;
-	QString mysql_host;
-	QString mysql_db;
-	QString mysql_login;
-	QString mysql_pass;
 	//store benchmark related
 	bool in_benchmark_mode;
 	int benchmark_latency;
@@ -116,6 +99,7 @@ private:
 	void addBot(quint16 x,quint16 y,Map_final *map,QString skin="");
 	QTimer nextStep;//all function call singal sync, then not pointer needed
 	QList<FakeBot *> fake_clients;
+	bool initialize_the_database();
 private slots:
 	//new connection
 	void newConnection();

@@ -9,9 +9,6 @@ ClientHeavyLoad::ClientHeavyLoad()
 {
 	is_logged=false;
 	fake_mode=false;
-	basePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
-	datapack_base_name=QCoreApplication::applicationDirPath()+"/datapack/";
-	right_file_name=QRegExp("^[0-9/a-zA-Z\\.\\- _]+\\.[a-z]{3,4}$");
 }
 
 ClientHeavyLoad::~ClientHeavyLoad()
@@ -28,8 +25,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	QSqlQuery loginQuery;
-	if(!loginQuery.exec("SELECT * FROM `player` WHERE `login`=\'"+SQL_text_quote(login)+"\' AND `password`=\'"+SQL_text_quote(hash.toHex())+"\'"))
+	QSqlQuery loginQuery=EventDispatcher::generalData.serverPrivateVariables.loginQuery;
+	loginQuery.bindValue(":login",login);
+	loginQuery.bindValue(":password",QString(hash.toHex()));
+	if(!loginQuery.exec())
 	{
 		out << (quint8)0x01;
 		out << QString("Mysql error");
@@ -47,7 +46,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	else
 	{
 		loginQuery.next();
-		if(EventDispatcher::generalData.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
+		if(EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
 		{
 			out << (quint8)0x01;
 			out << QString("Already logged");
@@ -56,7 +55,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		}
 		else
 		{
-			EventDispatcher::generalData.connected_players_id_list << loginQuery.value(0).toUInt();
+			EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << loginQuery.value(0).toUInt();
 			is_logged=true;
 			player_informations->public_informations.clan=loginQuery.value(10).toUInt();
 			player_informations->public_informations.description="";
@@ -71,7 +70,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit message(QString("Wrong orientation corrected: %1").arg(orentation));
 				orentation=3;
 			}
-			if(EventDispatcher::generalData.map_list.contains(loginQuery.value(8).toString()))
+			if(EventDispatcher::generalData.serverPrivateVariables.map_list.contains(loginQuery.value(8).toString()))
 			{
 				out << (quint8)02;
 				out << (quint32)loginQuery.value(0).toUInt();
@@ -81,7 +80,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit isLogged();
 				emit put_on_the_map(
 					player_informations->public_informations.id,
-					EventDispatcher::generalData.map_list[loginQuery.value(8).toString()],//map pointer
+					EventDispatcher::generalData.serverPrivateVariables.map_list[loginQuery.value(8).toString()],//map pointer
 					loginQuery.value(5).toInt(),//position_x
 					loginQuery.value(6).toInt(),//position_y
 					(Orientation)orentation,
@@ -102,7 +101,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 void ClientHeavyLoad::fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,Map_final *map,const Orientation &orientation,const QString &skin)
 {
 	fake_mode=true;
-	EventDispatcher::generalData.connected_players_id_list << last_fake_player_id;
+	EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << last_fake_player_id;
 	is_logged=true;
 	player_informations->public_informations.clan=0;
 	player_informations->public_informations.description="Bot";
@@ -135,7 +134,7 @@ void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)
 void ClientHeavyLoad::askIfIsReadyToStop()
 {
 	if(is_logged)
-		EventDispatcher::generalData.connected_players_id_list.remove(player_informations->public_informations.id);
+		EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.remove(player_informations->public_informations.id);
 	emit isReadyToStop();
 }
 
@@ -165,7 +164,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 			emit error(QString("start with wrong string: %1").arg(fileName));
 			return;
 		}
-		if(!fileName.contains(right_file_name))
+		if(!fileName.contains(EventDispatcher::generalData.serverPrivateVariables.datapack_rightFileName))
 		{
 			//emit error(QString("file have not match the regex: %1").arg(fileName));
 			//return;
@@ -173,7 +172,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 		}
 		else
 		{
-			if(sendFileIfNeeded(datapack_base_name+fileName,fileName,mtime,true))
+			if(sendFileIfNeeded(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+fileName,fileName,mtime,true))
 				out << (quint8)0x01;
 			else
 				out << (quint8)0x02;
@@ -214,7 +213,7 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fi
 void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &files)
 {
 	//do source check
-	QDir finalDatapackFolder(datapack_base_name+suffix);
+	QDir finalDatapackFolder(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+suffix);
 	QString fileName;
 	QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
 	int sizeEntryList=entryList.size();
@@ -226,7 +225,7 @@ void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &file
 		else
 		{
 			fileName=suffix+fileInfo.fileName();
-			if(fileName.contains(right_file_name))
+			if(fileName.contains(EventDispatcher::generalData.serverPrivateVariables.datapack_rightFileName))
 			{
 				if(!files.contains(fileName))
 					sendFileIfNeeded(fileName,0,false);
@@ -256,17 +255,12 @@ void ClientHeavyLoad::updatePlayerPosition(const QString &map,const quint16 &x,c
 {
 	if(!is_logged || fake_mode)
 		return;
-	QSqlQuery loginQuery;
-	loginQuery.exec(QString("UPDATE `player` SET `map_name`='%1',`position_x`='%2',`position_y`='%3',`orientation`='%4' WHERE `id`=%5")
-			.arg(SQL_text_quote(map))
-			.arg(x)
-			.arg(y)
-			.arg(orientation)
-			.arg(player_informations->public_informations.id));
-	DebugClass::debugConsole(QString("UPDATE `player` SET `map_name`='%1',`position_x`='%2',`position_y`='%3',`orientation`='%4' WHERE `id`=%5")
-			 .arg(SQL_text_quote(map))
-			 .arg(x)
-			 .arg(y)
-			 .arg(orientation)
-			 .arg(player_informations->public_informations.id));
+	QSqlQuery updateMapPositionQuery=EventDispatcher::generalData.serverPrivateVariables.updateMapPositionQuery;
+	updateMapPositionQuery.bindValue(":map_name",map);
+	updateMapPositionQuery.bindValue(":position_x",x);
+	updateMapPositionQuery.bindValue(":position_y",y);
+	updateMapPositionQuery.bindValue(":orientation",orientation);
+	updateMapPositionQuery.bindValue(":id",player_informations->public_informations.id);
+	if(!updateMapPositionQuery.exec())
+		DebugClass::debugConsole(QString("Sql query failed: %1, error: %2").arg(updateMapPositionQuery.lastQuery()).arg(updateMapPositionQuery.lastError().text()));
 }

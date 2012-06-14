@@ -7,6 +7,7 @@
   each Xs update the local player list
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
+/** \todo Drop colision detection, move to ClientLocalCalcule */
 
 //temp variable for purge buffer
 quint16 ClientMapManagement::purgeBuffer_player_affected;
@@ -48,7 +49,7 @@ Map_player_info ClientMapManagement::getMapPlayerInfo()
 void ClientMapManagement::setVariable(Player_private_and_public_informations *player_informations)
 {
 	MapBasicMove::setVariable(player_informations);
-	connect(&EventDispatcher::generalData.timer_to_send_insert_move_remove,	SIGNAL(timeout()),this,SLOT(purgeBuffer()),Qt::QueuedConnection);
+	connect(&EventDispatcher::generalData.serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),this,SLOT(purgeBuffer()),Qt::QueuedConnection);
 }
 
 void ClientMapManagement::extraStop()

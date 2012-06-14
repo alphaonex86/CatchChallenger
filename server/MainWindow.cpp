@@ -75,6 +75,7 @@ void MainWindow::updateActionButton()
 
 void MainWindow::on_pushButton_server_start_clicked()
 {
+	send_settings();
 	eventDispatcher.start_server();
 }
 
@@ -103,6 +104,7 @@ void MainWindow::server_is_started(bool is_started)
 		if(need_be_restarted)
 		{
 			need_be_restarted=false;
+			send_settings();
 			eventDispatcher.start_server();
 		}
 	}
@@ -327,14 +329,16 @@ void MainWindow::load_settings()
 	settings->endGroup();
 
 	settings->beginGroup("db");
-	if(!settings->contains("host"))
-		settings->setValue("host","localhost");
-	if(!settings->contains("login"))
-		settings->setValue("login","pokecraft-login");
-	if(!settings->contains("pass"))
-		settings->setValue("pass","pokecraft-pass");
-	if(!settings->contains("db"))
-		settings->setValue("db","pokecraft");
+	if(!settings->contains("type"))
+		settings->setValue("type","mysql");
+	if(!settings->contains("mysql_host"))
+		settings->setValue("mysql_host","localhost");
+	if(!settings->contains("mysql_login"))
+		settings->setValue("mysql_login","pokecraft-login");
+	if(!settings->contains("mysql_pass"))
+		settings->setValue("mysql_pass","pokecraft-pass");
+	if(!settings->contains("mysql_db"))
+		settings->setValue("mysql_db","pokecraft");
 	settings->endGroup();
 	// --------------------------------------------------
 	ui->max_player->setValue(settings->value("max-players").toUInt());
@@ -393,16 +397,89 @@ void MainWindow::load_settings()
 	ui->chat_allow_clan->setChecked(chat_allow_clan);
 
 	settings->beginGroup("db");
-	QString db_host=settings->value("host").toString();
-	QString bd_login=settings->value("login").toString();
-	QString bd_pass=settings->value("pass").toString();
-	QString bd_base=settings->value("db").toString();
+	QString db_type=settings->value("type").toString();
+	QString db_mysql_host=settings->value("mysql_host").toString();
+	QString db_mysql_login=settings->value("mysql_login").toString();
+	QString db_mysql_pass=settings->value("mysql_pass").toString();
+	QString db_mysql_base=settings->value("mysql_db").toString();
 	settings->endGroup();
 
-	ui->db_host->setText(db_host);
-	ui->db_login->setText(bd_login);
-	ui->db_pass->setText(bd_pass);
-	ui->db_base->setText(bd_base);
+	if(db_type=="mysql")
+		ui->db_type->setCurrentIndex(0);
+	else if(db_type=="sqlite")
+		ui->db_type->setCurrentIndex(1);
+	else
+		ui->db_type->setCurrentIndex(0);
+	ui->db_mysql_host->setText(db_mysql_host);
+	ui->db_mysql_login->setText(db_mysql_login);
+	ui->db_mysql_pass->setText(db_mysql_pass);
+	ui->db_mysql_base->setText(db_mysql_base);
+}
+
+void MainWindow::send_settings()
+{
+	GeneralData::ServerSettings formatedServerSettings;
+
+	//the listen
+	formatedServerSettings.server_port					= ui->server_port->value();
+	formatedServerSettings.server_ip					= ui->server_ip->text();
+
+	//fight
+	formatedServerSettings.commmonServerSettings.pvp			= ui->pvp->isChecked();
+
+	//rates
+	formatedServerSettings.commmonServerSettings.rates_xp			= ui->rates_xp_normal->value();
+	formatedServerSettings.rates_xp_premium					= ui->rates_xp_premium->value();
+	formatedServerSettings.commmonServerSettings.rates_gold			= ui->rates_xp_normal->value();
+	formatedServerSettings.rates_gold_premium				= ui->rates_xp_normal->value();
+	formatedServerSettings.commmonServerSettings.rates_shiny		= ui->rates_xp_normal->value();
+	formatedServerSettings.rates_shiny_premium				= ui->rates_xp_normal->value();
+
+	//chat allowed
+	formatedServerSettings.commmonServerSettings.chat_allow_all		= ui->chat_allow_all->isChecked();
+	formatedServerSettings.commmonServerSettings.chat_allow_local		= ui->chat_allow_local->isChecked();
+	formatedServerSettings.commmonServerSettings.chat_allow_private		= ui->chat_allow_private->isChecked();
+	formatedServerSettings.commmonServerSettings.chat_allow_aliance		= ui->chat_allow_aliance->isChecked();
+	formatedServerSettings.commmonServerSettings.chat_allow_clan		= ui->chat_allow_clan->isChecked();
+
+	switch(ui->db_type->currentIndex())
+	{
+		case 0:
+			formatedServerSettings.database.type					= GeneralData::ServerSettings::Database::DatabaseType_Mysql;
+		break;
+		case 1:
+			formatedServerSettings.database.type					= GeneralData::ServerSettings::Database::DatabaseType_SQLite;
+		break;
+		default:
+			formatedServerSettings.database.type					= GeneralData::ServerSettings::Database::DatabaseType_Mysql;
+		break;
+	}
+	formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
+	formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
+	formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
+	formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
+
+	//connection
+	formatedServerSettings.max_players					= ui->max_player->value();
+
+	//visibility algorithm
+	switch(ui->MapVisibilityAlgorithm->currentIndex())
+	{
+		case 0:
+			formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithm_simple;
+		break;
+		case 1:
+			formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithm_none;
+		break;
+		default:
+			formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithm_simple;
+		break;
+	}
+
+	formatedServerSettings.mapVisibility.simple.max				= ui->MapVisibilityAlgorithmSimpleMax->value();
+	formatedServerSettings.mapVisibility.simple.reshow			= ui->MapVisibilityAlgorithmSimpleReshow->value();
+
+	eventDispatcher.setSettings(formatedServerSettings);
 }
 
 void MainWindow::on_max_player_valueChanged(int arg1)
@@ -506,28 +583,28 @@ void MainWindow::on_chat_allow_clan_toggled(bool checked)
 void MainWindow::on_db_host_editingFinished()
 {
 	settings->beginGroup("db");
-	settings->setValue("host",ui->db_host->text());
+	settings->setValue("mysql_host",ui->db_mysql_host->text());
 	settings->endGroup();
 }
 
 void MainWindow::on_db_login_editingFinished()
 {
 	settings->beginGroup("db");
-	settings->setValue("login",ui->db_login->text());
+	settings->setValue("mysql_login",ui->db_mysql_login->text());
 	settings->endGroup();
 }
 
 void MainWindow::on_db_pass_editingFinished()
 {
 	settings->beginGroup("db");
-	settings->setValue("pass",ui->db_pass->text());
+	settings->setValue("mysql_pass",ui->db_mysql_pass->text());
 	settings->endGroup();
 }
 
 void MainWindow::on_db_base_editingFinished()
 {
 	settings->beginGroup("db");
-	settings->setValue("db",ui->db_base->text());
+	settings->setValue("mysql_db",ui->db_mysql_base->text());
 	settings->endGroup();
 }
 
