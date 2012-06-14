@@ -21,12 +21,16 @@ Client::Client(QTcpSocket *socket)
 	clientNetworkWrite=new ClientNetworkWrite(socket);
 	clientLocalCalcule=new ClientLocalCalcule();
 
-	switch(EventDispatcher::generalData.mapVisibilityAlgorithm)
+	switch(EventDispatcher::generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
 	{
 		default:
 		case MapVisibilityAlgorithm_simple:
 			clientMapManagement=new MapVisibilityAlgorithm_Simple();
 		break;
+		case MapVisibilityAlgorithm_none:
+			clientMapManagement=new MapVisibilityAlgorithm_None();
+		break;
+
 	}
 
 	player_informations.public_informations.pseudo="";
@@ -54,11 +58,11 @@ Client::Client(QTcpSocket *socket)
 	is_ready_to_stop=false;
 	ask_is_ready_to_stop=false;
 
-	clientBroadCast->moveToThread(EventDispatcher::generalData.eventThreaderList.at(0));
-	clientHeavyLoad->moveToThread(EventDispatcher::generalData.eventThreaderList.at(3));
-	clientMapManagement->moveToThread(EventDispatcher::generalData.eventThreaderList.at(1));
-	clientNetworkRead->moveToThread(EventDispatcher::generalData.eventThreaderList.at(2));
-	clientLocalCalcule->moveToThread(EventDispatcher::generalData.eventThreaderList.at(6));
+	clientBroadCast->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(0));
+	clientHeavyLoad->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(3));
+	clientMapManagement->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(1));
+	clientNetworkRead->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(2));
+	clientLocalCalcule->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(6));
 
 	//set variables
 	clientBroadCast->setVariable(&player_informations);
@@ -220,8 +224,8 @@ void Client::disconnectNextStep()
 	if(stopped_object==5)
 	{
 		//remove the player
-		EventDispatcher::generalData.connected_players--;
-		EventDispatcher::generalData.player_updater.removeConnectedPlayer();
+		EventDispatcher::generalData.serverPrivateVariables.connected_players--;
+		EventDispatcher::generalData.serverPrivateVariables.player_updater.removeConnectedPlayer();
 		is_logged=false;
 
 		//reconnect to real stop
@@ -280,8 +284,8 @@ void Client::send_player_informations()
 	this->player_informations=player_informations;
 	this->id=player_informations.public_informations.id;
 	is_logged=true;
-	EventDispatcher::generalData.connected_players++;
-	EventDispatcher::generalData.player_updater.addConnectedPlayer();
+	EventDispatcher::generalData.serverPrivateVariables.connected_players++;
+	EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();
 
 	//remove the useless connection
 	disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));

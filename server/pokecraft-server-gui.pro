@@ -31,6 +31,7 @@ SOURCES += main.cpp\
     base/ClientMapManagement/ClientMapManagement.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
     base/ClientMapManagement/MapBasicMove.cpp \
+    base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
     ../general/base/DebugClass.cpp \
     ../general/base/MoveClient.cpp \
     ../general/base/ChatParsing.cpp \
@@ -57,6 +58,7 @@ HEADERS += \
     base/ClientMapManagement/ClientMapManagement.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
     base/ClientMapManagement/MapBasicMove.h \
+    base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
     ../client/base/ClientStructures.h \
     ../general/base/MoveClient.h \
     ../general/base/DebugClass.h \

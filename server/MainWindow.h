@@ -35,6 +35,7 @@ private:
 	void closeEvent(QCloseEvent *event);
 	QSettings *settings;
 	void load_settings();
+	void send_settings();
 	QList<Player_private_and_public_informations> players;
 	QTimer timer_update_the_info;
 	QTimer check_latency;

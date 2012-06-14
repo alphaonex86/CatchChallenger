@@ -65,12 +65,12 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 				{
 					QString protocol;
 					in >> protocol;
-					if(EventDispatcher::generalData.connected_players>=EventDispatcher::generalData.max_players)
+					if(EventDispatcher::generalData.serverPrivateVariables.connected_players>=EventDispatcher::generalData.serverSettings.max_players)
 					{
 						out << (quint8)0x03;		//server full
 						out << QString("Server full");
 						emit postReply(queryNumber,outputData);
-						emit error(QString("Server full (%1/%2)").arg(EventDispatcher::generalData.connected_players).arg(EventDispatcher::generalData.max_players));
+						emit error(QString("Server full (%1/%2)").arg(EventDispatcher::generalData.serverPrivateVariables.connected_players).arg(EventDispatcher::generalData.serverSettings.max_players));
 						return;
 					}
 					if(protocol==PROTOCOL_HEADER)
