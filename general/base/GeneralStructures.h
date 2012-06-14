@@ -98,4 +98,25 @@ enum PacketModeTransmission
 	PacketModeTransmission_Client=0x01
 };
 
+/** \brief settings of the server shared with the client
+ * This settings is send if remote client
+ * If benchmark/local client -> single player, the settigns is send to keep the structure, but few useless, no performance impact */
+struct CommmonServerSettings
+{
+	//fight
+	bool pvp;
+
+	//rates
+	qreal rates_xp;
+	qreal rates_gold;
+	qreal rates_shiny;
+
+	//chat allowed
+	bool chat_allow_all;
+	bool chat_allow_local;
+	bool chat_allow_private;
+	bool chat_allow_aliance;
+	bool chat_allow_clan;
+};
+
 #endif // STRUCTURES_GENERAL_H

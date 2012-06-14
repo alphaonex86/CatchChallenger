@@ -19,6 +19,7 @@
 #include "../general/base/GeneralStructures.h"
 #include "../VariableServer.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple.h"
+#include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
 
 #ifndef CLIENT_H
 #define CLIENT_H

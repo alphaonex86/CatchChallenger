@@ -39,14 +39,11 @@ public slots:
 	void stop();
 private:
 	bool fake_mode;
-	QString datapack_base_name;
-	QRegExp right_file_name;
 	// ------------------------------
 	void sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime);
 	QString SQL_text_quote(QString text);
 	// ------------------------------
 	Player_private_and_public_informations *player_informations;
-	QString basePath;
 	bool sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime=true);
 	void listDatapack(const QString &suffix,const QStringList &files);
 signals:

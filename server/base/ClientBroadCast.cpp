@@ -14,7 +14,7 @@ ClientBroadCast::~ClientBroadCast()
 void ClientBroadCast::setVariable(Player_private_and_public_informations *player_informations)
 {
 	this->player_informations=player_informations;
-	connect(&EventDispatcher::generalData.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
+	connect(&EventDispatcher::generalData.serverPrivateVariables.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
 }
 
 void ClientBroadCast::disconnect()
@@ -26,12 +26,12 @@ void ClientBroadCast::disconnect()
 void ClientBroadCast::internal_disconnect()
 {
 	int index=0;
-	int list_size=EventDispatcher::generalData.clientBroadCastList.size();
+	int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
 	while(index<list_size)
 	{
-		if(EventDispatcher::generalData.clientBroadCastList.at(index)->player_id==player_id)
+		if(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_id==player_id)
 		{
-			EventDispatcher::generalData.clientBroadCastList.removeAt(index);
+			EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.removeAt(index);
 			break;
 		}
 		index++;
@@ -66,12 +66,12 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 		return;
 	}
 	int index=0;
-	int list_size=EventDispatcher::generalData.clientBroadCastList.size();
+	int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
 	while(index<list_size)
 	{
-		if(EventDispatcher::generalData.clientBroadCastList.at(index)->pseudo==pseudo)
+		if(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->pseudo==pseudo)
 		{
-			EventDispatcher::generalData.clientBroadCastList.at(index)->receivePM(text,player_id);
+			EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receivePM(text,player_id);
 			return;
 		}
 		index++;
@@ -80,7 +80,7 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 
 void ClientBroadCast::askIfIsReadyToStop()
 {
-	EventDispatcher::generalData.clientBroadCastList.removeOne(this);
+	EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.removeOne(this);
 	emit isReadyToStop();
 }
 
@@ -105,7 +105,7 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
 void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text)
 {
 	emit message(QString("sendChatText(), text: %1").arg(text));
-	int list_size=EventDispatcher::generalData.clientBroadCastList.size();
+	int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
 	if(chatType==Chat_type_clan)
 	{
 		if(player_informations->public_informations.clan==0)
@@ -115,8 +115,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 			int index=0;
 			while(index<list_size)
 			{
-				if(player_informations->public_informations.clan==EventDispatcher::generalData.clientBroadCastList.at(index)->player_informations->public_informations.clan && this!=EventDispatcher::generalData.clientBroadCastList.at(index))
-					EventDispatcher::generalData.clientBroadCastList.at(index)->receiveChatText(chatType,text,player_id);
+				if(player_informations->public_informations.clan==EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_informations.clan && this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
+					EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receiveChatText(chatType,text,player_id);
 				index++;
 			}
 		}
@@ -128,8 +128,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 			int index=0;
 			while(index<list_size)
 			{
-				if(this!=EventDispatcher::generalData.clientBroadCastList.at(index))
-					EventDispatcher::generalData.clientBroadCastList.at(index)->receiveChatText(chatType,text,0);
+				if(this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
+					EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receiveChatText(chatType,text,0);
 				index++;
 			}
 		}
@@ -141,8 +141,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 		int index=0;
 		while(index<list_size)
 		{
-			if(this!=EventDispatcher::generalData.clientBroadCastList.at(index))
-				EventDispatcher::generalData.clientBroadCastList.at(index)->receiveChatText(chatType,text,player_id);
+			if(this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
+				EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receiveChatText(chatType,text,player_id);
 			index++;
 		}
 	}
@@ -150,7 +150,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 
 void ClientBroadCast::send_player_informations()
 {
-	EventDispatcher::generalData.clientBroadCastList << this;
+	EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList << this;
 	this->pseudo=this->player_informations->public_informations.pseudo;
 	this->player_id=this->player_informations->public_informations.id;
 	QList<Player_private_and_public_informations> players_informations;
@@ -226,8 +226,8 @@ void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << EventDispatcher::generalData.connected_players;
-	out << EventDispatcher::generalData.max_players;
+	out << EventDispatcher::generalData.serverPrivateVariables.connected_players;
+	out << EventDispatcher::generalData.serverSettings.max_players;
 	emit sendPacket(0xC3,outputData);
 }
 
@@ -243,13 +243,13 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 	{
 		//drop, and do the command here to separate the loop
 		int index=0;
-		int list_size=EventDispatcher::generalData.clientBroadCastList.size();
+		int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
 		while(index<list_size)
 		{
-			if(EventDispatcher::generalData.clientBroadCastList.at(index)->pseudo==extraText)
+			if(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->pseudo==extraText)
 			{
 				emit sendChatText(Chat_type_system,QString("%1 have been kicked by %2").arg(extraText).arg(pseudo));
-				EventDispatcher::generalData.clientBroadCastList.at(index)->kick();
+				EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->kick();
 				return;
 			}
 			index++;
@@ -290,12 +290,12 @@ void ClientBroadCast::askPlayersInformation(const QList<quint32> &player_ids)
 	emit message(QString("askPlayersInformation: %1 for the player: %2").arg(player_ids_string.join(", ")).arg(player_id));
 	QList<Player_public_informations> players_informations;
 	index=0;
-	list_size=EventDispatcher::generalData.clientBroadCastList.size();
+	list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
 	while(index<list_size)
 	{
 		//do by this way to prevent one memory copy
-		if(player_ids.contains(EventDispatcher::generalData.clientBroadCastList.at(index)->player_id))
-			players_informations << EventDispatcher::generalData.clientBroadCastList.at(index)->player_informations->public_informations;
+		if(player_ids.contains(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_id))
+			players_informations << EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_informations;
 		index++;
 	}
 	if(players_informations.size())
