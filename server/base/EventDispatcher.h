@@ -18,6 +18,8 @@
 #include "FakeBot.h"
 #include "LatencyChecker.h"
 #include "../general/base/ProtocolParsing.h"
+#include "../general/base/QFakeServer.h"
+#include "../general/base/QFakeSocket.h"
 
 #ifndef EVENTDISPATCHER_H
 #define EVENTDISPATCHER_H
@@ -77,6 +79,9 @@ private:
 	QTimer *timer_benchmark_stop;
 	QTime time_benchmark_first_client;
 	LatencyChecker latencyChecker;
+	//to check double instance
+	//shared into all the program
+	static bool oneInstanceRunning;
 
 	/// \brief To lunch event only when the event loop is setup
 	QTimer *lunchInitFunction;
