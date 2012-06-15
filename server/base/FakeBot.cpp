@@ -1,5 +1,8 @@
 #include "FakeBot.h"
 
+int FakeBot::index_loop;
+int FakeBot::loop_size;
+
 /// \todo ask player information at the insert
 FakeBot::FakeBot(const quint16 &x,const quint16 &y,Map_final *map,const Direction &last_direction)
 {
@@ -11,6 +14,7 @@ FakeBot::FakeBot(const quint16 &x,const quint16 &y,Map_final *map,const Directio
 	TX_size=0;
 	RX_size=0;
 	do_step=false;
+	socket.connectToHost();
 }
 
 FakeBot::~FakeBot()

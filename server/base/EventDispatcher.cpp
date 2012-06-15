@@ -5,6 +5,7 @@
   */
 
 GeneralData EventDispatcher::generalData;
+bool EventDispatcher::oneInstanceRunning=false;
 
 EventDispatcher::EventDispatcher()
 {
@@ -48,6 +49,7 @@ EventDispatcher::EventDispatcher()
 	connect(this,SIGNAL(try_start_benchmark(quint16,quint16)),this,SLOT(start_internal_benchmark(quint16,quint16)),Qt::QueuedConnection);
 	connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
 	connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
+	connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
 
 	in_benchmark_mode=false;
 	stat=Down;
@@ -372,6 +374,11 @@ void EventDispatcher::start_internal_server()
 		emit error(QString("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
 		return;
 	}
+	if(oneInstanceRunning)
+	{
+		DebugClass::debugConsole("Other instance already running");
+		return;
+	}
 	if(stat!=Down)
 	{
 		DebugClass::debugConsole("In wrong stat");
@@ -409,7 +416,7 @@ void EventDispatcher::start_internal_server()
 	DebugClass::debugConsole(QString("Connected to mysql at %1").arg(generalData.serverSettings.database.mysql.host));
 	preload_the_data();
 	stat=Up;
-	connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
+	oneInstanceRunning=true;
 	emit is_started(true);
 	return;
 }
@@ -441,6 +448,11 @@ bool EventDispatcher::initialize_the_database()
 //start without real player possibility
 void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_client)
 {
+	if(oneInstanceRunning)
+	{
+		DebugClass::debugConsole("Other instance already running");
+		return;
+	}
 	if(stat!=Down)
 	{
 		DebugClass::debugConsole("Is in wrong stat for benchmark");
@@ -470,6 +482,7 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	}
 	timer_benchmark_stop->start();
 	stat=Up;
+	oneInstanceRunning=true;
 }
 
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
@@ -527,6 +540,7 @@ void EventDispatcher::stop_benchmark()
 	stat=Up;
 	stop_internal_server();
 	stat=Down;
+	oneInstanceRunning=false;
 	in_benchmark_mode=false;
 	emit benchmark_result(benchmark_latency,TX_speed,RX_speed,TX_size,RX_size,second);
 }
@@ -542,6 +556,7 @@ void EventDispatcher::check_if_now_stopped()
 		generalData.serverPrivateVariables.db->close();
 	//server.close();
 	stat=Down;
+	oneInstanceRunning=false;
 	if(server!=NULL)
 	{
 		server->close();
@@ -566,7 +581,6 @@ void EventDispatcher::stop_internal_server()
 	removeBots();
 	if(server!=NULL)
 	{
-		disconnect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
 		server->close();
 	}
 	int index=0;
@@ -634,15 +648,13 @@ void EventDispatcher::removeBots()
 
 void EventDispatcher::addBot(quint16 x,quint16 y,Map_final *map,QString skin)
 {
-	client_list << new Client(NULL);
-	client_list.last()->fakeLogin(65535-fake_clients.size(),x,y,map,(Orientation)Direction_look_at_top,skin);
 	fake_clients << new FakeBot(x,y,map,Direction_look_at_top);
-	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
-	connect(client_list.last(),SIGNAL(fake_send_data(QByteArray)),fake_clients.last(),SLOT(fake_send_data(QByteArray)),Qt::QueuedConnection);
-	connect(client_list.last(),SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
-	//connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SLOT(removeOneClient()),Qt::QueuedConnection);
-	connect(fake_clients.last(),SIGNAL(fake_receive_data(QByteArray)),client_list.last(),SLOT(fake_receive_data(QByteArray)));
+	client_list << new Client(fake_clients.last()->socket.getTheOtherSocket());
+
+	client_list.last()->fakeLogin(65535-fake_clients.size(),x,y,map,(Orientation)Direction_look_at_top,skin);
 	connect_the_last_client();
+
+	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
 	fake_clients.last()->moveToThread(generalData.serverPrivateVariables.eventThreaderList.at(5));
 	fake_clients.last()->start_step();
 }

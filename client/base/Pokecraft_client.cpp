@@ -121,7 +121,7 @@ void Pokecraft_client::disconnected()
 	wait_datapack_content=false;
 	haveData=false;
 	lastQueryNumber=1;
-	last_subIdent=0;
+	last_subCodeType=0;
 	dataClear();
 	resetAll();
 }
@@ -170,11 +170,11 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 		errorOutput(tr("wrong size at parse input"));
 		return;
 	}
-	in >> mainIdent;
+	in >> mainCodeType;
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	if(mainIdent!=0xC1)
+	if(mainCodeType!=0xC1)
 	{
 		if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 		{
@@ -190,26 +190,26 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 		{
 			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
                         {
-                                errorOutput(QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("have not send the login, mainIdent: %1").arg(mainIdent));
+				errorOutput(QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("have not send the login, mainCodeType: %1").arg(mainCodeType));
                                 return;
 			}
-                        in >> subIdent;
-			if(subIdent!=0x0009)
+			in >> subCodeType;
+			if(subCodeType!=0x0009)
 			{
-				errorOutput(QString(__FILE__)+QString::number(__LINE__)+QString("have not send the login, mainIdent: %1, subIdent: %2").arg(mainIdent).arg(subIdent));
+				errorOutput(QString(__FILE__)+QString::number(__LINE__)+QString("have not send the login, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
 				return;
 			}
 			else
 				in.device()->seek(0);
 		}
 	}
-	switch(mainIdent)
+	switch(mainCodeType)
 	{
 		case 0xC0:
 		{
 			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 			{
-				errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+				errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 				return;
 			}
 			quint16 actionListSize;
@@ -223,7 +223,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 			{
 				if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)+sizeof(quint8)))
 				{
-					errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+					errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 					return;
 				}
 				in >> type;
@@ -234,7 +234,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					{
 						if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						QString mapName;
@@ -243,7 +243,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 						quint8 direction;
 						if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)*2+sizeof(quint8)+sizeof(quint16)))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						in >> x;
@@ -252,7 +252,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 						in >> speed;
 						if(direction<1 || direction>8)
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("direction have wrong value: %1, at main ident: %2").arg(direction).arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("direction have wrong value: %1, at main ident: %2").arg(direction).arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						DebugClass::debugConsole(
@@ -270,14 +270,14 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					{
 						if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						quint8 list_size;
 						in >> list_size;
 						if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)*2*list_size))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						QList<QPair<quint8,quint8> > movement;
@@ -307,19 +307,19 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 						emit remove_player(player_id);
 					break;
 					default:
-					errorOutput(tr("Procotol wrong or corrupted"),QString("wrong type code with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+					errorOutput(tr("Procotol wrong or corrupted"),QString("wrong type code with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 					return;
 				}
 				index++;
 			}
-			last_subIdent=0;
+			last_subCodeType=0;
 		}
 		break;
 		case 0xC1:
 		{
 			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 			{
-				errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+				errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 				return;
 			}
 			in >> queryNumberReturned;
@@ -330,7 +330,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				{
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumberReturned: %2, type: query_type_protocol").arg(mainIdent).arg(queryNumberReturned)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumberReturned: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumberReturned)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					in >> returnCode;
@@ -349,7 +349,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					{
 						if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						QString string;
@@ -360,7 +360,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					}
 					else
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("bad return code: %1").arg(returnCode)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("bad return code: %1").arg(returnCode)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 				}
@@ -369,7 +369,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				{
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumberReturned: %2").arg(mainIdent).arg(queryNumberReturned)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumberReturned: %2").arg(mainCodeType).arg(queryNumberReturned)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint8 returnCode;
@@ -378,7 +378,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					{
 						if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						QString string;
@@ -391,7 +391,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					{
 						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 						{
-							errorOutput(tr("wrong size to get the player id")+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("wrong size to get the player id")+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						in >> player_id;
@@ -401,7 +401,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					}
 					else
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("bad return code: %1").arg(returnCode)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("bad return code: %1").arg(returnCode)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 				}
@@ -410,7 +410,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				{
 					if((in.device()->size()-in.device()->pos())!=((int)sizeof(quint8))*datapackFilesList.size())
 					{
-						errorOutput(tr("wrong size to return file list")+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("wrong size to return file list")+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint8 reply_code;
@@ -434,25 +434,25 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				default:
 				break;
 			}
-			last_subIdent=queryNumberReturned;
+			last_subCodeType=queryNumberReturned;
 		}
 		break;
 		case 0xC2:
 		{
 			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 			{
-				errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+				errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 				return;
 			}
-			in >> subIdent;
-			switch(subIdent)
+			in >> subCodeType;
+			switch(subCodeType)
 			{
 				//update of the player info
 				case 0x0002:
 				{
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for list size with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for list size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint16 list_size;
@@ -464,30 +464,30 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 						Player_public_informations temp;
 						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32)*2)
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for id with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for id with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						in >> temp.id;
 						if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for pseudo with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for pseudo with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						in >> temp.pseudo;
 						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for pseudo with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for pseudo with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for description with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for description with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						in >> temp.description;
 						if((in.device()->size()-in.device()->pos())<=(int)(sizeof(quint16)+sizeof(quint8)))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for clan and status with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for clan and status with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						in >> temp.clan;
@@ -496,7 +496,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 						temp.type = (Player_type)status;
 						if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 						{
-							errorOutput(tr("Procotol wrong or corrupted"),QString("missing skin variable: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+							errorOutput(tr("Procotol wrong or corrupted"),QString("missing skin variable: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 							return;
 						}
 						in >> temp.skin;
@@ -506,7 +506,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 
 							if((in.device()->size()-in.device()->pos())<=(int)(sizeof(quint32)))
 							{
-								errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for clan and status with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+								errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size for clan and status with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 								return;
 							}
 							in >> player_informations.cash;
@@ -520,7 +520,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					}
 					if(in.device()->size()!=in.device()->pos())
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("remaining data with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("remaining data with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					this->player_informations_list << player_informations_list;
@@ -533,7 +533,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				{
 					if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for file name with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for file name with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					QString fileName;
@@ -541,14 +541,14 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint32 file_size;
 					in >> file_size;
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint32 mtime;
@@ -602,7 +602,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				{
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)+sizeof(quint8)))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint32 player_id;
@@ -611,7 +611,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 					in >> chat_type;
 					if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					QString text;
@@ -624,14 +624,14 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				{
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint8 code;
 					in >> code;
 					if(!checkStringIntegrity(inputData.right(inputData.size()-in.device()->pos())))
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for reason with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong string for reason with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					QString text;
@@ -658,7 +658,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				{
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16)*2)
 					{
-						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+						errorOutput(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 						return;
 					}
 					quint16 current,max;
@@ -668,18 +668,18 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 				}
 				break;
 				default:
-				errorOutput(tr("Procotol wrong or corrupted"),QString("unknow subIdent reply code: %1, subIdent: %2").arg(mainIdent).arg(subIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+				errorOutput(tr("Procotol wrong or corrupted"),QString("unknow subCodeType reply code: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 			}
-			last_subIdent=subIdent;
+			last_subCodeType=subCodeType;
 		}
 		break;
 		default:
-			last_subIdent=0;
-			errorOutput(tr("Procotol wrong or corrupted"),QString("unknow ident reply code: %1").arg(mainIdent)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainIdent: %1, last_subIdent: %2, last_query: %3").arg(last_mainIdent).arg(last_subIdent).arg(QString(last_query.toHex())));
+			last_subCodeType=0;
+			errorOutput(tr("Procotol wrong or corrupted"),QString("unknow ident reply code: %1").arg(mainCodeType)+", "+QString(__FILE__)+":"+QString::number(__LINE__)+": "+QString("\nlast_mainCodeType: %1, last_subCodeType: %2, last_query: %3").arg(last_mainCodeType).arg(last_subCodeType).arg(QString(last_query.toHex())));
 			return;
 		break;
 	}
-	last_mainIdent=mainIdent;
+	last_mainCodeType=mainCodeType;
 	last_query=inputData;
 }
 
@@ -919,9 +919,9 @@ int Pokecraft_client::indexOfPlayerInformations(quint32 id)
 
 void Pokecraft_client::resetAll()
 {
-	mainIdent=0;
+	mainCodeType=0;
 	queryNumberReturned=0;
-	subIdent=0;
+	subCodeType=0;
 	returnCode=0;
 	player_id_watching.clear();
 	player_informations_list.clear();
@@ -930,8 +930,8 @@ void Pokecraft_client::resetAll()
 	query_list.clear();
 	wait_datapack_content=false;
 	datapackFilesList.clear();
-	last_mainIdent=0;
-	last_subIdent=0;
+	last_mainCodeType=0;
+	last_subCodeType=0;
 	last_query.clear();
 	query_files_list.clear();
 	is_logged=false;

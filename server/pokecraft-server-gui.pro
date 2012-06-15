@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     ../general/base/ChatParsing.cpp \
     ../general/base/ProtocolParsing.cpp \
     ../general/base/QFakeServer.cpp \
-    ../general/base/QFakeSocket.cpp
+    ../general/base/QFakeSocket.cpp \
+    ../client/base/Pokecraft_client.cpp
 
 
 HEADERS += \
@@ -67,7 +68,8 @@ HEADERS += \
     ../general/base/GeneralVariable.h \
     ../general/base/ProtocolParsing.h \
     ../general/base/QFakeServer.h \
-    ../general/base/QFakeSocket.h
+    ../general/base/QFakeSocket.h \
+    ../client/base/Pokecraft_client.h
 
 HEADERS  += MainWindow.h
 

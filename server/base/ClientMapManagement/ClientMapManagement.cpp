@@ -7,7 +7,6 @@
   each Xs update the local player list
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
-/** \todo Drop colision detection, move to ClientLocalCalcule */
 
 //temp variable for purge buffer
 quint16 ClientMapManagement::purgeBuffer_player_affected;
