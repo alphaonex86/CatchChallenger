@@ -28,7 +28,7 @@ class Client : public QObject
 {
 	Q_OBJECT
 public:
-	explicit Client(QTcpSocket *socket);
+	explicit Client(QAbstractSocket *socket);
 	~Client();
 	//cache
 	quint32 id;
@@ -52,7 +52,7 @@ private:
 	ClientLocalCalcule *clientLocalCalcule;
 
 	//socket related
-	QTcpSocket *socket;
+	QAbstractSocket *socket;
 	QString remote_ip;
 	quint16 port;
 

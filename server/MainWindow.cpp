@@ -209,8 +209,6 @@ void MainWindow::update_the_info()
 		delete ui->listLatency->item(last_item+1);
 		last_item++;
 	}
-
-	ui->label_latency->setText(tr("%1ms").arg(total_latency));
 }
 
 QString MainWindow::sizeToString(double size)

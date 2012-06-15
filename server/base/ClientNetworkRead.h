@@ -16,7 +16,7 @@ class ClientNetworkRead : public ProtocolParsingInput
 {
     Q_OBJECT
 public:
-	explicit ClientNetworkRead(Player_private_and_public_informations *player_informations,QTcpSocket * socket);
+	explicit ClientNetworkRead(Player_private_and_public_informations *player_informations,QAbstractSocket * socket);
 	void stopRead();
 	void fake_send_protocol();
 public slots:
@@ -66,7 +66,7 @@ private:
 	bool is_logging_in_progess;
 	bool stopIt;
 	// function
-	QTcpSocket * socket;
+	QAbstractSocket * socket;
 	Player_private_and_public_informations *player_informations;
 	//to prevent memory presure
 	quint8 previousMovedUnit;

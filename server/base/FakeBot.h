@@ -13,6 +13,7 @@
 #include "../general/base/GeneralStructures.h"
 #include "../base/ServerStructures.h"
 #include "../general/base/MoveClient.h"
+#include "../general/base/QFakeSocket.h"
 
 class FakeBot : public QObject, public MoveClient
 {
@@ -24,6 +25,7 @@ public:
 	void show_details();
 	quint64 get_TX_size();
 	quint64 get_RX_size();
+	QFakeSocket socket;
 private:
 	Map_final *map;
 	quint16 x,y;
@@ -34,7 +36,7 @@ private:
 	quint64 TX_size,RX_size;
 	void raw_trame(const QByteArray &data);
 	void newDirection(const Direction &the_direction);
-	int index_loop,loop_size;
+	static int index_loop,loop_size;
 	QSemaphore wait_to_stop;
 	bool do_step;
 signals:
