@@ -24,6 +24,7 @@ public:
 	bool	waitForBytesWritten ( int msecs = 30000 );
 	bool	waitForReadyRead ( int msecs = 30000 );
 	bool isValid();
+	QFakeSocket * getTheOtherSocket();
 protected:
 	qint64	readData ( char * data, qint64 maxSize );
 	qint64	readLineData(char * data, qint64 maxlen );
