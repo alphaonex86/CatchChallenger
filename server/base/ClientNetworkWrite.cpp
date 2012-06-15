@@ -1,7 +1,7 @@
 #include "ClientNetworkWrite.h"
 
 ClientNetworkWrite::ClientNetworkWrite(QAbstractSocket * socket) :
-	ProtocolParsingOutput(socket)
+	ProtocolParsingOutput(socket,PacketModeTransmission_Server)
 {
 	this->socket=socket;
 }

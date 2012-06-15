@@ -3,25 +3,25 @@
 //connexion parameters
 PacketSizeMode ProtocolParsing::packetSizeMode;
 
-QSet<quint8> ProtocolParsingInput::mainCodeWithoutSubCodeType;//if need sub code or not
+QSet<quint8>				ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
 //if is a query
-QSet<quint8> ProtocolParsingInput::mainCode_IsQuery;
-quint8 ProtocolParsingInput::replyCode;
+QSet<quint8>				ProtocolParsing::mainCode_IsQueryClientToServer;
+quint8					ProtocolParsing::replyCodeClientToServer;
 //predefined size
-QHash<quint8,quint16> ProtocolParsingInput::sizeOnlyMainCodePacket;
-QHash<quint8,QHash<quint16,quint16> > ProtocolParsingInput::sizeMultipleCodePacket;
-QHash<quint8,quint16> ProtocolParsingInput::replySizeOnlyMainCodePacket;
-QHash<quint8,QHash<quint16,quint16> > ProtocolParsingInput::replySizeMultipleCodePacket;
+QHash<quint8,quint16>			ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
+QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
+QHash<quint8,quint16>			ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
+QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketClientToServer;
 
-QSet<quint8> ProtocolParsingOutput::mainCodeWithoutSubCodeType;//if need sub code or not
+QSet<quint8>				ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
 //if is a query
-QSet<quint8> ProtocolParsingOutput::mainCode_IsQuery;
-quint8 ProtocolParsingOutput::replyCode;
+QSet<quint8>				ProtocolParsing::mainCode_IsQueryServerToClient;
+quint8					ProtocolParsing::replyCodeServerToClient;
 //predefined size
-QHash<quint8,quint16> ProtocolParsingOutput::sizeOnlyMainCodePacket;
-QHash<quint8,QHash<quint16,quint16> > ProtocolParsingOutput::sizeMultipleCodePacket;
-QHash<quint8,quint16> ProtocolParsingOutput::replySizeOnlyMainCodePacket;
-QHash<quint8,QHash<quint16,quint16> > ProtocolParsingOutput::replySizeMultipleCodePacket;
+QHash<quint8,quint16>			ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
+QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketServerToClient;
+QHash<quint8,quint16>			ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
+QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
 
 //temp data
 qint64 ProtocolParsingOutput::byteWriten;
@@ -34,39 +34,24 @@ ProtocolParsing::ProtocolParsing(QIODevice * device)
 	this->device=device;
 }
 
-void ProtocolParsing::initialiseTheVariable(PacketModeTransmission packetModeTransmission)
+void ProtocolParsing::initialiseTheVariable()
 {
-	if(packetModeTransmission==PacketModeTransmission_Client)
-	{
-		ProtocolParsingOutput::mainCodeWithoutSubCodeType << 0x40 << 0x51;
-		ProtocolParsingInput::mainCodeWithoutSubCodeType << 0xC3 << 0xC4 << 0xD1;
-		ProtocolParsingOutput::sizeOnlyMainCodePacket[0x40]=2;
-		ProtocolParsingInput::sizeOnlyMainCodePacket[0xC3]=4;
-		ProtocolParsingInput::sizeOnlyMainCodePacket[0xC4]=0;
+	ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient << 0xC3 << 0xC4 << 0xD1;
+	ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x51;
+	ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC4]=0;
+	ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=4;
+	ProtocolParsing::sizeOnlyMainCodePacketClientToServer[0x40]=2;
 
-		ProtocolParsingOutput::mainCode_IsQuery << 0x02;
+	ProtocolParsing::mainCode_IsQueryClientToServer << 0x02;
 
-		ProtocolParsingOutput::replyCode=0x41;
-		ProtocolParsingInput::replyCode=0xC1;
-	}
-	else
-	{
-		ProtocolParsingOutput::mainCodeWithoutSubCodeType << 0xC3 << 0xC4 << 0xD1;
-		ProtocolParsingInput::mainCodeWithoutSubCodeType << 0x40 << 0x51;
-		ProtocolParsingOutput::sizeOnlyMainCodePacket[0xC4]=0;
-		ProtocolParsingOutput::sizeOnlyMainCodePacket[0xC3]=4;
-		ProtocolParsingInput::sizeOnlyMainCodePacket[0x40]=2;
-
-		ProtocolParsingInput::mainCode_IsQuery << 0x02;
-
-		ProtocolParsingOutput::replyCode=0xC1;
-		ProtocolParsingInput::replyCode=0x41;
-	}
+	ProtocolParsing::replyCodeServerToClient=0xC1;
+	ProtocolParsing::replyCodeClientToServer=0x41;
 }
 
-ProtocolParsingInput::ProtocolParsingInput(QIODevice * device) :
+ProtocolParsingInput::ProtocolParsingInput(QIODevice * device,PacketModeTransmission packetModeTransmission) :
 	ProtocolParsing(device)
 {
+	isClient=(packetModeTransmission==PacketModeTransmission_Client);
 	dataClear();
 }
 
@@ -94,9 +79,10 @@ bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data)
 	return true;
 }
 
-ProtocolParsingOutput::ProtocolParsingOutput(QIODevice * device) :
+ProtocolParsingOutput::ProtocolParsingOutput(QIODevice * device,PacketModeTransmission packetModeTransmission) :
 	ProtocolParsing(device)
 {
+	isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
 void ProtocolParsingInput::parseIncommingData()
@@ -117,7 +103,10 @@ void ProtocolParsingInput::parseIncommingData()
 			have_subCodeType=false;
 			have_query_number=false;
 			is_reply=false;
-			need_subCodeType=!mainCodeWithoutSubCodeType.contains(mainCodeType);
+			if(isClient)
+				need_subCodeType=!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType);
+			else
+				need_subCodeType=!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType);
 			need_query_number=false;
 			data_size.clear();
 		}
@@ -127,7 +116,7 @@ void ProtocolParsingInput::parseIncommingData()
 			if(!need_subCodeType)
 			{
 				//if is a reply
-				if(mainCodeType==replyCode)
+				if((isClient && mainCodeType==replyCodeServerToClient) || (!isClient && mainCodeType==replyCodeClientToServer))
 				{
 					is_reply=true;
 					need_query_number=true;
@@ -135,16 +124,34 @@ void ProtocolParsingInput::parseIncommingData()
 				}
 				else
 				{
-					//if is query with reply
-					if(mainCode_IsQuery.contains(mainCodeType))
-						need_query_number=true;
 
-					//check if have defined size
-					if(sizeOnlyMainCodePacket.contains(mainCodeType))
+					if(isClient)
 					{
-						//have fixed size
-						dataSize=sizeOnlyMainCodePacket[mainCodeType];
-						haveData_dataSize=true;
+						//if is query with reply
+						if(mainCode_IsQueryServerToClient.contains(mainCodeType))
+							need_query_number=true;
+
+						//check if have defined size
+						if(sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+						{
+							//have fixed size
+							dataSize=sizeOnlyMainCodePacketServerToClient[mainCodeType];
+							haveData_dataSize=true;
+						}
+					}
+					else
+					{
+						//if is query with reply
+						if(mainCode_IsQueryClientToServer.contains(mainCodeType))
+							need_query_number=true;
+
+						//check if have defined size
+						if(sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+						{
+							//have fixed size
+							dataSize=sizeOnlyMainCodePacketClientToServer[mainCodeType];
+							haveData_dataSize=true;
+						}
 					}
 				}
 			}
@@ -154,18 +161,38 @@ void ProtocolParsingInput::parseIncommingData()
 					return;
 				in >> subCodeType;
 
-				//if is query with reply
-				if(mainCode_IsQuery.contains(mainCodeType))
-					need_query_number=true;
-
-				//check if have defined size
-				if(sizeMultipleCodePacket.contains(mainCodeType))
+				if(isClient)
 				{
-					if(sizeMultipleCodePacket[mainCodeType].contains(subCodeType))
+					//if is query with reply
+					if(mainCode_IsQueryServerToClient.contains(mainCodeType))
+						need_query_number=true;
+
+					//check if have defined size
+					if(sizeMultipleCodePacketServerToClient.contains(mainCodeType))
 					{
-						//have fixed size
-						dataSize=sizeMultipleCodePacket[mainCodeType][subCodeType];
-						haveData_dataSize=true;
+						if(sizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+						{
+							//have fixed size
+							dataSize=sizeMultipleCodePacketServerToClient[mainCodeType][subCodeType];
+							haveData_dataSize=true;
+						}
+					}
+				}
+				else
+				{
+					//if is query with reply
+					if(mainCode_IsQueryClientToServer.contains(mainCodeType))
+						need_query_number=true;
+
+					//check if have defined size
+					if(sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+					{
+						if(sizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+						{
+							//have fixed size
+							dataSize=sizeMultipleCodePacketClientToServer[mainCodeType][subCodeType];
+							haveData_dataSize=true;
+						}
 					}
 				}
 			}
@@ -341,8 +368,16 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 		emit error("Query with this query number already found");
 		return;
 	}
-	if(replySizeOnlyMainCodePacket.contains(mainCodeType))
-		replySize[queryNumber]=replySizeOnlyMainCodePacket[mainCodeType];
+	if(isClient)
+	{
+		if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+			replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
+	}
+	else
+	{
+		if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+			replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
+	}
 	reply_mainCodeType[queryNumber]=mainCodeType;
 }
 
@@ -353,10 +388,21 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 		emit error("Query with this query number already found");
 		return;
 	}
-	if(replySizeMultipleCodePacket.contains(mainCodeType))
+	if(isClient)
 	{
-		if(replySizeMultipleCodePacket[mainCodeType].contains(subCodeType))
-			replySize[queryNumber]=replySizeMultipleCodePacket[mainCodeType][subCodeType];
+		if(replySizeMultipleCodePacketServerToClient.contains(mainCodeType))
+		{
+			if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+				replySize[queryNumber]=replySizeMultipleCodePacketServerToClient[mainCodeType][subCodeType];
+		}
+	}
+	else
+	{
+		if(replySizeMultipleCodePacketClientToServer.contains(mainCodeType))
+		{
+			if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+				replySize[queryNumber]=replySizeMultipleCodePacketClientToServer[mainCodeType][subCodeType];
+		}
 	}
 	reply_mainCodeType[queryNumber]=mainCodeType;
 	reply_subCodeType[queryNumber]=subCodeType;
@@ -366,7 +412,10 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteA
 {
 	QByteArray block;
 	QDataStream out(&block, QIODevice::WriteOnly);
-	out << replyCode;
+	if(isClient)
+		out << replyCodeClientToServer;
+	else
+		out << replyCodeServerToClient;
 	out << queryNumber;
 
 	if(!replySize.contains(queryNumber))
@@ -384,8 +433,16 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
 		emit error("Query with this query number already found");
 		return;
 	}
-	if(replySizeOnlyMainCodePacket.contains(mainCodeType))
-		replySize[queryNumber]=replySizeOnlyMainCodePacket[mainCodeType];
+	if(isClient)
+	{
+		if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+			replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
+	}
+	else
+	{
+		if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+			replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
+	}
 }
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
@@ -395,10 +452,21 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
 		emit error("Query with this query number already found");
 		return;
 	}
-	if(replySizeMultipleCodePacket.contains(mainCodeType))
+	if(isClient)
 	{
-		if(replySizeMultipleCodePacket[mainCodeType].contains(subCodeType))
-			replySize[queryNumber]=replySizeMultipleCodePacket[mainCodeType][subCodeType];
+		if(replySizeMultipleCodePacketClientToServer.contains(mainCodeType))
+		{
+			if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+				replySize[queryNumber]=replySizeMultipleCodePacketClientToServer[mainCodeType][subCodeType];
+		}
+	}
+	else
+	{
+		if(replySizeMultipleCodePacketServerToClient.contains(mainCodeType))
+		{
+			if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+				replySize[queryNumber]=replySizeMultipleCodePacketServerToClient[mainCodeType][subCodeType];
+		}
 	}
 }
 
@@ -409,10 +477,20 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 	out << mainCodeType;
 	out << subCodeType;
 
-	if(!sizeMultipleCodePacket.contains(mainCodeType))
-		block+=encodeSize(data.size());
-	else if(!sizeMultipleCodePacket[mainCodeType].contains(subCodeType))
-		block+=encodeSize(data.size());
+	if(isClient)
+	{
+		if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+			block+=encodeSize(data.size());
+		else if(!sizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+			block+=encodeSize(data.size());
+	}
+	else
+	{
+		if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
+			block+=encodeSize(data.size());
+		else if(!sizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+			block+=encodeSize(data.size());
+	}
 
 	return internalPackOutcommingData(block+data);
 }
@@ -423,8 +501,16 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 	QDataStream out(&block, QIODevice::WriteOnly);
 	out << mainCodeType;
 
-	if(!sizeOnlyMainCodePacket.contains(mainCodeType))
-		block+=encodeSize(data.size());
+	if(isClient)
+	{
+		if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+			block+=encodeSize(data.size());
+	}
+	else
+	{
+		if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+			block+=encodeSize(data.size());
+	}
 
 	return internalPackOutcommingData(block+data);
 }
@@ -438,8 +524,16 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
 	out << mainCodeType;
 	out << queryNumber;
 
-	if(!sizeOnlyMainCodePacket.contains(mainCodeType))
-		block+=encodeSize(data.size());
+	if(isClient)
+	{
+		if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+			block+=encodeSize(data.size());
+	}
+	else
+	{
+		if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+			block+=encodeSize(data.size());
+	}
 
 	return internalPackOutcommingData(block+data);
 }
@@ -454,10 +548,20 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
 	out << subCodeType;
 	out << queryNumber;
 
-	if(!sizeMultipleCodePacket.contains(mainCodeType))
-		block+=encodeSize(data.size());
-	else if(!sizeMultipleCodePacket[mainCodeType].contains(subCodeType))
-		block+=encodeSize(data.size());
+	if(isClient)
+	{
+		if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+			block+=encodeSize(data.size());
+		else if(!sizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+			block+=encodeSize(data.size());
+	}
+	else
+	{
+		if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
+			block+=encodeSize(data.size());
+		else if(!sizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+			block+=encodeSize(data.size());
+	}
 
 	return internalPackOutcommingData(block+data);
 }

@@ -1,4 +1,4 @@
-#include "Pokecraft_client.h"
+#include "Pokecraft_protocol.h"
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -8,7 +8,8 @@
 
 //need host + port here to have datapack base
 
-Pokecraft_client::Pokecraft_client()
+Pokecraft_protocol::Pokecraft_protocol(QAbstractSocket *socket) :
+	ProtocolParsingInput(socket)
 {
 	host="localhost";
 	port=42489;
@@ -21,7 +22,7 @@ Pokecraft_client::Pokecraft_client()
 	dataClear();
 }
 
-Pokecraft_client::~Pokecraft_client()
+Pokecraft_protocol::~Pokecraft_protocol()
 {
 	socket.abort();
 	socket.disconnectFromHost();
@@ -29,14 +30,14 @@ Pokecraft_client::~Pokecraft_client()
 		socket.waitForDisconnected();
 }
 
-void Pokecraft_client::dataClear()
+void Pokecraft_protocol::dataClear()
 {
 	haveData=false;
 	dataSize=0;
 	data.clear();
 }
 
-void Pokecraft_client::tryConnect(QString host,quint16 port)
+void Pokecraft_protocol::tryConnect(QString host,quint16 port)
 {
 	DebugClass::debugConsole(QString("Try connect on: %1:%2").arg(host).arg(port));
 	this->host=host;
@@ -45,7 +46,7 @@ void Pokecraft_client::tryConnect(QString host,quint16 port)
 	datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
 }
 
-void Pokecraft_client::add_to_query_list(quint8 id,query_type type)
+void Pokecraft_protocol::add_to_query_list(quint8 id,query_type type)
 {
 	query_send temp;
 	temp.id=id;
@@ -53,19 +54,19 @@ void Pokecraft_client::add_to_query_list(quint8 id,query_type type)
 	query_list << temp;
 }
 
-quint8 Pokecraft_client::queryNumber()
+quint8 Pokecraft_protocol::queryNumber()
 {
 	if(lastQueryNumber>=254)
 		lastQueryNumber=1;
 	return lastQueryNumber++;
 }
 
-QString Pokecraft_client::errorString()
+QString Pokecraft_protocol::errorString()
 {
 	return error_string;
 }
 
-void Pokecraft_client::sendData(QByteArray data)
+void Pokecraft_protocol::sendData(QByteArray data)
 {
 	QByteArray block;
 	QDataStream out(&block, QIODevice::WriteOnly);
@@ -74,7 +75,7 @@ void Pokecraft_client::sendData(QByteArray data)
 	socket.write(block);
 }
 
-void Pokecraft_client::readyRead()
+void Pokecraft_protocol::readyRead()
 {
 	QTcpSocket *socket=qobject_cast<QTcpSocket *>(QObject::sender());
 	if(socket==NULL)
@@ -118,7 +119,7 @@ void Pokecraft_client::readyRead()
 	}
 }
 
-void Pokecraft_client::disconnected()
+void Pokecraft_protocol::disconnected()
 {
 	wait_datapack_content=false;
 	haveData=false;
@@ -128,7 +129,7 @@ void Pokecraft_client::disconnected()
 	resetAll();
 }
 
-bool Pokecraft_client::checkStringIntegrity(QByteArray data)
+bool Pokecraft_protocol::checkStringIntegrity(QByteArray data)
 {
 	if(data.size()<(int)sizeof(qint32))
 	{
@@ -152,7 +153,7 @@ bool Pokecraft_client::checkStringIntegrity(QByteArray data)
 	return true;
 }
 
-void Pokecraft_client::errorOutput(QString error,QString detailedError)
+void Pokecraft_protocol::errorOutput(QString error,QString detailedError)
 {
 	error_string=error;
 	emit haveNewError();
@@ -162,7 +163,7 @@ void Pokecraft_client::errorOutput(QString error,QString detailedError)
 		DebugClass::debugConsole(detailedError);
 }
 
-void Pokecraft_client::parseInput(QByteArray inputData)
+void Pokecraft_protocol::parseInput(QByteArray inputData)
 {
 	//DebugClass::debugConsole(QString("parseInput(): inputData: %1").arg(QString(inputData.toHex())));
 	QDataStream in(inputData);
@@ -685,7 +686,7 @@ void Pokecraft_client::parseInput(QByteArray inputData)
 	last_query=inputData;
 }
 
-Pokecraft_client::query_type Pokecraft_client::remove_to_query_list(quint8 id)
+Pokecraft_protocol::query_type Pokecraft_protocol::remove_to_query_list(quint8 id)
 {
 	int index=0;
 	while(index<query_list.size())
@@ -701,7 +702,7 @@ Pokecraft_client::query_type Pokecraft_client::remove_to_query_list(quint8 id)
 	return query_type_other;
 }
 
-void Pokecraft_client::sendProtocol()
+void Pokecraft_protocol::sendProtocol()
 {
 	if(socket.state()!=QAbstractSocket::ConnectedState)
 	{
@@ -725,7 +726,7 @@ void Pokecraft_client::sendProtocol()
 	add_to_query_list(query_number,query_type_protocol);
 }
 
-void Pokecraft_client::tryLogin(QString login,QString pass)
+void Pokecraft_protocol::tryLogin(QString login,QString pass)
 {
 	if(socket.state()!=QAbstractSocket::ConnectedState)
 	{
@@ -757,12 +758,12 @@ void Pokecraft_client::tryLogin(QString login,QString pass)
 	add_to_query_list(query_number,query_type_login);
 }
 
-QList<Player_public_informations> Pokecraft_client::get_player_informations_list()
+QList<Player_public_informations> Pokecraft_protocol::get_player_informations_list()
 {
 	return player_informations_list;
 }
 
-void Pokecraft_client::not_needed_player_informations(quint32 id)
+void Pokecraft_protocol::not_needed_player_informations(quint32 id)
 {
 	if(player_id==id)
 	{
@@ -771,12 +772,12 @@ void Pokecraft_client::not_needed_player_informations(quint32 id)
 	}
 }
 
-Player_private_and_public_informations Pokecraft_client::get_player_informations()
+Player_private_and_public_informations Pokecraft_protocol::get_player_informations()
 {
 	return player_informations;
 }
 
-void Pokecraft_client::send_player_move(quint8 moved_unit,quint8 direction)
+void Pokecraft_protocol::send_player_move(quint8 moved_unit,quint8 direction)
 {
 	if(direction<1 || direction>8)
 	{
@@ -792,7 +793,7 @@ void Pokecraft_client::send_player_move(quint8 moved_unit,quint8 direction)
 	sendData(outputData);
 }
 
-void Pokecraft_client::sendChatText(quint8 chatType,QString text)
+void Pokecraft_protocol::sendChatText(quint8 chatType,QString text)
 {
 	if((chatType<2 || chatType>5) && chatType!=6)
 	{
@@ -811,7 +812,7 @@ void Pokecraft_client::sendChatText(quint8 chatType,QString text)
 		emit new_chat_text(player_id,chatType,text);
 }
 
-void Pokecraft_client::sendPM(QString text,QString pseudo)
+void Pokecraft_protocol::sendPM(QString text,QString pseudo)
 {
 	emit new_chat_text(player_id,0x06,text);
 	if(pseudo==player_informations.public_informations.pseudo)
@@ -827,21 +828,21 @@ void Pokecraft_client::sendPM(QString text,QString pseudo)
 	sendData(outputData);
 }
 
-void Pokecraft_client::add_player_watching(quint32 id)
+void Pokecraft_protocol::add_player_watching(quint32 id)
 {
 	QList<quint32> ids;
 	ids << id;
 	add_player_watching(ids);
 }
 
-void Pokecraft_client::remove_player_watching(quint32 id)
+void Pokecraft_protocol::remove_player_watching(quint32 id)
 {
 	QList<quint32> ids;
 	ids << id;
 	remove_player_watching(ids);
 }
 
-void Pokecraft_client::add_player_watching(QList<quint32> ids)
+void Pokecraft_protocol::add_player_watching(QList<quint32> ids)
 {
 	QList<quint32> new_ids;
 	int index=0;
@@ -874,7 +875,7 @@ void Pokecraft_client::add_player_watching(QList<quint32> ids)
 	}
 }
 
-void Pokecraft_client::remove_player_watching(QList<quint32> ids)
+void Pokecraft_protocol::remove_player_watching(QList<quint32> ids)
 {
 	QList<quint32> new_ids;
 	int index=0;
@@ -906,7 +907,7 @@ void Pokecraft_client::remove_player_watching(QList<quint32> ids)
 	}
 }
 
-int Pokecraft_client::indexOfPlayerInformations(quint32 id)
+int Pokecraft_protocol::indexOfPlayerInformations(quint32 id)
 {
 	int index=0;
 	while(index<player_informations_list.size())
@@ -919,7 +920,7 @@ int Pokecraft_client::indexOfPlayerInformations(quint32 id)
 	return -1;
 }
 
-void Pokecraft_client::resetAll()
+void Pokecraft_protocol::resetAll()
 {
 	mainCodeType=0;
 	queryNumberReturned=0;
@@ -940,27 +941,27 @@ void Pokecraft_client::resetAll()
 	have_send_protocol=false;
 }
 
-QString Pokecraft_client::getPseudo()
+QString Pokecraft_protocol::getPseudo()
 {
 	return player_informations.public_informations.pseudo;
 }
 
-void Pokecraft_client::tryDisconnect()
+void Pokecraft_protocol::tryDisconnect()
 {
 	socket.disconnectFromHost();
 }
 
-QString Pokecraft_client::getHost()
+QString Pokecraft_protocol::getHost()
 {
 	return host;
 }
 
-quint16 Pokecraft_client::getPort()
+quint16 Pokecraft_protocol::getPort()
 {
 	return port;
 }
 
-void Pokecraft_client::sendDatapackContent()
+void Pokecraft_protocol::sendDatapackContent()
 {
 	if(wait_datapack_content)
 	{
@@ -991,7 +992,7 @@ void Pokecraft_client::sendDatapackContent()
 	add_to_query_list(datapack_content_query_number,query_type_datapack);
 }
 
-const QStringList Pokecraft_client::listDatapack(QString suffix)
+const QStringList Pokecraft_protocol::listDatapack(QString suffix)
 {
 	QStringList returnFile;
 	QDir finalDatapackFolder(datapack_base_name+suffix);
@@ -1009,7 +1010,7 @@ const QStringList Pokecraft_client::listDatapack(QString suffix)
 	return returnFile;
 }
 
-void Pokecraft_client::cleanDatapack(QString suffix)
+void Pokecraft_protocol::cleanDatapack(QString suffix)
 {
 	QDir finalDatapackFolder(datapack_base_name+suffix);
 	QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
@@ -1027,12 +1028,12 @@ void Pokecraft_client::cleanDatapack(QString suffix)
 		finalDatapackFolder.rmpath(datapack_base_name+suffix);
 }
 
-quint32 Pokecraft_client::getId()
+quint32 Pokecraft_protocol::getId()
 {
 	return player_id;
 }
 
-QString Pokecraft_client::get_datapack_base_name()
+QString Pokecraft_protocol::get_datapack_base_name()
 {
 	return datapack_base_name;
 }

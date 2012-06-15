@@ -2,7 +2,7 @@
 #include "EventDispatcher.h"
 
 ClientNetworkRead::ClientNetworkRead(Player_private_and_public_informations *player_informations,QAbstractSocket * socket) :
-	ProtocolParsingInput(socket)
+	ProtocolParsingInput(socket,PacketModeTransmission_Server)
 {
 	is_logged=false;
 	have_send_protocol=false;

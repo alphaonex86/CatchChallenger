@@ -15,9 +15,28 @@ class ProtocolParsing : public QObject
 public:
 	ProtocolParsing(QIODevice * device);
 	static PacketSizeMode packetSizeMode;
-	static void initialiseTheVariable(PacketModeTransmission packetModeTransmission);
+	static void initialiseTheVariable();
 protected:
 	QIODevice * device;
+
+	/********************** static *********************/
+	//connexion parameters
+	static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
+	static QSet<quint8> mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
+	//if is a query
+	static QSet<quint8> mainCode_IsQueryClientToServer;
+	static quint8 replyCodeClientToServer;
+	static QSet<quint8> mainCode_IsQueryServerToClient;
+	static quint8 replyCodeServerToClient;
+	//predefined size
+	static QHash<quint8,quint16> sizeOnlyMainCodePacketClientToServer;
+	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacketClientToServer;
+	static QHash<quint8,quint16> replySizeOnlyMainCodePacketClientToServer;
+	static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacketClientToServer;
+	static QHash<quint8,quint16> sizeOnlyMainCodePacketServerToClient;
+	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacketServerToClient;
+	static QHash<quint8,quint16> replySizeOnlyMainCodePacketServerToClient;
+	static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacketServerToClient;
 signals:
 	void error(const QString &error);
 	void message(const QString &message);
@@ -27,7 +46,7 @@ class ProtocolParsingInput : public ProtocolParsing
 {
 	Q_OBJECT
 public:
-	ProtocolParsingInput(QIODevice * device);
+	ProtocolParsingInput(QIODevice * device,PacketModeTransmission packetModeTransmission);
 	friend class ProtocolParsing;
 	bool checkStringIntegrity(const QByteArray & data);
 protected:
@@ -48,6 +67,7 @@ protected:
 	QByteArray data_size;
 	quint32 dataSize;
 	QByteArray data;
+	bool isClient;
 	//to parse the netwrok stream
 	quint8 mainCodeType;
 	quint16 subCodeType;
@@ -59,17 +79,6 @@ protected:
 	static quint8 temp_size_8Bits;
 	static quint16 temp_size_16Bits;
 	static quint32 temp_size_32Bits;
-	/********************** static *********************/
-	//connexion parameters
-	static QSet<quint8> mainCodeWithoutSubCodeType;//if need sub code or not
-	//if is a query
-	static QSet<quint8> mainCode_IsQuery;
-	static quint8 replyCode;
-	//predefined size
-	static QHash<quint8,quint16> sizeOnlyMainCodePacket;
-	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacket;
-	static QHash<quint8,quint16> replySizeOnlyMainCodePacket;
-	static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacket;
 	//reply to the query
 	QHash<quint8,quint16> replySize;
 	QHash<quint8,quint8> reply_mainCodeType;
@@ -86,7 +95,7 @@ class ProtocolParsingOutput : public ProtocolParsing
 {
 	Q_OBJECT
 public:
-	ProtocolParsingOutput(QIODevice * device);
+	ProtocolParsingOutput(QIODevice * device,PacketModeTransmission packetModeTransmission);
 	friend class ProtocolParsing;
 protected:
 	//send message without reply
@@ -100,19 +109,10 @@ protected:
 private:
 	bool internalPackOutcommingData(const QByteArray &data);
 	QByteArray encodeSize(quint32 size);
+
+	bool isClient;
 	//temp data
 	static qint64 byteWriten;
-	/********************** static *********************/
-	//connexion parameters
-	static QSet<quint8> mainCodeWithoutSubCodeType;//if need sub code or not
-	//if is a query
-	static QSet<quint8> mainCode_IsQuery;
-	static quint8 replyCode;
-	//predefined size
-	static QHash<quint8,quint16> sizeOnlyMainCodePacket;
-	static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacket;
-	static QHash<quint8,quint16> replySizeOnlyMainCodePacket;
-	static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacket;
 	//reply to the query
 	QHash<quint8,quint16> replySize;
 signals:
