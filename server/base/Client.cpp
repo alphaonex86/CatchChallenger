@@ -4,7 +4,7 @@
 /// \warning never cross the signals from and to the different client, complexity ^2
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 
-Client::Client(QTcpSocket *socket)
+Client::Client(QAbstractSocket *socket)
 {
 	qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
 	qRegisterMetaType<QList<quint32> >("QList<quint32>");
@@ -229,12 +229,11 @@ void Client::disconnectNextStep()
 		is_logged=false;
 
 		//reconnect to real stop
-		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()));
-		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()));
-		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()));
-		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()));
-		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
-		disconnect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()));
+		clientNetworkRead->disconnect();
+		clientBroadCast->disconnect();
+		clientHeavyLoad->disconnect();
+		clientMapManagement->disconnect();
+		clientNetworkWrite->disconnect();
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(stop()),Qt::QueuedConnection);
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(stop()),Qt::QueuedConnection);
 		connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(stop()),Qt::QueuedConnection);
@@ -288,10 +287,9 @@ void Client::send_player_informations()
 	EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();
 
 	//remove the useless connection
-	disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));
+	/*disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));
 	disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()));
-	disconnect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)));
-
+	disconnect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)));*/
 }
 
 QString Client::getPseudo()
