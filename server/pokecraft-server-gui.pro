@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     ../general/base/ProtocolParsing.cpp \
     ../general/base/QFakeServer.cpp \
     ../general/base/QFakeSocket.cpp \
-    ../client/base/Pokecraft_client.cpp
+    ../client/base/Pokecraft_client.cpp \
+    ../client/base/Pokecraft_protocol.cpp
 
 
 HEADERS += \
@@ -69,7 +70,8 @@ HEADERS += \
     ../general/base/ProtocolParsing.h \
     ../general/base/QFakeServer.h \
     ../general/base/QFakeSocket.h \
-    ../client/base/Pokecraft_client.h
+    ../client/base/Pokecraft_client.h \
+    ../client/base/Pokecraft_protocol.h
 
 HEADERS  += MainWindow.h
 

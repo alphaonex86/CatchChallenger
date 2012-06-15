@@ -85,6 +85,11 @@ bool QFakeSocket::isValid()
 	return theOtherSocket!=NULL;
 }
 
+QFakeSocket * QFakeSocket::getTheOtherSocket()
+{
+	return theOtherSocket;
+}
+
 qint64	QFakeSocket::readData(char * data, qint64 maxSize)
 {
 	QMutexLocker locker(&mutex);

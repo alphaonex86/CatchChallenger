@@ -9,6 +9,8 @@ bool EventDispatcher::oneInstanceRunning=false;
 
 EventDispatcher::EventDispatcher()
 {
+	ProtocolParsing::initialiseTheVariable();
+
 	generalData.serverPrivateVariables.connected_players	= 0;
 	generalData.serverPrivateVariables.db			= NULL;
 	generalData.serverPrivateVariables.timer_player_map	= NULL;
@@ -38,7 +40,6 @@ EventDispatcher::EventDispatcher()
 	generalData.serverPrivateVariables.player_updater.moveToThread(generalData.serverPrivateVariables.eventThreaderList.at(0));
 
 	ProtocolParsing::packetSizeMode = PacketSizeMode_Small;
-	ProtocolParsing::initialiseTheVariable(PacketModeTransmission_Server);
 
 	QStringList names;
 	names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher" << "benchmark";
