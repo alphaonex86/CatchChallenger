@@ -18,7 +18,6 @@ public:
 	static void initialiseTheVariable();
 protected:
 	QIODevice * device;
-
 	/********************** static *********************/
 	//connexion parameters
 	static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
@@ -97,7 +96,7 @@ class ProtocolParsingOutput : public ProtocolParsing
 public:
 	ProtocolParsingOutput(QIODevice * device,PacketModeTransmission packetModeTransmission);
 	friend class ProtocolParsing;
-protected:
+
 	//send message without reply
 	virtual bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
 	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
