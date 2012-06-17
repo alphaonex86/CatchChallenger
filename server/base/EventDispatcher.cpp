@@ -18,6 +18,7 @@ EventDispatcher::EventDispatcher()
 	lunchInitFunction					= NULL;
 	timer_benchmark_stop					= NULL;
 
+	generalData.serverPrivateVariables.botSpawnIndex=0;
 	generalData.serverPrivateVariables.datapack_mapPath		= QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	generalData.serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
 	generalData.serverPrivateVariables.datapack_rightFileName	= QRegExp("^[0-9/a-zA-Z\\.\\- _]+\\.[a-z]{3,4}$");
@@ -47,7 +48,7 @@ EventDispatcher::EventDispatcher()
 
 	qRegisterMetaType<Chat_type>("Chat_type");
 
-	connect(this,SIGNAL(try_start_benchmark(quint16,quint16)),this,SLOT(start_internal_benchmark(quint16,quint16)),Qt::QueuedConnection);
+	connect(this,SIGNAL(try_start_benchmark(quint16,quint16,bool)),this,SLOT(start_internal_benchmark(quint16,quint16,bool)),Qt::QueuedConnection);
 	connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
 	connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
 	connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
@@ -129,6 +130,7 @@ void EventDispatcher::preload_the_map()
 	//load the map
 	int size=returnList.size();
 	int index=0;
+	int index_sub,size_sub_loop;
 	QRegExp mapFilter("\\.tmx$");
 	while(index<size)
 	{
@@ -144,6 +146,32 @@ void EventDispatcher::preload_the_map()
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
 				map_name << returnList.at(index);
+
+				if(in_benchmark_mode)
+				{
+					index_sub=0;
+					size_sub_loop=map_temp.map_to_send.bot_spawn_points.size();
+					while(index_sub<size_sub_loop)
+					{
+						GeneralData::ServerPrivateVariables::BotSpawn tempPoint;
+						tempPoint.map=returnList.at(index);
+						tempPoint.x=map_temp.map_to_send.bot_spawn_points.at(index_sub).x;
+						tempPoint.y=map_temp.map_to_send.bot_spawn_points.at(index_sub).y;
+						generalData.serverPrivateVariables.botSpawn << tempPoint;
+						index_sub++;
+					}
+					index_sub=0;
+					size_sub_loop=map_temp.map_to_send.rescue_points.size();
+					while(index_sub<size_sub_loop)
+					{
+						GeneralData::ServerPrivateVariables::BotSpawn tempPoint;
+						tempPoint.map=returnList.at(index);
+						tempPoint.x=map_temp.map_to_send.rescue_points.at(index_sub).x;
+						tempPoint.y=map_temp.map_to_send.rescue_points.at(index_sub).y;
+						generalData.serverPrivateVariables.botSpawn << tempPoint;
+						index_sub++;
+					}
+				}
 
 				Map_semi map_semi;
 				map_semi.map				= generalData.serverPrivateVariables.map_list[returnList.at(index)];
@@ -428,7 +456,7 @@ bool EventDispatcher::initialize_the_database()
 	{
 		default:
 		case GeneralData::ServerSettings::Database::DatabaseType_Mysql:
-		generalData.serverPrivateVariables.loginQuery.prepare("SELECT * FROM player WHERE login=:login AND password=:password");
+		generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
 		generalData.serverPrivateVariables.updateMapPositionQuery.prepare("UPDATE player SET map_name=:map_name,position_x=:position_x,position_y=:position_y,orientation=:orientation WHERE id=:id");
 		if(generalData.serverPrivateVariables.db==NULL)
 			generalData.serverPrivateVariables.db=new QSqlDatabase();
@@ -441,13 +469,24 @@ bool EventDispatcher::initialize_the_database()
 		return true;
 		break;
 		case GeneralData::ServerSettings::Database::DatabaseType_SQLite:
-			return false;
+		/*generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
+		generalData.serverPrivateVariables.updateMapPositionQuery.prepare("UPDATE player SET map_name=:map_name,position_x=:position_x,position_y=:position_y,orientation=:orientation WHERE id=:id");
+		if(generalData.serverPrivateVariables.db==NULL)
+			generalData.serverPrivateVariables.db=new QSqlDatabase();
+		*generalData.serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
+		generalData.serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
+		generalData.serverPrivateVariables.db->setHostName(generalData.serverSettings.database.mysql.host);
+		generalData.serverPrivateVariables.db->setDatabaseName(generalData.serverSettings.database.mysql.db);
+		generalData.serverPrivateVariables.db->setUserName(generalData.serverSettings.database.mysql.login);
+		generalData.serverPrivateVariables.db->setPassword(generalData.serverSettings.database.mysql.pass);
+		return true;*/
+		return false;
 		break;
 	}
 }
 
 //start without real player possibility
-void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_client)
+void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_client,const bool &benchmark_map)
 {
 	if(oneInstanceRunning)
 	{
@@ -463,17 +502,18 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	benchmark_latency=0;
 	stat=InUp;
 	load_settings();
-	quint16 x=12,y=17;
 	//firstly get the spawn point
 	DebugClass::debugConsole(QString("benchmark spawn: x: %1, y: %2").arg(x).arg(y));
-	generalData.serverPrivateVariables.mapBasePath=":/internal/benchmark-map/";
+	if(benchmark_map)
+		generalData.serverPrivateVariables.mapBasePath=":/internal/benchmark-map/";
+	else
+		generalData.serverPrivateVariables.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	preload_the_data();
 
-	Map_final * benchmark_map=generalData.serverPrivateVariables.map_list["map.tmx"];
 	int index=0;
 	while(index<number_of_client)
 	{
-		addBot(x,y,benchmark_map);
+		addBot();
 		if(index==0)
 		{
 			//fake_clients.last()->show_details();
@@ -506,6 +546,7 @@ void EventDispatcher::unload_the_map()
 		i++;
 	}
 	generalData.serverPrivateVariables.map_list.clear();
+	generalData.serverPrivateVariables.botSpawn.clear();
 }
 
 void EventDispatcher::unload_the_visibility_algorithm()
@@ -647,12 +688,12 @@ void EventDispatcher::removeBots()
 
 /////////////////////////////////////// Add object //////////////////////////////////////
 
-void EventDispatcher::addBot(quint16 x,quint16 y,Map_final *map,QString skin)
+void EventDispatcher::addBot()
 {
-	fake_clients << new FakeBot(x,y,map,Direction_look_at_top);
+	fake_clients << new FakeBot();
 	client_list << new Client(fake_clients.last()->socket.getTheOtherSocket());
-
-	client_list.last()->fakeLogin(65535-fake_clients.size(),x,y,map,(Orientation)Direction_look_at_top,skin);
+	client_list.last()->player_informations.is_fake;
+	client_list.last()->setFake();
 	connect_the_last_client();
 
 	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
@@ -829,7 +870,7 @@ void EventDispatcher::stop_server()
 	emit try_stop_server();
 }
 
-void EventDispatcher::start_benchmark(quint16 second,quint16 number_of_client)
+void EventDispatcher::start_benchmark(quint16 second,quint16 number_of_client,bool benchmark_map)
 {
 	if(in_benchmark_mode)
 	{
@@ -837,5 +878,5 @@ void EventDispatcher::start_benchmark(quint16 second,quint16 number_of_client)
 		return;
 	}
 	in_benchmark_mode=true;
-	emit try_start_benchmark(second,number_of_client);
+	emit try_start_benchmark(second,number_of_client,benchmark_map);
 }
