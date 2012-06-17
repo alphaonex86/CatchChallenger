@@ -15,7 +15,7 @@ ClientHeavyLoad::~ClientHeavyLoad()
 {
 }
 
-void ClientHeavyLoad::setVariable(Player_private_and_public_informations *player_informations)
+void ClientHeavyLoad::setVariable(Player_internal_informations *player_informations)
 {
 	this->player_informations=player_informations;
 }
@@ -25,6 +25,50 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
+	if(player_informations->isFake)
+	{
+		if(EventDispatcher::generalData.serverPrivateVariables.botSpawn.size()==0)
+		{
+			out << (quint8)0x01;
+			out << QString("Not bot point");
+			emit postReply(query_id,outputData);
+			emit message(QString("Not bot point"));
+		}
+		else
+		{
+			if(!EventDispatcher::generalData.serverPrivateVariables.map_list.contains(EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).map))
+			{
+				out << (quint8)0x01;
+				out << QString("Bot point not resolved");
+				emit postReply(query_id,outputData);
+				emit message(QString("Bot point not resolved"));
+			}
+			else
+			{
+				EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << 65535-fake_clients.size();
+				is_logged=true;
+				player_informations->public_informations.clan=0;
+				player_informations->public_informations.description="Bot";
+				player_informations->public_informations.id=EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.last();
+				player_informations->public_informations.pseudo=QString("bot_%1").arg(last_fake_player_id);
+				player_informations->public_informations.skin=skin;//useless for serveur benchmark
+				player_informations->public_informations.type=Player_type_normal;
+				player_informations->cash=0;
+				emit send_player_informations();
+				emit isLogged();
+				//remplace x and y by real spawn point
+				emit put_on_the_map(player_informations->public_informations.id,
+						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).map,
+						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).x,
+						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).y,
+						    orientation,POKECRAFT_SERVER_NORMAL_SPEED);
+				EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex++;
+				if(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex>=EventDispatcher::generalData.serverPrivateVariables.botSpawn.size())
+					EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex=0;
+			}
+		}
+		return;
+	}
 	QSqlQuery loginQuery=EventDispatcher::generalData.serverPrivateVariables.loginQuery;
 	loginQuery.bindValue(":login",login);
 	loginQuery.bindValue(":password",QString(hash.toHex()));
@@ -57,14 +101,14 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		{
 			EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << loginQuery.value(0).toUInt();
 			is_logged=true;
-			player_informations->public_informations.clan=loginQuery.value(10).toUInt();
+			player_informations->public_informations.clan=loginQuery.value(8).toUInt();
 			player_informations->public_informations.description="";
 			player_informations->public_informations.id=loginQuery.value(0).toUInt();
 			player_informations->public_informations.pseudo=loginQuery.value(1).toString();
-			player_informations->public_informations.skin=loginQuery.value(4).toString();
-			player_informations->public_informations.type=(Player_type)loginQuery.value(9).toUInt();
+			player_informations->public_informations.skin=loginQuery.value(2).toString();
+			player_informations->public_informations.type=(Player_type)loginQuery.value(7).toUInt();
 			player_informations->cash=0;
-			int orentation=loginQuery.value(7).toInt();
+			int orentation=loginQuery.value(5).toInt();
 			if(orentation<1 || orentation>8)
 			{
 				emit message(QString("Wrong orientation corrected: %1").arg(orentation));
@@ -80,9 +124,9 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit isLogged();
 				emit put_on_the_map(
 					player_informations->public_informations.id,
-					EventDispatcher::generalData.serverPrivateVariables.map_list[loginQuery.value(8).toString()],//map pointer
-					loginQuery.value(5).toInt(),//position_x
-					loginQuery.value(6).toInt(),//position_y
+					EventDispatcher::generalData.serverPrivateVariables.map_list[loginQuery.value(6).toString()],//map pointer
+					loginQuery.value(3).toInt(),//position_x
+					loginQuery.value(4).toInt(),//position_y
 					(Orientation)orentation,
 					POKECRAFT_SERVER_NORMAL_SPEED //speed in ms for each tile (step delay)
 				);
@@ -96,24 +140,6 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			}
 		}
 	}
-}
-
-void ClientHeavyLoad::fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,Map_final *map,const Orientation &orientation,const QString &skin)
-{
-	fake_mode=true;
-	EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << last_fake_player_id;
-	is_logged=true;
-	player_informations->public_informations.clan=0;
-	player_informations->public_informations.description="Bot";
-	player_informations->public_informations.id=last_fake_player_id;
-	player_informations->public_informations.pseudo=QString("bot_%1").arg(last_fake_player_id);
-	player_informations->public_informations.skin=skin;//useless for serveur benchmark
-	player_informations->public_informations.type=Player_type_normal;
-	player_informations->cash=0;
-	emit send_player_informations();
-	emit isLogged();
-	//remplace x and y by real spawn point
-	emit put_on_the_map(last_fake_player_id,map,x,y,orientation,POKECRAFT_SERVER_NORMAL_SPEED);
 }
 
 void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)

@@ -562,7 +562,7 @@ void Api_protocol::send_player_move(quint8 moved_unit,quint8 direction)
 	output->packOutcommingData(0x40,outputData);
 }
 
-void Api_protocol::sendChatText(quint8 chatType,QString text)
+void Api_protocol::sendChatText(Chat_type chatType,QString text)
 {
 	if((chatType<2 || chatType>5) && chatType!=6)
 	{

@@ -15,6 +15,7 @@
 
 #include "../general/base/GeneralStructures.h"
 #include "PlayerUpdater.h"
+#include "FakeBot.h"
 
 class EventThreader;
 class Map_custom;
@@ -63,6 +64,18 @@ struct Map_to_send
 		QString map;
 	};
 	QList<Temp_teleport> teleport;
+
+	struct Rescue_Point
+	{
+		quint8 x,y;
+	};
+	QList<Rescue_Point> rescue_points;
+
+	struct Bot_Spawn_Point
+	{
+		quint8 x,y;
+	};
+	QList<Bot_Spawn_Point> bot_spawn_points;
 };
 
 /** conversion x,y to position: x+y*width */
@@ -132,6 +145,12 @@ enum MapVisibilityAlgorithm
 {
 	MapVisibilityAlgorithm_simple,
 	MapVisibilityAlgorithm_none
+};
+
+struct Player_internal_informations
+{
+	Player_private_and_public_informations public_and_private_informations;
+	bool isFake;
 };
 
 struct GeneralData
@@ -219,6 +238,17 @@ struct GeneralData
 		quint16 connected_players;
 		PlayerUpdater player_updater;
 		QSet<quint32> connected_players_id_list;
+
+		//bot
+		QList<FakeBot *> fake_clients;
+		struct BotSpawn
+		{
+			QString map;
+			quint16 x;
+			quint16 y;
+		};
+		QList<BotSpawn> botSpawn;
+		int botSpawnIndex;
 	};
 	ServerPrivateVariables serverPrivateVariables;
 };

@@ -46,7 +46,7 @@ public slots:
 	//to manipulate the server for restart and stop
 	void start_server();
 	void stop_server();
-	void start_benchmark(quint16 second,quint16 number_of_client);
+	void start_benchmark(quint16 second,quint16 number_of_client,bool benchmark_map);
 	//todo
 	/*void send_system_message(QString text);
 	void send_pm_message(QString pseudo,QString text);*/
@@ -101,9 +101,8 @@ private:
 
 	//bot related
 	void removeBots();
-	void addBot(quint16 x,quint16 y,Map_final *map,QString skin="");
+	void addBot();
 	QTimer nextStep;//all function call singal sync, then not pointer needed
-	QList<FakeBot *> fake_clients;
 	bool initialize_the_database();
 private slots:
 	//new connection
@@ -119,7 +118,7 @@ private slots:
 	void stop_internal_server();
 	void stop_benchmark();
 	void check_if_now_stopped();
-	void start_internal_benchmark(quint16 second,quint16 number_of_client);
+	void start_internal_benchmark(quint16 second,quint16 number_of_client,const bool &benchmark_map);
 	void start_internal_server();
 signals:
 	//async the call
@@ -128,7 +127,7 @@ signals:
 	void need_be_stopped();
 	void need_be_restarted();
 	void need_be_started();
-	void try_start_benchmark(const quint16 &second,const quint16 &number_of_client);
+	void try_start_benchmark(const quint16 &second,const quint16 &number_of_client,const bool &benchmark_map);
 	//stat
 	void is_started(bool);
 	//stat player
