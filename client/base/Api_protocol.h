@@ -104,7 +104,7 @@ signals:
 	void removeFile(QString fileName);
 public slots:
 	void send_player_move(quint8 moved_unit,quint8 direction);
-	void sendChatText(quint8 chatType,QString text);
+	void sendChatText(Chat_type chatType,QString text);
 	void sendPM(QString text,QString pseudo);
 };
 

@@ -1,7 +1,7 @@
 #include "ClientNetworkRead.h"
 #include "EventDispatcher.h"
 
-ClientNetworkRead::ClientNetworkRead(Player_private_and_public_informations *player_informations,QAbstractSocket * socket) :
+ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,QAbstractSocket * socket) :
 	ProtocolParsingInput(socket,PacketModeTransmission_Server)
 {
 	is_logged=false;

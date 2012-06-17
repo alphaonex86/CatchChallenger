@@ -6,7 +6,7 @@
 
 Client::Client(QAbstractSocket *socket)
 {
-	qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
+	qRegisterMetaType<Player_internal_informations>("Player_internal_informations");
 	qRegisterMetaType<QList<quint32> >("QList<quint32>");
 	qRegisterMetaType<Orientation>("Orientation");
 	qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
@@ -297,15 +297,9 @@ QString Client::getPseudo()
 	return player_informations.public_informations.pseudo;
 }
 
-void Client::fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin)
+void Client::setFake()
 {
 	player_informations.is_fake=true;
-	remote_ip=QString("bot_%1").arg(last_fake_player_id);
-	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	normalOutput("Fake connected client");
-	#endif
-	clientNetworkRead->fake_send_protocol();
-	emit send_fakeLogin(last_fake_player_id,x,y,map,orientation,skin);
 }
 
 void Client::serverCommand(QString command,QString extraText)

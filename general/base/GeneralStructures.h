@@ -81,7 +81,6 @@ struct Player_private_and_public_informations
 {
 	Player_public_informations public_informations;
 	quint64 cash;
-	bool is_fake;
 };
 
 /// \brief Define the mode of size

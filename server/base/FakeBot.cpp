@@ -2,17 +2,19 @@
 
 int FakeBot::index_loop;
 int FakeBot::loop_size;
+QSemaphore FakeBot::wait_to_stop;
 
 /// \todo ask player information at the insert
-FakeBot::FakeBot(const quint16 &x,const quint16 &y,Map_final *map,const Direction &last_direction)
+FakeBot::FakeBot()
 {
+	connect(&api,SIGNAL(insert_player(quint32,QString,quint16,quint16,quint8,quint16)),this,SLOT(insert_player(quint32,QString,quint16,quint16,quint8,quint16)));
+	api.sendProtocol();
+	api.tryLogin("Fake","Fake");
+
+	canLeaveTheMap=false;
 	details=false;
-	this->map=map;
-	this->x=x;
-	this->y=y;
-	this->last_direction=last_direction;
-	TX_size=0;
-	RX_size=0;
+	this->map=NULL;
+
 	do_step=false;
 	socket.connectToHost();
 }
@@ -24,8 +26,12 @@ FakeBot::~FakeBot()
 
 void FakeBot::doStep()
 {
-	if(do_step)
+	if(do_step && map!=NULL)
+	{
 		random_new_step();
+/*		if(rand()%(EventDispatcher::generalData.botNumber*10)==0)
+			api.sendChatText(Chat_type_local,"Hello world!");*/
+	}
 }
 
 void FakeBot::start_step()
@@ -36,13 +42,13 @@ void FakeBot::start_step()
 void FakeBot::random_new_step()
 {
 	QList<Direction> directions_allowed;
-	if(map->parsed_layer.walkable[x-1+y*map->width] && x>0)
+	if(map->parsed_layer.walkable[x-1+y*map->width] && (canLeaveTheMap || x>0))
 		directions_allowed << Direction_move_at_left;
-	if(map->parsed_layer.walkable[x+1+y*map->width] && x<map->width)
+	if(map->parsed_layer.walkable[x+1+y*map->width] && (canLeaveTheMap || x<map->width))
 		directions_allowed << Direction_move_at_right;
-	if(map->parsed_layer.walkable[x+(y-1)*map->width] && y>0)
+	if(map->parsed_layer.walkable[x+(y-1)*map->width] && (canLeaveTheMap || y>0))
 		directions_allowed << Direction_move_at_top;
-	if(map->parsed_layer.walkable[x+(y+1)*map->width] && y<map->height)
+	if(map->parsed_layer.walkable[x+(y+1)*map->width] && (canLeaveTheMap || y<map->height))
 		directions_allowed << Direction_move_at_bottom;
 	loop_size=directions_allowed.size();
 	if(loop_size<=0)
@@ -53,7 +59,7 @@ void FakeBot::random_new_step()
 		index_loop=0;
 		while(index_loop<loop_size)
 		{
-			directions_allowed_string << directionToString(directions_allowed.at(index_loop));
+			directions_allowed_string << MapBasicMove::directionToString(directions_allowed.at(index_loop));
 			index_loop++;
 		}
 		DebugClass::debugConsole(QString("FakeBot::random_new_step(), x: %1, y:%2, directions_allowed_string: %3").arg(x).arg(y).arg(directions_allowed_string.join(", ")));
@@ -61,6 +67,32 @@ void FakeBot::random_new_step()
 	int random = rand()%loop_size;
 	Direction final_direction=directions_allowed.at(random);
 	newDirection(final_direction);
+}
+
+void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed)
+{
+	if(id==api.getId())
+	{
+		if(!EventDispatcher::generalData.serverPrivateVariables.map_list.contains(mapName))
+		{
+			DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(mapName));
+			return;
+		}
+		if(x>=EventDispatcher::generalData.serverPrivateVariables.map_list[mapName]->width)
+		{
+			DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=EventDispatcher::generalData.serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(x).arg(EventDispatcher::generalData.serverPrivateVariables.map_list[mapName]->width));
+			return;
+		}
+		if(y>=EventDispatcher::generalData.serverPrivateVariables.map_list[mapName]->height)
+		{
+			DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=EventDispatcher::generalData.serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(y).arg(EventDispatcher::generalData.serverPrivateVariables.map_list[mapName]->height));
+			return;
+		}
+		this->map=EventDispatcher::generalData.serverPrivateVariables.map_list[mapName];
+		this->x=x;
+		this->y=y;
+		this->last_direction=direction;
+	}
 }
 
 void FakeBot::stop_step()
@@ -79,11 +111,6 @@ void FakeBot::show_details()
 {
 	details=true;
 	DebugClass::debugConsole(QString("FakeBot::show_details(), x: %1, y:%2").arg(x).arg(y));
-}
-
-void FakeBot::fake_send_data(const QByteArray &data)
-{
-	RX_size+=data.size();
 }
 
 void FakeBot::newDirection(const Direction &the_direction)
@@ -107,73 +134,8 @@ void FakeBot::newDirection(const Direction &the_direction)
 		break;
 	}
 	if(details)
-		DebugClass::debugConsole(QString("FakeBot::newDirection(), after %3, x: %1, y:%2, last_step: %4").arg(x).arg(y).arg(directionToString(the_direction)).arg(last_step));
-}
-
-QByteArray FakeBot::calculate_player_move(const quint8 &moved_unit,const Direction &the_direction)
-{
+		DebugClass::debugConsole(QString("FakeBot::newDirection(), after %3, x: %1, y:%2, last_step: %4").arg(x).arg(y).arg(MapBasicMove::directionToString(the_direction)).arg(last_step));
 	if(details)
-		DebugClass::debugConsole(QString("FakeBot::calculate_player_move(), moved_unit: %1, the_direction: %2").arg(moved_unit).arg(directionToString(the_direction)));
-	QByteArray outputData;
-	QDataStream out(&outputData, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0x40;
-	out << moved_unit;
-	out << (quint8)the_direction;
-	return outputData;
+		DebugClass::debugConsole(QString("FakeBot::calculate_player_move(), moved_unit: %1, the_direction: %2").arg(moved_unit).arg(MapBasicMove::directionToString(the_direction)));
 }
 
-void FakeBot::send_player_move(const quint8 &moved_unit,const Direction &the_direction)
-{
-	raw_trame(calculate_player_move(moved_unit,the_direction));
-}
-
-void FakeBot::raw_trame(const QByteArray &data)
-{
-	TX_size+=data.size();
-	emit fake_receive_data(data);
-}
-
-quint64 FakeBot::get_TX_size()
-{
-	return TX_size;
-}
-
-quint64 FakeBot::get_RX_size()
-{
-	return RX_size;
-}
-
-QString FakeBot::directionToString(const Direction &direction)
-{
-	switch(direction)
-	{
-		case Direction_look_at_top:
-			return "look at top";
-		break;
-		case Direction_look_at_right:
-			return "look at right";
-		break;
-		case Direction_look_at_bottom:
-			return "look at bottom";
-		break;
-		case Direction_look_at_left:
-			return "look at left";
-		break;
-		case Direction_move_at_top:
-			return "move at top";
-		break;
-		case Direction_move_at_right:
-			return "move at right";
-		break;
-		case Direction_move_at_bottom:
-			return "move at bottom";
-		break;
-		case Direction_move_at_left:
-			return "move at left";
-		break;
-		default:
-		break;
-	}
-	return "???";
-}

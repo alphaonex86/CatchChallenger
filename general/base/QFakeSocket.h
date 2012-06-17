@@ -25,6 +25,8 @@ public:
 	bool	waitForReadyRead ( int msecs = 30000 );
 	bool isValid();
 	QFakeSocket * getTheOtherSocket();
+	quint64 getRXSize();
+	quint64 getTXSize();
 protected:
 	qint64	readData ( char * data, qint64 maxSize );
 	qint64	readLineData(char * data, qint64 maxlen );
@@ -41,6 +43,7 @@ private:
 	QMutex mutex;
 	QByteArray data;
 	void internal_writeData(QByteArray data);
+	quint64 RX_size;
 };
 
 #endif // QFAKESOCKET_H

@@ -90,6 +90,17 @@ QFakeSocket * QFakeSocket::getTheOtherSocket()
 	return theOtherSocket;
 }
 
+quint64 QFakeSocket::getRXSize()
+{
+	QMutexLocker locker(&mutex);
+	return RX_size;
+}
+
+quint64 QFakeSocket::getTXSize()
+{
+	return theOtherSocket->getRXSize();
+}
+
 qint64	QFakeSocket::readData(char * data, qint64 maxSize)
 {
 	QMutexLocker locker(&mutex);
@@ -114,10 +125,11 @@ qint64	QFakeSocket::writeData ( const char * data, qint64 size )
 	return size;
 }
 
-void	QFakeSocket::internal_writeData(QByteArray data)
+void QFakeSocket::internal_writeData(QByteArray data)
 {
 	{
 		QMutexLocker locker(&mutex);
+		RX_size+=data.size();
 		this->data+=data;
 	}
 	emit readyRead();
