@@ -21,7 +21,7 @@ MapBasicMove::~MapBasicMove()
 	stopIt=true;
 }
 
-void MapBasicMove::setVariable(Player_private_and_public_informations *player_informations)
+void MapBasicMove::setVariable(Player_internal_informations *player_informations)
 {
 	this->player_informations=player_informations;
 }

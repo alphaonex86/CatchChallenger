@@ -256,6 +256,20 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 										else
 											DebugClass::debugConsole(QString("Missing map,x or y, type: %1").arg(type));
 									}
+									else if(type=="rescue")
+									{
+										Map_to_send::Rescue_Point tempPoint;
+										tempPoint.x=object_x;
+										tempPoint.y=object_y;
+										map_to_send.rescue_points << tempPoint;
+									}
+									else if(type=="bot spawn")
+									{
+										Map_to_send::Bot_Spawn_Point tempPoint;
+										tempPoint.x=object_x;
+										tempPoint.y=object_y;
+										map_to_send.bot_spawn_points << tempPoint;
+									}
 								}
 								else
 									DebugClass::debugConsole(QString("Missing balise properties: child.tagName(): %1, name: %2").arg(SubChild.tagName()).arg(SubChild.attribute("type")));

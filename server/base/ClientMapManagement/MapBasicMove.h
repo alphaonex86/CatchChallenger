@@ -1,6 +1,3 @@
-#ifndef MapBasicMove_H
-#define MapBasicMove_H
-
 #include <QObject>
 #include <QList>
 #include <QString>
@@ -14,6 +11,9 @@
 #include "../EventThreader.h"
 #include "../../VariableServer.h"
 
+#ifndef MapBasicMove_H
+#define MapBasicMove_H
+
 class Map_custom;
 
 class MapBasicMove : public QObject
@@ -22,7 +22,7 @@ class MapBasicMove : public QObject
 public:
 	explicit MapBasicMove();
 	virtual ~MapBasicMove();
-	virtual void setVariable(Player_private_and_public_informations *player_informations);
+	virtual void setVariable(Player_internal_informations *player_informations);
 	//info linked
 	qint16				x,y;//can be negative because offset to insert on map diff can be put into
 	Map_final*			current_map;
@@ -33,7 +33,7 @@ public:
 	quint16				speed;
 protected:
 	//internal var
-	Player_private_and_public_informations *player_informations;
+	Player_internal_informations *player_informations;
 
 	//pass to the Map management visibility algorithm
 	virtual void mapTeleporterUsed();

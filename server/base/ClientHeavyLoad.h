@@ -27,23 +27,21 @@ class ClientHeavyLoad : public QObject
 public:
 	explicit ClientHeavyLoad();
 	~ClientHeavyLoad();
-	void setVariable(Player_private_and_public_informations *player_informations);
+	void setVariable(Player_internal_informations *player_informations);
 public slots:
 	virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
 	void askRandomSeedList(const quint8 &query_id);
 	void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
 	void updatePlayerPosition(const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation);
-	void fakeLogin(const quint32 &last_fake_player_id,const quint16 &x,const quint16 &y,Map_final *map,const Orientation &orientation,const QString &skin);
 	//normal slots
 	void askIfIsReadyToStop();
 	void stop();
 private:
-	bool fake_mode;
 	// ------------------------------
 	void sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime);
 	QString SQL_text_quote(QString text);
 	// ------------------------------
-	Player_private_and_public_informations *player_informations;
+	Player_internal_informations *player_informations;
 	bool sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime=true);
 	void listDatapack(const QString &suffix,const QStringList &files);
 signals:

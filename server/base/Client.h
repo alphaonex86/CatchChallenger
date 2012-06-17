@@ -38,12 +38,13 @@ public:
 	//to prevent remove before the right moment
 	bool is_ready_to_stop;
 	//do a fake login
-	void fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_final *map,Orientation orientation,QString skin);
+	void setFake();
+	void setInternal();
 private:
 	bool ask_is_ready_to_stop;
 	bool is_logged;
 	//-------------------
-	Player_private_and_public_informations player_informations;
+	Player_internal_informations player_informations;
 	ClientBroadCast *clientBroadCast;
 	ClientHeavyLoad *clientHeavyLoad;
 	ClientMapManagement *clientMapManagement;
@@ -79,7 +80,7 @@ signals:
 	void isReadyToDelete();
 
 	//to pass to the event manager to display the information
-	void new_player_is_connected(const Player_private_and_public_informations &player);
+	void new_player_is_connected(const Player_internal_informations &player);
 	void player_is_disconnected(const QString &pseudo);
 	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
 
