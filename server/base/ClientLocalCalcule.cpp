@@ -26,7 +26,7 @@ bool ClientLocalCalcule::checkCollision()
 		return true;
 }
 
-void ClientLocalCalcule::put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void ClientLocalCalcule::put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
 	MapBasicMove::put_on_the_map(player_id,map,x,y,orientation,speed);
 

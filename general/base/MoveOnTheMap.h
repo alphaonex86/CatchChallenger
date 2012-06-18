@@ -1,14 +1,15 @@
-#ifndef MOVECLIENT_H
-#define MOVECLIENT_H
+#ifndef MOVEONTHEMAP_H
+#define MOVEONTHEMAP_H
 
 #include <QObject>
 
 #include "GeneralStructures.h"
 
-class MoveClient
+//to group the step by step move into line move
+class MoveOnTheMap
 {
 public:
-	MoveClient();
+	MoveOnTheMap();
 	virtual void newDirection(const Direction &the_direction);
 private:
 	virtual void send_player_move(const quint8 &moved_unit,const Direction &the_new_direction) = 0;
@@ -17,4 +18,4 @@ protected:
 	quint8 last_step;
 };
 
-#endif // MOVECLIENT_H
+#endif // MOVEONTHEMAP_H

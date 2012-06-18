@@ -57,7 +57,7 @@ signals:
 	//login linked signals
 	void send_player_informations();
 	void isLogged();
-	void put_on_the_map(const quint32 &player_id,Map_final* map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	void put_on_the_map(const quint32 &player_id,Map_server* map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	//random linked signals
 	void setRandomSeedList(const QByteArray &randomData);
 protected:

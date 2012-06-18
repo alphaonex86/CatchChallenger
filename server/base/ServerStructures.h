@@ -15,7 +15,7 @@
 
 #include "../general/base/GeneralStructures.h"
 #include "PlayerUpdater.h"
-#include "FakeBot.h"
+#include "Bot/FakeBot.h"
 
 class EventThreader;
 class Map_custom;
@@ -50,12 +50,12 @@ struct Map_to_send
 	quint32 height;
 	QHash<QString,QVariant> property;
 
-	struct Map_final_parsed_layer
+	struct MapToSend_ParsedLayer
 	{
 		bool *walkable;
 		bool *water;
 	};
-	Map_final_parsed_layer parsed_layer;
+	MapToSend_ParsedLayer parsed_layer;
 
 	struct Temp_teleport
 	{
@@ -78,41 +78,54 @@ struct Map_to_send
 	QList<Bot_Spawn_Point> bot_spawn_points;
 };
 
+/*use template here, like:
+template<T>
+struct Map
+{
+	T *map;
+};
+
+struct Map_server : Map<Map_server>
+{
+	bool 	metadonnes;
+};
+  */
+
 /** conversion x,y to position: x+y*width */
-struct Map_final
+struct Map_server
 {
 	//the index is position (x+y*width)
-	struct Map_final_parsed_layer
+	struct Map_ParsedLayer
 	{
 		bool *walkable;
 		bool *water;
 	};
-	Map_final_parsed_layer parsed_layer;
+	Map_ParsedLayer parsed_layer;
 
-	struct Map_final_border
+	struct Map_Border
 	{
-		struct Map_final_border_content_top_bottom
+		struct Map_BorderContent_TopBottom
 		{
-			Map_final *map;
+			Map_server *map;
 			qint32 x_offset;
 		};
-		struct Map_final_border_content_left_right
+		struct Map_BorderContent_LeftRight
 		{
-			Map_final *map;
+			Map_server *map;
 			qint32 y_offset;
 		};
-		Map_final_border_content_top_bottom top;
-		Map_final_border_content_top_bottom bottom;
-		Map_final_border_content_left_right left;
-		Map_final_border_content_left_right right;
+		Map_BorderContent_TopBottom top;
+		Map_BorderContent_TopBottom bottom;
+		Map_BorderContent_LeftRight left;
+		Map_BorderContent_LeftRight right;
 	};
-	Map_final_border border;
+	Map_Border border;
 
-	QList<Map_final *> near_map;//not only the border
+	QList<Map_server *> near_map;//not only the border
 	struct Teleporter
 	{
 		quint32 x,y;
-		Map_final *map;
+		Map_server *map;
 	};
 	QHash<quint32,Teleporter> teleporter;//the int (x+y*width) is position
 
@@ -136,7 +149,7 @@ struct Map_final
 
 struct Map_player_info
 {
-	Map_final *map;
+	Map_server *map;
 	int x,y;
 	QString skin;
 };
@@ -231,7 +244,7 @@ struct GeneralData
 
 		//map
 		QString mapBasePath;
-		QHash<QString,Map_final *> map_list;
+		QHash<QString,Map_server *> map_list;
 		QTimer timer_to_send_insert_move_remove;
 
 		//connection

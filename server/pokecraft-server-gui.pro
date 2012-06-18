@@ -27,20 +27,21 @@ SOURCES += main.cpp\
     base/Map_loader.cpp \
     base/PlayerUpdater.cpp \
     base/LatencyChecker.cpp \
-    base/FakeBot.cpp \
+    base/Bot/FakeBot.cpp \
     base/ClientMapManagement/ClientMapManagement.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
     base/ClientMapManagement/MapBasicMove.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
     ../general/base/DebugClass.cpp \
-    ../general/base/MoveClient.cpp \
+    ../general/base/MoveOnTheMap.cpp \
     ../general/base/ChatParsing.cpp \
     ../general/base/ProtocolParsing.cpp \
     ../general/base/QFakeServer.cpp \
     ../general/base/QFakeSocket.cpp \
     ../client/base/Api_protocol.cpp \
     ../client/base/Api_client_real.cpp \
-    ../client/base/Api_client_virtual.cpp
+    ../client/base/Api_client_virtual.cpp \
+    base/Bot/MoveOnTheMap_Server.cpp
 
 
 HEADERS += \
@@ -56,14 +57,14 @@ HEADERS += \
     base/ClientLocalCalcule.h \
     base/Map_loader.h \
     base/LatencyChecker.h \
-    base/FakeBot.h \
+    base/Bot/FakeBot.h \
     base/PlayerUpdater.h \
     base/ClientMapManagement/ClientMapManagement.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
     base/ClientMapManagement/MapBasicMove.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
     ../client/base/ClientStructures.h \
-    ../general/base/MoveClient.h \
+    ../general/base/MoveOnTheMap.h \
     ../general/base/DebugClass.h \
     ../general/base/GeneralStructures.h \
     ../general/base/ChatParsing.h \
@@ -73,7 +74,8 @@ HEADERS += \
     ../general/base/QFakeSocket.h \
     ../client/base/Api_protocol.h \
     ../client/base/Api_client_real.h \
-    ../client/base/Api_client_virtual.h
+    ../client/base/Api_client_virtual.h \
+    base/Bot/MoveOnTheMap_Server.h
 
 HEADERS  += MainWindow.h
 

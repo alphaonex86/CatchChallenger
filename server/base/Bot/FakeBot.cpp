@@ -8,12 +8,8 @@ QSemaphore FakeBot::wait_to_stop;
 FakeBot::FakeBot()
 {
 	connect(&api,SIGNAL(insert_player(quint32,QString,quint16,quint16,quint8,quint16)),this,SLOT(insert_player(quint32,QString,quint16,quint16,quint8,quint16)));
-	api.sendProtocol();
-	api.tryLogin("Fake","Fake");
 
-	canLeaveTheMap=false;
 	details=false;
-	this->map=NULL;
 
 	do_step=false;
 	socket.connectToHost();
@@ -22,6 +18,12 @@ FakeBot::FakeBot()
 FakeBot::~FakeBot()
 {
 	wait_to_stop.acquire();
+}
+
+void FakeBot::tryLink()
+{
+	api.sendProtocol();
+	api.tryLogin("Fake","Fake");
 }
 
 void FakeBot::doStep()
