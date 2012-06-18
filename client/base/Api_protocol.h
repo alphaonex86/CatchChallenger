@@ -36,7 +36,6 @@ public:
 	bool remove_player_watching(quint32 id);
 	bool add_player_watching(QList<quint32> ids);
 	bool remove_player_watching(QList<quint32> ids);
-	virtual bool socketIsReadyToSend() = 0;
 
 	//get the stored data
 	QList<Player_public_informations> get_player_informations_list();

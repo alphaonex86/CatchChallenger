@@ -1,9 +1,11 @@
-#ifndef MOVEONTHEMAP_SERVER_H
-#define MOVEONTHEMAP_SERVER_H
-
 #include <QObject>
 
 #include "../ServerStructures.h"
+
+struct Map_server;
+
+#ifndef MOVEONTHEMAP_SERVER_H
+#define MOVEONTHEMAP_SERVER_H
 
 class MoveOnTheMap_Server
 {

@@ -8,7 +8,6 @@
 ClientHeavyLoad::ClientHeavyLoad()
 {
 	is_logged=false;
-	fake_mode=false;
 }
 
 ClientHeavyLoad::~ClientHeavyLoad()
@@ -45,23 +44,23 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			}
 			else
 			{
-				EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << 65535-fake_clients.size();
 				is_logged=true;
-				player_informations->public_informations.clan=0;
-				player_informations->public_informations.description="Bot";
-				player_informations->public_informations.id=EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.last();
-				player_informations->public_informations.pseudo=QString("bot_%1").arg(last_fake_player_id);
-				player_informations->public_informations.skin=skin;//useless for serveur benchmark
-				player_informations->public_informations.type=Player_type_normal;
-				player_informations->cash=0;
+				player_informations->public_and_private_informations.public_informations.clan=0;
+				player_informations->public_and_private_informations.public_informations.description="Bot";
+				player_informations->public_and_private_informations.public_informations.id=65535-EventDispatcher::generalData.serverPrivateVariables.fake_clients.size();
+				player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.id);
+				player_informations->public_and_private_informations.public_informations.skin="";//useless for serveur benchmark
+				player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
+				player_informations->public_and_private_informations.cash=0;
+				EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << player_informations->public_and_private_informations.public_informations.id;
 				emit send_player_informations();
 				emit isLogged();
 				//remplace x and y by real spawn point
-				emit put_on_the_map(player_informations->public_informations.id,
-						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).map,
+				emit put_on_the_map(player_informations->public_and_private_informations.public_informations.id,
+						    EventDispatcher::generalData.serverPrivateVariables.map_list[EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).map],
 						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).x,
 						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).y,
-						    orientation,POKECRAFT_SERVER_NORMAL_SPEED);
+						    Orientation_bottom,POKECRAFT_SERVER_NORMAL_SPEED);
 				EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex++;
 				if(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex>=EventDispatcher::generalData.serverPrivateVariables.botSpawn.size())
 					EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex=0;
@@ -101,13 +100,13 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		{
 			EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << loginQuery.value(0).toUInt();
 			is_logged=true;
-			player_informations->public_informations.clan=loginQuery.value(8).toUInt();
-			player_informations->public_informations.description="";
-			player_informations->public_informations.id=loginQuery.value(0).toUInt();
-			player_informations->public_informations.pseudo=loginQuery.value(1).toString();
-			player_informations->public_informations.skin=loginQuery.value(2).toString();
-			player_informations->public_informations.type=(Player_type)loginQuery.value(7).toUInt();
-			player_informations->cash=0;
+			player_informations->public_and_private_informations.public_informations.clan=loginQuery.value(8).toUInt();
+			player_informations->public_and_private_informations.public_informations.description="";
+			player_informations->public_and_private_informations.public_informations.id=loginQuery.value(0).toUInt();
+			player_informations->public_and_private_informations.public_informations.pseudo=loginQuery.value(1).toString();
+			player_informations->public_and_private_informations.public_informations.skin=loginQuery.value(2).toString();
+			player_informations->public_and_private_informations.public_informations.type=(Player_type)loginQuery.value(7).toUInt();
+			player_informations->public_and_private_informations.cash=0;
 			int orentation=loginQuery.value(5).toInt();
 			if(orentation<1 || orentation>8)
 			{
@@ -118,12 +117,12 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			{
 				out << (quint8)02;
 				out << (quint32)loginQuery.value(0).toUInt();
-				emit message(QString("Logged: %1").arg(player_informations->public_informations.pseudo));
+				emit message(QString("Logged: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
 				emit postReply(query_id,outputData);
 				emit send_player_informations();
 				emit isLogged();
 				emit put_on_the_map(
-					player_informations->public_informations.id,
+					player_informations->public_and_private_informations.public_informations.id,
 					EventDispatcher::generalData.serverPrivateVariables.map_list[loginQuery.value(6).toString()],//map pointer
 					loginQuery.value(3).toInt(),//position_x
 					loginQuery.value(4).toInt(),//position_y
@@ -160,7 +159,7 @@ void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)
 void ClientHeavyLoad::askIfIsReadyToStop()
 {
 	if(is_logged)
-		EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.remove(player_informations->public_informations.id);
+		EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.remove(player_informations->public_and_private_informations.public_informations.id);
 	emit isReadyToStop();
 }
 
@@ -279,14 +278,14 @@ QString ClientHeavyLoad::SQL_text_quote(QString text)
 
 void ClientHeavyLoad::updatePlayerPosition(const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation)
 {
-	if(!is_logged || fake_mode)
+	if(!is_logged || player_informations->isFake)
 		return;
 	QSqlQuery updateMapPositionQuery=EventDispatcher::generalData.serverPrivateVariables.updateMapPositionQuery;
 	updateMapPositionQuery.bindValue(":map_name",map);
 	updateMapPositionQuery.bindValue(":position_x",x);
 	updateMapPositionQuery.bindValue(":position_y",y);
 	updateMapPositionQuery.bindValue(":orientation",orientation);
-	updateMapPositionQuery.bindValue(":id",player_informations->public_informations.id);
+	updateMapPositionQuery.bindValue(":id",player_informations->public_and_private_informations.public_informations.id);
 	if(!updateMapPositionQuery.exec())
 		DebugClass::debugConsole(QString("Sql query failed: %1, error: %2").arg(updateMapPositionQuery.lastQuery()).arg(updateMapPositionQuery.lastError().text()));
 }

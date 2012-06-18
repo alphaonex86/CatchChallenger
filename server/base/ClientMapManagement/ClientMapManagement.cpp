@@ -45,7 +45,7 @@ Map_player_info ClientMapManagement::getMapPlayerInfo()
 	return temp;
 }
 
-void ClientMapManagement::setVariable(Player_private_and_public_informations *player_informations)
+void ClientMapManagement::setVariable(Player_internal_informations *player_informations)
 {
 	MapBasicMove::setVariable(player_informations);
 	connect(&EventDispatcher::generalData.serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),this,SLOT(purgeBuffer()),Qt::QueuedConnection);
