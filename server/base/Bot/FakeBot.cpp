@@ -44,13 +44,13 @@ void FakeBot::start_step()
 void FakeBot::random_new_step()
 {
 	QList<Direction> directions_allowed;
-	if(map->parsed_layer.walkable[x-1+y*map->width] && (canLeaveTheMap || x>0))
+	if(canGoTo(Direction_move_at_left))
 		directions_allowed << Direction_move_at_left;
-	if(map->parsed_layer.walkable[x+1+y*map->width] && (canLeaveTheMap || x<map->width))
+	if(canGoTo(Direction_move_at_right))
 		directions_allowed << Direction_move_at_right;
-	if(map->parsed_layer.walkable[x+(y-1)*map->width] && (canLeaveTheMap || y>0))
+	if(canGoTo(Direction_move_at_top))
 		directions_allowed << Direction_move_at_top;
-	if(map->parsed_layer.walkable[x+(y+1)*map->width] && (canLeaveTheMap || y<map->height))
+	if(canGoTo(Direction_move_at_bottom))
 		directions_allowed << Direction_move_at_bottom;
 	loop_size=directions_allowed.size();
 	if(loop_size<=0)
