@@ -241,7 +241,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 						QRegExp commandRegExp("^/([a-z]+)( [^ ].*)$");
 						if(text.contains(commandRegExp))
 						{
-							if(player_informations->public_informations.type==Player_type_gm || player_informations->public_informations.type==Player_type_dev)
+							if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
 							{
 								QString command=text;
 								command.replace(commandRegExp,"\\1");

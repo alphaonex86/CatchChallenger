@@ -1,11 +1,14 @@
 #include "FakeBot.h"
+#include "../EventDispatcher.h"
+#include "../ClientMapManagement/MapBasicMove.h"
 
 int FakeBot::index_loop;
 int FakeBot::loop_size;
 QSemaphore FakeBot::wait_to_stop;
 
 /// \todo ask player information at the insert
-FakeBot::FakeBot()
+FakeBot::FakeBot() :
+	api(&socket)
 {
 	connect(&api,SIGNAL(insert_player(quint32,QString,quint16,quint16,quint8,quint16)),this,SLOT(insert_player(quint32,QString,quint16,quint16,quint8,quint16)));
 
@@ -68,11 +71,15 @@ void FakeBot::random_new_step()
 	}
 	int random = rand()%loop_size;
 	Direction final_direction=directions_allowed.at(random);
-	newDirection(final_direction);
+	//to group the signle move into move line
+	MoveOnTheMap::newDirection(final_direction);
+	//to do the real move
+	move(final_direction);
 }
 
-void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed)
+void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,Orientation direction,quint16 speed)
 {
+	Q_UNUSED(speed);
 	if(id==api.getId())
 	{
 		if(!EventDispatcher::generalData.serverPrivateVariables.map_list.contains(mapName))
@@ -93,7 +100,7 @@ void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint
 		this->map=EventDispatcher::generalData.serverPrivateVariables.map_list[mapName];
 		this->x=x;
 		this->y=y;
-		this->last_direction=direction;
+		this->last_direction=(Direction)direction;
 	}
 }
 
@@ -106,7 +113,7 @@ void FakeBot::stop()
 {
 	stop_step();
 	wait_to_stop.release();
-	emit disconnected();
+//	emit disconnected();
 }
 
 void FakeBot::show_details()
@@ -115,29 +122,17 @@ void FakeBot::show_details()
 	DebugClass::debugConsole(QString("FakeBot::show_details(), x: %1, y:%2").arg(x).arg(y));
 }
 
-void FakeBot::newDirection(const Direction &the_direction)
+quint64 FakeBot::get_TX_size()
 {
-	MoveClient::newDirection(the_direction);
-	switch(the_direction)
-	{
-		case Direction_move_at_top:
-			y-=1;
-		break;
-		case Direction_move_at_right:
-			x+=1;
-		break;
-		case Direction_move_at_bottom:
-			y+=1;
-		break;
-		case Direction_move_at_left:
-			x-=1;
-		break;
-		default:
-		break;
-	}
-	if(details)
-		DebugClass::debugConsole(QString("FakeBot::newDirection(), after %3, x: %1, y:%2, last_step: %4").arg(x).arg(y).arg(MapBasicMove::directionToString(the_direction)).arg(last_step));
-	if(details)
-		DebugClass::debugConsole(QString("FakeBot::calculate_player_move(), moved_unit: %1, the_direction: %2").arg(moved_unit).arg(MapBasicMove::directionToString(the_direction)));
+	return socket.getTXSize();
 }
 
+quint64 FakeBot::get_RX_size()
+{
+	return socket.getRXSize();
+}
+
+void FakeBot::send_player_move(const quint8 &moved_unit,const Direction &the_direction)
+{
+	api.send_player_move(moved_unit,the_direction);
+}

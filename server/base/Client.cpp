@@ -33,9 +33,9 @@ Client::Client(QAbstractSocket *socket)
 
 	}
 
-	player_informations.public_informations.pseudo="";
-	player_informations.public_informations.id=0;
-	player_informations.is_fake=false;
+	player_informations.public_and_private_informations.public_informations.pseudo="";
+	player_informations.public_and_private_informations.public_informations.id=0;
+	player_informations.isFake=false;
 
 	if(socket!=NULL)
 	{
@@ -213,7 +213,7 @@ void Client::disconnectClient()
 	connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
 	emit askIfIsReadyToStop();
 
-	emit player_is_disconnected(player_informations.public_informations.pseudo);
+	emit player_is_disconnected(player_informations.public_and_private_informations.public_informations.pseudo);
 }
 
 void Client::disconnectNextStep()
@@ -257,7 +257,7 @@ void Client::disconnectNextStep()
 void Client::errorOutput(QString errorString)
 {
 	if(is_logged)
-		clientBroadCast->sendSystemMessage(player_informations.public_informations.pseudo+" have been kicked from server, have try hack");
+		clientBroadCast->sendSystemMessage(player_informations.public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack");
 
 	normalOutput("Kicked by: "+errorString);
 	disconnectClient();
@@ -277,11 +277,11 @@ void Client::normalOutput(QString message)
 void Client::send_player_informations()
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	normalOutput("load the normal player id: "+QString::number(player_informations.public_informations.id));
+	normalOutput("load the normal player id: "+QString::number(player_informations.public_and_private_informations.public_informations.id));
 	#endif
 	emit new_player_is_connected(player_informations);
 	this->player_informations=player_informations;
-	this->id=player_informations.public_informations.id;
+	this->id=player_informations.public_and_private_informations.public_informations.id;
 	is_logged=true;
 	EventDispatcher::generalData.serverPrivateVariables.connected_players++;
 	EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();
@@ -294,12 +294,12 @@ void Client::send_player_informations()
 
 QString Client::getPseudo()
 {
-	return player_informations.public_informations.pseudo;
+	return player_informations.public_and_private_informations.public_informations.pseudo;
 }
 
 void Client::setFake()
 {
-	player_informations.is_fake=true;
+	player_informations.isFake=true;
 }
 
 void Client::serverCommand(QString command,QString extraText)
@@ -316,17 +316,17 @@ void Client::fake_receive_data(QByteArray data)
 
 void Client::local_sendPM(QString text,QString pseudo)
 {
-	emit new_chat_message(player_informations.public_informations.pseudo,Chat_type_pm,QString("to: %1, %2").arg(pseudo).arg(text));
+	emit new_chat_message(player_informations.public_and_private_informations.public_informations.pseudo,Chat_type_pm,QString("to: %1, %2").arg(pseudo).arg(text));
 }
 
 void Client::local_sendChatText(Chat_type chatType,QString text)
 {
-	emit new_chat_message(player_informations.public_informations.pseudo,chatType,text);
+	emit new_chat_message(player_informations.public_and_private_informations.public_informations.pseudo,chatType,text);
 }
 
 Map_player_info Client::getMapPlayerInfo()
 {
 	Map_player_info temp=clientMapManagement->getMapPlayerInfo();
-	temp.skin=player_informations.public_informations.skin;
+	temp.skin=player_informations.public_and_private_informations.public_informations.skin;
 	return temp;
 }

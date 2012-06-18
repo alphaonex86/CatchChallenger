@@ -23,9 +23,9 @@ public:
 	~ClientBroadCast();
 	// general info
 	QList<quint32> player_ids_to_watch;
-	Player_private_and_public_informations *player_informations;
+	Player_internal_informations *player_informations;
 	// set the variable
-	void setVariable(Player_private_and_public_informations *player_informations);
+	void setVariable(Player_internal_informations *player_informations);
 	void disconnect();
 	//cache
 	QString pseudo;

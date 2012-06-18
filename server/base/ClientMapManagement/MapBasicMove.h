@@ -31,6 +31,9 @@ public:
 	//map vector informations
 	Direction			last_direction;
 	quint16				speed;
+
+	//debug function
+	static QString directionToString(const Direction &direction);
 protected:
 	//internal var
 	Player_internal_informations *player_informations;
@@ -43,9 +46,6 @@ protected:
 	volatile bool stopCurrentMethod;
 	volatile bool stopIt;
 	virtual void extraStop();
-
-	//debug function
-	static QString directionToString(const Direction &direction);
 
 	//map load/unload and change
 	virtual void loadOnTheMap();
