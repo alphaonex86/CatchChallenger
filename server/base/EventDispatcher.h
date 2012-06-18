@@ -15,7 +15,7 @@
 #include "ServerStructures.h"
 #include "Client.h"
 #include "Map_loader.h"
-#include "FakeBot.h"
+#include "Bot/FakeBot.h"
 #include "LatencyChecker.h"
 #include "../general/base/ProtocolParsing.h"
 #include "../general/base/QFakeServer.h"
@@ -55,7 +55,7 @@ private:
 	struct Map_semi
 	{
 		//conversion x,y to position: x+y*width
-		Map_final * map;
+		Map_server * map;
 		Map_semi_border border;
 		Map_to_send old_map;
 	};

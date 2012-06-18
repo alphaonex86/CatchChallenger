@@ -81,7 +81,7 @@ void ClientMapManagement::extraStop()
 	}
 }
 
-void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
 	//store the starting informations
 	at_start_x=x;
@@ -119,7 +119,7 @@ void ClientMapManagement::unloadFromTheMap()
 	mapVisiblity_unloadFromTheMap();
 }
 
-void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map_final *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
+void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map_server *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 	emit message(QString("insertAnotherClient(%1,%2,%3)").arg(player_id).arg(x).arg(y));
