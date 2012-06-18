@@ -28,7 +28,7 @@ public:
 private:
 	bool checkCollision();
 public slots:
-	void put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	void put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 };
 
 #endif // CLIENTLOCALCALCULE_H

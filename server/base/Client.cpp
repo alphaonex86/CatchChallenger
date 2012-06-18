@@ -13,7 +13,7 @@ Client::Client(QAbstractSocket *socket)
 	qRegisterMetaType<Chat_type>("Chat_type");
 	qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
 	qRegisterMetaType<Direction>("Direction");
-	qRegisterMetaType<Map_final*>("Map_final*");
+	qRegisterMetaType<Map_server*>("Map_final*");
 
 	clientBroadCast=new ClientBroadCast();
 	clientHeavyLoad=new ClientHeavyLoad();
@@ -95,8 +95,8 @@ Client::Client(QAbstractSocket *socket)
 	//connect the player information
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),	clientLocalCalcule,	SLOT(put_on_the_map(quint32,Map_final*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),	clientLocalCalcule,	SLOT(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
@@ -106,8 +106,8 @@ Client::Client(QAbstractSocket *socket)
 		clientHeavyLoad,SLOT(askRandomSeedList(quint8)),Qt::QueuedConnection);
 	connect(clientNetworkRead,SIGNAL(datapackList(quint8,QStringList,QList<quint32>)),
 		clientHeavyLoad,SLOT(datapackList(quint8,QStringList,QList<quint32>)),Qt::QueuedConnection);
-	connect(this,SIGNAL(send_fakeLogin(quint32,quint16,quint16,Map_final *,Orientation,QString)),
-		clientHeavyLoad,SLOT(fakeLogin(quint32,quint16,quint16,Map_final *,Orientation,QString)),Qt::QueuedConnection);
+	connect(this,SIGNAL(send_fakeLogin(quint32,quint16,quint16,Map_server *,Orientation,QString)),
+		clientHeavyLoad,SLOT(fakeLogin(quint32,quint16,quint16,Map_server *,Orientation,QString)),Qt::QueuedConnection);
 
 	//packet parsed (map management)
 	connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientMapManagement,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
