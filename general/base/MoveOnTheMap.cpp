@@ -1,12 +1,12 @@
-#include "MoveClient.h"
+#include "MoveOnTheMap.h"
 
-MoveClient::MoveClient()
+MoveOnTheMap::MoveOnTheMap()
 {
 	last_direction=Direction_look_at_bottom;
 	last_step=0;
 }
 
-void MoveClient::newDirection(const Direction &the_new_direction)
+void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 {
 	if(last_direction!=the_new_direction)
 	{

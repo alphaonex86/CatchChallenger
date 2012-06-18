@@ -139,7 +139,7 @@ void EventDispatcher::preload_the_map()
 			DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
 			if(map_temp.tryLoadMap(generalData.serverPrivateVariables.mapBasePath+returnList.at(index)))
 			{
-				generalData.serverPrivateVariables.map_list[returnList.at(index)]=new Map_final;
+				generalData.serverPrivateVariables.map_list[returnList.at(index)]=new Map_server;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
@@ -372,8 +372,8 @@ void EventDispatcher::preload_the_map()
 
 void EventDispatcher::preload_the_visibility_algorithm()
 {
-	QHash<QString,Map_final *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
-	QHash<QString,Map_final *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
+	QHash<QString,Map_server *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
+	QHash<QString,Map_server *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
 	switch(generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
 	{
 		case MapVisibilityAlgorithm_simple:
@@ -469,18 +469,13 @@ bool EventDispatcher::initialize_the_database()
 		return true;
 		break;
 		case GeneralData::ServerSettings::Database::DatabaseType_SQLite:
-		/*generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
+		generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
 		generalData.serverPrivateVariables.updateMapPositionQuery.prepare("UPDATE player SET map_name=:map_name,position_x=:position_x,position_y=:position_y,orientation=:orientation WHERE id=:id");
 		if(generalData.serverPrivateVariables.db==NULL)
 			generalData.serverPrivateVariables.db=new QSqlDatabase();
 		*generalData.serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
-		generalData.serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
-		generalData.serverPrivateVariables.db->setHostName(generalData.serverSettings.database.mysql.host);
-		generalData.serverPrivateVariables.db->setDatabaseName(generalData.serverSettings.database.mysql.db);
-		generalData.serverPrivateVariables.db->setUserName(generalData.serverSettings.database.mysql.login);
-		generalData.serverPrivateVariables.db->setPassword(generalData.serverSettings.database.mysql.pass);
-		return true;*/
-		return false;
+		generalData.serverPrivateVariables.db->setDatabaseName(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
+		return true;
 		break;
 	}
 }
@@ -536,8 +531,8 @@ void EventDispatcher::unload_the_data()
 
 void EventDispatcher::unload_the_map()
 {
-	QHash<QString,Map_final *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
-	QHash<QString,Map_final *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
+	QHash<QString,Map_server *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
+	QHash<QString,Map_server *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
 	while (i != i_end)
 	{
 		delete i.value()->parsed_layer.walkable;
@@ -696,6 +691,7 @@ void EventDispatcher::addBot()
 	client_list.last()->setFake();
 	connect_the_last_client();
 
+	fake_clients.last()->tryLink();
 	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
 	fake_clients.last()->moveToThread(generalData.serverPrivateVariables.eventThreaderList.at(5));
 	fake_clients.last()->start_step();

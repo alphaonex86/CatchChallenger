@@ -53,7 +53,7 @@ void MapBasicMove::stop()
 	deleteLater();
 }
 
-void MapBasicMove::put_on_the_map(const quint32 &player_id,Map_final *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void MapBasicMove::put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
 	//store the starting informations
 	last_direction=static_cast<Direction>(orientation);
@@ -81,7 +81,7 @@ void MapBasicMove::put_on_the_map(const quint32 &player_id,Map_final *map,const 
 
 void MapBasicMove::mapTeleporterUsed()
 {
-	const Map_final::Teleporter &teleporter=current_map->teleporter[x+y*current_map->width];
+	const Map_server::Teleporter &teleporter=current_map->teleporter[x+y*current_map->width];
 	if(teleporter.map==current_map)
 	{
 		x=teleporter.x;
