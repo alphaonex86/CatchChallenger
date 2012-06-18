@@ -5,6 +5,8 @@
 
 #include "GeneralStructures.h"
 
+struct Map_client;
+
 class MoveOnTheMap_Client
 {
 public:

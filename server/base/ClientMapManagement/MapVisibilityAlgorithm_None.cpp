@@ -17,6 +17,9 @@ void MapVisibilityAlgorithm_None::insertClient()
 
 void MapVisibilityAlgorithm_None::moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged)
 {
+	Q_UNUSED(movedUnit);
+	Q_UNUSED(direction);
+	Q_UNUSED(mapHaveChanged);
 }
 
 void MapVisibilityAlgorithm_None::removeClient()

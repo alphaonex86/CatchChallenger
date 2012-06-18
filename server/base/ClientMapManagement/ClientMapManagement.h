@@ -23,7 +23,7 @@ class ClientMapManagement : public MapBasicMove
 public:
 	explicit ClientMapManagement();
 	virtual ~ClientMapManagement();
-	virtual void setVariable(Player_private_and_public_informations *player_informations);
+	virtual void setVariable(Player_internal_informations *player_informations);
 	/// \bug is not thread safe, and called by another thread, error can occure
 	Map_player_info getMapPlayerInfo();
 	//to change the info on another client

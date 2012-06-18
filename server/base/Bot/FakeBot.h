@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "../general/base/DebugClass.h"
+#include "../general/base/MoveOnTheMap.h"
 #include "../general/base/GeneralStructures.h"
 #include "../ServerStructures.h"
 #include "MoveOnTheMap_Server.h"
@@ -38,14 +39,15 @@ private:
 	static int index_loop,loop_size;
 	static QSemaphore wait_to_stop;
 	bool do_step;
-	void disconnected();
 public slots:
 	void stop_step();
 	void stop();
 	void doStep();
 private slots:
 	void random_new_step();
-	void insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed);
+	void insert_player(quint32 id,QString mapName,quint16 x,quint16 y,Orientation direction,quint16 speed);
+/*signals:
+	void disconnected();*/
 };
 
 #endif // FakeBot_H
