@@ -4,7 +4,7 @@ MoveOnTheMap_Client::MoveOnTheMap_Client()
 {
 }
 
-bool MoveOnTheMap_Server::canGoTo(Direction direction)
+bool MoveOnTheMap_Client::canGoTo(Direction direction)
 {
 	if(map==NULL)
 		return false;
@@ -54,3 +54,73 @@ bool MoveOnTheMap_Server::canGoTo(Direction direction)
 			return false;
 	}
 }
+
+void MoveOnTheMap_Client::move(Direction direction)
+{
+	if(map==NULL)
+		return;
+	if(!canGoTo(direction))
+		return;
+	switch(direction)
+	{
+		case Direction_move_at_left:
+			if(x>0)
+			{
+				x-=1;
+				return;
+			}
+			else
+			{
+				x=map->border.left.map->width-1;
+				y+=map->border.left.y_offset;
+				map=map->border.left.map;
+				return;
+			}
+		break;
+		case Direction_move_at_right:
+			if(x<map->width)
+			{
+				x+=1;
+				return;
+			}
+			else
+			{
+				x=0;
+				y+=map->border.right.y_offset;
+				map=map->border.right.map;
+				return;
+			}
+		break;
+		case Direction_move_at_top:
+			if(y>0)
+			{
+				y-=1;
+				return;
+			}
+			else
+			{
+				y=map->border.top.map->height-1;
+				x+=map->border.top.x_offset;
+				map=map->border.top.map;
+				return;
+			}
+		break;
+		case Direction_move_at_bottom:
+			if(y<map->height)
+			{
+				y+=1;
+				return;
+			}
+			else
+			{
+				y=0;
+				x+=map->border.bottom.x_offset;
+				map=map->border.bottom.map;
+				return;
+			}
+		break;
+		default:
+			return;
+	}
+}
+

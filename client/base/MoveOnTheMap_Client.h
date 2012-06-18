@@ -14,6 +14,7 @@ protected:
 	quint16 x,y;
 protected:
 	bool canGoTo(Direction direction);
+	void move(Direction direction);
 };
 
 #endif // MOVEONTHEMAP_CLIENT_H
