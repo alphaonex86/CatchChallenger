@@ -11,7 +11,7 @@ ClientBroadCast::~ClientBroadCast()
 {
 }
 
-void ClientBroadCast::setVariable(Player_private_and_public_informations *player_informations)
+void ClientBroadCast::setVariable(Player_internal_informations *player_informations)
 {
 	this->player_informations=player_informations;
 	connect(&EventDispatcher::generalData.serverPrivateVariables.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
@@ -108,14 +108,14 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 	int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
 	if(chatType==Chat_type_clan)
 	{
-		if(player_informations->public_informations.clan==0)
+		if(player_informations->public_and_private_informations.public_informations.clan==0)
 			emit error("Unable to chat with clan, you have not clan");
 		else
 		{
 			int index=0;
 			while(index<list_size)
 			{
-				if(player_informations->public_informations.clan==EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_informations.clan && this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
+				if(player_informations->public_and_private_informations.public_informations.clan==EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_and_private_informations.public_informations.clan && this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
 					EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receiveChatText(chatType,text,player_id);
 				index++;
 			}
@@ -123,7 +123,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 	}
 	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)
 	{
-		if(player_informations->public_informations.type==Player_type_gm || player_informations->public_informations.type==Player_type_dev)
+		if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
 		{
 			int index=0;
 			while(index<list_size)
@@ -151,10 +151,10 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 void ClientBroadCast::send_player_informations()
 {
 	EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList << this;
-	this->pseudo=this->player_informations->public_informations.pseudo;
-	this->player_id=this->player_informations->public_informations.id;
+	this->pseudo=this->player_informations->public_and_private_informations.public_informations.pseudo;
+	this->player_id=this->player_informations->public_and_private_informations.public_informations.id;
 	QList<Player_private_and_public_informations> players_informations;
-	players_informations << *(this->player_informations);
+	players_informations << this->player_informations->public_and_private_informations;
 	send_players_informations(players_informations);
 }
 
@@ -295,7 +295,7 @@ void ClientBroadCast::askPlayersInformation(const QList<quint32> &player_ids)
 	{
 		//do by this way to prevent one memory copy
 		if(player_ids.contains(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_id))
-			players_informations << EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_informations;
+			players_informations << EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_and_private_informations.public_informations;
 		index++;
 	}
 	if(players_informations.size())

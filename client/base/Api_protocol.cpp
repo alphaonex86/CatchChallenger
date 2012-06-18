@@ -495,6 +495,16 @@ Player_private_and_public_informations Api_protocol::get_player_informations()
 	return player_informations;
 }
 
+QString Api_protocol::getPseudo()
+{
+	return player_informations.public_informations.pseudo;
+}
+
+quint32 Api_protocol::getId()
+{
+	return player_informations.public_informations.id;
+}
+
 quint8 Api_protocol::queryNumber()
 {
 	if(lastQueryNumber>=254)
@@ -504,8 +514,6 @@ quint8 Api_protocol::queryNumber()
 
 bool Api_protocol::sendProtocol()
 {
-	if(!socketIsReadyToSend())
-		return false;
 	if(have_send_protocol)
 	{
 		emit newError(tr("Internal problem"),QString("Have already send the protocol"));
@@ -523,8 +531,6 @@ bool Api_protocol::sendProtocol()
 
 bool Api_protocol::tryLogin(QString login,QString pass)
 {
-	if(!socketIsReadyToSend())
-		return false;
 	if(!have_send_protocol)
 	{
 		emit newError(tr("Internal problem"),QString("Have not send the protocol"));
@@ -609,8 +615,6 @@ bool Api_protocol::remove_player_watching(quint32 id)
 
 bool Api_protocol::add_player_watching(QList<quint32> ids)
 {
-	if(!socketIsReadyToSend())
-		return false;
 	QList<quint32> new_ids;
 	int index=0;
 	while(index<ids.size())
@@ -643,8 +647,6 @@ bool Api_protocol::add_player_watching(QList<quint32> ids)
 
 bool Api_protocol::remove_player_watching(QList<quint32> ids)
 {
-	if(!socketIsReadyToSend())
-		return false;
 	QList<quint32> new_ids;
 	int index=0;
 	while(index<ids.size())

@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QPixmap>
 
 /** conversion x,y to position: x+y*width */
 struct Map_client

@@ -498,7 +498,6 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	stat=InUp;
 	load_settings();
 	//firstly get the spawn point
-	DebugClass::debugConsole(QString("benchmark spawn: x: %1, y: %2").arg(x).arg(y));
 	if(benchmark_map)
 		generalData.serverPrivateVariables.mapBasePath=":/internal/benchmark-map/";
 	else
@@ -563,13 +562,13 @@ void EventDispatcher::stop_benchmark()
 	double TX_size=0;
 	double RX_size=0;
 	double second=0;
-	if(fake_clients.size()>=1)
+	if(generalData.serverPrivateVariables.fake_clients.size()>=1)
 	{
 		second=((double)time_benchmark_first_client.elapsed()/1000);
 		if(second>0)
 		{
-			TX_size=fake_clients.first()->get_TX_size();
-			RX_size=fake_clients.first()->get_RX_size();
+			TX_size=generalData.serverPrivateVariables.fake_clients.first()->get_TX_size();
+			RX_size=generalData.serverPrivateVariables.fake_clients.first()->get_RX_size();
 			TX_speed=((double)TX_size)/second;
 			RX_speed=((double)RX_size)/second;
 		}
@@ -584,7 +583,7 @@ void EventDispatcher::stop_benchmark()
 
 void EventDispatcher::check_if_now_stopped()
 {
-	if(client_list.size()!=0 || fake_clients.size()!=0)
+	if(client_list.size()!=0 || generalData.serverPrivateVariables.fake_clients.size()!=0)
 		return;
 	if(stat!=InDown)
 		return;
@@ -661,21 +660,21 @@ void EventDispatcher::removeOneBot()
 		DebugClass::debugConsole("removeOneBot(): NULL client at disconnection");
 		return;
 	}
-	fake_clients.removeOne(client);
+	generalData.serverPrivateVariables.fake_clients.removeOne(client);
 	client->deleteLater();
 	check_if_now_stopped();
 }
 
 void EventDispatcher::removeBots()
 {
-	int list_size=fake_clients.size();
+	int list_size=generalData.serverPrivateVariables.fake_clients.size();
 	int index=0;
 	while(index<list_size)
 	{
-		fake_clients.at(index)->stop();
-		fake_clients.at(index)->disconnect();
-		disconnect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()));
-		connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
+		generalData.serverPrivateVariables.fake_clients.at(index)->stop();
+		generalData.serverPrivateVariables.fake_clients.at(index)->disconnect();
+		//disconnect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()));
+		//connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
 		//delete after the signal
 		index++;
 	}
@@ -685,16 +684,15 @@ void EventDispatcher::removeBots()
 
 void EventDispatcher::addBot()
 {
-	fake_clients << new FakeBot();
-	client_list << new Client(fake_clients.last()->socket.getTheOtherSocket());
-	client_list.last()->player_informations.is_fake;
+	generalData.serverPrivateVariables.fake_clients << new FakeBot();
+	client_list << new Client(generalData.serverPrivateVariables.fake_clients.last()->socket.getTheOtherSocket());
 	client_list.last()->setFake();
 	connect_the_last_client();
 
-	fake_clients.last()->tryLink();
-	connect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
-	fake_clients.last()->moveToThread(generalData.serverPrivateVariables.eventThreaderList.at(5));
-	fake_clients.last()->start_step();
+	generalData.serverPrivateVariables.fake_clients.last()->tryLink();
+	connect(&nextStep,SIGNAL(timeout()),generalData.serverPrivateVariables.fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
+	generalData.serverPrivateVariables.fake_clients.last()->moveToThread(generalData.serverPrivateVariables.eventThreaderList.at(5));
+	generalData.serverPrivateVariables.fake_clients.last()->start_step();
 }
 
 ///////////////////////////////////// Generic command //////////////////////////////////
@@ -725,7 +723,7 @@ void EventDispatcher::serverCommand(QString command,QString extraText)
 		}
 		if(command=="addbots")
 		{
-			if(!fake_clients.empty())
+			if(!generalData.serverPrivateVariables.fake_clients.empty())
 			{
 				//client->local_sendPM(client->getPseudo(),"Remove previous bots firstly");
 				DebugClass::debugConsole("Remove previous bots firstly");
@@ -748,7 +746,7 @@ void EventDispatcher::serverCommand(QString command,QString extraText)
 			int index=0;
 			while(index<number_player && client_list.size()<generalData.serverSettings.max_players)
 			{
-				addBot(map_player_info.x,map_player_info.y,map_player_info.map,map_player_info.skin);
+				addBot();//add way to locate the bot spawn
 				index++;
 			}
 		}

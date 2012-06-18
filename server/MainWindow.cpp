@@ -608,7 +608,7 @@ void MainWindow::on_db_base_editingFinished()
 
 void MainWindow::on_pushButton_server_benchmark_clicked()
 {
-	eventDispatcher.start_benchmark(ui->benchmark_seconds->value(),ui->benchmark_clients->value());
+	eventDispatcher.start_benchmark(ui->benchmark_seconds->value(),ui->benchmark_clients->value(),ui->benchmark_benchmarkMap->isChecked());
 	updateActionButton();
 }
 
