@@ -261,13 +261,13 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					QDateTime date;
 					date.setTime_t(mtime);
 					DebugClass::debugConsole(QString("write the file: %1, with date: %2").arg(fileName).arg(date.toString("dd.MM.yyyy hh:mm:ss.zzz")));
-					QByteArray data=data.right(data.size()-in.device()->pos());
-					if(data.size()!=file_size)
+					QByteArray dataFile=data.right(data.size()-in.device()->pos());
+					if(dataFile.size()!=file_size)
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size of the file (size != data.size()) with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
 						return;
 					}
-					emit haveNewFile(fileName,data,mtime);
+					emit haveNewFile(fileName,dataFile,mtime);
 				}
 				break;
 				//chat as input

@@ -6,10 +6,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../general/base/DebugClass.h"
 #include "../general/base/MoveOnTheMap.h"
-#include "../general/base/GeneralStructures.h"
-#include "../ServerStructures.h"
 #include "MoveOnTheMap_Server.h"
 #include "../general/base/QFakeSocket.h"
 #include "../client/base/Api_client_virtual.h"
