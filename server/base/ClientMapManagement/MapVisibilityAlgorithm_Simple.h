@@ -25,7 +25,7 @@ private:
 	void insertAnotherClient(const quint32 &player_id,const Map_server *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed);
 	#endif
 	#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
-	void moveAnotherClient(const quint32 &player_id,const Map_server *map,const quint8 &movedUnit,const Direction &direction);
+	void moveAnotherClientWithMap(const quint32 &player_id,const Map_server *map,const quint8 &movedUnit,const Direction &direction);
 	#endif
 	#ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
 	void removeAnotherClient(const quint32 &player_id);
