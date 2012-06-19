@@ -15,8 +15,7 @@ public:
 	void abort();
 	void disconnectFromHost();
 	void connectToHost();
-	bool	atEnd ();
-	qint64	bytesAvailable ();
+	qint64	bytesAvailable () const;
 	qint64	bytesToWrite () const;
 	bool	canReadLine () const;
 	void	close ();
@@ -40,8 +39,7 @@ signals:
 protected:
 	QFakeSocket *theOtherSocket;
 private:
-	QMutex mutex;
-	QByteArray data;
+	mutable QByteArray data;
 	void internal_writeData(QByteArray data);
 	quint64 RX_size;
 };

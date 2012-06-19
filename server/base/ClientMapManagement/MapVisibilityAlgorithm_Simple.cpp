@@ -98,7 +98,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 				if(current_client!=this)
 					#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
-					current_client->moveAnotherClient(player_id,current_map,movedUnit,direction);
+					current_client->moveAnotherClientWithMap(player_id,current_map,movedUnit,direction);
 					#else
 					current_client->moveAnotherClient(player_id,movedUnit,direction);
 					#endif
@@ -169,7 +169,7 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const quint32 &player_id
 #endif
 
 #if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
-void MapVisibilityAlgorithm_Simple::moveAnotherClient(const quint32 &player_id,const Map_server *map,const quint8 &movedUnit,const Direction &direction)
+void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const quint32 &player_id,const Map_server *map,const quint8 &movedUnit,const Direction &direction)
 {
 	if(overMove.contains(player_id))
 	{

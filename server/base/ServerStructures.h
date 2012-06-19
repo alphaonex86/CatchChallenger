@@ -1,6 +1,3 @@
-#ifndef STRUCTURES_SERVER_H
-#define STRUCTURES_SERVER_H
-
 #include <QObject>
 #include <QList>
 #include <QStringList>
@@ -15,12 +12,15 @@
 
 #include "../general/base/GeneralStructures.h"
 #include "PlayerUpdater.h"
-#include "Bot/FakeBot.h"
+
+#ifndef STRUCTURES_SERVER_H
+#define STRUCTURES_SERVER_H
 
 class EventThreader;
 class Map_custom;
 class ClientBroadCast;
 class ClientMapManagement;
+class FakeBot;
 
 struct Map_semi_border_content_top_bottom
 {

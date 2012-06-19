@@ -285,19 +285,19 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 			{
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 				{
-					QString("wrong size with the main ident: %1").arg(mainCodeType).arg(subCodeType);
+					emit error(QString("wrong size with the main ident: %1").arg(mainCodeType).arg(subCodeType));
 					return;
 				}
 				quint8 type_player_query;
 				in >> type_player_query;
 				if(type_player_query<1 || type_player_query>2)
 				{
-					QString("type player query wrong: %1, main ident: %2, sub ident: %3").arg(type_player_query).arg(mainCodeType).arg(subCodeType);
+					emit error(QString("type player query wrong: %1, main ident: %2, sub ident: %3").arg(type_player_query).arg(mainCodeType).arg(subCodeType));
 					return;
 				}
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 				{
-					QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType);
+					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
 					return;
 				}
 				QList<quint32> player_ids;
@@ -306,7 +306,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 				in >> list_size;
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32)*list_size)
 				{
-					QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType);
+					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
 					return;
 				}
 				int index=0;
@@ -330,7 +330,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 			{
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 				{
-					QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType);
+					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
 					return;
 				}
 				QList<quint32> player_ids;
@@ -339,7 +339,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 				in >> list_size;
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32)*list_size)
 				{
-					QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType);
+					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
 					return;
 				}
 				int index=0;
@@ -413,7 +413,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 			{
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 				{
-					QString("wrong size with the main ident: %1").arg(mainCodeType);
+					emit error(QString("wrong size with the main ident: %1").arg(mainCodeType));
 					return;
 				}
 				quint32 number_of_file;
