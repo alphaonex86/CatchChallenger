@@ -19,10 +19,7 @@ void QFakeSocket::disconnectFromHost()
 		return;
 	theOtherSocket->disconnect();
 	theOtherSocket=NULL;
-	{
-		QMutexLocker locker(&mutex);
-		data.clear();
-	}
+	data.clear();
 	emit stateChanged(QAbstractSocket::UnconnectedState);
 	emit disconnected();
 }
@@ -36,15 +33,8 @@ void QFakeSocket::connectToHost()
 	emit connected();
 }
 
-bool	QFakeSocket::atEnd ()
+qint64	QFakeSocket::bytesAvailable () const
 {
-	QMutexLocker locker(&mutex);
-	return data.size()==0;
-}
-
-qint64	QFakeSocket::bytesAvailable ()
-{
-	QMutexLocker locker(&mutex);
 	return data.size();
 }
 
@@ -92,7 +82,6 @@ QFakeSocket * QFakeSocket::getTheOtherSocket()
 
 quint64 QFakeSocket::getRXSize()
 {
-	QMutexLocker locker(&mutex);
 	return RX_size;
 }
 
@@ -103,7 +92,6 @@ quint64 QFakeSocket::getTXSize()
 
 qint64	QFakeSocket::readData(char * data, qint64 maxSize)
 {
-	QMutexLocker locker(&mutex);
 	QByteArray extractedData=this->data.mid(0,maxSize);
 	memcpy(data,extractedData.data(),extractedData.size());
 	return extractedData.size();
@@ -127,10 +115,7 @@ qint64	QFakeSocket::writeData ( const char * data, qint64 size )
 
 void QFakeSocket::internal_writeData(QByteArray data)
 {
-	{
-		QMutexLocker locker(&mutex);
-		RX_size+=data.size();
-		this->data+=data;
-	}
+	RX_size+=data.size();
+	this->data+=data;
 	emit readyRead();
 }
