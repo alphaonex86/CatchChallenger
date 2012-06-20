@@ -93,7 +93,7 @@ void MapBasicMove::mapTeleporterUsed()
 		unloadFromTheMap();
 		x=teleporter.x;
 		y=teleporter.y;
-		current_map=teleporter.map;
+		current_map=static_cast<Map_server *>(teleporter.map);
 		emit message(QString("moveThePlayer(): pass on remote teleporter %1 (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
 		loadOnTheMap();
 	}
@@ -143,7 +143,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						unloadFromTheMap();
 						y=current_map->border.top.map->height;
 						x+=current_map->border.top.x_offset;
-						current_map=current_map->border.top.map;
+						current_map=static_cast<Map_server *>(current_map->border.top.map);
 						loadOnTheMap();
 					}
 					return;
@@ -188,7 +188,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						unloadFromTheMap();
 						y=0;
 						x+=current_map->border.right.y_offset;
-						current_map=current_map->border.right.map;
+						current_map=static_cast<Map_server *>(current_map->border.right.map);
 						loadOnTheMap();
 					}
 					return;
@@ -233,7 +233,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						unloadFromTheMap();
 						y=0;
 						x+=current_map->border.bottom.x_offset;
-						current_map=current_map->border.bottom.map;
+						current_map=static_cast<Map_server *>(current_map->border.bottom.map);
 						loadOnTheMap();
 					}
 					return;
@@ -278,7 +278,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						unloadFromTheMap();
 						y=current_map->border.left.map->width;
 						x+=current_map->border.left.y_offset;
-						current_map=current_map->border.left.map;
+						current_map=static_cast<Map_server *>(current_map->border.left.map);
 						loadOnTheMap();
 					}
 					return;
