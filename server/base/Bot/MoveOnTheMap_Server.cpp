@@ -74,7 +74,7 @@ void MoveOnTheMap_Server::move(Direction direction)
 			{
 				x=map->border.left.map->width-1;
 				y+=map->border.left.y_offset;
-				map=map->border.left.map;
+				map=static_cast<Map_server *>(map->border.left.map);
 				return;
 			}
 		break;
@@ -88,7 +88,7 @@ void MoveOnTheMap_Server::move(Direction direction)
 			{
 				x=0;
 				y+=map->border.right.y_offset;
-				map=map->border.right.map;
+				map=static_cast<Map_server *>(map->border.right.map);
 				return;
 			}
 		break;
@@ -102,7 +102,7 @@ void MoveOnTheMap_Server::move(Direction direction)
 			{
 				y=map->border.top.map->height-1;
 				x+=map->border.top.x_offset;
-				map=map->border.top.map;
+				map=static_cast<Map_server *>(map->border.top.map);
 				return;
 			}
 		break;
@@ -116,7 +116,7 @@ void MoveOnTheMap_Server::move(Direction direction)
 			{
 				y=0;
 				x+=map->border.bottom.x_offset;
-				map=map->border.bottom.map;
+				map=static_cast<Map_server *>(map->border.bottom.map);
 				return;
 			}
 		break;

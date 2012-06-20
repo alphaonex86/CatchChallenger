@@ -13,9 +13,8 @@
 #include <QTime>
 #include <QMutexLocker>
 
-#include "../general/base/DebugClass.h"
-#include "../VariableServer.h"
-#include "ServerStructures.h"
+#include "DebugClass.h"
+#include "GeneralStructures.h"
 
 class Map_loader : public QObject
 {

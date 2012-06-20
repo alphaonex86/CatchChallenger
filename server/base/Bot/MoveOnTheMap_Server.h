@@ -2,7 +2,7 @@
 
 #include "../ServerStructures.h"
 
-struct Map_server;
+class Map_server;
 
 #ifndef MOVEONTHEMAP_SERVER_H
 #define MOVEONTHEMAP_SERVER_H
