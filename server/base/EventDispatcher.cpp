@@ -44,7 +44,6 @@ EventDispatcher::EventDispatcher()
 
 	QStringList names;
 	names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher" << "benchmark";
-	latencyChecker.setLatencyVariable(generalData.serverPrivateVariables.eventThreaderList,names);
 
 	qRegisterMetaType<Chat_type>("Chat_type");
 
@@ -840,16 +839,6 @@ quint16 EventDispatcher::player_current()
 quint16 EventDispatcher::player_max()
 {
 	return generalData.serverSettings.max_players;
-}
-
-QStringList EventDispatcher::getLatency()
-{
-	return latencyChecker.getLatency();
-}
-
-quint32 EventDispatcher::getTotalLatency()
-{
-	return latencyChecker.getTotalLatency();
 }
 
 /////////////////////////////////// Async the call ///////////////////////////////////

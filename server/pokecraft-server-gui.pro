@@ -24,9 +24,7 @@ SOURCES += main.cpp\
     base/ClientNetworkRead.cpp \
     base/ClientBroadCast.cpp \
     base/ClientLocalCalcule.cpp \
-    base/Map_loader.cpp \
     base/PlayerUpdater.cpp \
-    base/LatencyChecker.cpp \
     base/Bot/FakeBot.cpp \
     base/ClientMapManagement/ClientMapManagement.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
@@ -38,10 +36,14 @@ SOURCES += main.cpp\
     ../general/base/ProtocolParsing.cpp \
     ../general/base/QFakeServer.cpp \
     ../general/base/QFakeSocket.cpp \
+    ../general/base/Map_loader.cpp \
     ../client/base/Api_protocol.cpp \
     ../client/base/Api_client_real.cpp \
     ../client/base/Api_client_virtual.cpp \
-    base/Bot/MoveOnTheMap_Server.cpp
+    base/Bot/MoveOnTheMap_Server.cpp \
+    base/BroadCastWithoutSender.cpp \
+    ../general/base/Map.cpp \
+    base/Map_server.cpp
 
 
 HEADERS += \
@@ -55,8 +57,6 @@ HEADERS += \
     base/ClientNetworkRead.h \
     base/ClientBroadCast.h \
     base/ClientLocalCalcule.h \
-    base/Map_loader.h \
-    base/LatencyChecker.h \
     base/Bot/FakeBot.h \
     base/PlayerUpdater.h \
     base/ClientMapManagement/ClientMapManagement.h \
@@ -72,10 +72,14 @@ HEADERS += \
     ../general/base/ProtocolParsing.h \
     ../general/base/QFakeServer.h \
     ../general/base/QFakeSocket.h \
+    ../general/base/Map_loader.h \
     ../client/base/Api_protocol.h \
     ../client/base/Api_client_real.h \
     ../client/base/Api_client_virtual.h \
-    base/Bot/MoveOnTheMap_Server.h
+    base/Bot/MoveOnTheMap_Server.h \
+    base/BroadCastWithoutSender.h \
+    ../general/base/Map.h \
+    base/Map_server.h
 
 HEADERS  += MainWindow.h
 
