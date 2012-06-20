@@ -7,14 +7,13 @@
 #include <time.h>
 
 #include "../general/base/MoveOnTheMap.h"
-#include "MoveOnTheMap_Server.h"
 #include "../general/base/QFakeSocket.h"
 #include "../client/base/Api_client_virtual.h"
 
 #ifndef FakeBot_H
 #define FakeBot_H
 
-class FakeBot : public QObject, public MoveOnTheMap_Server, public MoveOnTheMap
+class FakeBot : public QObject, public MoveOnTheMap
 {
 	Q_OBJECT
 public:
