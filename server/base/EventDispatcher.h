@@ -14,12 +14,12 @@
 #include "../general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "Client.h"
-#include "Map_loader.h"
+#include "../general/base/Map_loader.h"
 #include "Bot/FakeBot.h"
-#include "LatencyChecker.h"
 #include "../general/base/ProtocolParsing.h"
 #include "../general/base/QFakeServer.h"
 #include "../general/base/QFakeSocket.h"
+#include "Map_server.h"
 
 #ifndef EVENTDISPATCHER_H
 #define EVENTDISPATCHER_H
@@ -37,8 +37,6 @@ public:
 	bool isInBenchmark();
 	quint16 player_current();
 	quint16 player_max();
-	QStringList getLatency();
-	quint32 getTotalLatency();
 
 	//shared into all the program
 	static GeneralData generalData;
@@ -78,7 +76,6 @@ private:
 	int benchmark_latency;
 	QTimer *timer_benchmark_stop;
 	QTime time_benchmark_first_client;
-	LatencyChecker latencyChecker;
 	//to check double instance
 	//shared into all the program
 	static bool oneInstanceRunning;

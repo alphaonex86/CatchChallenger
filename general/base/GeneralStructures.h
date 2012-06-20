@@ -6,6 +6,8 @@
 #include <QByteArray>
 #include <QStringList>
 #include <QString>
+#include <QHash>
+#include <QVariant>
 
 enum Chat_type
 {
@@ -116,6 +118,63 @@ struct CommmonServerSettings
 	bool chat_allow_private;
 	bool chat_allow_aliance;
 	bool chat_allow_clan;
+};
+
+/* mpa related */
+struct Map_semi_border_content_top_bottom
+{
+	QString fileName;
+	qint32 x_offset;//can be negative, it's an offset!
+};
+
+struct Map_semi_border_content_left_right
+{
+	QString fileName;
+	qint32 y_offset;//can be negative, it's an offset!
+};
+
+struct Map_semi_border
+{
+	Map_semi_border_content_top_bottom top;
+	Map_semi_border_content_top_bottom bottom;
+	Map_semi_border_content_left_right left;
+	Map_semi_border_content_left_right right;
+};
+
+struct Map_to_send
+{
+	Map_semi_border border;
+	//QStringList other_map;//border and not
+	quint32 width;
+	quint32 height;
+	QHash<QString,QVariant> property;
+
+	struct MapToSend_ParsedLayer
+	{
+		bool *walkable;
+		bool *water;
+	};
+	MapToSend_ParsedLayer parsed_layer;
+
+	struct Temp_teleport
+	{
+		quint32 source_x,source_y;
+		quint32 destination_x,destination_y;
+		QString map;
+	};
+	QList<Temp_teleport> teleport;
+
+	struct Rescue_Point
+	{
+		quint8 x,y;
+	};
+	QList<Rescue_Point> rescue_points;
+
+	struct Bot_Spawn_Point
+	{
+		quint8 x,y;
+	};
+	QList<Bot_Spawn_Point> bot_spawn_points;
 };
 
 #endif // STRUCTURES_GENERAL_H
