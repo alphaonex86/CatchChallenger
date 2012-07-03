@@ -78,7 +78,8 @@ void FakeBot::random_new_step()
 	move(final_direction,(Map **)&map,x,y);
 }
 
-void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,Orientation direction,quint16 speed)
+//quint32,QString,quint16,quint16,quint8,quint16
+void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed)
 {
 	Q_UNUSED(speed);
 	if(id==api.getId())

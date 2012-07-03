@@ -14,7 +14,7 @@ class QFakeServer : public QObject
 	Q_OBJECT
 public:
 	friend class QFakeSocket;
-	explicit QFakeServer(QObject *parent = 0);
+	explicit QFakeServer();
 	static QFakeServer server;
 
 	virtual bool hasPendingConnections();
