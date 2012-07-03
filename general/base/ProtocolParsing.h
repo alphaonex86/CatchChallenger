@@ -5,6 +5,7 @@
 #include <QHash>
 #include <QByteArray>
 #include <QObject>
+#include <QAbstractSocket>
 
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
@@ -13,11 +14,11 @@ class ProtocolParsing : public QObject
 {
 	Q_OBJECT
 public:
-	ProtocolParsing(QIODevice * device);
+	ProtocolParsing(QAbstractSocket * device);
 	static PacketSizeMode packetSizeMode;
 	static void initialiseTheVariable();
 protected:
-	QIODevice * device;
+	QAbstractSocket * device;
 	/********************** static *********************/
 	//connexion parameters
 	static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
@@ -45,7 +46,7 @@ class ProtocolParsingInput : public ProtocolParsing
 {
 	Q_OBJECT
 public:
-	ProtocolParsingInput(QIODevice * device,PacketModeTransmission packetModeTransmission);
+	ProtocolParsingInput(QAbstractSocket * device,PacketModeTransmission packetModeTransmission);
 	friend class ProtocolParsing;
 	bool checkStringIntegrity(const QByteArray & data);
 protected:
@@ -94,7 +95,7 @@ class ProtocolParsingOutput : public ProtocolParsing
 {
 	Q_OBJECT
 public:
-	ProtocolParsingOutput(QIODevice * device,PacketModeTransmission packetModeTransmission);
+	ProtocolParsingOutput(QAbstractSocket * device,PacketModeTransmission packetModeTransmission);
 	friend class ProtocolParsing;
 
 	//send message without reply
@@ -115,7 +116,6 @@ private:
 	//reply to the query
 	QHash<quint8,quint16> replySize;
 signals:
-	void fake_send_data(const QByteArray &data);
 	void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
 	void newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 public slots:

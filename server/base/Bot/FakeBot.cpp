@@ -57,8 +57,6 @@ void FakeBot::random_new_step()
 	if(canGoTo(Direction_move_at_bottom,map,x,y))
 		directions_allowed << Direction_move_at_bottom;
 	loop_size=directions_allowed.size();
-	if(loop_size<=0)
-		return;
 	if(details)
 	{
 		QStringList directions_allowed_string;
@@ -70,6 +68,8 @@ void FakeBot::random_new_step()
 		}
 		DebugClass::debugConsole(QString("FakeBot::random_new_step(), x: %1, y:%2, directions_allowed_string: %3").arg(x).arg(y).arg(directions_allowed_string.join(", ")));
 	}
+	if(loop_size<=0)
+		return;
 	int random = rand()%loop_size;
 	Direction final_direction=directions_allowed.at(random);
 	//to group the signle move into move line
@@ -81,9 +81,13 @@ void FakeBot::random_new_step()
 //quint32,QString,quint16,quint16,quint8,quint16
 void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed)
 {
+	if(details)
+		DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2").arg(id).arg(mapName));
 	Q_UNUSED(speed);
 	if(id==api.getId())
 	{
+		if(details)
+			DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2").arg(id).arg(mapName));
 		if(!EventDispatcher::generalData.serverPrivateVariables.map_list.contains(mapName))
 		{
 			DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(mapName));

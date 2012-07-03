@@ -49,8 +49,6 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	{
 		remote_ip="NA";
 		port=9999;
-		connect(clientNetworkWrite,	SIGNAL(fake_send_data(QByteArray)),		this,			SIGNAL(fake_send_data(QByteArray)));
-		connect(this,			SIGNAL(fake_send_received_data(QByteArray)),	clientNetworkRead,	SLOT(fake_receive_data(QByteArray)),Qt::QueuedConnection);
 	}
 	connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
 	this->socket			= socket;

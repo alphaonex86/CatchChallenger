@@ -1,4 +1,5 @@
 #include "ProtocolParsing.h"
+#include "DebugClass.h"
 
 //connexion parameters
 PacketSizeMode ProtocolParsing::packetSizeMode;
@@ -29,7 +30,7 @@ quint8 ProtocolParsingInput::temp_size_8Bits;
 quint16 ProtocolParsingInput::temp_size_16Bits;
 quint32 ProtocolParsingInput::temp_size_32Bits;
 
-ProtocolParsing::ProtocolParsing(QIODevice * device)
+ProtocolParsing::ProtocolParsing(QAbstractSocket * device)
 {
 	this->device=device;
 }
@@ -48,7 +49,7 @@ void ProtocolParsing::initialiseTheVariable()
 	ProtocolParsing::replyCodeClientToServer=0x41;
 }
 
-ProtocolParsingInput::ProtocolParsingInput(QIODevice * device,PacketModeTransmission packetModeTransmission) :
+ProtocolParsingInput::ProtocolParsingInput(QAbstractSocket * device,PacketModeTransmission packetModeTransmission) :
 	ProtocolParsing(device)
 {
 	isClient=(packetModeTransmission==PacketModeTransmission_Client);
@@ -79,7 +80,7 @@ bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data)
 	return true;
 }
 
-ProtocolParsingOutput::ProtocolParsingOutput(QIODevice * device,PacketModeTransmission packetModeTransmission) :
+ProtocolParsingOutput::ProtocolParsingOutput(QAbstractSocket * device,PacketModeTransmission packetModeTransmission) :
 	ProtocolParsing(device)
 {
 	isClient=(packetModeTransmission==PacketModeTransmission_Client);
@@ -411,7 +412,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteArray &data)
 {
 	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
+	QDataStream out(&block, QAbstractSocket::WriteOnly);
 	if(isClient)
 		out << replyCodeClientToServer;
 	else
@@ -473,7 +474,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
 bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
 	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
+	QDataStream out(&block, QAbstractSocket::WriteOnly);
 	out << mainCodeType;
 	out << subCodeType;
 
@@ -498,7 +499,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const QByteArray &data)
 {
 	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
+	QDataStream out(&block, QAbstractSocket::WriteOnly);
 	out << mainCodeType;
 
 	if(isClient)
@@ -520,7 +521,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
 	emit newOutputQuery(mainCodeType,queryNumber);
 
 	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
+	QDataStream out(&block, QAbstractSocket::WriteOnly);
 	out << mainCodeType;
 	out << queryNumber;
 
@@ -543,7 +544,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
 	emit newOutputQuery(mainCodeType,subCodeType,queryNumber);
 
 	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
+	QDataStream out(&block, QAbstractSocket::WriteOnly);
 	out << mainCodeType;
 	out << subCodeType;
 	out << queryNumber;
@@ -568,28 +569,25 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
 
 bool ProtocolParsingOutput::internalPackOutcommingData(const QByteArray &data)
 {
-	if(device!=NULL)
+	DebugClass::debugConsole("internalPackOutcommingData(): start");
+	#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+	emit message(QString("Sended packet size: %1").arg(data.size()+sizeof(qint32)));
+	#endif // DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+	//emit message(QString("data: %1").arg(QString(data.toHex())));
+	byteWriten = device->write(data);
+	if(data.size()!=byteWriten)
 	{
-		#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-		emit message(QString("Sended packet size: %1").arg(data.size()+sizeof(qint32)));
-		#endif // DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-		//emit message(QString("data: %1").arg(QString(data.toHex())));
-		byteWriten = device->write(data);
-		if(data.size()!=byteWriten)
-		{
-			emit error(QString("All the bytes have not be written: %1").arg(device->errorString()));
-			return false;
-		}
+		DebugClass::debugConsole(QString("All the bytes have not be written: %1, byteWriten: %2").arg(device->errorString()).arg(byteWriten));
+		emit error(QString("All the bytes have not be written: %1, byteWriten: %2").arg(device->errorString()).arg(byteWriten));
+		return false;
 	}
-	else
-		emit fake_send_data(data);
 	return true;
 }
 
 QByteArray ProtocolParsingOutput::encodeSize(quint32 size)
 {
 	QByteArray block;
-	QDataStream out(&block, QIODevice::WriteOnly);
+	QDataStream out(&block, QAbstractSocket::WriteOnly);
 	if(packetSizeMode==PacketSizeMode_Small)
 	{
 		if(size<=0xFF)
