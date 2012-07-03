@@ -1,12 +1,12 @@
 #include "QFakeSocket.h"
 #include "QFakeServer.h"
-
-#include <QTcpSocket>
+#include "DebugClass.h"
 
 QFakeSocket::QFakeSocket() :
 	QAbstractSocket(QAbstractSocket::UnknownSocketType,0)
 {
 	theOtherSocket=NULL;
+	RX_size=0;
 }
 
 void QFakeSocket::abort()
@@ -106,8 +106,12 @@ qint64	QFakeSocket::readLineData ( char * data, qint64 maxlen )
 
 qint64	QFakeSocket::writeData ( const char * data, qint64 size )
 {
+	DebugClass::debugConsole(QString("writeData(): size: %1").arg(size));
 	if(theOtherSocket==NULL)
+	{
+		DebugClass::debugConsole("theOtherSocket==NULL");
 		return 0;
+	}
 	QByteArray dataToSend(data,size);
 	theOtherSocket->internal_writeData(dataToSend);
 	return size;
