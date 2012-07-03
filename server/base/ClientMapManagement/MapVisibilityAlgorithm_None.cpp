@@ -30,3 +30,20 @@ void MapVisibilityAlgorithm_None::mapVisiblity_unloadFromTheMap()
 {
 	removeClient();
 }
+
+//map slots, transmited by the current ClientNetworkRead
+void MapVisibilityAlgorithm_None::put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+{
+	Q_UNUSED(player_id);
+	Q_UNUSED(map);
+	Q_UNUSED(x);
+	Q_UNUSED(y);
+	Q_UNUSED(orientation);
+	Q_UNUSED(speed);
+}
+
+void MapVisibilityAlgorithm_None::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+{
+	Q_UNUSED(previousMovedUnit);
+	Q_UNUSED(direction);
+}
