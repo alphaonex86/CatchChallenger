@@ -44,7 +44,7 @@ public slots:
 	void doStep();
 private slots:
 	void random_new_step();
-	void insert_player(quint32 id,QString mapName,quint16 x,quint16 y,Orientation direction,quint16 speed);
+	void insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed);
 /*signals:
 	void disconnected();*/
 };

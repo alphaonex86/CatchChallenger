@@ -77,10 +77,10 @@ private slots:
 	void on_chat_allow_private_toggled(bool checked);
 	void on_chat_allow_aliance_toggled(bool checked);
 	void on_chat_allow_clan_toggled(bool checked);
-	void on_db_host_editingFinished();
-	void on_db_login_editingFinished();
-	void on_db_pass_editingFinished();
-	void on_db_base_editingFinished();
+	void on_db_mysql_host_editingFinished();
+	void on_db_mysql_login_editingFinished();
+	void on_db_mysql_pass_editingFinished();
+	void on_db_mysql_base_editingFinished();
 	void on_pushButton_server_benchmark_clicked();
 	void on_MapVisibilityAlgorithm_currentIndexChanged(int index);
 	void on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1);

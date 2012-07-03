@@ -15,6 +15,7 @@
 
 #include "DebugClass.h"
 #include "GeneralStructures.h"
+#include "Map.h"
 
 class Map_loader : public QObject
 {

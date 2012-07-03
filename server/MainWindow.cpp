@@ -560,28 +560,28 @@ void MainWindow::on_chat_allow_clan_toggled(bool checked)
 	settings->endGroup();
 }
 
-void MainWindow::on_db_host_editingFinished()
+void MainWindow::on_db_mysql_host_editingFinished()
 {
 	settings->beginGroup("db");
 	settings->setValue("mysql_host",ui->db_mysql_host->text());
 	settings->endGroup();
 }
 
-void MainWindow::on_db_login_editingFinished()
+void MainWindow::on_db_mysql_login_editingFinished()
 {
 	settings->beginGroup("db");
 	settings->setValue("mysql_login",ui->db_mysql_login->text());
 	settings->endGroup();
 }
 
-void MainWindow::on_db_pass_editingFinished()
+void MainWindow::on_db_mysql_pass_editingFinished()
 {
 	settings->beginGroup("db");
 	settings->setValue("mysql_pass",ui->db_mysql_pass->text());
 	settings->endGroup();
 }
 
-void MainWindow::on_db_base_editingFinished()
+void MainWindow::on_db_mysql_base_editingFinished()
 {
 	settings->beginGroup("db");
 	settings->setValue("mysql_db",ui->db_mysql_base->text());

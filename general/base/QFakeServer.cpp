@@ -3,8 +3,7 @@
 
 QFakeServer QFakeServer::server;
 
-QFakeServer::QFakeServer(QObject *parent) :
-	QObject(parent)
+QFakeServer::QFakeServer()
 {
 	m_isListening=false;
 }
@@ -13,7 +12,7 @@ void QFakeServer::addPendingConnection(QFakeSocket * socket)
 {
 	QPair<QFakeSocket *,QFakeSocket *> newEntry;
 	newEntry.first=socket;
-	newEntry.second=new QFakeSocket(this);
+	newEntry.second=new QFakeSocket();
 	{
 		QMutexLocker locker(&mutex);
 		m_listOfConnexion << newEntry;

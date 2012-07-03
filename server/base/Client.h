@@ -28,7 +28,7 @@ class Client : public QObject
 {
 	Q_OBJECT
 public:
-	explicit Client(QAbstractSocket *socket);
+	explicit Client(QAbstractSocket *socket,bool isFake);
 	~Client();
 	//cache
 	quint32 id;
@@ -38,7 +38,6 @@ public:
 	//to prevent remove before the right moment
 	bool is_ready_to_stop;
 	//do a fake login
-	void setFake();
 	void setInternal();
 private:
 	bool ask_is_ready_to_stop;
