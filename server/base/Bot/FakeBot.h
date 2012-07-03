@@ -8,6 +8,7 @@
 
 #include "../general/base/MoveOnTheMap.h"
 #include "../general/base/QFakeSocket.h"
+#include "../Map_server.h"
 #include "../client/base/Api_client_virtual.h"
 
 #ifndef FakeBot_H
@@ -35,6 +36,8 @@ private:
 	static int index_loop,loop_size;
 	static QSemaphore wait_to_stop;
 	bool do_step;
+	Map_server *map;
+	quint16 x,y;
 public slots:
 	void stop_step();
 	void stop();

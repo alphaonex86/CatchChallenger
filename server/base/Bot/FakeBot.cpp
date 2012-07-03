@@ -13,6 +13,7 @@ FakeBot::FakeBot() :
 	connect(&api,SIGNAL(insert_player(quint32,QString,quint16,quint16,quint8,quint16)),this,SLOT(insert_player(quint32,QString,quint16,quint16,quint8,quint16)));
 
 	details=false;
+	map=NULL;
 
 	do_step=false;
 	socket.connectToHost();
@@ -47,13 +48,13 @@ void FakeBot::start_step()
 void FakeBot::random_new_step()
 {
 	QList<Direction> directions_allowed;
-	if(canGoTo(Direction_move_at_left))
+	if(canGoTo(Direction_move_at_left,map,x,y))
 		directions_allowed << Direction_move_at_left;
-	if(canGoTo(Direction_move_at_right))
+	if(canGoTo(Direction_move_at_right,map,x,y))
 		directions_allowed << Direction_move_at_right;
-	if(canGoTo(Direction_move_at_top))
+	if(canGoTo(Direction_move_at_top,map,x,y))
 		directions_allowed << Direction_move_at_top;
-	if(canGoTo(Direction_move_at_bottom))
+	if(canGoTo(Direction_move_at_bottom,map,x,y))
 		directions_allowed << Direction_move_at_bottom;
 	loop_size=directions_allowed.size();
 	if(loop_size<=0)
@@ -74,7 +75,7 @@ void FakeBot::random_new_step()
 	//to group the signle move into move line
 	MoveOnTheMap::newDirection(final_direction);
 	//to do the real move
-	move(final_direction);
+	move(final_direction,(Map **)&map,x,y);
 }
 
 void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,Orientation direction,quint16 speed)
