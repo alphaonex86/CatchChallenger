@@ -16,10 +16,11 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
+SOURCES += ProcessControler.cpp \
+    main-cli.cpp
+HEADERS  += ProcessControler.h
 
-SOURCES += main-cli.cpp \
-    ProcessControler.cpp \
-    base/EventDispatcher.cpp \
+SOURCES += base/EventDispatcher.cpp \
     base/EventThreader.cpp \
     base/Client.cpp \
     base/ClientHeavyLoad.cpp \
@@ -27,23 +28,26 @@ SOURCES += main-cli.cpp \
     base/ClientNetworkRead.cpp \
     base/ClientBroadCast.cpp \
     base/ClientLocalCalcule.cpp \
-    base/Map_loader.cpp \
     base/PlayerUpdater.cpp \
-    base/LatencyChecker.cpp \
-    base/FakeBot.cpp \
+    base/BroadCastWithoutSender.cpp \
+    base/Map_server.cpp \
+    base/Bot/FakeBot.cpp \
     base/ClientMapManagement/ClientMapManagement.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
     base/ClientMapManagement/MapBasicMove.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
     ../general/base/DebugClass.cpp \
-    ../general/base/MoveClient.cpp \
+    ../general/base/MoveOnTheMap.cpp \
     ../general/base/ChatParsing.cpp \
+    ../general/base/ProtocolParsing.cpp \
     ../general/base/QFakeServer.cpp \
-    ../general/base/QFakeSocket.cpp
-
-HEADERS += \
-    ProcessControler.h \
-    VariableServer.h \
+    ../general/base/QFakeSocket.cpp \
+    ../general/base/Map_loader.cpp \
+    ../general/base/Map.cpp \
+    ../client/base/Api_protocol.cpp \
+    ../client/base/Api_client_real.cpp \
+    ../client/base/Api_client_virtual.cpp
+HEADERS += VariableServer.h \
     base/EventDispatcher.h \
     base/ServerStructures.h \
     base/EventThreader.h \
@@ -53,21 +57,28 @@ HEADERS += \
     base/ClientNetworkRead.h \
     base/ClientBroadCast.h \
     base/ClientLocalCalcule.h \
-    base/Map_loader.h \
-    base/LatencyChecker.h \
-    base/FakeBot.h \
+    base/BroadCastWithoutSender.h \
     base/PlayerUpdater.h \
+    base/Map_server.h \
+    base/Bot/FakeBot.h \
     base/ClientMapManagement/ClientMapManagement.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
     base/ClientMapManagement/MapBasicMove.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
-    ../client/base/ClientStructures.h \
-    ../general/base/MoveClient.h \
+    ../general/base/MoveOnTheMap.h \
     ../general/base/DebugClass.h \
     ../general/base/GeneralStructures.h \
     ../general/base/ChatParsing.h \
+    ../general/base/GeneralVariable.h \
+    ../general/base/ProtocolParsing.h \
     ../general/base/QFakeServer.h \
-    ../general/base/QFakeSocket.h
+    ../general/base/QFakeSocket.h \
+    ../general/base/Map_loader.h \
+    ../general/base/Map.h \
+    ../client/base/ClientStructures.h \
+    ../client/base/Api_protocol.h \
+    ../client/base/Api_client_real.h \
+    ../client/base/Api_client_virtual.h
 
 
 RESOURCES += \

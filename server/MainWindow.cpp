@@ -178,7 +178,6 @@ void MainWindow::update_the_info()
 		ui->listLatency->addItem(tr("%1ms").arg(internal_currentLatency));
 	else
 		ui->listLatency->item(0)->setText(tr("%1ms").arg(internal_currentLatency));
-	quint16 total_latency=internal_currentLatency;
 	if(eventDispatcher.isListen() || eventDispatcher.isInBenchmark())
 	{
 		quint16 player_current,player_max;
@@ -191,23 +190,6 @@ void MainWindow::update_the_info()
 	else
 	{
 		ui->progressBar_player->setValue(0);
-	}
-	QStringList latencyList=eventDispatcher.getLatency();
-	int index=0;
-	while(index<latencyList.size())
-	{
-		if(ui->listLatency->count()<=(index+1))
-			ui->listLatency->addItem(latencyList.at(index));
-		else
-			ui->listLatency->item(index+1)->setText(latencyList.at(index));
-		index++;
-	}
-	total_latency+=eventDispatcher.getTotalLatency();
-	int last_item=index+1;
-	while(last_item<ui->listLatency->count())
-	{
-		delete ui->listLatency->item(last_item+1);
-		last_item++;
 	}
 }
 

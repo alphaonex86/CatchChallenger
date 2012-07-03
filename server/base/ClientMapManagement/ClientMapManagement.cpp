@@ -102,7 +102,7 @@ void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Di
 {
 	mapHaveChanged=false;
 	MapBasicMove::moveThePlayer(previousMovedUnit,direction);
-	if(stopCurrentMethod)
+	if(unlikely(stopCurrentMethod))
 		return;
 	moveClient(previousMovedUnit,direction,mapHaveChanged);
 }
@@ -148,14 +148,14 @@ void ClientMapManagement::moveAnotherClient(const quint32 &player_id,const quint
 void ClientMapManagement::removeAnotherClient(const quint32 &player_id)
 {
 	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
-	if(!stopIt && to_send_map_management_remove.contains(player_id))
+	if(unlikely(!stopIt && to_send_map_management_remove.contains(player_id)))
 	{
 		emit message("try dual remove");
 		return;
 	}
 	#endif
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	if(!stopIt)
+	if(unlikely(!stopIt))
 		emit message(QString("removeAnotherClient(%1,%2,%3)").arg(player_id));
 	#endif
 

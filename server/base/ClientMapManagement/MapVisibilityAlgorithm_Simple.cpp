@@ -15,7 +15,7 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 void MapVisibilityAlgorithm_Simple::insertClient()
 {
 	loop_size=current_map->clients.size();
-	if(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max)
+	if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
 	{
 		//insert the new client
 		index=0;
@@ -24,14 +24,12 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 			//register on other clients
 			current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 			current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
-			//register the other client on him self
-			insertAnotherClient(current_client->player_id,current_client->current_map,current_client->x,current_client->y,current_client->last_direction,current_client->speed);
 			index++;
 		}
 	}
 	else
 	{
-		if(current_map->mapVisibility.simple.show)
+		if(unlikely(current_map->mapVisibility.simple.show))
 		{
 			current_map->mapVisibility.simple.show=false;
 			//drop all show client because it have excess the limit
@@ -51,9 +49,9 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged)
 {
 	loop_size=current_map->clients.size();
-	if(mapHaveChanged)
+	if(unlikely(mapHaveChanged))
 	{
-		if(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max)
+		if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
 		{
 			//insert the new client
 			index=0;
@@ -61,7 +59,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 			{
 				//register on other clients
 				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
-				if(current_client!=this)
+				if(likely(current_client!=this))
 				{
 					current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 					//register the other client on him self
@@ -90,13 +88,13 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 		#endif
 
 		//normal operation
-		if(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max)
+		if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
 		{
 			index=0;
 			while(index<loop_size)
 			{
 				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
-				if(current_client!=this)
+				if(likely(current_client!=this))
 					#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
 					current_client->moveAnotherClientWithMap(player_id,current_map,movedUnit,direction);
 					#else
@@ -114,7 +112,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 void MapVisibilityAlgorithm_Simple::removeClient()
 {
 	loop_size=current_map->clients.size();
-	if(loop_size==(EventDispatcher::generalData.serverSettings.mapVisibility.simple.reshow) && current_map->mapVisibility.simple.show==false)
+	if(unlikely(loop_size==(EventDispatcher::generalData.serverSettings.mapVisibility.simple.reshow) && current_map->mapVisibility.simple.show==false))
 	{
 		current_map->mapVisibility.simple.show=true;
 		//insert all the client because it start to be visible
@@ -126,7 +124,7 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 		}
 	}
 	//nothing removed because all clients are already hide
-	else if(loop_size>(EventDispatcher::generalData.serverSettings.mapVisibility.simple.max+1))
+	else if(unlikely(loop_size>(EventDispatcher::generalData.serverSettings.mapVisibility.simple.max+1)))
 	{
 	}
 	else //normal working
@@ -152,7 +150,7 @@ void MapVisibilityAlgorithm_Simple::reinsertAllClient(const int &loop_size)
 	while(index<loop_size)
 	{
 		current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
-		if(current_client!=this)
+		if(likely(current_client!=this))
 			current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 		index++;
 	}
@@ -171,12 +169,14 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const quint32 &player_id
 #if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
 void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const quint32 &player_id,const Map_server *map,const quint8 &movedUnit,const Direction &direction)
 {
-	if(overMove.contains(player_id))
+	//already into over move
+	if(unlikely(overMove.contains(player_id)))
 	{
 		to_send_map_management_remove.remove(player_id);
 		ClientMapManagement::insertAnotherClient(player_id,map,x,y,direction,speed);
 	}
-	else if((to_send_map_management_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))>=(sizeof(quint32)+map->map_file.size()*sizeof(quint16)+sizeof(quint16)+sizeof(quint16)+sizeof(quint8)+sizeof(quint16)))
+	//go into over move
+	else if(unlikely((to_send_map_management_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))>=(sizeof(quint32)+map->map_file.size()*sizeof(quint16)+sizeof(quint16)+sizeof(quint16)+sizeof(quint8)+sizeof(quint16))))
 	{
 		to_send_map_management_move.remove(player_id);
 		overMove << player_id;

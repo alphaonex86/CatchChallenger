@@ -112,7 +112,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 	#endif
 	moveThePlayer_index_move=0;
 	stopCurrentMethod=false;
-	if(last_direction==direction)
+	if(unlikely(last_direction==direction))
 	{
 		emit error(QString("Previous action is same direction: %1").arg(last_direction));
 		stopCurrentMethod=true;
@@ -121,7 +121,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 	switch(last_direction)
 	{
 		case Direction_move_at_top:
-			if(previousMovedUnit==0)
+			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
@@ -129,9 +129,9 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if(0==y)
+				if(unlikely(0==y))
 				{
-					if(current_map->border.top.map==NULL)
+					if(unlikely(current_map->border.top.map==NULL))
 					{
 						emit error(QString("moveThePlayer(), out of map: %1 by top").arg(current_map->map_file));
 						stopCurrentMethod=true;
@@ -150,15 +150,15 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				}
 				else
 					y--;
-				if(!checkCollision())
+				if(unlikely(!checkCollision()))
 					return;
-				if(current_map->teleporter.contains(x+y*current_map->width))
+				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
 		case Direction_look_at_top:
-			if(previousMovedUnit>0)
+			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_top: Previous action is not moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
@@ -166,7 +166,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 		break;
 		case Direction_move_at_right:
-			if(previousMovedUnit==0)
+			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_right: Previous action is moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
@@ -174,9 +174,9 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if((current_map->width-1)==x)
+				if(unlikely((current_map->width-1)==x))
 				{
-					if(current_map->border.right.map==NULL)
+					if(unlikely(current_map->border.right.map==NULL))
 					{
 						emit error(QString("moveThePlayer(): move at right, out of map: %1, by right").arg(current_map->map_file));
 						stopCurrentMethod=true;
@@ -195,15 +195,15 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				}
 				else
 					x++;
-				if(!checkCollision())
+				if(unlikely(!checkCollision()))
 					return;
-				if(current_map->teleporter.contains(x+y*current_map->width))
+				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
 		case Direction_look_at_right:
-			if(previousMovedUnit>0)
+			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_right: Previous action is not moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
@@ -211,7 +211,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 		break;
 		case Direction_move_at_bottom:
-			if(previousMovedUnit==0)
+			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_bottom: Previous action is moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
@@ -219,9 +219,9 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if((current_map->height-1)==y)
+				if(unlikely((current_map->height-1)==y))
 				{
-					if(current_map->border.bottom.map==NULL)
+					if(unlikely(current_map->border.bottom.map==NULL))
 					{
 						emit error(QString("moveThePlayer(): move at bottom, out of map: %1, by bottom").arg(current_map->map_file));
 						stopCurrentMethod=true;
@@ -240,15 +240,15 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				}
 				else
 					y++;
-				if(!checkCollision())
+				if(unlikely(!checkCollision()))
 					return;
-				if(current_map->teleporter.contains(x+y*current_map->width))
+				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
 		case Direction_look_at_bottom:
-			if(previousMovedUnit>0)
+			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_bottom: Previous action is not moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
@@ -256,7 +256,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 		break;
 		case Direction_move_at_left:
-			if(previousMovedUnit==0)
+			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
@@ -264,9 +264,9 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if(0==x)
+				if(unlikely(0==x))
 				{
-					if(current_map->border.left.map==NULL)
+					if(unlikely(current_map->border.left.map==NULL))
 					{
 						emit error(QString("moveThePlayer(): move at left, out of map: %1, by left").arg(current_map->map_file));
 						stopCurrentMethod=true;
@@ -285,15 +285,15 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				}
 				else
 					x--;
-				if(!checkCollision())
+				if(unlikely(!checkCollision()))
 					return;
-				if(current_map->teleporter.contains(x+y*current_map->width))
+				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
 		case Direction_look_at_left:
-			if(previousMovedUnit>0)
+			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_left: Previous action is not moving: %1").arg(last_direction));
 				stopCurrentMethod=true;
