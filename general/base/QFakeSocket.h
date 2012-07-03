@@ -11,7 +11,7 @@ class QFakeSocket : public QAbstractSocket
 public:
 	friend class QFakeServer;
 //	friend class QFakeSocket;
-	explicit QFakeSocket(QObject *parent = 0);
+	explicit QFakeSocket();
 	void abort();
 	void disconnectFromHost();
 	void connectToHost();

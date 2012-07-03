@@ -5,16 +5,9 @@
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
-Client::Client(QAbstractSocket *socket)
+Client::Client(QAbstractSocket *socket,bool isFake)
 {
-	qRegisterMetaType<Player_internal_informations>("Player_internal_informations");
-	qRegisterMetaType<QList<quint32> >("QList<quint32>");
-	qRegisterMetaType<Orientation>("Orientation");
-	qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
-	qRegisterMetaType<Chat_type>("Chat_type");
-	qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
-	qRegisterMetaType<Direction>("Direction");
-	qRegisterMetaType<Map_server*>("Map_final*");
+	player_informations.isFake=isFake;
 
 	clientBroadCast=new ClientBroadCast();
 	clientHeavyLoad=new ClientHeavyLoad();
@@ -44,16 +37,13 @@ Client::Client(QAbstractSocket *socket)
 
 	player_informations.public_and_private_informations.public_informations.pseudo="";
 	player_informations.public_and_private_informations.public_informations.id=0;
-	player_informations.isFake=false;
 
-	if(socket!=NULL)
+	if(!player_informations.isFake)
 	{
 		remote_ip=socket->peerAddress().toString();
 		port=socket->peerPort();
 		connect(socket,	SIGNAL(error(QAbstractSocket::SocketError)),	this, SLOT(connectionError(QAbstractSocket::SocketError)));
-		connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
-		normalOutput("Connected client");
-		this->socket			= socket;
+		normalOutput(QString("Connected client: %1, %2").arg(remote_ip).arg(port));
 	}
 	else
 	{
@@ -61,8 +51,10 @@ Client::Client(QAbstractSocket *socket)
 		port=9999;
 		connect(clientNetworkWrite,	SIGNAL(fake_send_data(QByteArray)),		this,			SIGNAL(fake_send_data(QByteArray)));
 		connect(this,			SIGNAL(fake_send_received_data(QByteArray)),	clientNetworkRead,	SLOT(fake_receive_data(QByteArray)),Qt::QueuedConnection);
-		this->socket			= NULL;
 	}
+	connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
+	this->socket			= socket;
+
 	is_logged=false;
 	is_ready_to_stop=false;
 	ask_is_ready_to_stop=false;
@@ -112,8 +104,6 @@ Client::Client(QAbstractSocket *socket)
 		clientHeavyLoad,SLOT(askRandomSeedList(quint8)),Qt::QueuedConnection);
 	connect(clientNetworkRead,SIGNAL(datapackList(quint8,QStringList,QList<quint32>)),
 		clientHeavyLoad,SLOT(datapackList(quint8,QStringList,QList<quint32>)),Qt::QueuedConnection);
-	connect(this,SIGNAL(send_fakeLogin(quint32,quint16,quint16,Map_server *,Orientation,QString)),
-		clientHeavyLoad,SLOT(fakeLogin(quint32,quint16,quint16,Map_server *,Orientation,QString)),Qt::QueuedConnection);
 
 	//packet parsed (map management)
 	connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientLocalCalcule,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
@@ -298,11 +288,6 @@ void Client::send_player_informations()
 QString Client::getPseudo()
 {
 	return player_informations.public_and_private_informations.public_informations.pseudo;
-}
-
-void Client::setFake()
-{
-	player_informations.isFake=true;
 }
 
 void Client::serverCommand(QString command,QString extraText)
