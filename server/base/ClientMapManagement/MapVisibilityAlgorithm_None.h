@@ -14,8 +14,10 @@ protected:
 	void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged);
 	void removeClient();
 	void mapVisiblity_unloadFromTheMap();
-private:
-	MapVisibilityAlgorithm_None *current_client;
+public slots:
+	//map slots, transmited by the current ClientNetworkRead
+	virtual void put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 };
 
 #endif // MAPVISIBILITYALGORITHM_SIMPLE_H

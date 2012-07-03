@@ -1,7 +1,7 @@
 #ifndef VARIABLESERVER_H
 #define VARIABLESERVER_H
 
-/*
+//*
 #define DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 #define DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 #define DEBUG_MESSAGE_CLIENT_MOVE
@@ -9,7 +9,7 @@
 #define DEBUG_MESSAGE_CLIENT_MAP_BORDER
 #define DEBUG_MESSAGE_CLIENT_MAP_OBJECT
 #define DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-//#define DEBUG_MESSAGE_CLIENT_RAW_MAP
+#define DEBUG_MESSAGE_CLIENT_RAW_MAP
 //*/
 
 //in ms
@@ -30,5 +30,8 @@
 
 /// not end all packet, drop move/insert if remove, ... use very few more cpu, < 1% more cpu
 #define POKECRAFT_SERVER_VISIBILITY_CLEAR
+
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
 
 #endif // VARIABLESERVER_H

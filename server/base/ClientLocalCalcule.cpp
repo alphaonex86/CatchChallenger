@@ -31,4 +31,18 @@ void ClientLocalCalcule::put_on_the_map(const quint32 &player_id,Map_server *map
 	MapBasicMove::put_on_the_map(player_id,map,x,y,orientation,speed);
 
 	loadOnTheMap();
+
+	//send to the client the position of the player
+	QByteArray outputData;
+	QDataStream out(&outputData, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_4_4);
+	out << (quint8)0x01;
+	out << player_id;
+	out << map->map_file;
+	out << x;
+	out << y;
+	out << (quint8)orientation;
+	out << speed;
+	out << 1;//only send the position of the local player
+	emit sendPacket(0xC0,outputData);
 }

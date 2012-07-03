@@ -14,9 +14,11 @@ TEMPLATE = app
 
 CONFIG   += console
 
-SOURCES += main.cpp\
-	MainWindow.cpp \
-    base/EventDispatcher.cpp \
+SOURCES += MainWindow.cpp \
+    main.cpp
+HEADERS  += MainWindow.h
+
+SOURCES += base/EventDispatcher.cpp \
     base/EventThreader.cpp \
     base/Client.cpp \
     base/ClientHeavyLoad.cpp \
@@ -25,6 +27,8 @@ SOURCES += main.cpp\
     base/ClientBroadCast.cpp \
     base/ClientLocalCalcule.cpp \
     base/PlayerUpdater.cpp \
+    base/BroadCastWithoutSender.cpp \
+    base/Map_server.cpp \
     base/Bot/FakeBot.cpp \
     base/ClientMapManagement/ClientMapManagement.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
@@ -37,17 +41,11 @@ SOURCES += main.cpp\
     ../general/base/QFakeServer.cpp \
     ../general/base/QFakeSocket.cpp \
     ../general/base/Map_loader.cpp \
+    ../general/base/Map.cpp \
     ../client/base/Api_protocol.cpp \
     ../client/base/Api_client_real.cpp \
-    ../client/base/Api_client_virtual.cpp \
-    base/Bot/MoveOnTheMap_Server.cpp \
-    base/BroadCastWithoutSender.cpp \
-    ../general/base/Map.cpp \
-    base/Map_server.cpp
-
-
-HEADERS += \
-    VariableServer.h \
+    ../client/base/Api_client_virtual.cpp
+HEADERS += VariableServer.h \
     base/EventDispatcher.h \
     base/ServerStructures.h \
     base/EventThreader.h \
@@ -57,13 +55,14 @@ HEADERS += \
     base/ClientNetworkRead.h \
     base/ClientBroadCast.h \
     base/ClientLocalCalcule.h \
-    base/Bot/FakeBot.h \
+    base/BroadCastWithoutSender.h \
     base/PlayerUpdater.h \
+    base/Map_server.h \
+    base/Bot/FakeBot.h \
     base/ClientMapManagement/ClientMapManagement.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
     base/ClientMapManagement/MapBasicMove.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
-    ../client/base/ClientStructures.h \
     ../general/base/MoveOnTheMap.h \
     ../general/base/DebugClass.h \
     ../general/base/GeneralStructures.h \
@@ -73,15 +72,11 @@ HEADERS += \
     ../general/base/QFakeServer.h \
     ../general/base/QFakeSocket.h \
     ../general/base/Map_loader.h \
+    ../general/base/Map.h \
+    ../client/base/ClientStructures.h \
     ../client/base/Api_protocol.h \
     ../client/base/Api_client_real.h \
-    ../client/base/Api_client_virtual.h \
-    base/Bot/MoveOnTheMap_Server.h \
-    base/BroadCastWithoutSender.h \
-    ../general/base/Map.h \
-    base/Map_server.h
-
-HEADERS  += MainWindow.h
+    ../client/base/Api_client_virtual.h
 
 FORMS    += MainWindow.ui
 
