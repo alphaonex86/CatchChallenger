@@ -30,12 +30,12 @@ protected:
 	qint64	readData ( char * data, qint64 maxSize );
 	qint64	readLineData(char * data, qint64 maxlen );
 	qint64	writeData(const char * data, qint64 size);
-signals:
+/*signals:
 	void	connected();
 	void	disconnected();
 	void	error ( QAbstractSocket::SocketError socketError );
 	void	stateChanged ( QAbstractSocket::SocketState socketState );
-	void	readyRead();
+	void	readyRead();*/
 protected:
 	QFakeSocket *theOtherSocket;
 private:
