@@ -46,11 +46,18 @@ EventDispatcher::EventDispatcher()
 	names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher" << "benchmark";
 
 	qRegisterMetaType<Chat_type>("Chat_type");
+	qRegisterMetaType<Player_internal_informations>("Player_internal_informations");
+	qRegisterMetaType<QList<quint32> >("QList<quint32>");
+	qRegisterMetaType<Orientation>("Orientation");
+	qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
+	qRegisterMetaType<Chat_type>("Chat_type");
+	qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
+	qRegisterMetaType<Direction>("Direction");
+	qRegisterMetaType<Map_server*>("Map_final*");
 
 	connect(this,SIGNAL(try_start_benchmark(quint16,quint16,bool)),this,SLOT(start_internal_benchmark(quint16,quint16,bool)),Qt::QueuedConnection);
 	connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
 	connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
-	connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()));
 
 	in_benchmark_mode=false;
 	stat=Down;
@@ -239,9 +246,22 @@ void EventDispatcher::preload_the_map()
 				)
 			{
 				int virtual_position=semi_loaded_map[index].old_map.teleport.at(sub_index).source_x+semi_loaded_map[index].old_map.teleport.at(sub_index).source_y*semi_loaded_map[index].map->width;
-				semi_loaded_map[index].map->teleporter[virtual_position].map=generalData.serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
-				semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
-				semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
+				if(semi_loaded_map[index].map->teleporter.contains(virtual_position))
+				{
+					DebugClass::debugConsole(QString("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+						 .arg(semi_loaded_map[index].map->map_file)
+						 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
+						 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
+						 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
+						 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
+						 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+				}
+				else
+				{
+					semi_loaded_map[index].map->teleporter[virtual_position].map=generalData.serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
+					semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
+					semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
+				}
 			}
 			else
 				DebugClass::debugConsole(QString("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
@@ -395,7 +415,11 @@ void EventDispatcher::load_settings()
 void EventDispatcher::start_internal_server()
 {
 	if(server==NULL)
+	{
 		server=new QTcpServer();
+		//to do in the thread
+		connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
+	}
 	if(server->isListening())
 	{
 		DebugClass::debugConsole(QString("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
@@ -684,8 +708,7 @@ void EventDispatcher::removeBots()
 void EventDispatcher::addBot()
 {
 	generalData.serverPrivateVariables.fake_clients << new FakeBot();
-	client_list << new Client(generalData.serverPrivateVariables.fake_clients.last()->socket.getTheOtherSocket());
-	client_list.last()->setFake();
+	client_list << new Client(generalData.serverPrivateVariables.fake_clients.last()->socket.getTheOtherSocket(),true);
 	connect_the_last_client();
 
 	generalData.serverPrivateVariables.fake_clients.last()->tryLink();
@@ -792,7 +815,7 @@ void EventDispatcher::newConnection()
 		QTcpSocket *socket = server->nextPendingConnection();
 		if(socket!=NULL)
 		{
-			client_list << new Client(socket);
+			client_list << new Client(socket,false);
 			connect_the_last_client();
 		}
 		else

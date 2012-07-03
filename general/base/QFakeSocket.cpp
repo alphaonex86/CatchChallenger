@@ -3,8 +3,8 @@
 
 #include <QTcpSocket>
 
-QFakeSocket::QFakeSocket(QObject *parent) :
-	QAbstractSocket(QAbstractSocket::UnknownSocketType,parent)
+QFakeSocket::QFakeSocket() :
+	QAbstractSocket(QAbstractSocket::UnknownSocketType,0)
 {
 	theOtherSocket=NULL;
 }
