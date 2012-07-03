@@ -531,11 +531,6 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	while(index<number_of_client)
 	{
 		addBot();
-		if(index==0)
-		{
-			//fake_clients.last()->show_details();
-			time_benchmark_first_client.start();
-		}
 		index++;
 	}
 	timer_benchmark_stop->start();
@@ -711,10 +706,15 @@ void EventDispatcher::addBot()
 	client_list << new Client(generalData.serverPrivateVariables.fake_clients.last()->socket.getTheOtherSocket(),true);
 	connect_the_last_client();
 
-	generalData.serverPrivateVariables.fake_clients.last()->tryLink();
+	if(generalData.serverPrivateVariables.fake_clients.size()==1)
+	{
+		generalData.serverPrivateVariables.fake_clients.last()->show_details();
+		time_benchmark_first_client.start();
+	}
 	connect(&nextStep,SIGNAL(timeout()),generalData.serverPrivateVariables.fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
 	generalData.serverPrivateVariables.fake_clients.last()->moveToThread(generalData.serverPrivateVariables.eventThreaderList.at(5));
 	generalData.serverPrivateVariables.fake_clients.last()->start_step();
+	generalData.serverPrivateVariables.fake_clients.last()->tryLink();
 }
 
 ///////////////////////////////////// Generic command //////////////////////////////////
