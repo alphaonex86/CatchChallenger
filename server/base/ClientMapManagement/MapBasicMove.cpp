@@ -36,7 +36,7 @@ void MapBasicMove::askIfIsReadyToStop()
 		emit isReadyToStop();
 		return;
 	}
-	unloadFromTheMap();
+	unloadFromTheMap();//product remove on the map
 
 	extraStop();
 
@@ -53,7 +53,7 @@ void MapBasicMove::stop()
 	deleteLater();
 }
 
-void MapBasicMove::put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void MapBasicMove::put_on_the_map(Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
 	//store the starting informations
 	last_direction=static_cast<Direction>(orientation);

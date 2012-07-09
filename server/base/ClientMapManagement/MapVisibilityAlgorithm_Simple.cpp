@@ -24,6 +24,7 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 			//register on other clients
 			current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 			current_client->insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
+			insertAnotherClient(current_client->player_id,current_client->current_map,current_client->x,current_client->y,current_client->last_direction,current_client->speed);
 			index++;
 		}
 	}
@@ -42,8 +43,8 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 			}
 		}
 	}
-	//auto insert to know where it have spawn
-	insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
+	//auto insert to know where it have spawn, now in charge of ClientLocalCalcule
+	//insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 }
 
 void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged)
@@ -51,6 +52,9 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 	loop_size=current_map->clients.size();
 	if(unlikely(mapHaveChanged))
 	{
+		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
+		emit message(QString("map have change %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(directionToString((Direction)direction)).arg(loop_size-1));
+		#endif
 		if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
 		{
 			//insert the new client

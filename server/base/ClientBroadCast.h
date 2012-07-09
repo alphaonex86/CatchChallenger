@@ -27,29 +27,26 @@ public:
 	// set the variable
 	void setVariable(Player_internal_informations *player_informations);
 	void disconnect();
-	//cache
-	QString pseudo;
-	quint32 player_id;
+	//player indexed list
+	static QHash<QString,ClientBroadCast *> playerByPseudo;
+	static QList<ClientBroadCast *> clientBroadCastList;
 public slots:
 	//global slot
-	void receivePM(const QString &text,const quint32 &player_id);
+	void receivePM(const QString &text,const QString &pseudo);
 	void sendPM(const QString &text,const QString &pseudo);
-	void receiveChatText(const Chat_type &chatType,const QString &text,const quint32 &sender_player_id);
+	void receiveChatText(const Chat_type &chatType,const QString &text,const QString &sender_pseudo,const Player_type &sender_player_type);
+	void receiveSystemText(const bool &important,const QString &text);
 	void sendChatText(const Chat_type &chatType,const QString &text);
 	void receive_instant_player_number(qint32 connected_players);
 	void kick();
 	void sendBroadCastCommand(const QString &command,const QString &extraText);
+	void setRights(const Player_type& type);
 	//after login
 	void send_player_informations();
 	//normal slots
 	void askIfIsReadyToStop();
 	void stop();
 	void sendSystemMessage(const QString &text,const bool &important=false);
-	//player watching
-	void addPlayersInformationToWatch(const QList<quint32> &player_ids,const quint8 &type_player_query);
-	void removePlayersInformationToWatch(const QList<quint32> &player_ids);
-	//void receiveQueryPlayersInformation(QList<quint32> player_ids);
-	void askPlayersInformation(const QList<quint32> &player_ids);
 signals:
 	//normal signals
 	void error(const QString &error);
@@ -61,15 +58,11 @@ signals:
 	void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
 	void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
 private:
-	//player login
-	void send_players_informations(const QList<Player_private_and_public_informations> &players_informations);
-	void send_players_informations(const QList<Player_public_informations> &players_informations);
 	//local data
 	QList<Player_private_and_public_informations> players_informations_to_push;
 	QSemaphore disconnection;
 	qint32 connected_players;
 private slots:
-	void receivePlayersInformation(const Player_private_and_public_informations &player_informations);
 	void internal_disconnect();
 };
 

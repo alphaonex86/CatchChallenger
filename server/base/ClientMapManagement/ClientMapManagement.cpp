@@ -56,7 +56,7 @@ void ClientMapManagement::extraStop()
 	stopIt=true;
 
 	//call MapVisibilityAlgorithm to remove
-	removeClient();
+	//removeClient(); -> do by unload from map
 
 	to_send_map_management_insert.clear();
 	to_send_map_management_move.clear();
@@ -81,7 +81,7 @@ void ClientMapManagement::extraStop()
 	}
 }
 
-void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void ClientMapManagement::put_on_the_map(Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
 	//store the starting informations
 	at_start_x=x;
@@ -89,7 +89,8 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_server *ma
 	at_start_orientation=orientation;
 	at_start_map_name=map->map_file;
 
-	MapBasicMove::put_on_the_map(player_id,map,x,y,orientation,speed);
+	emit message(QString("ClientMapManagement put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
+	MapBasicMove::put_on_the_map(map,x,y,orientation,speed);
 
 	//call MapVisibilityAlgorithm to insert
 	insertClient();
@@ -100,6 +101,9 @@ void ClientMapManagement::put_on_the_map(const quint32 &player_id,Map_server *ma
 /// \note The second heavy function
 void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
+	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
+	emit message(QString("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_id).arg(directionToString(direction)).arg(previousMovedUnit));
+	#endif
 	mapHaveChanged=false;
 	MapBasicMove::moveThePlayer(previousMovedUnit,direction);
 	if(unlikely(stopCurrentMethod))
@@ -121,8 +125,14 @@ void ClientMapManagement::unloadFromTheMap()
 
 void ClientMapManagement::insertAnotherClient(const quint32 &player_id,const Map_server *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed)
 {
+	/* Do into the upper class, like MapVisibilityAlgorithm_Simple
+	 * #ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
+	//remove the move/insert
+	to_send_map_management_remove.remove(player_id);
+	to_send_map_management_move.remove(player_id);
+	#endif */
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	emit message(QString("insertAnotherClient(%1,%2,%3)").arg(player_id).arg(x).arg(y));
+	emit message(QString("insertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(map->map_file).arg(x).arg(y));
 	#endif
 	insertClient_temp.fileName=map->map_file;
 	insertClient_temp.direction=direction;
@@ -150,16 +160,21 @@ void ClientMapManagement::removeAnotherClient(const quint32 &player_id)
 	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
 	if(unlikely(!stopIt && to_send_map_management_remove.contains(player_id)))
 	{
-		emit message("try dual remove");
+		emit message("removeAnotherClient() try dual remove");
 		return;
 	}
 	#endif
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 	if(unlikely(!stopIt))
-		emit message(QString("removeAnotherClient(%1,%2,%3)").arg(player_id));
+		emit message(QString("removeAnotherClient(%1)").arg(player_id));
 	#endif
 
+	/* Do into the upper class, like MapVisibilityAlgorithm_Simple
+	 * #ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
+	//remove the move/insert
+	to_send_map_management_insert.remove(player_id);
 	to_send_map_management_move.remove(player_id);
+	#endif */
 	to_send_map_management_remove << player_id;
 }
 

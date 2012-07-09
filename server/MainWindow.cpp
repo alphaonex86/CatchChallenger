@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(&eventDispatcher,SIGNAL(is_started(bool)),this,SLOT(server_is_started(bool)));
 	connect(&eventDispatcher,SIGNAL(need_be_stopped()),this,SLOT(server_need_be_stopped()));
 	connect(&eventDispatcher,SIGNAL(need_be_restarted()),this,SLOT(server_need_be_restarted()));
-	connect(&eventDispatcher,SIGNAL(new_player_is_connected(Player_private_and_public_informations)),this,SLOT(new_player_is_connected(Player_private_and_public_informations)));
+	connect(&eventDispatcher,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SLOT(new_player_is_connected(Player_internal_informations)));
 	connect(&eventDispatcher,SIGNAL(player_is_disconnected(QString)),this,SLOT(player_is_disconnected(QString)));
 	connect(&eventDispatcher,SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SLOT(new_chat_message(QString,Chat_type,QString)));
 	connect(&eventDispatcher,SIGNAL(error(QString)),this,SLOT(server_error(QString)));
@@ -121,9 +121,9 @@ void MainWindow::server_need_be_restarted()
 	eventDispatcher.stop_server();
 }
 
-void MainWindow::new_player_is_connected(Player_private_and_public_informations player)
+void MainWindow::new_player_is_connected(Player_internal_informations player)
 {
-	ui->listPlayer->addItem(player.public_informations.pseudo);
+	ui->listPlayer->addItem(player.public_and_private_informations.public_informations.pseudo);
 	players << player;
 }
 
@@ -139,7 +139,7 @@ void MainWindow::player_is_disconnected(QString pseudo)
 	index=0;
 	while(index<players.size())
 	{
-		if(players.at(index).public_informations.pseudo==pseudo)
+		if(players.at(index).public_and_private_informations.public_informations.pseudo==pseudo)
 		{
 			players.removeAt(index);
 			break;
@@ -153,10 +153,10 @@ void MainWindow::new_chat_message(QString pseudo,Chat_type type,QString text)
 	int index=0;
 	while(index<players.size())
 	{
-		if(players.at(index).public_informations.pseudo==pseudo)
+		if(players.at(index).public_and_private_informations.public_informations.pseudo==pseudo)
 		{
 			QString html=ui->textBrowserChat->toHtml();
-			html+=ChatParsing::new_chat_message(players.at(index).public_informations.pseudo,players.at(index).public_informations.type,type,text);
+			html+=ChatParsing::new_chat_message(players.at(index).public_and_private_informations.public_informations.pseudo,players.at(index).public_and_private_informations.public_informations.type,type,text);
 			if(html.size()>1024*1024)
 				html=html.mid(html.size()-1024*1024,1024*1024);
 			ui->textBrowserChat->setHtml(html);
@@ -241,7 +241,7 @@ void MainWindow::benchmark_result(int latency,double TX_speed,double RX_speed,do
 {
 	updateActionButton();
 	clean_updated_info();
-	QMessageBox::information(this,"Benchmark",tr("The latency of the benchmark: %1\nTX_speed: %2/s, RX_speed %3/s\nTX_size: %4, RX_size: %5, in %6s\nThis latency is cumulated latency of different point. That's not show the database performance.")
+	QMessageBox::information(this,"benchmark_map",tr("The latency of the benchmark: %1\nTX_speed: %2/s, RX_speed %3/s\nTX_size: %4, RX_size: %5, in %6s\nThis latency is cumulated latency of different point. That's not show the database performance.")
 				 .arg(latency)
 				 .arg(sizeToString(TX_speed))
 				 .arg(sizeToString(RX_speed))
@@ -267,6 +267,12 @@ void MainWindow::load_settings()
 		settings->setValue("pvp",true);
 	if(!settings->contains("server-port"))
 		settings->setValue("server-port",42489);
+	if(!settings->contains("benchmark_map"))
+		settings->setValue("benchmark_map",true);
+	if(!settings->contains("benchmark_seconds"))
+		settings->setValue("benchmark_seconds",60);
+	if(!settings->contains("benchmark_clients"))
+		settings->setValue("benchmark_clients",400);
 
 	settings->beginGroup("MapVisibilityAlgorithm");
 	if(!settings->contains("MapVisibilityAlgorithm"))
@@ -325,6 +331,9 @@ void MainWindow::load_settings()
 	ui->server_ip->setText(settings->value("server-ip").toString());
 	ui->pvp->setChecked(settings->value("pvp").toBool());
 	ui->server_port->setValue(settings->value("server-port").toUInt());
+	ui->benchmark_benchmarkMap->setChecked(settings->value("benchmark_map").toBool());
+	ui->benchmark_seconds->setValue(settings->value("benchmark_seconds").toUInt());
+	ui->benchmark_clients->setValue(settings->value("benchmark_clients").toUInt());
 
 	quint32 tempValue=0;
 	settings->beginGroup("MapVisibilityAlgorithm");
@@ -394,6 +403,8 @@ void MainWindow::load_settings()
 	ui->db_mysql_login->setText(db_mysql_login);
 	ui->db_mysql_pass->setText(db_mysql_pass);
 	ui->db_mysql_base->setText(db_mysql_base);
+
+	send_settings();
 }
 
 void MainWindow::send_settings()
@@ -590,6 +601,7 @@ void MainWindow::on_db_mysql_base_editingFinished()
 
 void MainWindow::on_pushButton_server_benchmark_clicked()
 {
+	send_settings();
 	eventDispatcher.start_benchmark(ui->benchmark_seconds->value(),ui->benchmark_clients->value(),ui->benchmark_benchmarkMap->isChecked());
 	updateActionButton();
 }
@@ -617,4 +629,19 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleReshow_editingFinished()
 	settings->beginGroup("MapVisibilityAlgorithm-Simple");
 	settings->setValue("Reshow",ui->MapVisibilityAlgorithmSimpleReshow->value());
 	settings->endGroup();
+}
+
+void MainWindow::on_benchmark_benchmarkMap_clicked()
+{
+	settings->setValue("benchmark_map",ui->benchmark_benchmarkMap->isChecked());
+}
+
+void MainWindow::on_benchmark_seconds_valueChanged(int arg1)
+{
+	settings->setValue("benchmark_seconds",arg1);
+}
+
+void MainWindow::on_benchmark_clients_valueChanged(int arg1)
+{
+	settings->setValue("benchmark_clients",arg1);
 }

@@ -7,6 +7,7 @@
 
 Client::Client(QAbstractSocket *socket,bool isFake)
 {
+	this->socket			= socket;
 	player_informations.isFake=isFake;
 
 	clientBroadCast=new ClientBroadCast();
@@ -29,14 +30,13 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	{
 		connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
-		connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
+		connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map_server*,quint16,quint16,Orientation,quint16)),	clientMapManagement,	SLOT(put_on_the_map(Map_server*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
 		connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientMapManagement,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
 	}
 
-	player_informations.public_and_private_informations.public_informations.pseudo="";
-	player_informations.public_and_private_informations.public_informations.id=0;
+	player_informations.is_logged=false;
 
 	if(!player_informations.isFake)
 	{
@@ -50,8 +50,10 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 		remote_ip="NA";
 		port=9999;
 	}
-	connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
-	this->socket			= socket;
+	if(socket==NULL)
+		normalOutput(QString("Connected client: socket is NULL"));
+	else
+		connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
 
 	is_logged=false;
 	is_ready_to_stop=false;
@@ -91,8 +93,7 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 
 	//connect the player information
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientNetworkRead,	SLOT(send_player_informations()),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),	clientLocalCalcule,	SLOT(put_on_the_map(quint32,Map_server*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map_server*,quint16,quint16,Orientation,quint16)),	clientLocalCalcule,	SLOT(put_on_the_map(Map_server*,quint16,quint16,Orientation,quint16)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
@@ -262,17 +263,19 @@ void Client::kicked()
 
 void Client::normalOutput(QString message)
 {
-	DebugClass::debugConsole(QString("%1:%2 %3").arg(remote_ip).arg(port).arg(message));
+	if(!is_logged)
+		DebugClass::debugConsole(QString("%1:%2 %3").arg(remote_ip).arg(port).arg(message));
+	else
+		DebugClass::debugConsole(QString("%1: %2").arg(player_informations.id).arg(message));
 }
 
 void Client::send_player_informations()
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	normalOutput("load the normal player id: "+QString::number(player_informations.public_and_private_informations.public_informations.id));
+	normalOutput(QString("load the normal player id: %1, simplified id: %2").arg(player_informations.id).arg(player_informations.public_and_private_informations.public_informations.simplifiedId));
 	#endif
 	emit new_player_is_connected(player_informations);
 	this->player_informations=player_informations;
-	this->id=player_informations.public_and_private_informations.public_informations.id;
 	is_logged=true;
 	EventDispatcher::generalData.serverPrivateVariables.connected_players++;
 	EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();

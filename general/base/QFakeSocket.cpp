@@ -1,40 +1,58 @@
 #include "QFakeSocket.h"
 #include "QFakeServer.h"
 #include "DebugClass.h"
+#include "GeneralVariable.h"
 
 QFakeSocket::QFakeSocket() :
 	QAbstractSocket(QAbstractSocket::UnknownSocketType,0)
 {
+	setSocketError(QAbstractSocket::UnknownSocketError);
+	setSocketState(QAbstractSocket::UnconnectedState);
 	theOtherSocket=NULL;
 	RX_size=0;
 }
 
 void QFakeSocket::abort()
 {
+	#ifdef FAKESOCKETDEBUG
+	DebugClass::debugConsole(QString("disconnectFromHostImplementation()"));
+	#endif
 }
 
-void QFakeSocket::disconnectFromHost()
+void QFakeSocket::disconnectFromHostImplementation()
 {
+	#ifdef FAKESOCKETDEBUG
+	DebugClass::debugConsole(QString("disconnectFromHostImplementation()"));
+	#endif
 	if(theOtherSocket==NULL)
 		return;
-	theOtherSocket->disconnect();
+	QFakeSocket *tempOtherSocket=theOtherSocket;
 	theOtherSocket=NULL;
 	data.clear();
+	setSocketState(QAbstractSocket::UnconnectedState);
+	tempOtherSocket->disconnectFromHost();
 	emit stateChanged(QAbstractSocket::UnconnectedState);
 	emit disconnected();
 }
 
-void QFakeSocket::connectToHost()
+void QFakeSocket::connectToHostImplementation()
 {
+	#ifdef FAKESOCKETDEBUG
+	DebugClass::debugConsole(QString("connectToHostImplementation()"));
+	#endif
 	if(theOtherSocket!=NULL)
 		return;
 	QFakeServer::server.addPendingConnection(this);
+	setSocketState(QAbstractSocket::ConnectedState);
 	emit stateChanged(QAbstractSocket::ConnectedState);
 	emit connected();
 }
 
 qint64	QFakeSocket::bytesAvailable () const
 {
+	#ifdef FAKESOCKETDEBUG
+	DebugClass::debugConsole(QString("bytesAvailable(): data.size(): %1").arg(data.size()));
+	#endif
 	return data.size();
 }
 
@@ -51,11 +69,6 @@ bool	QFakeSocket::canReadLine () const
 void	QFakeSocket::close ()
 {
 	disconnectFromHost();
-}
-
-bool	QFakeSocket::isSequential () const
-{
-	return true;
 }
 
 bool	QFakeSocket::waitForBytesWritten ( int msecs )
@@ -87,29 +100,30 @@ quint64 QFakeSocket::getRXSize()
 
 quint64 QFakeSocket::getTXSize()
 {
+	if(theOtherSocket==NULL)
+		return 0;
 	return theOtherSocket->getRXSize();
 }
 
 qint64	QFakeSocket::readData(char * data, qint64 maxSize)
 {
 	QByteArray extractedData=this->data.mid(0,maxSize);
+	#ifdef FAKESOCKETDEBUG
+	DebugClass::debugConsole(QString("readData(): extractedData.size(): %1, this->data: %2, extractedData: %3").arg(extractedData.size()).arg(this->data.size()).arg(QString(extractedData.toHex())));
+	#endif
 	memcpy(data,extractedData.data(),extractedData.size());
+	this->data.remove(0,extractedData.size());
 	return extractedData.size();
-}
-
-qint64	QFakeSocket::readLineData ( char * data, qint64 maxlen )
-{
-	Q_UNUSED(data);
-	Q_UNUSED(maxlen);
-	return 0;
 }
 
 qint64	QFakeSocket::writeData ( const char * data, qint64 size )
 {
+	#ifdef FAKESOCKETDEBUG
 	DebugClass::debugConsole(QString("writeData(): size: %1").arg(size));
+	#endif
 	if(theOtherSocket==NULL)
 	{
-		DebugClass::debugConsole("theOtherSocket==NULL");
+		DebugClass::debugConsole("writeData(): theOtherSocket==NULL");
 		return 0;
 	}
 	QByteArray dataToSend(data,size);
@@ -119,6 +133,9 @@ qint64	QFakeSocket::writeData ( const char * data, qint64 size )
 
 void QFakeSocket::internal_writeData(QByteArray data)
 {
+	#ifdef FAKESOCKETDEBUG
+	DebugClass::debugConsole(QString("internal_writeData(): size: %1").arg(data.size()));
+	#endif
 	RX_size+=data.size();
 	this->data+=data;
 	emit readyRead();

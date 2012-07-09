@@ -20,8 +20,6 @@ public:
 	void stopRead();
 	void fake_send_protocol();
 public slots:
-	void readyRead();
-	void send_player_informations();
 	void fake_receive_data(const QByteArray &data);
 	//normal slots
 	void askIfIsReadyToStop();
@@ -61,7 +59,6 @@ signals:
 	void serverCommand(const QString &command,const QString &extraText);
 private:
 	// for status
-	bool is_logged;
 	bool have_send_protocol;
 	bool is_logging_in_progess;
 	bool stopIt;

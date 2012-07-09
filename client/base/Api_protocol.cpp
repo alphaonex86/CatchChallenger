@@ -24,116 +24,336 @@ Api_protocol::~Api_protocol()
 //have message without reply
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
+	DebugClass::debugConsole(QString("Api_protocol::parseMessage() mainCodeType: %1").arg(mainCodeType));
 	QDataStream in(data);
 	in.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
 	{
 		case 0xC0:
 		{
-			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 			{
 				emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
 				return;
 			}
-			quint16 actionListSize;
-			in >> actionListSize;
-			if(actionListSize==0)
-				break;
+			quint8 mapListSize;
+			in >> mapListSize;
 			int index=0;
-			quint32 player_id;
-			quint8 type;
-			while(index<actionListSize)
+			while(index<mapListSize)
 			{
-				if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)+sizeof(quint8)))
+				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 				{
 					emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
 					return;
 				}
-				in >> type;
-				in >> player_id;
-				switch(type)
+				quint8 mapNameSize;
+				in >> mapNameSize;
+				if((in.device()->size()-in.device()->pos())<(int)mapNameSize)
 				{
-					case 0x01:
-					{
-						if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-						{
-							emit newError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainCodeType));
-							return;
-						}
-						QString mapName;
-						in >> mapName;
-						quint16 x,y,speed;
-						quint8 direction;
-						if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)*2+sizeof(quint8)+sizeof(quint16)))
-						{
-							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-							return;
-						}
-						in >> x;
-						in >> y;
-						in >> direction;
-						in >> speed;
-						if(direction<1 || direction>8)
-						{
-							emit newError(tr("Procotol wrong or corrupted"),QString("direction have wrong value: %1, at main ident: %2").arg(direction).arg(mainCodeType));
-							return;
-						}
-						DebugClass::debugConsole(
-									QString("player_id: %1, mapName %2, x: %3, y: %4, direction: %5")
-									.arg(player_id)
-									.arg(mapName)
-									.arg(x)
-									.arg(y)
-									.arg(direction)
-									 );
-						emit insert_player(player_id,mapName,x,y,direction,speed);
-					}
-					break;
-					case 0x02:
-					{
-						if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
-						{
-							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-							return;
-						}
-						quint8 list_size;
-						in >> list_size;
-						if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)*2*list_size))
-						{
-							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-							return;
-						}
-						QList<QPair<quint8,quint8> > movement;
-						QPair<quint8,quint8> pair;
-						int indexMove=0;
-						while(indexMove<list_size)
-						{
-							in >> pair.first;
-							in >> pair.second;
-							/*DebugClass::debugConsole(
-								QString("player_id: %1, move %2, direction: %3")
-								.arg(player_id)
-								.arg(pair.first)
-								.arg(pair.second)
-									 );*/
-							movement << pair;
-							indexMove++;
-						}
-						emit move_player(player_id,movement);
-					}
-					break;
-					case 0x03:
-						DebugClass::debugConsole(
-								QString("player_id: %1 remove")
-								.arg(player_id)
-								 );
-						emit remove_player(player_id);
-					break;
-					default:
-					emit newError(tr("Procotol wrong or corrupted"),QString("wrong type code with main ident: %1").arg(mainCodeType));
+					emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
 					return;
 				}
+				QByteArray rawText=data.mid(in.device()->pos(),mapNameSize);
+				QString mapFile;
+				mapFile.fromUtf8(rawText.data(),rawText.size());
+				if(mapFile.isEmpty())
+				{
+					emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
+					return;
+				}
+				quint16 playerSizeList;
+				if(max_player<=255)
+				{
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					quint8 numberOfPlayer;
+					in >> numberOfPlayer;
+					playerSizeList=numberOfPlayer;
+				}
+				else
+				{
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> playerSizeList;
+				}
+				int index_sub_loop=0;
+				while(index_sub_loop<playerSizeList)
+				{
+					Player_public_informations public_informations;
+					if(max_player<=255)
+					{
+						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+							return;
+						}
+						quint8 playerSmallId;
+						in >> playerSmallId;
+						public_informations.simplifiedId=playerSmallId;
+					}
+					else
+					{
+						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+							return;
+						}
+						in >> public_informations.simplifiedId;
+					}
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					quint8 x,y;
+					in >> x;
+					in >> y;
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					quint8 directionAndPlayerType;
+					in >> directionAndPlayerType;
+					quint8 directionInt,playerTypeInt;
+					directionInt=directionAndPlayerType & 0x0F;
+					playerTypeInt=directionAndPlayerType & 0xF0;
+					if(directionInt<1 || directionInt>8)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("direction have wrong value: %1, at main ident: %2").arg(directionInt).arg(mainCodeType));
+						return;
+					}
+					Direction direction=(Direction)directionInt;
+					Player_type playerType=(Player_type)playerTypeInt;
+					if(playerType!=Player_type_normal || playerType!=Player_type_premium || playerType!=Player_type_gm || playerType!=Player_type_dev)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("playerType have wrong value: %1, at main ident: %2").arg(playerTypeInt).arg(mainCodeType));
+						return;
+					}
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> public_informations.speed;
+					//the pseudo
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					quint8 pseudoSize;
+					in >> pseudoSize;
+					if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+					public_informations.pseudo.fromUtf8(rawText.data(),rawText.size());
+					if(public_informations.pseudo.isEmpty())
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
+						return;
+					}
+					//the clan
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> public_informations.clan;
+					//the skin
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					quint8 skinSize;
+					in >> skinSize;
+					if((in.device()->size()-in.device()->pos())<(int)skinSize)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					rawText=data.mid(in.device()->pos(),skinSize);
+					public_informations.skin.fromUtf8(rawText.data(),rawText.size());
+					if(public_informations.skin.isEmpty())
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
+						return;
+					}
+					if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
+						player_informations.public_informations=public_informations;
+					emit insert_player(public_informations,mapFile,x,y,direction);
+					index_sub_loop++;
+				}
 				index++;
+			}
+			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+			{
+				emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+				return;
+			}
+			//move the player
+			quint8 directionInt,moveListSize;
+			quint16 playerSizeList;
+			if(max_player<=255)
+			{
+				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+				{
+					emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+					return;
+				}
+				quint8 numberOfPlayer;
+				in >> numberOfPlayer;
+				playerSizeList=numberOfPlayer;
+				quint8 playerId;
+
+				index=0;
+				while(index<playerSizeList)
+				{
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> playerId;
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					QList<QPair<quint8,Direction> > movement;
+					QPair<quint8,Direction> new_movement;
+					in >> moveListSize;
+					int index_sub_loop=0;
+					if(moveListSize==0)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("move size == 0 with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					while(index_sub_loop<moveListSize)
+					{
+						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+							return;
+						}
+						in >> new_movement.first;
+						in >> directionInt;
+						new_movement.second=(Direction)directionInt;
+						movement << new_movement;
+						index_sub_loop++;
+					}
+					emit move_player(playerId,movement);
+					index++;
+				}
+			}
+			else
+			{
+				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+				{
+					emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+					return;
+				}
+				in >> playerSizeList;
+				quint16 playerId;
+
+				index=0;
+				while(index<playerSizeList)
+				{
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> playerId;
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					QList<QPair<quint8,Direction> > movement;
+					QPair<quint8,Direction> new_movement;
+					in >> moveListSize;
+					int index_sub_loop=0;
+					if(moveListSize==0)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("move size == 0 with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					while(index_sub_loop<moveListSize)
+					{
+						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+							return;
+						}
+						in >> new_movement.first;
+						in >> directionInt;
+						new_movement.second=(Direction)directionInt;
+						movement << new_movement;
+						index_sub_loop++;
+					}
+					emit move_player(playerId,movement);
+					index++;
+				}
+			}
+			//remove player
+			if(max_player<=255)
+			{
+				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+				{
+					emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+					return;
+				}
+				quint8 numberOfPlayer;
+				in >> numberOfPlayer;
+				playerSizeList=numberOfPlayer;
+				quint8 playerId;
+
+				index=0;
+				while(index<playerSizeList)
+				{
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> playerId;
+					emit remove_player(playerId);
+					index++;
+				}
+			}
+			else
+			{
+				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+				{
+					emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+					return;
+				}
+				in >> playerSizeList;
+				quint16 playerId;
+
+				index=0;
+				while(index<playerSizeList)
+				{
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> playerId;
+					emit remove_player(playerId);
+					index++;
+				}
 			}
 		}
 		break;
@@ -146,6 +366,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
+	DebugClass::debugConsole(QString("Api_protocol::parseMessage() mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
 	QDataStream in(data);
 	in.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
@@ -155,7 +376,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 			switch(subCodeType)
 			{
 				//update of the player info
-				case 0x0002:
+				/*case 0x0002:
 				{
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
 					{
@@ -169,12 +390,26 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					while(index<list_size)
 					{
 						Player_public_informations temp;
-						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32)*2)
+						if(max_player<=255)
 						{
-							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size for id with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
-							return;
+							quint8 tempId;
+							if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+							{
+								emit newError(tr("Procotol wrong or corrupted"),QString("wrong size for id with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+								return;
+							}
+							in >> tempId;
+							temp.simplifiedId=tempId;
 						}
-						in >> temp.id;
+						else
+						{
+							if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+							{
+								emit newError(tr("Procotol wrong or corrupted"),QString("wrong size for id with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+								return;
+							}
+							in >> temp.simplifiedId;
+						}
 						if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
 						{
 							emit newError(tr("Procotol wrong or corrupted"),QString("wrong string for pseudo with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
@@ -208,7 +443,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 						}
 						in >> temp.skin;
 
-						if(temp.id==player_id)
+						if(temp.simplifiedId==player_informations.public_informations.simplifiedId)
 						{
 
 							if((in.device()->size()-in.device()->pos())<=(int)(sizeof(quint32)))
@@ -218,7 +453,13 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 							}
 							in >> player_informations.cash;
 							player_informations.public_informations=temp;
-							emit have_current_player_info(player_informations);
+							pseudo.fromUtf8(player_informations.public_informations.rawPseudo.data(),player_informations.public_informations.rawPseudo.size());
+							if(pseudo.isEmpty())
+							{
+								emit newError(tr("Procotol wrong or corrupted"),QString("conversion from utf8 have failed"));
+								return;
+							}
+							emit have_current_player_info(player_informations,pseudo);
 						}
 						this->player_informations_list << player_informations_list;
 						player_informations_list << temp;
@@ -232,7 +473,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					}
 					emit new_player_info(player_informations_list);
 				}
-				break;
+				break;*/
 				//file as input
 				case 0x0003:
 				{
@@ -273,15 +514,19 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 				//chat as input
 				case 0x0005:
 				{
-					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)+sizeof(quint8)))
+					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
 						return;
 					}
-					quint32 player_id;
-					quint8 chat_type;
-					in >> player_id;
-					in >> chat_type;
+					quint8 chat_type_int;
+					in >> chat_type_int;
+					if(chat_type_int<1 || chat_type_int>8)
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong chat type with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+						return;
+					}
+					Chat_type chat_type=(Chat_type)chat_type_int;
 					if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
@@ -289,7 +534,39 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					}
 					QString text;
 					in >> text;
-					emit new_chat_text(player_id,chat_type,text);
+					if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
+						emit new_system_text(chat_type,text);
+					else
+					{
+						quint8 pseudoSize;
+						in >> pseudoSize;
+						if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+							return;
+						}
+						QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+						QString pseudo;
+						pseudo.fromUtf8(rawText.data(),rawText.size());
+						if(pseudo.isEmpty())
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
+							return;
+						}
+						quint8 player_type_int;
+						if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+							return;
+						}
+						in >> player_type_int;
+						if(player_type_int<1 || player_type_int>4)
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong chat type with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+							return;
+						}
+						emit new_chat_text(chat_type,text,pseudo,(Player_type)player_type_int);
+					}
 				}
 				break;
 				//kicked/ban and reason
@@ -337,7 +614,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					quint16 current,max;
 					in >> current;
 					in >> max;
-					emit number_of_player(current,max);
+					emit number_of_player(current,max_player);
 				}
 				break;
 				default:
@@ -456,14 +733,41 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 					}
 					else if(returnCode==0x02)
 					{
+						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+							return;
+						}
+						in >> max_player;
+						if(max_player<=255)
+						{
+							quint8 tempSize;
+							if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+							{
+								emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+								return;
+							}
+							in >> tempSize;
+							player_informations.public_informations.simplifiedId=tempSize;
+						}
+						else
+						{
+							if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+							{
+								emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+								return;
+							}
+							in >> player_informations.public_informations.simplifiedId;
+						}
 						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 						{
 							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
 							return;
 						}
-						in >> player_id;
+						in >> player_informations.cash;
+
 						is_logged=true;
-						DebugClass::debugConsole("is logged with id: "+QString::number(player_id));
+						DebugClass::debugConsole("is logged with id: "+QString::number(player_informations.public_informations.simplifiedId));
 						emit logged();
 					}
 					else
@@ -483,11 +787,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 			return;
 		break;
 	}
-}
-
-QList<Player_public_informations> Api_protocol::get_player_informations_list()
-{
-	return player_informations_list;
+	if((in.device()->size()-in.device()->pos())!=(int)sizeof(quint32))
+	{
+		emit newError(tr("Procotol wrong or corrupted"),QString("remaining data"));
+		return;
+	}
 }
 
 Player_private_and_public_informations Api_protocol::get_player_informations()
@@ -497,12 +801,12 @@ Player_private_and_public_informations Api_protocol::get_player_informations()
 
 QString Api_protocol::getPseudo()
 {
-	return player_informations.public_informations.pseudo;
+	return pseudo;
 }
 
-quint32 Api_protocol::getId()
+quint16 Api_protocol::getId()
 {
-	return player_informations.public_informations.id;
+	return player_informations.public_informations.simplifiedId;
 }
 
 quint8 Api_protocol::queryNumber()
@@ -523,9 +827,8 @@ bool Api_protocol::sendProtocol()
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	quint8 query_number=queryNumber();
 	out << QString(PROTOCOL_HEADER);
-	output->packOutcommingQuery(0x02,0x0001,query_number,outputData);
+	output->packOutcommingQuery(0x02,0x0001,queryNumber(),outputData);
 	return true;
 }
 
@@ -553,19 +856,25 @@ bool Api_protocol::tryLogin(QString login,QString pass)
 	return true;
 }
 
-void Api_protocol::send_player_move(quint8 moved_unit,quint8 direction)
+void Api_protocol::send_player_move(const quint8 &moved_unit,const Direction &direction)
 {
-	if(direction<1 || direction>8)
+	quint8 directionInt=static_cast<quint8>(direction);
+	if(directionInt<1 || directionInt>8)
 	{
-		DebugClass::debugConsole(QString("direction given wrong: %1").arg(direction));
+		DebugClass::debugConsole(QString("direction given wrong: %1").arg(directionInt));
 		return;
 	}
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << moved_unit;
-	out << direction;
+	out << directionInt;
 	output->packOutcommingData(0x40,outputData);
+}
+
+void Api_protocol::send_player_direction(const Direction &the_direction)
+{
+	newDirection(the_direction);
 }
 
 void Api_protocol::sendChatText(Chat_type chatType,QString text)
@@ -582,98 +891,21 @@ void Api_protocol::sendChatText(Chat_type chatType,QString text)
 	out << text;
 	output->packOutcommingData(0x42,0x0003,outputData);
 	if(!text.startsWith('/'))
-		emit new_chat_text(player_id,chatType,text);
+		emit new_chat_text(chatType,text,player_informations.public_informations.pseudo,player_informations.public_informations.type);
 }
 
 void Api_protocol::sendPM(QString text,QString pseudo)
 {
-	emit new_chat_text(player_id,0x06,text);
-	if(pseudo==player_informations.public_informations.pseudo)
+	emit new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
+	if(this->pseudo==pseudo)
 		return;
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0x06;
+	out << (quint8)Chat_type_pm;
 	out << text;
 	out << pseudo;
 	output->packOutcommingData(0x42,0x003,outputData);
-}
-
-bool Api_protocol::add_player_watching(quint32 id)
-{
-	QList<quint32> ids;
-	ids << id;
-	return add_player_watching(ids);
-}
-
-bool Api_protocol::remove_player_watching(quint32 id)
-{
-	QList<quint32> ids;
-	ids << id;
-	return remove_player_watching(ids);
-}
-
-bool Api_protocol::add_player_watching(QList<quint32> ids)
-{
-	QList<quint32> new_ids;
-	int index=0;
-	while(index<ids.size())
-	{
-		if(ids.at(index)!=player_id)
-		{
-			if(!player_id_watching.contains(ids.at(index)))
-				new_ids << ids.at(index);
-			player_id_watching << ids.at(index);
-		}
-		index++;
-	}
-	if(new_ids.size()>0)
-	{
-		QByteArray outputData;
-		QDataStream out(&outputData, QIODevice::WriteOnly);
-		out.setVersion(QDataStream::Qt_4_4);
-		out << (quint8)0x01;
-		out << (quint16)new_ids.size();
-		int index=0;
-		while(index<new_ids.size())
-		{
-			out << new_ids.at(index);
-			index++;
-		}
-		output->packOutcommingData(0x42,0x000A,outputData);
-	}
-	return true;
-}
-
-bool Api_protocol::remove_player_watching(QList<quint32> ids)
-{
-	QList<quint32> new_ids;
-	int index=0;
-	while(index<ids.size())
-	{
-		if(ids.at(index)!=player_id)
-		{
-			player_id_watching.removeOne(ids.at(index));
-			if(!player_id_watching.contains(ids.at(index)))
-				new_ids << ids.at(index);
-		}
-		index++;
-	}
-	if(new_ids.size()>0)
-	{
-		QByteArray outputData;
-		QDataStream out(&outputData, QIODevice::WriteOnly);
-		out.setVersion(QDataStream::Qt_4_4);
-		out << (quint16)new_ids.size();
-		int index=0;
-		while(index<new_ids.size())
-		{
-			out << new_ids.at(index);
-			index++;
-		}
-		output->packOutcommingData(0x42,0x000B,outputData);
-	}
-	return true;
 }
 
 //to reset all
@@ -682,9 +914,6 @@ void Api_protocol::resetAll()
 	//status for the query
 	is_logged=false;
 	have_send_protocol=false;
-
-	player_informations_list.clear();
-	player_id_watching.clear();
 
 	//to send trame
 	lastQueryNumber=1;
