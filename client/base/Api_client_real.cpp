@@ -42,8 +42,11 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 			switch(subCodeType)
 			{
 				//Send datapack file list
-				case 0x0003:
+				case 0x000C:
 				{
+					QByteArray rawData=qUncompress(data);
+					QDataStream in(rawData);
+					in.setVersion(QDataStream::Qt_4_4);
 					if((in.device()->size()-in.device()->pos())!=((int)sizeof(quint8))*datapackFilesList.size())
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to return file list"));
@@ -154,7 +157,7 @@ void Api_client_real::sendDatapackContent()
 		out << (quint32)info.st_mtime;
 		index++;
 	}
-	output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
+	output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,qCompress(outputData,9));
 }
 
 const QStringList Api_client_real::listDatapack(QString suffix)

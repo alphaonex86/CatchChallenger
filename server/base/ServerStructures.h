@@ -109,6 +109,9 @@ struct Player_internal_informations
 {
 	Player_private_and_public_informations public_and_private_informations;
 	bool isFake;
+	bool is_logged;
+	quint32 id;
+	QByteArray rawPseudo;
 };
 
 struct GeneralData
@@ -184,8 +187,7 @@ struct GeneralData
 		QTimer *timer_player_map;
 
 		//interconnected thread
-		QList<ClientBroadCast *> clientBroadCastList;
-		QMutex clientBroadCastListMutex;
+		//QMutex clientBroadCastListMutex;
 
 		//map
 		QString mapBasePath;
@@ -199,6 +201,7 @@ struct GeneralData
 
 		//bot
 		QList<FakeBot *> fake_clients;
+		quint32 number_of_bots_logged;
 		struct BotSpawn
 		{
 			QString map;

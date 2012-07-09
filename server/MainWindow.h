@@ -36,7 +36,7 @@ private:
 	QSettings *settings;
 	void load_settings();
 	void send_settings();
-	QList<Player_private_and_public_informations> players;
+	QList<Player_internal_informations> players;
 	QTimer timer_update_the_info;
 	QTimer check_latency;
 	QTime time_latency;
@@ -49,7 +49,7 @@ private slots:
 	void server_is_started(bool is_started);
 	void server_need_be_stopped();
 	void server_need_be_restarted();
-	void new_player_is_connected(Player_private_and_public_informations player);
+	void new_player_is_connected(Player_internal_informations player);
 	void player_is_disconnected(QString pseudo);
 	void new_chat_message(QString pseudo,Chat_type type,QString text);
 	void server_error(QString error);
@@ -85,6 +85,12 @@ private slots:
 	void on_MapVisibilityAlgorithm_currentIndexChanged(int index);
 	void on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1);
 	void on_MapVisibilityAlgorithmSimpleReshow_editingFinished();
+	void on_benchmark_benchmarkMap_clicked();
+
+	void on_benchmark_seconds_valueChanged(int arg1);
+
+	void on_benchmark_clients_valueChanged(int arg1);
+
 signals:
 	void record_latency();
 };

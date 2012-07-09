@@ -30,8 +30,6 @@ class Client : public QObject
 public:
 	explicit Client(QAbstractSocket *socket,bool isFake);
 	~Client();
-	//cache
-	quint32 id;
 	//to get some info
 	QString getPseudo();
 	Map_player_info getMapPlayerInfo();

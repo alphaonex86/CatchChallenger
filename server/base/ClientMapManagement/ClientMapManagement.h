@@ -36,7 +36,7 @@ protected:
 	//pass to the Map management visibility algorithm
 	virtual void insertClient() = 0;
 	virtual void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged) = 0;
-	virtual void removeClient() = 0;
+	//virtual void removeClient() = 0;
 	virtual void mapVisiblity_unloadFromTheMap() = 0;
 	// stuff to send
 	QHash<quint32, map_management_insert>			to_send_map_management_insert;
@@ -47,7 +47,7 @@ signals:
 	void updatePlayerPosition(const QString & map,const quint16 &x,const quint16 &y,const Orientation &orientation);
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
-	virtual void put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	virtual void put_on_the_map(Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 private slots:
 	virtual void purgeBuffer();

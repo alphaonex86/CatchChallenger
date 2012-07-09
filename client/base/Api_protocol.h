@@ -19,9 +19,10 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/MoveOnTheMap.h"
 #include "ClientStructures.h"
 
-class Api_protocol : public ProtocolParsingInput
+class Api_protocol : public ProtocolParsingInput, public MoveOnTheMap
 {
 	Q_OBJECT
 public:
@@ -31,24 +32,15 @@ public:
 	//protocol command
 	bool tryLogin(QString login,QString pass);
 	bool sendProtocol();
-	bool not_needed_player_informations(quint32 id);
-	bool add_player_watching(quint32 id);
-	bool remove_player_watching(quint32 id);
-	bool add_player_watching(QList<quint32> ids);
-	bool remove_player_watching(QList<quint32> ids);
 
 	//get the stored data
-	QList<Player_public_informations> get_player_informations_list();
 	Player_private_and_public_informations get_player_informations();
 	QString getPseudo();
-	quint32 getId();
+	quint16 getId();
 private:
 	//status for the query
 	bool is_logged;
 	bool have_send_protocol;
-
-	QList<Player_public_informations> player_informations_list;
-	QList<quint32> player_id_watching;
 
 	//to send trame
 	quint8 lastQueryNumber;
@@ -64,8 +56,9 @@ protected:
 	virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
 	//stored local player info
-	quint32 player_id;
+	quint16 max_player;
 	Player_private_and_public_informations player_informations;
+	QString pseudo;
 
 	//to send trame
 	ProtocolParsingOutput *output;
@@ -83,26 +76,27 @@ signals:
 	void protocol_is_good();
 
 	//general info
-	void number_of_player(quint16 number,quint16 max);
+	void number_of_player(quint16 number,quint16 max_player);
 
 	//map move
-	void insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed);
-	void move_player(quint32 id,QList<QPair<quint8,quint8> > movement);
-	void remove_player(quint32 id);
+	void insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,quint8 direction);
+	void move_player(quint16 id,QList<QPair<quint8,Direction> > movement);
+	void remove_player(quint16 id);
 
 	//chat
-	void new_chat_text(quint32 player_id,quint8 chat_type,QString text);
+	void new_chat_text(Chat_type chat_type,QString text,QString pseudo,Player_type type);
+	void new_system_text(Chat_type chat_type,QString text);
 
 	//player info
-	void new_player_info(QList<Player_public_informations> info);
-	void have_current_player_info(Player_private_and_public_informations info);
+	void have_current_player_info(Player_private_and_public_informations info,QString pseudo);
 
 	//datapack
 	void haveTheDatapack();
 	void haveNewFile(QString fileName,QByteArray data,quint32 mtime);
 	void removeFile(QString fileName);
 public slots:
-	void send_player_move(quint8 moved_unit,quint8 direction);
+	void send_player_direction(const Direction &the_direction);
+	void send_player_move(const quint8 &moved_unit,const Direction &direction);
 	void sendChatText(Chat_type chatType,QString text);
 	void sendPM(QString text,QString pseudo);
 };
