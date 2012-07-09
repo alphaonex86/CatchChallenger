@@ -4,17 +4,11 @@
 ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,QAbstractSocket * socket) :
 	ProtocolParsingInput(socket,PacketModeTransmission_Server)
 {
-	is_logged=false;
 	have_send_protocol=false;
 	is_logging_in_progess=false;
 	stopIt=false;
 	this->player_informations=player_informations;
 	this->socket=socket;
-	if(socket!=NULL)
-	{
-		//this->socket->flush();
-		connect(socket,SIGNAL(readyRead()),this,SLOT(readyRead()),Qt::QueuedConnection);
-	}
 }
 
 void ClientNetworkRead::stopRead()
@@ -37,11 +31,6 @@ void ClientNetworkRead::askIfIsReadyToStop()
 void ClientNetworkRead::stop()
 {
 	deleteLater();
-}
-
-void ClientNetworkRead::readyRead()
-{
-	ProtocolParsingInput::parseIncommingData();
 }
 
 void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & data)
@@ -76,9 +65,6 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 					if(protocol==PROTOCOL_HEADER)
 					{
 						out << (quint8)0x01;		//protocol supported
-						/*out << (quint8)0x00;		//raw (no compression)
-						out << (quint8)0x01;		//upload size type: small (client -> server)
-						out << (quint8)0x01;		//upload size type: small (client -> server)*/
 						emit postReply(queryNumber,outputData);
 						have_send_protocol=true;
 						emit message("Protocol sended and replied");
@@ -116,7 +102,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 						emit postReply(queryNumber,outputData);
 						emit error("Loggin in progress");
 					}
-					else if(is_logged)
+					else if(player_informations->is_logged)
 					{
 						out << (quint8)1;
 						emit postReply(queryNumber,outputData);
@@ -144,7 +130,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
-	if(!is_logged)
+	if(!player_informations->is_logged)
 	{
 		emit error(QString("is not logged, parseMessage(%1)").arg(mainCodeType));
 		return;
@@ -181,7 +167,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
-	if(!is_logged)
+	if(!player_informations->is_logged)
 	{
 		emit error(QString("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
 		return;
@@ -234,15 +220,16 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 						return;
 					QString text;
 					in >> text;
-					if(!text.startsWith('/'))
-						emit sendChatText((Chat_type)chatType,text);
-					else
+					if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
 					{
-						QRegExp commandRegExp("^/([a-z]+)( [^ ].*)$");
-						if(text.contains(commandRegExp))
+						if(!text.startsWith('/'))
+							emit sendChatText((Chat_type)chatType,text);
+						else
 						{
-							if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
+							QRegExp commandRegExp("^/([a-z]+)( [^ ].*)$");
+							if(text.contains(commandRegExp))
 							{
+
 								QString command=text;
 								command.replace(commandRegExp,"\\1");
 								if(text.contains(commandRegExp))
@@ -253,6 +240,16 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 								else
 									text="";
 								if(command=="kick")
+								{
+									emit sendBroadCastCommand(command,text);
+									emit message("send command: /"+command+" "+text);
+								}
+								else if(command=="chat")
+								{
+									emit sendBroadCastCommand(command,text);
+									emit message("send command: /"+command+" "+text);
+								}
+								else if(command=="setrights")
 								{
 									emit sendBroadCastCommand(command,text);
 									emit message("send command: /"+command+" "+text);
@@ -271,11 +268,11 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 									emit message("unknow send command: /"+command+" and \""+text+"\"");
 							}
 							else
-								emit message("command ignored because have not the rights: "+text);
+								emit message("commands seem not right: \""+text+"\"");
 						}
-						else
-							emit message("commands seem not right: \""+text+"\"");
 					}
+					else
+						emit sendChatText((Chat_type)chatType,text);
 				}
 				return;
 			}
@@ -375,7 +372,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 	Q_UNUSED(data);
-	if(!is_logged)
+	if(!player_informations->is_logged)
 	{
 		emit error(QString("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
 		return;
@@ -387,7 +384,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &quer
 
 void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
-	if(!is_logged)
+	if(!player_informations->is_logged)
 	{
 		parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
 		return;
@@ -411,6 +408,9 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 			//Send datapack file list
 			case 0x000C:
 			{
+				QByteArray rawData=qUncompress(data);
+				QDataStream in(rawData);
+				in.setVersion(QDataStream::Qt_4_4);
 				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 				{
 					emit error(QString("wrong size with the main ident: %1").arg(mainCodeType));
@@ -469,7 +469,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 	Q_UNUSED(data);
-	if(!is_logged)
+	if(!player_informations->is_logged)
 	{
 		emit error(QString("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
 		return;
@@ -481,18 +481,13 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &
 void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
 	Q_UNUSED(data);
-	if(!is_logged)
+	if(!player_informations->is_logged)
 	{
 		emit error(QString("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 		return;
 	}
 	emit error(QString("The server for now not ask anything: %1, %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 	return;
-}
-
-void ClientNetworkRead::send_player_informations()
-{
-	is_logged=true;
 }
 
 /// \warning it need be complete protocol trame

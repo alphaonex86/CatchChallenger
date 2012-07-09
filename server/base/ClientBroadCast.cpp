@@ -1,6 +1,9 @@
 #include "ClientBroadCast.h"
 #include "EventDispatcher.h"
 
+QHash<QString,ClientBroadCast *> ClientBroadCast::playerByPseudo;
+QList<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
+
 ClientBroadCast::ClientBroadCast()
 {
 	connected_players=0;
@@ -25,17 +28,8 @@ void ClientBroadCast::disconnect()
 
 void ClientBroadCast::internal_disconnect()
 {
-	int index=0;
-	int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
-	while(index<list_size)
-	{
-		if(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_id==player_id)
-		{
-			EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.removeAt(index);
-			break;
-		}
-		index++;
-	}
+	playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
+	clientBroadCastList.removeOne(this);
 	disconnection.release();
 }
 
@@ -47,12 +41,12 @@ void ClientBroadCast::sendSystemMessage(const QString &text,const bool &importan
 		emit sendChatText(Chat_type_system,text);
 }
 
-void ClientBroadCast::receivePM(const QString &text,const quint32 &player_id)
+void ClientBroadCast::receivePM(const QString &text,const QString &pseudo)
 {
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << player_id;//id player here
+	out << pseudo;//id player here
 	out << (quint8)0x06;
 	out << text;
 	emit sendPacket(0xC2,0x0005,outputData);
@@ -60,27 +54,24 @@ void ClientBroadCast::receivePM(const QString &text,const quint32 &player_id)
 
 void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 {
-	if(this->pseudo==pseudo)
+	if(this->player_informations->public_and_private_informations.public_informations.pseudo==pseudo)
 	{
 		emit error("Can't send them self the PM");
 		return;
 	}
-	int index=0;
-	int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
-	while(index<list_size)
+	if(!playerByPseudo.contains(pseudo))
 	{
-		if(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->pseudo==pseudo)
-		{
-			EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receivePM(text,player_id);
-			return;
-		}
-		index++;
+		receiveSystemText(Chat_type_system,QString("unable to found the connected player: pseudo: \"%1\"").arg(pseudo));
+		emit message(QString("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
+		return;
 	}
+	playerByPseudo[pseudo]->receivePM(text,this->player_informations->public_and_private_informations.public_informations.pseudo);
 }
 
 void ClientBroadCast::askIfIsReadyToStop()
 {
-	EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.removeOne(this);
+	playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
+	clientBroadCastList.removeOne(this);
 	emit isReadyToStop();
 }
 
@@ -89,15 +80,29 @@ void ClientBroadCast::stop()
 	deleteLater();
 }
 
-void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &text,const quint32 &sender_player_id)
+void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &text,const QString &sender_pseudo,const Player_type &sender_player_type)
 {
 	/* Multiple message when multiple player connected
 	emit message(QString("receiveChatText(), text: %1, sender_player_id: %2, to player: %3").arg(text).arg(sender_player_id).arg(player_informations.id)); */
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << sender_player_id;
 	out << (quint8)chatType;
+	out << text;
+	out << sender_pseudo;
+	out << (quint8)sender_player_type;
+	emit sendPacket(0xC2,0x0005,outputData);
+}
+
+void ClientBroadCast::receiveSystemText(const bool &important,const QString &text)
+{
+	QByteArray outputData;
+	QDataStream out(&outputData, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_4_4);
+	if(important)
+		out << (quint8)Chat_type_system_important;
+	else
+		out << (quint8)Chat_type_system;
 	out << text;
 	emit sendPacket(0xC2,0x0005,outputData);
 }
@@ -105,7 +110,7 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
 void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text)
 {
 	emit message(QString("sendChatText(), text: %1").arg(text));
-	int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
+	int list_size=clientBroadCastList.size();
 	if(chatType==Chat_type_clan)
 	{
 		if(player_informations->public_and_private_informations.public_informations.clan==0)
@@ -115,8 +120,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 			int index=0;
 			while(index<list_size)
 			{
-				if(player_informations->public_and_private_informations.public_informations.clan==EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_and_private_informations.public_informations.clan && this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
-					EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receiveChatText(chatType,text,player_id);
+				if(player_informations->public_and_private_informations.public_informations.clan==clientBroadCastList.at(index)->player_informations->public_and_private_informations.public_informations.clan && this!=clientBroadCastList.at(index))
+					clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations->public_and_private_informations.public_informations.pseudo,player_informations->public_and_private_informations.public_informations.type);
 				index++;
 			}
 		}
@@ -128,8 +133,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 			int index=0;
 			while(index<list_size)
 			{
-				if(this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
-					EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receiveChatText(chatType,text,0);
+				if(this!=clientBroadCastList.at(index))
+					clientBroadCastList.at(index)->receiveSystemText(chatType,text);
 				index++;
 			}
 		}
@@ -141,8 +146,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 		int index=0;
 		while(index<list_size)
 		{
-			if(this!=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index))
-				EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->receiveChatText(chatType,text,player_id);
+			if(this!=clientBroadCastList.at(index))
+				clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations->public_and_private_informations.public_informations.pseudo,player_informations->public_and_private_informations.public_informations.type);
 			index++;
 		}
 	}
@@ -150,72 +155,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 
 void ClientBroadCast::send_player_informations()
 {
-	EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList << this;
-	this->pseudo=this->player_informations->public_and_private_informations.public_informations.pseudo;
-	this->player_id=this->player_informations->public_and_private_informations.public_informations.id;
-	QList<Player_private_and_public_informations> players_informations;
-	players_informations << this->player_informations->public_and_private_informations;
-	send_players_informations(players_informations);
-}
-
-void ClientBroadCast::send_players_informations(const QList<Player_private_and_public_informations> &players_informations)
-{
-	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	emit message(QString("send_players_informations, players_informations.size(): %1").arg(players_informations.size()));
-	#endif
-	if(players_informations.size()==0)
-	{
-		emit message("players_informations.size()==0 at send_players_informations()");
-		return;
-	}
-	QByteArray outputData;
-	QDataStream out(&outputData, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint16)players_informations.size();
-	int index=0;
-	int list_size=players_informations.size();
-	while(index<list_size)
-	{
-		out << players_informations.at(index).public_informations.id;
-		out << players_informations.at(index).public_informations.pseudo;
-		out << players_informations.at(index).public_informations.description;
-		out << players_informations.at(index).public_informations.clan;
-		out << (quint8)players_informations.at(index).public_informations.type;
-		out << players_informations.at(index).public_informations.skin;
-		if(players_informations.at(index).public_informations.id==player_id)
-			out << players_informations.at(index).cash;
-		index++;
-	}
-	emit sendPacket(0xC2,0x0002,outputData);
-}
-
-void ClientBroadCast::send_players_informations(const QList<Player_public_informations> &players_informations)
-{
-	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	emit message(QString("send_players_informations, players_informations.size(): %1").arg(players_informations.size()));
-	#endif
-	if(players_informations.size()==0)
-	{
-		emit message("players_informations.size()==0 at send_players_informations()");
-		return;
-	}
-	QByteArray outputData;
-	QDataStream out(&outputData, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint16)players_informations.size();
-	int index=0;
-	int list_size=players_informations.size();
-	while(index<list_size)
-	{
-		out << players_informations.at(index).id;
-		out << players_informations.at(index).pseudo;
-		out << players_informations.at(index).description;
-		out << players_informations.at(index).clan;
-		out << (quint8)players_informations.at(index).type;
-		out << players_informations.at(index).skin;
-		index++;
-	}
-	emit sendPacket(0xC2,0x0002,outputData);
+	playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
+	clientBroadCastList << this;
 }
 
 void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
@@ -227,7 +168,6 @@ void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << EventDispatcher::generalData.serverPrivateVariables.connected_players;
-	out << EventDispatcher::generalData.serverSettings.max_players;
 	emit sendPacket(0xC3,outputData);
 }
 
@@ -239,76 +179,82 @@ void ClientBroadCast::kick()
 void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString &extraText)
 {
 	emit message(QString("command: %1, text: %2").arg(command).arg(extraText));
-	if(command=="kick")
+	if(command=="chat")
+	{
+		QStringList list=extraText.split(' ');
+		if(list.size()<2)
+		{
+			receiveSystemText(Chat_type_system,QString("command not understand").arg(extraText));
+			emit message(QString("command not understand").arg(extraText));
+			return;
+		}
+		if(list.first()=="system")
+		{
+			list.removeFirst();
+			sendChatText(Chat_type_system,list.join(" "));
+			return;
+		}
+		if(list.first()=="system_important")
+		{
+			list.removeFirst();
+			sendChatText(Chat_type_system_important,list.join(" "));
+			return;
+		}
+		else
+		{
+			receiveSystemText(Chat_type_system,QString("command not understand").arg(extraText));
+			emit message(QString("command not understand").arg(extraText));
+			return;
+		}
+	}
+	if(command=="setrights")
+	{
+		QStringList list=extraText.split(' ');
+		if(list.size()!=2)
+		{
+			receiveSystemText(Chat_type_system,QString("command not understand").arg(extraText));
+			emit message(QString("command not understand").arg(extraText));
+			return;
+		}
+		if(!playerByPseudo.contains(list.first()))
+		{
+			receiveSystemText(Chat_type_system,QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
+			emit message(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
+			return;
+		}
+		if(list.last()=="normal")
+			playerByPseudo[extraText]->setRights(Player_type_normal);
+		else if(list.last()=="premium")
+			playerByPseudo[extraText]->setRights(Player_type_premium);
+		else if(list.last()=="gm")
+			playerByPseudo[extraText]->setRights(Player_type_gm);
+		else if(list.last()=="dev")
+			playerByPseudo[extraText]->setRights(Player_type_dev);
+		else
+		{
+			receiveSystemText(Chat_type_system,QString("unable to found this rights level: \"%1\"").arg(list.last()));
+			emit message(QString("unable to found this rights level: \"%1\"").arg(list.last()));
+			return;
+		}
+	}
+	else if(command=="kick")
 	{
 		//drop, and do the command here to separate the loop
-		int index=0;
-		int list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
-		while(index<list_size)
+		if(!playerByPseudo.contains(extraText))
 		{
-			if(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->pseudo==extraText)
-			{
-				emit sendChatText(Chat_type_system,QString("%1 have been kicked by %2").arg(extraText).arg(pseudo));
-				EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->kick();
-				return;
-			}
-			index++;
+			receiveSystemText(Chat_type_system,QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
+			emit message(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
+			return;
 		}
+		playerByPseudo[extraText]->kick();
+		emit sendChatText(Chat_type_system,QString("%1 have been kicked by %2").arg(extraText).arg(player_informations->public_and_private_informations.public_informations.pseudo));
+		return;
 	}
 	else
 		emit message(QString("unknow command: %1, text: %2").arg(command).arg(extraText));
 }
 
-void ClientBroadCast::addPlayersInformationToWatch(const QList<quint32> &player_ids,const quint8 &type_player_query)
+void ClientBroadCast::setRights(const Player_type& type)
 {
-	if(type_player_query==0x01)
-		player_ids_to_watch<<player_ids;
-	emit askPlayersInformation(player_ids);
+	player_informations->public_and_private_informations.public_informations.type=type;
 }
-
-void ClientBroadCast::removePlayersInformationToWatch(const QList<quint32> &player_ids)
-{
-	int index=0;
-	int list_size=player_ids.size();
-	while(index<list_size)
-	{
-		player_ids_to_watch.removeOne(player_ids.at(index));
-		index++;
-	}
-}
-
-void ClientBroadCast::askPlayersInformation(const QList<quint32> &player_ids)
-{
-	QStringList player_ids_string;
-	int index=0;
-	int list_size=player_ids.size();
-	while(index<list_size)
-	{
-		player_ids_string << QString::number(player_ids.at(index));
-		index++;
-	}
-	emit message(QString("askPlayersInformation: %1 for the player: %2").arg(player_ids_string.join(", ")).arg(player_id));
-	QList<Player_public_informations> players_informations;
-	index=0;
-	list_size=EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.size();
-	while(index<list_size)
-	{
-		//do by this way to prevent one memory copy
-		if(player_ids.contains(EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_id))
-			players_informations << EventDispatcher::generalData.serverPrivateVariables.clientBroadCastList.at(index)->player_informations->public_and_private_informations.public_informations;
-		index++;
-	}
-	if(players_informations.size())
-		send_players_informations(players_informations);
-}
-
-void ClientBroadCast::receivePlayersInformation(const Player_private_and_public_informations &player_informations)
-{
-	emit message(QString("receivePlayersInformation: %1, send to player: %2").arg(player_informations.public_informations.id).arg(player_id));
-	players_informations_to_push << player_informations;
-	QList<Player_private_and_public_informations> players_informations;
-	players_informations << player_informations;
-	send_players_informations(players_informations);
-	//update the player info on all which have ask to look it by: addPlayersInformationToWatch()
-}
-

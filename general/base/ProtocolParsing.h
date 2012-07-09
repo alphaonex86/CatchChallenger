@@ -14,11 +14,10 @@ class ProtocolParsing : public QObject
 {
 	Q_OBJECT
 public:
-	ProtocolParsing(QAbstractSocket * device);
-	static PacketSizeMode packetSizeMode;
+	ProtocolParsing(QAbstractSocket * socket);
 	static void initialiseTheVariable();
 protected:
-	QAbstractSocket * device;
+	QAbstractSocket * socket;
 	/********************** static *********************/
 	//connexion parameters
 	static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
@@ -46,11 +45,10 @@ class ProtocolParsingInput : public ProtocolParsing
 {
 	Q_OBJECT
 public:
-	ProtocolParsingInput(QAbstractSocket * device,PacketModeTransmission packetModeTransmission);
+	ProtocolParsingInput(QAbstractSocket * socket,PacketModeTransmission packetModeTransmission);
 	friend class ProtocolParsing;
 	bool checkStringIntegrity(const QByteArray & data);
 protected:
-	virtual void parseIncommingData();
 	//have message without reply
 	virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data) = 0;
 	virtual void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data) = 0;
@@ -83,6 +81,8 @@ protected:
 	QHash<quint8,quint16> replySize;
 	QHash<quint8,quint8> reply_mainCodeType;
 	QHash<quint8,quint16> reply_subCodeType;
+private slots:
+	virtual void parseIncommingData();
 signals:
 	void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
 	void newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
@@ -95,7 +95,7 @@ class ProtocolParsingOutput : public ProtocolParsing
 {
 	Q_OBJECT
 public:
-	ProtocolParsingOutput(QAbstractSocket * device,PacketModeTransmission packetModeTransmission);
+	ProtocolParsingOutput(QAbstractSocket * socket,PacketModeTransmission packetModeTransmission);
 	friend class ProtocolParsing;
 
 	//send message without reply

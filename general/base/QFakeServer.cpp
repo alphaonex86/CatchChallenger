@@ -1,6 +1,8 @@
 #include "QFakeServer.h"
 #include "QFakeSocket.h"
 
+#include <QHostAddress>
+
 QFakeServer QFakeServer::server;
 
 QFakeServer::QFakeServer()
@@ -20,6 +22,8 @@ void QFakeServer::addPendingConnection(QFakeSocket * socket)
 	}
 	newEntry.first->theOtherSocket=newEntry.second;
 	newEntry.second->theOtherSocket=newEntry.first;
+	newEntry.second->connectToHost(QHostAddress::LocalHost,9999);
+	newEntry.second->connectToHostImplementation();
 	connect(newEntry.first,SIGNAL(disconnected()),this,SLOT(disconnectedSocket()));
 	emit newConnection();
 }

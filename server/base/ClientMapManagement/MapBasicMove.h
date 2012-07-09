@@ -59,7 +59,7 @@ signals:
 	void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
-	virtual void put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	virtual void put_on_the_map(Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	//normal slots
 	virtual void askIfIsReadyToStop();

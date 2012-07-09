@@ -28,6 +28,7 @@ public:
 	explicit ClientHeavyLoad();
 	~ClientHeavyLoad();
 	void setVariable(Player_internal_informations *player_informations);
+	static QList<quint16> simplifiedIdList;
 public slots:
 	virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
 	void askRandomSeedList(const quint8 &query_id);
@@ -38,12 +39,13 @@ public slots:
 	void stop();
 private:
 	// ------------------------------
-	void sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime);
+	bool sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime);
 	QString SQL_text_quote(QString text);
 	// ------------------------------
 	Player_internal_informations *player_informations;
 	bool sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime=true);
 	void listDatapack(const QString &suffix,const QStringList &files);
+	bool loadTheRawPseudo();
 signals:
 	//normal signals
 	void error(const QString &error);
@@ -57,11 +59,9 @@ signals:
 	//login linked signals
 	void send_player_informations();
 	void isLogged();
-	void put_on_the_map(const quint32 &player_id,Map_server* map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	void put_on_the_map(Map_server* map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	//random linked signals
 	void setRandomSeedList(const QByteArray &randomData);
-protected:
-	bool is_logged;
 };
 
 #endif // CLIENTHEAVYLOAD_H

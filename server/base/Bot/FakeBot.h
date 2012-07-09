@@ -45,6 +45,8 @@ public slots:
 private slots:
 	void random_new_step();
 	void insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed);
+	void have_current_player_info(Player_private_and_public_informations info,QString pseudo);
+	void newError(QString error,QString detailedError);
 /*signals:
 	void disconnected();*/
 };

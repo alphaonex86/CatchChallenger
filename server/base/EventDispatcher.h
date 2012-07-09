@@ -128,7 +128,7 @@ signals:
 	//stat
 	void is_started(bool);
 	//stat player
-	void new_player_is_connected(const Player_private_and_public_informations &player);
+	void new_player_is_connected(const Player_internal_informations &player);
 	void player_is_disconnected(const QString &pseudo);
 	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
 	void error(const QString &error);

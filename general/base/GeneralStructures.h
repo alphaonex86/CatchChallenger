@@ -22,10 +22,10 @@ enum Chat_type
 
 enum Player_type
 {
-	Player_type_normal = 0x01,
-	Player_type_premium = 0x02,
-	Player_type_gm = 0x03,
-	Player_type_dev = 0x04
+	Player_type_normal = 0x10,
+	Player_type_premium = 0x20,
+	Player_type_gm = 0x30,
+	Player_type_dev = 0x40
 };
 
 enum Orientation
@@ -71,25 +71,18 @@ struct map_management_move
 
 struct Player_public_informations
 {
-	quint32 id;
+	quint16 simplifiedId;
 	QString pseudo;
-	QString description;
 	quint16 clan;
 	Player_type type;
 	QString skin;
+	quint8 speed;
 };
 
 struct Player_private_and_public_informations
 {
 	Player_public_informations public_informations;
 	quint64 cash;
-};
-
-/// \brief Define the mode of size
-enum PacketSizeMode
-{
-	PacketSizeMode_Small=0x00,
-	PacketSizeMode_Big=0x01
 };
 
 /// \brief Define the mode of transmission: client or server
