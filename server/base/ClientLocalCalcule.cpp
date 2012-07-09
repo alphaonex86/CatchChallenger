@@ -26,9 +26,14 @@ bool ClientLocalCalcule::checkCollision()
 		return true;
 }
 
-void ClientLocalCalcule::put_on_the_map(const quint32 &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+/* why do that's here?
+ * Because the ClientMapManagement can be totaly satured by the square complexity
+ * that's allow to continue the player to connect and play
+ * the overhead for the network it just at the connexion */
+void ClientLocalCalcule::put_on_the_map(Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
 {
-	MapBasicMove::put_on_the_map(player_id,map,x,y,orientation,speed);
+	emit message(QString("ClientLocalCalcule put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
+	MapBasicMove::put_on_the_map(map,x,y,orientation,speed);
 
 	loadOnTheMap();
 
@@ -44,5 +49,6 @@ void ClientLocalCalcule::put_on_the_map(const quint32 &player_id,Map_server *map
 	out << (quint8)orientation;
 	out << speed;
 	out << 1;//only send the position of the local player
+	emit message(QString("ClientLocalCalcule insert the local client: map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
 	emit sendPacket(0xC0,outputData);
 }

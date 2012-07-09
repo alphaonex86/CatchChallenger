@@ -11,12 +11,18 @@ FakeBot::FakeBot() :
 	api(&socket)
 {
 	connect(&api,SIGNAL(insert_player(quint32,QString,quint16,quint16,quint8,quint16)),this,SLOT(insert_player(quint32,QString,quint16,quint16,quint8,quint16)));
+	connect(&api,SIGNAL(have_current_player_info(Player_private_and_public_informations,QString)),this,SLOT(have_current_player_info(Player_private_and_public_informations,QString)));
+	connect(&api,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
 
 	details=false;
 	map=NULL;
 
 	do_step=false;
-	socket.connectToHost();
+	socket.connectToHost(QHostAddress::LocalHost,9999);
+	socket.connectToHostImplementation();
+
+	x=0;
+	y=0;
 }
 
 FakeBot::~FakeBot()
@@ -32,7 +38,8 @@ void FakeBot::tryLink()
 
 void FakeBot::doStep()
 {
-	if(do_step && map!=NULL)
+	//DebugClass::debugConsole(QString("FakeBot::doStep(), do_step: %1, socket.isValid():%2, map!=NULL: %3").arg(do_step).arg(socket.isValid()).arg(map!=NULL));
+	if(do_step && socket.isValid() && map!=NULL)
 	{
 		random_new_step();
 /*		if(rand()%(EventDispatcher::generalData.botNumber*10)==0)
@@ -81,8 +88,7 @@ void FakeBot::random_new_step()
 //quint32,QString,quint16,quint16,quint8,quint16
 void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed)
 {
-	if(details)
-		DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2").arg(id).arg(mapName));
+	DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2, api.getId(): %3").arg(id).arg(mapName).arg(api.getId()));
 	Q_UNUSED(speed);
 	if(id==api.getId())
 	{
@@ -108,6 +114,18 @@ void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint
 		this->y=y;
 		this->last_direction=(Direction)direction;
 	}
+}
+
+void FakeBot::have_current_player_info(Player_private_and_public_informations info,QString pseudo)
+{
+	Q_UNUSED(info);
+	DebugClass::debugConsole(QString("FakeBot::have_current_player_info() pseudo: %1").arg(pseudo));
+}
+
+void FakeBot::newError(QString error,QString detailedError)
+{
+	DebugClass::debugConsole(QString("FakeBot::newError() error: %1, detailedError: %2").arg(error).arg(detailedError));
+	socket.disconnectFromHost();
 }
 
 void FakeBot::stop_step()

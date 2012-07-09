@@ -12,6 +12,7 @@ EventDispatcher::EventDispatcher()
 	ProtocolParsing::initialiseTheVariable();
 
 	generalData.serverPrivateVariables.connected_players	= 0;
+	generalData.serverPrivateVariables.number_of_bots_logged= 0;
 	generalData.serverPrivateVariables.db			= NULL;
 	generalData.serverPrivateVariables.timer_player_map	= NULL;
 	server							= NULL;
@@ -39,8 +40,6 @@ EventDispatcher::EventDispatcher()
 	generalData.serverPrivateVariables.eventThreaderList << new EventThreader();//local calcule (6)
 
 	generalData.serverPrivateVariables.player_updater.moveToThread(generalData.serverPrivateVariables.eventThreaderList.at(0));
-
-	ProtocolParsing::packetSizeMode = PacketSizeMode_Small;
 
 	QStringList names;
 	names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher" << "benchmark";
@@ -105,6 +104,11 @@ EventDispatcher::~EventDispatcher()
 
 void EventDispatcher::setSettings(GeneralData::ServerSettings settings)
 {
+	//check the settings here
+	if(settings.max_players<1)
+		settings.max_players=200;
+	//load it
+	DebugClass::debugConsole(QString("load with max player: %1").arg(settings.max_players));
 	generalData.serverSettings=settings;
 }
 
@@ -123,6 +127,14 @@ void EventDispatcher::preload_the_data()
 {
 	preload_the_map();
 	preload_the_visibility_algorithm();
+
+	ClientHeavyLoad::simplifiedIdList.clear();
+	int index=0;
+	while(index<generalData.serverSettings.max_players)
+	{
+		ClientHeavyLoad::simplifiedIdList << index;
+		index++;
+	}
 }
 
 void EventDispatcher::preload_the_map()
@@ -409,6 +421,8 @@ void EventDispatcher::preload_the_visibility_algorithm()
 
 void EventDispatcher::load_settings()
 {
+	generalData.serverPrivateVariables.connected_players	= 0;
+	generalData.serverPrivateVariables.number_of_bots_logged= 0;
 }
 
 //start with allow real player to connect
@@ -544,6 +558,8 @@ void EventDispatcher::unload_the_data()
 {
 	unload_the_map();
 	unload_the_visibility_algorithm();
+
+	ClientHeavyLoad::simplifiedIdList.clear();
 }
 
 void EventDispatcher::unload_the_map()
@@ -829,7 +845,7 @@ void EventDispatcher::connect_the_last_client()
 	if(!in_benchmark_mode)
 	{
 		connect(client_list.last(),SIGNAL(emit_serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
-		connect(client_list.last(),SIGNAL(new_player_is_connected(Player_private_and_public_informations)),this,SIGNAL(new_player_is_connected(Player_private_and_public_informations)),Qt::QueuedConnection);
+		connect(client_list.last(),SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
 		connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
 		connect(client_list.last(),SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
 	}

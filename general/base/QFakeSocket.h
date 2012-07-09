@@ -13,13 +13,12 @@ public:
 //	friend class QFakeSocket;
 	explicit QFakeSocket();
 	void abort();
-	void disconnectFromHost();
-	void connectToHost();
+	void disconnectFromHostImplementation();
+	void connectToHostImplementation();
 	qint64	bytesAvailable () const;
 	qint64	bytesToWrite () const;
 	bool	canReadLine () const;
 	void	close ();
-	bool	isSequential () const;
 	bool	waitForBytesWritten ( int msecs = 30000 );
 	bool	waitForReadyRead ( int msecs = 30000 );
 	bool isValid();
@@ -28,7 +27,6 @@ public:
 	quint64 getTXSize();
 protected:
 	qint64	readData ( char * data, qint64 maxSize );
-	qint64	readLineData(char * data, qint64 maxlen );
 	qint64	writeData(const char * data, qint64 size);
 /*signals:
 	void	connected();
