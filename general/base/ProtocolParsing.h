@@ -16,6 +16,7 @@ class ProtocolParsing : public QObject
 public:
 	ProtocolParsing(QAbstractSocket * socket);
 	static void initialiseTheVariable();
+	static QByteArray toUTF8(const QString &text);
 protected:
 	QAbstractSocket * socket;
 	/********************** static *********************/

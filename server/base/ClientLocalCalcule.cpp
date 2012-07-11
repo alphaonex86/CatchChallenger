@@ -1,4 +1,6 @@
 #include "ClientLocalCalcule.h"
+#include "../../general/base/ProtocolParsing.h"
+#include "EventDispatcher.h"
 
 /** \todo do client near list for the local player
   the list is limited to 50
@@ -26,29 +28,92 @@ bool ClientLocalCalcule::checkCollision()
 		return true;
 }
 
+void ClientLocalCalcule::extraStop()
+{
+	//virtual stop the player
+	if(last_direction>4)
+		last_direction=Direction((quint8)last_direction-4);
+	Orientation orientation=(Orientation)last_direction;
+	if(current_map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
+	{
+		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
+		DebugClass::debugConsole(
+					QString("current_map->map_file: %1,x: %2,y: %3, orientation: %4")
+					.arg(current_map->map_file)
+					.arg(x)
+					.arg(y)
+					.arg(orientation)
+					);
+		#endif
+		if(!player_informations->is_logged || player_informations->isFake)
+			return;
+		QSqlQuery updateMapPositionQuery=EventDispatcher::generalData.serverPrivateVariables.updateMapPositionQuery;
+		updateMapPositionQuery.bindValue(":map_name",current_map->map_file);
+		updateMapPositionQuery.bindValue(":position_x",x);
+		updateMapPositionQuery.bindValue(":position_y",y);
+		updateMapPositionQuery.bindValue(":orientation",orientation);
+		updateMapPositionQuery.bindValue(":id",player_informations->id);
+		if(!updateMapPositionQuery.exec())
+			DebugClass::debugConsole(QString("Sql query failed: %1, error: %2").arg(updateMapPositionQuery.lastQuery()).arg(updateMapPositionQuery.lastError().text()));
+	}
+}
+
 /* why do that's here?
  * Because the ClientMapManagement can be totaly satured by the square complexity
  * that's allow to continue the player to connect and play
  * the overhead for the network it just at the connexion */
-void ClientLocalCalcule::put_on_the_map(Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
 	emit message(QString("ClientLocalCalcule put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
-	MapBasicMove::put_on_the_map(map,x,y,orientation,speed);
+	MapBasicMove::put_on_the_map(map,x,y,orientation);
+	at_start_orientation=orientation;
+	at_start_map_name=map;
+	at_start_x=x;
+	at_start_y=y;
 
 	loadOnTheMap();
 
 	//send to the client the position of the player
 	QByteArray outputData;
-	QDataStream out(&outputData, QIODevice::WriteOnly);
-	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint8)0x01;
-	out << player_id;
-	out << map->map_file;
-	out << x;
-	out << y;
-	out << (quint8)orientation;
-	out << speed;
-	out << 1;//only send the position of the local player
+	outputData[0]=0x01;
+	outputData+=map->rawMapFile;
+	{
+		QDataStream out(&outputData, QIODevice::WriteOnly);
+		out.setVersion(QDataStream::Qt_4_4);
+		if(EventDispatcher::generalData.serverSettings.max_players<=255)
+		{
+			out << (quint8)0x01;
+			out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
+		}
+		else
+		{
+			out << (quint16)0x0001;
+			out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
+		}
+		out << x;
+		out << y;
+		out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
+		out << player_informations->public_and_private_informations.public_informations.speed;
+		out << player_informations->public_and_private_informations.public_informations.clan;
+
+		outputData+=player_informations->rawPseudo;
+		out.device()->seek(out.device()->pos()+player_informations->rawPseudo.size());
+		outputData+=player_informations->rawSkin;
+		out.device()->seek(out.device()->pos()+player_informations->rawSkin.size());
+
+		//0 move and 0 remove
+		if(EventDispatcher::generalData.serverSettings.max_players<=255)
+		{
+			out << (quint8)0x00;
+			out << (quint8)0x00;
+		}
+		else
+		{
+			out << (quint16)0x0000;
+			out << (quint16)0x0000;
+		}
+	}
+
 	emit message(QString("ClientLocalCalcule insert the local client: map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
 	emit sendPacket(0xC0,outputData);
 }

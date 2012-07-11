@@ -85,6 +85,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 				int index_sub_loop=0;
 				while(index_sub_loop<playerSizeList)
 				{
+					//player id
 					Player_public_informations public_informations;
 					if(max_player<=255)
 					{
@@ -106,6 +107,8 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 						}
 						in >> public_informations.simplifiedId;
 					}
+
+					//x and y
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
@@ -114,6 +117,8 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 					quint8 x,y;
 					in >> x;
 					in >> y;
+
+					//direction and player type
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
@@ -136,12 +141,23 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 						emit newError(tr("Procotol wrong or corrupted"),QString("playerType have wrong value: %1, at main ident: %2").arg(playerTypeInt).arg(mainCodeType));
 						return;
 					}
+
+					//the speed
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
 						return;
 					}
 					in >> public_informations.speed;
+
+					//the clan
+					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+					{
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+						return;
+					}
+					in >> public_informations.clan;
+
 					//the pseudo
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 					{
@@ -162,13 +178,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 						emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
 						return;
 					}
-					//the clan
-					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-					{
-						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-						return;
-					}
-					in >> public_informations.clan;
+
 					//the skin
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
 					{
@@ -189,6 +199,8 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 						emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
 						return;
 					}
+
+
 					if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
 						player_informations.public_informations=public_informations;
 					emit insert_player(public_informations,mapFile,x,y,direction);
