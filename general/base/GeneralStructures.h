@@ -9,6 +9,12 @@
 #include <QHash>
 #include <QVariant>
 
+#define COORD_TYPE quint8
+#define SIMPLIFIED_PLAYER_ID_TYPE quint16
+#define CLAN_ID_TYPE quint8
+#define SPEED_TYPE quint8
+
+
 enum Chat_type
 {
 	Chat_type_local = 0x01,
@@ -51,8 +57,8 @@ enum Direction
 struct map_management_insert
 {
 	QString fileName;
-	quint16 x;
-	quint16 y;
+	COORD_TYPE x;
+	COORD_TYPE y;
 	Direction direction;//can be insert as direction when changing of map
 	quint16 speed;
 };
@@ -71,12 +77,12 @@ struct map_management_move
 
 struct Player_public_informations
 {
-	quint16 simplifiedId;
+	SIMPLIFIED_PLAYER_ID_TYPE simplifiedId;
 	QString pseudo;
-	quint16 clan;
+	CLAN_ID_TYPE clan;
 	Player_type type;
 	QString skin;
-	quint8 speed;
+	SPEED_TYPE speed;
 };
 
 struct Player_private_and_public_informations
@@ -117,13 +123,13 @@ struct CommmonServerSettings
 struct Map_semi_border_content_top_bottom
 {
 	QString fileName;
-	qint32 x_offset;//can be negative, it's an offset!
+	qint16 x_offset;//can be negative, it's an offset!
 };
 
 struct Map_semi_border_content_left_right
 {
 	QString fileName;
-	qint32 y_offset;//can be negative, it's an offset!
+	qint16 y_offset;//can be negative, it's an offset!
 };
 
 struct Map_semi_border
@@ -138,8 +144,11 @@ struct Map_to_send
 {
 	Map_semi_border border;
 	//QStringList other_map;//border and not
+
+	//quint32 because the format allow it, checked into tryLoadMap()
 	quint32 width;
 	quint32 height;
+
 	QHash<QString,QVariant> property;
 
 	struct MapToSend_ParsedLayer
@@ -151,21 +160,21 @@ struct Map_to_send
 
 	struct Temp_teleport
 	{
-		quint32 source_x,source_y;
-		quint32 destination_x,destination_y;
+		COORD_TYPE source_x,source_y;
+		COORD_TYPE destination_x,destination_y;
 		QString map;
 	};
 	QList<Temp_teleport> teleport;
 
 	struct Rescue_Point
 	{
-		quint8 x,y;
+		COORD_TYPE x,y;
 	};
 	QList<Rescue_Point> rescue_points;
 
 	struct Bot_Spawn_Point
 	{
-		quint8 x,y;
+		COORD_TYPE x,y;
 	};
 	QList<Bot_Spawn_Point> bot_spawn_points;
 };
