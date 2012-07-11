@@ -1,3 +1,6 @@
+#ifndef STRUCTURES_SERVER_H
+#define STRUCTURES_SERVER_H
+
 #include <QObject>
 #include <QList>
 #include <QStringList>
@@ -12,85 +15,14 @@
 
 #include "../general/base/GeneralStructures.h"
 #include "PlayerUpdater.h"
-#include "Map_server.h"
-
-#ifndef STRUCTURES_SERVER_H
-#define STRUCTURES_SERVER_H
 
 class EventThreader;
 class Map_custom;
 class ClientBroadCast;
 class ClientMapManagement;
 class FakeBot;
-
-/*use template here, like:
-template<T>
-struct Map
-{
-	T *map;
-};
-
-struct Map_server : Map<Map_server>
-{
-	bool 	metadonnes;
-};
-  */
-
-/** conversion x,y to position: x+y*width */
-/*struct Map_server
-{
-	//the index is position (x+y*width)
-	struct Map_ParsedLayer
-	{
-		bool *walkable;
-		bool *water;
-	};
-	Map_ParsedLayer parsed_layer;
-
-	struct Map_Border
-	{
-		struct Map_BorderContent_TopBottom
-		{
-			Map_server *map;
-			qint32 x_offset;
-		};
-		struct Map_BorderContent_LeftRight
-		{
-			Map_server *map;
-			qint32 y_offset;
-		};
-		Map_BorderContent_TopBottom top;
-		Map_BorderContent_TopBottom bottom;
-		Map_BorderContent_LeftRight left;
-		Map_BorderContent_LeftRight right;
-	};
-	Map_Border border;
-
-	QList<Map_server *> near_map;//not only the border
-	struct Teleporter
-	{
-		quint32 x,y;
-		Map_server *map;
-	};
-	QHash<quint32,Teleporter> teleporter;//the int (x+y*width) is position
-
-	QString map_file;
-	quint16 width;
-	quint16 height;
-	quint32 group;
-
-	QList<ClientMapManagement *> clients;//manipulated by thread of ClientMapManagement()
-
-	struct MapVisibility_simple
-	{
-		bool show;
-	};
-	struct MapVisibility
-	{
-		MapVisibility_simple simple;
-	};
-	MapVisibility mapVisibility;
-};*/
+class PlayerUpdater;
+class Map_server;
 
 struct Map_player_info
 {
@@ -112,6 +44,7 @@ struct Player_internal_informations
 	bool is_logged;
 	quint32 id;
 	QByteArray rawPseudo;
+	QByteArray rawSkin;
 };
 
 struct GeneralData
@@ -193,6 +126,7 @@ struct GeneralData
 		QString mapBasePath;
 		QHash<QString,Map_server *> map_list;
 		QTimer timer_to_send_insert_move_remove;
+		qint8 sizeofInsertRequest;
 
 		//connection
 		quint16 connected_players;
@@ -205,8 +139,8 @@ struct GeneralData
 		struct BotSpawn
 		{
 			QString map;
-			quint16 x;
-			quint16 y;
+			COORD_TYPE x;
+			COORD_TYPE y;
 		};
 		QList<BotSpawn> botSpawn;
 		int botSpawnIndex;

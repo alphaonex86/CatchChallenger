@@ -58,7 +58,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				player_informations->public_and_private_informations.public_informations.clan=0;
 				player_informations->id=999999999-EventDispatcher::generalData.serverPrivateVariables.number_of_bots_logged;
 				player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->id);
-				if(!loadTheRawPseudo())
+				if(!loadTheRawUTF8String())
 				{
 					out << (quint8)01;
 					out << QString("Convert into utf8 have wrong size");
@@ -69,6 +69,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				player_informations->public_and_private_informations.public_informations.skin="";//useless for serveur benchmark
 				player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
 				player_informations->public_and_private_informations.cash=0;
+				player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
 				EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << player_informations->id;
 				emit send_player_informations();
 				emit isLogged();
@@ -76,7 +77,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit put_on_the_map(EventDispatcher::generalData.serverPrivateVariables.map_list[EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).map],
 						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).x,
 						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).y,
-						    Orientation_bottom,POKECRAFT_SERVER_NORMAL_SPEED);
+						    Orientation_bottom);
 				EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex++;
 				if(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex>=EventDispatcher::generalData.serverPrivateVariables.botSpawn.size())
 					EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex=0;
@@ -140,7 +141,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			player_informations->public_and_private_informations.public_informations.skin=loginQuery.value(2).toString();
 			player_informations->public_and_private_informations.public_informations.type=(Player_type)loginQuery.value(7).toUInt();
 			player_informations->public_and_private_informations.cash=0;
-			if(!loadTheRawPseudo())
+			player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
+			if(!loadTheRawUTF8String())
 			{
 				out << (quint8)01;
 				out << QString("Convert into utf8 have wrong size");
@@ -171,8 +173,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 					EventDispatcher::generalData.serverPrivateVariables.map_list[loginQuery.value(6).toString()],//map pointer
 					loginQuery.value(3).toInt(),//position_x
 					loginQuery.value(4).toInt(),//position_y
-					(Orientation)orentation,
-					POKECRAFT_SERVER_NORMAL_SPEED //speed in ms for each tile (step delay)
+					(Orientation)orentation
 				);
 			}
 			else
@@ -187,15 +188,16 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	}
 }
 
-bool ClientHeavyLoad::loadTheRawPseudo()
+bool ClientHeavyLoad::loadTheRawUTF8String()
 {
-	if(player_informations->public_and_private_informations.public_informations.pseudo.size()>255 || player_informations->public_and_private_informations.public_informations.pseudo.size()==0)
+	player_informations->rawPseudo=ProtocolParsing::toUTF8(player_informations->public_and_private_informations.public_informations.pseudo);
+	if(player_informations->rawPseudo.size()==0)
 		return false;
-	QByteArray rawPseudo=player_informations->public_and_private_informations.public_informations.pseudo.toUtf8();
-	if(rawPseudo.size()>255 || rawPseudo.size()==0)
+
+	player_informations->rawSkin=ProtocolParsing::toUTF8(player_informations->public_and_private_informations.public_informations.skin);
+	if(player_informations->rawSkin.size()==0)
 		return false;
-	player_informations->rawPseudo[0]=rawPseudo.size();
-	player_informations->rawPseudo+=rawPseudo;
+
 	return true;
 }
 
@@ -331,7 +333,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content
 		return false;
 	QByteArray outputData;
 	outputData[0]=fileNameRaw.size();
-	outputData+=fileName;
+	outputData+=fileNameRaw;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint32)content.size();
@@ -346,16 +348,11 @@ QString ClientHeavyLoad::SQL_text_quote(QString text)
 	return text.replace("'","\\'");
 }
 
-void ClientHeavyLoad::updatePlayerPosition(const QString &map,const quint16 &x,const quint16 &y,const Orientation &orientation)
+void ClientHeavyLoad::dbQuery(QSqlQuery &sqlQuery)
 {
-	if(!player_informations->is_logged || player_informations->isFake)
+	if(!sqlQuery.exec())
+	{
+		emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
 		return;
-	QSqlQuery updateMapPositionQuery=EventDispatcher::generalData.serverPrivateVariables.updateMapPositionQuery;
-	updateMapPositionQuery.bindValue(":map_name",map);
-	updateMapPositionQuery.bindValue(":position_x",x);
-	updateMapPositionQuery.bindValue(":position_y",y);
-	updateMapPositionQuery.bindValue(":orientation",orientation);
-	updateMapPositionQuery.bindValue(":id",player_informations->id);
-	if(!updateMapPositionQuery.exec())
-		DebugClass::debugConsole(QString("Sql query failed: %1, error: %2").arg(updateMapPositionQuery.lastQuery()).arg(updateMapPositionQuery.lastError().text()));
+	}
 }

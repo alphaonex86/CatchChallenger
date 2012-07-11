@@ -1,7 +1,7 @@
-#include "ClientMapManagement.h"
-
 #ifndef MAPVISIBILITYALGORITHM_SIMPLE_H
 #define MAPVISIBILITYALGORITHM_SIMPLE_H
+
+#include "ClientMapManagement.h"
 
 class MapVisibilityAlgorithm_Simple : public ClientMapManagement
 {
@@ -9,6 +9,8 @@ public:
 	explicit MapVisibilityAlgorithm_Simple();
 	virtual ~MapVisibilityAlgorithm_Simple();
 	void reinsertAllClient(const int &loop_size);
+	//drop all clients
+	virtual void dropAllClients();
 protected:
 	//add clients linked
 	void insertClient();
@@ -18,20 +20,46 @@ protected:
 private:
 	static int index;
 	static int loop_size;
-	MapVisibilityAlgorithm_Simple *current_client;
+	static MapVisibilityAlgorithm_Simple *current_client;//static to drop down the memory
 	//overwrite
 	//remove the move/remove
-	#ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
-	void insertAnotherClient(const quint32 &player_id,const Map_server *map,const quint16 &x,const quint16 &y,const Direction &direction,const quint16 &speed);
-	#endif
 	#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
-	void moveAnotherClientWithMap(const quint32 &player_id,const Map_server *map,const quint8 &movedUnit,const Direction &direction);
+	QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>			to_send_over_move;
+	void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction);
+	void send_reinsert();
 	#endif
 	#ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
-	void removeAnotherClient(const quint32 &player_id);
+	void insertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player);
+	void removeAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id);
 	#endif
 
-	QSet<quint32> overMove;
+	//temp variable for purge buffer
+	static QByteArray purgeBuffer_outputData;
+	static QByteArray purgeBuffer_outputDataLoop;
+	static int purgeBuffer_index;
+	static int purgeBuffer_list_size;
+	static int purgeBuffer_list_size_internal;
+	static int purgeBuffer_indexMovement;
+	static map_management_move purgeBuffer_move;
+	static QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >::const_iterator i_move;
+	static QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >::const_iterator i_move_end;
+	static QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>::const_iterator i_insert;
+	static QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>::const_iterator i_insert_end;
+	static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove;
+	static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove_end;
+
+	//temp variable to move on the map
+	static map_management_movement moveClient_tempMov;
+
+	// stuff to send
+	QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>			to_send_insert;
+	QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >	to_send_move;
+	QSet<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
+public slots:
+	virtual void purgeBuffer();
+
+private slots:
+	virtual void extraStop();
 };
 
 #endif // MAPVISIBILITYALGORITHM_SIMPLE_H

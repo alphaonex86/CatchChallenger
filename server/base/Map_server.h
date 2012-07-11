@@ -55,6 +55,11 @@ public:
 		MapVisibility_simple simple;
 	};
 	MapVisibility mapVisibility;
+
+	// variables UTF8
+	QByteArray rawMapFile;
+
+	bool loadInternalVariables();
 };
 
 #endif // MAP_SERVER_H
