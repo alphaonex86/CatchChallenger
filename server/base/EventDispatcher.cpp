@@ -110,6 +110,13 @@ void EventDispatcher::setSettings(GeneralData::ServerSettings settings)
 	//load it
 	DebugClass::debugConsole(QString("load with max player: %1").arg(settings.max_players));
 	generalData.serverSettings=settings;
+
+	quint8 player_list_size;
+	if(settings.max_players<=255)
+		player_list_size=sizeof(quint8);
+	else
+		player_list_size=sizeof(quint16);
+	generalData.serverPrivateVariables.sizeofInsertRequest=player_list_size+sizeof(quint8)+sizeof(quint8)+sizeof(quint8);
 }
 
 void EventDispatcher::initAll()
@@ -163,52 +170,55 @@ void EventDispatcher::preload_the_map()
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
-				map_name << returnList.at(index);
-
-				if(in_benchmark_mode)
+				if(generalData.serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables())
 				{
-					index_sub=0;
-					size_sub_loop=map_temp.map_to_send.bot_spawn_points.size();
-					while(index_sub<size_sub_loop)
+					map_name << returnList.at(index);
+
+					if(in_benchmark_mode)
 					{
-						GeneralData::ServerPrivateVariables::BotSpawn tempPoint;
-						tempPoint.map=returnList.at(index);
-						tempPoint.x=map_temp.map_to_send.bot_spawn_points.at(index_sub).x;
-						tempPoint.y=map_temp.map_to_send.bot_spawn_points.at(index_sub).y;
-						generalData.serverPrivateVariables.botSpawn << tempPoint;
-						index_sub++;
+						index_sub=0;
+						size_sub_loop=map_temp.map_to_send.bot_spawn_points.size();
+						while(index_sub<size_sub_loop)
+						{
+							GeneralData::ServerPrivateVariables::BotSpawn tempPoint;
+							tempPoint.map=returnList.at(index);
+							tempPoint.x=map_temp.map_to_send.bot_spawn_points.at(index_sub).x;
+							tempPoint.y=map_temp.map_to_send.bot_spawn_points.at(index_sub).y;
+							generalData.serverPrivateVariables.botSpawn << tempPoint;
+							index_sub++;
+						}
+						index_sub=0;
+						size_sub_loop=map_temp.map_to_send.rescue_points.size();
+						while(index_sub<size_sub_loop)
+						{
+							GeneralData::ServerPrivateVariables::BotSpawn tempPoint;
+							tempPoint.map=returnList.at(index);
+							tempPoint.x=map_temp.map_to_send.rescue_points.at(index_sub).x;
+							tempPoint.y=map_temp.map_to_send.rescue_points.at(index_sub).y;
+							generalData.serverPrivateVariables.botSpawn << tempPoint;
+							index_sub++;
+						}
 					}
-					index_sub=0;
-					size_sub_loop=map_temp.map_to_send.rescue_points.size();
-					while(index_sub<size_sub_loop)
-					{
-						GeneralData::ServerPrivateVariables::BotSpawn tempPoint;
-						tempPoint.map=returnList.at(index);
-						tempPoint.x=map_temp.map_to_send.rescue_points.at(index_sub).x;
-						tempPoint.y=map_temp.map_to_send.rescue_points.at(index_sub).y;
-						generalData.serverPrivateVariables.botSpawn << tempPoint;
-						index_sub++;
-					}
+
+					Map_semi map_semi;
+					map_semi.map				= generalData.serverPrivateVariables.map_list[returnList.at(index)];
+
+					map_semi.border.top.fileName		= map_temp.map_to_send.border.top.fileName;
+					map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
+
+					map_semi.border.bottom.fileName		= map_temp.map_to_send.border.bottom.fileName;
+					map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
+
+					map_semi.border.left.fileName		= map_temp.map_to_send.border.left.fileName;
+					map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
+
+					map_semi.border.right.fileName		= map_temp.map_to_send.border.right.fileName;
+					map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
+
+					map_semi.old_map=map_temp.map_to_send;
+
+					semi_loaded_map << map_semi;
 				}
-
-				Map_semi map_semi;
-				map_semi.map				= generalData.serverPrivateVariables.map_list[returnList.at(index)];
-
-				map_semi.border.top.fileName		= map_temp.map_to_send.border.top.fileName;
-				map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
-
-				map_semi.border.bottom.fileName		= map_temp.map_to_send.border.bottom.fileName;
-				map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
-
-				map_semi.border.left.fileName		= map_temp.map_to_send.border.left.fileName;
-				map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
-
-				map_semi.border.right.fileName		= map_temp.map_to_send.border.right.fileName;
-				map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
-
-				map_semi.old_map=map_temp.map_to_send;
-
-				semi_loaded_map << map_semi;
 			}
 			else
 				DebugClass::debugConsole(QString("error at loading: %1, error: %2").arg(returnList.at(index)).arg(map_temp.errorString()));

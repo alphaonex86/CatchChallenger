@@ -88,12 +88,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 	}
 
 	//check the size
-	if(map_to_send.width<1 || map_to_send.width>32000)
+	if(map_to_send.width<1 || map_to_send.width>255)
 	{
 		error=QString("the width should be greater or equal than 1, and lower or equal than 32000");
 		return false;
 	}
-	if(map_to_send.height<1 || map_to_send.height>32000)
+	if(map_to_send.height<1 || map_to_send.height>255)
 	{
 		error=QString("the height should be greater or equal than 1, and lower or equal than 32000");
 		return false;

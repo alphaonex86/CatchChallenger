@@ -1,4 +1,5 @@
 #include "MapBasicMove.h"
+#include "../Map_server.h"
 
 /** \todo do client near list for the local player
   the list is limited to 50
@@ -53,7 +54,7 @@ void MapBasicMove::stop()
 	deleteLater();
 }
 
-void MapBasicMove::put_on_the_map(Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed)
+void MapBasicMove::put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
 	//store the starting informations
 	last_direction=static_cast<Direction>(orientation);
@@ -62,7 +63,6 @@ void MapBasicMove::put_on_the_map(Map_server *map,const quint16 &x,const quint16
 	this->player_id=player_id;
 	this->x=x;
 	this->y=y;
-	this->speed=speed;
 	current_map=map;
 
 	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
