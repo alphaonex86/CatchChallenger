@@ -115,6 +115,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 						hash=data.right(data.size()-in.device()->pos());
 						emit askLogin(queryNumber,login,hash);
 					}
+					return;
 				}
 			break;
 			default:
@@ -125,6 +126,11 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 		default:
 			emit error("wrong data before login with mainIdent: "+QString::number(mainCodeType));
 		break;
+	}
+	if((in.device()->size()-in.device()->pos())!=0)
+	{
+		emit error(QString("remaining data: parseInputBeforeLogin(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+		return;
 	}
 }
 
@@ -162,6 +168,11 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
 			emit error("unknow main ident: "+QString::number(mainCodeType));
 			return;
 		break;
+	}
+	if((in.device()->size()-in.device()->pos())!=0)
+	{
+		emit error(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+		return;
 	}
 }
 
@@ -277,84 +288,6 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 				return;
 			}
 			break;
-			//Add players info to watch
-			case 0x000A:
-			{
-				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-				{
-					emit error(QString("wrong size with the main ident: %1").arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				quint8 type_player_query;
-				in >> type_player_query;
-				if(type_player_query<1 || type_player_query>2)
-				{
-					emit error(QString("type player query wrong: %1, main ident: %2, sub ident: %3").arg(type_player_query).arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
-				{
-					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				QList<quint32> player_ids;
-				quint32 id;
-				quint16 list_size;
-				in >> list_size;
-				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32)*list_size)
-				{
-					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				int index=0;
-				while(index<list_size)
-				{
-					in >> id;
-					player_ids << id;
-					index++;
-				}
-				if(in.device()->size()!=in.device()->pos())
-				{
-					emit error(QString("remaining data: %1, subIdent: %2").arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				emit addPlayersInformationToWatch(player_ids,type_player_query);
-				return;
-			}
-			break;
-			//Remove players info to watch
-			case 0x000B:
-			{
-				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
-				{
-					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				QList<quint32> player_ids;
-				quint32 id;
-				quint16 list_size;
-				in >> list_size;
-				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32)*list_size)
-				{
-					emit error(QString("wrong size with the main ident: %1, sub ident: %2").arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				int index=0;
-				while(index<list_size)
-				{
-					in >> id;
-					player_ids << id;
-					index++;
-				}
-				if(in.device()->size()!=in.device()->pos())
-				{
-					emit error(QString("remaining data: %1, subIdent: %2").arg(mainCodeType).arg(subCodeType));
-					return;
-				}
-				emit removePlayersInformationToWatch(player_ids);
-				return;
-			}
-			break;
 			default:
 				emit error(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
 				return;
@@ -365,6 +298,11 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 			emit error("unknow main ident: "+QString::number(mainCodeType));
 			return;
 		break;
+	}
+	if((in.device()->size()-in.device()->pos())!=0)
+	{
+		emit error(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+		return;
 	}
 }
 
@@ -400,11 +338,6 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 		case 0x02:
 		switch(subCodeType)
 		{
-			//ask the seed list
-			case 0x0005:
-				emit(askRandomSeedList(queryNumber));
-				return;
-			break;
 			//Send datapack file list
 			case 0x000C:
 			{
@@ -462,6 +395,11 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 			emit error("unknow main ident: "+QString::number(mainCodeType));
 			return;
 		break;
+	}
+	if((in.device()->size()-in.device()->pos())!=0)
+	{
+		emit error(QString("remaining data: parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+		return;
 	}
 }
 

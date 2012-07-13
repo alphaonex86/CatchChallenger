@@ -10,7 +10,7 @@ QSemaphore FakeBot::wait_to_stop;
 FakeBot::FakeBot() :
 	api(&socket)
 {
-	connect(&api,SIGNAL(insert_player(quint32,QString,quint16,quint16,quint8,quint16)),this,SLOT(insert_player(quint32,QString,quint16,quint16,quint8,quint16)));
+	connect(&api,SIGNAL(insert_player(Player_public_informations,QString,quint16,quint16,Direction)),this,SLOT(insert_player(Player_public_informations,QString,quint16,quint16,Direction)));
 	connect(&api,SIGNAL(have_current_player_info(Player_private_and_public_informations,QString)),this,SLOT(have_current_player_info(Player_private_and_public_informations,QString)));
 	connect(&api,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
 
@@ -86,14 +86,13 @@ void FakeBot::random_new_step()
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
-void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint8 direction,quint16 speed)
+void FakeBot::insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction)
 {
-	DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2, api.getId(): %3").arg(id).arg(mapName).arg(api.getId()));
-	Q_UNUSED(speed);
-	if(id==api.getId())
+	DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2, api.getId(): %3").arg(player.simplifiedId).arg(mapName).arg(api.getId()));
+	if(player.simplifiedId==api.getId())
 	{
 		if(details)
-			DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2").arg(id).arg(mapName));
+			DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2").arg(player.simplifiedId).arg(mapName));
 		if(!EventDispatcher::generalData.serverPrivateVariables.map_list.contains(mapName))
 		{
 			DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(mapName));
@@ -112,7 +111,7 @@ void FakeBot::insert_player(quint32 id,QString mapName,quint16 x,quint16 y,quint
 		this->map=EventDispatcher::generalData.serverPrivateVariables.map_list[mapName];
 		this->x=x;
 		this->y=y;
-		this->last_direction=(Direction)direction;
+		this->last_direction=direction;
 	}
 }
 
@@ -126,6 +125,8 @@ void FakeBot::newError(QString error,QString detailedError)
 {
 	DebugClass::debugConsole(QString("FakeBot::newError() error: %1, detailedError: %2").arg(error).arg(detailedError));
 	socket.disconnectFromHost();
+	socket.disconnectFromHostImplementation();
+	this->map=NULL;
 }
 
 void FakeBot::stop_step()

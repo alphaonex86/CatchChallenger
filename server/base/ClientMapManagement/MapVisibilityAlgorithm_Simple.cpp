@@ -1,5 +1,6 @@
 #include "MapVisibilityAlgorithm_Simple.h"
 #include "../EventDispatcher.h"
+#include "../../VariableServer.h"
 
 int MapVisibilityAlgorithm_Simple::index;
 int MapVisibilityAlgorithm_Simple::loop_size;
@@ -7,7 +8,6 @@ MapVisibilityAlgorithm_Simple *MapVisibilityAlgorithm_Simple::current_client;
 
 //temp variable for purge buffer
 QByteArray MapVisibilityAlgorithm_Simple::purgeBuffer_outputData;
-QByteArray MapVisibilityAlgorithm_Simple::purgeBuffer_outputDataLoop;
 int MapVisibilityAlgorithm_Simple::purgeBuffer_index;
 int MapVisibilityAlgorithm_Simple::purgeBuffer_list_size;
 int MapVisibilityAlgorithm_Simple::purgeBuffer_list_size_internal;
@@ -282,70 +282,84 @@ void MapVisibilityAlgorithm_Simple::extraStop()
 
 void MapVisibilityAlgorithm_Simple::purgeBuffer()
 {
-	/// \todo suspend when is into fighting
-	if(to_send_insert.size()==0 && to_send_move.size()==0 && to_send_remove.size()==0)
-		return;
 	if(stopIt)
 		return;
 
-	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	emit message("purgeBuffer() runing....");
+	void send_insert();
+	void send_move();
+	void send_remove();
+	#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
+	send_reinsert();
 	#endif
+}
+
+//for the purge buffer
+void MapVisibilityAlgorithm_Simple::send_insert()
+{
+	if(to_send_insert.size()==0)
+		return;
 
 	purgeBuffer_outputData.clear();
 	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
 
 	//////////////////////////// insert //////////////////////////
-	if(to_send_insert.size()==0)
-		out << (quint8)0x00;
+	/* can be only this map with this algo, then 1 map */
+	out << (quint8)0x01;
+	purgeBuffer_outputData+=current_map->rawMapFile;
+	out.device()->seek(out.device()->pos()+current_map->rawMapFile.size());
+	if(EventDispatcher::generalData.serverSettings.max_players<=255)
+		out << (quint8)to_send_insert.size();
 	else
+		out << (quint16)to_send_insert.size();
+
+	i_insert = to_send_insert.constBegin();
+	i_insert_end = to_send_insert.constEnd();
+	while (i_insert != i_insert_end)
 	{
-		/* can be only this map with this algo, then 1 map */
-		out << (quint8)0x01;
-		purgeBuffer_outputData+=current_map->rawMapFile;
-		out.device()->seek(out.device()->pos()+current_map->rawMapFile.size());
+		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+		emit message(
+			QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6")
+			.arg(i_insert.key())
+			.arg(i_insert.value()->current_map->map_file)
+			.arg(i_insert.value()->x)
+			.arg(i_insert.value()->y)
+			.arg(directionToString(i_insert.value()->last_direction))
+			.arg(player_id)
+			 );
+		#endif
 		if(EventDispatcher::generalData.serverSettings.max_players<=255)
-			out << (quint8)to_send_insert.size();
+			out << (quint8)i_insert.key();
 		else
-			out << (quint16)to_send_insert.size();
+			out << (quint16)i_insert.key();
+		out << i_insert.value()->x;
+		out << i_insert.value()->y;
+		out << ((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
+		out << i_insert.value()->player_informations->public_and_private_informations.public_informations.speed;
+		//clan
+		out << i_insert.value()->player_informations->public_and_private_informations.public_informations.clan;
+		//pseudo
+		purgeBuffer_outputData+=i_insert.value()->player_informations->rawPseudo;
+		out.device()->seek(out.device()->pos()+i_insert.value()->player_informations->rawPseudo.size());
+		//skin
+		purgeBuffer_outputData+=i_insert.value()->player_informations->rawSkin;
+		out.device()->seek(out.device()->pos()+i_insert.value()->player_informations->rawSkin.size());
 
-		i_insert = to_send_insert.constBegin();
-		i_insert_end = to_send_insert.constEnd();
-		while (i_insert != i_insert_end)
-		{
-			#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-			emit message(
-				QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6")
-				.arg(i_insert.key())
-				.arg(i_insert.value()->current_map->map_file)
-				.arg(i_insert.value()->x)
-				.arg(i_insert.value()->y)
-				.arg(directionToString(i_insert.value()->last_direction))
-				.arg(player_id)
-				 );
-			#endif
-			if(EventDispatcher::generalData.serverSettings.max_players<=255)
-				out << (quint8)i_insert.key();
-			else
-				out << (quint16)i_insert.key();
-			out << i_insert.value()->x;
-			out << i_insert.value()->y;
-			out << ((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
-			out << i_insert.value()->player_informations->public_and_private_informations.public_informations.speed;
-			//clan
-			out << i_insert.value()->player_informations->public_and_private_informations.public_informations.clan;
-			//pseudo
-			purgeBuffer_outputData+=i_insert.value()->player_informations->rawPseudo;
-			out.device()->seek(out.device()->pos()+i_insert.value()->player_informations->rawPseudo.size());
-			//skin
-			purgeBuffer_outputData+=i_insert.value()->player_informations->rawSkin;
-			out.device()->seek(out.device()->pos()+i_insert.value()->player_informations->rawSkin.size());
-
-			++i_insert;
-		}
-		to_send_insert.clear();
+		++i_insert;
 	}
+	to_send_insert.clear();
+
+	emit sendPacket(0xC0,purgeBuffer_outputData);
+}
+
+void MapVisibilityAlgorithm_Simple::send_move()
+{
+	if(to_send_move.size()==0)
+		return;
+
+	purgeBuffer_outputData.clear();
+	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_4_4);
 
 	//////////////////////////// move //////////////////////////
 	purgeBuffer_list_size_internal=0;
@@ -383,6 +397,18 @@ void MapVisibilityAlgorithm_Simple::purgeBuffer()
 	}
 	to_send_move.clear();
 
+	emit sendPacket(0xC7,purgeBuffer_outputData);
+}
+
+void MapVisibilityAlgorithm_Simple::send_remove()
+{
+	if(to_send_remove.size()==0)
+		return;
+
+	purgeBuffer_outputData.clear();
+	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_4_4);
+
 	//////////////////////////// remove //////////////////////////
 	i_remove = to_send_remove.constBegin();
 	i_remove_end = to_send_remove.constEnd();
@@ -407,11 +433,7 @@ void MapVisibilityAlgorithm_Simple::purgeBuffer()
 	}
 	to_send_remove.clear();
 
-	purgeBuffer_outputData+=purgeBuffer_outputDataLoop;
-	emit sendPacket(0xC0,purgeBuffer_outputData);
-	#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
-	send_reinsert();
-	#endif
+	emit sendPacket(0xC8,purgeBuffer_outputData);
 }
 
 #if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
