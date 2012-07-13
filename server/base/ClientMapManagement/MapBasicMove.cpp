@@ -54,7 +54,7 @@ void MapBasicMove::stop()
 	deleteLater();
 }
 
-void MapBasicMove::put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void MapBasicMove::put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
 	//store the starting informations
 	last_direction=static_cast<Direction>(orientation);

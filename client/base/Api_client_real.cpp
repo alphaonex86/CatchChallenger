@@ -80,6 +80,11 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 			return;
 		break;
 	}
+	if((in.device()->size()-in.device()->pos())!=0)
+	{
+		emit newError(tr("Procotol wrong or corrupted"),QString("remaining data: Api_client_real::parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+		return;
+	}
 }
 
 void Api_client_real::resetAll()

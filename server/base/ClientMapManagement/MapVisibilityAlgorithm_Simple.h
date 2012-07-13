@@ -28,6 +28,10 @@ private:
 	void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction);
 	void send_reinsert();
 	#endif
+	//for the purge buffer
+	void send_insert();
+	void send_move();
+	void send_remove();
 	#ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
 	void insertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player);
 	void removeAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id);
@@ -35,7 +39,6 @@ private:
 
 	//temp variable for purge buffer
 	static QByteArray purgeBuffer_outputData;
-	static QByteArray purgeBuffer_outputDataLoop;
 	static int purgeBuffer_index;
 	static int purgeBuffer_list_size;
 	static int purgeBuffer_list_size_internal;

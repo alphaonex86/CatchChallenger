@@ -6,7 +6,7 @@
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
 Client::Client(QAbstractSocket *socket,bool isFake)
-{
+{	
 	this->socket			= socket;
 	player_informations.isFake=isFake;
 
@@ -15,6 +15,11 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	clientNetworkRead=new ClientNetworkRead(&player_informations,socket);
 	clientNetworkWrite=new ClientNetworkWrite(socket);
 	clientLocalCalcule=new ClientLocalCalcule();
+
+	connect(clientNetworkRead,SIGNAL(newInputQuery(quint8,quint8)),clientNetworkWrite,SLOT(newInputQuery(quint8,quint8)));
+	connect(clientNetworkRead,SIGNAL(newInputQuery(quint8,quint16,quint8)),clientNetworkWrite,SLOT(newInputQuery(quint8,quint16,quint8)));
+	connect(clientNetworkWrite,SIGNAL(newOutputQuery(quint8,quint8)),clientNetworkRead,SLOT(newOutputQuery(quint8,quint8)));
+	connect(clientNetworkWrite,SIGNAL(newOutputQuery(quint8,quint16,quint8)),clientNetworkRead,SLOT(newOutputQuery(quint8,quint16,quint8)));
 
 	switch(EventDispatcher::generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
 	{
@@ -30,7 +35,7 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	{
 		connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
-		connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map_server*,COORD_TYPE,COORD_TYPE,Orientation)),	clientMapManagement,	SLOT(put_on_the_map(Map_server*,COORD_TYPE,COORD_TYPE,Orientation)),Qt::QueuedConnection);
+		connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map_server*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),clientMapManagement,	SLOT(put_on_the_map(Map_server*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
 		connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientMapManagement,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
@@ -92,16 +97,16 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	connect(clientNetworkRead,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
 
+	connect(clientLocalCalcule,SIGNAL(dbQuery(QSqlQuery)),clientHeavyLoad,SLOT(dbQuery(QSqlQuery)),Qt::QueuedConnection);
+
 	//connect the player information
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
-	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map_server*,COORD_TYPE,COORD_TYPE,Orientation,quint16)),	clientLocalCalcule,	SLOT(put_on_the_map(Map_server*,COORD_TYPE,COORD_TYPE,Orientation,quint16)),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map_server*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	clientLocalCalcule,	SLOT(put_on_the_map(Map_server*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
 	connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),
 		clientHeavyLoad,SLOT(askLogin(quint8,QString,QByteArray)),Qt::QueuedConnection);
-	connect(clientNetworkRead,SIGNAL(askRandomSeedList(quint8)),
-		clientHeavyLoad,SLOT(askRandomSeedList(quint8)),Qt::QueuedConnection);
 	connect(clientNetworkRead,SIGNAL(datapackList(quint8,QStringList,QList<quint32>)),
 		clientHeavyLoad,SLOT(datapackList(quint8,QStringList,QList<quint32>)),Qt::QueuedConnection);
 
@@ -112,9 +117,7 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	connect(clientNetworkRead,	SIGNAL(sendPM(QString,QString)),				clientBroadCast,	SLOT(sendPM(QString,QString)),					Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(sendChatText(Chat_type,QString)),			this,			SLOT(local_sendChatText(Chat_type,QString)),			Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(sendPM(QString,QString)),				this,			SLOT(local_sendPM(QString,QString)),				Qt::QueuedConnection);
-	connect(clientNetworkRead,	SIGNAL(addPlayersInformationToWatch(QList<quint32>,quint8)),	clientBroadCast,	SLOT(addPlayersInformationToWatch(QList<quint32>,quint8)),	Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(sendBroadCastCommand(QString,QString)),			clientBroadCast,	SLOT(sendBroadCastCommand(QString,QString)),			Qt::QueuedConnection);
-	connect(clientNetworkRead,	SIGNAL(removePlayersInformationToWatch(QList<quint32>)),	clientBroadCast,	SLOT(removePlayersInformationToWatch(QList<quint32>)),		Qt::QueuedConnection);
 	connect(clientBroadCast,	SIGNAL(kicked()),						this,			SLOT(kicked()),							Qt::QueuedConnection);
 	connect(clientNetworkRead,	SIGNAL(serverCommand(QString,QString)),				this,			SLOT(serverCommand(QString,QString)),			Qt::QueuedConnection);
 
@@ -191,8 +194,7 @@ void Client::disconnectClient()
 	clientNetworkWrite->disconnect();
 
 	//connect to save
-	connect(clientLocalCalcule,SIGNAL(dbQuery(QSqlQuery)),
-		clientHeavyLoad,SLOT(dbQuery(QSqlQuery)),Qt::QueuedConnection);
+	connect(clientLocalCalcule,SIGNAL(dbQuery(QSqlQuery)),clientHeavyLoad,SLOT(dbQuery(QSqlQuery)),Qt::QueuedConnection);
 
 	//connect to quit
 	connect(clientNetworkRead,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
