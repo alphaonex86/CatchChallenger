@@ -14,7 +14,7 @@
 
 //in ms
 #define POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT 150
-#define POKECRAFT_SERVER_NORMAL_SPEED 200
+#define POKECRAFT_SERVER_NORMAL_SPEED 4 //then 4*50ms, see the protocol
 
 /** convert the overflow of move into insert, use more cpu than POKECRAFT_SERVER_VISIBILITY_CLEAR
  * need POKECRAFT_SERVER_VISIBILITY_CLEAR enabled

@@ -75,45 +75,32 @@ void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,cons
 
 	//send to the client the position of the player
 	QByteArray outputData;
+	QDataStream out(&outputData, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_4_4);
+
 	outputData[0]=0x01;
 	outputData+=map->rawMapFile;
+	out.device()->seek(out.device()->size());
+	if(EventDispatcher::generalData.serverSettings.max_players<=255)
 	{
-		QDataStream out(&outputData, QIODevice::WriteOnly);
-		out.setVersion(QDataStream::Qt_4_4);
-		if(EventDispatcher::generalData.serverSettings.max_players<=255)
-		{
-			out << (quint8)0x01;
-			out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
-		}
-		else
-		{
-			out << (quint16)0x0001;
-			out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
-		}
-		out << x;
-		out << y;
-		out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
-		out << player_informations->public_and_private_informations.public_informations.speed;
-		out << player_informations->public_and_private_informations.public_informations.clan;
-
-		outputData+=player_informations->rawPseudo;
-		out.device()->seek(out.device()->pos()+player_informations->rawPseudo.size());
-		outputData+=player_informations->rawSkin;
-		out.device()->seek(out.device()->pos()+player_informations->rawSkin.size());
-
-		//0 move and 0 remove
-		if(EventDispatcher::generalData.serverSettings.max_players<=255)
-		{
-			out << (quint8)0x00;
-			out << (quint8)0x00;
-		}
-		else
-		{
-			out << (quint16)0x0000;
-			out << (quint16)0x0000;
-		}
+		out << (quint8)0x01;
+		out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
 	}
+	else
+	{
+		out << (quint16)0x0001;
+		out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
+	}
+	out << x;
+	out << y;
+	out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
+	out << player_informations->public_and_private_informations.public_informations.speed;
+	out << player_informations->public_and_private_informations.public_informations.clan;
 
-	emit message(QString("ClientLocalCalcule insert the local client: map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
+	outputData+=player_informations->rawPseudo;
+	out.device()->seek(out.device()->pos()+player_informations->rawPseudo.size());
+	outputData+=player_informations->rawSkin;
+	out.device()->seek(out.device()->pos()+player_informations->rawSkin.size());
+
 	emit sendPacket(0xC0,outputData);
 }

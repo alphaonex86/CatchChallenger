@@ -33,7 +33,7 @@ public slots:
 	virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
 	void askRandomSeedList(const quint8 &query_id);
 	void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
-	void dbQuery(QSqlQuery &sqlQuery);
+	void dbQuery(QSqlQuery sqlQuery);
 	//normal slots
 	void askIfIsReadyToStop();
 	void stop();
@@ -59,7 +59,7 @@ signals:
 	//login linked signals
 	void send_player_informations();
 	void isLogged();
-	void put_on_the_map(Map_server* map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+	void put_on_the_map(Map_server* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
 	//random linked signals
 	void setRandomSeedList(const QByteArray &randomData);
 };
