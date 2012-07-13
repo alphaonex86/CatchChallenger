@@ -77,11 +77,15 @@ signals:
 
 	//general info
 	void number_of_player(quint16 number,quint16 max_player);
+	void random_seeds(QByteArray data);
 
 	//map move
-	void insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,quint8 direction);
+	void insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction);
 	void move_player(quint16 id,QList<QPair<quint8,Direction> > movement);
 	void remove_player(quint16 id);
+	void reinsert_player(quint16 id,quint16 x,quint16 y,quint8 direction);
+	void reinsert_player(quint16 id,QString mapName,quint16 x,quint16 y,quint8 direction);
+	void dropAllPlayerOnTheMap();
 
 	//chat
 	void new_chat_text(Chat_type chat_type,QString text,QString pseudo,Player_type type);

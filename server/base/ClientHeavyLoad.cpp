@@ -43,7 +43,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit postReply(query_id,outputData);
 				emit message(QString("Bot point not resolved"));
 			}
-			else if(simplifiedIdList.size()>0)
+			else if(simplifiedIdList.size()<=0)
 			{
 				out << (quint8)0x01;
 				out << QString("Not free id to login");
@@ -57,20 +57,21 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				simplifiedIdList.removeFirst();
 				player_informations->public_and_private_informations.public_informations.clan=0;
 				player_informations->id=999999999-EventDispatcher::generalData.serverPrivateVariables.number_of_bots_logged;
-				player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->id);
+				player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
+				player_informations->public_and_private_informations.public_informations.skin="";//useless for serveur benchmark
+				player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
+				player_informations->public_and_private_informations.cash=0;
+				player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
+				EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << player_informations->id;
 				if(!loadTheRawUTF8String())
 				{
+					emit message(QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->id)));
 					out << (quint8)01;
 					out << QString("Convert into utf8 have wrong size");
 					emit postReply(query_id,outputData);
 					emit error("Convert into utf8 have wrong size");
 					return;
 				}
-				player_informations->public_and_private_informations.public_informations.skin="";//useless for serveur benchmark
-				player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
-				player_informations->public_and_private_informations.cash=0;
-				player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
-				EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << player_informations->id;
 				emit send_player_informations();
 				emit isLogged();
 				//remplace x and y by real spawn point
@@ -122,7 +123,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			emit postReply(query_id,outputData);
 			emit error("Already logged");
 		}
-		else if(simplifiedIdList.size()>0)
+		else if(simplifiedIdList.size()<=0)
 		{
 			out << (quint8)0x01;
 			out << QString("Not free id to login");
@@ -192,11 +193,18 @@ bool ClientHeavyLoad::loadTheRawUTF8String()
 {
 	player_informations->rawPseudo=ProtocolParsing::toUTF8(player_informations->public_and_private_informations.public_informations.pseudo);
 	if(player_informations->rawPseudo.size()==0)
+	{
+		emit message(QString("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
 		return false;
+	}
 
 	player_informations->rawSkin=ProtocolParsing::toUTF8(player_informations->public_and_private_informations.public_informations.skin);
 	if(player_informations->rawSkin.size()==0)
-		return false;
+	{
+		player_informations->rawSkin[0]=0x00;
+		/*emit message(QString("Unable to convert the skin to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.skin));
+		//return false;//ignore this error*/
+	}
 
 	return true;
 }
@@ -348,7 +356,7 @@ QString ClientHeavyLoad::SQL_text_quote(QString text)
 	return text.replace("'","\\'");
 }
 
-void ClientHeavyLoad::dbQuery(QSqlQuery &sqlQuery)
+void ClientHeavyLoad::dbQuery(QSqlQuery sqlQuery)
 {
 	if(!sqlQuery.exec())
 	{

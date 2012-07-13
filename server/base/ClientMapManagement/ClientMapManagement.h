@@ -36,7 +36,7 @@ protected:
 	virtual void mapVisiblity_unloadFromTheMap() = 0;
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
-	virtual void put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+	virtual void put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
 	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	virtual void purgeBuffer() = 0;
 private slots:

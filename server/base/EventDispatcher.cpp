@@ -53,6 +53,8 @@ EventDispatcher::EventDispatcher()
 	qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
 	qRegisterMetaType<Direction>("Direction");
 	qRegisterMetaType<Map_server*>("Map_final*");
+	qRegisterMetaType<Player_public_informations>("Player_public_informations");
+	qRegisterMetaType<QSqlQuery>("QSqlQuery");
 
 	connect(this,SIGNAL(try_start_benchmark(quint16,quint16,bool)),this,SLOT(start_internal_benchmark(quint16,quint16,bool)),Qt::QueuedConnection);
 	connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
@@ -65,7 +67,7 @@ EventDispatcher::EventDispatcher()
 	connect(this,SIGNAL(try_initAll()),this,SLOT(initAll()),Qt::QueuedConnection);
 	emit try_initAll();
 
-	nextStep.start(POKECRAFT_SERVER_NORMAL_SPEED);
+	nextStep.start(POKECRAFT_SERVER_NORMAL_SPEED*50);
 	srand(time(NULL));
 }
 
@@ -734,7 +736,7 @@ void EventDispatcher::addBot()
 
 	if(generalData.serverPrivateVariables.fake_clients.size()==1)
 	{
-		generalData.serverPrivateVariables.fake_clients.last()->show_details();
+		//generalData.serverPrivateVariables.fake_clients.last()->show_details();
 		time_benchmark_first_client.start();
 	}
 	connect(&nextStep,SIGNAL(timeout()),generalData.serverPrivateVariables.fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);

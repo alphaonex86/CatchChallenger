@@ -36,7 +36,7 @@ ProtocolParsing::ProtocolParsing(QAbstractSocket * device)
 void ProtocolParsing::initialiseTheVariable()
 {
 	//def query without the sub code
-	ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4;
+	ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8;
 	ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41;
 
 	//define the size of direct query
@@ -109,7 +109,7 @@ ProtocolParsingOutput::ProtocolParsingOutput(QAbstractSocket * socket,PacketMode
 void ProtocolParsingInput::parseIncommingData()
 {
 	#ifdef PROTOCOLPARSINGDEBUG
-	DebugClass::debugConsole(QString("parseIncommingData(): socket->bytesAvailable(): %1").arg(socket->bytesAvailable()));
+	DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): socket->bytesAvailable(): %1").arg(socket->bytesAvailable()));
 	#endif
 
 	//put this as general
@@ -120,12 +120,12 @@ void ProtocolParsingInput::parseIncommingData()
 	{
 		if(!haveData)
 		{
-			#ifdef PROTOCOLPARSINGDEBUG
-			DebugClass::debugConsole(QString("parseIncommingData(): !haveData"));
-			#endif
 			if(socket->bytesAvailable()<(int)sizeof(quint8))//ignore because first int is cuted!
 				return;
 			in >> mainCodeType;
+			#ifdef PROTOCOLPARSINGDEBUG
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
+			#endif
 			haveData=true;
 			haveData_dataSize=false;
 			have_subCodeType=false;
@@ -142,18 +142,18 @@ void ProtocolParsingInput::parseIncommingData()
 		if(!have_subCodeType)
 		{
 			#ifdef PROTOCOLPARSINGDEBUG
-			DebugClass::debugConsole(QString("parseIncommingData(): !have_subCodeType"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !have_subCodeType"));
 			#endif
 			if(!need_subCodeType)
 			{
 				#ifdef PROTOCOLPARSINGDEBUG
-				DebugClass::debugConsole(QString("parseIncommingData(): !need_subCodeType"));
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_subCodeType"));
 				#endif
 				//if is a reply
 				if((isClient && mainCodeType==replyCodeServerToClient) || (!isClient && mainCodeType==replyCodeClientToServer))
 				{
 					#ifdef PROTOCOLPARSINGDEBUG
-					DebugClass::debugConsole(QString("parseIncommingData(): need_query_number=true"));
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true"));
 					#endif
 					is_reply=true;
 					need_query_number=true;
@@ -168,7 +168,7 @@ void ProtocolParsingInput::parseIncommingData()
 						if(mainCode_IsQueryServerToClient.contains(mainCodeType))
 						{
 							#ifdef PROTOCOLPARSINGDEBUG
-							DebugClass::debugConsole(QString("parseIncommingData(): need_query_number=true, query with reply"));
+							DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true, query with reply"));
 							#endif
 							need_query_number=true;
 						}
@@ -200,7 +200,7 @@ void ProtocolParsingInput::parseIncommingData()
 			else
 			{
 				#ifdef PROTOCOLPARSINGDEBUG
-				DebugClass::debugConsole(QString("parseIncommingData(): need_subCodeType"));
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_subCodeType"));
 				#endif
 				if(socket->bytesAvailable()<(int)sizeof(quint16))//ignore because first int is cuted!
 					return;
@@ -209,13 +209,13 @@ void ProtocolParsingInput::parseIncommingData()
 				if(isClient)
 				{
 					#ifdef PROTOCOLPARSINGDEBUG
-					DebugClass::debugConsole(QString("parseIncommingData(): isClient"));
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): isClient"));
 					#endif
 					//if is query with reply
 					if(mainCode_IsQueryServerToClient.contains(mainCodeType))
 					{
 						#ifdef PROTOCOLPARSINGDEBUG
-						DebugClass::debugConsole(QString("parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
+						DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
 						#endif
 						need_query_number=true;
 					}
@@ -234,13 +234,13 @@ void ProtocolParsingInput::parseIncommingData()
 				else
 				{
 					#ifdef PROTOCOLPARSINGDEBUG
-					DebugClass::debugConsole(QString("parseIncommingData(): !isClient"));
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !isClient"));
 					#endif
 					//if is query with reply
 					if(mainCode_IsQueryClientToServer.contains(mainCodeType))
 					{
 						#ifdef PROTOCOLPARSINGDEBUG
-						DebugClass::debugConsole(QString("parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
+						DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
 						#endif
 						need_query_number=true;
 					}
@@ -263,12 +263,12 @@ void ProtocolParsingInput::parseIncommingData()
 		}
 		#ifdef PROTOCOLPARSINGDEBUG
 		else
-			DebugClass::debugConsole(QString("parseIncommingData(): have_subCodeType"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have_subCodeType"));
 		#endif
 		if(!have_query_number && need_query_number)
 		{
 			#ifdef PROTOCOLPARSINGDEBUG
-			DebugClass::debugConsole(QString("parseIncommingData(): need_query_number"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number"));
 			#endif
 			if(socket->bytesAvailable()<(int)sizeof(quint8))
 				return;
@@ -277,6 +277,9 @@ void ProtocolParsingInput::parseIncommingData()
 			// it's reply
 			if(is_reply)
 			{
+				#ifdef PROTOCOLPARSINGDEBUG
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): it's reply, resolv size"));
+				#endif
 				if(replySize.contains(queryNumber))
 				{
 					dataSize=replySize[queryNumber];
@@ -293,17 +296,17 @@ void ProtocolParsingInput::parseIncommingData()
 		}
 		#ifdef PROTOCOLPARSINGDEBUG
 		else
-			DebugClass::debugConsole(QString("parseIncommingData(): not need_query_number"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not need_query_number"));
 		#endif
 		if(!haveData_dataSize)
 		{
 			#ifdef PROTOCOLPARSINGDEBUG
-			DebugClass::debugConsole(QString("parseIncommingData(): !haveData_dataSize"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !haveData_dataSize"));
 			#endif
 			if(!haveData_dataSize)
 			{
 				#ifdef PROTOCOLPARSINGDEBUG
-				DebugClass::debugConsole(QString("parseIncommingData(): while(!haveData_dataSize)"));
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): while(!haveData_dataSize)"));
 				#endif
 				while(!haveData_dataSize)
 				{
@@ -322,12 +325,12 @@ void ProtocolParsingInput::parseIncommingData()
 								dataSize=temp_size_8Bits;
 								haveData_dataSize=true;
 								#ifdef PROTOCOLPARSINGDEBUG
-								DebugClass::debugConsole(QString("parseIncommingData(): have 8Bits data size"));
+								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 8Bits data size"));
 								#endif
 							}
 							#ifdef PROTOCOLPARSINGDEBUG
 							else
-								DebugClass::debugConsole(QString("parseIncommingData(): have not 8Bits data size: %1, temp_size_8Bits: %2").arg(QString(data_size.toHex())).arg(temp_size_8Bits));
+								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 8Bits data size: %1, temp_size_8Bits: %2").arg(QString(data_size.toHex())).arg(temp_size_8Bits));
 							#endif
 						}
 						break;
@@ -352,12 +355,12 @@ void ProtocolParsingInput::parseIncommingData()
 								dataSize=temp_size_16Bits;
 								haveData_dataSize=true;
 								#ifdef PROTOCOLPARSINGDEBUG
-								DebugClass::debugConsole(QString("parseIncommingData(): have 16Bits data size"));
+								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 16Bits data size"));
 								#endif
 							}
 							#ifdef PROTOCOLPARSINGDEBUG
 							else
-								DebugClass::debugConsole(QString("parseIncommingData(): have not 16Bits data size"));
+								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 16Bits data size"));
 							#endif
 						}
 						break;
@@ -391,8 +394,8 @@ void ProtocolParsingInput::parseIncommingData()
 		}
 		#ifdef PROTOCOLPARSINGDEBUG
 		else
-			DebugClass::debugConsole(QString("parseIncommingData(): haveData_dataSize"));
-		DebugClass::debugConsole(QString("parseIncommingData(): some info is ready"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): haveData_dataSize"));
+		DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): some info is ready"));
 		#endif
 		#ifdef POKECRAFT_EXTRA_CHECK
 		if(!haveData_dataSize)
@@ -413,7 +416,7 @@ void ProtocolParsingInput::parseIncommingData()
 			else
 			{
 				#ifdef PROTOCOLPARSINGDEBUG
-				DebugClass::debugConsole(QString("parseIncommingData(): not suffisent data"));
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data"));
 				#endif
 				data.append(socket->readAll());
 				return;
@@ -428,14 +431,14 @@ void ProtocolParsingInput::parseIncommingData()
 		#endif
 		#ifdef PROTOCOLPARSINGINPUTDEBUG
 		if(isClient)
-			DebugClass::debugConsole(QString("parseIncommingData(): parse message as client"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): parse message as client"));
 		else
-			DebugClass::debugConsole(QString("parseIncommingData(): parse message as server"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): parse message as server"));
 		#endif
 		if(!need_query_number)
 		{
 			#ifdef PROTOCOLPARSINGINPUTDEBUG
-			DebugClass::debugConsole(QString("parseIncommingData(): !need_query_number"));
+			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_query_number"));
 			#endif
 			if(!need_subCodeType)
 				parseMessage(mainCodeType,data);
@@ -447,7 +450,7 @@ void ProtocolParsingInput::parseIncommingData()
 			if(!is_reply)
 			{
 				#ifdef PROTOCOLPARSINGINPUTDEBUG
-				DebugClass::debugConsole(QString("parseIncommingData(): need_query_number && is_reply"));
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && !is_reply"));
 				#endif
 				if(!need_subCodeType)
 					parseQuery(mainCodeType,queryNumber,data);
@@ -458,8 +461,13 @@ void ProtocolParsingInput::parseIncommingData()
 			{
 				if(!reply_subCodeType.contains(queryNumber))
 				{
+					if(!reply_mainCodeType.contains(queryNumber))
+					{
+						emit error("reply to a query not send");
+						return;
+					}
 					#ifdef PROTOCOLPARSINGINPUTDEBUG
-					DebugClass::debugConsole(QString("parseIncommingData(): need_query_number && !is_reply && !reply_subCodeType.contains(queryNumber)"));
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && !reply_subCodeType.contains(queryNumber)"));
 					#endif
 					mainCodeType=reply_mainCodeType[queryNumber];
 					reply_mainCodeType.remove(queryNumber);
@@ -468,7 +476,7 @@ void ProtocolParsingInput::parseIncommingData()
 				else
 				{
 					#ifdef PROTOCOLPARSINGINPUTDEBUG
-					DebugClass::debugConsole(QString("parseIncommingData(): need_query_number && !is_reply && reply_subCodeType.contains(queryNumber)"));
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber)"));
 					#endif
 					mainCodeType=reply_mainCodeType[queryNumber];
 					subCodeType=reply_subCodeType[queryNumber];
@@ -507,6 +515,9 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 		if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
 			replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
 	}
+	#ifdef PROTOCOLPARSINGINPUTDEBUG
+	DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+	#endif
 	reply_mainCodeType[queryNumber]=mainCodeType;
 }
 
@@ -533,6 +544,9 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 				replySize[queryNumber]=replySizeMultipleCodePacketClientToServer[mainCodeType][subCodeType];
 		}
 	}
+	#ifdef PROTOCOLPARSINGINPUTDEBUG
+	DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+	#endif
 	reply_mainCodeType[queryNumber]=mainCodeType;
 	reply_subCodeType[queryNumber]=subCodeType;
 }

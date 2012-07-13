@@ -38,7 +38,7 @@ void ClientMapManagement::extraStop()
 	//removeClient(); -> do by unload from map
 }
 
-void ClientMapManagement::put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void ClientMapManagement::put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
 	emit message(QString("ClientMapManagement put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
 	MapBasicMove::put_on_the_map(map,x,y,orientation);
@@ -76,5 +76,5 @@ void ClientMapManagement::unloadFromTheMap()
 
 void ClientMapManagement::dropAllClients()
 {
-	emit sendPacket(0xC3);
+	emit sendPacket(0xC4);
 }
