@@ -149,6 +149,12 @@ Client::~Client()
 		delete socket;
 		socket=NULL;
 	}
+	
+	delete clientBroadCast;
+	delete clientHeavyLoad;
+	delete clientNetworkRead;
+	delete clientNetworkWrite;
+	delete clientLocalCalcule;
 }
 
 /// \brief new error at connexion
