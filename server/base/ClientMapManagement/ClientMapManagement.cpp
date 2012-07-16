@@ -53,7 +53,7 @@ void ClientMapManagement::put_on_the_map(Map_server *map,const /*COORD_TYPE*/qui
 void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-	emit message(QString("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_id).arg(directionToString(direction)).arg(previousMovedUnit));
+	emit message(QString("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(directionToString(direction)).arg(previousMovedUnit));
 	#endif
 	mapHaveChanged=false;
 	MapBasicMove::moveThePlayer(previousMovedUnit,direction);

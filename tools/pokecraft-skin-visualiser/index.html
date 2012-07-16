@@ -22,6 +22,9 @@ var index_ani=0;
 var index_direction=0;
 function updatePlayer()
 {
+	if($('#stop').is(':checked'))
+		return;
+
 	var index_ani_temp=index_ani+1;
 	if(index_ani_temp>=3)
 		index_ani_temp-=3;
@@ -54,5 +57,7 @@ Look on: <select onchange="updateDirection()" id="direction">
   <option value="2">Bottom</option>
   <option value="3">Left</option>
 </select>
+<br />
+<input type="checkbox" id="stop"> Stop
 </body>
 </html>
