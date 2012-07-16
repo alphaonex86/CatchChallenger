@@ -60,7 +60,6 @@ void MapBasicMove::put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,
 	last_direction=static_cast<Direction>(orientation);
 
 	//store the current information about player on the map
-	this->player_id=player_id;
 	this->x=x;
 	this->y=y;
 	current_map=map;
@@ -108,7 +107,7 @@ bool MapBasicMove::checkCollision()
 void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4, direction: %5").arg(x).arg(y).arg(player_id).arg(previousMovedUnit).arg(directionToString((Direction)direction)));
+	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4, direction: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(previousMovedUnit).arg(directionToString((Direction)direction)));
 	#endif
 	moveThePlayer_index_move=0;
 	stopCurrentMethod=false;

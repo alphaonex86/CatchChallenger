@@ -23,8 +23,6 @@ public:
 	//info linked
 	qint16				x,y;//can be negative because offset to insert on map diff can be put into
 	Map_server*			current_map;
-	//cache
-	SIMPLIFIED_PLAYER_ID_TYPE	player_id;//to save at the close, and have cache
 	//map vector informations
 	Direction			last_direction;
 
