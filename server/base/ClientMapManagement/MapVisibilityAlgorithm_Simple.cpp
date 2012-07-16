@@ -42,8 +42,8 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 		{
 			//register on other clients
 			current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
-			current_client->insertAnotherClient(player_id,this);
-			this->insertAnotherClient(current_client->player_id,current_client);
+			current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
+			this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
 			index++;
 		}
 	}
@@ -72,7 +72,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 	if(unlikely(mapHaveChanged))
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-		emit message(QString("map have change %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(directionToString((Direction)direction)).arg(loop_size-1));
+		emit message(QString("map have change %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(directionToString((Direction)direction)).arg(loop_size-1));
 		#endif
 		if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
 		{
@@ -84,9 +84,9 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 				if(likely(current_client!=this))
 				{
-					current_client->insertAnotherClient(player_id,this);
+					current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
 					//register the other client on him self
-					this->insertAnotherClient(current_client->player_id,current_client);
+					this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
 				}
 				index++;
 			}
@@ -107,7 +107,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 	{
 		//here to know how player is affected
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-		emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_id).arg(directionToString((Direction)direction)).arg(loop_size-1));
+		emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(directionToString((Direction)direction)).arg(loop_size-1));
 		#endif
 
 		//normal operation
@@ -119,9 +119,9 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 				if(likely(current_client!=this))
 					#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
-					current_client->moveAnotherClientWithMap(player_id,this,movedUnit,direction);
+					current_client->moveAnotherClientWithMap(player_informations->public_and_private_informations.public_informations.simplifiedId,this,movedUnit,direction);
 					#else
-					current_client->moveAnotherClient(player_id,movedUnit,direction);
+					current_client->moveAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,movedUnit,direction);
 					#endif
 				index++;
 			}
@@ -167,7 +167,7 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 		while(index<loop_size)
 		{
 			//current_map -> wrong pointer
-			static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index))->removeAnotherClient(player_id);
+			static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index))->removeAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId);
 			index++;
 		}
 	}
@@ -186,8 +186,8 @@ void MapVisibilityAlgorithm_Simple::reinsertAllClient(const int &loop_size)
 		current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
 		if(likely(current_client!=this))
 		{
-			current_client->insertAnotherClient(player_id,this);
-			this->insertAnotherClient(player_id,current_client);
+			current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
+			this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
 		}
 		index++;
 	}
@@ -210,9 +210,13 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const SIMPLIFIED_PLAYER_
 #if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
 void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction)
 {
+
 	//already into over move
 	if(to_send_insert.contains(player_id) || to_send_over_move.contains(player_id))
 	{
+		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, already into over move").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+		#endif
 		//to_send_map_management_remove.remove(player_id); -> what?
 		return;//quit now
 	}
@@ -224,15 +228,17 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
 					EventDispatcher::generalData.serverPrivateVariables.sizeofInsertRequest
 				))
 	{
+		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, go into over move").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+		#endif
 		to_send_move.remove(player_id);
 		to_send_over_move[player_id]=the_another_player;
 	}
 	else
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-		emit message(QString("moveClient(%1,%2,%3)").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)));
+		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
 		#endif
-
 		moveClient_tempMov.movedUnit=movedUnit;
 		moveClient_tempMov.direction=direction;
 		to_send_move[player_id] << moveClient_tempMov;
@@ -285,9 +291,9 @@ void MapVisibilityAlgorithm_Simple::purgeBuffer()
 	if(stopIt)
 		return;
 
-	void send_insert();
-	void send_move();
-	void send_remove();
+	send_insert();
+	send_move();
+	send_remove();
 	#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
 	send_reinsert();
 	#endif
@@ -298,6 +304,9 @@ void MapVisibilityAlgorithm_Simple::send_insert()
 {
 	if(to_send_insert.size()==0)
 		return;
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+	emit message(QString("send_insert() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+	#endif
 
 	purgeBuffer_outputData.clear();
 	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
@@ -319,22 +328,25 @@ void MapVisibilityAlgorithm_Simple::send_insert()
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
 		emit message(
-			QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6")
+			QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6, direction | type: %7, rawPseudo: %8, rawSkin: %9")
 			.arg(i_insert.key())
 			.arg(i_insert.value()->current_map->map_file)
 			.arg(i_insert.value()->x)
 			.arg(i_insert.value()->y)
 			.arg(directionToString(i_insert.value()->last_direction))
-			.arg(player_id)
+			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
+			.arg(((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type))
+			.arg(QString(i_insert.value()->player_informations->rawPseudo.toHex()))
+			.arg(QString(i_insert.value()->player_informations->rawSkin.toHex()))
 			 );
 		#endif
 		if(EventDispatcher::generalData.serverSettings.max_players<=255)
 			out << (quint8)i_insert.key();
 		else
 			out << (quint16)i_insert.key();
-		out << i_insert.value()->x;
-		out << i_insert.value()->y;
-		out << ((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
+		out << (COORD_TYPE)i_insert.value()->x;
+		out << (COORD_TYPE)i_insert.value()->y;
+		out << (quint8)((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
 		out << i_insert.value()->player_informations->public_and_private_informations.public_informations.speed;
 		//clan
 		out << i_insert.value()->player_informations->public_and_private_informations.public_informations.clan;
@@ -356,6 +368,9 @@ void MapVisibilityAlgorithm_Simple::send_move()
 {
 	if(to_send_move.size()==0)
 		return;
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+	emit message(QString("send_move() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+	#endif
 
 	purgeBuffer_outputData.clear();
 	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
@@ -376,7 +391,7 @@ void MapVisibilityAlgorithm_Simple::send_move()
 		emit message(
 			QString("move player_id: %1, for player: %2")
 			.arg(i_move.key())
-			.arg(player_id)
+			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			 );
 		#endif
 		if(EventDispatcher::generalData.serverSettings.max_players<=255)
@@ -404,6 +419,9 @@ void MapVisibilityAlgorithm_Simple::send_remove()
 {
 	if(to_send_remove.size()==0)
 		return;
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+	emit message(QString("send_remove() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+	#endif
 
 	purgeBuffer_outputData.clear();
 	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
@@ -422,7 +440,7 @@ void MapVisibilityAlgorithm_Simple::send_remove()
 		emit message(
 			QString("player_id to remove: %1, for player: %2")
 			.arg((quint32)(*i_remove))
-			.arg(player_id)
+			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			 );
 		#endif
 		if(EventDispatcher::generalData.serverSettings.max_players<=255)
@@ -441,6 +459,9 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 {
 	if(to_send_over_move.size()==0)
 		return;
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+	emit message(QString("send_reinsert() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+	#endif
 
 	purgeBuffer_outputData.clear();
 	QDataStream out(&purgeBuffer_outputData, QIODevice::WriteOnly);
@@ -463,7 +484,7 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 			.arg(i_insert.value()->x)
 			.arg(i_insert.value()->y)
 			.arg(directionToString(i_insert.value()->last_direction))
-			.arg(player_id)
+			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			 );
 		#endif
 		if(EventDispatcher::generalData.serverSettings.max_players<=255)
