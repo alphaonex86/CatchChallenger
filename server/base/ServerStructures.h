@@ -110,6 +110,7 @@ struct GeneralData
 		QString datapack_basePath;
 		QString datapack_mapPath;
 		QRegExp datapack_rightFileName;
+		QString db_type_string;
 
 		//sql query
 		QSqlQuery loginQuery;
