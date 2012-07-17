@@ -1,7 +1,6 @@
 #include <QObject>
 
 #include "GeneralStructures.h"
-#include "Map.h"
 
 #ifndef MOVEONTHEMAP_H
 #define MOVEONTHEMAP_H
@@ -10,6 +9,9 @@
 /* template <typename TMap = Map>
 class MoveOnTheMap {
    TMap * map_;*/
+
+class Map;
+
 class MoveOnTheMap
 {
 public:

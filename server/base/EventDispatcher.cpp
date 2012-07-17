@@ -478,11 +478,13 @@ void EventDispatcher::start_internal_server()
 		DebugClass::debugConsole(QString("Listen *:%1").arg(generalData.serverSettings.server_port));
 	else
 		DebugClass::debugConsole("Listen "+server_ip+":"+QString::number(generalData.serverSettings.server_port));
-	DebugClass::debugConsole("Connecting to mysql...");
+	DebugClass::debugConsole("Connecting to the database...");
 
 	if(!initialize_the_database())
 		return;
 
+	if(generalData.serverPrivateVariables.db->isOpen())
+		generalData.serverPrivateVariables.db->close();
 	if(!generalData.serverPrivateVariables.db->open())
 	{
 		DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(generalData.serverPrivateVariables.db->lastError().driverText()).arg(generalData.serverSettings.database.mysql.login).arg(generalData.serverPrivateVariables.db->lastError().databaseText()));
@@ -491,7 +493,7 @@ void EventDispatcher::start_internal_server()
 		emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(generalData.serverPrivateVariables.db->lastError().driverText()).arg(generalData.serverSettings.database.mysql.login).arg(generalData.serverPrivateVariables.db->lastError().databaseText()));
 		return;
 	}
-	DebugClass::debugConsole(QString("Connected to mysql at %1").arg(generalData.serverSettings.database.mysql.host));
+	DebugClass::debugConsole(QString("Connected to %2 at %1").arg(generalData.serverSettings.database.mysql.host).arg(generalData.serverPrivateVariables.db_type_string));
 	preload_the_data();
 	stat=Up;
 	oneInstanceRunning=true;
@@ -501,29 +503,35 @@ void EventDispatcher::start_internal_server()
 
 bool EventDispatcher::initialize_the_database()
 {
+	if(generalData.serverPrivateVariables.db!=NULL)
+	{
+		generalData.serverPrivateVariables.db->close();
+		delete generalData.serverPrivateVariables.db;
+		generalData.serverPrivateVariables.db=NULL;
+	}
 	switch(generalData.serverSettings.database.type)
 	{
 		default:
 		case GeneralData::ServerSettings::Database::DatabaseType_Mysql:
 		generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
 		generalData.serverPrivateVariables.updateMapPositionQuery.prepare("UPDATE player SET map_name=:map_name,position_x=:position_x,position_y=:position_y,orientation=:orientation WHERE id=:id");
-		if(generalData.serverPrivateVariables.db==NULL)
-			generalData.serverPrivateVariables.db=new QSqlDatabase();
+		generalData.serverPrivateVariables.db = new QSqlDatabase();
 		*generalData.serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL");
 		generalData.serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
 		generalData.serverPrivateVariables.db->setHostName(generalData.serverSettings.database.mysql.host);
 		generalData.serverPrivateVariables.db->setDatabaseName(generalData.serverSettings.database.mysql.db);
 		generalData.serverPrivateVariables.db->setUserName(generalData.serverSettings.database.mysql.login);
 		generalData.serverPrivateVariables.db->setPassword(generalData.serverSettings.database.mysql.pass);
+		generalData.serverPrivateVariables.db_type_string="mysql";
 		return true;
 		break;
 		case GeneralData::ServerSettings::Database::DatabaseType_SQLite:
 		generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
 		generalData.serverPrivateVariables.updateMapPositionQuery.prepare("UPDATE player SET map_name=:map_name,position_x=:position_x,position_y=:position_y,orientation=:orientation WHERE id=:id");
-		if(generalData.serverPrivateVariables.db==NULL)
-			generalData.serverPrivateVariables.db=new QSqlDatabase();
+		generalData.serverPrivateVariables.db = new QSqlDatabase();
 		*generalData.serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
 		generalData.serverPrivateVariables.db->setDatabaseName(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
+		generalData.serverPrivateVariables.db_type_string="sqlite";
 		return true;
 		break;
 	}
