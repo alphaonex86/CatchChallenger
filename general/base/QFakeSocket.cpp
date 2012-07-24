@@ -64,7 +64,7 @@ qint64	QFakeSocket::bytesAvailableWithMutex()
 
 qint64	QFakeSocket::bytesAvailable () const
 {
-	return bytesAvailableWithMutex();
+	return const_cast<QFakeSocket *>(this)->bytesAvailableWithMutex();
 }
 
 qint64	QFakeSocket::bytesToWrite () const
@@ -149,10 +149,10 @@ void QFakeSocket::internal_writeData(QByteArray rawData)
 	{
 		QMutexLocker lock(&mutex);
 		#ifdef FAKESOCKETDEBUG
-		DebugClass::debugConsole(QString("internal_writeData(): size: %1").arg(data.size()));
+		DebugClass::debugConsole(QString("internal_writeData(): size: %1").arg(rawData.size()));
 		#endif
-		RX_size+=data.size();
-		this->data+=data;
+		RX_size+=rawData.size();
+		this->data+=rawData;
 	}
 	emit readyRead();
 }
