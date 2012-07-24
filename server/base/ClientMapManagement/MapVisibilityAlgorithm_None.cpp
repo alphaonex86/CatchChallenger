@@ -42,10 +42,11 @@ void MapVisibilityAlgorithm_None::put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE
 	Q_UNUSED(speed);
 }
 
-void MapVisibilityAlgorithm_None::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+bool MapVisibilityAlgorithm_None::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	Q_UNUSED(previousMovedUnit);
 	Q_UNUSED(direction);
+	return true;
 }
 
 void MapVisibilityAlgorithm_None::purgeBuffer()

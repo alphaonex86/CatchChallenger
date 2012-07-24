@@ -29,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->tabWidget->setCurrentIndex(0);
 	internal_currentLatency=0;
 	load_settings();
+	updateDbGroupbox();
 }
 
 MainWindow::~MainWindow()
@@ -644,4 +645,35 @@ void MainWindow::on_benchmark_seconds_valueChanged(int arg1)
 void MainWindow::on_benchmark_clients_valueChanged(int arg1)
 {
 	settings->setValue("benchmark_clients",arg1);
+}
+
+void MainWindow::on_db_type_currentIndexChanged(int index)
+{
+	settings->beginGroup("db");
+	switch(index)
+	{
+		case 1:
+			settings->setValue("type","sqlite");
+		break;
+		case 0:
+		default:
+			settings->setValue("type","mysql");
+		break;
+	}
+	settings->endGroup();
+	updateDbGroupbox();
+}
+
+void MainWindow::updateDbGroupbox()
+{
+	switch(ui->db_type->currentIndex())
+	{
+		case 1:
+			ui->groupBoxDbMysql->setEnabled(false);
+		break;
+		case 0:
+		default:
+			ui->groupBoxDbMysql->setEnabled(true);
+		break;
+	}
 }

@@ -26,8 +26,8 @@ public:
 	quint64 getRXSize();
 	quint64 getTXSize();
 protected:
-	qint64	readData ( char * data, qint64 maxSize );
-	qint64	writeData(const char * data, qint64 size);
+	qint64	readData ( char * rawData, qint64 maxSize );
+	qint64	writeData(const char * rawData, qint64 size);
 /*signals:
 	void	connected();
 	void	disconnected();
@@ -37,9 +37,11 @@ protected:
 protected:
 	QFakeSocket *theOtherSocket;
 private:
-	mutable QByteArray data;
-	void internal_writeData(QByteArray data);
+	QByteArray data;
+	QMutex mutex;
+	void internal_writeData(QByteArray rawData);
 	quint64 RX_size;
+	qint64	bytesAvailableWithMutex();
 };
 
 #endif // QFAKESOCKET_H
