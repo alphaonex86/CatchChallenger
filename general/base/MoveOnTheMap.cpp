@@ -105,72 +105,72 @@ void MoveOnTheMap::teleport(Map ** map,quint16 &x,quint16 &y)
 	}
 }
 
-void MoveOnTheMap::move(Direction direction,Map ** map,quint16 &x,quint16 &y)
+bool MoveOnTheMap::move(Direction direction,Map ** map,quint16 &x,quint16 &y)
 {
 	if(*map==NULL)
-		return;
+		return false;
 	if(!canGoTo(direction,*map,x,y))
-		return;
+		return false;
 	switch(direction)
 	{
 		case Direction_move_at_left:
 			if(x>0)
 			{
 				x-=1;
-				return;
+				return true;
 			}
 			else
 			{
 				x=(*map)->border.left.map->width-1;
 				y+=(*map)->border.left.y_offset;
 				*map=(*map)->border.left.map;
-				return;
+				return true;
 			}
 		break;
 		case Direction_move_at_right:
 			if(x<(*map)->width)
 			{
 				x+=1;
-				return;
+				return true;
 			}
 			else
 			{
 				x=0;
 				y+=(*map)->border.right.y_offset;
 				*map=(*map)->border.right.map;
-				return;
+				return true;
 			}
 		break;
 		case Direction_move_at_top:
 			if(y>0)
 			{
 				y-=1;
-				return;
+				return true;
 			}
 			else
 			{
 				y=(*map)->border.top.map->height-1;
 				x+=(*map)->border.top.x_offset;
 				*map=(*map)->border.top.map;
-				return;
+				return true;
 			}
 		break;
 		case Direction_move_at_bottom:
 			if(y<(*map)->height)
 			{
 				y+=1;
-				return;
+				return true;
 			}
 			else
 			{
 				y=0;
 				x+=(*map)->border.bottom.x_offset;
 				*map=(*map)->border.bottom.map;
-				return;
+				return true;
 			}
 		break;
 		default:
-			return;
+			return false;
 	}
 }
 

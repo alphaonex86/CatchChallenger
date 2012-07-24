@@ -36,8 +36,10 @@ private:
 	Orientation			at_start_orientation;
 	Map_server *			at_start_map_name;
 	COORD_TYPE			at_start_x,at_start_y;
+	static QString			temp_direction;
 public slots:
 	void put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+	bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 private slots:
 	virtual void extraStop();
 signals:

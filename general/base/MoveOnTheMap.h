@@ -23,7 +23,7 @@ protected:
 	quint8 last_step;
 protected:
 	static bool canGoTo(Direction direction,Map *map,quint16 x,quint16 y);
-	static void move(Direction direction,Map ** map,quint16 &x,quint16 &y);
+	static bool move(Direction direction,Map ** map,quint16 &x,quint16 &y);
 	static void teleport(Map ** map,quint16 &x,quint16 &y);
 };
 

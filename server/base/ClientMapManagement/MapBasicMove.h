@@ -13,6 +13,8 @@
 #include "../ServerStructures.h"
 #include "../../VariableServer.h"
 
+/** \warning No static variable due to thread access to this class!!! */
+
 class MapBasicMove : public QObject
 {
 	Q_OBJECT
@@ -37,8 +39,8 @@ protected:
 	virtual bool checkCollision();
 
 	//related to stop
-	volatile bool stopCurrentMethod;
-	volatile bool stopIt;
+	//volatile bool stopCurrentMethod;
+	//volatile bool stopIt;
 	virtual void extraStop();
 
 	//map load/unload and change
@@ -54,13 +56,13 @@ signals:
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
 	virtual void put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-	virtual void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+	virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	//normal slots
 	virtual void askIfIsReadyToStop();
 	virtual void stop();
 private:
 	//temp variable for put on map
-	static int moveThePlayer_index_move;
+	/*quint8 moveThePlayer_index_move;*//// \warning not static because have multiple thread access
 };
 
 #endif // MapBasicMove_H

@@ -155,7 +155,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 							DebugClass::debugConsole(QString("Missing coord: %1").arg(child.tagName()));
 						else
 						{
-							quint32 object_y=SubChild.attribute("y").toUInt(&ok)/16;
+							DebugClass::debugConsole(QString("Missing coord: %1").arg(child.tagName()));
+
+							/** the -1 is important to fix object layer bug into tiled!!!
+							 * Don't remove! */
+							quint32 object_y=(SubChild.attribute("y").toUInt(&ok)/16)-1;
+
 							if(!ok)
 								DebugClass::debugConsole(QString("Missing coord: %1").arg(child.tagName()));
 							else if(object_x>map_to_send.width || object_y>map_to_send.height)

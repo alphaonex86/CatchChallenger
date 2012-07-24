@@ -119,6 +119,7 @@ struct GeneralData
 		//general data
 		QList<EventThreader *> eventThreaderList;
 		QTimer *timer_player_map;
+		bool stopIt;
 
 		//interconnected thread
 		//QMutex clientBroadCastListMutex;
