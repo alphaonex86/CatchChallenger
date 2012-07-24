@@ -256,10 +256,11 @@ void Client::disconnectNextStep()
 
 }
 
+//* do the message by the general broadcast */
 void Client::errorOutput(QString errorString)
 {
 	if(is_logged)
-		clientBroadCast->sendSystemMessage(player_informations.public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack");
+		clientBroadCast->sendSystemMessage(player_informations.public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
 	normalOutput("Kicked by: "+errorString);
 	disconnectClient();

@@ -251,7 +251,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
 void MapVisibilityAlgorithm_Simple::removeAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id)
 {
 	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
-	if(unlikely(!stopIt && to_send_remove.contains(player_id)))
+	if(unlikely(to_send_remove.contains(player_id)))
 	{
 		emit message("removeAnotherClient() try dual remove");
 		return;
@@ -265,8 +265,7 @@ void MapVisibilityAlgorithm_Simple::removeAnotherClient(const SIMPLIFIED_PLAYER_
 	#endif
 
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	if(unlikely(!stopIt))
-		emit message(QString("removeAnotherClient(%1)").arg(player_id));
+	emit message(QString("removeAnotherClient(%1)").arg(player_id));
 	#endif
 
 	/* Do into the upper class, like MapVisibilityAlgorithm_Simple
@@ -288,9 +287,6 @@ void MapVisibilityAlgorithm_Simple::extraStop()
 
 void MapVisibilityAlgorithm_Simple::purgeBuffer()
 {
-	if(stopIt)
-		return;
-
 	send_insert();
 	send_move();
 	send_remove();

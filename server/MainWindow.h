@@ -91,6 +91,8 @@ private slots:
 
 	void on_benchmark_clients_valueChanged(int arg1);
 
+	void on_db_type_currentIndexChanged(int index);
+	void updateDbGroupbox();
 signals:
 	void record_latency();
 };

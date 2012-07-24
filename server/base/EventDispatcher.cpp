@@ -75,6 +75,7 @@ EventDispatcher::EventDispatcher()
  * \warning this function is thread safe because it quit all thread before remove */
 EventDispatcher::~EventDispatcher()
 {
+	generalData.serverPrivateVariables.stopIt=true;
 	lunchInitFunction->deleteLater();
 	timer_benchmark_stop->deleteLater();
 	int index=0;
@@ -134,6 +135,8 @@ void EventDispatcher::initAll()
 
 void EventDispatcher::preload_the_data()
 {
+	generalData.serverPrivateVariables.stopIt=false;
+
 	preload_the_map();
 	preload_the_visibility_algorithm();
 
@@ -187,6 +190,7 @@ void EventDispatcher::preload_the_map()
 							tempPoint.x=map_temp.map_to_send.bot_spawn_points.at(index_sub).x;
 							tempPoint.y=map_temp.map_to_send.bot_spawn_points.at(index_sub).y;
 							generalData.serverPrivateVariables.botSpawn << tempPoint;
+							DebugClass::debugConsole(QString("BotSpawn (bot_spawn_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
 							index_sub++;
 						}
 						index_sub=0;
@@ -198,6 +202,7 @@ void EventDispatcher::preload_the_map()
 							tempPoint.x=map_temp.map_to_send.rescue_points.at(index_sub).x;
 							tempPoint.y=map_temp.map_to_send.rescue_points.at(index_sub).y;
 							generalData.serverPrivateVariables.botSpawn << tempPoint;
+							DebugClass::debugConsole(QString("BotSpawn (rescue_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
 							index_sub++;
 						}
 					}
@@ -576,6 +581,8 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 
 void EventDispatcher::unload_the_data()
 {
+	generalData.serverPrivateVariables.stopIt=true;
+
 	unload_the_map();
 	unload_the_visibility_algorithm();
 

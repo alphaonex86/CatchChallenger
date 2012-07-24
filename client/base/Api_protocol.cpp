@@ -29,7 +29,6 @@ Api_protocol::~Api_protocol()
 //have message without reply
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
-	DebugClass::debugConsole(QString("Api_protocol::parseMessage() mainCodeType: %1").arg(mainCodeType));
 	QDataStream in(data);
 	in.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
@@ -632,7 +631,6 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
-	DebugClass::debugConsole(QString("Api_protocol::parseMessage() mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
 	QDataStream in(data);
 	in.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
