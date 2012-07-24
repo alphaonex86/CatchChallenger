@@ -73,7 +73,7 @@ void FakeBot::random_new_step()
 			directions_allowed_string << MapBasicMove::directionToString(directions_allowed.at(index_loop));
 			index_loop++;
 		}
-		DebugClass::debugConsole(QString("FakeBot::random_new_step(), x: %1, y:%2, directions_allowed_string: %3").arg(x).arg(y).arg(directions_allowed_string.join(", ")));
+		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, x: %2, y:%3, directions_allowed_string: %4").arg(api.getId()).arg(x).arg(y).arg(directions_allowed_string.join(", ")));
 	}
 	if(loop_size<=0)
 		return;
@@ -82,7 +82,12 @@ void FakeBot::random_new_step()
 	//to group the signle move into move line
 	MoveOnTheMap::newDirection(final_direction);
 	//to do the real move
-	move(final_direction,(Map **)&map,x,y);
+	if(!move(final_direction,(Map **)&map,x,y))
+	{
+		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 2, id: %1, x: %2, y:%3, can't move on direction of: %4").arg(api.getId()).arg(x).arg(y).arg(MapBasicMove::directionToString(final_direction)));
+		map=NULL;
+		return;
+	}
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16

@@ -8,18 +8,14 @@
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
 
-int MapBasicMove::moveThePlayer_index_move;
-
 MapBasicMove::MapBasicMove()
 {
 	current_map=NULL;
 	player_informations=NULL;
-	stopIt=false;
 }
 
 MapBasicMove::~MapBasicMove()
 {
-	stopIt=true;
 }
 
 void MapBasicMove::setVariable(Player_internal_informations *player_informations)
@@ -29,9 +25,6 @@ void MapBasicMove::setVariable(Player_internal_informations *player_informations
 
 void MapBasicMove::askIfIsReadyToStop()
 {
-	if(stopIt)
-		return;
-	stopIt=true;
 	if(current_map==NULL)
 	{
 		emit isReadyToStop();
@@ -104,18 +97,16 @@ bool MapBasicMove::checkCollision()
 }
 
 /// \note The second heavy function
-void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4, direction: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(previousMovedUnit).arg(directionToString((Direction)direction)));
+	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(previousMovedUnit).arg(MapBasicMove::directionToString(last_direction)).arg(directionToString((Direction)direction)));
 	#endif
-	moveThePlayer_index_move=0;
-	stopCurrentMethod=false;
+	quint8 moveThePlayer_index_move=0;
 	if(unlikely(last_direction==direction))
 	{
 		emit error(QString("Previous action is same direction: %1").arg(last_direction));
-		stopCurrentMethod=true;
-		return;
+		return false;
 	}
 	switch(last_direction)
 	{
@@ -123,8 +114,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
@@ -133,8 +123,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 					if(unlikely(current_map->border.top.map==NULL))
 					{
 						emit error(QString("moveThePlayer(), out of map: %1 by top").arg(current_map->map_file));
-						stopCurrentMethod=true;
-						return;
+						return false;
 					}
 					else
 					{
@@ -145,14 +134,20 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						current_map=static_cast<Map_server *>(current_map->border.top.map);
 						loadOnTheMap();
 					}
-					return;
+					//bug with: return;
 				}
 				else
 					y--;
+
 				if(unlikely(!checkCollision()))
-					return;
+				{
+					//walk on the wall
+					return false;
+				}
+
 				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
+
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -160,16 +155,14 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_top: Previous action is not moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 		break;
 		case Direction_move_at_right:
 			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_right: Previous action is moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
@@ -178,8 +171,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 					if(unlikely(current_map->border.right.map==NULL))
 					{
 						emit error(QString("moveThePlayer(): move at right, out of map: %1, by right").arg(current_map->map_file));
-						stopCurrentMethod=true;
-						return;
+						return false;
 					}
 					else
 					{
@@ -190,12 +182,15 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						current_map=static_cast<Map_server *>(current_map->border.right.map);
 						loadOnTheMap();
 					}
-					return;
+					//bug with: return;
 				}
 				else
 					x++;
 				if(unlikely(!checkCollision()))
-					return;
+				{
+					//walk on the wall
+					return false;
+				}
 				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
 				moveThePlayer_index_move++;
@@ -205,16 +200,14 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_right: Previous action is not moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 		break;
 		case Direction_move_at_bottom:
 			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_bottom: Previous action is moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
@@ -223,8 +216,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 					if(unlikely(current_map->border.bottom.map==NULL))
 					{
 						emit error(QString("moveThePlayer(): move at bottom, out of map: %1, by bottom").arg(current_map->map_file));
-						stopCurrentMethod=true;
-						return;
+						return false;
 					}
 					else
 					{
@@ -235,12 +227,15 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						current_map=static_cast<Map_server *>(current_map->border.bottom.map);
 						loadOnTheMap();
 					}
-					return;
+					//bug with: return;
 				}
 				else
 					y++;
 				if(unlikely(!checkCollision()))
-					return;
+				{
+					//walk on the wall
+					return false;
+				}
 				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
 				moveThePlayer_index_move++;
@@ -250,16 +245,14 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_bottom: Previous action is not moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 		break;
 		case Direction_move_at_left:
 			if(unlikely(previousMovedUnit==0))
 			{
 				emit error(QString("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
@@ -268,8 +261,7 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 					if(unlikely(current_map->border.left.map==NULL))
 					{
 						emit error(QString("moveThePlayer(): move at left, out of map: %1, by left").arg(current_map->map_file));
-						stopCurrentMethod=true;
-						return;
+						return false;
 					}
 					else
 					{
@@ -280,12 +272,15 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 						current_map=static_cast<Map_server *>(current_map->border.left.map);
 						loadOnTheMap();
 					}
-					return;
+					//bug with: return;
 				}
 				else
 					x--;
 				if(unlikely(!checkCollision()))
-					return;
+				{
+					//walk on the wall
+					return false;
+				}
 				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
 					mapTeleporterUsed();
 				moveThePlayer_index_move++;
@@ -295,17 +290,16 @@ void MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			if(unlikely(previousMovedUnit>0))
 			{
 				emit error(QString("Direction_look_at_left: Previous action is not moving: %1").arg(last_direction));
-				stopCurrentMethod=true;
-				return;
+				return false;
 			}
 		break;
 		default:
 			emit error(QString("moveThePlayer(): direction not managed"));
-			stopCurrentMethod=true;
-			return;
+			return false;
 		break;
 	}
 	last_direction=direction;
+	return true;
 }
 
 void MapBasicMove::loadOnTheMap()

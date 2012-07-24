@@ -33,12 +33,30 @@ void ClientBroadCast::internal_disconnect()
 	disconnection.release();
 }
 
+//without verification of rights
 void ClientBroadCast::sendSystemMessage(const QString &text,const bool &important)
 {
+	int list_size=clientBroadCastList.size();
 	if(important)
-		emit sendChatText(Chat_type_system_important,text);
+	{
+		int index=0;
+		while(index<list_size)
+		{
+			if(this!=clientBroadCastList.at(index))
+				clientBroadCastList.at(index)->receiveSystemText(Chat_type_system_important,text);
+			index++;
+		}
+	}
 	else
-		emit sendChatText(Chat_type_system,text);
+	{
+		int index=0;
+		while(index<list_size)
+		{
+			if(this!=clientBroadCastList.at(index))
+				clientBroadCastList.at(index)->receiveSystemText(Chat_type_system,text);
+			index++;
+		}
+	}
 }
 
 void ClientBroadCast::receivePM(const QString &text,const QString &pseudo)
@@ -247,7 +265,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 			return;
 		}
 		playerByPseudo[extraText]->kick();
-		emit sendChatText(Chat_type_system,QString("%1 have been kicked by %2").arg(extraText).arg(player_informations->public_and_private_informations.public_informations.pseudo));
+		sendSystemMessage(QString("%1 have been kicked by %2").arg(extraText).arg(player_informations->public_and_private_informations.public_informations.pseudo));
 		return;
 	}
 	else

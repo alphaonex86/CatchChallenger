@@ -9,6 +9,8 @@
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
 
+QString ClientLocalCalcule::temp_direction;
+
 ClientLocalCalcule::ClientLocalCalcule()
 {
 }
@@ -21,7 +23,7 @@ bool ClientLocalCalcule::checkCollision()
 {
 	if(!current_map->parsed_layer.walkable[x+y*current_map->width])
 	{
-		emit error(QString("move at top, can't wall at: %1,%2 on map: %3").arg(x).arg(y).arg(current_map->map_file));
+		emit error(QString("move at %1, can't wall at: %2,%3 on map: %4").arg(temp_direction).arg(x).arg(y).arg(current_map->map_file));
 		return false;
 	}
 	else
@@ -103,4 +105,10 @@ void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,cons
 	out.device()->seek(out.device()->pos()+player_informations->rawSkin.size());
 
 	emit sendPacket(0xC0,outputData);
+}
+
+bool ClientLocalCalcule::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+{
+	temp_direction=MapBasicMove::directionToString(direction);
+	return MapBasicMove::moveThePlayer(previousMovedUnit,direction);
 }

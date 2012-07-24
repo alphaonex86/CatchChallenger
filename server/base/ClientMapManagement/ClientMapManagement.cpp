@@ -32,8 +32,6 @@ void ClientMapManagement::setVariable(Player_internal_informations *player_infor
 
 void ClientMapManagement::extraStop()
 {
-	stopIt=true;
-
 	//call MapVisibilityAlgorithm to remove
 	//removeClient(); -> do by unload from map
 }
@@ -50,16 +48,16 @@ void ClientMapManagement::put_on_the_map(Map_server *map,const /*COORD_TYPE*/qui
 }
 
 /// \note The second heavy function
-void ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+bool ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
 	emit message(QString("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(directionToString(direction)).arg(previousMovedUnit));
 	#endif
 	mapHaveChanged=false;
-	MapBasicMove::moveThePlayer(previousMovedUnit,direction);
-	if(unlikely(stopCurrentMethod))
-		return;
+	if(unlikely(!MapBasicMove::moveThePlayer(previousMovedUnit,direction)))
+		return false;
 	moveClient(previousMovedUnit,direction,mapHaveChanged);
+	return true;
 }
 
 void ClientMapManagement::loadOnTheMap()
