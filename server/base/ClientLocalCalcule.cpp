@@ -30,6 +30,12 @@ bool ClientLocalCalcule::checkCollision()
 		return true;
 }
 
+void ClientLocalCalcule::getRandomNumberIfNeeded()
+{
+	if(player_informations->public_and_private_informations.public_informations.randomNumber.size()<=POKECRAFT_SERVER_MIN_RANDOM_LIST_SIZE)
+		emit askRandomNumber();
+}
+
 void ClientLocalCalcule::extraStop()
 {
 	//virtual stop the player
@@ -105,10 +111,18 @@ void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,cons
 	out.device()->seek(out.device()->pos()+player_informations->rawSkin.size());
 
 	emit sendPacket(0xC0,outputData);
+
+	//load the first time the random number list
+	getRandomNumberIfNeeded();
 }
 
 bool ClientLocalCalcule::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	temp_direction=MapBasicMove::directionToString(direction);
 	return MapBasicMove::moveThePlayer(previousMovedUnit,direction);
+}
+
+void ClientLocalCalcule::newRandomNumber(const QByteArray &randomData)
+{
+	player_informations->public_and_private_informations.public_informations.randomNumber+=randomData;
 }

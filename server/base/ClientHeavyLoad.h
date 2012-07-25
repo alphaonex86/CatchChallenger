@@ -31,9 +31,9 @@ public:
 	static QList<quint16> simplifiedIdList;
 public slots:
 	virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
-	void askRandomSeedList(const quint8 &query_id);
 	void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
 	void dbQuery(QSqlQuery sqlQuery);
+	void askedRandomNumber();
 	//normal slots
 	void askIfIsReadyToStop();
 	void stop();
@@ -61,7 +61,7 @@ signals:
 	void isLogged();
 	void put_on_the_map(Map_server* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
 	//random linked signals
-	void setRandomSeedList(const QByteArray &randomData);
+	void newRandomNumber(const QByteArray &randomData);
 };
 
 #endif // CLIENTHEAVYLOAD_H
