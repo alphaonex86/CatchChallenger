@@ -121,7 +121,7 @@ qint64	QFakeSocket::readData(char * rawData, qint64 maxSize)
 	QMutexLocker lock(&mutex);
 	QByteArray extractedData=this->data.mid(0,maxSize);
 	#ifdef FAKESOCKETDEBUG
-	DebugClass::debugConsole(QString("readData(): extractedData.size(): %1, this->data: %2, extractedData: %3").arg(extractedData.size()).arg(this->data.size()).arg(QString(extractedData.toHex())));
+	DebugClass::debugConsole(QString("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(QString(extractedData.toHex())));
 	#endif
 	memcpy(rawData,extractedData.data(),extractedData.size());
 	this->data.remove(0,extractedData.size());
