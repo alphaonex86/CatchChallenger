@@ -209,21 +209,6 @@ bool ClientHeavyLoad::loadTheRawUTF8String()
 	return true;
 }
 
-void ClientHeavyLoad::askRandomSeedList(const quint8 &query_id)
-{
-	QByteArray randomData;
-	QDataStream randomDataStream(&randomData, QIODevice::WriteOnly);
-	randomDataStream.setVersion(QDataStream::Qt_4_4);
-	int index=0;
-	while(index<POKECRAFT_SERVER_RANDOM_LIST_SIZE)
-	{
-		randomDataStream << quint8(rand()%256);
-		index++;
-	}
-	emit setRandomSeedList(randomData);
-	emit postReply(query_id,randomData);
-}
-
 void ClientHeavyLoad::askIfIsReadyToStop()
 {
 	if(player_informations->is_logged)
@@ -363,4 +348,19 @@ void ClientHeavyLoad::dbQuery(QSqlQuery sqlQuery)
 		emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
 		return;
 	}
+}
+
+void ClientHeavyLoad::askedRandomNumber()
+{
+	QByteArray randomData;
+	QDataStream randomDataStream(&randomData, QIODevice::WriteOnly);
+	randomDataStream.setVersion(QDataStream::Qt_4_4);
+	int index=0;
+	while(index<POKECRAFT_SERVER_RANDOM_LIST_SIZE)
+	{
+		randomDataStream << quint8(rand()%256);
+		index++;
+	}
+	emit newRandomNumber(randomData);
+	emit sendPacket(0xD0,0x0009,randomData);
 }

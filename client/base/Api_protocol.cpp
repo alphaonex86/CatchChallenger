@@ -618,7 +618,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 		}
 		break;
 		default:
-			emit newError(tr("Procotol wrong or corrupted"),QString("unknow ident reply code: %1").arg(mainCodeType));
+			emit newError(tr("Procotol wrong or corrupted"),QString("unknow ident main code: %1").arg(mainCodeType));
 			return;
 		break;
 	}
@@ -769,7 +769,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 				}
 				break;
 				default:
-				emit newError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType reply code: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+				emit newError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
 				return;
 			}
 		}
@@ -786,13 +786,13 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 				}
 				break;
 				default:
-				emit newError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType reply code: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+				emit newError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
 				return;
 			}
 		}
 		break;
 		default:
-			emit newError(tr("Procotol wrong or corrupted"),QString("unknow ident reply code: %1").arg(mainCodeType));
+			emit newError(tr("Procotol wrong or corrupted"),QString("unknow ident main code: %1").arg(mainCodeType));
 			return;
 		break;
 	}

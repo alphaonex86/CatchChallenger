@@ -24,6 +24,7 @@
 //put for map, add for local thread
 //put this size into the options
 #define POKECRAFT_SERVER_RANDOM_LIST_SIZE 512
+#define POKECRAFT_SERVER_MIN_RANDOM_LIST_SIZE 128
 
 /// check more, then use more cpu, it's to develop and detect the internal bug
 #define POKECRAFT_SERVER_EXTRA_CHECK

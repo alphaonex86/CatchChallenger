@@ -303,99 +303,92 @@ void ProtocolParsingInput::parseIncommingData()
 			#ifdef PROTOCOLPARSINGDEBUG
 			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !haveData_dataSize"));
 			#endif
-			if(!haveData_dataSize)
+			while(!haveData_dataSize)
 			{
-				#ifdef PROTOCOLPARSINGDEBUG
-				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): while(!haveData_dataSize)"));
-				#endif
-				while(!haveData_dataSize)
+				switch(data_size.size())
 				{
-					switch(data_size.size())
+					case 0:
 					{
-						case 0:
+						if(socket->bytesAvailable()<(int)sizeof(quint8))
+							return;
+						data_size+=socket->read(sizeof(quint8));
+						QDataStream in_size(data_size);
+						in_size.setVersion(QDataStream::Qt_4_4);
+						in_size >> temp_size_8Bits;
+						if(temp_size_8Bits!=0x00)
 						{
-							if(socket->bytesAvailable()<(int)sizeof(quint8))
-								return;
-							data_size+=socket->read(sizeof(quint8));
-							QDataStream in_size(data_size);
-							in_size.setVersion(QDataStream::Qt_4_4);
-							in_size >> temp_size_8Bits;
-							if(temp_size_8Bits!=0x00)
-							{
-								dataSize=temp_size_8Bits;
-								haveData_dataSize=true;
-								#ifdef PROTOCOLPARSINGDEBUG
-								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 8Bits data size"));
-								#endif
-							}
+							dataSize=temp_size_8Bits;
+							haveData_dataSize=true;
 							#ifdef PROTOCOLPARSINGDEBUG
-							else
-								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 8Bits data size: %1, temp_size_8Bits: %2").arg(QString(data_size.toHex())).arg(temp_size_8Bits));
+							DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 8Bits data size"));
 							#endif
 						}
-						break;
-						case sizeof(quint8):
-						{
-							if(socket->bytesAvailable()<(int)sizeof(quint16))
-								return;
-							data_size+=socket->read(sizeof(quint8));
-							{
-								QDataStream in_size(data_size);
-								in_size.setVersion(QDataStream::Qt_4_4);
-								in_size >> temp_size_16Bits;
-							}
-							if(temp_size_16Bits!=0x0000)
-							{
-								QDataStream in_size(data_size);
-								in_size.setVersion(QDataStream::Qt_4_4);
-								data_size+=socket->read(sizeof(quint8));
-								in_size.device()->seek(sizeof(quint8));
-								in_size >> temp_size_8Bits;
-								in_size >> temp_size_16Bits;
-								dataSize=temp_size_16Bits;
-								haveData_dataSize=true;
-								#ifdef PROTOCOLPARSINGDEBUG
-								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 16Bits data size"));
-								#endif
-							}
-							#ifdef PROTOCOLPARSINGDEBUG
-							else
-								DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 16Bits data size"));
-							#endif
-						}
-						break;
-						case sizeof(quint16):
-						{
-							if(socket->bytesAvailable()<(int)sizeof(quint32))
-								return;
-							QDataStream in_size(data_size);
-							in_size.setVersion(QDataStream::Qt_4_4);
-							data_size+=socket->read(sizeof(quint32));
-							in_size >> temp_size_16Bits;
-							in_size >> temp_size_32Bits;
-							if(temp_size_32Bits!=0x00000000)
-							{
-								dataSize=temp_size_32Bits;
-								haveData_dataSize=true;
-							}
-							else
-							{
-								emit error("size is null");
-								return;
-							}
-						}
-						break;
-						default:
-						emit error(QString("size not understand, internal bug: %1").arg(data_size.size()));
-						return;
+						#ifdef PROTOCOLPARSINGDEBUG
+						else
+							DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 8Bits data size: %1, temp_size_8Bits: %2").arg(QString(data_size.toHex())).arg(temp_size_8Bits));
+						#endif
 					}
+					break;
+					case sizeof(quint8):
+					{
+						if(socket->bytesAvailable()<(int)sizeof(quint16))
+							return;
+						data_size+=socket->read(sizeof(quint8));
+						{
+							QDataStream in_size(data_size);
+							in_size.setVersion(QDataStream::Qt_4_4);
+							in_size >> temp_size_16Bits;
+						}
+						if(temp_size_16Bits!=0x0000)
+						{
+							data_size+=socket->read(sizeof(quint8));
+							QDataStream in_size(data_size);
+							in_size.setVersion(QDataStream::Qt_4_4);
+							//in_size.device()->seek(sizeof(quint8)); or in_size >> temp_size_8Bits;, not both
+							in_size >> temp_size_8Bits;
+							in_size >> temp_size_16Bits;
+							dataSize=temp_size_16Bits;
+							haveData_dataSize=true;
+							#ifdef PROTOCOLPARSINGDEBUG
+							DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 16Bits data size: %1, temp_size_16Bits: %2").arg(QString(data_size.toHex())).arg(dataSize));
+							#endif
+						}
+						#ifdef PROTOCOLPARSINGDEBUG
+						else
+							DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 16Bits data size"));
+						#endif
+					}
+					break;
+					case sizeof(quint16):
+					{
+						if(socket->bytesAvailable()<(int)sizeof(quint32))
+							return;
+						data_size+=socket->read(sizeof(quint32));
+						QDataStream in_size(data_size);
+						in_size.setVersion(QDataStream::Qt_4_4);
+						in_size >> temp_size_16Bits;
+						in_size >> temp_size_32Bits;
+						if(temp_size_32Bits!=0x00000000)
+						{
+							dataSize=temp_size_32Bits;
+							haveData_dataSize=true;
+						}
+						else
+						{
+							emit error("size is null");
+							return;
+						}
+					}
+					break;
+					default:
+					emit error(QString("size not understand, internal bug: %1").arg(data_size.size()));
+					return;
 				}
 			}
 		}
 		#ifdef PROTOCOLPARSINGDEBUG
 		else
 			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): haveData_dataSize"));
-		DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): some info is ready"));
 		#endif
 		#ifdef POKECRAFT_EXTRA_CHECK
 		if(!haveData_dataSize)
@@ -403,6 +396,9 @@ void ProtocolParsingInput::parseIncommingData()
 			emit error("have not the size here!");
 			return;
 		}
+		#endif
+		#ifdef PROTOCOLPARSINGDEBUG
+		DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): header informations is ready, dataSize: %1").arg(dataSize));
 		#endif
 		if(dataSize>16*1024*1024)
 		{
@@ -435,15 +431,25 @@ void ProtocolParsingInput::parseIncommingData()
 		else
 			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): parse message as server"));
 		#endif
+		#ifdef PROTOCOLPARSINGINPUTDEBUG
+		DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data: %1").arg(QString(data.toHex())));
+		#endif
 		if(!need_query_number)
 		{
-			#ifdef PROTOCOLPARSINGINPUTDEBUG
-			DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_query_number"));
-			#endif
 			if(!need_subCodeType)
+			{
+				#ifdef PROTOCOLPARSINGINPUTDEBUG
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
+				#endif
 				parseMessage(mainCodeType,data);
+			}
 			else
+			{
+				#ifdef PROTOCOLPARSINGINPUTDEBUG
+				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+				#endif
 				parseMessage(mainCodeType,subCodeType,data);
+			}
 		}
 		else
 		{
