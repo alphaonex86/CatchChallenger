@@ -31,6 +31,7 @@ public:
 	virtual ~ClientLocalCalcule();
 private:
 	bool checkCollision();
+	void getRandomNumberIfNeeded();
 
 	//info linked
 	Orientation			at_start_orientation;
@@ -40,10 +41,13 @@ private:
 public slots:
 	void put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 	bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+	//random linked signals
+	void newRandomNumber(const QByteArray &randomData);
 private slots:
 	virtual void extraStop();
 signals:
 	void dbQuery(const QSqlQuery &sqlQuery);
+	void askRandomNumber();
 };
 
 #endif // CLIENTLOCALCALCULE_H

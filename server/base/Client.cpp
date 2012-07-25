@@ -98,11 +98,13 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	connect(clientHeavyLoad,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
 
 	connect(clientLocalCalcule,SIGNAL(dbQuery(QSqlQuery)),clientHeavyLoad,SLOT(dbQuery(QSqlQuery)),Qt::QueuedConnection);
+	connect(clientLocalCalcule,SIGNAL(askRandomNumber()),clientHeavyLoad,SLOT(askedRandomNumber()),Qt::QueuedConnection);
 
 	//connect the player information
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map_server*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	clientLocalCalcule,	SLOT(put_on_the_map(Map_server*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
 	connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
+	connect(clientHeavyLoad,	SIGNAL(newRandomNumber(QByteArray)),			clientLocalCalcule,	SLOT(newRandomNumber(QByteArray)),Qt::QueuedConnection);
 
 	//packet parsed (heavy)
 	connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),
