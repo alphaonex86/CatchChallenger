@@ -122,7 +122,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				{
 					if(unlikely(current_map->border.top.map==NULL))
 					{
-						emit error(QString("moveThePlayer(), out of map: %1 by top").arg(current_map->map_file));
+						emit error(QString("moveThePlayer(), out of map: %1 by top  (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
 						return false;
 					}
 					else
@@ -170,7 +170,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				{
 					if(unlikely(current_map->border.right.map==NULL))
 					{
-						emit error(QString("moveThePlayer(): move at right, out of map: %1, by right").arg(current_map->map_file));
+						emit error(QString("moveThePlayer(): out of map: %1, by right (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
 						return false;
 					}
 					else
@@ -215,7 +215,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				{
 					if(unlikely(current_map->border.bottom.map==NULL))
 					{
-						emit error(QString("moveThePlayer(): move at bottom, out of map: %1, by bottom").arg(current_map->map_file));
+						emit error(QString("moveThePlayer(): out of map: %1, by bottom  (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
 						return false;
 					}
 					else
@@ -260,7 +260,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 				{
 					if(unlikely(current_map->border.left.map==NULL))
 					{
-						emit error(QString("moveThePlayer(): move at left, out of map: %1, by left").arg(current_map->map_file));
+						emit error(QString("moveThePlayer(): out of map: %1, by left  (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
 						return false;
 					}
 					else

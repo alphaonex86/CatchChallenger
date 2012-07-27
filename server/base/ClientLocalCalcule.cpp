@@ -72,7 +72,9 @@ void ClientLocalCalcule::extraStop()
  * the overhead for the network it just at the connexion */
 void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	emit message(QString("ClientLocalCalcule put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
+	#endif
 	MapBasicMove::put_on_the_map(map,x,y,orientation);
 	at_start_orientation=orientation;
 	at_start_map_name=map;
