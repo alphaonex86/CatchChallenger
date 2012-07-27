@@ -128,7 +128,7 @@ bool MoveOnTheMap::move(Direction direction,Map ** map,quint16 &x,quint16 &y)
 			}
 		break;
 		case Direction_move_at_right:
-			if(x<(*map)->width)
+			if(x<((*map)->width-1))
 			{
 				x+=1;
 				return true;
@@ -156,7 +156,7 @@ bool MoveOnTheMap::move(Direction direction,Map ** map,quint16 &x,quint16 &y)
 			}
 		break;
 		case Direction_move_at_bottom:
-			if(y<(*map)->height)
+			if(y<((*map)->height-1))
 			{
 				y+=1;
 				return true;
