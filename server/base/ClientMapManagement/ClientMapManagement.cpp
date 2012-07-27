@@ -38,7 +38,9 @@ void ClientMapManagement::extraStop()
 
 void ClientMapManagement::put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
+	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	emit message(QString("ClientMapManagement put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
+	#endif
 	MapBasicMove::put_on_the_map(map,x,y,orientation);
 
 	//call MapVisibilityAlgorithm to insert
