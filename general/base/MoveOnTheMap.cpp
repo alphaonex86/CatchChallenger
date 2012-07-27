@@ -60,7 +60,7 @@ bool MoveOnTheMap::canGoTo(Direction direction,Map *map,quint16 x,quint16 y)
 				return map->border.left.map->parsed_layer.walkable[map->border.left.map->width-1+(y+map->border.left.y_offset)*(map->border.left.map->width)];
 		break;
 		case Direction_move_at_right:
-			if(x<map->width)
+			if(x<(map->width-1))
 				return map->parsed_layer.walkable[x+1+y*(map->width)];
 			else if(map->border.right.map==NULL)
 				return false;
@@ -80,7 +80,7 @@ bool MoveOnTheMap::canGoTo(Direction direction,Map *map,quint16 x,quint16 y)
 				return map->border.top.map->parsed_layer.walkable[x+map->border.top.x_offset+(map->border.top.map->height-1)*(map->border.top.map->width)];
 		break;
 		case Direction_move_at_bottom:
-			if(y<map->height)
+			if(y<(map->height-1))
 				return map->parsed_layer.walkable[x+(y+1)*(map->width)];
 			else if(map->border.bottom.map==NULL)
 				return false;
