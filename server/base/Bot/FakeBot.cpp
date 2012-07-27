@@ -93,7 +93,8 @@ void FakeBot::random_new_step()
 //quint32,QString,quint16,quint16,quint8,quint16
 void FakeBot::insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction)
 {
-	DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2, api.getId(): %3").arg(player.simplifiedId).arg(mapName).arg(api.getId()));
+	if(details)
+		DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2, api.getId(): %3").arg(player.simplifiedId).arg(mapName).arg(api.getId()));
 	if(player.simplifiedId==api.getId())
 	{
 		if(details)
