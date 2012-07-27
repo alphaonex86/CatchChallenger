@@ -67,7 +67,9 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 						out << (quint8)0x01;		//protocol supported
 						emit postReply(queryNumber,outputData);
 						have_send_protocol=true;
+						#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 						emit message("Protocol sended and replied");
+						#endif
 					}
 					else
 					{
