@@ -26,31 +26,27 @@
  </layer>
  <layer name="WallDecoration" width="19" height="16">
   <data encoding="base64" compression="zlib">
-   eJxjYCAMBBkR7A9A/JEIPbiAISNhNaNgFIyCUUAMAAC+qQIm
+   eJzjYyAMBBkR7A9A/BGLGgEg1iPCLENGwmoMiDBnFIyCUTAKAN3fAqI=
   </data>
  </layer>
  <objectgroup name="Tp" width="19" height="16">
-  <object name="bot spawn" type="bot spawn" gid="68" x="144" y="144"/>
   <object type="tp on push" gid="238" x="128" y="256">
    <properties>
-    <property name="map" value="1.0.tmx"/>
-    <property name="orientation" value="bottom"/>
+    <property name="map" value="1.0"/>
     <property name="x" value="23"/>
     <property name="y" value="6"/>
    </properties>
   </object>
   <object type="tp on push" gid="238" x="144" y="256">
    <properties>
-    <property name="map" value="1.0.tmx"/>
-    <property name="orientation" value="bottom"/>
+    <property name="map" value="1.0"/>
     <property name="x" value="23"/>
     <property name="y" value="6"/>
    </properties>
   </object>
   <object type="tp on push" gid="238" x="160" y="256">
    <properties>
-    <property name="map" value="1.0.tmx"/>
-    <property name="orientation" value="bottom"/>
+    <property name="map" value="1.0"/>
     <property name="x" value="23"/>
     <property name="y" value="6"/>
    </properties>
