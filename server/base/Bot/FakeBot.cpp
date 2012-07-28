@@ -13,8 +13,10 @@ FakeBot::FakeBot() :
 	connect(&api,SIGNAL(insert_player(Player_public_informations,QString,quint16,quint16,Direction)),this,SLOT(insert_player(Player_public_informations,QString,quint16,quint16,Direction)));
 	connect(&api,SIGNAL(have_current_player_info(Player_private_and_public_informations,QString)),this,SLOT(have_current_player_info(Player_private_and_public_informations,QString)));
 	connect(&api,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
+	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(newSocketError(QAbstractSocket::SocketError)));
+	connect(&socket,SIGNAL(disconnected()),this,SLOT(disconnected()));
 
-	details=false;
+	details=true;
 	map=NULL;
 
 	do_step=false;
@@ -23,11 +25,22 @@ FakeBot::FakeBot() :
 
 	x=0;
 	y=0;
+
+	predefinied_step << Direction_move_at_top;
+	predefinied_step << Direction_move_at_top;
+	predefinied_step << Direction_move_at_bottom;
+	predefinied_step << Direction_move_at_bottom;
 }
 
 FakeBot::~FakeBot()
 {
 	wait_to_stop.acquire();
+}
+
+void FakeBot::disconnected()
+{
+	DebugClass::debugConsole(QString("FakeBot::disconnected() start"));
+	map=NULL;
 }
 
 void FakeBot::tryLink()
@@ -54,31 +67,45 @@ void FakeBot::start_step()
 
 void FakeBot::random_new_step()
 {
-	QList<Direction> directions_allowed;
-	if(canGoTo(Direction_move_at_left,map,x,y))
-		directions_allowed << Direction_move_at_left;
-	if(canGoTo(Direction_move_at_right,map,x,y))
-		directions_allowed << Direction_move_at_right;
-	if(canGoTo(Direction_move_at_top,map,x,y))
-		directions_allowed << Direction_move_at_top;
-	if(canGoTo(Direction_move_at_bottom,map,x,y))
-		directions_allowed << Direction_move_at_bottom;
-	loop_size=directions_allowed.size();
-	if(details)
+	Direction final_direction;
+	while(predefinied_step.size()>0 && !canGoTo(predefinied_step.first(),map,x,y))
 	{
-		QStringList directions_allowed_string;
-		index_loop=0;
-		while(index_loop<loop_size)
-		{
-			directions_allowed_string << MapBasicMove::directionToString(directions_allowed.at(index_loop));
-			index_loop++;
-		}
-		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, x: %2, y:%3, directions_allowed_string: %4").arg(api.getId()).arg(x).arg(y).arg(directions_allowed_string.join(", ")));
+		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), unable to go on: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MapBasicMove::directionToString(predefinied_step.first())));
+		predefinied_step.removeFirst();
 	}
-	if(loop_size<=0)
-		return;
-	int random = rand()%loop_size;
-	Direction final_direction=directions_allowed.at(random);
+	if(predefinied_step.size()>0)
+	{
+		final_direction=predefinied_step.first();
+		predefinied_step.removeFirst();
+	}
+	else
+	{
+		QList<Direction> directions_allowed;
+		if(canGoTo(Direction_move_at_left,map,x,y))
+			directions_allowed << Direction_move_at_left;
+		if(canGoTo(Direction_move_at_right,map,x,y))
+			directions_allowed << Direction_move_at_right;
+		if(canGoTo(Direction_move_at_top,map,x,y))
+			directions_allowed << Direction_move_at_top;
+		if(canGoTo(Direction_move_at_bottom,map,x,y))
+			directions_allowed << Direction_move_at_bottom;
+		loop_size=directions_allowed.size();
+		if(details)
+		{
+			QStringList directions_allowed_string;
+			index_loop=0;
+			while(index_loop<loop_size)
+			{
+				directions_allowed_string << MapBasicMove::directionToString(directions_allowed.at(index_loop));
+				index_loop++;
+			}
+			DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), directions_allowed_string: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(directions_allowed_string.join(", ")));
+		}
+		if(loop_size<=0)
+			return;
+		int random = rand()%loop_size;
+		final_direction=directions_allowed.at(random);
+	}
 	//to group the signle move into move line
 	MoveOnTheMap::newDirection(final_direction);
 	//to do the real move
@@ -88,17 +115,19 @@ void FakeBot::random_new_step()
 		map=NULL;
 		return;
 	}
+	if(details)
+		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 3, id: %1, map: %2 (%3,%4)").arg(api.getId()).arg(map->map_file).arg(x).arg(y));
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
 void FakeBot::insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction)
 {
 	if(details)
-		DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2, api.getId(): %3").arg(player.simplifiedId).arg(mapName).arg(api.getId()));
+		DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2 (%3,%4), api.getId(): %5").arg(player.simplifiedId).arg(mapName).arg(x).arg(y).arg(api.getId()));
 	if(player.simplifiedId==api.getId())
 	{
 		if(details)
-			DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2").arg(player.simplifiedId).arg(mapName));
+			DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2 (%3,%4)").arg(player.simplifiedId).arg(mapName).arg(x).arg(y));
 		if(!EventDispatcher::generalData.serverPrivateVariables.map_list.contains(mapName))
 		{
 			DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(mapName));
@@ -132,6 +161,12 @@ void FakeBot::newError(QString error,QString detailedError)
 	DebugClass::debugConsole(QString("FakeBot::newError() error: %1, detailedError: %2").arg(error).arg(detailedError));
 	socket.disconnectFromHost();
 	socket.disconnectFromHostImplementation();
+	this->map=NULL;
+}
+
+void FakeBot::newSocketError(QAbstractSocket::SocketError error)
+{
+	DebugClass::debugConsole(QString("FakeBot::newError() error: %1").arg(error));
 	this->map=NULL;
 }
 

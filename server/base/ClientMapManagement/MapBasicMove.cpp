@@ -1,5 +1,6 @@
 #include "MapBasicMove.h"
 #include "../Map_server.h"
+#include "../../../general/base/GeneralVariable.h"
 
 /** \todo do client near list for the local player
   the list is limited to 50
@@ -76,17 +77,21 @@ void MapBasicMove::mapTeleporterUsed()
 	const Map_server::Teleporter &teleporter=current_map->teleporter[x+y*current_map->width];
 	if(teleporter.map==current_map)
 	{
+		#ifdef DEBUG_MESSAGE_MAP_TP
+		emit message(QString("moveThePlayer(): pass on local teleporter from %1 (%2,%3) to: %4,%5").arg(current_map->map_file).arg(x).arg(y).arg(teleporter.x).arg(teleporter.y));
+		#endif
 		x=teleporter.x;
 		y=teleporter.y;
-		emit message(QString("moveThePlayer(): pass on local teleporter (%1,%2)").arg(x).arg(y));
 	}
 	else
 	{
 		unloadFromTheMap();
+		#ifdef DEBUG_MESSAGE_MAP_TP
+		emit message(QString("moveThePlayer(): pass on remote teleporter from %1 (%2,%3) to: %4 (%5,%6)").arg(current_map->map_file).arg(x).arg(y).arg(teleporter.map->map_file).arg(teleporter.x).arg(teleporter.y));
+		#endif
 		x=teleporter.x;
 		y=teleporter.y;
 		current_map=static_cast<Map_server *>(teleporter.map);
-		emit message(QString("moveThePlayer(): pass on remote teleporter %1 (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
 		loadOnTheMap();
 	}
 }

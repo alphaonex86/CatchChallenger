@@ -287,6 +287,13 @@ void EventDispatcher::preload_the_map()
 				}
 				else
 				{
+					DebugClass::debugConsole(QString("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+								 .arg(semi_loaded_map[index].map->map_file)
+								 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
+								 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
+								 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
+								 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
+								 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
 					semi_loaded_map[index].map->teleporter[virtual_position].map=generalData.serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
 					semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
 					semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
