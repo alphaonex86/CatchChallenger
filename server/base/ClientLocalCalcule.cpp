@@ -21,6 +21,8 @@ ClientLocalCalcule::~ClientLocalCalcule()
 
 bool ClientLocalCalcule::checkCollision()
 {
+	if(current_map->parsed_layer.walkable==NULL)
+		return false;
 	if(!current_map->parsed_layer.walkable[x+y*current_map->width])
 	{
 		emit error(QString("move at %1, can't wall at: %2,%3 on map: %4").arg(temp_direction).arg(x).arg(y).arg(current_map->map_file));

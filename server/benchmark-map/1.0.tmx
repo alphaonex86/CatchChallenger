@@ -25,7 +25,7 @@
   </data>
  </layer>
  <objectgroup name="Tp" width="30" height="30">
-  <object name="bot spawn" type="bot spawn" gid="68" x="368" y="112"/>
+  <object name="bot spawn" type="bot spawn" gid="68" x="256" y="208"/>
   <object name="house" type="door" gid="332" x="368" y="96">
    <properties>
     <property name="map" value="house"/>
