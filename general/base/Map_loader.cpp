@@ -169,19 +169,18 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 							else if(SubChild.hasAttribute("type"))
 							{
 								QString type=SubChild.attribute("type");
-								#ifdef DEBUG_MESSAGE_MAP
-								DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3")
-											 .arg(type)
-											 .arg(object_x)
-											 .arg(object_y)
-											 );
-								#endif
 
 								QHash<QString,QVariant> property_text;
 								QDomElement prop=SubChild.firstChildElement("properties");
 								if(!prop.isNull())
 								{
-
+									#ifdef DEBUG_MESSAGE_MAP
+									DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3, prop.isNull()")
+												 .arg(type)
+												 .arg(object_x)
+												 .arg(object_y)
+												 );
+									#endif
 									QDomElement property=prop.firstChildElement("property");
 									while(!property.isNull())
 									{
@@ -192,6 +191,13 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 								}
 								if(type=="border-left" || type=="border-right" || type=="border-top" || type=="border-bottom")
 								{
+									#ifdef DEBUG_MESSAGE_MAP
+									DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3, border")
+										 .arg(type)
+										 .arg(object_x)
+										 .arg(object_y)
+										 );
+									#endif
 									if(property_text.contains("map"))
 									{
 										if(type=="border-left")//border left
@@ -246,6 +252,13 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 								}
 								else if(type=="teleport on push" || type=="teleport on it" || type=="door")
 								{
+									#ifdef DEBUG_MESSAGE_MAP
+									DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3, tp")
+										 .arg(type)
+										 .arg(object_x)
+										 .arg(object_y)
+										 );
+									#endif
 									if(property_text.contains("map") && property_text.contains("x") && property_text.contains("y"))
 									{
 										Map_to_send::Temp_teleport new_tp;
@@ -276,6 +289,13 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 								}
 								else if(type=="rescue")
 								{
+									#ifdef DEBUG_MESSAGE_MAP
+									DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3, rescue")
+										 .arg(type)
+										 .arg(object_x)
+										 .arg(object_y)
+										 );
+									#endif
 									Map_to_send::Rescue_Point tempPoint;
 									tempPoint.x=object_x;
 									tempPoint.y=object_y;
@@ -283,10 +303,25 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 								}
 								else if(type=="bot spawn")
 								{
+									#ifdef DEBUG_MESSAGE_MAP
+									DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3, bot spawn")
+										 .arg(type)
+										 .arg(object_x)
+										 .arg(object_y)
+										 );
+									#endif
 									Map_to_send::Bot_Spawn_Point tempPoint;
 									tempPoint.x=object_x;
 									tempPoint.y=object_y;
 									map_to_send.bot_spawn_points << tempPoint;
+								}
+								else
+								{
+									DebugClass::debugConsole(QString("unknow type: %1, object_x: %2, object_y: %3")
+										 .arg(type)
+										 .arg(object_x)
+										 .arg(object_y)
+										 );
 								}
 
 							}
@@ -388,8 +423,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 	null_data[2]=0x00;
 	null_data[3]=0x00;
 
-	map_to_send.parsed_layer.walkable	= new bool[map_to_send.width*map_to_send.height];
-	map_to_send.parsed_layer.water		= new bool[map_to_send.width*map_to_send.height];
+	if(Walkable.size()>0)
+		map_to_send.parsed_layer.walkable	= new bool[map_to_send.width*map_to_send.height];
+	else
+		map_to_send.parsed_layer.walkable	= NULL;
+	if(Water.size()>0)
+		map_to_send.parsed_layer.water		= new bool[map_to_send.width*map_to_send.height];
+	else
+		map_to_send.parsed_layer.water		= NULL;
 
 	quint32 x=0;
 	quint32 y=0;
@@ -412,16 +453,39 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 			if(x*4+y*map_to_send.width*4<(quint32)Collisions.size())
 				collisions=Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data;
 			else//if layer not found
-				collisions=false;
+				collisions=true;
 
-			map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=walkable && !water && !collisions;
-			map_to_send.parsed_layer.water[x+y*map_to_send.width]=water;
+			if(Walkable.size()>0)
+				map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=walkable && !water && !collisions;
+			if(Water.size()>0)
+				map_to_send.parsed_layer.water[x+y*map_to_send.width]=water && !collisions;
 			y++;
 		}
 		x++;
 	}
 
-#ifdef DEBUG_MESSAGE_CLIENT_RAW_MAP
+	if(Walkable.size()>0)
+	{
+		DebugClass::debugConsole(QString("map_to_send.teleport.size(): %1").arg(map_to_send.teleport.size()));
+		int index=0;
+		while(index<map_to_send.teleport.size())
+		{
+			map_to_send.parsed_layer.walkable[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
+			index++;
+		}
+	}
+	if(Water.size()>0)
+	{
+		DebugClass::debugConsole(QString("map_to_send.teleport.size(): %1").arg(map_to_send.teleport.size()));
+		int index=0;
+		while(index<map_to_send.teleport.size())
+		{
+			map_to_send.parsed_layer.water[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
+			index++;
+		}
+	}
+
+#ifdef DEBUG_MESSAGE_MAP_RAW
 	if(Walkable.size()>0 || Water.size()>0 || Collisions.size()>0)
 	{
 		x=0;
@@ -482,10 +546,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 		DebugClass::debugConsole("No layer found!");
 #endif
 
-	/*QTime toto;
-	toto.start();
-	while(toto.elapsed()<5000)
-	{}*/
+	//don't put code here !!!!!! put before the last block
 
 	this->map_to_send=map_to_send;
 	return true;
