@@ -37,7 +37,8 @@ private:
 	static QSemaphore wait_to_stop;
 	bool do_step;
 	Map_server *map;
-	quint16 x,y;
+	COORD_TYPE x,y;
+	QList<Direction> predefinied_step;
 public slots:
 	void stop_step();
 	void stop();
@@ -47,8 +48,8 @@ private slots:
 	void insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction);
 	void have_current_player_info(Player_private_and_public_informations info,QString pseudo);
 	void newError(QString error,QString detailedError);
-/*signals:
-	void disconnected();*/
+	void newSocketError(QAbstractSocket::SocketError error);
+	void disconnected();
 };
 
 #endif // FakeBot_H

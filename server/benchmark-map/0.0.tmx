@@ -35,6 +35,10 @@
   </data>
  </layer>
  <objectgroup name="Tp" width="30" height="30">
-  <object name="bot spawn" type="bot spawn" gid="68" x="240" y="256"/>
+  <object type="border-right" gid="238" x="464" y="240">
+   <properties>
+    <property name="map" value="1.0"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
