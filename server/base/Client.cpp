@@ -189,6 +189,8 @@ void Client::disconnectClient()
 	if(socket!=NULL)
 	{
 		socket->disconnectFromHost();
+		if(player_informations.isFake)
+			static_cast<QFakeSocket *>(socket)->disconnectFromHostImplementation();
 		if(socket->state()!=QAbstractSocket::UnconnectedState)
 			socket->waitForDisconnected();
 		socket=NULL;

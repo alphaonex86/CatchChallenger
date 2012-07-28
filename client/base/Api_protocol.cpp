@@ -29,6 +29,11 @@ Api_protocol::~Api_protocol()
 //have message without reply
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
+	if(!is_logged)
+	{
+		emit newError(tr("Procotol wrong or corrupted"),QString("is not logged with main ident: %1").arg(mainCodeType));
+		return;
+	}
 	QDataStream in(data);
 	in.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
@@ -631,6 +636,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
+	if(!is_logged)
+	{
+		emit newError(tr("Procotol wrong or corrupted"),QString("is not logged with main ident: %1").arg(mainCodeType));
+		return;
+	}
 	QDataStream in(data);
 	in.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
@@ -855,7 +865,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 					{
 						have_send_protocol=true;
 						emit protocol_is_good();
-						DebugClass::debugConsole("the protocol is good");
+						//DebugClass::debugConsole("the protocol is good");
 					}
 					else if(returnCode==0x02)
 					{
@@ -941,7 +951,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 						in >> player_informations.cash;
 
 						is_logged=true;
-						DebugClass::debugConsole("is logged with id: "+QString::number(player_informations.public_informations.simplifiedId));
+						//DebugClass::debugConsole("is logged with id: "+QString::number(player_informations.public_informations.simplifiedId));
 						emit logged();
 					}
 					else
@@ -1088,6 +1098,7 @@ void Api_protocol::resetAll()
 	//status for the query
 	is_logged=false;
 	have_send_protocol=false;
+	max_player=65535;
 
 	//to send trame
 	lastQueryNumber=1;

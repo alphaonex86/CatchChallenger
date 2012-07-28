@@ -30,12 +30,13 @@ void QFakeSocket::disconnectFromHostImplementation()
 		return;
 	QFakeSocket *tempOtherSocket=theOtherSocket;
 	theOtherSocket=NULL;
+	tempOtherSocket->disconnectFromHost();
+	tempOtherSocket->disconnectFromHostImplementation();
 	{
 		QMutexLocker lock(&mutex);
 		data.clear();
 	}
 	setSocketState(QAbstractSocket::UnconnectedState);
-	tempOtherSocket->disconnectFromHost();
 	emit stateChanged(QAbstractSocket::UnconnectedState);
 	emit disconnected();
 }
@@ -134,17 +135,18 @@ qint64	QFakeSocket::readData(char * rawData, qint64 maxSize)
 
 qint64	QFakeSocket::writeData ( const char * rawData, qint64 size )
 {
+	if(theOtherSocket==NULL)
+	{
+		DebugClass::debugConsole("writeData(): theOtherSocket==NULL");
+		emit error(QAbstractSocket::NetworkError);
+		return size;
+	}
 	QByteArray dataToSend;
 	{
 		QMutexLocker lock(&mutex);
 		#ifdef FAKESOCKETDEBUG
 		DebugClass::debugConsole(QString("writeData(): size: %1").arg(size));
 		#endif
-		if(theOtherSocket==NULL)
-		{
-			DebugClass::debugConsole("writeData(): theOtherSocket==NULL");
-			return size;
-		}
 		dataToSend=QByteArray(rawData,size);
 	}
 	theOtherSocket->internal_writeData(dataToSend);
