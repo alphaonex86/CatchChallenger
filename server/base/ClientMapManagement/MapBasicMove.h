@@ -10,6 +10,8 @@
 #include <QHashIterator>
 
 #include "../general/base/DebugClass.h"
+#include "../general/base/GeneralVariable.h"
+#include "../general/base/MoveOnTheMap.h"
 #include "../ServerStructures.h"
 #include "../../VariableServer.h"
 
@@ -23,29 +25,21 @@ public:
 	virtual ~MapBasicMove();
 	virtual void setVariable(Player_internal_informations *player_informations);
 	//info linked
-	qint16				x,y;//can be negative because offset to insert on map diff can be put into
-	Map_server*			current_map;
+	COORD_TYPE			x,y;//can't be negative
+	Map*			map;
 	//map vector informations
 	Direction			last_direction;
-
-	//debug function
-	static QString directionToString(const Direction &direction);
 
 	//internal var
 	Player_internal_informations *player_informations;
 protected:
 	//pass to the Map management visibility algorithm
-	virtual void mapTeleporterUsed();
-	virtual bool checkCollision();
+	virtual bool singleMove(const Direction &direction) = 0;
 
 	//related to stop
 	//volatile bool stopCurrentMethod;
 	//volatile bool stopIt;
 	virtual void extraStop();
-
-	//map load/unload and change
-	virtual void loadOnTheMap();
-	virtual void unloadFromTheMap();
 signals:
 	//normal signals
 	void error(const QString &error);
@@ -55,7 +49,7 @@ signals:
 	void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
-	virtual void put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+	virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
 	virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 	//normal slots
 	virtual void askIfIsReadyToStop();
