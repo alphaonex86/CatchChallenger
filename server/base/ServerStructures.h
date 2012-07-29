@@ -18,15 +18,16 @@
 
 class EventThreader;
 class Map_custom;
+class Map;
 class ClientBroadCast;
 class ClientMapManagement;
 class FakeBot;
 class PlayerUpdater;
-class Map_server;
+class Map_server_MapVisibility_simple;
 
 struct Map_player_info
 {
-	Map_server *map;
+	Map *map;
 	int x,y;
 	QString skin;
 };
@@ -126,7 +127,7 @@ struct GeneralData
 
 		//map
 		QString mapBasePath;
-		QHash<QString,Map_server *> map_list;
+		QHash<QString,Map *> map_list;
 		QTimer timer_to_send_insert_move_remove;
 		qint8 sizeofInsertRequest;
 

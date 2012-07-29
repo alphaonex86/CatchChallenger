@@ -19,6 +19,9 @@ QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>::const_iterato
 QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>::const_iterator MapVisibilityAlgorithm_Simple::i_insert_end;
 QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator MapVisibilityAlgorithm_Simple::i_remove;
 QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator MapVisibilityAlgorithm_Simple::i_remove_end;
+Map* MapVisibilityAlgorithm_Simple::old_map;
+Map* MapVisibilityAlgorithm_Simple::new_map;
+bool MapVisibilityAlgorithm_Simple::mapHaveChanged;
 
 //temp variable to move on the map
 map_management_movement MapVisibilityAlgorithm_Simple::moveClient_tempMov;
@@ -33,7 +36,7 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 
 void MapVisibilityAlgorithm_Simple::insertClient()
 {
-	loop_size=current_map->clients.size();
+	loop_size=static_cast<Map_server_MapVisibility_simple*>(map)->clients.size();
 	if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
 	{
 		//insert the new client
@@ -41,7 +44,7 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 		while(index<loop_size)
 		{
 			//register on other clients
-			current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
+			current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
 			current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
 			this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
 			index++;
@@ -49,15 +52,15 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 	}
 	else
 	{
-		if(unlikely(current_map->mapVisibility.simple.show))
+		if(unlikely(static_cast<Map_server_MapVisibility_simple*>(map)->show))
 		{
-			current_map->mapVisibility.simple.show=false;
+			static_cast<Map_server_MapVisibility_simple*>(map)->show=false;
 			//drop all show client because it have excess the limit
 			//drop on all client
 			index=0;
 			while(index<loop_size)
 			{
-				current_map->clients.at(index)->dropAllClients();
+				static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->dropAllClients();
 				index++;
 			}
 		}
@@ -66,9 +69,9 @@ void MapVisibilityAlgorithm_Simple::insertClient()
 	//insertAnotherClient(player_id,current_map,x,y,last_direction,speed);
 }
 
-void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged)
+void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Direction &direction)
 {
-	loop_size=current_map->clients.size();
+	loop_size=static_cast<Map_server_MapVisibility_simple*>(map)->clients.size();
 	if(unlikely(mapHaveChanged))
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
@@ -81,7 +84,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 			while(index<loop_size)
 			{
 				//register on other clients
-				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
+				current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
 				if(likely(current_client!=this))
 				{
 					current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
@@ -98,7 +101,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 			index=0;
 			while(index<loop_size)
 			{
-				current_map->clients.at(index)->dropAllClients();
+				static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->dropAllClients();
 				index++;
 			}
 		}
@@ -116,7 +119,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 			index=0;
 			while(index<loop_size)
 			{
-				current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
+				current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
 				if(likely(current_client!=this))
 					#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
 					current_client->moveAnotherClientWithMap(player_informations->public_and_private_informations.public_informations.simplifiedId,this,movedUnit,direction);
@@ -145,15 +148,15 @@ void MapVisibilityAlgorithm_Simple::dropAllClients()
 
 void MapVisibilityAlgorithm_Simple::removeClient()
 {
-	loop_size=current_map->clients.size();
-	if(unlikely(loop_size==(EventDispatcher::generalData.serverSettings.mapVisibility.simple.reshow) && current_map->mapVisibility.simple.show==false))
+	loop_size=static_cast<Map_server_MapVisibility_simple*>(map)->clients.size();
+	if(unlikely(loop_size==(EventDispatcher::generalData.serverSettings.mapVisibility.simple.reshow) && static_cast<Map_server_MapVisibility_simple*>(map)->show==false))
 	{
-		current_map->mapVisibility.simple.show=true;
+		static_cast<Map_server_MapVisibility_simple*>(map)->show=true;
 		//insert all the client because it start to be visible
 		index=0;
 		while(index<loop_size)
 		{
-			static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index))->reinsertAllClient(loop_size);
+			static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->reinsertAllClient(loop_size);
 			index++;
 		}
 	}
@@ -167,7 +170,7 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 		while(index<loop_size)
 		{
 			//current_map -> wrong pointer
-			static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index))->removeAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId);
+			static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->removeAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId);
 			index++;
 		}
 	}
@@ -183,7 +186,7 @@ void MapVisibilityAlgorithm_Simple::reinsertAllClient(const int &loop_size)
 	index=0;
 	while(index<loop_size)
 	{
-		current_client=static_cast<MapVisibilityAlgorithm_Simple*>(current_map->clients.at(index));
+		current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
 		if(likely(current_client!=this))
 		{
 			current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
@@ -280,6 +283,8 @@ void MapVisibilityAlgorithm_Simple::removeAnotherClient(const SIMPLIFIED_PLAYER_
 
 void MapVisibilityAlgorithm_Simple::extraStop()
 {
+	unloadFromTheMap();//product remove on the map
+
 	to_send_insert.clear();
 	to_send_move.clear();
 	to_send_remove.clear();
@@ -311,8 +316,8 @@ void MapVisibilityAlgorithm_Simple::send_insert()
 	//////////////////////////// insert //////////////////////////
 	/* can be only this map with this algo, then 1 map */
 	out << (quint8)0x01;
-	purgeBuffer_outputData+=current_map->rawMapFile;
-	out.device()->seek(out.device()->pos()+current_map->rawMapFile.size());
+	purgeBuffer_outputData+=map->rawMapFile;
+	out.device()->seek(out.device()->pos()+map->rawMapFile.size());
 	if(EventDispatcher::generalData.serverSettings.max_players<=255)
 		out << (quint8)to_send_insert.size();
 	else
@@ -495,3 +500,33 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 	}
 }
 #endif
+
+bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
+{
+	mapHaveChanged=false;
+	if(!MoveOnTheMap::canGoTo(direction,map,x,y,false))
+		return false;
+	old_map=map;
+	new_map=map;
+	MoveOnTheMap::move(direction,&new_map,x,y);
+	if(old_map!=new_map)
+	{
+		mapHaveChanged=true;
+		map=old_map;
+		unloadFromTheMap();
+		map=static_cast<Map_server_MapVisibility_simple*>(new_map);
+		loadOnTheMap();
+	}
+	return true;
+}
+
+void MapVisibilityAlgorithm_Simple::loadOnTheMap()
+{
+	static_cast<Map_server_MapVisibility_simple*>(map)->clients << this;
+}
+
+void MapVisibilityAlgorithm_Simple::unloadFromTheMap()
+{
+	static_cast<Map_server_MapVisibility_simple*>(map)->clients.removeOne(this);
+	mapVisiblity_unloadFromTheMap();
+}

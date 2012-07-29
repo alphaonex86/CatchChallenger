@@ -16,7 +16,7 @@
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzUEOQDAQheGxxkm0J6G3UCTlGkjEnT2JRYlYNDrdzEv+1STz2YzI/lxORIVXSfd7i2KsQspLP+6x3Bo1XobJdWj0mpjcDVX4rZBGO5N7rr5+mxcjpuuu3xOz+zVxxRVX3BRuh3o0MLszWtDK7IZMXHHFFTfETdUBjEwrZQ==
+   eJztzV0KQEAUxXGesRJjJdiFr2K2gZI9O2oebpNMievlnPo/GffXxlHUBpILvT1L8C4VZd5/jXfzreXIiArv+1duiSpRreSOaBJZJXdDOW4bVKBdyT1Xutv1hfGlO7rbVtm9G126dOn+4XaoR4OyO6MFrcruk9GlS5fuE/evDuwAKjM=
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
@@ -25,7 +25,7 @@
   </data>
  </layer>
  <objectgroup name="Tp" width="30" height="30">
-  <object name="bot spawn" type="bot spawn" gid="68" x="256" y="208"/>
+  <object name="bot spawn" type="bot spawn" gid="68" x="0" y="464"/>
   <object name="house" type="door" gid="332" x="368" y="96">
    <properties>
     <property name="map" value="house"/>
@@ -36,6 +36,11 @@
   <object type="border-left" gid="238" x="0" y="240">
    <properties>
     <property name="map" value="0.0"/>
+   </properties>
+  </object>
+  <object name="border-top" gid="238" x="160" y="16">
+   <properties>
+    <property name="map" value="1.1"/>
    </properties>
   </object>
  </objectgroup>

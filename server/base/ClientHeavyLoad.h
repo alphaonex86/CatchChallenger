@@ -59,7 +59,7 @@ signals:
 	//login linked signals
 	void send_player_informations();
 	void isLogged();
-	void put_on_the_map(Map_server* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
+	void put_on_the_map(Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
 	//random linked signals
 	void newRandomNumber(const QByteArray &randomData);
 };

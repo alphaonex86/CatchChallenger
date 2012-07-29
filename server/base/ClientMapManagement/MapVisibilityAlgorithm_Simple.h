@@ -14,7 +14,7 @@ public:
 protected:
 	//add clients linked
 	void insertClient();
-	void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged);
+	void moveClient(const quint8 &movedUnit,const Direction &direction);
 	void removeClient();
 	void mapVisiblity_unloadFromTheMap();
 private:
@@ -36,6 +36,12 @@ private:
 	void insertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player);
 	void removeAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id);
 	#endif
+	//map load/unload and change
+	virtual void			loadOnTheMap();
+	virtual void			unloadFromTheMap();
+
+	//map move
+	bool singleMove(const Direction &direction);
 
 	//temp variable for purge buffer
 	static QByteArray purgeBuffer_outputData;
@@ -43,6 +49,7 @@ private:
 	static int purgeBuffer_list_size;
 	static int purgeBuffer_list_size_internal;
 	static int purgeBuffer_indexMovement;
+	static bool mapHaveChanged;
 	static map_management_move purgeBuffer_move;
 	static QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >::const_iterator i_move;
 	static QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >::const_iterator i_move_end;
@@ -50,6 +57,8 @@ private:
 	static QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>::const_iterator i_insert_end;
 	static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove;
 	static QSet<SIMPLIFIED_PLAYER_ID_TYPE>::const_iterator i_remove_end;
+	static Map*			old_map;
+	static Map*			new_map;
 
 	//temp variable to move on the map
 	static map_management_movement moveClient_tempMov;

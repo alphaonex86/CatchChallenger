@@ -53,7 +53,7 @@ private:
 	struct Map_semi
 	{
 		//conversion x,y to position: x+y*width
-		Map_server * map;
+		Map* map;
 		Map_semi_border border;
 		Map_to_send old_map;
 	};

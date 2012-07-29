@@ -3,9 +3,9 @@
 
 #include "../../general/base/Map.h"
 
-class ClientMapManagement;
+class MapVisibilityAlgorithm_Simple;
 
-class Map_server : public Map
+class Map_server_MapVisibility_simple : public Map
 {
 public:
 	/** \todo
@@ -42,24 +42,11 @@ public:
 	Or quadtree usage, cf google: quadtree
 	 * */
 	
-	Map_server();
+	Map_server_MapVisibility_simple();
 
-	QList<ClientMapManagement *> clients;//manipulated by thread of ClientMapManagement()
+	QList<MapVisibilityAlgorithm_Simple *> clients;//manipulated by thread of ClientMapManagement()
 
-	struct MapVisibility_simple
-	{
-		bool show;
-	};
-	struct MapVisibility
-	{
-		MapVisibility_simple simple;
-	};
-	MapVisibility mapVisibility;
-
-	// variables UTF8
-	QByteArray rawMapFile;
-
-	bool loadInternalVariables();
+	bool show;
 };
 
 #endif // MAP_SERVER_H

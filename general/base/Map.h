@@ -47,6 +47,11 @@ public:
 	quint16 width;
 	quint16 height;
 	quint32 group;
+
+	// variables UTF8
+	QByteArray rawMapFile;
+
+	bool loadInternalVariables();
 };
 
 #endif // MAP_H

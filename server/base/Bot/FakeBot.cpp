@@ -16,7 +16,7 @@ FakeBot::FakeBot() :
 	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(newSocketError(QAbstractSocket::SocketError)));
 	connect(&socket,SIGNAL(disconnected()),this,SLOT(disconnected()));
 
-	details=true;
+	details=false;
 	map=NULL;
 
 	do_step=false;
@@ -26,10 +26,8 @@ FakeBot::FakeBot() :
 	x=0;
 	y=0;
 
-	predefinied_step << Direction_move_at_top;
-	predefinied_step << Direction_move_at_top;
-	predefinied_step << Direction_move_at_bottom;
-	predefinied_step << Direction_move_at_bottom;
+	predefinied_step << Direction_move_at_left;
+	predefinied_step << Direction_move_at_right;
 }
 
 FakeBot::~FakeBot()
@@ -39,7 +37,6 @@ FakeBot::~FakeBot()
 
 void FakeBot::disconnected()
 {
-	DebugClass::debugConsole(QString("FakeBot::disconnected() start"));
 	map=NULL;
 }
 
@@ -68,9 +65,9 @@ void FakeBot::start_step()
 void FakeBot::random_new_step()
 {
 	Direction final_direction;
-	while(predefinied_step.size()>0 && !canGoTo(predefinied_step.first(),map,x,y))
+	while(predefinied_step.size()>0 && !canGoTo(predefinied_step.first(),map,x,y,true))
 	{
-		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), unable to go on: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MapBasicMove::directionToString(predefinied_step.first())));
+		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), unable to go on: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MoveOnTheMap::directionToString(predefinied_step.first())));
 		predefinied_step.removeFirst();
 	}
 	if(predefinied_step.size()>0)
@@ -81,13 +78,13 @@ void FakeBot::random_new_step()
 	else
 	{
 		QList<Direction> directions_allowed;
-		if(canGoTo(Direction_move_at_left,map,x,y))
+		if(canGoTo(Direction_move_at_left,map,x,y,true))
 			directions_allowed << Direction_move_at_left;
-		if(canGoTo(Direction_move_at_right,map,x,y))
+		if(canGoTo(Direction_move_at_right,map,x,y,true))
 			directions_allowed << Direction_move_at_right;
-		if(canGoTo(Direction_move_at_top,map,x,y))
+		if(canGoTo(Direction_move_at_top,map,x,y,true))
 			directions_allowed << Direction_move_at_top;
-		if(canGoTo(Direction_move_at_bottom,map,x,y))
+		if(canGoTo(Direction_move_at_bottom,map,x,y,true))
 			directions_allowed << Direction_move_at_bottom;
 		loop_size=directions_allowed.size();
 		if(details)
@@ -96,7 +93,7 @@ void FakeBot::random_new_step()
 			index_loop=0;
 			while(index_loop<loop_size)
 			{
-				directions_allowed_string << MapBasicMove::directionToString(directions_allowed.at(index_loop));
+				directions_allowed_string << MoveOnTheMap::directionToString(directions_allowed.at(index_loop));
 				index_loop++;
 			}
 			DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), directions_allowed_string: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(directions_allowed_string.join(", ")));
@@ -111,7 +108,7 @@ void FakeBot::random_new_step()
 	//to do the real move
 	if(!move(final_direction,(Map **)&map,x,y))
 	{
-		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 2, id: %1, x: %2, y:%3, can't move on direction of: %4").arg(api.getId()).arg(x).arg(y).arg(MapBasicMove::directionToString(final_direction)));
+		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 2, id: %1, x: %2, y:%3, can't move on direction of: %4").arg(api.getId()).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
 		map=NULL;
 		return;
 	}

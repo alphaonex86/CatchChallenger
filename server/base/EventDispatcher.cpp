@@ -52,7 +52,7 @@ EventDispatcher::EventDispatcher()
 	qRegisterMetaType<Chat_type>("Chat_type");
 	qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
 	qRegisterMetaType<Direction>("Direction");
-	qRegisterMetaType<Map_server*>("Map_final*");
+	qRegisterMetaType<Map_server_MapVisibility_simple*>("Map_final*");
 	qRegisterMetaType<Player_public_informations>("Player_public_informations");
 	qRegisterMetaType<QSqlQuery>("QSqlQuery");
 
@@ -169,13 +169,35 @@ void EventDispatcher::preload_the_map()
 			DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
 			if(map_temp.tryLoadMap(generalData.serverPrivateVariables.mapBasePath+returnList.at(index)))
 			{
-				generalData.serverPrivateVariables.map_list[returnList.at(index)]=new Map_server;
+				switch(generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
+				{
+					case MapVisibilityAlgorithm_simple:
+						generalData.serverPrivateVariables.map_list[returnList.at(index)]=new Map_server_MapVisibility_simple;
+					break;
+					case MapVisibilityAlgorithm_none:
+					default:
+						generalData.serverPrivateVariables.map_list[returnList.at(index)]=new Map;
+					break;
+				}
+
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
 				generalData.serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
-				if(generalData.serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables())
+
+				bool continueTheLoading=true;
+				switch(generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
+				{
+					case MapVisibilityAlgorithm_simple:
+						continueTheLoading=generalData.serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();
+					break;
+					case MapVisibilityAlgorithm_none:
+					default:
+					break;
+				}
+
+				if(continueTheLoading)
 				{
 					map_name << returnList.at(index);
 
@@ -427,14 +449,14 @@ void EventDispatcher::preload_the_map()
 
 void EventDispatcher::preload_the_visibility_algorithm()
 {
-	QHash<QString,Map_server *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
-	QHash<QString,Map_server *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
+	QHash<QString,Map *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
+	QHash<QString,Map *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
 	switch(generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
 	{
 		case MapVisibilityAlgorithm_simple:
 		while (i != i_end)
 		{
-			i.value()->mapVisibility.simple.show=true;
+			static_cast<Map_server_MapVisibility_simple *>(i.value())->show=true;
 			i++;
 		}
 		break;
@@ -598,8 +620,8 @@ void EventDispatcher::unload_the_data()
 
 void EventDispatcher::unload_the_map()
 {
-	QHash<QString,Map_server *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
-	QHash<QString,Map_server *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
+	QHash<QString,Map *>::const_iterator i = generalData.serverPrivateVariables.map_list.constBegin();
+	QHash<QString,Map *>::const_iterator i_end = generalData.serverPrivateVariables.map_list.constEnd();
 	while (i != i_end)
 	{
 		delete i.value()->parsed_layer.walkable;

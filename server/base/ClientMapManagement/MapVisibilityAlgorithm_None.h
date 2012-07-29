@@ -11,12 +11,14 @@ public:
 protected:
 	//add clients linked
 	void insertClient();
-	void moveClient(const quint8 &movedUnit,const Direction &direction,const bool &mapHaveChanged);
+	void moveClient(const quint8 &movedUnit,const Direction &direction);
 	void removeClient();
 	void mapVisiblity_unloadFromTheMap();
+	//map move
+	bool singleMove(const Direction &direction);
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
-	virtual void put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,Map_server *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
+	virtual void put_on_the_map(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,Map_server_MapVisibility_simple *map,const quint16 &x,const quint16 &y,const Orientation &orientation,const quint16 &speed);
 	virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 public slots:
 	virtual void purgeBuffer();

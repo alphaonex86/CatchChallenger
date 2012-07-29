@@ -82,7 +82,7 @@ signals:
 	void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
 
 	//to async the message
-	void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_server *map,Orientation orientation,QString skin);
+	void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_server_MapVisibility_simple *map,Orientation orientation,QString skin);
 	void fake_send_data(const QByteArray &data);
 	void fake_send_received_data(const QByteArray &data);
 	void try_ask_stop();

@@ -21,11 +21,11 @@ ClientLocalCalcule::~ClientLocalCalcule()
 
 bool ClientLocalCalcule::checkCollision()
 {
-	if(current_map->parsed_layer.walkable==NULL)
+	if(map->parsed_layer.walkable==NULL)
 		return false;
-	if(!current_map->parsed_layer.walkable[x+y*current_map->width])
+	if(!map->parsed_layer.walkable[x+y*map->width])
 	{
-		emit error(QString("move at %1, can't wall at: %2,%3 on map: %4").arg(temp_direction).arg(x).arg(y).arg(current_map->map_file));
+		emit error(QString("move at %1, can't wall at: %2,%3 on map: %4").arg(temp_direction).arg(x).arg(y).arg(map->map_file));
 		return false;
 	}
 	else
@@ -44,7 +44,7 @@ void ClientLocalCalcule::extraStop()
 	if(last_direction>4)
 		last_direction=Direction((quint8)last_direction-4);
 	Orientation orientation=(Orientation)last_direction;
-	if(current_map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
+	if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
 		DebugClass::debugConsole(
@@ -58,7 +58,7 @@ void ClientLocalCalcule::extraStop()
 		if(!player_informations->is_logged || player_informations->isFake)
 			return;
 		QSqlQuery updateMapPositionQuery=EventDispatcher::generalData.serverPrivateVariables.updateMapPositionQuery;
-		updateMapPositionQuery.bindValue(":map_name",current_map->map_file);
+		updateMapPositionQuery.bindValue(":map_name",map->map_file);
 		updateMapPositionQuery.bindValue(":position_x",x);
 		updateMapPositionQuery.bindValue(":position_y",y);
 		updateMapPositionQuery.bindValue(":orientation",orientation);
@@ -72,7 +72,7 @@ void ClientLocalCalcule::extraStop()
  * Because the ClientMapManagement can be totaly satured by the square complexity
  * that's allow to continue the player to connect and play
  * the overhead for the network it just at the connexion */
-void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
 	emit message(QString("ClientLocalCalcule put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
@@ -82,8 +82,6 @@ void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,cons
 	at_start_map_name=map;
 	at_start_x=x;
 	at_start_y=y;
-
-	loadOnTheMap();
 
 	//send to the client the position of the player
 	QByteArray outputData;
@@ -122,11 +120,24 @@ void ClientLocalCalcule::put_on_the_map(Map_server *map,const COORD_TYPE &x,cons
 
 bool ClientLocalCalcule::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
-	temp_direction=MapBasicMove::directionToString(direction);
+	temp_direction=MoveOnTheMap::directionToString(direction);
 	return MapBasicMove::moveThePlayer(previousMovedUnit,direction);
 }
 
 void ClientLocalCalcule::newRandomNumber(const QByteArray &randomData)
 {
 	player_informations->public_and_private_informations.public_informations.randomNumber+=randomData;
+}
+
+bool ClientLocalCalcule::singleMove(const Direction &direction)
+{
+	if(!MoveOnTheMap::canGoTo(direction,map,x,y,true))
+	{
+		emit error(QString("ClientLocalCalcule::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+		return false;
+	}
+	Map* map=this->map;
+	MoveOnTheMap::move(direction,&map,x,y);
+	this->map=static_cast<Map_server_MapVisibility_simple*>(map);
+	return true;
 }

@@ -36,7 +36,7 @@ private:
 	static int index_loop,loop_size;
 	static QSemaphore wait_to_stop;
 	bool do_step;
-	Map_server *map;
+	Map *map;
 	COORD_TYPE x,y;
 	QList<Direction> predefinied_step;
 public slots:
