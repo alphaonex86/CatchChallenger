@@ -1,6 +1,7 @@
 #include "MapBasicMove.h"
 #include "../Map_server.h"
 #include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/MoveOnTheMap.h"
 
 /** \todo do client near list for the local player
   the list is limited to 50
@@ -11,7 +12,7 @@
 
 MapBasicMove::MapBasicMove()
 {
-	current_map=NULL;
+	map=NULL;
 	player_informations=NULL;
 }
 
@@ -26,16 +27,14 @@ void MapBasicMove::setVariable(Player_internal_informations *player_informations
 
 void MapBasicMove::askIfIsReadyToStop()
 {
-	if(current_map==NULL)
+	if(map==NULL)
 	{
 		emit isReadyToStop();
 		return;
 	}
-	unloadFromTheMap();//product remove on the map
-
 	extraStop();
 
-	current_map=NULL;
+	map=NULL;
 	emit isReadyToStop();
 }
 
@@ -48,7 +47,7 @@ void MapBasicMove::stop()
 	deleteLater();
 }
 
-void MapBasicMove::put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+void MapBasicMove::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
 	//store the starting informations
 	last_direction=static_cast<Direction>(orientation);
@@ -56,52 +55,22 @@ void MapBasicMove::put_on_the_map(Map_server *map,const /*COORD_TYPE*/quint8 &x,
 	//store the current information about player on the map
 	this->x=x;
 	this->y=y;
-	current_map=map;
+	this->map=map;
 
 	#ifdef POKECRAFT_SERVER_EXTRA_CHECK
-	if(this->x>(current_map->width-1))
+	if(this->x>(map->width-1))
 	{
 		emit message(QString("put_on_the_map(): Wrong x: %1").arg(x));
-		this->x=current_map->width-1;
+		this->x=map->width-1;
 	}
-	if(this->y>(current_map->height-1))
+	if(this->y>(map->height-1))
 	{
 		emit message(QString("put_on_the_map(): Wrong y: %1").arg(y));
-		this->y=current_map->height-1;
+		this->y=map->height-1;
 	}
 	#endif
 }
 
-void MapBasicMove::mapTeleporterUsed()
-{
-	const Map_server::Teleporter &teleporter=current_map->teleporter[x+y*current_map->width];
-	if(teleporter.map==current_map)
-	{
-		#ifdef DEBUG_MESSAGE_MAP_TP
-		emit message(QString("moveThePlayer(): pass on local teleporter from %1 (%2,%3) to: %4,%5").arg(current_map->map_file).arg(x).arg(y).arg(teleporter.x).arg(teleporter.y));
-		#endif
-		x=teleporter.x;
-		y=teleporter.y;
-	}
-	else
-	{
-		unloadFromTheMap();
-		#ifdef DEBUG_MESSAGE_MAP_TP
-		emit message(QString("moveThePlayer(): pass on remote teleporter from %1 (%2,%3) to: %4 (%5,%6)").arg(current_map->map_file).arg(x).arg(y).arg(teleporter.map->map_file).arg(teleporter.x).arg(teleporter.y));
-		#endif
-		x=teleporter.x;
-		y=teleporter.y;
-		current_map=static_cast<Map_server *>(teleporter.map);
-		loadOnTheMap();
-	}
-}
-
-bool MapBasicMove::checkCollision()
-{
-	return true;
-}
-
-/// \note The second heavy function
 bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -123,36 +92,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if(unlikely(0==y))
-				{
-					if(unlikely(current_map->border.top.map==NULL))
-					{
-						emit error(QString("moveThePlayer(), out of map: %1 by top  (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
-						return false;
-					}
-					else
-					{
-						emit message(QString("moveThePlayer(): move at top, leave the map: %1, enter to the map: %2, the enter add x offset=%3").arg(current_map->map_file).arg(current_map->border.top.map->map_file).arg(x-current_map->border.top.x_offset));
-						unloadFromTheMap();
-						y=current_map->border.top.map->height;
-						x+=current_map->border.top.x_offset;
-						current_map=static_cast<Map_server *>(current_map->border.top.map);
-						loadOnTheMap();
-					}
-					//bug with: return;
-				}
-				else
-					y--;
-
-				if(unlikely(!checkCollision()))
-				{
-					//walk on the wall
+				if(!singleMove(Direction_move_at_top))
 					return false;
-				}
-
-				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
-					mapTeleporterUsed();
-
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -171,33 +112,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if(unlikely((current_map->width-1)==x))
-				{
-					if(unlikely(current_map->border.right.map==NULL))
-					{
-						emit error(QString("moveThePlayer(): out of map: %1, by right (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
-						return false;
-					}
-					else
-					{
-						emit message(QString("moveThePlayer(): move at right, leave the map: %1, enter to the map: %2, the enter add y offset=%3").arg(current_map->map_file).arg(current_map->border.right.map->map_file).arg(y-current_map->border.right.y_offset));
-						unloadFromTheMap();
-						y=0;
-						x+=current_map->border.right.y_offset;
-						current_map=static_cast<Map_server *>(current_map->border.right.map);
-						loadOnTheMap();
-					}
-					//bug with: return;
-				}
-				else
-					x++;
-				if(unlikely(!checkCollision()))
-				{
-					//walk on the wall
+				if(!singleMove(Direction_move_at_right))
 					return false;
-				}
-				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
-					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -216,33 +132,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if(unlikely((current_map->height-1)==y))
-				{
-					if(unlikely(current_map->border.bottom.map==NULL))
-					{
-						emit error(QString("moveThePlayer(): out of map: %1, by bottom  (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
-						return false;
-					}
-					else
-					{
-						emit message(QString("moveThePlayer(): move at bottom, leave the map: %1, enter to the map: %2, the enter add x offset=%3").arg(current_map->map_file).arg(current_map->border.bottom.map->map_file).arg(x-current_map->border.bottom.x_offset));
-						unloadFromTheMap();
-						y=0;
-						x+=current_map->border.bottom.x_offset;
-						current_map=static_cast<Map_server *>(current_map->border.bottom.map);
-						loadOnTheMap();
-					}
-					//bug with: return;
-				}
-				else
-					y++;
-				if(unlikely(!checkCollision()))
-				{
-					//walk on the wall
+				if(!singleMove(Direction_move_at_bottom))
 					return false;
-				}
-				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
-					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -261,33 +152,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 			}
 			while(moveThePlayer_index_move<previousMovedUnit)
 			{
-				if(unlikely(0==x))
-				{
-					if(unlikely(current_map->border.left.map==NULL))
-					{
-						emit error(QString("moveThePlayer(): out of map: %1, by left  (%2,%3)").arg(current_map->map_file).arg(x).arg(y));
-						return false;
-					}
-					else
-					{
-						emit message(QString("moveThePlayer(): move at left, leave the map: %1, enter to the map: %2, the enter add y offset=%3").arg(current_map->map_file).arg(current_map->border.left.map->map_file).arg(y-current_map->border.left.y_offset));
-						unloadFromTheMap();
-						y=current_map->border.left.map->width;
-						x+=current_map->border.left.y_offset;
-						current_map=static_cast<Map_server *>(current_map->border.left.map);
-						loadOnTheMap();
-					}
-					//bug with: return;
-				}
-				else
-					x--;
-				if(unlikely(!checkCollision()))
-				{
-					//walk on the wall
+				if(!singleMove(Direction_move_at_left))
 					return false;
-				}
-				if(unlikely(current_map->teleporter.contains(x+y*current_map->width)))
-					mapTeleporterUsed();
 				moveThePlayer_index_move++;
 			}
 		break;
@@ -305,46 +171,4 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
 	}
 	last_direction=direction;
 	return true;
-}
-
-void MapBasicMove::loadOnTheMap()
-{
-}
-
-void MapBasicMove::unloadFromTheMap()
-{
-}
-
-QString MapBasicMove::directionToString(const Direction &direction)
-{
-	switch(direction)
-	{
-		case Direction_look_at_top:
-			return "look at top";
-		break;
-		case Direction_look_at_right:
-			return "look at right";
-		break;
-		case Direction_look_at_bottom:
-			return "look at bottom";
-		break;
-		case Direction_look_at_left:
-			return "look at left";
-		break;
-		case Direction_move_at_top:
-			return "move at top";
-		break;
-		case Direction_move_at_right:
-			return "move at right";
-		break;
-		case Direction_move_at_bottom:
-			return "move at bottom";
-		break;
-		case Direction_move_at_left:
-			return "move at left";
-		break;
-		default:
-		break;
-	}
-	return "???";
 }
