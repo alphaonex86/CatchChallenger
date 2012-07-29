@@ -44,7 +44,41 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 	}
 }
 
-bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE y)
+QString MoveOnTheMap::directionToString(const Direction &direction)
+{
+	switch(direction)
+	{
+		case Direction_look_at_top:
+			return "look at top";
+		break;
+		case Direction_look_at_right:
+			return "look at right";
+		break;
+		case Direction_look_at_bottom:
+			return "look at bottom";
+		break;
+		case Direction_look_at_left:
+			return "look at left";
+		break;
+		case Direction_move_at_top:
+			return "move at top";
+		break;
+		case Direction_move_at_right:
+			return "move at right";
+		break;
+		case Direction_move_at_bottom:
+			return "move at bottom";
+		break;
+		case Direction_move_at_left:
+			return "move at left";
+		break;
+		default:
+		break;
+	}
+	return "???";
+}
+
+bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE y,bool checkCollision)
 {
 	if(map==NULL)
 		return false;
@@ -52,67 +86,99 @@ bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE 
 	{
 		case Direction_move_at_left:
 			if(x>0)
+			{
+				if(!checkCollision)
+					return true;
 				return map->parsed_layer.walkable[x-1+y*(map->width)];
+			}
 			else if(map->border.left.map==NULL)
 				return false;
 			else if(y<-map->border.left.y_offset)
 				return false;
 			else
+			{
+				if(!checkCollision)
+					return true;
 				return map->border.left.map->parsed_layer.walkable[map->border.left.map->width-1+(y+map->border.left.y_offset)*(map->border.left.map->width)];
+			}
 		break;
 		case Direction_move_at_right:
 			if(x<(map->width-1))
+			{
+				if(!checkCollision)
+					return true;
 				return map->parsed_layer.walkable[x+1+y*(map->width)];
+			}
 			else if(map->border.right.map==NULL)
 				return false;
 			else if(y<-map->border.right.y_offset)
 				return false;
 			else
+			{
+				if(!checkCollision)
+					return true;
 				return map->border.right.map->parsed_layer.walkable[0+(y+map->border.right.y_offset)*(map->border.right.map->width)];
+			}
 		break;
 		case Direction_move_at_top:
 			if(y>0)
+			{
+				if(!checkCollision)
+					return true;
 				return map->parsed_layer.walkable[x+(y-1)*(map->width)];
+			}
 			else if(map->border.top.map==NULL)
 				return false;
 			else if(x<-map->border.top.x_offset)
 				return false;
 			else
+			{
+				if(!checkCollision)
+					return true;
 				return map->border.top.map->parsed_layer.walkable[x+map->border.top.x_offset+(map->border.top.map->height-1)*(map->border.top.map->width)];
+			}
 		break;
 		case Direction_move_at_bottom:
 			if(y<(map->height-1))
+			{
+				if(!checkCollision)
+					return true;
 				return map->parsed_layer.walkable[x+(y+1)*(map->width)];
+			}
 			else if(map->border.bottom.map==NULL)
 				return false;
 			else if(x<-map->border.bottom.x_offset)
 				return false;
 			else
+			{
+				if(!checkCollision)
+					return true;
 				return map->border.bottom.map->parsed_layer.walkable[x+map->border.top.x_offset+0];
+			}
 		break;
 		default:
 			return false;
 	}
 }
 
-void MoveOnTheMap::teleport(Map ** map,COORD_TYPE &x,COORD_TYPE &y)
+bool MoveOnTheMap::teleport(Map ** map,COORD_TYPE &x,COORD_TYPE &y)
 {
-	DebugClass::debugConsole(QString("FakeBot::teleport(), map: %1 (%2,%3), teleporter: %4").arg((*map)->map_file).arg(x).arg(y).arg((*map)->teleporter.size()));
 	if((*map)->teleporter.contains(x+y*(*map)->width))
 	{
 		const Map::Teleporter &teleporter=(*map)->teleporter[x+y*(*map)->width];
-		DebugClass::debugConsole(QString("FakeBot::teleport(), map: %1 (%2,%3), to: %4 (%5,%6)").arg((*map)->map_file).arg(x).arg(y).arg(teleporter.map->map_file).arg(teleporter.x).arg(teleporter.y));
 		x=teleporter.x;
 		y=teleporter.y;
 		(*map)=teleporter.map;
+		return true;
 	}
+	return false;
 }
 
 bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE &x,COORD_TYPE &y)
 {
 	if(*map==NULL)
 		return false;
-	if(!canGoTo(direction,*map,x,y))
+	if(!canGoTo(direction,*map,x,y,true))
 		return false;
 	switch(direction)
 	{
