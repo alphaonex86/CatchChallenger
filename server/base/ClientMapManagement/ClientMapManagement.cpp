@@ -41,7 +41,7 @@ void ClientMapManagement::extraStop()
 bool ClientMapManagement::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-	emit message(QString("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(directionToString(direction)).arg(previousMovedUnit));
+	emit message(QString("ClientMapManagement::moveThePlayer (%1,%2): %3, direction: %4, previousMovedUnit: %5").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(previousMovedUnit));
 	#endif
 	if(unlikely(!MapBasicMove::moveThePlayer(previousMovedUnit,direction)))
 		return false;

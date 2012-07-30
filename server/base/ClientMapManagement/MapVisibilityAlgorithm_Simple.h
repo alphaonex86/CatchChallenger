@@ -14,7 +14,7 @@ public:
 protected:
 	//add clients linked
 	void insertClient();
-	void moveClient(const quint8 &movedUnit,const Direction &direction);
+	void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
 	void removeClient();
 	void mapVisiblity_unloadFromTheMap();
 private:
@@ -69,6 +69,9 @@ private:
 	QSet<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
 public slots:
 	virtual void purgeBuffer();
+	//map slots, transmited by the current ClientNetworkRead
+	virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+	virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
 
 private slots:
 	virtual void extraStop();
