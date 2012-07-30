@@ -31,7 +31,7 @@ public:
 protected:
 	//pass to the Map management visibility algorithm
 	virtual void insertClient() = 0;
-	virtual void moveClient(const quint8 &movedUnit,const Direction &direction) = 0;
+	virtual void moveClient(const quint8 &previousMovedUnit,const Direction &direction) = 0;
 public slots:
 	//map slots, transmited by the current ClientNetworkRead
 	virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
