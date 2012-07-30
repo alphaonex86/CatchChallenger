@@ -64,6 +64,8 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 				}
 				QByteArray rawText=data.mid(in.device()->pos(),mapNameSize);
 				QString mapFile=QString::fromUtf8(rawText.data(),rawText.size());
+				if(!mapFile.endsWith(".tmx"))
+					mapFile+=".tmx";
 				in.device()->seek(in.device()->pos()+rawText.size());
 				if(mapFile.isEmpty())
 				{

@@ -75,7 +75,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 	if(unlikely(mapHaveChanged))
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-		emit message(QString("map have change %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(directionToString((Direction)direction)).arg(loop_size-1));
+		emit message(QString("map have change %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
 		#endif
 		if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
 		{
@@ -110,7 +110,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 	{
 		//here to know how player is affected
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
-		emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(directionToString((Direction)direction)).arg(loop_size-1));
+		emit message(QString("after %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
 		#endif
 
 		//normal operation
@@ -204,7 +204,7 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const SIMPLIFIED_PLAYER_
 	to_send_move.remove(player_id);
 
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-	emit message(QString("insertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->current_map->map_file).arg(the_another_player->x).arg(the_another_player->y));
+	emit message(QString("insertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
 	#endif
 	to_send_insert[player_id]=the_another_player;
 }
@@ -218,7 +218,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
 	if(to_send_insert.contains(player_id) || to_send_over_move.contains(player_id))
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, already into over move").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, already into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
 		#endif
 		//to_send_map_management_remove.remove(player_id); -> what?
 		return;//quit now
@@ -232,7 +232,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
 				))
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, go into over move").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, go into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
 		#endif
 		to_send_move.remove(player_id);
 		to_send_over_move[player_id]=the_another_player;
@@ -240,7 +240,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
 	else
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(directionToString((Direction)direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+		emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
 		#endif
 		moveClient_tempMov.movedUnit=movedUnit;
 		moveClient_tempMov.direction=direction;
@@ -331,10 +331,10 @@ void MapVisibilityAlgorithm_Simple::send_insert()
 		emit message(
 			QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6, direction | type: %7, rawPseudo: %8, rawSkin: %9")
 			.arg(i_insert.key())
-			.arg(i_insert.value()->current_map->map_file)
+			.arg(i_insert.value()->map->map_file)
 			.arg(i_insert.value()->x)
 			.arg(i_insert.value()->y)
-			.arg(directionToString(i_insert.value()->last_direction))
+			.arg(MoveOnTheMap::directionToString(i_insert.value()->last_direction))
 			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			.arg(((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type))
 			.arg(QString(i_insert.value()->player_informations->rawPseudo.toHex()))
@@ -484,7 +484,7 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 			.arg(i_insert.key())
 			.arg(i_insert.value()->x)
 			.arg(i_insert.value()->y)
-			.arg(directionToString(i_insert.value()->last_direction))
+			.arg(MoveOnTheMap::directionToString(i_insert.value()->last_direction))
 			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			 );
 		#endif
@@ -529,4 +529,20 @@ void MapVisibilityAlgorithm_Simple::unloadFromTheMap()
 {
 	static_cast<Map_server_MapVisibility_simple*>(map)->clients.removeOne(this);
 	mapVisiblity_unloadFromTheMap();
+}
+
+//map slots, transmited by the current ClientNetworkRead
+void MapVisibilityAlgorithm_Simple::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
+{
+	MapBasicMove::put_on_the_map(map,x,y,orientation);
+	insertClient();
+	loadOnTheMap();
+}
+
+bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
+{
+	if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+		return false;
+	moveClient(previousMovedUnit,direction);
+	return true;
 }

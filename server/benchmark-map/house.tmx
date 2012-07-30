@@ -51,5 +51,6 @@
     <property name="y" value="6"/>
    </properties>
   </object>
+  <object name="bot spawn" type="bot spawn" gid="68" x="144" y="144"/>
  </objectgroup>
 </map>

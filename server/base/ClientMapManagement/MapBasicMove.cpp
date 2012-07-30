@@ -74,7 +74,7 @@ void MapBasicMove::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /
 bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
 	#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(previousMovedUnit).arg(MapBasicMove::directionToString(last_direction)).arg(directionToString((Direction)direction)));
+	emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(previousMovedUnit).arg(MoveOnTheMap::directionToString(last_direction)).arg(MoveOnTheMap::directionToString(direction)));
 	#endif
 	quint8 moveThePlayer_index_move=0;
 	if(unlikely(last_direction==direction))

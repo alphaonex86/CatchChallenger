@@ -48,8 +48,8 @@ void ClientLocalCalcule::extraStop()
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
 		DebugClass::debugConsole(
-					QString("current_map->map_file: %1,x: %2,y: %3, orientation: %4")
-					.arg(current_map->map_file)
+					QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
+					.arg(map->map_file)
 					.arg(x)
 					.arg(y)
 					.arg(orientation)
