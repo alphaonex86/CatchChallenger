@@ -2,10 +2,10 @@
 #define GENERALVARIABLE_H
 
 #define PROTOCOL_HEADER "pokecraft-0.0.0.1"
+
 #define CLIENT_VERSION "0.0.1.0"
-#define API_CLIENT_VERSION "0.0.0.97"
-#define SERVER_VERSION "0.0.3.0"
-#define API_PROTOCOL_VERSION "0.0.0.1"
+#define API_CLIENT_VERSION "0.0.3.1"
+#define SERVER_VERSION "0.0.3.1"
 
 /*
 #define POKECRAFT_EXTRA_CHECK

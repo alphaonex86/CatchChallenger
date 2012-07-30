@@ -155,7 +155,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 					{
 						quint32 object_x=SubChild.attribute("x").toUInt(&ok)/16;
 						if(!ok)
-							DebugClass::debugConsole(QString("Wrong conversion with x: %1").arg(SubChild.tagName()));
+							DebugClass::debugConsole(QString("Wrong conversion with x: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
 						else
 						{
 							/** the -1 is important to fix object layer bug into tiled!!!
@@ -163,9 +163,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 							quint32 object_y=(SubChild.attribute("y").toUInt(&ok)/16)-1;
 
 							if(!ok)
-								DebugClass::debugConsole(QString("Wrong conversion with y: %1").arg(SubChild.tagName()));
+								DebugClass::debugConsole(QString("Wrong conversion with y: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
 							else if(object_x>map_to_send.width || object_y>map_to_send.height)
-								DebugClass::debugConsole(QString("Object out of the map: %1").arg(SubChild.tagName()));
+								DebugClass::debugConsole(QString("Object out of the map: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
 							else if(SubChild.hasAttribute("type"))
 							{
 								QString type=SubChild.attribute("type");
@@ -248,7 +248,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 												 );
 									}
 									else
-										DebugClass::debugConsole(QString("Missing border properties: child.tagName(): %1").arg(SubChild.tagName()));
+										DebugClass::debugConsole(QString("Missing border properties: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
 								}
 								else if(type=="teleport on push" || type=="teleport on it" || type=="door")
 								{
@@ -279,13 +279,13 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 												#endif
 											}
 											else
-												DebugClass::debugConsole(QString("Bad convertion to int for y, type: %1").arg(type));
+												DebugClass::debugConsole(QString("Bad convertion to int for y, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
 										}
 										else
-											DebugClass::debugConsole(QString("Bad convertion to int for x, type: %1").arg(type));
+											DebugClass::debugConsole(QString("Bad convertion to int for x, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
 									}
 									else
-										DebugClass::debugConsole(QString("Missing map,x or y, type: %1").arg(type));
+										DebugClass::debugConsole(QString("Missing map,x or y, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
 								}
 								else if(type=="rescue")
 								{
@@ -326,11 +326,11 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 
 							}
 							else
-								DebugClass::debugConsole(QString("Missing attribute type missing: child.tagName(): %1").arg(SubChild.tagName()));
+								DebugClass::debugConsole(QString("Missing attribute type missing: SubChild.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
 						}
 					}
 					else
-						error=QString("Is not Element: child.tagName(): %1").arg(SubChild.tagName());
+						DebugClass::debugConsole(QString("Is not Element: SubChild.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
 					SubChild = SubChild.nextSiblingElement("object");
 				}
 			}

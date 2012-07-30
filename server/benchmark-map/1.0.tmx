@@ -25,7 +25,7 @@
   </data>
  </layer>
  <objectgroup name="Tp" width="30" height="30">
-  <object name="bot spawn" type="bot spawn" gid="68" x="0" y="464"/>
+  <object name="bot spawn" type="bot spawn" gid="68" x="144" y="16"/>
   <object name="house" type="door" gid="332" x="368" y="96">
    <properties>
     <property name="map" value="house"/>
@@ -38,7 +38,7 @@
     <property name="map" value="0.0"/>
    </properties>
   </object>
-  <object name="border-top" gid="238" x="160" y="16">
+  <object type="border-top" gid="238" x="160" y="16">
    <properties>
     <property name="map" value="1.1"/>
    </properties>
