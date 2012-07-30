@@ -35,7 +35,7 @@
   </data>
  </layer>
  <objectgroup name="Tp" width="30" height="30">
-  <object name="border-bottom" gid="238" x="160" y="480">
+  <object type="border-bottom" gid="238" x="160" y="480">
    <properties>
     <property name="map" value="1.0"/>
    </properties>

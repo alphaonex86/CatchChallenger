@@ -29,7 +29,5 @@
    eJztwTEBAAAAwqD1T20ND6AAAAAA4NcAEsAAAQ==
   </data>
  </layer>
- <objectgroup name="Tp" width="40" height="30">
-  <object name="bot spawn" type="bot spawn" gid="68" x="208" y="208"/>
- </objectgroup>
+ <objectgroup name="Tp" width="40" height="30"/>
 </map>
