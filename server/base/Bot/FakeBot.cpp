@@ -16,7 +16,7 @@ FakeBot::FakeBot() :
 	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(newSocketError(QAbstractSocket::SocketError)));
 	connect(&socket,SIGNAL(disconnected()),this,SLOT(disconnected()));
 
-	details=false;
+	details=true;
 	map=NULL;
 
 	do_step=false;
@@ -26,8 +26,8 @@ FakeBot::FakeBot() :
 	x=0;
 	y=0;
 
-	predefinied_step << Direction_move_at_left;
-	predefinied_step << Direction_move_at_right;
+	predefinied_step << Direction_move_at_top;
+	predefinied_step << Direction_move_at_bottom;
 }
 
 FakeBot::~FakeBot()
