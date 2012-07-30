@@ -11,7 +11,7 @@ public:
 protected:
 	//add clients linked
 	void insertClient();
-	void moveClient(const quint8 &movedUnit,const Direction &direction);
+	void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
 	void removeClient();
 	void mapVisiblity_unloadFromTheMap();
 	//map move
