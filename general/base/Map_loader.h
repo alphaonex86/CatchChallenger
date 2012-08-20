@@ -17,6 +17,7 @@
 #include "GeneralStructures.h"
 #include "Map.h"
 
+namespace Pokecraft {
 class Map_loader : public QObject
 {
 	Q_OBJECT
@@ -31,5 +32,6 @@ private:
 	QByteArray decompress(const QByteArray &data, int expectedSize);
 	QString error;
 };
+}
 
 #endif // MAP_LOADER_H

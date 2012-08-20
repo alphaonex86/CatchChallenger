@@ -2,6 +2,8 @@
 #include "../EventDispatcher.h"
 #include "../../VariableServer.h"
 
+using namespace Pokecraft;
+
 int MapVisibilityAlgorithm_Simple::index;
 int MapVisibilityAlgorithm_Simple::loop_size;
 MapVisibilityAlgorithm_Simple *MapVisibilityAlgorithm_Simple::current_client;

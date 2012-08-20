@@ -13,6 +13,7 @@
 #include "../general/base/GeneralStructures.h"
 #include "../VariableServer.h"
 
+namespace Pokecraft {
 /// \warning here, 0 random should be call
 /// \warning here only the call with global scope need be do
 class ClientBroadCast : public QObject
@@ -65,5 +66,6 @@ private:
 private slots:
 	void internal_disconnect();
 };
+}
 
 #endif // CLIENTBROADCAST_H

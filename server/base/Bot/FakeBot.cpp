@@ -2,6 +2,8 @@
 #include "../EventDispatcher.h"
 #include "../ClientMapManagement/MapBasicMove.h"
 
+using namespace Pokecraft;
+
 int FakeBot::index_loop;
 int FakeBot::loop_size;
 QSemaphore FakeBot::wait_to_stop;

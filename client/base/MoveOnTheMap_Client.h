@@ -3,20 +3,22 @@
 
 #include <QObject>
 
-#include "GeneralStructures.h"
+#include "../../general/base/GeneralStructures.h"
 
-struct Map_client;
+namespace Pokecraft {
+class Map;
 
 class MoveOnTheMap_Client
 {
 public:
 	MoveOnTheMap_Client();
 protected:
-	MoveOnTheMap_Client *map;
+	Map *map;
 	quint16 x,y;
 protected:
 	bool canGoTo(Direction direction);
 	void move(Direction direction);
 };
+}
 
 #endif // MOVEONTHEMAP_CLIENT_H

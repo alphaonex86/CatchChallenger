@@ -24,6 +24,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+namespace Pokecraft {
 class Client : public QObject
 {
 	Q_OBJECT
@@ -94,5 +95,6 @@ public slots:
 	/// \warning it need be complete protocol trame
 	void fake_receive_data(QByteArray data);
 };
+}
 
 #endif // CLIENT_H

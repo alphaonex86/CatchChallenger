@@ -12,6 +12,7 @@
 #include "../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
+namespace Pokecraft {
 class ClientNetworkRead : public ProtocolParsingInput
 {
     Q_OBJECT
@@ -70,5 +71,6 @@ private:
 	quint16 subCodeType;
 	quint8 queryNumber;
 };
+}
 
 #endif // CLIENTNETWORKREAD_H

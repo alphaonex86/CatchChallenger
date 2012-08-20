@@ -14,6 +14,7 @@
 #ifndef FakeBot_H
 #define FakeBot_H
 
+namespace Pokecraft {
 class FakeBot : public QObject, public MoveOnTheMap
 {
 	Q_OBJECT
@@ -51,5 +52,6 @@ private slots:
 	void newSocketError(QAbstractSocket::SocketError error);
 	void disconnected();
 };
+}
 
 #endif // FakeBot_H

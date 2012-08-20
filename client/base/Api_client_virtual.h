@@ -21,6 +21,7 @@
 #include "ClientStructures.h"
 #include "Api_protocol.h"
 
+namespace Pokecraft {
 class Api_client_virtual : public Api_protocol
 {
 	Q_OBJECT
@@ -28,5 +29,6 @@ public:
 	explicit Api_client_virtual(QAbstractSocket *socket);
 	~Api_client_virtual();
 };
+}
 
 #endif // Protocol_and_virtual_data_H

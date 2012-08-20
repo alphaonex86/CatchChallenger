@@ -2,6 +2,8 @@
 #include "Map.h"
 #include "DebugClass.h"
 
+using namespace Pokecraft;
+
 MoveOnTheMap::MoveOnTheMap()
 {
 	last_direction=Direction_look_at_bottom;

@@ -5,6 +5,7 @@
 #ifndef CHAT_PARSING_H
 #define CHAT_PARSING_H
 
+namespace Pokecraft {
 class ChatParsing
 {
 public:
@@ -12,5 +13,6 @@ public:
 	static QString toHtmlEntities(QString text);
 	static QString toSmilies(QString text);
 };
+}
 
 #endif // CHAT_PARSING_H

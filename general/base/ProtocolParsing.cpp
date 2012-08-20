@@ -2,6 +2,8 @@
 #include "DebugClass.h"
 #include "GeneralVariable.h"
 
+using namespace Pokecraft;
+
 QSet<quint8>				ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
 //if is a query
 QSet<quint8>				ProtocolParsing::mainCode_IsQueryClientToServer;

@@ -4,6 +4,7 @@
 #include <QString>
 #include <QHash>
 
+namespace Pokecraft {
 class Map
 {
 public:
@@ -53,5 +54,6 @@ public:
 
 	bool loadInternalVariables();
 };
+}
 
 #endif // MAP_H
