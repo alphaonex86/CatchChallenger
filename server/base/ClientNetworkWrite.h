@@ -11,6 +11,7 @@
 #include "../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
+namespace Pokecraft {
 class ClientNetworkWrite : public ProtocolParsingOutput
 {
     Q_OBJECT
@@ -30,5 +31,6 @@ private:
 signals:
 	void isReadyToStop();
 };
+}
 
 #endif // CLIENTNETWORKWRITE_H

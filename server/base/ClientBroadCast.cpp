@@ -1,6 +1,8 @@
 #include "ClientBroadCast.h"
 #include "EventDispatcher.h"
 
+using namespace Pokecraft;
+
 QHash<QString,ClientBroadCast *> ClientBroadCast::playerByPseudo;
 QList<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
 

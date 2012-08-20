@@ -1,5 +1,7 @@
 #include "DebugClass.h"
 
+using namespace Pokecraft;
+
 QMutex mutexForDebugClass;
 
 void DebugClass::debugConsole(const QString &errorString)

@@ -3,6 +3,7 @@
 
 #include "ClientMapManagement.h"
 
+namespace Pokecraft {
 class MapVisibilityAlgorithm_Simple : public ClientMapManagement
 {
 public:
@@ -76,5 +77,6 @@ public slots:
 private slots:
 	virtual void extraStop();
 };
+}
 
 #endif // MAPVISIBILITYALGORITHM_SIMPLE_H

@@ -5,6 +5,8 @@
 
 #include <QMutexLocker>
 
+using namespace Pokecraft;
+
 QFakeSocket::QFakeSocket() :
 	QAbstractSocket(QAbstractSocket::UnknownSocketType,0)
 {

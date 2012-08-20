@@ -3,6 +3,7 @@
 
 #include "../../general/base/Map.h"
 
+namespace Pokecraft {
 class MapVisibilityAlgorithm_Simple;
 
 class Map_server_MapVisibility_simple : public Map
@@ -48,5 +49,6 @@ public:
 
 	bool show;
 };
+}
 
 #endif // MAP_SERVER_H

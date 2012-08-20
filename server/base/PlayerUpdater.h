@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTimer>
 
+namespace Pokecraft {
 class PlayerUpdater : public QObject
 {
 	Q_OBJECT
@@ -24,5 +25,6 @@ private:
 	quint16 connected_players,sended_connected_players;
 	QTimer next_send_timer;
 };
+}
 
 #endif // PLAYERUPDATER_H

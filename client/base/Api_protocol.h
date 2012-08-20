@@ -22,6 +22,7 @@
 #include "../../general/base/MoveOnTheMap.h"
 #include "ClientStructures.h"
 
+namespace Pokecraft {
 class Api_protocol : public ProtocolParsingInput, public MoveOnTheMap
 {
 	Q_OBJECT
@@ -104,5 +105,6 @@ public slots:
 	void sendChatText(Chat_type chatType,QString text);
 	void sendPM(QString text,QString pseudo);
 };
+}
 
 #endif // POKECRAFT_PROTOCOL_H

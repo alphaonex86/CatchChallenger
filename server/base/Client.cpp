@@ -1,6 +1,8 @@
 #include "Client.h"
 #include "EventDispatcher.h"
 
+using namespace Pokecraft;
+
 /// \warning never cross the signals from and to the different client, complexity ^2
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None

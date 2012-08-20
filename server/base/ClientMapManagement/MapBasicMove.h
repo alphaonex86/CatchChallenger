@@ -17,6 +17,7 @@
 
 /** \warning No static variable due to thread access to this class!!! */
 
+namespace Pokecraft {
 class MapBasicMove : public QObject
 {
 	Q_OBJECT
@@ -58,5 +59,6 @@ private:
 	//temp variable for put on map
 	/*quint8 moveThePlayer_index_move;*//// \warning not static because have multiple thread access
 };
+}
 
 #endif // MapBasicMove_H
