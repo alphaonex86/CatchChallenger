@@ -10,6 +10,8 @@
 class MoveOnTheMap {
    TMap * map_;*/
 
+namespace Pokecraft {
+
 class Map;
 
 class MoveOnTheMap
@@ -28,5 +30,7 @@ protected:
 	Direction last_direction;
 	quint8 last_step;
 };
+
+}
 
 #endif // MOVEONTHEMAP_H

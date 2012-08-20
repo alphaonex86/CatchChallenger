@@ -1,6 +1,8 @@
 #include "ClientNetworkRead.h"
 #include "EventDispatcher.h"
 
+using namespace Pokecraft;
+
 ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,QAbstractSocket * socket) :
 	ProtocolParsingInput(socket,PacketModeTransmission_Server)
 {

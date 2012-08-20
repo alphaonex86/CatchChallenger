@@ -4,6 +4,8 @@
   When disconnect the fake client, stop the benchmark
   */
 
+using namespace Pokecraft;
+
 GeneralData EventDispatcher::generalData;
 bool EventDispatcher::oneInstanceRunning=false;
 

@@ -24,6 +24,7 @@
 #ifndef EVENTDISPATCHER_H
 #define EVENTDISPATCHER_H
 
+namespace Pokecraft {
 class EventDispatcher : public QObject
 {
 	Q_OBJECT
@@ -135,5 +136,6 @@ signals:
 	//benchmark
 	void benchmark_result(const int &latency,const double &TX_speed,const double &RX_speed,const double &TX_size,const double &RX_size,const double &second);
 };
+}
 
 #endif // EVENTDISPATCHER_H

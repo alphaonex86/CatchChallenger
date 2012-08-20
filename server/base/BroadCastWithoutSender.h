@@ -3,6 +3,7 @@
 
 #include <QObject>
 
+namespace Pokecraft {
 class BroadCastWithoutSender : public QObject
 {
 	Q_OBJECT
@@ -14,5 +15,6 @@ signals:
 public slots:
 	
 };
+}
 
 #endif // BROADCASTWITHOUTSENDER_H

@@ -9,6 +9,8 @@
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
 
+using namespace Pokecraft;
+
 QString ClientLocalCalcule::temp_direction;
 
 ClientLocalCalcule::ClientLocalCalcule()

@@ -3,6 +3,8 @@
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/MoveOnTheMap.h"
 
+using namespace Pokecraft;
+
 /** \todo do client near list for the local player
   the list is limited to 50
   if is greater, then truncate to have the near player, truncate to have all near player grouped by distance where a group not do the list greater

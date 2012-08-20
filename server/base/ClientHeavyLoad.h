@@ -21,6 +21,7 @@
 #include "../VariableServer.h"
 #include "../general/base/DebugClass.h"
 
+namespace Pokecraft {
 class ClientHeavyLoad : public QObject
 {
 	Q_OBJECT
@@ -63,5 +64,6 @@ signals:
 	//random linked signals
 	void newRandomNumber(const QByteArray &randomData);
 };
+}
 
 #endif // CLIENTHEAVYLOAD_H

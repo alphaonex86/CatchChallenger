@@ -3,6 +3,7 @@
 
 #include <QThread>
 
+namespace Pokecraft {
 class EventThreader : public QThread
 {
 	Q_OBJECT
@@ -16,5 +17,6 @@ public slots:
 signals:
 	void return_latency();
 };
+}
 
 #endif // EVENTTHREADER_H

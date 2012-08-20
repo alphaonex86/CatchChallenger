@@ -1,6 +1,8 @@
 #include "Map.h"
 #include "ProtocolParsing.h"
 
+using namespace Pokecraft;
+
 Map::Map()
 {
 }

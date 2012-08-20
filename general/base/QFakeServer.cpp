@@ -3,6 +3,8 @@
 
 #include <QHostAddress>
 
+using namespace Pokecraft;
+
 QFakeServer QFakeServer::server;
 
 QFakeServer::QFakeServer()

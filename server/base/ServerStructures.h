@@ -16,6 +16,7 @@
 #include "../general/base/GeneralStructures.h"
 #include "PlayerUpdater.h"
 
+namespace Pokecraft {
 class EventThreader;
 class Map_custom;
 class Map;
@@ -150,5 +151,6 @@ struct GeneralData
 	};
 	ServerPrivateVariables serverPrivateVariables;
 };
+}
 
 #endif // STRUCTURES_SERVER_H

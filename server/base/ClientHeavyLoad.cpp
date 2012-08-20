@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+using namespace Pokecraft;
+
 QList<quint16> ClientHeavyLoad::simplifiedIdList;
 
 ClientHeavyLoad::ClientHeavyLoad()

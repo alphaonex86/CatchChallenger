@@ -10,6 +10,7 @@
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
 
+namespace Pokecraft {
 class ProtocolParsing : public QObject
 {
 	Q_OBJECT
@@ -123,5 +124,6 @@ public slots:
 	void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
 	void newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 };
+}
 
 #endif // PROTOCOLPARSING_H

@@ -1,5 +1,6 @@
 #include "EventThreader.h"
 
+using namespace Pokecraft;
 EventThreader::EventThreader()
 {
 	start();

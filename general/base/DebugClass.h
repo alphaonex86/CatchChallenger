@@ -6,10 +6,12 @@
 #include <QMutex>
 #include <QMutexLocker>
 
+namespace Pokecraft {
 class DebugClass
 {
 public:
 	static void debugConsole(const QString &errorString);
 };
+}
 
 #endif // DEBUGCLASS_H

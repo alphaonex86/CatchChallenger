@@ -1,5 +1,7 @@
 #include "ClientNetworkWrite.h"
 
+using namespace Pokecraft;
+
 ClientNetworkWrite::ClientNetworkWrite(QAbstractSocket * socket) :
 	ProtocolParsingOutput(socket,PacketModeTransmission_Server)
 {

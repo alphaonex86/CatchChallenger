@@ -7,6 +7,7 @@
 #include <QList>
 #include <QPair>
 
+namespace Pokecraft {
 class QFakeSocket;
 
 class QFakeServer : public QObject
@@ -35,5 +36,6 @@ protected:
 private slots:
 	void disconnectedSocket();
 };
+}
 
 #endif // QFAKESERVER_H

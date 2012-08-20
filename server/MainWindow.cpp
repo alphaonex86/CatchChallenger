@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+using namespace Pokecraft;
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -349,12 +351,13 @@ void MainWindow::load_settings()
 	reshow=settings->value("Reshow").toUInt();
 	if(reshow>tempValue)
 	{
+		DebugClass::debugConsole("Reshow number corrected");
 		reshow=tempValue;
 		settings->setValue("Reshow",reshow);
 	}
 	settings->endGroup();
 	ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
-	ui->MapVisibilityAlgorithmSimpleMax->setValue(reshow);
+	ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
 
 	settings->beginGroup("rates");
 	double rates_xp_normal=settings->value("xp_normal").toReal();

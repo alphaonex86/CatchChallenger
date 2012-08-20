@@ -1,4 +1,7 @@
 #include "MoveOnTheMap_Client.h"
+#include "../../general/base/Map.h"
+
+using namespace Pokecraft;
 
 MoveOnTheMap_Client::MoveOnTheMap_Client()
 {

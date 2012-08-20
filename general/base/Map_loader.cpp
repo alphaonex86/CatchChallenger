@@ -3,6 +3,8 @@
 
 #include <zlib.h>
 
+using namespace Pokecraft;
+
 /// \todo put at walkable the tp on push
 
 static void logZlibError(int error)
@@ -146,7 +148,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 			DebugClass::debugConsole(QString("Is Element: child.tagName(): %1, name: %2").arg(child.tagName().arg(child.attribute("name"))));
 		else
 		{
-			if(child.attribute("name")=="Tp")
+			if(child.attribute("name")=="Moving")
 			{
 				QDomElement SubChild=child.firstChildElement("object");
 				while(!SubChild.isNull())
