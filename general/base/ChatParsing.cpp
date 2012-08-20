@@ -1,5 +1,7 @@
 #include "ChatParsing.h"
 
+using namespace Pokecraft;
+
 QString ChatParsing::new_chat_message(QString pseudo,Player_type player_type,Chat_type chat_type,QString text)
 {
 	QString returned_html;

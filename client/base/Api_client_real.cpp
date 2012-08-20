@@ -1,5 +1,7 @@
 #include "Api_client_real.h"
 
+using namespace Pokecraft;
+
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
 #include <utime.h>

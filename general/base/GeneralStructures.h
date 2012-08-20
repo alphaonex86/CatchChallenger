@@ -14,7 +14,7 @@
 #define CLAN_ID_TYPE quint8
 #define SPEED_TYPE quint8
 
-
+namespace Pokecraft {
 enum Chat_type
 {
 	Chat_type_local = 0x01,
@@ -179,5 +179,6 @@ struct Map_to_send
 	};
 	QList<Bot_Spawn_Point> bot_spawn_points;
 };
+}
 
 #endif // STRUCTURES_GENERAL_H

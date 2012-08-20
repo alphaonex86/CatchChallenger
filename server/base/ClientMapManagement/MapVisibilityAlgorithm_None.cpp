@@ -1,6 +1,8 @@
 #include "MapVisibilityAlgorithm_None.h"
 #include "../EventDispatcher.h"
 
+using namespace Pokecraft;
+
 MapVisibilityAlgorithm_None::MapVisibilityAlgorithm_None()
 {
 }

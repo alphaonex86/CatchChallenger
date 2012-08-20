@@ -5,6 +5,7 @@
 #include <QMutex>
 #include <QByteArray>
 
+namespace Pokecraft {
 class QFakeSocket : public QAbstractSocket
 {
 	Q_OBJECT
@@ -43,5 +44,6 @@ private:
 	quint64 RX_size;
 	qint64	bytesAvailableWithMutex();
 };
+}
 
 #endif // QFAKESOCKET_H

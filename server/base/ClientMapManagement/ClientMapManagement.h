@@ -15,6 +15,7 @@
 #include "../../VariableServer.h"
 #include "MapBasicMove.h"
 
+namespace Pokecraft {
 class Map_custom;
 
 class ClientMapManagement : public MapBasicMove
@@ -39,5 +40,6 @@ public slots:
 private slots:
 	virtual void extraStop();
 };
+}
 
 #endif // CLIENTMAPMANAGEMENT_H

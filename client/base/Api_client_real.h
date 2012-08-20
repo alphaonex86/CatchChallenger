@@ -21,6 +21,7 @@
 #include "ClientStructures.h"
 #include "Api_protocol.h"
 
+namespace Pokecraft {
 class Api_client_real : public Api_protocol
 {
 	Q_OBJECT
@@ -65,5 +66,6 @@ signals:
 private slots:
 	void disconnected();
 };
+}
 
 #endif // Protocol_and_data_H

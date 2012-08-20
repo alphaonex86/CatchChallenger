@@ -1,5 +1,6 @@
 #include "PlayerUpdater.h"
 
+using namespace Pokecraft;
 PlayerUpdater::PlayerUpdater()
 {
 	connected_players=0;

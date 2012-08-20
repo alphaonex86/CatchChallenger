@@ -18,7 +18,7 @@
 namespace Ui {
 	class MainWindow;
 }
-
+namespace Pokecraft {
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -96,5 +96,6 @@ private slots:
 signals:
 	void record_latency();
 };
+}
 
 #endif // MAINWINDOW_H

@@ -23,6 +23,7 @@
  * no access to other client -> broadcast, no file/db access, no visibility calcule, ...
  * Only here you need use the random list */
 
+namespace Pokecraft {
 class ClientLocalCalcule : public MapBasicMove
 {
 	Q_OBJECT
@@ -52,5 +53,6 @@ signals:
 	void dbQuery(const QSqlQuery &sqlQuery);
 	void askRandomNumber();
 };
+}
 
 #endif // CLIENTLOCALCALCULE_H
