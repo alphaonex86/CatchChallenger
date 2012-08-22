@@ -34,7 +34,7 @@
    eJxjYBjaIJFxoF0wPAEbELMDMcdAO4SGYDTtjIJRMApGwSgYBaNgqIDRdgt9ASi86YkHEgAA5ksL9A==
   </data>
  </layer>
- <objectgroup name="Tp" width="30" height="30">
+ <objectgroup name="Moving" width="30" height="30">
   <object type="border-right" gid="238" x="464" y="240">
    <properties>
     <property name="map" value="1.0"/>

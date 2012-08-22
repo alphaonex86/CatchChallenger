@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QCoreApplication>
-#include <QTcpSocket>
+#include <QAbstractSocket>
 #include <QString>
 #include <QByteArray>
 #include <QList>
@@ -26,7 +26,7 @@ class Api_client_real : public Api_protocol
 {
 	Q_OBJECT
 public:
-	explicit Api_client_real();
+	explicit Api_client_real(QAbstractSocket *socket);
 	~Api_client_real();
 
 	//connection related
@@ -46,7 +46,6 @@ protected:
 private:
 	QString host;
 	quint16 port;
-	QTcpSocket socket;
 
 	//file list
 	struct query_files

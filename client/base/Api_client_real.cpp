@@ -10,26 +10,25 @@ using namespace Pokecraft;
 
 //need host + port here to have datapack base
 
-Api_client_real::Api_client_real() :
-	Api_protocol(&socket)
+Api_client_real::Api_client_real(QAbstractSocket *socket) :
+	Api_protocol(socket)
 {
 	host="localhost";
 	port=42489;
 	datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
-	connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),	this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
-	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),		this,SIGNAL(error(QAbstractSocket::SocketError)));
-	connect(&socket,SIGNAL(readyRead()),					this,SLOT(readyRead()));
-	connect(&socket,SIGNAL(disconnected()),					this,SLOT(disconnected()));
+	connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),	this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
+	connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),		this,SIGNAL(error(QAbstractSocket::SocketError)));
+	connect(socket,SIGNAL(disconnected()),					this,SLOT(disconnected()));
 	disconnected();
 	dataClear();
 }
 
 Api_client_real::~Api_client_real()
 {
-	socket.abort();
-	socket.disconnectFromHost();
-	if(socket.state()!=QAbstractSocket::UnconnectedState)
-		socket.waitForDisconnected();
+	socket->abort();
+	socket->disconnectFromHost();
+	if(socket->state()!=QAbstractSocket::UnconnectedState)
+		socket->waitForDisconnected();
 }
 
 void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
@@ -102,7 +101,7 @@ void Api_client_real::tryConnect(QString host,quint16 port)
 	DebugClass::debugConsole(QString("Try connect on: %1:%2").arg(host).arg(port));
 	this->host=host;
 	this->port=port;
-	socket.connectToHost(host,port);
+	socket->connectToHost(host,port);
 	datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
 }
 
@@ -119,14 +118,14 @@ void Api_client_real::disconnected()
 	error_string=error;
 	emit haveNewError();
 	DebugClass::debugConsole("User message: "+error);
-	socket.disconnectFromHost();
+	socket->disconnectFromHost();
 	if(!detailedError.isEmpty())
 		DebugClass::debugConsole(detailedError);
 }*/
 
 void Api_client_real::tryDisconnect()
 {
-	socket.disconnectFromHost();
+	socket->disconnectFromHost();
 }
 
 QString Api_client_real::getHost()
