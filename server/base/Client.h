@@ -40,7 +40,6 @@ public:
 	void setInternal();
 private:
 	bool ask_is_ready_to_stop;
-	bool is_logged;
 	//-------------------
 	Player_internal_informations player_informations;
 	ClientBroadCast *clientBroadCast;
