@@ -22,7 +22,6 @@ EventDispatcher::EventDispatcher()
 	timer_benchmark_stop					= NULL;
 
 	generalData.serverPrivateVariables.botSpawnIndex=0;
-	generalData.serverPrivateVariables.datapack_mapPath		= QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	generalData.serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
 	generalData.serverPrivateVariables.datapack_rightFileName	= QRegExp("^[0-9/a-zA-Z\\.\\- _]+\\.[a-z]{3,4}$");
 
@@ -153,11 +152,12 @@ void EventDispatcher::preload_the_data()
 
 void EventDispatcher::preload_the_map()
 {
-	DebugClass::debugConsole(QString("start preload the map"));
+	generalData.serverPrivateVariables.datapack_mapPath=generalData.serverPrivateVariables.datapack_basePath+"map/";
+	DebugClass::debugConsole(QString("start preload the map, into: %1").arg(generalData.serverPrivateVariables.datapack_mapPath));
 	Map_loader map_temp;
 	QList<Map_semi> semi_loaded_map;
 	QStringList map_name;
-	QStringList returnList=listFolder(generalData.serverPrivateVariables.mapBasePath,"");
+	QStringList returnList=listFolder(generalData.serverPrivateVariables.datapack_mapPath,"");
 
 	//load the map
 	int size=returnList.size();
@@ -169,7 +169,7 @@ void EventDispatcher::preload_the_map()
 		if(returnList.at(index).contains(mapFilter))
 		{
 			DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
-			if(map_temp.tryLoadMap(generalData.serverPrivateVariables.mapBasePath+returnList.at(index)))
+			if(map_temp.tryLoadMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index),generalData.serverPrivateVariables.datapack_mapPath))
 			{
 				switch(generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
 				{
@@ -529,7 +529,7 @@ void EventDispatcher::start_internal_server()
 		emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(generalData.serverPrivateVariables.db->lastError().driverText()).arg(generalData.serverSettings.database.mysql.login).arg(generalData.serverPrivateVariables.db->lastError().databaseText()));
 		return;
 	}
-	DebugClass::debugConsole(QString("Connected to %2 at %1").arg(generalData.serverSettings.database.mysql.host).arg(generalData.serverPrivateVariables.db_type_string));
+	DebugClass::debugConsole(QString("Connected to %1 at %2 (%3)").arg(generalData.serverPrivateVariables.db_type_string).arg(generalData.serverSettings.database.mysql.host).arg(generalData.serverPrivateVariables.db->isOpen()));
 	preload_the_data();
 	stat=Up;
 	oneInstanceRunning=true;
@@ -549,8 +549,6 @@ bool EventDispatcher::initialize_the_database()
 	{
 		default:
 		case GeneralData::ServerSettings::Database::DatabaseType_Mysql:
-		generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
-		generalData.serverPrivateVariables.updateMapPositionQuery.prepare("UPDATE player SET map_name=:map_name,position_x=:position_x,position_y=:position_y,orientation=:orientation WHERE id=:id");
 		generalData.serverPrivateVariables.db = new QSqlDatabase();
 		*generalData.serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL");
 		generalData.serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
@@ -562,8 +560,6 @@ bool EventDispatcher::initialize_the_database()
 		return true;
 		break;
 		case GeneralData::ServerSettings::Database::DatabaseType_SQLite:
-		generalData.serverPrivateVariables.loginQuery.prepare("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=:login AND password=:password");
-		generalData.serverPrivateVariables.updateMapPositionQuery.prepare("UPDATE player SET map_name=:map_name,position_x=:position_x,position_y=:position_y,orientation=:orientation WHERE id=:id");
 		generalData.serverPrivateVariables.db = new QSqlDatabase();
 		*generalData.serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
 		generalData.serverPrivateVariables.db->setDatabaseName(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
@@ -592,9 +588,9 @@ void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_
 	load_settings();
 	//firstly get the spawn point
 	if(benchmark_map)
-		generalData.serverPrivateVariables.mapBasePath=":/internal/benchmark-map/";
+		generalData.serverPrivateVariables.datapack_basePath=":/datapack/";
 	else
-		generalData.serverPrivateVariables.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
+		generalData.serverPrivateVariables.datapack_basePath=QCoreApplication::applicationDirPath()+"/datapack/";
 	preload_the_data();
 
 	int index=0;
@@ -648,7 +644,6 @@ void EventDispatcher::stop_benchmark()
 		return;
 	}
 	DebugClass::debugConsole("Stop the benchmark");
-	generalData.serverPrivateVariables.mapBasePath=QCoreApplication::applicationDirPath()+"/datapack/map/tmx/";
 	double TX_speed=0;
 	double RX_speed=0;
 	double TX_size=0;
