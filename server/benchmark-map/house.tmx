@@ -29,7 +29,7 @@
    eJzjYyAMBBkR7A9A/BGLGgEg1iPCLENGwmoMiDBnFIyCUTAKAN3fAqI=
   </data>
  </layer>
- <objectgroup name="Tp" width="19" height="16">
+ <objectgroup name="Moving" width="19" height="16">
   <object type="teleport on push" gid="238" x="128" y="256">
    <properties>
     <property name="map" value="1.0"/>
