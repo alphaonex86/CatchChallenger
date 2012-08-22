@@ -337,3 +337,11 @@ Map_player_info Client::getMapPlayerInfo()
 	temp.skin=player_informations.public_and_private_informations.public_informations.skin;
 	return temp;
 }
+
+QString Client::quoteSqlVariable(QString variable)
+{
+	variable.replace("\\","\\\\");
+	variable.replace("\"","\\\"");
+	variable.replace("'","\\'");
+	return variable;
+}
