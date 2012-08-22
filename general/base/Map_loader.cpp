@@ -1,6 +1,8 @@
 #include "Map_loader.h"
 #include "GeneralVariable.h"
 
+#include <QDir>
+
 #include <zlib.h>
 
 using namespace Pokecraft;
@@ -38,7 +40,7 @@ Map_loader::~Map_loader()
 	map_to_send.parsed_layer.water=NULL;
 }
 
-bool Map_loader::tryLoadMap(const QString &fileName)
+bool Map_loader::tryLoadMap(const QString &fileName,const QString &datapackPath)
 {
 	Map_to_send map_to_send;
 
@@ -207,6 +209,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											map_to_send.border.left.fileName=property_text["map"].toString();
 											if(!map_to_send.border.left.fileName.endsWith(".tmx"))
 												map_to_send.border.left.fileName+=".tmx";
+											map_to_send.border.bottom.fileName=resolvRelativeMap(fileName,map_to_send.border.bottom.fileName,datapackPath);
 											map_to_send.border.left.y_offset=object_y;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
 											DebugClass::debugConsole(QString("map_to_send.border.left.fileName: %1, offset: %2").arg(map_to_send.border.left.fileName).arg(map_to_send.border.left.y_offset));
@@ -217,6 +220,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											map_to_send.border.right.fileName=property_text["map"].toString();
 											if(!map_to_send.border.right.fileName.endsWith(".tmx"))
 												map_to_send.border.right.fileName+=".tmx";
+											map_to_send.border.bottom.fileName=resolvRelativeMap(fileName,map_to_send.border.bottom.fileName,datapackPath);
 											map_to_send.border.right.y_offset=object_y;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
 											DebugClass::debugConsole(QString("map_to_send.border.right.fileName: %1, offset: %2").arg(map_to_send.border.right.fileName).arg(map_to_send.border.right.y_offset));
@@ -227,6 +231,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											map_to_send.border.top.fileName=property_text["map"].toString();
 											if(!map_to_send.border.top.fileName.endsWith(".tmx"))
 												map_to_send.border.top.fileName+=".tmx";
+											map_to_send.border.bottom.fileName=resolvRelativeMap(fileName,map_to_send.border.bottom.fileName,datapackPath);
 											map_to_send.border.top.x_offset=object_x;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
 											DebugClass::debugConsole(QString("map_to_send.border.top.fileName: %1, offset: %2").arg(map_to_send.border.top.fileName).arg(map_to_send.border.top.x_offset));
@@ -237,6 +242,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 											map_to_send.border.bottom.fileName=property_text["map"].toString();
 											if(!map_to_send.border.bottom.fileName.endsWith(".tmx"))
 												map_to_send.border.bottom.fileName+=".tmx";
+											map_to_send.border.bottom.fileName=resolvRelativeMap(fileName,map_to_send.border.bottom.fileName,datapackPath);
 											map_to_send.border.bottom.x_offset=object_x;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
 											DebugClass::debugConsole(QString("map_to_send.border.bottom.fileName: %1, offset: %2").arg(map_to_send.border.bottom.fileName).arg(map_to_send.border.bottom.x_offset));
@@ -275,6 +281,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 												new_tp.map=property_text["map"].toString();
 												if(!new_tp.map.endsWith(".tmx"))
 													new_tp.map+=".tmx";
+												new_tp.map=resolvRelativeMap(fileName,new_tp.map,datapackPath);
 												map_to_send.teleport << new_tp;
 												#ifdef DEBUG_MESSAGE_MAP_OBJECT
 												DebugClass::debugConsole(QString("Teleporter type: %1, to: %2 (%3,%4)").arg(type).arg(new_tp.map).arg(new_tp.source_x).arg(new_tp.source_y));
@@ -557,6 +564,23 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 QString Map_loader::errorString()
 {
 	return error;
+}
+
+QString Map_loader::resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath)
+{
+	if(link.isEmpty())
+		return link;
+	QString currentPath=QFileInfo(fileName).absolutePath();
+	QFileInfo newmap(currentPath+QDir::separator()+link);
+	QString newPath=newmap.absoluteFilePath();
+	if(newPath.startsWith(datapackPath))
+	{
+		newPath.remove(0,datapackPath.size());
+		DebugClass::debugConsole(QString("map link resolved: %1 (%2)").arg(newPath).arg(link));
+		return newPath;
+	}
+	DebugClass::debugConsole(QString("map link not resolved: %1").arg(link));
+	return link;
 }
 
 QByteArray Map_loader::decompress(const QByteArray &data, int expectedSize)

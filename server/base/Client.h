@@ -37,7 +37,7 @@ public:
 	//to prevent remove before the right moment
 	bool is_ready_to_stop;
 	//do a fake login
-	void setInternal();
+	static QString quoteSqlVariable(QString variable);
 private:
 	bool ask_is_ready_to_stop;
 	//-------------------

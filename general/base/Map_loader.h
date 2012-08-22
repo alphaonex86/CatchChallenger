@@ -27,7 +27,8 @@ public:
 
 	Map_to_send map_to_send;
 	QString errorString();
-	bool tryLoadMap(const QString &fileName);
+	bool tryLoadMap(const QString &fileName,const QString &datapackPath);
+	QString resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath);
 private:
 	QByteArray decompress(const QByteArray &data, int expectedSize);
 	QString error;

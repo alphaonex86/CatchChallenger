@@ -114,10 +114,6 @@ struct GeneralData
 		QRegExp datapack_rightFileName;
 		QString db_type_string;
 
-		//sql query
-		QSqlQuery loginQuery;
-		QSqlQuery updateMapPositionQuery;
-
 		//general data
 		QList<EventThreader *> eventThreaderList;
 		QTimer *timer_player_map;
@@ -127,7 +123,6 @@ struct GeneralData
 		//QMutex clientBroadCastListMutex;
 
 		//map
-		QString mapBasePath;
 		QHash<QString,Map *> map_list;
 		QTimer timer_to_send_insert_move_remove;
 		qint8 sizeofInsertRequest;

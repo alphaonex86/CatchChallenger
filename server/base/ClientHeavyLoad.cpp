@@ -97,9 +97,21 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		}
 		return;
 	}
-	QSqlQuery loginQuery=EventDispatcher::generalData.serverPrivateVariables.loginQuery;
-	loginQuery.bindValue(":login",login);
-	loginQuery.bindValue(":password",QString(hash.toHex()));
+	QSqlQuery loginQuery;
+	switch(EventDispatcher::generalData.serverSettings.database.type)
+	{
+		default:
+		case GeneralData::ServerSettings::Database::DatabaseType_Mysql:
+			loginQuery=QString("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
+				.arg(Client::quoteSqlVariable(login))
+				.arg(Client::quoteSqlVariable(QString(hash.toHex())));
+		break;
+		case GeneralData::ServerSettings::Database::DatabaseType_SQLite:
+			loginQuery=QString("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
+				.arg(Client::quoteSqlVariable(login))
+				.arg(Client::quoteSqlVariable(QString(hash.toHex())));
+		break;
+	}
 	if(!loginQuery.exec())
 	{
 		out << (quint8)0x01;
@@ -158,8 +170,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			{
 				emit message(QString("Wrong orientation corrected: %1").arg(orentation));
 				orentation=3;
-			}
-			if(EventDispatcher::generalData.serverPrivateVariables.map_list.contains(loginQuery.value(8).toString()))
+			}//id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
+			if(EventDispatcher::generalData.serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
 			{
 				out << (quint8)02;
 				out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
@@ -184,7 +196,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				out << (quint8)01;
 				out << QString("Map not found");
 				emit postReply(query_id,outputData);
-				emit error("Map not found: "+loginQuery.value(8).toString());
+				emit error("Map not found: "+loginQuery.value(6).toString());
 				return;
 			}
 		}
