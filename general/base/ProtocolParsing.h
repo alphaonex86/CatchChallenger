@@ -84,7 +84,7 @@ protected:
 	QHash<quint8,quint8> reply_mainCodeType;
 	QHash<quint8,quint16> reply_subCodeType;
 private slots:
-	virtual void parseIncommingData();
+	void parseIncommingData();
 signals:
 	void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
 	void newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
@@ -101,13 +101,13 @@ public:
 	friend class ProtocolParsing;
 
 	//send message without reply
-	virtual bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
-	virtual bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+	bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
+	bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
 	//send query with reply
-	virtual bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-	virtual bool packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+	bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
+	bool packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 	//send reply
-	virtual bool postReplyData(const quint8 &queryNumber,const QByteArray &data);
+	bool postReplyData(const quint8 &queryNumber,const QByteArray &data);
 private:
 	bool internalPackOutcommingData(const QByteArray &data);
 	QByteArray encodeSize(quint32 size);

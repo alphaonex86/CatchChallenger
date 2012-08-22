@@ -63,7 +63,6 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	else
 		connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
 
-	is_logged=false;
 	is_ready_to_stop=false;
 	ask_is_ready_to_stop=false;
 
@@ -232,9 +231,12 @@ void Client::disconnectNextStep()
 	if(stopped_object==5)
 	{
 		//remove the player
-		EventDispatcher::generalData.serverPrivateVariables.connected_players--;
-		EventDispatcher::generalData.serverPrivateVariables.player_updater.removeConnectedPlayer();
-		is_logged=false;
+		if(player_informations.is_logged)
+		{
+			EventDispatcher::generalData.serverPrivateVariables.connected_players--;
+			EventDispatcher::generalData.serverPrivateVariables.player_updater.removeConnectedPlayer();
+		}
+		player_informations.is_logged=false;
 
 		//reconnect to real stop
 		clientNetworkRead->disconnect();
@@ -265,7 +267,7 @@ void Client::disconnectNextStep()
 //* do the message by the general broadcast */
 void Client::errorOutput(QString errorString)
 {
-	if(is_logged)
+	if(player_informations.is_logged)
 		clientBroadCast->sendSystemMessage(player_informations.public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
 	normalOutput("Kicked by: "+errorString);
@@ -280,7 +282,7 @@ void Client::kicked()
 
 void Client::normalOutput(QString message)
 {
-	if(!is_logged)
+	if(!player_informations.is_logged)
 		DebugClass::debugConsole(QString("%1:%2 %3").arg(remote_ip).arg(port).arg(message));
 	else
 		DebugClass::debugConsole(QString("%1: %2").arg(player_informations.id).arg(message));
@@ -293,7 +295,6 @@ void Client::send_player_informations()
 	#endif
 	emit new_player_is_connected(player_informations);
 	this->player_informations=player_informations;
-	is_logged=true;
 	EventDispatcher::generalData.serverPrivateVariables.connected_players++;
 	EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();
 
