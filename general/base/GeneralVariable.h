@@ -23,4 +23,6 @@
 #define DEBUG_MESSAGE_MAP_RAW
 //*/
 
+#define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]+\\.[a-z]{3,4}$"
+
 #endif // GENERALVARIABLE_H
