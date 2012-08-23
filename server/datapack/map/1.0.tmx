@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="type" value="city"/>
+ </properties>
+ <tileset firstgid="1" source="texture.tsx"/>
+ <layer name="Walkable" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJydVVtuwkAMdBIEXKQ3gYPyOkhoVbgGVGo5RjcSK4yZsb18jOJNNjv2+LG9iAwFs4Le2D14V232D7LRGp3Bzo/ORd89v/T6u+BEcDa+RD4wDIB33omsCv7kFR9d3hekL+Os334BJ8MN6Ik0YPrqd17MiJfFh/KL6kCvszFP2p+BzlF8rPbe0VrzbQq2BTuggdUmW19Ma63jWHAs+AR8rL/qc+Je3DH5sFZrjWX3Wj+WNzNjmO63YL8+H/HqvSj/Nh+D4o1mIIo3qzHqvcrLZpS1Na/XNxHv/J5HNN/RuR7vZG8bsCPxoh6J4r0m8SWPGvHyW23WR56m6P0oz7UZxez1L5qXrN5GcAabtayPonsR5dDG6+UZ5deLz7srLC+LM6pntL8lXqYXmlfojsrwe/ll9x6bVy2zufIeJN/re6JzpK9dXyTf6xo/Di/LEbM9/zO5R/dR9E+0h/mHei0bT9Yn9m80m7JaZfOFOFt1a43VmxeMJ6t1C+qZ//c4o00=
+  </data>
+ </layer>
+ <layer name="WalkBottom" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzrENACAMBLHsPwhkzPwAtBGNLV1/VQAAvJx0U/8eAVgyoMMB9g==
+  </data>
+ </layer>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzV0KQEAUxXGesRJjJdiFr2K2gZI9O2oebpNMievlnPo/GffXxlHUBpILvT1L8C4VZd5/jXfzreXIiArv+1duiSpRreSOaBJZJXdDOW4bVKBdyT1Xutv1hfGlO7rbVtm9G126dOn+4XaoR4OyO6MFrcruk9GlS5fuE/evDuwAKjM=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztziEOADAIxVAwbNfEc3893OzUfkL6kvqaAXhRrj4AgCu61W31CAAMk/4/pQMwrQud
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="30" height="30">
+  <object name="bot spawn" type="bot spawn" gid="68" x="144" y="16"/>
+  <object name="house" type="door" gid="332" x="368" y="96">
+   <properties>
+    <property name="map" value="house"/>
+    <property name="x" value="9"/>
+    <property name="y" value="14"/>
+   </properties>
+  </object>
+  <object type="border-left" gid="238" x="0" y="240">
+   <properties>
+    <property name="map" value="0.0"/>
+   </properties>
+  </object>
+  <object type="border-top" gid="238" x="160" y="16">
+   <properties>
+    <property name="map" value="1.1"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

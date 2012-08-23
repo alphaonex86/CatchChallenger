@@ -346,47 +346,56 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 			case 0x000C:
 			{
 				QByteArray rawData=qUncompress(data);
-				QDataStream in(rawData);
-				in.setVersion(QDataStream::Qt_4_4);
-				if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 				{
-					emit error(QString("wrong size with the main ident: %1").arg(mainCodeType));
-					return;
-				}
-				quint32 number_of_file;
-				in >> number_of_file;
-				QStringList files;
-				QList<quint32> timestamps;
-				QString tempFileName;
-				quint32 tempTimestamps;
-				quint32 index=0;
-				while(index<number_of_file)
-				{
-					if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-						return;
-					in >> tempFileName;
-					files << tempFileName;
+					QByteArray data=rawData;
+					#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+					emit message(QString("parseInputAfterLogin(): data after qUncompress: %1").arg(QString(data.toHex())));
+					#endif
+					QDataStream in(data);
+					in.setVersion(QDataStream::Qt_4_4);
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
 					{
-						emit error(QString("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
-							.arg(mainCodeType)
-							.arg(subCodeType)
-							.arg(in.device()->size()-in.device()->pos())
-							.arg((int)sizeof(quint32))
-							);
+						emit error(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
 						return;
 					}
-					in >> tempTimestamps;
-					timestamps << tempTimestamps;
-					index++;
-				}
-				if(in.device()->size()!=in.device()->pos())
-				{
-					emit error(QString("remaining data: %1, subIdent: %2").arg(mainCodeType).arg(subCodeType));
+					quint32 number_of_file;
+					in >> number_of_file;
+					QStringList files;
+					QList<quint32> timestamps;
+					QString tempFileName;
+					quint32 tempTimestamps;
+					quint32 index=0;
+					while(index<number_of_file)
+					{
+						if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+						{
+							emit error(QString("error at datapack file list query"));
+							return;
+						}
+						in >> tempFileName;
+						files << tempFileName;
+						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+						{
+							emit error(QString("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
+								.arg(mainCodeType)
+								.arg(subCodeType)
+								.arg(in.device()->size()-in.device()->pos())
+								.arg((int)sizeof(quint32))
+								);
+							return;
+						}
+						in >> tempTimestamps;
+						timestamps << tempTimestamps;
+						index++;
+					}
+					if(in.device()->size()!=in.device()->pos())
+					{
+						emit error(QString("remaining data: %1, subIdent: %2").arg(mainCodeType).arg(subCodeType));
+						return;
+					}
+					emit datapackList(queryNumber,files,timestamps);
 					return;
 				}
-				emit datapackList(queryNumber,files,timestamps);
-				return;
 			}
 			break;
 			default:
