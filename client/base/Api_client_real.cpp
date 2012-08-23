@@ -19,6 +19,7 @@ Api_client_real::Api_client_real(QAbstractSocket *socket) :
 	connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),	this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
 	connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),		this,SIGNAL(error(QAbstractSocket::SocketError)));
 	connect(socket,SIGNAL(disconnected()),					this,SLOT(disconnected()));
+	connect(this,SIGNAL(newFile(QString,QByteArray,quint32)),		this,SLOT(writeNewFile(QString,QByteArray,quint32)));
 	disconnected();
 	dataClear();
 }
@@ -60,8 +61,10 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 						in >> reply_code;
 						if(reply_code==0x02)
 						{
-							DebugClass::debugConsole(QString("remove the file: %1").arg(datapackFilesList.at(index)));
-							emit removeFile(datapackFilesList.at(index));
+							QFile file(datapack_base_name+"/"+datapackFilesList.at(index));
+							if(!file.remove())
+								DebugClass::debugConsole(QString("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
+							//emit removeFile(datapackFilesList.at(index));
 						}
 						index++;
 					}
@@ -113,6 +116,54 @@ void Api_client_real::disconnected()
 	resetAll();
 }
 
+void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &data,const quint32 &mtime)
+{
+	QFile file(datapack_base_name+"/"+fileName);
+	QFileInfo fileInfo(file);
+
+	QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
+
+	if(!file.open(QIODevice::WriteOnly))
+	{
+		DebugClass::debugConsole(QString("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
+		return;
+	}
+	if(file.write(data)!=data.size())
+	{
+		file.close();
+		DebugClass::debugConsole(QString("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
+		return;
+	}
+	file.close();
+
+	time_t actime=QFileInfo(file).lastRead().toTime_t();
+	//protect to wrong actime
+	if(actime<0)
+		actime=0;
+	time_t modtime=mtime;
+	if(modtime<0)
+	{
+		DebugClass::debugConsole(QString("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
+		return;
+	}
+	#ifdef Q_CC_GNU
+		//this function avalaible on unix and mingw
+		utimbuf butime;
+		butime.actime=actime;
+		butime.modtime=modtime;
+		int returnVal=utime(file.fileName().toLocal8Bit().data(),&butime);
+		if(returnVal==0)
+			return;
+		else
+		{
+			DebugClass::debugConsole(QString("Can't set time: %1").arg(fileName));
+			return;
+		}
+	#else
+		#error "Not supported on this platform"
+	#endif
+}
+
 /*void Api_client_real::errorOutput(QString error,QString detailedError)
 {
 	error_string=error;
@@ -147,16 +198,18 @@ void Api_client_real::sendDatapackContent()
 	}
 	wait_datapack_content=true;
 	datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
+	QDir(datapack_base_name).mkpath(datapack_base_name);
 	quint8 datapack_content_query_number=queryNumber();
 	datapackFilesList=listDatapack("");
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << datapack_content_query_number;
 	out << (quint32)datapackFilesList.size();
 	int index=0;
+	DebugClass::debugConsole(QString("sendDatapackContent size: %1, datapack_base_name: %2").arg(datapackFilesList.size()).arg(datapack_base_name));
 	while(index<datapackFilesList.size())
 	{
+		DebugClass::debugConsole(QString("sendDatapackContent file: %1").arg(datapackFilesList.at(index)));
 		out << datapackFilesList.at(index);
 		struct stat info;
 		stat(QString(datapack_base_name+datapackFilesList.at(index)).toLatin1().data(),&info);
