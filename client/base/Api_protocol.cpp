@@ -682,7 +682,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					date.setTime_t(mtime);
 					DebugClass::debugConsole(QString("write the file: %1, with date: %2").arg(fileName).arg(date.toString("dd.MM.yyyy hh:mm:ss.zzz")));
 					QByteArray dataFile=data.right(data.size()-in.device()->pos());
-					writeNewFile(fileName,dataFile,mtime);
+					emit newFile(fileName,dataFile,mtime);
 				}
 				break;
 				//chat as input

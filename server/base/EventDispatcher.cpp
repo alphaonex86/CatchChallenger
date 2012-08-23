@@ -23,7 +23,7 @@ EventDispatcher::EventDispatcher()
 
 	generalData.serverPrivateVariables.botSpawnIndex=0;
 	generalData.serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
-	generalData.serverPrivateVariables.datapack_rightFileName	= QRegExp("^[0-9/a-zA-Z\\.\\- _]+\\.[a-z]{3,4}$");
+	generalData.serverPrivateVariables.datapack_rightFileName	= QRegExp(DATAPACK_FILE_REGEX);
 
 	generalData.serverSettings.database.type=GeneralData::ServerSettings::Database::DatabaseType_Mysql;
 
