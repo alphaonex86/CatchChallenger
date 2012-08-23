@@ -56,6 +56,8 @@ protected:
 	virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
 	virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
+	virtual void writeNewFile(const QString &fileName,const QByteArray &data,const quint32 &mtime) = 0;
+
 	//stored local player info
 	quint16 max_player;
 	Player_private_and_public_informations player_informations;
@@ -97,7 +99,7 @@ signals:
 
 	//datapack
 	void haveTheDatapack();
-	void haveNewFile(QString fileName,QByteArray data,quint32 mtime);
+	void newFile(const QString &fileName,const QByteArray &data,const quint32 &mtime);
 	void removeFile(QString fileName);
 public slots:
 	void send_player_direction(const Direction &the_direction);
