@@ -32,6 +32,7 @@ public:
 	static QList<quint16> simplifiedIdList;
 public slots:
 	virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
+	//check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 	void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
 	void dbQuery(QSqlQuery sqlQuery);
 	void askedRandomNumber();
@@ -44,6 +45,8 @@ private:
 	QString SQL_text_quote(QString text);
 	// ------------------------------
 	Player_internal_informations *player_informations;
+	/** \brief send file if new or need be updated
+	 * \return return false if need be removed */
 	bool sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime=true);
 	void listDatapack(const QString &suffix,const QStringList &files);
 	bool loadTheRawUTF8String();

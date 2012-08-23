@@ -238,6 +238,7 @@ void ClientHeavyLoad::stop()
 	deleteLater();
 }
 
+//check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps)
 {
 	emit message("datapackList()");
@@ -250,6 +251,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 	{
 		QString fileName=files.at(loopIndex);
 		quint32 mtime=timestamps.at(loopIndex);
+		emit message(QString("datapackList(), fileName: %1, mtime: %2").arg(fileName).arg(mtime));
 		if(fileName.contains("./") || fileName.contains("\\") || fileName.contains("//"))
 		{
 			emit error(QString("file name contains illegale char: %1").arg(fileName));
@@ -280,23 +282,30 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 	emit postReply(query_id,qCompress(outputData,9));
 }
 
+/** \brief send file if new or need be updated
+ * \return return false if need be removed */
 bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime)
 {
 	QFile file(filePath);
 	if(file.size()>8*1024*1024)
 		return false;
 	quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
+	//the file on the client is already updated
 	if(localMtime==mtime)
+		return true;
+	//the file on the client not exists on the server, then remove it
+	if(!file.exists())
 		return false;
+	//the file need be downloaded because it's new
 	if(file.open(QIODevice::ReadOnly))
 	{
 		QByteArray content=file.readAll();
-		/*emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
+		emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
 			     .arg(fileName)
 			     .arg(checkMtime)
 			     .arg(mtime)
 			     .arg(localMtime)
-		);*/
+		);
 		bool returnVal=sendFile(fileName,content,localMtime);
 		file.close();
 		return returnVal;
@@ -326,7 +335,11 @@ void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &file
 			if(fileName.contains(EventDispatcher::generalData.serverPrivateVariables.datapack_rightFileName))
 			{
 				if(!files.contains(fileName))
+				{
+					emit message(QString("send a new file: %1").arg(fileName));
 					sendFileIfNeeded(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+fileName,fileName,0,false);
+				}
+
 			}
 		}
 	}

@@ -61,6 +61,7 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 						in >> reply_code;
 						if(reply_code==0x02)
 						{
+							DebugClass::debugConsole(QString("remove the file: %1").arg(datapack_base_name+"/"+datapackFilesList.at(index)));
 							QFile file(datapack_base_name+"/"+datapackFilesList.at(index));
 							if(!file.remove())
 								DebugClass::debugConsole(QString("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
@@ -69,6 +70,7 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 						index++;
 					}
 					datapackFilesList.clear();
+					cleanDatapack("");
 					emit haveTheDatapack();
 				}
 				break;
@@ -209,11 +211,11 @@ void Api_client_real::sendDatapackContent()
 	DebugClass::debugConsole(QString("sendDatapackContent size: %1, datapack_base_name: %2").arg(datapackFilesList.size()).arg(datapack_base_name));
 	while(index<datapackFilesList.size())
 	{
-		DebugClass::debugConsole(QString("sendDatapackContent file: %1").arg(datapackFilesList.at(index)));
 		out << datapackFilesList.at(index);
 		struct stat info;
 		stat(QString(datapack_base_name+datapackFilesList.at(index)).toLatin1().data(),&info);
 		out << (quint32)info.st_mtime;
+		DebugClass::debugConsole(QString("sendDatapackContent file: %1: mtime: %2").arg(datapackFilesList.at(index)).arg((quint32)info.st_mtime));
 		index++;
 	}
 	output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,qCompress(outputData,9));
@@ -222,8 +224,8 @@ void Api_client_real::sendDatapackContent()
 const QStringList Api_client_real::listDatapack(QString suffix)
 {
 	QStringList returnFile;
+	DebugClass::debugConsole(QString("listDatapack(): list file into: %1").arg(datapack_base_name+suffix));
 	QDir finalDatapackFolder(datapack_base_name+suffix);
-	QString fileName;
 	QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
 	int sizeEntryList=entryList.size();
 	for (int index=0;index<sizeEntryList;++index)
@@ -232,7 +234,19 @@ const QStringList Api_client_real::listDatapack(QString suffix)
 		if(fileInfo.isDir())
 			returnFile << listDatapack(suffix+fileInfo.fileName()+"/");//put unix separator because it's transformed into that's under windows too
 		else
-			returnFile << suffix+fileInfo.fileName();
+		{
+			//if match with correct file name, considere as valid
+			if(fileInfo.fileName().contains(QRegExp(DATAPACK_FILE_REGEX)))
+				returnFile << suffix+fileInfo.fileName();
+			//is invalid
+			else
+			{
+				DebugClass::debugConsole(QString("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
+				QFile file(datapack_base_name+suffix+fileInfo.fileName());
+				if(!file.remove())
+					DebugClass::debugConsole(QString("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
+			}
+		}
 	}
 	return returnFile;
 }
