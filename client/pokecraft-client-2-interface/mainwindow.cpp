@@ -281,6 +281,12 @@ void MainWindow::haveNewError()
 //	QMessageBox::critical(this,tr("Error"),client->errorString());
 }
 
+void MainWindow::newError(QString error,QString detailedError)
+{
+	QMessageBox::critical(this,tr("Error"),error);
+	qDebug() << detailedError;
+}
+
 void MainWindow::protocol_is_good()
 {
 	client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());

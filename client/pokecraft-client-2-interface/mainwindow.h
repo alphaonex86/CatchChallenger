@@ -33,6 +33,7 @@ private slots:
 	void stateChanged(QAbstractSocket::SocketState socketState);
 	void error(QAbstractSocket::SocketError socketError);
 	void haveNewError();
+	void newError(QString error,QString detailedError);
 	void disconnected(QString reason);
 	void notLogged(QString reason);
 	void logged();

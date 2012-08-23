@@ -240,6 +240,7 @@ void ClientHeavyLoad::stop()
 
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps)
 {
+	emit message("datapackList()");
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
@@ -290,12 +291,12 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fi
 	if(file.open(QIODevice::ReadOnly))
 	{
 		QByteArray content=file.readAll();
-		emit message(QString("send the file without cache: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
+		/*emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
 			     .arg(fileName)
 			     .arg(checkMtime)
 			     .arg(mtime)
 			     .arg(localMtime)
-		);
+		);*/
 		bool returnVal=sendFile(fileName,content,localMtime);
 		file.close();
 		return returnVal;
@@ -325,7 +326,7 @@ void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &file
 			if(fileName.contains(EventDispatcher::generalData.serverPrivateVariables.datapack_rightFileName))
 			{
 				if(!files.contains(fileName))
-					sendFileIfNeeded(fileName,0,false);
+					sendFileIfNeeded(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+fileName,fileName,0,false);
 			}
 		}
 	}
@@ -335,18 +336,14 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content
 {
 	if(fileName.size()>255 || fileName.size()==0)
 		return false;
-	QByteArray fileNameRaw=fileName.toUtf8();
+	QByteArray fileNameRaw=ProtocolParsing::toUTF8(fileName);
 	if(fileNameRaw.size()>255 || fileNameRaw.size()==0)
 		return false;
 	QByteArray outputData;
-	outputData[0]=fileNameRaw.size();
-	outputData+=fileNameRaw;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << (quint32)content.size();
 	out << mtime;
-	outputData+=content;
-	emit sendPacket(0xC2,0x0003,outputData);
+	emit sendPacket(0xC2,0x0003,fileNameRaw+outputData+content);
 	return true;
 }
 

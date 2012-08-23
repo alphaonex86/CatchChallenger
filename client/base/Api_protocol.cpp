@@ -656,21 +656,21 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 				//file as input
 				case 0x0003:
 				{
-					if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+					if((in.device()->size()-in.device()->pos())<(int)(int)(sizeof(quint8)))
 					{
-						emit newError(tr("Procotol wrong or corrupted"),QString("wrong string for file name with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
 						return;
 					}
-					QString fileName;
-					in >> fileName;
-
-					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+					quint8 fileNameSize;
+					in >> fileNameSize;
+					if((in.device()->size()-in.device()->pos())<(int)fileNameSize)
 					{
-						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
 						return;
 					}
-					qint32 file_size;
-					in >> file_size;
+					QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
+					in.device()->seek(in.device()->pos()+rawText.size());
+					QString fileName=QString::fromUtf8(rawText.data(),rawText.size());
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
@@ -682,12 +682,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					date.setTime_t(mtime);
 					DebugClass::debugConsole(QString("write the file: %1, with date: %2").arg(fileName).arg(date.toString("dd.MM.yyyy hh:mm:ss.zzz")));
 					QByteArray dataFile=data.right(data.size()-in.device()->pos());
-					if(dataFile.size()!=file_size)
-					{
-						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size of the file (size != data.size()) with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
-						return;
-					}
-					emit haveNewFile(fileName,dataFile,mtime);
+					writeNewFile(fileName,dataFile,mtime);
 				}
 				break;
 				//chat as input
