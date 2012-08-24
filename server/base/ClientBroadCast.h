@@ -63,6 +63,8 @@ private:
 	QList<Player_private_and_public_informations> players_informations_to_push;
 	QSemaphore disconnection;
 	qint32 connected_players;
+	static QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo;
+	static QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo_end;
 private slots:
 	void internal_disconnect();
 };

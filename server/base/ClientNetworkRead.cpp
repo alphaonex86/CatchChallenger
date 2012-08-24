@@ -235,25 +235,43 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 						return;
 					QString text;
 					in >> text;
-					if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
+
+					if(!text.startsWith('/'))
+						emit sendChatText((Chat_type)chatType,text);
+					else
 					{
-						if(!text.startsWith('/'))
-							emit sendChatText((Chat_type)chatType,text);
-						else
+						QRegExp commandRegExp("^/([a-z]+)( [^ ].*)$");
+						if(text.contains(commandRegExp))
 						{
-							QRegExp commandRegExp("^/([a-z]+)( [^ ].*)$");
+
+							QString command=text;
+							command.replace(commandRegExp,"\\1");
 							if(text.contains(commandRegExp))
 							{
+								text.replace(commandRegExp,"\\2");
+								text.replace(QRegExp("^ (.*)$"),"\\1");
+							}
+							else
+								text="";
 
-								QString command=text;
-								command.replace(commandRegExp,"\\1");
-								if(text.contains(commandRegExp))
+							//the normal player command
+							{
+								if(command=="playernumber")
 								{
-									text.replace(commandRegExp,"\\2");
-									text.replace(QRegExp("^ (.*)$"),"\\1");
+									emit sendBroadCastCommand(command,text);
+									emit message("send command: /"+command+" "+text);
+									return;
 								}
-								else
-									text="";
+								if(command=="playerlist")
+								{
+									emit sendBroadCastCommand(command,text);
+									emit message("send command: /"+command+" "+text);
+									return;
+								}
+							}
+							//the admin command
+							if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
+							{
 								if(command=="kick")
 								{
 									emit sendBroadCastCommand(command,text);
@@ -280,14 +298,17 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 									emit message("send command: /"+command+" "+text);
 								}
 								else
+								{
 									emit message("unknow send command: /"+command+" and \""+text+"\"");
+									emit sendChatText((Chat_type)chatType,text);
+								}
 							}
 							else
-								emit message("commands seem not right: \""+text+"\"");
+								emit sendChatText((Chat_type)chatType,text);
 						}
+						else
+							emit message("commands seem not right: \""+text+"\"");
 					}
-					else
-						emit sendChatText((Chat_type)chatType,text);
 				}
 				return;
 			}

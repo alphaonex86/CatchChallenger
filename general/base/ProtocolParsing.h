@@ -17,6 +17,7 @@ class ProtocolParsing : public QObject
 public:
 	ProtocolParsing(QAbstractSocket * socket);
 	static void initialiseTheVariable();
+	static void setMaxPlayers(quint16 maxPlayers);
 	static QByteArray toUTF8(const QString &text);
 protected:
 	QAbstractSocket * socket;

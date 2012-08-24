@@ -42,7 +42,10 @@ void ProtocolParsing::initialiseTheVariable()
 	ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41;
 
 	//define the size of direct query
-	ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=2;
+	{
+		//default like is was more than 255 players
+		ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=2;
+	}
 	ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC4]=0;
 	ProtocolParsing::sizeOnlyMainCodePacketClientToServer[0x40]=2;
 
@@ -55,6 +58,18 @@ void ProtocolParsing::initialiseTheVariable()
 	//reply code
 	ProtocolParsing::replyCodeServerToClient=0xC1;
 	ProtocolParsing::replyCodeClientToServer=0x41;
+}
+
+void ProtocolParsing::setMaxPlayers(quint16 maxPlayers)
+{
+	if(maxPlayers<=255)
+	{
+		ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=1;
+	}
+	else
+	{
+		//this case do into initialiseTheVariable()
+	}
 }
 
 QByteArray ProtocolParsing::toUTF8(const QString &text)
@@ -413,9 +428,7 @@ void ProtocolParsingInput::parseIncommingData()
 				data.append(socket->read(dataSize-data.size()));
 			else
 			{
-				#ifdef PROTOCOLPARSINGDEBUG
 				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data"));
-				#endif
 				data.append(socket->readAll());
 				return;
 			}
