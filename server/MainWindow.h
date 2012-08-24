@@ -86,13 +86,11 @@ private slots:
 	void on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1);
 	void on_MapVisibilityAlgorithmSimpleReshow_editingFinished();
 	void on_benchmark_benchmarkMap_clicked();
-
 	void on_benchmark_seconds_valueChanged(int arg1);
-
 	void on_benchmark_clients_valueChanged(int arg1);
-
 	void on_db_type_currentIndexChanged(int index);
 	void updateDbGroupbox();
+	void on_sendPlayerNumber_toggled(bool checked);
 signals:
 	void record_latency();
 };

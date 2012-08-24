@@ -1,4 +1,6 @@
 #include "PlayerUpdater.h"
+#include "../../general/base/DebugClass.h"
+#include "EventDispatcher.h"
 
 using namespace Pokecraft;
 PlayerUpdater::PlayerUpdater()
@@ -7,18 +9,23 @@ PlayerUpdater::PlayerUpdater()
 	sended_connected_players=0;
 	next_send_timer.setSingleShot(true);
 	next_send_timer.setInterval(250);
-	connect(this,SIGNAL(send_addConnectedPlayer()),this,SLOT(internal_addConnectedPlayer()),Qt::QueuedConnection);
-	connect(this,SIGNAL(send_removeConnectedPlayer()),this,SLOT(internal_removeConnectedPlayer()),Qt::QueuedConnection);
-	connect(&next_send_timer,SIGNAL(timeout()),this,SLOT(send_timer()),Qt::QueuedConnection);
+	if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
+	{
+		connect(this,SIGNAL(send_addConnectedPlayer()),this,SLOT(internal_addConnectedPlayer()),Qt::QueuedConnection);
+		connect(this,SIGNAL(send_removeConnectedPlayer()),this,SLOT(internal_removeConnectedPlayer()),Qt::QueuedConnection);
+		connect(&next_send_timer,SIGNAL(timeout()),this,SLOT(send_timer()),Qt::QueuedConnection);
+	}
 }
 
 void PlayerUpdater::addConnectedPlayer()
 {
+	DebugClass::debugConsole("PlayerUpdater::addConnectedPlayer()");
 	emit send_addConnectedPlayer();
 }
 
 void PlayerUpdater::removeConnectedPlayer()
 {
+	DebugClass::debugConsole("PlayerUpdater::removeConnectedPlayer()");
 	emit send_removeConnectedPlayer();
 }
 
