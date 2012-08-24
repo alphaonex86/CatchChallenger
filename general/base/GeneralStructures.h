@@ -106,6 +106,7 @@ struct CommmonServerSettings
 {
 	//fight
 	bool pvp;
+	bool sendPlayerNumber;
 
 	//rates
 	qreal rates_xp;

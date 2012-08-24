@@ -5,6 +5,8 @@ using namespace Pokecraft;
 
 QHash<QString,ClientBroadCast *> ClientBroadCast::playerByPseudo;
 QList<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
+QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo;
+QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo_end;
 
 ClientBroadCast::ClientBroadCast()
 {
@@ -19,7 +21,8 @@ ClientBroadCast::~ClientBroadCast()
 void ClientBroadCast::setVariable(Player_internal_informations *player_informations)
 {
 	this->player_informations=player_informations;
-	connect(&EventDispatcher::generalData.serverPrivateVariables.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
+	if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
+		connect(&EventDispatcher::generalData.serverPrivateVariables.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
 }
 
 void ClientBroadCast::disconnect()
@@ -181,13 +184,18 @@ void ClientBroadCast::send_player_informations()
 
 void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 {
+	emit message(QString("connected_players: %1").arg(connected_players));
 	if(this->connected_players==connected_players)
 		return;
 	this->connected_players=connected_players;
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << EventDispatcher::generalData.serverPrivateVariables.connected_players;
+	if(EventDispatcher::generalData.serverSettings.max_players<=255)
+		out << (qint8)connected_players;
+	else
+		out << (qint16)connected_players;
+	emit message(QString("send connected_players: %1").arg(connected_players));
 	emit sendPacket(0xC3,outputData);
 }
 
@@ -227,7 +235,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 			return;
 		}
 	}
-	if(command=="setrights")
+	else if(command=="setrights")
 	{
 		QStringList list=extraText.split(' ');
 		if(list.size()!=2)
@@ -256,6 +264,32 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 			emit message(QString("unable to found this rights level: \"%1\"").arg(list.last()));
 			return;
 		}
+	}
+	else if(command=="playerlist")
+	{
+		if(playerByPseudo.size()==1)
+			receiveSystemText(Chat_type_system,QString("You are alone on the server!"));
+		else
+		{
+			QStringList playerStringList;
+			i_playerByPseudo = playerByPseudo.constBegin();
+			i_playerByPseudo_end = playerByPseudo.constEnd();
+			while (i_playerByPseudo != i_playerByPseudo_end)
+			{
+				playerStringList << "<b>"+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+"</b>";
+				++i_playerByPseudo;
+			}
+			receiveSystemText(Chat_type_system,QString("players connected: %1").arg(playerStringList.join(", ")));
+		}
+		return;
+	}
+	else if(command=="playernumber")
+	{
+		if(playerByPseudo.size()==1)
+			receiveSystemText(Chat_type_system,QString("You are alone on the server!"));
+		else
+			receiveSystemText(Chat_type_system,QString("<b>%1</b> players connected").arg(playerByPseudo.size()));
+		return;
 	}
 	else if(command=="kick")
 	{

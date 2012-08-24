@@ -276,6 +276,8 @@ void MainWindow::load_settings()
 		settings->setValue("benchmark_seconds",60);
 	if(!settings->contains("benchmark_clients"))
 		settings->setValue("benchmark_clients",400);
+	if(!settings->contains("sendPlayerNumber"))
+		settings->setValue("sendPlayerNumber",false);
 
 	settings->beginGroup("MapVisibilityAlgorithm");
 	if(!settings->contains("MapVisibilityAlgorithm"))
@@ -333,6 +335,7 @@ void MainWindow::load_settings()
 	ui->max_player->setValue(settings->value("max-players").toUInt());
 	ui->server_ip->setText(settings->value("server-ip").toString());
 	ui->pvp->setChecked(settings->value("pvp").toBool());
+	ui->sendPlayerNumber->setChecked(settings->value("sendPlayerNumber").toBool());
 	ui->server_port->setValue(settings->value("server-port").toUInt());
 	ui->benchmark_benchmarkMap->setChecked(settings->value("benchmark_map").toBool());
 	ui->benchmark_seconds->setValue(settings->value("benchmark_seconds").toUInt());
@@ -421,6 +424,7 @@ void MainWindow::send_settings()
 
 	//fight
 	formatedServerSettings.commmonServerSettings.pvp			= ui->pvp->isChecked();
+	formatedServerSettings.commmonServerSettings.sendPlayerNumber		= ui->sendPlayerNumber->isChecked();
 
 	//rates
 	formatedServerSettings.commmonServerSettings.rates_xp			= ui->rates_xp_normal->value();
@@ -679,4 +683,10 @@ void MainWindow::updateDbGroupbox()
 			ui->groupBoxDbMysql->setEnabled(true);
 		break;
 	}
+}
+
+void Pokecraft::MainWindow::on_sendPlayerNumber_toggled(bool checked)
+{
+	Q_UNUSED(checked);
+	settings->setValue("sendPlayerNumber",ui->sendPlayerNumber->isChecked());
 }

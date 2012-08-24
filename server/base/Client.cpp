@@ -234,7 +234,8 @@ void Client::disconnectNextStep()
 		if(player_informations.is_logged)
 		{
 			EventDispatcher::generalData.serverPrivateVariables.connected_players--;
-			EventDispatcher::generalData.serverPrivateVariables.player_updater.removeConnectedPlayer();
+			if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
+				EventDispatcher::generalData.serverPrivateVariables.player_updater.removeConnectedPlayer();
 		}
 		player_informations.is_logged=false;
 
@@ -296,7 +297,8 @@ void Client::send_player_informations()
 	emit new_player_is_connected(player_informations);
 	this->player_informations=player_informations;
 	EventDispatcher::generalData.serverPrivateVariables.connected_players++;
-	EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();
+	if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
+		EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();
 
 	//remove the useless connection
 	/*disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));
