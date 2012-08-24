@@ -111,6 +111,7 @@ void EventDispatcher::setSettings(GeneralData::ServerSettings settings)
 	//check the settings here
 	if(settings.max_players<1)
 		settings.max_players=200;
+	ProtocolParsing::setMaxPlayers(settings.max_players);
 	//load it
 	DebugClass::debugConsole(QString("load with max player: %1").arg(settings.max_players));
 	generalData.serverSettings=settings;

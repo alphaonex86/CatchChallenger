@@ -86,7 +86,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 					EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex=0;
 				EventDispatcher::generalData.serverPrivateVariables.number_of_bots_logged++;
 				out << (quint8)02;
-				out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
+				if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
+					out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
+				else
+					out << (quint16)0;
 				if(EventDispatcher::generalData.serverSettings.max_players<=255)
 					out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
 				else
@@ -174,7 +177,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			if(EventDispatcher::generalData.serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
 			{
 				out << (quint8)02;
-				out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
+				if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
+					out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
+				else
+					out << (quint16)0;
 				if(EventDispatcher::generalData.serverSettings.max_players<=255)
 					out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
 				else

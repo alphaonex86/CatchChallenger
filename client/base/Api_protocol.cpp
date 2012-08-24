@@ -31,6 +31,7 @@ Api_protocol::~Api_protocol()
 //have message without reply
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
+	DebugClass::debugConsole(QString("mainCodeType: %1").arg(mainCodeType));
 	if(!is_logged)
 	{
 		emit newError(tr("Procotol wrong or corrupted"),QString("is not logged with main ident: %1").arg(mainCodeType));
@@ -405,6 +406,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 				}
 				quint8 current_player_connected_8Bits;
 				in >> current_player_connected_8Bits;
+				DebugClass::debugConsole(QString("current_player_connected_8Bits: %1").arg(current_player_connected_8Bits));
 				emit number_of_player(current_player_connected_8Bits,max_player);
 			}
 			else
@@ -416,6 +418,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 				}
 				quint16 current_player_connected_16Bits;
 				in >> current_player_connected_16Bits;
+				DebugClass::debugConsole(QString("current_player_connected_16Bits: %1").arg(current_player_connected_16Bits));
 				emit number_of_player(current_player_connected_16Bits,max_player);
 			}
 		}
@@ -922,7 +925,10 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 							return;
 						}
 						in >> max_player;
-						if(max_player<=255)
+						Pokecraft::ProtocolParsing::setMaxPlayers(max_player);
+						if(max_player==0)
+							emit number_of_player(0,0);//current player number never send with this server
+						else if(max_player<=255)
 						{
 							quint8 tempSize;
 							if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))

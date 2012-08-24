@@ -146,6 +146,7 @@ void MainWindow::notLogged(QString reason)
 
 void MainWindow::logged()
 {
+	ui->label_interface_number_of_player->show();
 	ui->label_connecting_status->setText(tr("Loading the starting data..."));
 	client->sendDatapackContent();
 }
@@ -468,7 +469,10 @@ void MainWindow::on_toolButton_interface_map_released()
 
 void MainWindow::number_of_player(quint16 number,quint16 max)
 {
-	ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
+	if(max==0)
+		ui->label_interface_number_of_player->hide();
+	else
+		ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
 }
 
 void MainWindow::on_comboBox_chat_type_currentIndexChanged(int index)
