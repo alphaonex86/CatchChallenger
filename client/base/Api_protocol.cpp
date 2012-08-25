@@ -41,6 +41,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 	in.setVersion(QDataStream::Qt_4_4);
 	switch(mainCodeType)
 	{
+		//Insert player on map
 		case 0xC0:
 		{
 			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -226,6 +227,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 			}
 		}
 		break;
+		//Move player on map
 		case 0xC7:
 		{
 			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -340,6 +342,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 			}
 		}
 		break;
+		//Remove player from map
 		case 0xC8:
 		{
 			//remove player
@@ -427,6 +430,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 		case 0xC4:
 			emit dropAllPlayerOnTheMap();
 		break;
+		//Reinser player on same map
 		case 0xC5:
 		{
 			quint16 playerSizeList;
@@ -512,6 +516,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 
 		}
 		break;
+		//Reinser player on other map
 		case 0xC6:
 		{
 			if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -926,8 +931,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 						}
 						in >> max_player;
 						Pokecraft::ProtocolParsing::setMaxPlayers(max_player);
-						if(max_player==0)
-							emit number_of_player(0,0);//current player number never send with this server
+						if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+						{
+							emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+							return;
+						}
 						else if(max_player<=255)
 						{
 							quint8 tempSize;
