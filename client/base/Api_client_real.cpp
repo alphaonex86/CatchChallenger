@@ -16,8 +16,6 @@ Api_client_real::Api_client_real(QAbstractSocket *socket) :
 	host="localhost";
 	port=42489;
 	datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
-	connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),	this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
-	connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),		this,SIGNAL(error(QAbstractSocket::SocketError)));
 	connect(socket,SIGNAL(disconnected()),					this,SLOT(disconnected()));
 	connect(this,SIGNAL(newFile(QString,QByteArray,quint32)),		this,SLOT(writeNewFile(QString,QByteArray,quint32)));
 	disconnected();
@@ -208,14 +206,12 @@ void Api_client_real::sendDatapackContent()
 	out.setVersion(QDataStream::Qt_4_4);
 	out << (quint32)datapackFilesList.size();
 	int index=0;
-	DebugClass::debugConsole(QString("sendDatapackContent size: %1, datapack_base_name: %2").arg(datapackFilesList.size()).arg(datapack_base_name));
 	while(index<datapackFilesList.size())
 	{
 		out << datapackFilesList.at(index);
 		struct stat info;
 		stat(QString(datapack_base_name+datapackFilesList.at(index)).toLatin1().data(),&info);
 		out << (quint32)info.st_mtime;
-		DebugClass::debugConsole(QString("sendDatapackContent file: %1: mtime: %2").arg(datapackFilesList.at(index)).arg((quint32)info.st_mtime));
 		index++;
 	}
 	output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,qCompress(outputData,9));
@@ -224,7 +220,6 @@ void Api_client_real::sendDatapackContent()
 const QStringList Api_client_real::listDatapack(QString suffix)
 {
 	QStringList returnFile;
-	DebugClass::debugConsole(QString("listDatapack(): list file into: %1").arg(datapack_base_name+suffix));
 	QDir finalDatapackFolder(datapack_base_name+suffix);
 	QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
 	int sizeEntryList=entryList.size();
