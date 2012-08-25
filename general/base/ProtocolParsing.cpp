@@ -424,21 +424,29 @@ void ProtocolParsingInput::parseIncommingData()
 		}
 		if(dataSize>0)
 		{
-			if((dataSize-data.size())<=socket->bytesAvailable())
-				data.append(socket->read(dataSize-data.size()));
-			else
+			do
+			{
+				//if have too many data, or just the size
+				if((dataSize-data.size())<=socket->bytesAvailable())
+					data.append(socket->read(dataSize-data.size()));
+				else //if need more data
+					data.append(socket->readAll());
+			} while(
+				//need more data
+				(dataSize-data.size())>0 &&
+				//and have more data
+				socket->bytesAvailable()>0
+				);
+
+			if((dataSize-data.size())>0)
 			{
 				#ifdef PROTOCOLPARSINGDEBUG
 				if(!need_subCodeType)
-					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1").arg(mainCodeType));
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1, wait more tcp packet").arg(mainCodeType));
 				else
-					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1,%2").arg(mainCodeType).arg(subCodeType));
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1,%2, wait more tcp packet").arg(mainCodeType).arg(subCodeType));
 				#endif
-				if(!need_subCodeType)
-					emit error(QString("at parseIncommingData: not suffisent data: %1").arg(mainCodeType));
-				else
-					emit error(QString("at parseIncommingData: not suffisent data: %1,%2").arg(mainCodeType).arg(subCodeType));
-				data.append(socket->readAll());
+
 				return;
 			}
 		}
