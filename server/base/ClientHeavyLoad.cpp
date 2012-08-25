@@ -86,10 +86,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 					EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex=0;
 				EventDispatcher::generalData.serverPrivateVariables.number_of_bots_logged++;
 				out << (quint8)02;
-				if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
-					out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
-				else
-					out << (quint16)0;
+				out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
 				if(EventDispatcher::generalData.serverSettings.max_players<=255)
 					out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
 				else
@@ -177,10 +174,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			if(EventDispatcher::generalData.serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
 			{
 				out << (quint8)02;
-				if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
-					out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
-				else
-					out << (quint16)0;
+				out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
 				if(EventDispatcher::generalData.serverSettings.max_players<=255)
 					out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
 				else
@@ -247,7 +241,6 @@ void ClientHeavyLoad::stop()
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps)
 {
-	emit message("datapackList()");
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
@@ -257,7 +250,6 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 	{
 		QString fileName=files.at(loopIndex);
 		quint32 mtime=timestamps.at(loopIndex);
-		emit message(QString("datapackList(), fileName: %1, mtime: %2").arg(fileName).arg(mtime));
 		if(fileName.contains("./") || fileName.contains("\\") || fileName.contains("//"))
 		{
 			emit error(QString("file name contains illegale char: %1").arg(fileName));
@@ -306,12 +298,12 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fi
 	if(file.open(QIODevice::ReadOnly))
 	{
 		QByteArray content=file.readAll();
-		emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
+		/*emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
 			     .arg(fileName)
 			     .arg(checkMtime)
 			     .arg(mtime)
 			     .arg(localMtime)
-		);
+		);*/
 		bool returnVal=sendFile(fileName,content,localMtime);
 		file.close();
 		return returnVal;
@@ -341,11 +333,7 @@ void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &file
 			if(fileName.contains(EventDispatcher::generalData.serverPrivateVariables.datapack_rightFileName))
 			{
 				if(!files.contains(fileName))
-				{
-					emit message(QString("send a new file: %1").arg(fileName));
 					sendFileIfNeeded(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+fileName,fileName,0,false);
-				}
-
 			}
 		}
 	}

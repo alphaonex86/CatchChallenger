@@ -428,7 +428,16 @@ void ProtocolParsingInput::parseIncommingData()
 				data.append(socket->read(dataSize-data.size()));
 			else
 			{
-				DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data"));
+				#ifdef PROTOCOLPARSINGDEBUG
+				if(!need_subCodeType)
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1").arg(mainCodeType));
+				else
+					DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1,%2").arg(mainCodeType).arg(subCodeType));
+				#endif
+				if(!need_subCodeType)
+					emit error(QString("at parseIncommingData: not suffisent data: %1").arg(mainCodeType));
+				else
+					emit error(QString("at parseIncommingData: not suffisent data: %1,%2").arg(mainCodeType).arg(subCodeType));
 				data.append(socket->readAll());
 				return;
 			}

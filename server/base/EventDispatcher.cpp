@@ -113,8 +113,8 @@ void EventDispatcher::setSettings(GeneralData::ServerSettings settings)
 		settings.max_players=200;
 	ProtocolParsing::setMaxPlayers(settings.max_players);
 	//load it
-	DebugClass::debugConsole(QString("load with max player: %1").arg(settings.max_players));
 	generalData.serverSettings=settings;
+	DebugClass::debugConsole(QString("generalData.serverSettings.commmonServerSettings.sendPlayerNumber: %1").arg(generalData.serverSettings.commmonServerSettings.sendPlayerNumber));
 
 	quint8 player_list_size;
 	if(settings.max_players<=255)
