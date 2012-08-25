@@ -58,9 +58,6 @@ private:
 	bool wait_datapack_content;
 	QStringList datapackFilesList;
 signals:
-	void stateChanged(QAbstractSocket::SocketState socketState);
-	void error(QAbstractSocket::SocketError socketError);
-
 	void haveTheDatapack();
 private slots:
 	void disconnected();

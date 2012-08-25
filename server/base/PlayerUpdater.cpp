@@ -9,12 +9,9 @@ PlayerUpdater::PlayerUpdater()
 	sended_connected_players=0;
 	next_send_timer.setSingleShot(true);
 	next_send_timer.setInterval(250);
-	if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
-	{
-		connect(this,SIGNAL(send_addConnectedPlayer()),this,SLOT(internal_addConnectedPlayer()),Qt::QueuedConnection);
-		connect(this,SIGNAL(send_removeConnectedPlayer()),this,SLOT(internal_removeConnectedPlayer()),Qt::QueuedConnection);
-		connect(&next_send_timer,SIGNAL(timeout()),this,SLOT(send_timer()),Qt::QueuedConnection);
-	}
+	connect(this,SIGNAL(send_addConnectedPlayer()),this,SLOT(internal_addConnectedPlayer()),Qt::QueuedConnection);
+	connect(this,SIGNAL(send_removeConnectedPlayer()),this,SLOT(internal_removeConnectedPlayer()),Qt::QueuedConnection);
+	connect(&next_send_timer,SIGNAL(timeout()),this,SLOT(send_timer()),Qt::QueuedConnection);
 }
 
 void PlayerUpdater::addConnectedPlayer()
@@ -45,7 +42,7 @@ void PlayerUpdater::internal_removeConnectedPlayer()
 
 void PlayerUpdater::send_timer()
 {
-	if(sended_connected_players!=connected_players)
+	if(sended_connected_players!=connected_players && EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
 	{
 		sended_connected_players=connected_players;
 		emit newConnectedPlayer(connected_players);

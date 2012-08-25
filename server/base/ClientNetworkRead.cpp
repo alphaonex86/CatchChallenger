@@ -386,7 +386,6 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 					QString tempFileName;
 					quint32 tempTimestamps;
 					quint32 index=0;
-					emit message(QString("index: %1, number_of_file: %2").arg(index).arg(number_of_file));
 					while(index<number_of_file)
 					{
 						if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
@@ -408,7 +407,6 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 						}
 						in >> tempTimestamps;
 						timestamps << tempTimestamps;
-						emit message(QString("tempFileName: %1, tempTimestamps: %2 (%3,%4)").arg(tempFileName).arg(tempTimestamps).arg(files.size()).arg(timestamps.size()));
 						index++;
 					}
 					if(in.device()->size()!=in.device()->pos())

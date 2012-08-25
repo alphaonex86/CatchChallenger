@@ -30,11 +30,13 @@ MainWindow::MainWindow(QWidget *parent) :
 			ui->comboBoxServerList->setCurrentIndex(index);
 	}
 	connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
-	connect(client,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
+	connect(client,SIGNAL(error(QString)),this,SLOT(error(QString)));
+	connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
+	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
 	connect(client,SIGNAL(notLogged(QString)),this,SLOT(notLogged(QString)));
 	connect(client,SIGNAL(logged()),this,SLOT(logged()));
 	connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
-	connect(client,SIGNAL(stateChanged(QAbstractSocket::SocketState)),SLOT(stateChanged(QAbstractSocket::SocketState)));
+	connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),SLOT(stateChanged(QAbstractSocket::SocketState)));
 	connect(client,SIGNAL(haveTheDatapack()),SLOT(haveTheDatapack()));
 //	connect(client,SIGNAL(new_chat_text(quint32,quint8,QString)),this,SLOT(new_chat_text(quint32,quint8,QString)));
 	connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
@@ -59,6 +61,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::resetAll()
 {
+	ui->frame_main_display_interface_player->hide();
 	ui->label_interface_number_of_player->setText("?/?");
 	ui->stackedWidget->setCurrentIndex(0);
 	chat_list_player_id.clear();
@@ -146,7 +149,6 @@ void MainWindow::notLogged(QString reason)
 
 void MainWindow::logged()
 {
-	ui->label_interface_number_of_player->show();
 	ui->label_connecting_status->setText(tr("Loading the starting data..."));
 	client->sendDatapackContent();
 }
@@ -286,6 +288,16 @@ void MainWindow::newError(QString error,QString detailedError)
 {
 	QMessageBox::critical(this,tr("Error"),error);
 	qDebug() << detailedError;
+}
+
+void MainWindow::error(QString error)
+{
+	newError("Error with the protocol",error);
+}
+
+void MainWindow::message(QString message)
+{
+	qDebug() << message;
 }
 
 void MainWindow::protocol_is_good()
@@ -469,10 +481,8 @@ void MainWindow::on_toolButton_interface_map_released()
 
 void MainWindow::number_of_player(quint16 number,quint16 max)
 {
-	if(max==0)
-		ui->label_interface_number_of_player->hide();
-	else
-		ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
+	ui->frame_main_display_interface_player->show();
+	ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
 }
 
 void MainWindow::on_comboBox_chat_type_currentIndexChanged(int index)

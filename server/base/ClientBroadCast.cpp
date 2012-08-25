@@ -21,6 +21,7 @@ ClientBroadCast::~ClientBroadCast()
 void ClientBroadCast::setVariable(Player_internal_informations *player_informations)
 {
 	this->player_informations=player_informations;
+	emit message(QString("boardcast: EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber: %1").arg(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber));
 	if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
 		connect(&EventDispatcher::generalData.serverPrivateVariables.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
 }
