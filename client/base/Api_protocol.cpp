@@ -696,6 +696,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 				//chat as input
 				case 0x0005:
 				{
+					DebugClass::debugConsole("chat as input");
 					if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
 					{
 						emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
@@ -716,6 +717,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
 					}
 					QString text;
 					in >> text;
+					DebugClass::debugConsole("chat as input: "+text);
 					if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
 						emit new_system_text(chat_type,text);
 					else
@@ -1084,7 +1086,7 @@ void Api_protocol::sendChatText(Chat_type chatType,QString text)
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
 	out.setVersion(QDataStream::Qt_4_4);
-	out << chatType;
+	out << (quint8)chatType;
 	out << text;
 	output->packOutcommingData(0x42,0x0003,outputData);
 	if(!text.startsWith('/'))

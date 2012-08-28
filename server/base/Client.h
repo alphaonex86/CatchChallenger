@@ -21,8 +21,8 @@
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
 
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef POKECRAFT_CLIENT_H
+#define POKECRAFT_CLIENT_H
 
 namespace Pokecraft {
 class Client : public QObject

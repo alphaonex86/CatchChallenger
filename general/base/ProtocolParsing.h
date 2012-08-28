@@ -1,5 +1,5 @@
-#ifndef PROTOCOLPARSING_H
-#define PROTOCOLPARSING_H
+#ifndef POKECRAFT_PROTOCOLPARSING_H
+#define POKECRAFT_PROTOCOLPARSING_H
 
 #include <QSet>
 #include <QHash>

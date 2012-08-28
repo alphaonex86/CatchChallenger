@@ -2,8 +2,8 @@
 
 #include "GeneralStructures.h"
 
-#ifndef MOVEONTHEMAP_H
-#define MOVEONTHEMAP_H
+#ifndef POKECRAFT_MOVEONTHEMAP_H
+#define POKECRAFT_MOVEONTHEMAP_H
 
 //to group the step by step move into line move
 /* template <typename TMap = Map>

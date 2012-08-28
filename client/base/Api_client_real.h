@@ -1,5 +1,5 @@
-#ifndef Protocol_and_data_H
-#define Protocol_and_data_H
+#ifndef POKECRAFT_API_CLIENT_REAL_H
+#define POKECRAFT_API_CLIENT_REAL_H
 
 #include <QObject>
 #include <QString>

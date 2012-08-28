@@ -1,5 +1,5 @@
-#ifndef MapBasicMove_H
-#define MapBasicMove_H
+#ifndef POKECRAFT_MapBasicMove_H
+#define POKECRAFT_MapBasicMove_H
 
 #include <QObject>
 #include <QList>

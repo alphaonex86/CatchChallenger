@@ -11,8 +11,8 @@
 #include "../Map_server.h"
 #include "../client/base/Api_client_virtual.h"
 
-#ifndef FakeBot_H
-#define FakeBot_H
+#ifndef POKECRAFT_FakeBot_H
+#define POKECRAFT_FakeBot_H
 
 namespace Pokecraft {
 class FakeBot : public QObject, public MoveOnTheMap

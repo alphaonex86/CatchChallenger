@@ -1,5 +1,5 @@
-#ifndef MAP_H
-#define MAP_H
+#ifndef POKECRAFT_MAP_H
+#define POKECRAFT_MAP_H
 
 #include <QString>
 #include <QHash>
