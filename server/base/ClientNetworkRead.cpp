@@ -3,6 +3,9 @@
 
 using namespace Pokecraft;
 
+QRegExp ClientNetworkRead::commandRegExp=QRegExp("^/([a-z]+)( [^ ].*)?$");
+QRegExp ClientNetworkRead::commandRegExpWithArgs=QRegExp("^/([a-z]+)( [^ ].*)$");
+
 ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,QAbstractSocket * socket) :
 	ProtocolParsingInput(socket,PacketModeTransmission_Server)
 {
@@ -240,12 +243,13 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 						emit sendChatText((Chat_type)chatType,text);
 					else
 					{
-						QRegExp commandRegExp("^/([a-z]+)( [^ ].*)$");
 						if(text.contains(commandRegExp))
 						{
-
+							//isolate the main command (the first word)
 							QString command=text;
 							command.replace(commandRegExp,"\\1");
+
+							//isolate the arguements
 							if(text.contains(commandRegExp))
 							{
 								text.replace(commandRegExp,"\\2");
@@ -369,9 +373,6 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 				QByteArray rawData=qUncompress(data);
 				{
 					QByteArray data=rawData;
-					#ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-					emit message(QString("parseInputAfterLogin(): data after qUncompress: %1").arg(QString(data.toHex())));
-					#endif
 					QDataStream in(data);
 					in.setVersion(QDataStream::Qt_4_4);
 					if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))

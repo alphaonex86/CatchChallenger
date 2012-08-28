@@ -1,5 +1,5 @@
-#ifndef MAP_SERVER_H
-#define MAP_SERVER_H
+#ifndef POKECRAFT_MAP_SERVER_H
+#define POKECRAFT_MAP_SERVER_H
 
 #include "../../general/base/Map.h"
 

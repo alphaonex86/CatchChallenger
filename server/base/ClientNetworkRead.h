@@ -1,10 +1,11 @@
-#ifndef CLIENTNETWORKREAD_H
-#define CLIENTNETWORKREAD_H
+#ifndef POKECRAFT_CLIENTNETWORKREAD_H
+#define POKECRAFT_CLIENTNETWORKREAD_H
 
 #include <QObject>
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QStringList>
+#include <QRegExp>
 
 #include "ServerStructures.h"
 #include "../general/base/DebugClass.h"
@@ -70,6 +71,9 @@ private:
 	quint8 mainCodeType;
 	quint16 subCodeType;
 	quint8 queryNumber;
+
+	static QRegExp commandRegExp;
+	static QRegExp commandRegExpWithArgs;
 };
 }
 

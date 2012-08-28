@@ -1,5 +1,5 @@
-#ifndef CLIENTHEAVYLOAD_H
-#define CLIENTHEAVYLOAD_H
+#ifndef POKECRAFT_CLIENTHEAVYLOAD_H
+#define POKECRAFT_CLIENTHEAVYLOAD_H
 
 #include <QObject>
 #include <QSqlDatabase>

@@ -1,5 +1,5 @@
-#ifndef QFAKESERVER_H
-#define QFAKESERVER_H
+#ifndef POKECRAFT_QFAKESERVER_H
+#define POKECRAFT_QFAKESERVER_H
 
 #include <QObject>
 #include <QMutex>

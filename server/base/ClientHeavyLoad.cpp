@@ -289,7 +289,7 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fi
 		return false;
 	quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
 	//the file on the client is already updated
-	if(localMtime==mtime)
+	if(checkMtime && localMtime==mtime)
 		return true;
 	//the file on the client not exists on the server, then remove it
 	if(!file.exists())

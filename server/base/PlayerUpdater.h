@@ -1,5 +1,5 @@
-#ifndef PLAYERUPDATER_H
-#define PLAYERUPDATER_H
+#ifndef POKECRAFT_PLAYERUPDATER_H
+#define POKECRAFT_PLAYERUPDATER_H
 
 #include <QObject>
 #include <QTimer>

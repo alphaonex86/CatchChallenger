@@ -1,5 +1,5 @@
-#ifndef QFAKESOCKET_H
-#define QFAKESOCKET_H
+#ifndef POKECRAFT_QFAKESOCKET_H
+#define POKECRAFT_QFAKESOCKET_H
 
 #include <QAbstractSocket>
 #include <QMutex>
