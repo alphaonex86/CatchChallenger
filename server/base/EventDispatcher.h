@@ -21,8 +21,8 @@
 #include "../general/base/QFakeSocket.h"
 #include "Map_server.h"
 
-#ifndef EVENTDISPATCHER_H
-#define EVENTDISPATCHER_H
+#ifndef POKECRAFT_EVENTDISPATCHER_H
+#define POKECRAFT_EVENTDISPATCHER_H
 
 namespace Pokecraft {
 class EventDispatcher : public QObject

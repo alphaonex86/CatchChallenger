@@ -2,8 +2,8 @@
 
 #include "GeneralStructures.h"
 
-#ifndef CHAT_PARSING_H
-#define CHAT_PARSING_H
+#ifndef POKECRAFT_CHAT_PARSING_H
+#define POKECRAFT_CHAT_PARSING_H
 
 namespace Pokecraft {
 class ChatParsing

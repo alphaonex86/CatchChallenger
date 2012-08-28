@@ -1,5 +1,5 @@
-#ifndef STRUCTURES_CLIENT_H
-#define STRUCTURES_CLIENT_H
+#ifndef POKECRAFT_STRUCTURES_CLIENT_H
+#define POKECRAFT_STRUCTURES_CLIENT_H
 
 #include <QObject>
 #include <QString>

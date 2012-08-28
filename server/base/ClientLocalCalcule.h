@@ -1,7 +1,7 @@
 #include "ClientMapManagement/MapBasicMove.h"
 
-#ifndef CLIENTLOCALCALCULE_H
-#define CLIENTLOCALCALCULE_H
+#ifndef POKECRAFT_CLIENTLOCALCALCULE_H
+#define POKECRAFT_CLIENTLOCALCALCULE_H
 
 #include <QObject>
 #include <QList>
