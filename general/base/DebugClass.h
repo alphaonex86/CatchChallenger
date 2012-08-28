@@ -1,5 +1,5 @@
-#ifndef DEBUGCLASS_H
-#define DEBUGCLASS_H
+#ifndef POKECRAFT_DEBUGCLASS_H
+#define POKECRAFT_DEBUGCLASS_H
 
 #include <QString>
 #include <QDebug>

@@ -1,5 +1,5 @@
-#ifndef MAP_LOADER_H
-#define MAP_LOADER_H
+#ifndef POKECRAFT_MAP_LOADER_H
+#define POKECRAFT_MAP_LOADER_H
 
 #include <QObject>
 #include <QStringList>

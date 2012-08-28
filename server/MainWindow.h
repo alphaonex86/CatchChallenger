@@ -1,5 +1,5 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef POKECRAFT_MAINWINDOW_H
+#define POKECRAFT_MAINWINDOW_H
 
 #include <QMainWindow>
 #include <QProcess>

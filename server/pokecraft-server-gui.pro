@@ -12,7 +12,7 @@ QMAKE_CXXFLAGS += -pipe -march=native -O2 -fomit-frame-pointer -floop-block -flo
 TARGET = pokecraft-server-gui
 TEMPLATE = app
 
-CONFIG   += console
+win32:CONFIG   += console
 
 SOURCES += MainWindow.cpp \
     main.cpp

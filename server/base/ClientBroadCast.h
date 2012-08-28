@@ -1,5 +1,5 @@
-#ifndef CLIENTBROADCAST_H
-#define CLIENTBROADCAST_H
+#ifndef POKECRAFT_CLIENTBROADCAST_H
+#define POKECRAFT_CLIENTBROADCAST_H
 
 #include <QObject>
 #include <QDataStream>
@@ -36,7 +36,7 @@ public slots:
 	void receivePM(const QString &text,const QString &pseudo);
 	void sendPM(const QString &text,const QString &pseudo);
 	void receiveChatText(const Chat_type &chatType,const QString &text,const QString &sender_pseudo,const Player_type &sender_player_type);
-	void receiveSystemText(const bool &important,const QString &text);
+	void receiveSystemText(const QString &text,const bool &important=false);
 	void sendChatText(const Chat_type &chatType,const QString &text);
 	void receive_instant_player_number(qint32 connected_players);
 	void kick();

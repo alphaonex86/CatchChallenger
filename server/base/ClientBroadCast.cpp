@@ -49,7 +49,7 @@ void ClientBroadCast::sendSystemMessage(const QString &text,const bool &importan
 		while(index<list_size)
 		{
 			if(this!=clientBroadCastList.at(index))
-				clientBroadCastList.at(index)->receiveSystemText(Chat_type_system_important,text);
+				clientBroadCastList.at(index)->receiveSystemText(text,true);
 			index++;
 		}
 	}
@@ -59,7 +59,7 @@ void ClientBroadCast::sendSystemMessage(const QString &text,const bool &importan
 		while(index<list_size)
 		{
 			if(this!=clientBroadCastList.at(index))
-				clientBroadCastList.at(index)->receiveSystemText(Chat_type_system,text);
+				clientBroadCastList.at(index)->receiveSystemText(text);
 			index++;
 		}
 	}
@@ -85,7 +85,7 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 	}
 	if(!playerByPseudo.contains(pseudo))
 	{
-		receiveSystemText(Chat_type_system,QString("unable to found the connected player: pseudo: \"%1\"").arg(pseudo));
+		receiveSystemText(QString("unable to found the connected player: pseudo: \"%1\"").arg(pseudo),false);
 		emit message(QString("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
 		return;
 	}
@@ -118,7 +118,7 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
 	emit sendPacket(0xC2,0x0005,outputData);
 }
 
-void ClientBroadCast::receiveSystemText(const bool &important,const QString &text)
+void ClientBroadCast::receiveSystemText(const QString &text,const bool &important)
 {
 	QByteArray outputData;
 	QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -150,7 +150,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 			}
 		}
 	}
-	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)
+/* Now do by command
+ *	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)
 	{
 		if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
 		{
@@ -158,13 +159,13 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 			while(index<list_size)
 			{
 				if(this!=clientBroadCastList.at(index))
-					clientBroadCastList.at(index)->receiveSystemText(chatType,text);
+					clientBroadCastList.at(index)->receiveSystemText(text);
 				index++;
 			}
 		}
 		else
 			emit error("Have not the right to send system message");
-	}
+	}*/
 	else
 	{
 		int index=0;
@@ -213,7 +214,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 		QStringList list=extraText.split(' ');
 		if(list.size()<2)
 		{
-			receiveSystemText(Chat_type_system,QString("command not understand").arg(extraText));
+			receiveSystemText(QString("command not understand").arg(extraText));
 			emit message(QString("command not understand").arg(extraText));
 			return;
 		}
@@ -231,7 +232,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 		}
 		else
 		{
-			receiveSystemText(Chat_type_system,QString("command not understand").arg(extraText));
+			receiveSystemText(QString("command not understand").arg(extraText));
 			emit message(QString("command not understand").arg(extraText));
 			return;
 		}
@@ -241,13 +242,13 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 		QStringList list=extraText.split(' ');
 		if(list.size()!=2)
 		{
-			receiveSystemText(Chat_type_system,QString("command not understand").arg(extraText));
+			receiveSystemText(QString("command not understand").arg(extraText));
 			emit message(QString("command not understand").arg(extraText));
 			return;
 		}
 		if(!playerByPseudo.contains(list.first()))
 		{
-			receiveSystemText(Chat_type_system,QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
+			receiveSystemText(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
 			emit message(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
 			return;
 		}
@@ -261,7 +262,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 			playerByPseudo[extraText]->setRights(Player_type_dev);
 		else
 		{
-			receiveSystemText(Chat_type_system,QString("unable to found this rights level: \"%1\"").arg(list.last()));
+			receiveSystemText(QString("unable to found this rights level: \"%1\"").arg(list.last()));
 			emit message(QString("unable to found this rights level: \"%1\"").arg(list.last()));
 			return;
 		}
@@ -269,7 +270,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 	else if(command=="playerlist")
 	{
 		if(playerByPseudo.size()==1)
-			receiveSystemText(Chat_type_system,QString("You are alone on the server!"));
+			receiveSystemText(QString("You are alone on the server!"));
 		else
 		{
 			QStringList playerStringList;
@@ -280,16 +281,16 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 				playerStringList << "<b>"+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+"</b>";
 				++i_playerByPseudo;
 			}
-			receiveSystemText(Chat_type_system,QString("players connected: %1").arg(playerStringList.join(", ")));
+			receiveSystemText(QString("players connected: %1").arg(playerStringList.join(", ")));
 		}
 		return;
 	}
 	else if(command=="playernumber")
 	{
 		if(playerByPseudo.size()==1)
-			receiveSystemText(Chat_type_system,QString("You are alone on the server!"));
+			receiveSystemText(QString("You are alone on the server!"));
 		else
-			receiveSystemText(Chat_type_system,QString("<b>%1</b> players connected").arg(playerByPseudo.size()));
+			receiveSystemText(QString("<b>%1</b> players connected").arg(playerByPseudo.size()));
 		return;
 	}
 	else if(command=="kick")
@@ -297,7 +298,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
 		//drop, and do the command here to separate the loop
 		if(!playerByPseudo.contains(extraText))
 		{
-			receiveSystemText(Chat_type_system,QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
+			receiveSystemText(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
 			emit message(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
 			return;
 		}

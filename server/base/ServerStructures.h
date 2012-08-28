@@ -1,5 +1,5 @@
-#ifndef STRUCTURES_SERVER_H
-#define STRUCTURES_SERVER_H
+#ifndef POKECRAFT_SERVER_STRUCTURES_H
+#define POKECRAFT_SERVER_STRUCTURES_H
 
 #include <QObject>
 #include <QList>

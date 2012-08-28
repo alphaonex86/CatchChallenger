@@ -1,5 +1,5 @@
-#ifndef STRUCTURES_GENERAL_H
-#define STRUCTURES_GENERAL_H
+#ifndef POKECRAFT_GENERAL_STRUCTURES_H
+#define POKECRAFT_GENERAL_STRUCTURES_H
 
 #include <QObject>
 #include <QList>

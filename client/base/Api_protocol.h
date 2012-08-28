@@ -81,28 +81,28 @@ signals:
 	void random_seeds(QByteArray data);
 
 	//map move
-	void insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction);
+	void insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction);
 	void move_player(quint16 id,QList<QPair<quint8,Direction> > movement);
 	void remove_player(quint16 id);
-	void reinsert_player(quint16 id,quint16 x,quint16 y,quint8 direction);
-	void reinsert_player(quint16 id,QString mapName,quint16 x,quint16 y,quint8 direction);
+	void reinsert_player(quint16 id,quint8 x,quint8 y,Pokecraft::Direction direction);
+	void reinsert_player(quint16 id,QString mapName,quint8 x,quint8 y,Pokecraft::Direction direction);
 	void dropAllPlayerOnTheMap();
 
 	//chat
-	void new_chat_text(Chat_type chat_type,QString text,QString pseudo,Player_type type);
-	void new_system_text(Chat_type chat_type,QString text);
+	void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
+	void new_system_text(Pokecraft::Chat_type chat_type,QString text);
 
 	//player info
-	void have_current_player_info(Player_private_and_public_informations info,QString pseudo);
+	void have_current_player_info(Pokecraft::Player_private_and_public_informations info,QString pseudo);
 
 	//datapack
 	void haveTheDatapack();
 	void newFile(const QString &fileName,const QByteArray &data,const quint32 &mtime);
 	void removeFile(QString fileName);
 public slots:
-	void send_player_direction(const Direction &the_direction);
-	void send_player_move(const quint8 &moved_unit,const Direction &direction);
-	void sendChatText(Chat_type chatType,QString text);
+	void send_player_direction(const Pokecraft::Direction &the_direction);
+	void send_player_move(const quint8 &moved_unit,const Pokecraft::Direction &direction);
+	void sendChatText(Pokecraft::Chat_type chatType,QString text);
 	void sendPM(QString text,QString pseudo);
 };
 }

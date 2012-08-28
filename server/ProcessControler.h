@@ -1,5 +1,5 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef POKECRAFT_PROCESSCONTROLER_H
+#define POKECRAFT_PROCESSCONTROLER_H
 
 #include <QCoreApplication>
 

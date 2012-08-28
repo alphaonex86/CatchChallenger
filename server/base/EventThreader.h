@@ -1,5 +1,5 @@
-#ifndef EVENTTHREADER_H
-#define EVENTTHREADER_H
+#ifndef POKECRAFT_EVENTTHREADER_H
+#define POKECRAFT_EVENTTHREADER_H
 
 #include <QThread>
 
