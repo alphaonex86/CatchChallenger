@@ -72,19 +72,6 @@ void ProtocolParsing::setMaxPlayers(quint16 maxPlayers)
 	}
 }
 
-QByteArray ProtocolParsing::toUTF8(const QString &text)
-{
-	if(text.isEmpty() || text.size()>255)
-		return QByteArray();
-	QByteArray returnedData,data;
-	data=text.toUtf8();
-	if(data.size()==0 || data.size()>255)
-		return QByteArray();
-	returnedData[0]=data.size();
-	returnedData+=data;
-	return returnedData;
-}
-
 ProtocolParsingInput::ProtocolParsingInput(QAbstractSocket * socket,PacketModeTransmission packetModeTransmission) :
 	ProtocolParsing(socket)
 {
