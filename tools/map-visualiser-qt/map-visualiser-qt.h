@@ -29,9 +29,10 @@
 #include "mapobject.h"
 #include "objectgroup.h"
 
-#include "general/base/GeneralStructures.h"
-#include "general/base/Map.h"
-#include "general/base/Map_loader.h"
+#include "../../general/base/GeneralStructures.h"
+#include "../../general/base/Map.h"
+#include "../../client/base/Map_client.h"
+#include "../../general/base/Map_loader.h"
 
 #include "isometricrenderer.h"
 #include "map.h"
@@ -80,7 +81,7 @@ private:
     QTimer lookToMove;
     int moveStep;
     Pokecraft::Direction direction;
-    Pokecraft::Map logicalMap;
+    Pokecraft::Map_client logicalMap;
     QSet<int> keyPressed;
 private slots:
     void moveTile();

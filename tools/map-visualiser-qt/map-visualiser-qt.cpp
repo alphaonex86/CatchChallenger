@@ -35,7 +35,7 @@
 #include <QTime>
 #include <QDebug>
 
-#include "general/base/MoveOnTheMap.h"
+#include "../../general/base/MoveOnTheMap.h"
 
 using namespace Tiled;
 
@@ -573,15 +573,6 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
     playerMapObject = new MapObject();
 
-    //the direction
-    direction=Pokecraft::Direction_look_at_bottom;
-    playerMapObject->setTile(playerTileset->tileAt(7));
-
-    //position
-    xPerso=2;
-    yPerso=2;
-    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
-
     delete mRenderer;
     mRenderer = 0;
 
@@ -600,6 +591,28 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     if(!map_loader.tryLoadMap(fileName))
         return;
 
+    //the direction
+    direction=Pokecraft::Direction_look_at_bottom;
+    playerMapObject->setTile(playerTileset->tileAt(7));
+
+    //position
+    if(!map_loader.map_to_send.rescue_points.empty())
+    {
+        xPerso=map_loader.map_to_send.rescue_points.first().x;
+        yPerso=map_loader.map_to_send.rescue_points.first().y;
+    }
+    else if(!map_loader.map_to_send.bot_spawn_points.empty())
+    {
+        xPerso=map_loader.map_to_send.bot_spawn_points.first().x;
+        yPerso=map_loader.map_to_send.bot_spawn_points.first().y;
+    }
+    else
+    {
+        xPerso=2;
+        yPerso=2;
+    }
+    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+
     logicalMap.width                    = map_loader.map_to_send.width;
     logicalMap.height                   = map_loader.map_to_send.height;
     logicalMap.parsed_layer.walkable	= map_loader.map_to_send.parsed_layer.walkable;
@@ -609,6 +622,8 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     logicalMap.border.top.map           = NULL;
     logicalMap.border.right.map         = NULL;
     logicalMap.border.left.map          = NULL;
+    logicalMap.border_semi              = map_loader.map_to_send.border;
+    logicalMap.teleport_semi            = map_loader.map_to_send.teleport;
 
     switch (mMap->orientation()) {
     case Map::Isometric:
