@@ -43,12 +43,17 @@
 #include "tilelayer.h"
 #include "tileset.h"
 
-#ifndef TMXVIEWER_H
-#define TMXVIEWER_H
+#ifndef MAP_VISUALISER_H
+#define MAP_VISUALISER_H
 
 #include <QGraphicsView>
 #include <QTimer>
 #include <QKeyEvent>
+#include <QGraphicsItem>
+#include <QRectF>
+#include <QPainter>
+#include <QStyleOptionGraphicsItem>
+#include <QWidget>
 
 namespace Tiled {
 class Map;
@@ -56,6 +61,15 @@ class MapRenderer;
 }
 
 #define STEPPERSO 1
+
+class MapItem : public QGraphicsItem
+{
+public:
+    MapItem(QGraphicsItem *parent = 0);
+    void addMap(Tiled::Map *map, Tiled::MapRenderer *renderer);
+    QRectF boundingRect() const;
+    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
+};
 
 class MapVisualiserQt : public QGraphicsView
 {
@@ -70,24 +84,38 @@ public:
     void viewMap(const QString &fileName);
 
 private:
+    struct Map_full
+    {
+        Pokecraft::Map_client logicalMap;
+        Tiled::Map * tiledMap;
+        Tiled::MapRenderer * tiledRender;
+        Tiled::ObjectGroup * objectGroup;
+        QString fileName;
+    };
+
+    Tiled::MapReader reader;
     QGraphicsScene *mScene;
-    Tiled::Map *mMap;
-    Tiled::MapRenderer *mRenderer;
+    MapItem* mapItem;
+
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
-    QTimer timer;
-    float xPerso,yPerso;
-    bool inMove;
-    QTimer moveTimer;
-    QTimer lookToMove;
     int moveStep;
     Pokecraft::Direction direction;
-    Pokecraft::Map_client logicalMap;
+    float xPerso,yPerso;
+    bool inMove;
+
+    QTimer timer;
+    QTimer moveTimer;
+    QTimer lookToMove;
     QSet<int> keyPressed;
+
+    Map_full current_map;
+    QList<Map_full> other_map;
 private slots:
-    void moveTile();
+    bool loadOtherMap(const QString &fileName);
+    void linkOtherMap();
     void moveStepSlot(bool justUpdateTheTile=false);
     void transformLookToMove();
 };
 
-#endif // TMXVIEWER_H
+#endif
