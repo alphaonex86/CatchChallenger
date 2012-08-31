@@ -265,7 +265,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 									#endif
 									if(property_text.contains("map") && property_text.contains("x") && property_text.contains("y"))
 									{
-										Map_to_send::Temp_teleport new_tp;
+										Map_semi_teleport new_tp;
 										new_tp.destination_x = property_text["x"].toUInt(&ok);
 										if(ok)
 										{

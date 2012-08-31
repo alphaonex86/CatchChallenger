@@ -3,6 +3,8 @@
 
 #include <QString>
 #include <QHash>
+#include <QList>
+#include <QByteArray>
 
 namespace Pokecraft {
 class Map
