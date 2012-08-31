@@ -90,7 +90,6 @@ private:
         Tiled::Map * tiledMap;
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
-        QString fileName;
     };
 
     Tiled::MapReader reader;
@@ -109,10 +108,10 @@ private:
     QTimer lookToMove;
     QSet<int> keyPressed;
 
-    Map_full current_map;
-    QList<Map_full> other_map;
+    Map_full *current_map;
+    QHash<QString,Map_full *> other_map;
 private slots:
-    bool loadOtherMap(const QString &fileName);
+    QString loadOtherMap(const QString &fileName, const bool &isCurrentMap=false);
     void linkOtherMap();
     void moveStepSlot(bool justUpdateTheTile=false);
     void transformLookToMove();

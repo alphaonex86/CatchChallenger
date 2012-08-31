@@ -142,6 +142,13 @@ struct Map_semi_border
 	Map_semi_border_content_left_right right;
 };
 
+struct Map_semi_teleport
+{
+    COORD_TYPE source_x,source_y;
+    COORD_TYPE destination_x,destination_y;
+    QString map;
+};
+
 struct Map_to_send
 {
 	Map_semi_border border;
@@ -160,13 +167,7 @@ struct Map_to_send
 	};
 	MapToSend_ParsedLayer parsed_layer;
 
-	struct Temp_teleport
-	{
-		COORD_TYPE source_x,source_y;
-		COORD_TYPE destination_x,destination_y;
-		QString map;
-	};
-	QList<Temp_teleport> teleport;
+    QList<Map_semi_teleport> teleport;
 
 	struct Rescue_Point
 	{
