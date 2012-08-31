@@ -202,83 +202,200 @@ MapVisualiserQt::~MapVisualiserQt()
     delete tiledRender;*/
 }
 
-bool MapVisualiserQt::loadOtherMap(const QString &fileName)
+QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCurrentMap)
 {
-    Map_full tempMapObject;
+    Map_full *tempMapObject=new Map_full();
     QFileInfo fileInformations(fileName);
-    tempMapObject.fileName=fileInformations.absoluteFilePath();
+    QString resolvedFileName=fileInformations.absoluteFilePath();
+    if(other_map.contains(resolvedFileName))
+        return resolvedFileName;
 
     //load the map
-    tempMapObject.tiledMap = reader.readMap(tempMapObject.fileName);
-    if (!tempMapObject.tiledMap)
+    tempMapObject->tiledMap = reader.readMap(resolvedFileName);
+    if (!tempMapObject->tiledMap)
     {
-        qDebug() << QString("Unable to load the map: %1, error: %2").arg(tempMapObject.fileName).arg(reader.errorString());
-        return false;
+        qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
+        return QString();
     }
     Pokecraft::Map_loader map_loader;
-    if(!map_loader.tryLoadMap(tempMapObject.fileName))
+    if(!map_loader.tryLoadMap(resolvedFileName))
     {
-        qDebug() << QString("Unable to load the map: %1, error: %2").arg(tempMapObject.fileName).arg(map_loader.errorString());
-        delete tempMapObject.tiledMap;
-        return false;
+        qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString());
+        delete tempMapObject->tiledMap;
+        return QString();
     }
 
     //copy the variables
-    tempMapObject.logicalMap.width                    = map_loader.map_to_send.width;
-    tempMapObject.logicalMap.height                   = map_loader.map_to_send.height;
-    tempMapObject.logicalMap.parsed_layer.walkable    = map_loader.map_to_send.parsed_layer.walkable;
-    tempMapObject.logicalMap.parsed_layer.water       = map_loader.map_to_send.parsed_layer.water;
-    tempMapObject.logicalMap.map_file                 = fileName;
-    tempMapObject.logicalMap.border.bottom.map        = NULL;
-    tempMapObject.logicalMap.border.top.map           = NULL;
-    tempMapObject.logicalMap.border.right.map         = NULL;
-    tempMapObject.logicalMap.border.left.map          = NULL;
-    tempMapObject.logicalMap.border_semi              = map_loader.map_to_send.border;
-    tempMapObject.logicalMap.teleport_semi            = map_loader.map_to_send.teleport;
-    tempMapObject.logicalMap.rescue_points            = map_loader.map_to_send.rescue_points;
-    tempMapObject.logicalMap.bot_spawn_points         = map_loader.map_to_send.bot_spawn_points;
+    tempMapObject->logicalMap.width                    = map_loader.map_to_send.width;
+    tempMapObject->logicalMap.height                   = map_loader.map_to_send.height;
+    tempMapObject->logicalMap.parsed_layer.walkable    = map_loader.map_to_send.parsed_layer.walkable;
+    tempMapObject->logicalMap.parsed_layer.water       = map_loader.map_to_send.parsed_layer.water;
+    tempMapObject->logicalMap.map_file                 = resolvedFileName;
+    tempMapObject->logicalMap.border.bottom.map        = NULL;
+    tempMapObject->logicalMap.border.top.map           = NULL;
+    tempMapObject->logicalMap.border.right.map         = NULL;
+    tempMapObject->logicalMap.border.left.map          = NULL;
+
+    //load the resolved border and teleporter
+    tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
+    tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName).absoluteFilePath();
+    tempMapObject->logicalMap.border_semi.top.fileName   =QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.top.fileName).absoluteFilePath();
+    tempMapObject->logicalMap.border_semi.left.fileName  =QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.left.fileName).absoluteFilePath();
+    tempMapObject->logicalMap.border_semi.right.fileName =QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.right.fileName).absoluteFilePath();
+    int index=0;
+    while(index<tempMapObject->logicalMap.teleport_semi.size())
+    {
+        tempMapObject->logicalMap.teleport_semi[index].map              = QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map).absoluteFilePath();
+        index++;
+    }
+
+    tempMapObject->logicalMap.rescue_points            = map_loader.map_to_send.rescue_points;
+    tempMapObject->logicalMap.bot_spawn_points         = map_loader.map_to_send.bot_spawn_points;
 
     //load the render
-    switch (tempMapObject.tiledMap->orientation()) {
+    switch (tempMapObject->tiledMap->orientation()) {
     case Map::Isometric:
-        tempMapObject.tiledRender = new IsometricRenderer(tempMapObject.tiledMap);
+        tempMapObject->tiledRender = new IsometricRenderer(tempMapObject->tiledMap);
         break;
     case Map::Orthogonal:
     default:
-        tempMapObject.tiledRender = new OrthogonalRenderer(tempMapObject.tiledMap);
+        tempMapObject->tiledRender = new OrthogonalRenderer(tempMapObject->tiledMap);
         break;
     }
-    tempMapObject.tiledRender->setObjectBorder(false);
+    tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
-    tempMapObject.objectGroup = new ObjectGroup();
-    int index=0;
-    while(index<tempMapObject.tiledMap->layerCount())
+    tempMapObject->objectGroup = new ObjectGroup();
+    index=0;
+    while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(tempMapObject.tiledMap->layerAt(index)->name()=="Collisions")
+        if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
         {
-            tempMapObject.tiledMap->insertLayer(index+1,tempMapObject.objectGroup);
+            tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
             break;
         }
         index++;
     }
 
-    linkOtherMap();
-    other_map << tempMapObject;
-    return true;
+    other_map[resolvedFileName]=tempMapObject;
+    if(isCurrentMap)
+        current_map=tempMapObject;
+
+    QString mapIndex;
+
+    if(isCurrentMap)
+    {
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
+        {
+            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && current_map->logicalMap.border_semi.bottom.fileName==mapIndex)
+                {
+                    current_map->logicalMap.border.bottom.map=other_map[mapIndex]->logicalMap.border.top.map;
+                    int offset=current_map->logicalMap.border.bottom.x_offset-other_map[mapIndex]->logicalMap.border.top.x_offset;
+                    current_map->logicalMap.border.bottom.x_offset=offset;
+                    other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
+                }
+            }
+        }
+
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
+        {
+            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.top.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && current_map->logicalMap.border_semi.top.fileName==mapIndex)
+                {
+                    current_map->logicalMap.border.top.map=other_map[mapIndex]->logicalMap.border.bottom.map;
+                    int offset=current_map->logicalMap.border.top.x_offset-other_map[mapIndex]->logicalMap.border.bottom.x_offset;
+                    current_map->logicalMap.border.top.x_offset=offset;
+                    other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
+                }
+            }
+        }
+
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
+        {
+            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.left.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && current_map->logicalMap.border_semi.left.fileName==mapIndex)
+                {
+                    current_map->logicalMap.border.left.map=other_map[mapIndex]->logicalMap.border.right.map;
+                    int offset=current_map->logicalMap.border.left.y_offset-other_map[mapIndex]->logicalMap.border.right.y_offset;
+                    current_map->logicalMap.border.left.y_offset=offset;
+                    other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
+                }
+            }
+        }
+
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
+        {
+            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.right.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && current_map->logicalMap.border_semi.right.fileName==mapIndex)
+                {
+                    current_map->logicalMap.border.right.map=other_map[mapIndex]->logicalMap.border.left.map;
+                    int offset=current_map->logicalMap.border.right.y_offset-other_map[mapIndex]->logicalMap.border.left.y_offset;
+                    current_map->logicalMap.border.right.y_offset=offset;
+                    other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
+                }
+            }
+        }
+    }
+
+    if(isCurrentMap)
+    {
+        int index=0;
+        while(index<tempMapObject->logicalMap.teleport_semi.size())
+        {
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.teleport_semi[index].map);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(tempMapObject->logicalMap.teleport_semi[index].destination_x<other_map[mapIndex]->logicalMap.width && tempMapObject->logicalMap.teleport_semi[index].destination_y<other_map[mapIndex]->logicalMap.height)
+                {
+                    int virtual_position=tempMapObject->logicalMap.teleport_semi[index].source_x+tempMapObject->logicalMap.teleport_semi[index].source_y*tempMapObject->logicalMap.width;
+                    tempMapObject->logicalMap.teleporter[virtual_position].map=&other_map[mapIndex]->logicalMap;
+                    tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
+                    tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
+                }
+            }
+            index++;
+        }
+    }
+
+    if(isCurrentMap)
+        other_map.remove(resolvedFileName);
+    return resolvedFileName;
 }
 
 void MapVisualiserQt::linkOtherMap()
 {
-    if(other_map.isEmpty())
-        return;
-
-    //if is border of actual map, render it
-    //mapItem->addMap(other_map.last().tiledMap,other_map.last().tiledRender);
 }
 
 void MapVisualiserQt::viewMap(const QString &fileName)
 {
+    QTime startTime;
+    startTime.restart();
+
+    mapItem=new MapItem();
+
     playerTileset = new Tileset("player",16,24);
     playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
     playerMapObject = new MapObject();
@@ -286,44 +403,35 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     mScene->clear();
     centerOn(0, 0);
 
-    QTime startTime;
-    startTime.restart();
-
-    if(!loadOtherMap(fileName))
+    if(loadOtherMap(fileName,true).isEmpty())
         return;
-    current_map=other_map.first();
-    other_map.removeFirst();
 
     //the direction
     direction=Pokecraft::Direction_look_at_bottom;
     playerMapObject->setTile(playerTileset->tileAt(7));
 
     //position
-    if(!current_map.logicalMap.rescue_points.empty())
+    if(!current_map->logicalMap.rescue_points.empty())
     {
-        xPerso=current_map.logicalMap.rescue_points.first().x;
-        yPerso=current_map.logicalMap.rescue_points.first().y;
+        xPerso=current_map->logicalMap.rescue_points.first().x;
+        yPerso=current_map->logicalMap.rescue_points.first().y;
     }
-    else if(!current_map.logicalMap.bot_spawn_points.empty())
+    else if(!current_map->logicalMap.bot_spawn_points.empty())
     {
-        xPerso=current_map.logicalMap.bot_spawn_points.first().x;
-        yPerso=current_map.logicalMap.bot_spawn_points.first().y;
+        xPerso=current_map->logicalMap.bot_spawn_points.first().x;
+        yPerso=current_map->logicalMap.bot_spawn_points.first().y;
     }
     else
     {
-        xPerso=current_map.logicalMap.width/2;
-        yPerso=current_map.logicalMap.height/2;
+        xPerso=current_map->logicalMap.width/2;
+        yPerso=current_map->logicalMap.height/2;
     }
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
-    current_map.objectGroup->addObject(playerMapObject);
+    current_map->objectGroup->addObject(playerMapObject);
 
-    mapItem=new MapItem();
-    mapItem->addMap(current_map.tiledMap,current_map.tiledRender);
+    mapItem->addMap(current_map->tiledMap,current_map->tiledRender);
     qDebug() << startTime.elapsed();
     mScene->addItem(mapItem);
-
-/*    if(!logicalMap.border_semi.bottom.fileName.isEmpty())
-        loadOtherMap(logicalMap.border_semi.bottom.fileName);*/
 }
 
 /*    int index=0;
@@ -417,7 +525,7 @@ void MapVisualiserQt::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_left)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the left!
             //the first step
             direction=Pokecraft::Direction_move_at_left;
@@ -438,7 +546,7 @@ void MapVisualiserQt::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_right)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the right!
             //the first step
             direction=Pokecraft::Direction_move_at_right;
@@ -459,7 +567,7 @@ void MapVisualiserQt::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_top)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the top!
             //the first step
             direction=Pokecraft::Direction_move_at_top;
@@ -480,7 +588,7 @@ void MapVisualiserQt::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_bottom)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=Pokecraft::Direction_move_at_bottom;
@@ -607,7 +715,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
         if(keyPressed.contains(16777234))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_left;
                 playerMapObject->setTile(playerTileset->tileAt(10));
@@ -624,7 +732,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
         else if(keyPressed.contains(16777236))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_right;
                 playerMapObject->setTile(playerTileset->tileAt(4));
@@ -641,7 +749,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
         else if(keyPressed.contains(16777235))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_top;
                 playerMapObject->setTile(playerTileset->tileAt(1));
@@ -658,7 +766,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
         else if(keyPressed.contains(16777237))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map.logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_bottom;
                 playerMapObject->setTile(playerTileset->tileAt(7));
@@ -716,7 +824,7 @@ void MapVisualiserQt::transformLookToMove()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map.logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_left;
             inMove=true;
@@ -725,7 +833,7 @@ void MapVisualiserQt::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map.logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_right;
             inMove=true;
@@ -734,7 +842,7 @@ void MapVisualiserQt::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map.logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_top;
             inMove=true;
@@ -743,7 +851,7 @@ void MapVisualiserQt::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map.logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_bottom;
             inMove=true;
