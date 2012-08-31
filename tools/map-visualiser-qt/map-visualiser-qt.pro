@@ -20,7 +20,7 @@ SOURCES += main.cpp \
     ../../general/base/Map.cpp \
     ../../general/base/DebugClass.cpp \
     ../../general/base/FacilityLib.cpp \
-    ../base/Map_client.cpp
+    ../../client/base/Map_client.cpp
 
 HEADERS += map-visualiser-qt.h \
     ../../general/base/Map_loader.h \
@@ -31,7 +31,7 @@ HEADERS += map-visualiser-qt.h \
     ../../client/base/ClientStructures.h \
     ../../general/base/DebugClass.h \
     ../../general/base/FacilityLib.h \
-    ../base/Map_client.h
+    ../../client/base/Map_client.h
 
 RESOURCES += \
     resources.qrc
