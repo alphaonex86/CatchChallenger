@@ -66,6 +66,7 @@ public:
     ~MapVisualiserQt();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
+    void keyPressParse();
     void viewMap(const QString &fileName);
 
 private:
