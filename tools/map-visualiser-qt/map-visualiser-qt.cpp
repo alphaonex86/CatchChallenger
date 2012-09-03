@@ -226,26 +226,35 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCur
     }
 
     //copy the variables
-    tempMapObject->logicalMap.width                    = map_loader.map_to_send.width;
-    tempMapObject->logicalMap.height                   = map_loader.map_to_send.height;
-    tempMapObject->logicalMap.parsed_layer.walkable    = map_loader.map_to_send.parsed_layer.walkable;
-    tempMapObject->logicalMap.parsed_layer.water       = map_loader.map_to_send.parsed_layer.water;
-    tempMapObject->logicalMap.map_file                 = resolvedFileName;
-    tempMapObject->logicalMap.border.bottom.map        = NULL;
-    tempMapObject->logicalMap.border.top.map           = NULL;
-    tempMapObject->logicalMap.border.right.map         = NULL;
-    tempMapObject->logicalMap.border.left.map          = NULL;
+    tempMapObject->logicalMap.width                                 = map_loader.map_to_send.width;
+    tempMapObject->logicalMap.height                                = map_loader.map_to_send.height;
+    tempMapObject->logicalMap.parsed_layer.walkable                 = map_loader.map_to_send.parsed_layer.walkable;
+    tempMapObject->logicalMap.parsed_layer.water                    = map_loader.map_to_send.parsed_layer.water;
+    tempMapObject->logicalMap.map_file                              = resolvedFileName;
+    tempMapObject->logicalMap.border.bottom.map                     = NULL;
+    tempMapObject->logicalMap.border.top.map                        = NULL;
+    tempMapObject->logicalMap.border.right.map                      = NULL;
+    tempMapObject->logicalMap.border.left.map                       = NULL;
 
-    //load the resolved border and teleporter
+    //load the string
     tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
-    tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName).absoluteFilePath();
-    tempMapObject->logicalMap.border_semi.top.fileName   =QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.top.fileName).absoluteFilePath();
-    tempMapObject->logicalMap.border_semi.left.fileName  =QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.left.fileName).absoluteFilePath();
-    tempMapObject->logicalMap.border_semi.right.fileName =QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.right.fileName).absoluteFilePath();
+    if(!map_loader.map_to_send.border.bottom.fileName.isEmpty())
+        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName;
+    if(!map_loader.map_to_send.border.top.fileName.isEmpty())
+        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.top.fileName;
+    if(!map_loader.map_to_send.border.right.fileName.isEmpty())
+        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.right.fileName;
+    if(!map_loader.map_to_send.border.left.fileName.isEmpty())
+        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.left.fileName;
+    qDebug() << QString("moveStepSlot(): tempMapObject->logicalMap.border_semi.bottom.fileName: '%1'").arg(tempMapObject->logicalMap.border_semi.bottom.fileName);
+
+    //load the string
     int index=0;
-    while(index<tempMapObject->logicalMap.teleport_semi.size())
+    while(index<map_loader.map_to_send.teleport.size())
     {
-        tempMapObject->logicalMap.teleport_semi[index].map              = QFileInfo(resolvedFileName+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map).absoluteFilePath();
+        tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
+        tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map;
+        qDebug() << QString("moveStepSlot(): resolvedFileName: '%1'").arg(tempMapObject->logicalMap.teleport_semi.at(index).map);
         index++;
     }
 
@@ -283,12 +292,13 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCur
 
     QString mapIndex;
 
+    //load the pointer
     if(isCurrentMap)
     {
         //if have border
         if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName);
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
             {
@@ -306,7 +316,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCur
         //if have border
         if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.top.fileName);
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
             {
@@ -324,7 +334,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCur
         //if have border
         if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.left.fileName);
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
             {
@@ -342,7 +352,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCur
         //if have border
         if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(resolvedFileName+"/"+tempMapObject->logicalMap.border_semi.right.fileName);
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
             {
@@ -356,6 +366,16 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCur
                 }
             }
         }
+
+        //load the pointer
+        /*int index=0;
+        while(index<map_loader.map_to_send.teleport.size())
+        {
+            tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
+            tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map;
+            qDebug() << QString("moveStepSlot(): resolvedFileName: '%1'").arg(tempMapObject->logicalMap.teleport_semi.at(index).map);
+            index++;
+        }*/
     }
 
     if(isCurrentMap)
@@ -685,33 +705,49 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
     //if have finish the step
     if(moveStep>3)
     {
+        Pokecraft::Map * old_map=&current_map->logicalMap;
+        Pokecraft::Map * map=&current_map->logicalMap;
         //set the final value (direction, position, ...)
         switch(direction)
         {
             case Pokecraft::Direction_move_at_left:
             direction=Pokecraft::Direction_look_at_left;
-            xPerso-=1;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&xPerso,&yPerso);
             break;
             case Pokecraft::Direction_move_at_right:
             direction=Pokecraft::Direction_look_at_right;
-            xPerso+=1;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&xPerso,&yPerso);
             break;
             case Pokecraft::Direction_move_at_top:
             direction=Pokecraft::Direction_look_at_top;
-            yPerso-=1;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&xPerso,&yPerso);
             break;
             case Pokecraft::Direction_move_at_bottom:
             direction=Pokecraft::Direction_look_at_bottom;
-            yPerso+=1;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&xPerso,&yPerso);
             break;
             default:
             qDebug() << QString("moveStepSlot(): moveStep: %1, justUpdateTheTile: %2, wrong direction when moveStep>2").arg(moveStep).arg(justUpdateTheTile);
             return;
         }
+        //if the map have changed
+        if(old_map!=map)
+        {
+            if(!other_map.contains(map->map_file))
+                qDebug() << QString("map changed not located: %1").arg(map->map_file);
+            else
+            {
+                qDebug() << QString("map changed located: %1").arg(map->map_file);
+                current_map->objectGroup->removeObject(playerMapObject);
+                other_map[current_map->logicalMap.map_file]=current_map;
+                current_map=other_map[map->map_file];
+                current_map->objectGroup->addObject(playerMapObject);
+            }
+        }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
 
-	//check if one arrow key is pressed to continue to move into this direction
+        //check if one arrow key is pressed to continue to move into this direction
         if(keyPressed.contains(16777234))
         {
             //if can go, then do the move
