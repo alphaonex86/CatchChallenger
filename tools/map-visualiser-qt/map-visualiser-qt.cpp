@@ -168,6 +168,7 @@ void MapItem::removeMap(Map *map)
         delete values.at(index);
         index++;
     }
+    displayed_layer.remove(map);
 }
 
 QRectF MapItem::boundingRect() const
@@ -215,7 +216,7 @@ MapVisualiserQt::~MapVisualiserQt()
     delete tiledRender;*/
 }
 
-QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCurrentMap)
+QString MapVisualiserQt::loadOtherMap(const QString &fileName)
 {
     Map_full *tempMapObject=new Map_full();
     QFileInfo fileInformations(fileName);
@@ -300,126 +301,133 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName, const bool &isCur
     }
 
     other_map[resolvedFileName]=tempMapObject;
-    if(isCurrentMap)
-        current_map=tempMapObject;
 
-    QString mapIndex;
-
-    //load the pointer
-    if(isCurrentMap)
-    {
-        //if have border
-        if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
-        {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
-            {
-                //if both border match
-                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && current_map->logicalMap.border_semi.bottom.fileName==mapIndex)
-                {
-                    current_map->logicalMap.border.bottom.map=other_map[mapIndex]->logicalMap.border.top.map;
-                    int offset=current_map->logicalMap.border.bottom.x_offset-other_map[mapIndex]->logicalMap.border.top.x_offset;
-                    current_map->logicalMap.border.bottom.x_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
-                }
-            }
-        }
-
-        //if have border
-        if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
-        {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
-            {
-                //if both border match
-                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && current_map->logicalMap.border_semi.top.fileName==mapIndex)
-                {
-                    current_map->logicalMap.border.top.map=other_map[mapIndex]->logicalMap.border.bottom.map;
-                    int offset=current_map->logicalMap.border.top.x_offset-other_map[mapIndex]->logicalMap.border.bottom.x_offset;
-                    current_map->logicalMap.border.top.x_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
-                }
-            }
-        }
-
-        //if have border
-        if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
-        {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
-            {
-                //if both border match
-                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && current_map->logicalMap.border_semi.left.fileName==mapIndex)
-                {
-                    current_map->logicalMap.border.left.map=other_map[mapIndex]->logicalMap.border.right.map;
-                    int offset=current_map->logicalMap.border.left.y_offset-other_map[mapIndex]->logicalMap.border.right.y_offset;
-                    current_map->logicalMap.border.left.y_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
-                }
-            }
-        }
-
-        //if have border
-        if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
-        {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
-            {
-                //if both border match
-                if(resolvedFileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && current_map->logicalMap.border_semi.right.fileName==mapIndex)
-                {
-                    current_map->logicalMap.border.right.map=other_map[mapIndex]->logicalMap.border.left.map;
-                    int offset=current_map->logicalMap.border.right.y_offset-other_map[mapIndex]->logicalMap.border.left.y_offset;
-                    current_map->logicalMap.border.right.y_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
-                }
-            }
-        }
-
-        //load the pointer
-        /*int index=0;
-        while(index<map_loader.map_to_send.teleport.size())
-        {
-            tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
-            tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map;
-            qDebug() << QString("moveStepSlot(): resolvedFileName: '%1'").arg(tempMapObject->logicalMap.teleport_semi.at(index).map);
-            index++;
-        }*/
-    }
-
-    if(isCurrentMap)
-    {
-        int index=0;
-        while(index<tempMapObject->logicalMap.teleport_semi.size())
-        {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.teleport_semi[index].map);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
-            {
-                //if both border match
-                if(tempMapObject->logicalMap.teleport_semi[index].destination_x<other_map[mapIndex]->logicalMap.width && tempMapObject->logicalMap.teleport_semi[index].destination_y<other_map[mapIndex]->logicalMap.height)
-                {
-                    int virtual_position=tempMapObject->logicalMap.teleport_semi[index].source_x+tempMapObject->logicalMap.teleport_semi[index].source_y*tempMapObject->logicalMap.width;
-                    tempMapObject->logicalMap.teleporter[virtual_position].map=&other_map[mapIndex]->logicalMap;
-                    tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
-                    tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
-                }
-            }
-            index++;
-        }
-    }
-
-    if(isCurrentMap)
-        other_map.remove(resolvedFileName);
     return resolvedFileName;
 }
 
-void MapVisualiserQt::linkOtherMap()
+void MapVisualiserQt::loadCurrentMap(const QString &fileName)
 {
+    if(!other_map.contains(fileName))
+    {
+        qDebug() << QString("the current map is unable to load: %1").arg(fileName);
+        return;
+    }
+    QString mapIndex;
+    Map_full *tempMapObject=other_map[fileName];
+
+    //if have border
+    if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
+    {
+        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
+        //if is correctly loaded
+        if(!mapIndex.isEmpty())
+        {
+            //if both border match
+            if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && current_map->logicalMap.border_semi.bottom.fileName==mapIndex)
+            {
+                current_map->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
+                int offset=current_map->logicalMap.border.bottom.x_offset-other_map[mapIndex]->logicalMap.border.top.x_offset;
+                current_map->logicalMap.border.bottom.x_offset=offset;
+                other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
+            }
+        }
+    }
+
+    //if have border
+    if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
+    {
+        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
+        //if is correctly loaded
+        if(!mapIndex.isEmpty())
+        {
+            //if both border match
+            if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && current_map->logicalMap.border_semi.top.fileName==mapIndex)
+            {
+                current_map->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
+                int offset=current_map->logicalMap.border.top.x_offset-other_map[mapIndex]->logicalMap.border.bottom.x_offset;
+                current_map->logicalMap.border.top.x_offset=offset;
+                other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
+            }
+        }
+    }
+
+    //if have border
+    if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
+    {
+        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
+        //if is correctly loaded
+        if(!mapIndex.isEmpty())
+        {
+            //if both border match
+            if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && current_map->logicalMap.border_semi.left.fileName==mapIndex)
+            {
+                current_map->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
+                int offset=current_map->logicalMap.border.left.y_offset-other_map[mapIndex]->logicalMap.border.right.y_offset;
+                current_map->logicalMap.border.left.y_offset=offset;
+                other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
+            }
+        }
+    }
+
+    //if have border
+    if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
+    {
+        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
+        //if is correctly loaded
+        if(!mapIndex.isEmpty())
+        {
+            //if both border match
+            if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && current_map->logicalMap.border_semi.right.fileName==mapIndex)
+            {
+                current_map->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
+                int offset=current_map->logicalMap.border.right.y_offset-other_map[mapIndex]->logicalMap.border.left.y_offset;
+                current_map->logicalMap.border.right.y_offset=offset;
+                other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
+            }
+        }
+    }
+
+    int index=0;
+    while(index<tempMapObject->logicalMap.teleport_semi.size())
+    {
+        mapIndex=loadOtherMap(tempMapObject->logicalMap.teleport_semi[index].map);
+        //if is correctly loaded
+        if(!mapIndex.isEmpty())
+        {
+            //if both border match
+            if(tempMapObject->logicalMap.teleport_semi[index].destination_x<other_map[mapIndex]->logicalMap.width && tempMapObject->logicalMap.teleport_semi[index].destination_y<other_map[mapIndex]->logicalMap.height)
+            {
+                int virtual_position=tempMapObject->logicalMap.teleport_semi[index].source_x+tempMapObject->logicalMap.teleport_semi[index].source_y*tempMapObject->logicalMap.width;
+                tempMapObject->logicalMap.teleporter[virtual_position].map=&other_map[mapIndex]->logicalMap;
+                tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
+                tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
+            }
+        }
+        index++;
+    }
+}
+
+void MapVisualiserQt::unloadCurrentMap(const QString &fileName)
+{
+    Map_full *tempMapObject;
+    if(!other_map.contains(fileName))
+    {
+        if(current_map->logicalMap.map_file!=fileName)
+        {
+            qDebug() << QString("the current map is unable to load: %1").arg(fileName);
+            return;
+        }
+        else
+            tempMapObject=current_map;
+    }
+    else
+        tempMapObject=other_map[fileName];
+
+    tempMapObject->logicalMap.border.bottom.map=NULL;
+    tempMapObject->logicalMap.border.top.map=NULL;
+    tempMapObject->logicalMap.border.left.map=NULL;
+    tempMapObject->logicalMap.border.right.map=NULL;
+    tempMapObject->logicalMap.teleporter.clear();
 }
 
 void MapVisualiserQt::viewMap(const QString &fileName)
@@ -436,8 +444,12 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     mScene->clear();
     centerOn(0, 0);
 
-    if(loadOtherMap(fileName,true).isEmpty())
+    QString current_map_fileName=loadOtherMap(fileName);
+    if(current_map_fileName.isEmpty())
         return;
+    current_map=other_map[current_map_fileName];
+    other_map.remove(current_map_fileName);
+    loadCurrentMap(current_map->logicalMap.map_file);
 
     //the direction
     direction=Pokecraft::Direction_look_at_bottom;
@@ -524,7 +536,7 @@ void MapVisualiserQt::displayMap()
             qDebug() << QString("remove to display the map: %1").arg((*i)->logicalMap.map_file);
             mapItem->removeMap((*i)->tiledMap);
             displayed_map.remove(*i);
-            //i = displayed_map.constBegin()//needed?
+            i = displayed_map.constBegin();//needed
         }
         else
            ++i;
@@ -810,15 +822,18 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
         //if the map have changed
         if(old_map!=map)
         {
+            loadOtherMap(map->map_file);
             if(!other_map.contains(map->map_file))
                 qDebug() << QString("map changed not located: %1").arg(map->map_file);
             else
             {
                 qDebug() << QString("map changed located: %1").arg(map->map_file);
+                unloadCurrentMap(current_map->logicalMap.map_file);
                 current_map->objectGroup->removeObject(playerMapObject);
                 other_map[current_map->logicalMap.map_file]=current_map;
                 current_map=other_map[map->map_file];
                 current_map->objectGroup->addObject(playerMapObject);
+                loadCurrentMap(current_map->logicalMap.map_file);
                 displayMap();
             }
         }
@@ -900,11 +915,13 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
             playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
             inMove=false;
         }
+        qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
     }
     else
         moveTimer.start();
 
-    /*qDebug() << QString("xPerso: %1, yPerso: %2").arg(xPerso).arg(yPerso);
+    /*
+    qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
     int y=0;
     while(y<logicalMap.height)
     {
