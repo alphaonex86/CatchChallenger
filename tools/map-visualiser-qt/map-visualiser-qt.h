@@ -117,8 +117,9 @@ private:
     QHash<QString,Map_full *> other_map;
     QSet<Map_full *> displayed_map;
 private slots:
-    QString loadOtherMap(const QString &fileName, const bool &isCurrentMap=false);
-    void linkOtherMap();
+    QString loadOtherMap(const QString &fileName);
+    void loadCurrentMap(const QString &fileName);
+    void unloadCurrentMap(const QString &fileName);
     void moveStepSlot(bool justUpdateTheTile=false);
     void transformLookToMove();
 };
