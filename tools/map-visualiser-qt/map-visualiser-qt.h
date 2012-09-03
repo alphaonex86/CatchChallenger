@@ -100,7 +100,7 @@ private:
     Tiled::Tileset * playerTileset;
     int moveStep;
     Pokecraft::Direction direction;
-    float xPerso,yPerso;
+    quint8 xPerso,yPerso;
     bool inMove;
 
     QTimer timer;
