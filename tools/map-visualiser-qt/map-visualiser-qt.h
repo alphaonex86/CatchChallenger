@@ -70,6 +70,7 @@ public:
     MapItem(QGraphicsItem *parent = 0);
     void addMap(Tiled::Map *map, Tiled::MapRenderer *renderer);
     void removeMap(Tiled::Map *map);
+    void setMapPosition(Tiled::Map *map,QString fileName, qint16 x, qint16 y);
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 private:

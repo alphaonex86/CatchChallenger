@@ -171,6 +171,18 @@ void MapItem::removeMap(Map *map)
     displayed_layer.remove(map);
 }
 
+void MapItem::setMapPosition(Tiled::Map *map,QString fileName,qint16 x,qint16 y)
+{
+    qDebug() << QString("setMapPosition(%1,%2,%3)").arg(fileName).arg(x).arg(y);
+    QList<QGraphicsItem *> values = displayed_layer.values(map);
+    int index=0;
+    while(index<values.size())
+    {
+        values.at(index)->setPos(x*16,y*16);
+        index++;
+    }
+}
+
 QRectF MapItem::boundingRect() const
 {
     return QRectF();
@@ -253,22 +265,21 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
     //load the string
     tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
     if(!map_loader.map_to_send.border.bottom.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName;
+        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.bottom.fileName).absoluteFilePath();
     if(!map_loader.map_to_send.border.top.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.top.fileName;
+        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.top.fileName).absoluteFilePath();
     if(!map_loader.map_to_send.border.right.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.right.fileName;
+        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.right.fileName).absoluteFilePath();
     if(!map_loader.map_to_send.border.left.fileName.isEmpty())
-        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.left.fileName;
-    qDebug() << QString("moveStepSlot(): tempMapObject->logicalMap.border_semi.bottom.fileName: '%1'").arg(tempMapObject->logicalMap.border_semi.bottom.fileName);
+        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.left.fileName).absoluteFilePath();
 
     //load the string
     int index=0;
     while(index<map_loader.map_to_send.teleport.size())
     {
         tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
-        tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map;
-        qDebug() << QString("moveStepSlot(): resolvedFileName: '%1'").arg(tempMapObject->logicalMap.teleport_semi.at(index).map);
+        tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map).absoluteFilePath();
+        //qDebug() << QString("moveStepSlot(): resolvedFileName: '%1'").arg(tempMapObject->logicalMap.teleport_semi.at(index).map);
         index++;
     }
 
@@ -307,13 +318,22 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
 
 void MapVisualiserQt::loadCurrentMap(const QString &fileName)
 {
+    qDebug() << QString("loadCurrentMap(%1)").arg(fileName);
+    Map_full *tempMapObject;
     if(!other_map.contains(fileName))
     {
-        qDebug() << QString("the current map is unable to load: %1").arg(fileName);
-        return;
+        if(current_map->logicalMap.map_file!=fileName)
+        {
+            qDebug() << QString("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
+            return;
+        }
+        else
+            tempMapObject=current_map;
     }
+    else
+        tempMapObject=other_map[fileName];
+
     QString mapIndex;
-    Map_full *tempMapObject=other_map[fileName];
 
     //if have border
     if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
@@ -405,16 +425,32 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
         }
         index++;
     }
+
+    //set the position
+    mapItem->setMapPosition(current_map->tiledMap,current_map->logicalMap.map_file,0,0);
+    if(current_map->logicalMap.border.left.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.left.fileName]->tiledMap,current_map->logicalMap.border_semi.left.fileName,
+                                -(quint32)current_map->logicalMap.border.left.map->width,-(quint32)current_map->logicalMap.border.left.y_offset);
+    if(current_map->logicalMap.border.right.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.right.fileName]->tiledMap,current_map->logicalMap.border_semi.right.fileName,
+                                (quint32)current_map->logicalMap.border.right.map->width,-(quint32)current_map->logicalMap.border.right.y_offset);
+    if(current_map->logicalMap.border.top.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.top.fileName]->tiledMap,current_map->logicalMap.border_semi.top.fileName,
+                                -(quint32)current_map->logicalMap.border.top.x_offset,-(quint32)current_map->logicalMap.border.top.map->height);
+    if(current_map->logicalMap.border.bottom.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.bottom.fileName]->tiledMap,current_map->logicalMap.border_semi.bottom.fileName,
+                                -(quint32)current_map->logicalMap.border.bottom.x_offset,(quint32)current_map->logicalMap.border.bottom.map->height);
 }
 
 void MapVisualiserQt::unloadCurrentMap(const QString &fileName)
 {
+    qDebug() << QString("unloadCurrentMap(%1)").arg(fileName);
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
     {
         if(current_map->logicalMap.map_file!=fileName)
         {
-            qDebug() << QString("the current map is unable to load: %1").arg(fileName);
+            qDebug() << QString("unloadCurrentMap(): the current map is unable to load: %1").arg(fileName);
             return;
         }
         else
