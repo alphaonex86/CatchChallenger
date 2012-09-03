@@ -54,6 +54,8 @@
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 #include <QWidget>
+#include <QSet>
+#include <QMultiMap>
 
 namespace Tiled {
 class Map;
@@ -67,8 +69,11 @@ class MapItem : public QGraphicsItem
 public:
     MapItem(QGraphicsItem *parent = 0);
     void addMap(Tiled::Map *map, Tiled::MapRenderer *renderer);
+    void removeMap(Tiled::Map *map);
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
+private:
+    QMultiMap<Tiled::Map *,QGraphicsItem *> displayed_layer;
 };
 
 class MapVisualiserQt : public QGraphicsView
@@ -82,7 +87,7 @@ public:
     void keyReleaseEvent(QKeyEvent *event);
     void keyPressParse();
     void viewMap(const QString &fileName);
-
+    void displayMap();
 private:
     struct Map_full
     {
@@ -110,6 +115,7 @@ private:
 
     Map_full *current_map;
     QHash<QString,Map_full *> other_map;
+    QSet<Map_full *> displayed_map;
 private slots:
     QString loadOtherMap(const QString &fileName, const bool &isCurrentMap=false);
     void linkOtherMap();
