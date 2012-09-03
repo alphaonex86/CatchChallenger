@@ -150,10 +150,23 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
         if (TileLayer *tileLayer = layer->asTileLayer()) {
             TileLayerItem *item=new TileLayerItem(tileLayer, renderer, this);
             item->setZValue(index++);
+            displayed_layer.insert(map,item);
         } else if (ObjectGroup *objectGroup = layer->asObjectGroup()) {
             ObjectGroupItem *item=new ObjectGroupItem(objectGroup, renderer, this);
             item->setZValue(index++);
+            displayed_layer.insert(map,item);
         }
+    }
+}
+
+void MapItem::removeMap(Map *map)
+{
+    QList<QGraphicsItem *> values = displayed_layer.values(map);
+    int index=0;
+    while(index<values.size())
+    {
+        delete values.at(index);
+        index++;
     }
 }
 
@@ -449,9 +462,73 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
     current_map->objectGroup->addObject(playerMapObject);
 
-    mapItem->addMap(current_map->tiledMap,current_map->tiledRender);
+    displayMap();
     qDebug() << startTime.elapsed();
     mScene->addItem(mapItem);
+}
+
+void MapVisualiserQt::displayMap()
+{
+    qDebug() << QString("displayMap()");
+
+    QSet<Map_full *> temp_displayed_map;
+    //the main map
+    if(!displayed_map.contains(current_map))
+    {
+        mapItem->addMap(current_map->tiledMap,current_map->tiledRender);
+        displayed_map << current_map;
+    }
+    temp_displayed_map << current_map;
+    //the border
+    if(current_map->logicalMap.border.bottom.map!=NULL)
+    {
+        if(!displayed_map.contains(other_map[current_map->logicalMap.border.bottom.map->map_file]))
+        {
+            mapItem->addMap(other_map[current_map->logicalMap.border.bottom.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.bottom.map->map_file]->tiledRender);
+            displayed_map << other_map[current_map->logicalMap.border.bottom.map->map_file];
+        }
+        temp_displayed_map << other_map[current_map->logicalMap.border.bottom.map->map_file];
+    }
+    if(current_map->logicalMap.border.top.map!=NULL)
+    {
+        if(!displayed_map.contains(other_map[current_map->logicalMap.border.top.map->map_file]))
+        {
+            mapItem->addMap(other_map[current_map->logicalMap.border.top.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.top.map->map_file]->tiledRender);
+            displayed_map << other_map[current_map->logicalMap.border.top.map->map_file];
+        }
+        temp_displayed_map << other_map[current_map->logicalMap.border.top.map->map_file];
+    }
+    if(current_map->logicalMap.border.left.map!=NULL)
+    {
+        if(!displayed_map.contains(other_map[current_map->logicalMap.border.left.map->map_file]))
+        {
+            mapItem->addMap(other_map[current_map->logicalMap.border.left.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.left.map->map_file]->tiledRender);
+            displayed_map << other_map[current_map->logicalMap.border.left.map->map_file];
+        }
+        temp_displayed_map << other_map[current_map->logicalMap.border.left.map->map_file];
+    }
+    if(current_map->logicalMap.border.right.map!=NULL)
+    {
+        if(!displayed_map.contains(other_map[current_map->logicalMap.border.right.map->map_file]))
+        {
+            mapItem->addMap(other_map[current_map->logicalMap.border.right.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.right.map->map_file]->tiledRender);
+            displayed_map << other_map[current_map->logicalMap.border.right.map->map_file];
+        }
+        temp_displayed_map << other_map[current_map->logicalMap.border.right.map->map_file];
+    }
+    //the map to remove
+    QSet<Map_full *>::const_iterator i = displayed_map.constBegin();
+    while (i != displayed_map.constEnd()) {
+        if(!temp_displayed_map.contains(*i))
+        {
+            qDebug() << QString("remove to display the map: %1").arg((*i)->logicalMap.map_file);
+            mapItem->removeMap((*i)->tiledMap);
+            displayed_map.remove(*i);
+            //i = displayed_map.constBegin()//needed?
+        }
+        else
+           ++i;
+    }
 }
 
 /*    int index=0;
@@ -742,6 +819,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
                 other_map[current_map->logicalMap.map_file]=current_map;
                 current_map=other_map[map->map_file];
                 current_map->objectGroup->addObject(playerMapObject);
+                displayMap();
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
