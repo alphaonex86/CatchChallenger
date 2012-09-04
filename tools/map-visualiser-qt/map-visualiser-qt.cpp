@@ -151,10 +151,12 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
             TileLayerItem *item=new TileLayerItem(tileLayer, renderer, this);
             item->setZValue(index++);
             displayed_layer.insert(map,item);
+            //item->setPos(0,0);-> do with this
         } else if (ObjectGroup *objectGroup = layer->asObjectGroup()) {
             ObjectGroupItem *item=new ObjectGroupItem(objectGroup, renderer, this);
             item->setZValue(index++);
             displayed_layer.insert(map,item);
+            //item->setPos(0,0);-> do with this
         }
     }
 }
@@ -171,9 +173,8 @@ void MapItem::removeMap(Map *map)
     displayed_layer.remove(map);
 }
 
-void MapItem::setMapPosition(Tiled::Map *map,QString fileName,qint16 x,qint16 y)
+void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
 {
-    qDebug() << QString("setMapPosition(%1,%2,%3)").arg(fileName).arg(x).arg(y);
     QList<QGraphicsItem *> values = displayed_layer.values(map);
     int index=0;
     while(index<values.size())
@@ -425,21 +426,6 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
         }
         index++;
     }
-
-    //set the position
-    mapItem->setMapPosition(current_map->tiledMap,current_map->logicalMap.map_file,0,0);
-    if(current_map->logicalMap.border.left.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.left.fileName]->tiledMap,current_map->logicalMap.border_semi.left.fileName,
-                                -(quint32)current_map->logicalMap.border.left.map->width,-(quint32)current_map->logicalMap.border.left.y_offset);
-    if(current_map->logicalMap.border.right.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.right.fileName]->tiledMap,current_map->logicalMap.border_semi.right.fileName,
-                                (quint32)current_map->logicalMap.border.right.map->width,-(quint32)current_map->logicalMap.border.right.y_offset);
-    if(current_map->logicalMap.border.top.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.top.fileName]->tiledMap,current_map->logicalMap.border_semi.top.fileName,
-                                -(quint32)current_map->logicalMap.border.top.x_offset,-(quint32)current_map->logicalMap.border.top.map->height);
-    if(current_map->logicalMap.border.bottom.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.bottom.fileName]->tiledMap,current_map->logicalMap.border_semi.bottom.fileName,
-                                -(quint32)current_map->logicalMap.border.bottom.x_offset,(quint32)current_map->logicalMap.border.bottom.map->height);
 }
 
 void MapVisualiserQt::unloadCurrentMap(const QString &fileName)
@@ -577,6 +563,20 @@ void MapVisualiserQt::displayMap()
         else
            ++i;
     }
+    //set the position
+    mapItem->setMapPosition(current_map->tiledMap,0,0);
+    if(current_map->logicalMap.border.left.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.left.fileName]->tiledMap,
+                                -(quint32)current_map->logicalMap.border.left.map->width,-(quint32)current_map->logicalMap.border.left.y_offset);
+    if(current_map->logicalMap.border.right.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.right.fileName]->tiledMap,
+                                (quint32)current_map->logicalMap.border.right.map->width,-(quint32)current_map->logicalMap.border.right.y_offset);
+    if(current_map->logicalMap.border.top.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.top.fileName]->tiledMap,
+                                -(quint32)current_map->logicalMap.border.top.x_offset,-(quint32)current_map->logicalMap.border.top.map->height);
+    if(current_map->logicalMap.border.bottom.map!=NULL)
+        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.bottom.fileName]->tiledMap,
+                                -(quint32)current_map->logicalMap.border.bottom.x_offset,(quint32)current_map->logicalMap.border.bottom.map->height);
 }
 
 /*    int index=0;
