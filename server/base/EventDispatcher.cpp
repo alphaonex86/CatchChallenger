@@ -15,11 +15,11 @@ EventDispatcher::EventDispatcher()
 
 	generalData.serverPrivateVariables.connected_players	= 0;
 	generalData.serverPrivateVariables.number_of_bots_logged= 0;
-	generalData.serverPrivateVariables.db			= NULL;
-	generalData.serverPrivateVariables.timer_player_map	= NULL;
-	server							= NULL;
-	lunchInitFunction					= NULL;
-	timer_benchmark_stop					= NULL;
+    generalData.serverPrivateVariables.db                   = NULL;
+    generalData.serverPrivateVariables.timer_player_map     = NULL;
+    server                                                  = NULL;
+    lunchInitFunction                                       = NULL;
+    timer_benchmark_stop                                    = NULL;
 
 	generalData.serverPrivateVariables.botSpawnIndex=0;
 	generalData.serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
@@ -170,7 +170,7 @@ void EventDispatcher::preload_the_map()
 		if(returnList.at(index).contains(mapFilter))
 		{
 			DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
-			if(map_temp.tryLoadMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index),generalData.serverPrivateVariables.datapack_mapPath))
+            if(map_temp.tryLoadMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index)))
 			{
 				switch(generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
 				{
@@ -235,17 +235,33 @@ void EventDispatcher::preload_the_map()
 					Map_semi map_semi;
 					map_semi.map				= generalData.serverPrivateVariables.map_list[returnList.at(index)];
 
-					map_semi.border.top.fileName		= map_temp.map_to_send.border.top.fileName;
-					map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
-
-					map_semi.border.bottom.fileName		= map_temp.map_to_send.border.bottom.fileName;
-					map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
-
-					map_semi.border.left.fileName		= map_temp.map_to_send.border.left.fileName;
-					map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
-
-					map_semi.border.right.fileName		= map_temp.map_to_send.border.right.fileName;
-					map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
+					if(!map_temp.map_to_send.border.top.fileName.isEmpty())
+					{
+                        map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.top.fileName,generalData.serverPrivateVariables.datapack_mapPath);
+						map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
+					}
+					if(!map_temp.map_to_send.border.bottom.fileName.isEmpty())
+					{
+                        map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.bottom.fileName,generalData.serverPrivateVariables.datapack_mapPath);
+						map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
+					}
+					if(!map_temp.map_to_send.border.left.fileName.isEmpty())
+					{
+                        map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.left.fileName,generalData.serverPrivateVariables.datapack_mapPath);
+                        map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
+					}
+					if(!map_temp.map_to_send.border.right.fileName.isEmpty())
+					{
+                        map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.right.fileName,generalData.serverPrivateVariables.datapack_mapPath);
+                        map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
+					}
+					
+					int sub_index=0;
+					while(sub_index<map_temp.map_to_send.teleport.size())
+					{
+                        map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(generalData.serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.teleport.at(sub_index).map,generalData.serverPrivateVariables.datapack_mapPath);
+						sub_index++;
+					}
 
 					map_semi.old_map=map_temp.map_to_send;
 

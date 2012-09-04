@@ -1,6 +1,8 @@
 #include "ClientHeavyLoad.h"
 #include "EventDispatcher.h"
 
+#include "../general/base/FacilityLib.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -205,14 +207,14 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 
 bool ClientHeavyLoad::loadTheRawUTF8String()
 {
-	player_informations->rawPseudo=ProtocolParsing::toUTF8(player_informations->public_and_private_informations.public_informations.pseudo);
+	player_informations->rawPseudo=FacilityLib::toUTF8(player_informations->public_and_private_informations.public_informations.pseudo);
 	if(player_informations->rawPseudo.size()==0)
 	{
 		emit message(QString("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
 		return false;
 	}
 
-	player_informations->rawSkin=ProtocolParsing::toUTF8(player_informations->public_and_private_informations.public_informations.skin);
+	player_informations->rawSkin=FacilityLib::toUTF8(player_informations->public_and_private_informations.public_informations.skin);
 	if(player_informations->rawSkin.size()==0)
 	{
 		player_informations->rawSkin[0]=0x00;
@@ -343,7 +345,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content
 {
 	if(fileName.size()>255 || fileName.size()==0)
 		return false;
-	QByteArray fileNameRaw=ProtocolParsing::toUTF8(fileName);
+	QByteArray fileNameRaw=FacilityLib::toUTF8(fileName);
 	if(fileNameRaw.size()>255 || fileNameRaw.size()==0)
 		return false;
 	QByteArray outputData;

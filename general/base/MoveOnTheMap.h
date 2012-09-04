@@ -23,8 +23,8 @@ public:
 	static QString directionToString(const Direction &direction);
 
 	static bool canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE y,bool checkCollision);
-	static bool move(Direction direction,Map ** map,COORD_TYPE &x,COORD_TYPE &y);
-	static bool teleport(Map ** map,COORD_TYPE &x,COORD_TYPE &y);
+    static bool move(Direction direction, Map ** map, quint8 *x, quint8 *y);
+    static bool teleport(Map ** map, quint8 *x, quint8 *y);
 protected:
 	virtual void send_player_move(const quint8 &moved_unit,const Direction &the_new_direction) = 0;
 	Direction last_direction;

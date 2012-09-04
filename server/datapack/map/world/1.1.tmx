@@ -3,7 +3,7 @@
  <properties>
   <property name="type" value="city"/>
  </properties>
- <tileset firstgid="1" source="texture.tsx"/>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
  <layer name="Walkable" width="30" height="30">
   <data encoding="base64" compression="zlib">
    eJyVldENwkAMQ4+2AvYfCpgEGIPjo1JkPSe5j6hHS+PEcdxtjLHPOGZsct7g3nl279CZflMOl7/K+5jxbMTL5FOc87qH+1Tve8anEV/AjdgHYB7w7Myxihs5VUztW2cTr6u48X2aOfW/QazgKr+xvxiKT/9fxY2hPUd+9Rzf+d+/Xsa4NeJ+YR4Vk4J6dnzpHGkvFIv062ZD9TjvIJ242Wodmp+0oDugtZNP6H91rqQN2kXi2PVNGst8ks6UT7lQvujs/J3yKpfZt4e+Rco9fTNIs5Sj8kDdV+Ij61frI+7JI51m3S65num55ss4d7qp5qN7lPFWaYCwM08ibyC+K21mNWmvbi8z3dLOOM7cbBwftL+ZZ2V7Sb2Tpir9V97o6tXn2UyyuTpetJ5qXzMtdLRc+U9n9hln3Xy0H1Sf89KuF3RqyubvuF/hqjsvtxsrvK32mvmFw+lyvRJnzh9QoEPB
@@ -37,7 +37,7 @@
  <objectgroup name="Moving" width="30" height="30">
   <object type="border-bottom" gid="238" x="160" y="480">
    <properties>
-    <property name="map" value="1.0"/>
+    <property name="map" value="1.0.tmx"/>
    </properties>
   </object>
   <object name="bot spawn" type="bot spawn" gid="68" x="240" y="400"/>

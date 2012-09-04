@@ -154,7 +154,7 @@ bool ClientLocalCalcule::singleMove(const Direction &direction)
 		return false;
 	}
 	Map* map=this->map;
-	MoveOnTheMap::move(direction,&map,x,y);
+    MoveOnTheMap::move(direction,&map,&x,&y);
 	this->map=static_cast<Map_server_MapVisibility_simple*>(map);
 	return true;
 }
