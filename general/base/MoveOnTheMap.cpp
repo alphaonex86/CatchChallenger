@@ -163,70 +163,70 @@ bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE 
 	}
 }
 
-bool MoveOnTheMap::teleport(Map ** map,COORD_TYPE &x,COORD_TYPE &y)
+bool MoveOnTheMap::teleport(Map ** map,COORD_TYPE *x,COORD_TYPE *y)
 {
-	if((*map)->teleporter.contains(x+y*(*map)->width))
+    if((*map)->teleporter.contains(*x+*y*(*map)->width))
 	{
-		const Map::Teleporter &teleporter=(*map)->teleporter[x+y*(*map)->width];
-		x=teleporter.x;
-		y=teleporter.y;
-		(*map)=teleporter.map;
+        const Map::Teleporter &teleporter=(*map)->teleporter[*x+*y*(*map)->width];
+        *x=teleporter.x;
+        *y=teleporter.y;
+        *map=teleporter.map;
 		return true;
 	}
 	return false;
 }
 
-bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE &x,COORD_TYPE &y)
+bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE *x,COORD_TYPE *y)
 {
 	if(*map==NULL)
 		return false;
-	if(!canGoTo(direction,*map,x,y,true))
+    if(!canGoTo(direction,*map,*x,*y,true))
 		return false;
 	switch(direction)
 	{
 		case Direction_move_at_left:
-			if(x>0)
-				x-=1;
+            if(*x>0)
+                *x-=1;
 			else
 			{
-				x=(*map)->border.left.map->width-1;
-				y+=(*map)->border.left.y_offset;
+                *x=(*map)->border.left.map->width-1;
+                *y+=(*map)->border.left.y_offset;
 				*map=(*map)->border.left.map;
 			}
-			teleport(map,x,y);
+            teleport(map,x,y);
 			return true;
 		break;
 		case Direction_move_at_right:
-			if(x<((*map)->width-1))
-				x+=1;
+            if(*x<((*map)->width-1))
+                *x+=1;
 			else
 			{
-				x=0;
-				y+=(*map)->border.right.y_offset;
+                *x=0;
+                *y+=(*map)->border.right.y_offset;
 				*map=(*map)->border.right.map;
 			}
 			teleport(map,x,y);
 			return true;
 		break;
 		case Direction_move_at_top:
-			if(y>0)
-				y-=1;
+            if(*y>0)
+                *y-=1;
 			else
 			{
-				y=(*map)->border.top.map->height-1;
-				x+=(*map)->border.top.x_offset;
+                *y=(*map)->border.top.map->height-1;
+                *x+=(*map)->border.top.x_offset;
 				*map=(*map)->border.top.map;
 			}
 			teleport(map,x,y);
 			return true;
 		break;
 		case Direction_move_at_bottom:
-			if(y<((*map)->height-1))
-				y+=1;
+            if(*y<((*map)->height-1))
+                *y+=1;
 			else
 			{
-				y=0;
-				x+=(*map)->border.bottom.x_offset;
+                *y=0;
+                *x+=(*map)->border.bottom.x_offset;
 				*map=(*map)->border.bottom.map;
 			}
 			teleport(map,x,y);

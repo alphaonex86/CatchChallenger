@@ -510,7 +510,7 @@ bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
 		return false;
 	old_map=map;
 	new_map=map;
-	MoveOnTheMap::move(direction,&new_map,x,y);
+    MoveOnTheMap::move(direction,&new_map,&x,&y);
 	if(old_map!=new_map)
 	{
 		mapHaveChanged=true;

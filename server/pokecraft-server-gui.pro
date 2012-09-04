@@ -6,8 +6,8 @@
 
 QT       += core gui network xml sql widgets
 
-QMAKE_CFLAGS += -pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops  -O2 -ftree-vectorize
-QMAKE_CXXFLAGS += -pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -O2 -ftree-vectorize
+QMAKE_CFLAGS += -pipe -march=native -O0 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ftree-vectorize
+QMAKE_CXXFLAGS += -pipe -march=native -O0 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ftree-vectorize
 
 TARGET = pokecraft-server-gui
 TEMPLATE = app
@@ -15,8 +15,10 @@ TEMPLATE = app
 win32:CONFIG   += console
 
 SOURCES += MainWindow.cpp \
-    main.cpp
-HEADERS  += MainWindow.h
+    main.cpp \
+    ../general/base/FacilityLib.cpp
+HEADERS  += MainWindow.h \
+    ../general/base/FacilityLib.h
 
 SOURCES += base/EventDispatcher.cpp \
     base/EventThreader.cpp \

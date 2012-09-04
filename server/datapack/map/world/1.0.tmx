@@ -36,12 +36,12 @@
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzUEOQDAQheFa4yTqJNVbKBJcA4m4syexmDSiiehYmJf8KzWfS5RygehCb49SvMtIufdf7d18awXSpNL7Hss1qCJZJrdHA2lkcldU4LZGJdqY3GPmvG0vjJju3cQVV1xx/+Q2qEUdszuhGS3M7pOJK6644j5xv2oHpVspWQ==
+   eJztzV0KQEAUxXGesRJjJdiFr2K2gZI9O2oebpNMievlnPo/GffXxlHUBpILvT1L8C4VZd5/jXfzreXIiArv+1duiSpRreSOaBJZJXdDOW4bVKBdyT1Xutv1hfGlO7rbVtm9G126dOn+4XaoR4OyO6MFrcruk9GlS5fuE/evDuwAKjM=
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzjEKACAQA8FLo37TWvx/64FY2xmQHVjSJgLAzdDeKe8PADhKVrPmPgIAn+l6n9MC0/QMCg==
+   eJztzrENACAMwLCyAG/y/xP0ilYgW8qeCADgNTNb2e4eAfjMGfV1uo1PCzA=
   </data>
  </layer>
 </map>
