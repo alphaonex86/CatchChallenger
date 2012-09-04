@@ -102,8 +102,8 @@ private:
 
     QHash<QString,Map_full *> other_map;
 private slots:
-    QString loadOtherMap(const QString &fileName, qint32 x=-1, qint32 y=-1);
-    void loadCurrentMap(const QString &fileName,qint32 x,qint32 y);
+    QString loadOtherMap(const QString &fileName);
+    void loadCurrentMap(const QString &fileName,qint32 x, qint32 y);
 };
 
 #endif
