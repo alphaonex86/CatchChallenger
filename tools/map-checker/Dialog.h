@@ -30,6 +30,7 @@ public:
 private:
     Ui::Dialog *ui;
     QHash<QString,Pokecraft::Map_client> other_map;
+    QHash<QString,QStringList> map_log;
 };
 
 #endif // DIALOG_H

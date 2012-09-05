@@ -54,6 +54,7 @@ QString Dialog::loadOtherMap(const QString &fileName)
         other_map[resolvedFileName].border_semi.bottom.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+other_map[resolvedFileName].border_semi.bottom.fileName).absoluteFilePath();
         if(!other_map.contains(other_map[resolvedFileName].border_semi.bottom.fileName))
         {
+            map_log[resolvedFileName]<<Pokecraft::DebugClass::getLog();
             mapIndex=loadOtherMap(other_map[resolvedFileName].border_semi.bottom.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
@@ -78,6 +79,7 @@ QString Dialog::loadOtherMap(const QString &fileName)
         other_map[resolvedFileName].border_semi.top.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+other_map[resolvedFileName].border_semi.top.fileName).absoluteFilePath();
         if(!other_map.contains(other_map[resolvedFileName].border_semi.top.fileName))
         {
+            map_log[resolvedFileName]<<Pokecraft::DebugClass::getLog();
             mapIndex=loadOtherMap(other_map[resolvedFileName].border_semi.top.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
@@ -102,6 +104,7 @@ QString Dialog::loadOtherMap(const QString &fileName)
         other_map[resolvedFileName].border_semi.left.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+other_map[resolvedFileName].border_semi.left.fileName).absoluteFilePath();
         if(!other_map.contains(other_map[resolvedFileName].border_semi.left.fileName))
         {
+            map_log[resolvedFileName]<<Pokecraft::DebugClass::getLog();
             mapIndex=loadOtherMap(other_map[resolvedFileName].border_semi.left.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
@@ -126,6 +129,7 @@ QString Dialog::loadOtherMap(const QString &fileName)
         other_map[resolvedFileName].border_semi.right.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+other_map[resolvedFileName].border_semi.right.fileName).absoluteFilePath();
         if(!other_map.contains(other_map[resolvedFileName].border_semi.right.fileName))
         {
+            map_log[resolvedFileName]<<Pokecraft::DebugClass::getLog();
             mapIndex=loadOtherMap(other_map[resolvedFileName].border_semi.right.fileName);
             //if is correctly loaded
             if(!mapIndex.isEmpty())
@@ -144,6 +148,7 @@ QString Dialog::loadOtherMap(const QString &fileName)
         }
     }
 
+    map_log[resolvedFileName]<<Pokecraft::DebugClass::getLog();
     return resolvedFileName;
 }
 
@@ -158,8 +163,19 @@ void Dialog::scanMaps(const QString &folderName)
 
     qDebug() << startTime.elapsed();
 
-    QStringList stringList=Pokecraft::DebugClass::getLog();
-    ui->textEdit->setHtml("<ul><li>"+stringList.join("</li><li>")+"</li></ul>");
+    QString html="<ul>";
+    QHash<QString,QStringList>::const_iterator i = map_log.constBegin();
+    while (i != map_log.constEnd()) {
+        if(i.value().size()>0)
+        {
+            html+="<li>"+i.key();
+            html+="<ul><li>"+i.value().join("</li><li>")+"</li></ul>";
+            html+="</li>";
+        }
+        ++i;
+    }
+    html+="</ul>";
+    ui->textEdit->setHtml(html);
 }
 
 void Dialog::scanFolder(const QDir &dir)
