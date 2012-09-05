@@ -35,6 +35,7 @@
 #include <QTime>
 #include <QDebug>
 #include <QFileInfo>
+#include <QPointer>
 
 #include "../../general/base/MoveOnTheMap.h"
 
@@ -305,6 +306,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
     {
         if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
         {
+            tempMapObject->objectGroup->setName("Dyna management");
             tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
             break;
         }
@@ -485,6 +487,9 @@ void MapVisualiserQt::unloadCurrentMap(const QString &fileName)
 
     //load the player sprite
     int index=tempMapObject->objectGroup->removeObject(playerMapObject);
+    /*delete playerMapObject;
+    playerMapObject = new MapObject();
+    playerMapObject->setTile(playerTileset->tileAt(7));*/
     qDebug() << QString("unloadCurrentMap(): after remove the player: %1").arg(index);
 }
 
