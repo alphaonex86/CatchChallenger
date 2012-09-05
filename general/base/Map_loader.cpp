@@ -252,7 +252,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 												 );
 									}
 									else
-										DebugClass::debugConsole(QString("Missing border properties: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                                        DebugClass::debugConsole(QString("Missing \"map\" properties for the border: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
 								}
 								else if(type=="teleport on push" || type=="teleport on it" || type=="door")
 								{
