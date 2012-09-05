@@ -207,7 +207,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 										if(type=="border-left")//border left
 										{
 											map_to_send.border.left.fileName=property_text["map"].toString();
-											if(!map_to_send.border.left.fileName.endsWith(".tmx"))
+                                            if(!map_to_send.border.left.fileName.endsWith(".tmx") && !map_to_send.border.left.fileName.isEmpty())
 												map_to_send.border.left.fileName+=".tmx";
 											map_to_send.border.left.y_offset=object_y;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
@@ -217,7 +217,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 										else if(type=="border-right")//border right
 										{
 											map_to_send.border.right.fileName=property_text["map"].toString();
-											if(!map_to_send.border.right.fileName.endsWith(".tmx"))
+                                            if(!map_to_send.border.right.fileName.endsWith(".tmx") && !map_to_send.border.right.fileName.isEmpty())
                                                 map_to_send.border.right.fileName+=".tmx";
 											map_to_send.border.right.y_offset=object_y;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
@@ -227,7 +227,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 										else if(type=="border-top")//border top
 										{
 											map_to_send.border.top.fileName=property_text["map"].toString();
-											if(!map_to_send.border.top.fileName.endsWith(".tmx"))
+                                            if(!map_to_send.border.top.fileName.endsWith(".tmx") && !map_to_send.border.top.fileName.isEmpty())
                                                 map_to_send.border.top.fileName+=".tmx";
 											map_to_send.border.top.x_offset=object_x;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
@@ -237,7 +237,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 										else if(type=="border-bottom")//border bottom
 										{
 											map_to_send.border.bottom.fileName=property_text["map"].toString();
-											if(!map_to_send.border.bottom.fileName.endsWith(".tmx"))
+                                            if(!map_to_send.border.bottom.fileName.endsWith(".tmx") && !map_to_send.border.bottom.fileName.isEmpty())
                                                 map_to_send.border.bottom.fileName+=".tmx";
 											map_to_send.border.bottom.x_offset=object_x;
 											#ifdef DEBUG_MESSAGE_MAP_BORDER
@@ -275,7 +275,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 												new_tp.source_x=object_x;
 												new_tp.source_y=object_y;
 												new_tp.map=property_text["map"].toString();
-												if(!new_tp.map.endsWith(".tmx"))
+                                                if(!new_tp.map.endsWith(".tmx") && !new_tp.map.isEmpty())
 													new_tp.map+=".tmx";
 												map_to_send.teleport << new_tp;
 												#ifdef DEBUG_MESSAGE_MAP_OBJECT
@@ -469,8 +469,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 	}
 
 	if(Walkable.size()>0)
-	{
-		DebugClass::debugConsole(QString("map_to_send.teleport.size(): %1").arg(map_to_send.teleport.size()));
+    {
 		int index=0;
 		while(index<map_to_send.teleport.size())
 		{
