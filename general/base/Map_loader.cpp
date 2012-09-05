@@ -479,7 +479,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 	}
 	if(Water.size()>0)
 	{
-		DebugClass::debugConsole(QString("map_to_send.teleport.size(): %1").arg(map_to_send.teleport.size()));
 		int index=0;
 		while(index<map_to_send.teleport.size())
 		{

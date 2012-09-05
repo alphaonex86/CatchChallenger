@@ -19,5 +19,7 @@ void DebugClass::debugConsole(const QString &errorString)
 QStringList DebugClass::getLog()
 {
     QMutexLocker lock(&mutexForDebugClass);
-    return log;
+    QStringList oldLog=log;
+    log.clear();
+    return oldLog;
 }
