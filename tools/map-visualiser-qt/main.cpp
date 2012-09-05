@@ -36,32 +36,12 @@ namespace {
 
 struct CommandLineOptions {
     CommandLineOptions()
-        : showHelp(false)
-        , showVersion(false)
     {}
 
-    bool showHelp;
-    bool showVersion;
     QString fileToOpen;
 };
 
 } // anonymous namespace
-
-static void showHelp()
-{
-    // TODO: Make translatable
-    qWarning() <<
-            "Usage: tmxviewer [option] [file]\n\n"
-            "Options:\n"
-            "  -h --help    : Display this help\n"
-            "  -v --version : Display the version";
-}
-
-static void showVersion()
-{
-    qWarning() << "TMX Map Viewer"
-            << qPrintable(QApplication::applicationVersion());
-}
 
 static void parseCommandLineArguments(CommandLineOptions &options)
 {
@@ -69,14 +49,8 @@ static void parseCommandLineArguments(CommandLineOptions &options)
 
     for (int i = 1; i < arguments.size(); ++i) {
         const QString &arg = arguments.at(i);
-        if (arg == QLatin1String("--help") || arg == QLatin1String("-h")) {
-            options.showHelp = true;
-        } else if (arg == QLatin1String("--version")
-                || arg == QLatin1String("-v")) {
-            options.showVersion = true;
-        } else if (arg.at(0) == QLatin1Char('-')) {
+        if (arg.at(0) == QLatin1Char('-')) {
             qWarning() << "Unknown option" << arg;
-            options.showHelp = true;
         } else {
             options.fileToOpen = arg;
         }
@@ -92,21 +66,14 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    a.setOrganizationDomain(QLatin1String("mapeditor.org"));
-    a.setApplicationName(QLatin1String("TmxViewer"));
+    a.setOrganizationDomain(QLatin1String("pokecraft"));
+    a.setApplicationName(QLatin1String("Map visualiser"));
     a.setApplicationVersion(QLatin1String("1.0"));
 
     CommandLineOptions options;
     parseCommandLineArguments(options);
 
-    if (options.showVersion)
-        showVersion();
-    if (options.showHelp || (options.fileToOpen.isEmpty()
-                             && !options.showVersion))
-        showHelp();
-    if (options.showVersion
-            || options.showHelp
-            || options.fileToOpen.isEmpty())
+    if (options.fileToOpen.isEmpty())
     {
         QString source = QFileDialog::getOpenFileName(NULL,"Select map");
         if(source.isEmpty() || source.isNull() || source=="")
