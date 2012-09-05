@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    a.setOrganizationDomain(QLatin1String("mapeditor.org"));
+    a.setOrganizationDomain(QLatin1String("pokecraft"));
     a.setApplicationName(QLatin1String("map-checker"));
     a.setApplicationVersion(QLatin1String("1.0"));
     QString folderToOpen;

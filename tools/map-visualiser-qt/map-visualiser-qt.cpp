@@ -134,9 +134,10 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
 {
     //align zIndex to Collision Layer
     int index=0;
-    while(index<map->layers().size())
+    QList<Layer *> layers=map->layers();
+    while(index<layers.size())
     {
-        if(map->layers().at(index)->name()=="Collisions")
+        if(layers.at(index)->name()=="Collisions")
             break;
         index++;
     }
@@ -146,17 +147,15 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
         index=-index;
 
     // Create a child item for each layer
-    foreach (Layer *layer, map->layers()) {
+    foreach (Layer *layer, layers) {
         if (TileLayer *tileLayer = layer->asTileLayer()) {
             TileLayerItem *item=new TileLayerItem(tileLayer, renderer, this);
             item->setZValue(index++);
             displayed_layer.insert(map,item);
-            //item->setPos(0,0);-> do with this
         } else if (ObjectGroup *objectGroup = layer->asObjectGroup()) {
             ObjectGroupItem *item=new ObjectGroupItem(objectGroup, renderer, this);
             item->setZValue(index++);
             displayed_layer.insert(map,item);
-            //item->setPos(0,0);-> do with this
         }
     }
 }
@@ -205,7 +204,7 @@ MapVisualiserQt::MapVisualiserQt(QWidget *parent) :
     moveTimer.setInterval(66);
     moveTimer.setSingleShot(true);
     connect(&moveTimer,SIGNAL(timeout()),this,SLOT(moveStepSlot()));
-    setWindowTitle(tr("TMX Viewer"));
+    setWindowTitle(tr("map-visualiser-qt"));
     //scale(2,2);
 
     setScene(mScene);
@@ -319,6 +318,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
 
 void MapVisualiserQt::loadCurrentMap(const QString &fileName)
 {
+    QStringList mapUsed;
     qDebug() << QString("loadCurrentMap(%1)").arg(fileName);
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
@@ -333,6 +333,8 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
     }
     else
         tempMapObject=other_map[fileName];
+
+    mapUsed<<tempMapObject->logicalMap.map_file;
 
     QString mapIndex;
 
@@ -350,6 +352,7 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
                 int offset=current_map->logicalMap.border.bottom.x_offset-other_map[mapIndex]->logicalMap.border.top.x_offset;
                 current_map->logicalMap.border.bottom.x_offset=offset;
                 other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
+                mapUsed<<mapIndex;
             }
         }
     }
@@ -368,6 +371,7 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
                 int offset=current_map->logicalMap.border.top.x_offset-other_map[mapIndex]->logicalMap.border.bottom.x_offset;
                 current_map->logicalMap.border.top.x_offset=offset;
                 other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
+                mapUsed<<mapIndex;
             }
         }
     }
@@ -386,6 +390,7 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
                 int offset=current_map->logicalMap.border.left.y_offset-other_map[mapIndex]->logicalMap.border.right.y_offset;
                 current_map->logicalMap.border.left.y_offset=offset;
                 other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
+                mapUsed<<mapIndex;
             }
         }
     }
@@ -404,6 +409,7 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
                 int offset=current_map->logicalMap.border.right.y_offset-other_map[mapIndex]->logicalMap.border.left.y_offset;
                 current_map->logicalMap.border.right.y_offset=offset;
                 other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
+                mapUsed<<mapIndex;
             }
         }
     }
@@ -422,9 +428,35 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
                 tempMapObject->logicalMap.teleporter[virtual_position].map=&other_map[mapIndex]->logicalMap;
                 tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
                 tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
+                mapUsed<<mapIndex;
             }
         }
         index++;
+    }
+
+    //load the player sprite
+    qDebug() << QString("loadCurrentMap(), add player on: %1").arg(tempMapObject->logicalMap.map_file);
+    tempMapObject->objectGroup->addObject(playerMapObject);
+
+    //remove the not used map
+    QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
+    while (i != other_map.constEnd()) {
+        if(!mapUsed.contains((*i)->logicalMap.map_file))
+        {
+            //if it's the last reference
+            if(!displayed_map.contains(*i))
+            {
+                delete (*i)->logicalMap.parsed_layer.walkable;
+                delete (*i)->logicalMap.parsed_layer.water;
+                delete (*i)->tiledMap;
+                delete (*i)->tiledRender;
+                delete (*i);
+            }
+            other_map.remove((*i)->logicalMap.map_file);
+            i = other_map.constBegin();//needed
+        }
+        else
+            ++i;
     }
 }
 
@@ -450,6 +482,10 @@ void MapVisualiserQt::unloadCurrentMap(const QString &fileName)
     tempMapObject->logicalMap.border.left.map=NULL;
     tempMapObject->logicalMap.border.right.map=NULL;
     tempMapObject->logicalMap.teleporter.clear();
+
+    //load the player sprite
+    int index=tempMapObject->objectGroup->removeObject(playerMapObject);
+    qDebug() << QString("unloadCurrentMap(): after remove the player: %1").arg(index);
 }
 
 void MapVisualiserQt::viewMap(const QString &fileName)
@@ -494,7 +530,6 @@ void MapVisualiserQt::viewMap(const QString &fileName)
         yPerso=current_map->logicalMap.height/2;
     }
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
-    current_map->objectGroup->addObject(playerMapObject);
 
     displayMap();
     qDebug() << startTime.elapsed();
@@ -503,7 +538,7 @@ void MapVisualiserQt::viewMap(const QString &fileName)
 
 void MapVisualiserQt::displayMap()
 {
-    qDebug() << QString("displayMap()");
+    qDebug() << QString("displayMap(): %1").arg(current_map->logicalMap.map_file);
 
     QSet<Map_full *> temp_displayed_map;
     //the main map
@@ -555,8 +590,16 @@ void MapVisualiserQt::displayMap()
     while (i != displayed_map.constEnd()) {
         if(!temp_displayed_map.contains(*i))
         {
-            qDebug() << QString("remove to display the map: %1").arg((*i)->logicalMap.map_file);
             mapItem->removeMap((*i)->tiledMap);
+            //if it's the last reference
+            if(!other_map.contains((*i)->logicalMap.map_file))
+            {
+                delete (*i)->logicalMap.parsed_layer.walkable;
+                delete (*i)->logicalMap.parsed_layer.water;
+                delete (*i)->tiledMap;
+                delete (*i)->tiledRender;
+                delete (*i);
+            }
             displayed_map.remove(*i);
             i = displayed_map.constBegin();//needed
         }
@@ -570,13 +613,13 @@ void MapVisualiserQt::displayMap()
                                 -(quint32)current_map->logicalMap.border.left.map->width,-(quint32)current_map->logicalMap.border.left.y_offset);
     if(current_map->logicalMap.border.right.map!=NULL)
         mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.right.fileName]->tiledMap,
-                                (quint32)current_map->logicalMap.border.right.map->width,-(quint32)current_map->logicalMap.border.right.y_offset);
+                                (quint32)current_map->logicalMap.width,-(quint32)current_map->logicalMap.border.right.y_offset);
     if(current_map->logicalMap.border.top.map!=NULL)
         mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.top.fileName]->tiledMap,
                                 -(quint32)current_map->logicalMap.border.top.x_offset,-(quint32)current_map->logicalMap.border.top.map->height);
     if(current_map->logicalMap.border.bottom.map!=NULL)
         mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.bottom.fileName]->tiledMap,
-                                -(quint32)current_map->logicalMap.border.bottom.x_offset,(quint32)current_map->logicalMap.border.bottom.map->height);
+                                -(quint32)current_map->logicalMap.border.bottom.x_offset,(quint32)current_map->logicalMap.height);
 }
 
 /*    int index=0;
@@ -865,10 +908,8 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
             {
                 qDebug() << QString("map changed located: %1").arg(map->map_file);
                 unloadCurrentMap(current_map->logicalMap.map_file);
-                current_map->objectGroup->removeObject(playerMapObject);
                 other_map[current_map->logicalMap.map_file]=current_map;
                 current_map=other_map[map->map_file];
-                current_map->objectGroup->addObject(playerMapObject);
                 loadCurrentMap(current_map->logicalMap.map_file);
                 displayMap();
             }
