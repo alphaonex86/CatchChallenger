@@ -4,8 +4,6 @@ LIBS *= -ltiled
 
 TEMPLATE = app
 TARGET = map-checker
-INSTALLS += target
-TEMPLATE = app
 
 QT += xml
 
