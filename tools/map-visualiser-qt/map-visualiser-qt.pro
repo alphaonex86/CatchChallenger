@@ -18,7 +18,10 @@ SOURCES += main.cpp \
     ../../general/base/Map.cpp \
     ../../general/base/DebugClass.cpp \
     ../../general/base/FacilityLib.cpp \
-    ../../client/base/Map_client.cpp
+    ../../client/base/Map_client.cpp \
+    map-visualiser-map.cpp \
+    map-visualiser-move.cpp \
+    map-visualiser-move-player.cpp
 
 HEADERS += map-visualiser-qt.h \
     ../../general/base/Map_loader.h \
