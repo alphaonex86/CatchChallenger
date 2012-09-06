@@ -26,12 +26,20 @@ public:
     ~Dialog();
 
     void scanMaps(const QString &folderName);
-    void scanFolder(const QDir &dir);
-    QString loadOtherMap(const QString &fileName);
+    void scanFolderMap(const QDir &dir);
+    void scanFolderPosition(const QDir &dir);
+    QString loadMap(const QString &fileName);
+    void loadPosition(const QString &fileName);
 private:
+    struct Map_full
+    {
+        Pokecraft::Map_client map;
+        QStringList log;
+        qint32 x,y;
+        bool position_set;
+    };
     Ui::Dialog *ui;
-    QHash<QString,Pokecraft::Map_client> other_map;
-    QHash<QString,QStringList> map_log;
+    QHash<QString,Map_full> other_map;
     Tiled::MapReader reader;
 };
 
