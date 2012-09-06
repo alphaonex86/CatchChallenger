@@ -5,6 +5,7 @@
 
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/Map_loader.h"
+#include "map.h"
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -70,6 +71,8 @@ QString Dialog::loadOtherMap(const QString &fileName)
                 else
                     Pokecraft::DebugClass::debugConsole(QString("the map: %1 is not linked with the border bottom, because the map at the bottom have not this map as border").arg(resolvedFileName));
             }
+            else
+                Pokecraft::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].border_semi.bottom.fileName));
         }
     }
 
@@ -95,6 +98,8 @@ QString Dialog::loadOtherMap(const QString &fileName)
                 else
                     Pokecraft::DebugClass::debugConsole(QString("the map: %1 is not linked with the border top, because the map at the top have not this map as border").arg(resolvedFileName));
             }
+            else
+                Pokecraft::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].border_semi.top.fileName));
         }
     }
 
@@ -120,6 +125,8 @@ QString Dialog::loadOtherMap(const QString &fileName)
                 else
                     Pokecraft::DebugClass::debugConsole(QString("the map: %1 is not linked with the border left, because the map at the left have not this map as border").arg(resolvedFileName));
             }
+            else
+                Pokecraft::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].border_semi.left.fileName));
         }
     }
 
@@ -145,8 +152,37 @@ QString Dialog::loadOtherMap(const QString &fileName)
                 else
                     Pokecraft::DebugClass::debugConsole(QString("the map: %1 is not linked with the border right, because the map at the right have not this map as border").arg(resolvedFileName));
             }
+            else
+                Pokecraft::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].border_semi.right.fileName));
         }
     }
+
+    //check the teleporter
+    int index=0;
+    while(index<other_map[resolvedFileName].teleport_semi.size())
+    {
+        mapIndex=loadOtherMap(other_map[resolvedFileName].teleport_semi[index].map);
+        //if is correctly loaded
+        if(!mapIndex.isEmpty())
+        {
+            //if both border match
+            if(other_map[resolvedFileName].teleport_semi[index].destination_x<other_map[mapIndex].width && other_map[resolvedFileName].teleport_semi[index].destination_y<other_map[mapIndex].height)
+            {
+            }
+            else
+                Pokecraft::DebugClass::debugConsole(QString("the map: %1 have teleporter witch point out of the map %2").arg(resolvedFileName).arg(mapIndex));
+        }
+        else
+            Pokecraft::DebugClass::debugConsole(QString("the map: %1 have teleporter with wrong destination %2").arg(resolvedFileName).arg(other_map[resolvedFileName].teleport_semi[index].map));
+        index++;
+    }
+
+    //load the map
+    Tiled::Map *tiledMap = reader.readMap(resolvedFileName);
+    if(!tiledMap)
+        Pokecraft::DebugClass::debugConsole(QString("the map: %1 have bug into the render with tiled: %2").arg(resolvedFileName).arg(reader.errorString()));
+    else
+        delete tiledMap;
 
     map_log[resolvedFileName]<<Pokecraft::DebugClass::getLog();
     return resolvedFileName;

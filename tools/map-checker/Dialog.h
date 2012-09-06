@@ -11,6 +11,7 @@
 #include <QDir>
 
 #include "../../client/base/Map_client.h"
+#include "mapreader.h"
 
 namespace Ui {
 class Dialog;
@@ -31,6 +32,7 @@ private:
     Ui::Dialog *ui;
     QHash<QString,Pokecraft::Map_client> other_map;
     QHash<QString,QStringList> map_log;
+    Tiled::MapReader reader;
 };
 
 #endif // DIALOG_H

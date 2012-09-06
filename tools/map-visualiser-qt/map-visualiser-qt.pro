@@ -1,5 +1,5 @@
-INCLUDEPATH += libtiled/
-DEPENDPATH += libtiled/
+INCLUDEPATH += ../../general/libtiled/
+DEPENDPATH += ../../general/libtiled/
 LIBS *= -ltiled
 
 TEMPLATE = app
