@@ -1,3 +1,7 @@
+INCLUDEPATH += ../../general/libtiled/
+DEPENDPATH += ../../general/libtiled/
+LIBS *= -ltiled
+
 TEMPLATE = app
 TARGET = map-checker
 INSTALLS += target
