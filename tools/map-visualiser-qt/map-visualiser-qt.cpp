@@ -11,6 +11,8 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
+//setParent(ObjectGroupItem)
+
 using namespace Tiled;
 
 /**
@@ -19,29 +21,35 @@ using namespace Tiled;
 class MapObjectItem : public QGraphicsItem
 {
 public:
-    MapObjectItem(MapObject *mapObject, MapRenderer *renderer,
+    MapObjectItem(MapObject *mapObject,
                   QGraphicsItem *parent = 0)
         : QGraphicsItem(parent)
         , mMapObject(mapObject)
-        , mRenderer(renderer)
     {}
 
     QRectF boundingRect() const
     {
-        return mRenderer->boundingRect(mMapObject);
+        return mRendererList[mMapObject->objectGroup()]->boundingRect(mMapObject);
     }
 
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
     {
+        if(!mMapObject->isVisible())
+            return;
+        if(mMapObject->objectGroup()!=NULL)
+            if(!mMapObject->objectGroup()->isVisible())
+                return;
         const QColor &color = mMapObject->objectGroup()->color();
-        mRenderer->drawMapObject(p, mMapObject,
+        mRendererList[mMapObject->objectGroup()]->drawMapObject(p, mMapObject,
                                  color.isValid() ? color : Qt::darkGray);
     }
 
 private:
     MapObject *mMapObject;
-    MapRenderer *mRenderer;
+public:
+    static QHash<ObjectGroup *,MapRenderer *> mRendererList;
 };
+QHash<ObjectGroup *,MapRenderer *> MapObjectItem::mRendererList;
 
 /**
  * Item that represents a tile layer.
@@ -79,19 +87,31 @@ private:
 class ObjectGroupItem : public QGraphicsItem
 {
 public:
-    ObjectGroupItem(ObjectGroup *objectGroup, MapRenderer *renderer,
+    ObjectGroupItem(ObjectGroup *objectGroup,
                     QGraphicsItem *parent = 0)
-        : QGraphicsItem(parent)
+        : QGraphicsItem(parent),
+          mObjectGroup(objectGroup)
     {
-        setFlag(QGraphicsItem::ItemHasNoContents);
+//        setFlag(QGraphicsItem::ItemHasNoContents);
 
-        // Create a child item for each object
-        foreach (MapObject *object, objectGroup->objects())
-            new MapObjectItem(object, renderer, this);
     }
 
     QRectF boundingRect() const { return QRectF(); }
-    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *) {}
+    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *)
+    {
+        // Create a child item for each object
+        QList<QGraphicsItem *> childs=childItems();
+        int index=0;
+        while(index<childs.size())
+        {
+            delete childs.at(index);
+            index++;
+        }
+        foreach (MapObject *object, mObjectGroup->objects())
+            new MapObjectItem(object, this);
+    }
+public:
+    ObjectGroup *mObjectGroup;
 };
 
 /**
@@ -121,25 +141,29 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
 
     // Create a child item for each layer
     foreach (Layer *layer, layers) {
+        Map_graphics_link tempItem;
         if (TileLayer *tileLayer = layer->asTileLayer()) {
-            TileLayerItem *item=new TileLayerItem(tileLayer, renderer, this);
-            item->setZValue(index++);
-            displayed_layer.insert(map,item);
+            tempItem.graphic=new TileLayerItem(tileLayer, renderer, this);
+            tempItem.layer=tileLayer;
         } else if (ObjectGroup *objectGroup = layer->asObjectGroup()) {
-            ObjectGroupItem *item=new ObjectGroupItem(objectGroup, renderer, this);
-            item->setZValue(index++);
-            displayed_layer.insert(map,item);
+            MapObjectItem::mRendererList[objectGroup]=renderer;
+            tempItem.graphic=new ObjectGroupItem(objectGroup, this);
+            tempItem.layer=objectGroup;
         }
+        tempItem.graphic->setZValue(index++);
+        displayed_layer.insert(map,tempItem);
     }
 }
 
 void MapItem::removeMap(Map *map)
 {
-    QList<QGraphicsItem *> values = displayed_layer.values(map);
+    QList<Map_graphics_link> values = displayed_layer.values(map);
     int index=0;
     while(index<values.size())
     {
-        delete values.at(index);
+        if (ObjectGroup *objectGroup = values.at(index).layer->asObjectGroup())
+            MapObjectItem::mRendererList.remove(objectGroup);
+        delete values.at(index).graphic;
         index++;
     }
     displayed_layer.remove(map);
@@ -147,11 +171,15 @@ void MapItem::removeMap(Map *map)
 
 void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
 {
-    QList<QGraphicsItem *> values = displayed_layer.values(map);
+    qDebug() << QString("setMapPosition(%1,%2,%3)").arg(quint64(map)).arg(x).arg(y);
+    QList<Map_graphics_link> values = displayed_layer.values(map);
     int index=0;
     while(index<values.size())
     {
-        values.at(index)->setPos(x*16,y*16);
+        qDebug() << QString("setMapPosition(): apply on layer: %1, on layer: %2")
+                    .arg((quint64)values.at(index).layer)
+                    .arg(values.at(index).layer->name());
+        values.at(index).graphic->setPos(x*16,y*16);
         index++;
     }
 }
@@ -170,6 +198,9 @@ MapVisualiserQt::MapVisualiserQt(QWidget *parent) :
     mScene(new QGraphicsScene(this)),
     inMove(false)
 {
+    xPerso=0;
+    yPerso=0;
+
     lookToMove.setInterval(200);
     lookToMove.setSingleShot(true);
     connect(&lookToMove,SIGNAL(timeout()),this,SLOT(transformLookToMove()));
@@ -204,6 +235,8 @@ MapVisualiserQt::~MapVisualiserQt()
 
 void MapVisualiserQt::viewMap(const QString &fileName)
 {
+    current_map=NULL;
+
     QTime startTime;
     startTime.restart();
 
@@ -212,6 +245,14 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     playerTileset = new Tileset("player",16,24);
     playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
     playerMapObject = new MapObject();
+
+    tagTilesetIndex=0;
+    tagTileset = new Tileset("tags",16,16);
+    tagTileset->loadFromImage(QImage(":/tags.png"),":/tags.png");
+
+    //commented to not blink
+    //blink_dyna_layer.start(200);
+    connect(&blink_dyna_layer,SIGNAL(timeout()),this,SLOT(blinkDynaLayer()));
 
     mScene->clear();
     centerOn(0, 0);

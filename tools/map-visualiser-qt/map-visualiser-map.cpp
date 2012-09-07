@@ -36,6 +36,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
         delete tempMapObject->tiledMap;
         return QString();
     }
+    qDebug() << QString("loadOtherMap: %1, tiledMap: %2").arg(resolvedFileName).arg(quint64(tempMapObject->tiledMap));
 
     //copy the variables
     tempMapObject->logicalMap.width                                 = map_loader.map_to_send.width;
@@ -85,17 +86,32 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
     tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
-    tempMapObject->objectGroup = new ObjectGroup();
+    tempMapObject->objectGroup = new ObjectGroup(QString("Dyna management %1").arg(fileInformations.fileName()),0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
+
+    //add a tags
+    Tiled::MapObject * tagMapObject = new MapObject();
+    tagMapObject->setTile(tagTileset->tileAt(tagTilesetIndex));
+    tagMapObject->setPosition(QPoint(tempMapObject->logicalMap.width/2,tempMapObject->logicalMap.height/2+1));
+    tempMapObject->objectGroup->addObject(tagMapObject);
+    tagTilesetIndex++;
+    if(tagTilesetIndex>=tagTileset->tileCount())
+        tagTilesetIndex=0;
+
+    qDebug() << QString("Add for %1 the layer: %2").arg(fileInformations.fileName()).arg((quint64)tempMapObject->objectGroup);
     index=0;
     while(index<tempMapObject->tiledMap->layerCount())
     {
         if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
         {
-            tempMapObject->objectGroup->setName("Dyna management");
             tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
             break;
         }
         index++;
+    }
+    if(index==tempMapObject->tiledMap->layerCount())
+    {
+        qDebug() << QString("Unable to locate the \"Collisions\" layer on the map: %1").arg(fileInformations.fileName());
+        tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
     }
 
     other_map[resolvedFileName]=tempMapObject;
@@ -356,4 +372,11 @@ void MapVisualiserQt::displayMap()
     if(current_map->logicalMap.border.bottom.map!=NULL)
         mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.bottom.fileName]->tiledMap,
                                 -(quint32)current_map->logicalMap.border.bottom.x_offset,(quint32)current_map->logicalMap.height);
+}
+
+void MapVisualiserQt::blinkDynaLayer()
+{
+    current_map->objectGroup->setVisible(!current_map->objectGroup->isVisible());
+    //do it here only because it's one player, then max 3 call by second
+    viewport()->update();
 }
