@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="32" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="type" value="city"/>
+ </properties>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
+ <layer name="under-water" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzbENACAMBLFnObL/RswADQTZ0tWXAAAAL5gjqYN++e/wv/vvagFIlwpn
+  </data>
+ </layer>
+ <layer name="Walkable" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJzNlstRAzEMhr2PG6QIoJIklUBIISmF14VHESHDhUcR5EroAXlmNZh/JNuyl8Dhm12PN/osWfakdc51RDs8e+Hdc9Q4d2zkpPkZC2PjGP3hXK0/ll8X5BmuZSy/RhfxY51K/VKdJWdqn8baf+wrnkc3rrcmfyme5sdvec2l/lhcbc+l72r9qbOm+fm9xi958Yyl1jGlWDMjc6H/LDmn6nVBXBJXiTMk9RPOSX0Su488a+KR2CT2V+tprf+l+0iKj35pf7U1xM4fj1slJo9j+cf2ugdHGJP3NIfrwX9j+A2Cfp/TE7HdE9hr66GeOT0Qu1dS947U663gzz2TWm9pOeAc+qfEzMA8I3ftHIS9yP5T4szAMmN9Wh2k/K3+kvXhmn7TL7GA+veBf7VnPz+9n++TWwN3xD3xUOH3vLvvu+HZwAvxSrxV1t+P+exZavlB7IhPox970nNesJel/rF66YD+6xwSk+Zv/CX8B/8Xe6TdTA==
+  </data>
+ </layer>
+ <layer name="WalkBottom" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzkEJAAAIADH7B1FjagsRNrj/RQBf5VZbX48AAMADAwyuAfY=
+  </data>
+ </layer>
+ <layer name="Water" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJzt0uEJABAQhuGzDCbBJNh/Ajbg5Ep6n/r+Xb0lIgAAAMAbvBMJRotu3U/zJhutbPRP/dLXvD/9+/06b5rRuuH/0xg87yub
+  </data>
+ </layer>
+ <layer name="Collisions" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJzt180NgzAMBeBw7BycWCsB2knartJROgpbEKRaMlZsHhLgQ/MkS4CSfAmR+ElNCL1Rw4Elx06/smzKJ+xPJ861OWjrXY0lzrVE1u5W6GP50tT81vCHDZ/vRWS+ZUsfTcmX8yB/K5o/5rrneuz0KQlYu+U/c71yvdk12h/UR8L9CPY50v+yY+R+LZmANqh/VugZVH1f32sO1a8++g440/eK59rJ90z1/9en725v32sepf8fb//qmgH4cUSv
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBheIJFxoF0wsgAbELMDMcdAO4SOYDSNUReMhufAg9E4GAWjYBSMglFALzAY6hyQG2B4oMFgcQO98GAAAORTDd4=
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="32" height="30">
+  <object type="border-right" gid="238" x="496" y="240">
+   <properties>
+    <property name="map" value="0.0.tmx"/>
+   </properties>
+  </object>
+  <object name="bot spawn" type="bot spawn" gid="68" x="256" y="240"/>
+ </objectgroup>
+</map>

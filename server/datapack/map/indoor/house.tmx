@@ -32,21 +32,21 @@
  <objectgroup name="Moving" width="19" height="16">
   <object type="teleport on push" gid="238" x="128" y="256">
    <properties>
-    <property name="map" value="../world/1.0.tmx"/>
+    <property name="map" value="../world/0.0.tmx"/>
     <property name="x" value="23"/>
     <property name="y" value="6"/>
    </properties>
   </object>
   <object type="teleport on push" gid="238" x="144" y="256">
    <properties>
-    <property name="map" value="../world/1.0.tmx"/>
+    <property name="map" value="../world/0.0.tmx"/>
     <property name="x" value="23"/>
     <property name="y" value="6"/>
    </properties>
   </object>
   <object type="teleport on push" gid="238" x="160" y="256">
    <properties>
-    <property name="map" value="../world/1.0.tmx"/>
+    <property name="map" value="../world/0.0.tmx"/>
     <property name="x" value="23"/>
     <property name="y" value="6"/>
    </properties>

@@ -19,10 +19,7 @@ Dialog::~Dialog()
     delete ui;
 }
 
-/** \todo check with cyclic border, if is not missaligned
- * AB
- * CD
- * after apply border, the map B need have same coord if you pass by border DB or DC+CA+AB */
+/** \todo check layer: Collisions, Walkable */
 QString Dialog::loadMap(const QString &fileName)
 {
     QFileInfo fileInformations(fileName);
