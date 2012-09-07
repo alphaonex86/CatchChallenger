@@ -46,7 +46,12 @@ public:
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 private:
-    QMultiMap<Tiled::Map *,QGraphicsItem *> displayed_layer;
+    struct Map_graphics_link
+    {
+        QGraphicsItem * graphic;
+        Tiled::Layer *layer;
+    };
+    QMultiMap<Tiled::Map *,Map_graphics_link> displayed_layer;
 };
 
 class MapVisualiserQt : public QGraphicsView
@@ -76,6 +81,8 @@ private:
 
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
+    Tiled::Tileset * tagTileset;
+    int tagTilesetIndex;
     int moveStep;
     Pokecraft::Direction direction;
     quint8 xPerso,yPerso;
@@ -85,6 +92,8 @@ private:
     QTimer moveTimer;
     QTimer lookToMove;
     QSet<int> keyPressed;
+
+    QTimer blink_dyna_layer;
 
     Map_full *current_map;
     QHash<QString,Map_full *> other_map;
@@ -97,6 +106,7 @@ private slots:
     void unloadPlayerFromCurrentMap();
     void moveStepSlot(bool justUpdateTheTile=false);
     void transformLookToMove();
+    void blinkDynaLayer();
 };
 
 #endif

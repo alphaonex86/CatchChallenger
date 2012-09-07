@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="32" height="32" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="type" value="city"/>
+ </properties>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
+ <layer name="Walkable" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzFlVFywjAMRI3JQO9/KOhJWo5BPuiM2L6V5Hy0H5oQ7Ejyanc9xxjnPebruf3R7xnqzn+un+1x6yv1qnf9xq1V+W973BvxCfjHvA6juJ/6/trjuxGPpH7sYYPaG6z95DhaP2KttRWHbbyfPT6P1o95NP8cjMeEOFJfcZ+yRnN3+4/Wj6EYKEZT1iJOl9MY10Z8nH7jqNzTc2sQBg4/nW/knepJaxLf3cyoL+c5yv/O7LUfrUNcUc2Qp2SeTO8unIYJe6rv/Ij6oLzkDeSv1X/kua5udrdl95L7hjhFc3Me6HjpzkreqnonfLLza5/VTDSf47jToMOA1onr5Pfx3fGrmpvqr/IohyXdQ7Sn8jjKTf6ecTnrTc/u9Kz4O++h7zLf15k5fFb01vEsyk2zcp7t7oPMczt8Us1U+q80QPMljyS9Z/UzfpL+s3wdbqi/u286eXWPw7DST5ebnd4yfpA3dDXd3ZedR7W0iufq2as7MavXncFKaP4nZ/hFEA==
+  </data>
+ </layer>
+ <layer name="Collisions" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztl2EKgCAMhVO7SHWS6ijW/a+QPxKGiG5zalQPHmTJvrnCpVXDcCB9Mp2KaQl8rrC55NYroVxtuDx92ziPYAzvw+deIbtEMb4fp/hS9YXrhKwcX0phzWN1b8WH7yF2XYsf+/568VO5cPjKzdUIG0JMyt42uXkzwgsyHnVvfROf01u+zl/dvA3hvRJfUrD3SvV2qnqt/ef//Cfww//fHpI+a0jxW+VR++wlwabmVBr3S74Aa7xrYA==
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIKRCxIZR5a9gwGMZL+PglEwCkbBYAGgsngwlMcwdwwmtww0oKU7SDEXOW4IuQmbWlL0U+KmwRBnQwkAACmKDQU=
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="32" height="32">
+  <object type="border-right" gid="238" x="496" y="80">
+   <properties>
+    <property name="map" value="0.1.tmx"/>
+   </properties>
+  </object>
+  <object name="bot spawn" type="bot spawn" gid="68" x="224" y="368"/>
+ </objectgroup>
+</map>

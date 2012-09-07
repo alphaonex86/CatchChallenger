@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="32" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="type" value="city"/>
+ </properties>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
+ <layer name="Walkable" width="30" height="32">
+  <data encoding="base64" compression="zlib">
+   eJy9lUluwzAUQx3Hi9z/lDlGsogBgXgkvzZZCFar4g+ceh7H8fye8/e9/nRfz7/7tpnofacP/Uw1XP1Wl2o7XKme1rm/69+7maj/hNu19wU9dQ/tpfUUP/qd1iZslBviqPVdd0uc0/7JC02Letc669H+TfPE331/Q33decVX7+t743m9vx6Mo/akkzxCvNJb6kX6ddxM53E6cdzqHKoj0oJ6QGennHBec8d5MXk36bDx5Tzi9KWZqNmkd5fvzr+T/x0tQx0H9E26ShmofiU80r4ukykDVKekWecltzO9a72EudNN40d9lHBrGqDeLvddNhDeTZtpJt3V+TLpljyTcpC4cXiQf1NmJV/S7qSppv+WjW5efU+cJF4dLjpP82vSwkTLLX8m3CfMpvXIHzSfy9JpFkxmSvw77HewmvLlvLGD2+6uKS9cnynWO+eu+QGMzwu2
+  </data>
+ </layer>
+ <layer name="Collisions" width="30" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt1kEKACAIRNE6a3X/K4QLQaIgpVz9gcGVPNzZaindVCJzPGw71DoSna+y8+2dv6N+N7dmJvNWXFxcXFy/m23j4v50+XNwcePeWu9+xIjaNzteM7MTgcFB9g==
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="32">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGNkhkHGgXjIJRMApGwSgYSACqB5DrAnQ+qfrxqUHG+NQSYych+0k1B5c7CbmZWH8NBgAAShoLfQ==
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="30" height="32">
+  <object name="bot spawn" type="bot spawn" gid="68" x="240" y="432"/>
+  <object type="border-top" gid="238" x="64" y="16">
+   <properties>
+    <property name="map" value="0.0.tmx"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
