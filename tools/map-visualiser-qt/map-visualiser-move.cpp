@@ -335,7 +335,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
             playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
             inMove=false;
         }
-        qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
+        //qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
     }
     else
         moveTimer.start();

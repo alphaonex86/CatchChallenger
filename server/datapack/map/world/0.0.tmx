@@ -4,42 +4,54 @@
   <property name="type" value="city"/>
  </properties>
  <tileset firstgid="1" source="../tileset/texture.tsx"/>
- <layer name="under-water" width="30" height="30">
-  <data encoding="base64" compression="zlib">
-   eJztzbENACAMBLHPcrD/RixAQ7ogW7r6EgAA+MOqZDea+n3hy80BsKEKZw==
-  </data>
- </layer>
  <layer name="Walkable" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJzFlstNAzEQhr1rbpAigEqSrYRXIZTC68KjiIC4QCgCrkAP/JYywhnNeD3jsBw+KWvtzud52EofQohgB/Tsd2K/C+HAyGG3GYvHJrg3f6fVy3PhecVsD9vyakTBy+vh9Ur11Zzb9PI4Wn2ltZa50uJpa3yPXu9Yftoct+ar9U5al2agxav5NFe+NkeMhZFBmCtttjWv9N4FuARXhf5I6/ma1P/SPZJYgkfwVOifNLtjNS6d6Sh4pf7Vnps8/16JRc+lfMd6GVks6lkN12vvjeEbTp7DM/iYCKrBcl232ntbm6fa+4Lg3tqzpd2/2t455J2DhYGhIldpH5F5j8CxgbOKfZXy9no9+xoy/195JU7C5jlK3vOJvFT75KV74NbAHbgHDw5v4j38nukXA69gBd6cdU5uOkOWmn2CL/Bt9OZzduroldfbOiO7+G+xB2bdtF4P/+n9AT3t2fo=
+   eJydVVtuwkAMdBIEXKQ3gYPyOkhoVbgGVGo5RjcSK4yZsb18jOJNNjv2+LG9iAwFs4Le2D14V232D7LRGp3Bzo/ORd89v/T6u+BEcDa+RD4wDIB33omsCv7kFR9d3hekL+Os334BJ8MN6Ik0YPrqd17MiJfFh/KL6kCvszFP2p+BzlF8rPbe0VrzbQq2BTuggdUmW19Ma63jWHAs+AR8rL/qc+Je3DH5sFZrjWX3Wj+WNzNjmO63YL8+H/HqvSj/Nh+D4o1mIIo3qzHqvcrLZpS1Na/XNxHv/J5HNN/RuR7vZG8bsCPxoh6J4r0m8SWPGvHyW23WR56m6P0oz7UZxez1L5qXrN5GcAabtayPonsR5dDG6+UZ5deLz7srLC+LM6pntL8lXqYXmlfojsrwe/ll9x6bVy2zufIeJN/re6JzpK9dXyTf6xo/Di/LEbM9/zO5R/dR9E+0h/mHei0bT9Yn9m80m7JaZfOFOFt1a43VmxeMJ6t1C+qZ//c4o00=
   </data>
  </layer>
  <layer name="WalkBottom" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzjENAAAIwDD8CwFkggsO2mT/IoArudXW1yMAALw0szAB9g==
-  </data>
- </layer>
- <layer name="Water" width="30" height="30">
-  <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjIJRMApGwSgYBcMVqDEyMKjTCGsw4rbXDSjnTiPsgcdecsFQtZeUcB61l3x704By6TTCGTRIV6QAAOKNK5s=
+   eJztzrERACAMw0BnXshawJh4A6qQRn+nXhKAlxHSdBndJwCAn5bb7nSPAECRC4rGAz0=
   </data>
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxLYWRgSKUzTgbiFCDGB1bil8YKNAnIpxBhryYBeRhIQlLHSUAPqfYq41GXSoK9SVT0LzIgZG8qBfamAXE6EGeQYS8IkGtvGxC3A3EHkhgsHqhtbxKRYU4Ne08isVOJtPclEWoI2UsrMGrvqL2j9o7aO2rvqL2j9tLfzlF76WfvQGAA8YguWQ==
+   eJzt1kEKgzAQheG4rj2JehLrLYwttL2GFkrv3FcwMIYJJDhjQfPgBymab1EX9oUxPZMl0dkinHv2hPtK0tnwhu/4VuzcsxWua1LDuGuc0Fp0IXWMq7E7epCeZvk/aLlvVOHsGjXoM/9uld3f2vnszjO03dCym12N2T+5zs7b7yTeqwFd0S3BlHBHNKHXxm7qjuRqf29kV9blvsNT7pcyU4s1pLyQLX12rL+F8wXay1LH
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBjaIJFxoF0wPAEbELMDMcdAO4SGYDTtjIJRMApGwSgYBaNgqIDRdgt9ASi86YkHEgAA5ksL9A==
+   eJxjYBgFo2AUjIJRMApGAT1BIiPlZrABMTsQc9DRzlEwOMFo3A4tAIovdEyKXnLtJNYtpLoJ3Sx0NqUA3Rxc7qR2PqAkLIYaAACgfQuS
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="30">
+  <object name="bot spawn" type="bot spawn" gid="68" x="144" y="16"/>
+  <object name="house" type="door" gid="332" x="368" y="96">
+   <properties>
+    <property name="map" value="../indoor/house.tmx"/>
+    <property name="x" value="9"/>
+    <property name="y" value="14"/>
+   </properties>
+  </object>
+  <object type="border-left" gid="238" x="0" y="240">
+   <properties>
+    <property name="map" value="-1.0.tmx"/>
+   </properties>
+  </object>
+  <object type="border-top" gid="238" x="160" y="16">
+   <properties>
+    <property name="map" value="0.1.tmx"/>
+   </properties>
+  </object>
+  <object type="border-bottom" gid="238" x="64" y="480">
+   <properties>
+    <property name="map" value="0.1.tmx"/>
+   </properties>
+  </object>
   <object type="border-right" gid="238" x="464" y="240">
    <properties>
     <property name="map" value="1.0.tmx"/>
    </properties>
   </object>
-  <object name="bot spawn" type="bot spawn" gid="68" x="224" y="240"/>
  </objectgroup>
 </map>
