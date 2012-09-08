@@ -16,27 +16,35 @@ using namespace Tiled;
 //open the file, and load it into the variables
 QString MapVisualiserQt::loadOtherMap(const QString &fileName)
 {
-    Map_full *tempMapObject=new Map_full();
     QFileInfo fileInformations(fileName);
     QString resolvedFileName=fileInformations.absoluteFilePath();
     if(other_map.contains(resolvedFileName))
         return resolvedFileName;
+
+    Map_full *tempMapObject=new Map_full();
 
     //load the map
     tempMapObject->tiledMap = reader.readMap(resolvedFileName);
     if (!tempMapObject->tiledMap)
     {
         qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
+        delete tempMapObject;
         return QString();
     }
     Pokecraft::Map_loader map_loader;
     if(!map_loader.tryLoadMap(resolvedFileName))
     {
         qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString());
+        int index=0;
+        while(index<tempMapObject->tiledMap->tilesets().size())
+        {
+            delete tempMapObject->tiledMap->tilesets().at(index);
+            index++;
+        }
         delete tempMapObject->tiledMap;
+        delete tempMapObject;
         return QString();
     }
-    qDebug() << QString("loadOtherMap: %1, tiledMap: %2").arg(resolvedFileName).arg(quint64(tempMapObject->tiledMap));
 
     //copy the variables
     tempMapObject->logicalMap.width                                 = map_loader.map_to_send.width;
@@ -66,7 +74,6 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
     {
         tempMapObject->logicalMap.teleport_semi << map_loader.map_to_send.teleport.at(index);
         tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.teleport_semi.at(index).map).absoluteFilePath();
-        //qDebug() << QString("moveStepSlot(): resolvedFileName: '%1'").arg(tempMapObject->logicalMap.teleport_semi.at(index).map);
         index++;
     }
 
@@ -97,7 +104,6 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
     if(tagTilesetIndex>=tagTileset->tileCount())
         tagTilesetIndex=0;
 
-    qDebug() << QString("Add for %1 the layer: %2").arg(fileInformations.fileName()).arg((quint64)tempMapObject->objectGroup);
     index=0;
     while(index<tempMapObject->tiledMap->layerCount())
     {
@@ -122,7 +128,6 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
 void MapVisualiserQt::loadCurrentMap(const QString &fileName)
 {
     QStringList mapUsed;
-    qDebug() << QString("loadCurrentMap(%1)").arg(fileName);
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
     {
@@ -248,6 +253,7 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
             {
                 delete (*i)->logicalMap.parsed_layer.walkable;
                 delete (*i)->logicalMap.parsed_layer.water;
+                qDeleteAll((*i)->tiledMap->tilesets());
                 delete (*i)->tiledMap;
                 delete (*i)->tiledRender;
                 delete (*i);
@@ -264,34 +270,28 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
 
 void MapVisualiserQt::unloadCurrentMap(const QString &fileName)
 {
-    qDebug() << QString("unloadCurrentMap(%1)").arg(fileName);
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
     {
         if(current_map->logicalMap.map_file!=fileName)
-        {
-            qDebug() << QString("unloadCurrentMap(): the current map is unable to load: %1").arg(fileName);
             return;
-        }
         else
             tempMapObject=current_map;
     }
     else
         tempMapObject=other_map[fileName];
 
-    tempMapObject->logicalMap.border.bottom.map=NULL;
+/*    tempMapObject->logicalMap.border.bottom.map=NULL;
     tempMapObject->logicalMap.border.top.map=NULL;
     tempMapObject->logicalMap.border.left.map=NULL;
     tempMapObject->logicalMap.border.right.map=NULL;
-    tempMapObject->logicalMap.teleporter.clear();
+    tempMapObject->logicalMap.teleporter.clear();*/
 
     unloadPlayerFromCurrentMap();
 }
 
 void MapVisualiserQt::displayMap()
 {
-    qDebug() << QString("displayMap(): %1").arg(current_map->logicalMap.map_file);
-
     QSet<Map_full *> temp_displayed_map;
     //the main map
     if(!displayed_map.contains(current_map))
@@ -348,6 +348,7 @@ void MapVisualiserQt::displayMap()
             {
                 delete (*i)->logicalMap.parsed_layer.walkable;
                 delete (*i)->logicalMap.parsed_layer.water;
+                qDeleteAll((*i)->tiledMap->tilesets());
                 delete (*i)->tiledMap;
                 delete (*i)->tiledRender;
                 delete (*i);

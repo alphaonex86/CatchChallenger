@@ -249,7 +249,6 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
                 qDebug() << QString("map changed not located: %1").arg(map->map_file);
             else
             {
-                qDebug() << QString("map changed located: %1").arg(map->map_file);
                 unloadCurrentMap(current_map->logicalMap.map_file);
                 other_map[current_map->logicalMap.map_file]=current_map;
                 current_map=other_map[map->map_file];
