@@ -171,14 +171,10 @@ void MapItem::removeMap(Map *map)
 
 void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
 {
-    qDebug() << QString("setMapPosition(%1,%2,%3)").arg(quint64(map)).arg(x).arg(y);
     QList<Map_graphics_link> values = displayed_layer.values(map);
     int index=0;
     while(index<values.size())
     {
-        qDebug() << QString("setMapPosition(): apply on layer: %1, on layer: %2")
-                    .arg((quint64)values.at(index).layer)
-                    .arg(values.at(index).layer->name());
         values.at(index).graphic->setPos(x*16,y*16);
         index++;
     }
@@ -227,9 +223,26 @@ MapVisualiserQt::MapVisualiserQt(QWidget *parent) :
 
 MapVisualiserQt::~MapVisualiserQt()
 {
-/*    qDeleteAll(tiledMap->tilesets());
-    delete tiledMap;
-    delete tiledRender;*/
+    //remove the not used map
+    QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
+    while (i != other_map.constEnd()) {
+        //if it's the last reference
+        if(!displayed_map.contains(*i))
+        {
+            delete (*i)->logicalMap.parsed_layer.walkable;
+            delete (*i)->logicalMap.parsed_layer.water;
+            qDeleteAll((*i)->tiledMap->tilesets());
+            delete (*i)->tiledMap;
+            delete (*i)->tiledRender;
+            delete (*i);
+        }
+        other_map.remove((*i)->logicalMap.map_file);
+        i = other_map.constBegin();//needed
+    }
+    delete mapItem;
+    delete playerTileset;
+    delete playerMapObject;
+    delete tagTileset;
 }
 
 
