@@ -125,108 +125,18 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
     return resolvedFileName;
 }
 
-void MapVisualiserQt::loadCurrentMap(const QString &fileName)
+void MapVisualiserQt::loadCurrentMap()
 {
-    QStringList mapUsed;
-    Map_full *tempMapObject;
-    if(!other_map.contains(fileName))
-    {
-        if(current_map->logicalMap.map_file!=fileName)
-        {
-            qDebug() << QString("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
-            return;
-        }
-        else
-            tempMapObject=current_map;
-    }
-    else
-        tempMapObject=other_map[fileName];
+    QSet<QString> mapUsed;
+    Map_full *tempMapObject=current_map;
 
-    mapUsed<<tempMapObject->logicalMap.map_file;
-
-    QString mapIndex;
-
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
-    {
-        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
-        //if is correctly loaded
-        if(!mapIndex.isEmpty())
-        {
-            //if both border match
-            if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && current_map->logicalMap.border_semi.bottom.fileName==mapIndex)
-            {
-                current_map->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
-                int offset=current_map->logicalMap.border.bottom.x_offset-other_map[mapIndex]->logicalMap.border.top.x_offset;
-                current_map->logicalMap.border.bottom.x_offset=offset;
-                other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
-                mapUsed<<mapIndex;
-            }
-        }
-    }
-
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
-    {
-        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
-        //if is correctly loaded
-        if(!mapIndex.isEmpty())
-        {
-            //if both border match
-            if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && current_map->logicalMap.border_semi.top.fileName==mapIndex)
-            {
-                current_map->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
-                int offset=current_map->logicalMap.border.top.x_offset-other_map[mapIndex]->logicalMap.border.bottom.x_offset;
-                current_map->logicalMap.border.top.x_offset=offset;
-                other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
-                mapUsed<<mapIndex;
-            }
-        }
-    }
-
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
-    {
-        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
-        //if is correctly loaded
-        if(!mapIndex.isEmpty())
-        {
-            //if both border match
-            if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && current_map->logicalMap.border_semi.left.fileName==mapIndex)
-            {
-                current_map->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
-                int offset=current_map->logicalMap.border.left.y_offset-other_map[mapIndex]->logicalMap.border.right.y_offset;
-                current_map->logicalMap.border.left.y_offset=offset;
-                other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
-                mapUsed<<mapIndex;
-            }
-        }
-    }
-
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
-    {
-        mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
-        //if is correctly loaded
-        if(!mapIndex.isEmpty())
-        {
-            //if both border match
-            if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && current_map->logicalMap.border_semi.right.fileName==mapIndex)
-            {
-                current_map->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
-                int offset=current_map->logicalMap.border.right.y_offset-other_map[mapIndex]->logicalMap.border.left.y_offset;
-                current_map->logicalMap.border.right.y_offset=offset;
-                other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
-                mapUsed<<mapIndex;
-            }
-        }
-    }
+    mapUsed << tempMapObject->logicalMap.map_file;
 
     //load the teleporter
     int index=0;
     while(index<tempMapObject->logicalMap.teleport_semi.size())
     {
-        mapIndex=loadOtherMap(tempMapObject->logicalMap.teleport_semi[index].map);
+        QString mapIndex=loadOtherMap(tempMapObject->logicalMap.teleport_semi[index].map);
         //if is correctly loaded
         if(!mapIndex.isEmpty())
         {
@@ -237,20 +147,29 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
                 tempMapObject->logicalMap.teleporter[virtual_position].map=&other_map[mapIndex]->logicalMap;
                 tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
                 tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
-                mapUsed<<mapIndex;
+                //reset the other map
+                tempMapObject->logicalMap.teleporter.clear();
+                tempMapObject->logicalMap.border.bottom.map=NULL;
+                tempMapObject->logicalMap.border.top.map=NULL;
+                tempMapObject->logicalMap.border.left.map=NULL;
+                tempMapObject->logicalMap.border.right.map=NULL;
+                mapUsed << mapIndex;
             }
         }
         index++;
     }
 
+    loadNearMap(tempMapObject->logicalMap.map_file);
+
     //remove the not used map
     QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
     while (i != other_map.constEnd()) {
-        if(!mapUsed.contains((*i)->logicalMap.map_file))
+        if(!mapUsed.contains((*i)->logicalMap.map_file) && !loadedNearMap.contains((*i)->logicalMap.map_file))
         {
             //if it's the last reference
             if(!displayed_map.contains(*i))
             {
+                mapItem->removeMap((*i)->tiledMap);
                 delete (*i)->logicalMap.parsed_layer.walkable;
                 delete (*i)->logicalMap.parsed_layer.water;
                 qDeleteAll((*i)->tiledMap->tilesets());
@@ -266,113 +185,218 @@ void MapVisualiserQt::loadCurrentMap(const QString &fileName)
     }
 
     loadPlayerFromCurrentMap();
+    loadedNearMap.clear();
 }
 
-void MapVisualiserQt::unloadCurrentMap(const QString &fileName)
+void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y)
 {
+    if(loadedNearMap.contains(fileName))
+        return;
+    qDebug() << QString("loadNearMap(): %1").arg(fileName);
+
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
     {
         if(current_map->logicalMap.map_file!=fileName)
+        {
+            qDebug() << QString("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
             return;
+        }
         else
             tempMapObject=current_map;
     }
     else
         tempMapObject=other_map[fileName];
 
-/*    tempMapObject->logicalMap.border.bottom.map=NULL;
+    loadedNearMap << fileName;
+
+    QString mapIndex;
+    QRect current_map_rect(0,0,current_map->logicalMap.width,current_map->logicalMap.height);
+
+    //reset the other map
+    tempMapObject->logicalMap.teleporter.clear();
+    tempMapObject->logicalMap.border.bottom.map=NULL;
     tempMapObject->logicalMap.border.top.map=NULL;
     tempMapObject->logicalMap.border.left.map=NULL;
     tempMapObject->logicalMap.border.right.map=NULL;
-    tempMapObject->logicalMap.teleporter.clear();*/
 
-    unloadPlayerFromCurrentMap();
-}
+    //display the map
+    mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender);
+    mapItem->setMapPosition(tempMapObject->tiledMap,x,y);
 
-void MapVisualiserQt::displayMap()
-{
-    QSet<Map_full *> temp_displayed_map;
-    //the main map
-    if(!displayed_map.contains(current_map))
+    //if have bottom border
+    if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
     {
-        mapItem->addMap(current_map->tiledMap,current_map->tiledRender);
-        displayed_map << current_map;
-    }
-    temp_displayed_map << current_map;
-    //the border
-    if(current_map->logicalMap.border.bottom.map!=NULL)
-    {
-        if(!displayed_map.contains(other_map[current_map->logicalMap.border.bottom.map->map_file]))
+        //if the position is good to have border in range
+        if((y+tempMapObject->logicalMap.height)<=current_map->logicalMap.height)
         {
-            mapItem->addMap(other_map[current_map->logicalMap.border.bottom.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.bottom.map->map_file]->tiledRender);
-            displayed_map << other_map[current_map->logicalMap.border.bottom.map->map_file];
-        }
-        temp_displayed_map << other_map[current_map->logicalMap.border.bottom.map->map_file];
-    }
-    if(current_map->logicalMap.border.top.map!=NULL)
-    {
-        if(!displayed_map.contains(other_map[current_map->logicalMap.border.top.map->map_file]))
-        {
-            mapItem->addMap(other_map[current_map->logicalMap.border.top.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.top.map->map_file]->tiledRender);
-            displayed_map << other_map[current_map->logicalMap.border.top.map->map_file];
-        }
-        temp_displayed_map << other_map[current_map->logicalMap.border.top.map->map_file];
-    }
-    if(current_map->logicalMap.border.left.map!=NULL)
-    {
-        if(!displayed_map.contains(other_map[current_map->logicalMap.border.left.map->map_file]))
-        {
-            mapItem->addMap(other_map[current_map->logicalMap.border.left.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.left.map->map_file]->tiledRender);
-            displayed_map << other_map[current_map->logicalMap.border.left.map->map_file];
-        }
-        temp_displayed_map << other_map[current_map->logicalMap.border.left.map->map_file];
-    }
-    if(current_map->logicalMap.border.right.map!=NULL)
-    {
-        if(!displayed_map.contains(other_map[current_map->logicalMap.border.right.map->map_file]))
-        {
-            mapItem->addMap(other_map[current_map->logicalMap.border.right.map->map_file]->tiledMap,other_map[current_map->logicalMap.border.right.map->map_file]->tiledRender);
-            displayed_map << other_map[current_map->logicalMap.border.right.map->map_file];
-        }
-        temp_displayed_map << other_map[current_map->logicalMap.border.right.map->map_file];
-    }
-    //the map to remove
-    QSet<Map_full *>::const_iterator i = displayed_map.constBegin();
-    while (i != displayed_map.constEnd()) {
-        if(!temp_displayed_map.contains(*i))
-        {
-            mapItem->removeMap((*i)->tiledMap);
-            //if it's the last reference
-            if(!other_map.contains((*i)->logicalMap.map_file))
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
             {
-                delete (*i)->logicalMap.parsed_layer.walkable;
-                delete (*i)->logicalMap.parsed_layer.water;
-                qDeleteAll((*i)->tiledMap->tilesets());
-                delete (*i)->tiledMap;
-                delete (*i)->tiledRender;
-                delete (*i);
+                //if both border match
+                if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
+                {
+                    int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map[mapIndex]->logicalMap.border_semi.top.x_offset;
+                    const quint32 x_sub=x+offset;
+                    const quint32 y_sub=y+tempMapObject->logicalMap.height;
+                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    //if the new map touch the current map
+                    if(RectTouch(current_map_rect,border_map_rect))
+                    {
+                        tempMapObject->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.bottom.x_offset=-offset;
+                        other_map[mapIndex]->logicalMap.border.top.x_offset=offset;
+
+                        loadNearMap(mapIndex,x_sub,y_sub);
+                    }
+                    else
+                    {
+                        qDebug() << current_map_rect;
+                        qDebug() << border_map_rect;
+                        qDebug() << QString("loadNearMap(): bottom: the map not touch %1").arg(fileName);
+                    }
+                }
+                else
+                    qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(fileName);
             }
-            displayed_map.remove(*i);
-            i = displayed_map.constBegin();//needed
+            else
+                qDebug() << QString("loadNearMap(): bottom: not correctly loaded %1").arg(fileName);
         }
         else
-           ++i;
+            qDebug() << QString("loadNearMap(): bottom: the next map is out of range %1").arg(fileName);
     }
-    //set the position
-    mapItem->setMapPosition(current_map->tiledMap,0,0);
-    if(current_map->logicalMap.border.left.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.left.fileName]->tiledMap,
-                                -(quint32)current_map->logicalMap.border.left.map->width,-(quint32)current_map->logicalMap.border.left.y_offset);
-    if(current_map->logicalMap.border.right.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.right.fileName]->tiledMap,
-                                (quint32)current_map->logicalMap.width,-(quint32)current_map->logicalMap.border.right.y_offset);
-    if(current_map->logicalMap.border.top.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.top.fileName]->tiledMap,
-                                -(quint32)current_map->logicalMap.border.top.x_offset,-(quint32)current_map->logicalMap.border.top.map->height);
-    if(current_map->logicalMap.border.bottom.map!=NULL)
-        mapItem->setMapPosition(other_map[current_map->logicalMap.border_semi.bottom.fileName]->tiledMap,
-                                -(quint32)current_map->logicalMap.border.bottom.x_offset,(quint32)current_map->logicalMap.height);
+    //if have top border
+    if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
+    {
+        //if the position is good to have border in range
+        if(y>=0)
+        {
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
+                {
+                    int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
+                    const quint32 x_sub=x+offset;
+                    const quint32 y_sub=y-other_map[mapIndex]->logicalMap.height;
+                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    //if the new map touch the current map
+                    if(RectTouch(current_map_rect,border_map_rect))
+                    {
+                        tempMapObject->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.top.x_offset=-offset;
+                        other_map[mapIndex]->logicalMap.border.bottom.x_offset=offset;
+
+                        loadNearMap(mapIndex,x_sub,y_sub);
+                    }
+                    else
+                    {
+                        qDebug() << current_map_rect;
+                        qDebug() << border_map_rect;
+                        qDebug() << QString("loadNearMap(): top: the map not touch %1").arg(fileName);
+                    }
+                }
+                else
+                    qDebug() << QString("loadNearMap(): top: have not mutual border %1").arg(fileName);
+            }
+            else
+                qDebug() << QString("loadNearMap(): top: not correctly loaded %1").arg(fileName);
+        }
+        else
+            qDebug() << QString("loadNearMap(): top: the next map is out of range %1").arg(fileName);
+    }
+    //if have right border
+    if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
+    {
+        //if the position is good to have border in range
+        if((x+tempMapObject->logicalMap.width)<=current_map->logicalMap.width)
+        {
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
+                {
+                    int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map[mapIndex]->logicalMap.border_semi.left.y_offset;
+                    const quint32 x_sub=x+tempMapObject->logicalMap.width;
+                    const quint32 y_sub=y+offset;
+                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    //if the new map touch the current map
+                    if(RectTouch(current_map_rect,border_map_rect))
+                    {
+                        tempMapObject->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.right.y_offset=-offset;
+                        other_map[mapIndex]->logicalMap.border.left.y_offset=offset;
+
+                        loadNearMap(mapIndex,x_sub,y_sub);
+                    }
+                    else
+                    {
+                        qDebug() << current_map_rect;
+                        qDebug() << border_map_rect;
+                        qDebug() << QString("loadNearMap(): right: the map not touch %1").arg(fileName);
+                    }
+                }
+                else
+                    qDebug() << QString("loadNearMap(): right: have not mutual border %1").arg(fileName);
+            }
+            else
+                qDebug() << QString("loadNearMap(): right: not correctly loaded %1").arg(fileName);
+        }
+        else
+            qDebug() << QString("loadNearMap(): right: the next map is out of range %1").arg(fileName);
+    }
+    //if have left border
+    if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
+    {
+        //if the position is good to have border in range
+        if(x>=0)
+        {
+            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
+            //if is correctly loaded
+            if(!mapIndex.isEmpty())
+            {
+                //if both border match
+                if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
+                {
+                    int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map[mapIndex]->logicalMap.border_semi.right.y_offset;
+                    const quint32 x_sub=x-other_map[mapIndex]->logicalMap.width;
+                    const quint32 y_sub=y+offset;
+                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    //if the new map touch the current map
+                    if(RectTouch(current_map_rect,border_map_rect))
+                    {
+                        tempMapObject->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.left.y_offset=-offset;
+                        other_map[mapIndex]->logicalMap.border.right.y_offset=offset;
+
+                        loadNearMap(mapIndex,x_sub,y_sub);
+                    }
+                    else
+                    {
+                        qDebug() << current_map_rect;
+                        qDebug() << border_map_rect;
+                        qDebug() << QString("loadNearMap(): left: the map not touch %1").arg(fileName);
+                    }
+                }
+                else
+                    qDebug() << QString("loadNearMap(): left: have not mutual border %1").arg(fileName);
+            }
+            else
+                qDebug() << QString("loadNearMap(): left: not correctly loaded %1").arg(fileName);
+        }
+        else
+            qDebug() << QString("loadNearMap(): left: the next map is out of range %1").arg(fileName);
+    }
+}
+
+void MapVisualiserQt::unloadCurrentMap()
+{
+    unloadPlayerFromCurrentMap();
 }
 
 void MapVisualiserQt::blinkDynaLayer()
