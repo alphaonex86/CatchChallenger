@@ -249,11 +249,10 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
                 qDebug() << QString("map changed not located: %1").arg(map->map_file);
             else
             {
-                unloadCurrentMap(current_map->logicalMap.map_file);
+                unloadCurrentMap();
                 other_map[current_map->logicalMap.map_file]=current_map;
                 current_map=other_map[map->map_file];
-                loadCurrentMap(current_map->logicalMap.map_file);
-                displayMap();
+                loadCurrentMap();
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
