@@ -219,8 +219,6 @@ MapVisualiserQt::MapVisualiserQt(QWidget *parent) :
     //setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
 }
 
-
-
 MapVisualiserQt::~MapVisualiserQt()
 {
     //remove the not used map
@@ -244,7 +242,6 @@ MapVisualiserQt::~MapVisualiserQt()
     delete playerMapObject;
     delete tagTileset;
 }
-
 
 void MapVisualiserQt::viewMap(const QString &fileName)
 {
@@ -275,7 +272,6 @@ void MapVisualiserQt::viewMap(const QString &fileName)
         return;
     current_map=other_map[current_map_fileName];
     other_map.remove(current_map_fileName);
-    loadCurrentMap(current_map->logicalMap.map_file);
 
     //the direction
     direction=Pokecraft::Direction_look_at_bottom;
@@ -299,8 +295,38 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     }
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
 
-    displayMap();
+    loadCurrentMap();
+
     qDebug() << startTime.elapsed();
     mScene->addItem(mapItem);
 }
 
+bool MapVisualiserQt::RectTouch(QRect r1,QRect r2)
+{
+    if (r1.isNull() || r2.isNull())
+        return false;
+
+    if((r1.x()+r1.width())<r2.x())
+    {
+        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 1 not respected");
+        return false;
+    }
+    if((r2.x()+r2.width())<r1.x())
+    {
+        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 2 not respected");
+        return false;
+    }
+
+    if((r1.y()+r1.height())<r2.y())
+    {
+        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 3 not respected");
+        return false;
+    }
+    if((r2.y()+r2.height())<r1.y())
+    {
+        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 4 not respected: %1+%2<%3").arg(r2.y()).arg(r2.width()).arg(r1.y());
+        return false;
+    }
+
+    return true;
+}

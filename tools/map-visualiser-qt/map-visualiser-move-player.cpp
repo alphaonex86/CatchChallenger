@@ -33,6 +33,5 @@ void MapVisualiserQt::loadPlayerFromCurrentMap()
 void MapVisualiserQt::unloadPlayerFromCurrentMap()
 {
     //load the player sprite
-    int index=current_map->objectGroup->removeObject(playerMapObject);
-    current_map->objectGroup->setVisible(true);
+    current_map->objectGroup->removeObject(playerMapObject);
 }

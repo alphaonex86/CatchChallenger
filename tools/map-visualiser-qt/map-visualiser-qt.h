@@ -52,6 +52,7 @@ private:
         Tiled::Layer *layer;
     };
     QMultiMap<Tiled::Map *,Map_graphics_link> displayed_layer;
+    QSet<Tiled::Map *> displayed_map;
 };
 
 class MapVisualiserQt : public QGraphicsView
@@ -65,7 +66,7 @@ public:
     void keyReleaseEvent(QKeyEvent *event);
     void keyPressParse();
     void viewMap(const QString &fileName);
-    void displayMap();
+    bool RectTouch(QRect r1,QRect r2);
 private:
     struct Map_full
     {
@@ -92,16 +93,19 @@ private:
     QTimer moveTimer;
     QTimer lookToMove;
     QSet<int> keyPressed;
+    QSet<QString> mapUsed;
 
     QTimer blink_dyna_layer;
 
     Map_full *current_map;
     QHash<QString,Map_full *> other_map;
     QSet<Map_full *> displayed_map;
+    QSet<QString> loadedNearMap;
 private slots:
     QString loadOtherMap(const QString &fileName);
-    void loadCurrentMap(const QString &fileName);
-    void unloadCurrentMap(const QString &fileName);
+    void loadCurrentMap();
+    void loadNearMap(const QString &fileName, const qint32 &x=0, const qint32 &y=0);
+    void unloadCurrentMap();
     void loadPlayerFromCurrentMap();
     void unloadPlayerFromCurrentMap();
     void moveStepSlot(bool justUpdateTheTile=false);
