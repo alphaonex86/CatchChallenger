@@ -69,6 +69,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
         tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+tempMapObject->logicalMap.border_semi.left.fileName).absoluteFilePath();
 
     //load the string
+    tempMapObject->logicalMap.teleport_semi.clear();
     int index=0;
     while(index<map_loader.map_to_send.teleport.size())
     {
@@ -130,7 +131,8 @@ void MapVisualiserQt::loadCurrentMap()
     QSet<QString> mapUsed;
     Map_full *tempMapObject=current_map;
 
-    mapUsed << tempMapObject->logicalMap.map_file;
+    loadPlayerFromCurrentMap();
+    loadNearMap(tempMapObject->logicalMap.map_file);
 
     //load the teleporter
     int index=0;
@@ -140,28 +142,21 @@ void MapVisualiserQt::loadCurrentMap()
         //if is correctly loaded
         if(!mapIndex.isEmpty())
         {
-            //if both border match
+            //if the teleporter is in range
             if(tempMapObject->logicalMap.teleport_semi[index].destination_x<other_map[mapIndex]->logicalMap.width && tempMapObject->logicalMap.teleport_semi[index].destination_y<other_map[mapIndex]->logicalMap.height)
             {
                 int virtual_position=tempMapObject->logicalMap.teleport_semi[index].source_x+tempMapObject->logicalMap.teleport_semi[index].source_y*tempMapObject->logicalMap.width;
                 tempMapObject->logicalMap.teleporter[virtual_position].map=&other_map[mapIndex]->logicalMap;
                 tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
                 tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
-                //reset the other map
-                tempMapObject->logicalMap.teleporter.clear();
-                tempMapObject->logicalMap.border.bottom.map=NULL;
-                tempMapObject->logicalMap.border.top.map=NULL;
-                tempMapObject->logicalMap.border.left.map=NULL;
-                tempMapObject->logicalMap.border.right.map=NULL;
+
                 mapUsed << mapIndex;
             }
+            else
+                qDebug() << QString("The teleporter is out of range: %1").arg(mapIndex);
         }
         index++;
     }
-
-    loadNearMap(tempMapObject->logicalMap.map_file);
-
-    loadPlayerFromCurrentMap();
 
     //remove the not displayed map
     {

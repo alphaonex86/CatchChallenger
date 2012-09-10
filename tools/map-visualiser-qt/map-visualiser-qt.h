@@ -35,6 +35,18 @@ class MapRenderer;
 }
 
 #define STEPPERSO 1
+#define TILE_SIZE 16
+
+class ObjectGroupItem : public QGraphicsItem
+{
+public:
+    ObjectGroupItem(Tiled::ObjectGroup *objectGroup,QGraphicsItem *parent = 0);
+    QRectF boundingRect() const;
+    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
+    void updateObject();
+public:
+    Tiled::ObjectGroup *mObjectGroup;
+};
 
 class MapItem : public QGraphicsItem
 {
@@ -52,6 +64,7 @@ private:
         Tiled::Layer *layer;
     };
     QMultiMap<Tiled::Map *,Map_graphics_link> displayed_layer;
+    QMultiMap<Tiled::Map *,ObjectGroupItem *> ObjectGroupItemList;
     QSet<Tiled::Map *> displayed_map;
 };
 
@@ -67,6 +80,7 @@ public:
     void keyPressParse();
     void viewMap(const QString &fileName);
     bool RectTouch(QRect r1,QRect r2);
+    void displayTheDebugMap();
 private:
     struct Map_full
     {
