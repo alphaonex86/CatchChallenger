@@ -155,7 +155,7 @@ bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE 
 			{
 				if(!checkCollision)
 					return true;
-				return map->border.bottom.map->parsed_layer.walkable[x+map->border.top.x_offset+0];
+                return map->border.bottom.map->parsed_layer.walkable[x+map->border.bottom.x_offset+0];
 			}
 		break;
 		default:

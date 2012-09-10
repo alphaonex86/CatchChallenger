@@ -11,20 +11,25 @@
  </layer>
  <layer name="Collisions" width="32" height="30">
   <data encoding="base64" compression="zlib">
-   eJzFllkOwzAIRNOr1sn9r9CfRkJogGFxguQvW35jlknW5zjOl9Zy9i5yTWu672Wjq0XnoBNZDV+jBp3wcsr2wGQOZC2Rhgo/Oid7ItLnzYDmeHuZ8PjRfFn7mbgMvpUvNp+VHKz/ysy8p4HVofndkPVAHEvzFF/yEB9pqPhth4/maTo0I/LkNVwD1AOR/zL8TK6ss5b/PsW/9xA/6sHd/M6d6H4rtHez3of6yuKz83ySb5fnvfdlvwNZPpojzc54WZbv6aiwq3ytI+vh3v/HE8H+b73F36kF+c8OHez7WP6u9QMuDaN2
+   eJzFllEKxCAMRNurrvX+V1gKXZAwGScmdgfypfjGmATbeRwXiVtsPRONrPUnbvXTj6wH71xVWS+Vinr4gDfIiuVYrYHKHIxviTys8Gf7WB1ZD6wHLKeqfhh/1l/eekTd4Xv5UvO5koP2RKTnmQfVh+VnNb4H4nieq/gjD/GRB/buO/heP1XKnjmbya34DVANzOavwo/kydvrzd+3+L81xJ/V4G5+5kx0vic7u9XZh+rK46v9fIl3H/ez+0X7OcpHfWTZkVkW5TMfK+xVvvUR/TOz/8cbUv9b/+Lv9ILmzw4f6v1U/q74ApkWoRs=
   </data>
  </layer>
  <layer name="WalkBehind" width="32" height="30">
   <data encoding="base64" compression="zlib">
-   eJztlTkOACAIBPWp/v8TFjaG4IUCa8IkFjbsiFdKQfAXJbehXZ/mcHMLZuvV7sUuKA4IHj0oTigOFh6rjN6Du+eIoPsFDe1/yZvVX+Tl4dUb6dvhuZc0G+kNtHbg8jT7cVrz5nxxQ8qo3uscayobExpr
+   eJxjYBgFAwkSGVHxQIPB4AZCgNZhhStOsPHpAfD5dzTdoLphMLgDGQwWNw0WN9DDHYTsIJSvByMY7O4bBRBA63ppoAGhumig3DFQYUNu2TGQcYlu90huf2Kzj5bhQaqZlKQvbJhcgMs8attDbwAAowkb8w==
   </data>
  </layer>
  <objectgroup name="Moving" width="32" height="30">
-  <object type="border-left" gid="238" x="0" y="240">
+  <object type="border-left" gid="238" x="0" y="64">
    <properties>
     <property name="map" value="0.0.tmx"/>
    </properties>
   </object>
   <object name="bot spawn" type="bot spawn" gid="68" x="256" y="240"/>
+  <object type="border-top" gid="238" x="128" y="16">
+   <properties>
+    <property name="map" value="1.0b.tmx"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
