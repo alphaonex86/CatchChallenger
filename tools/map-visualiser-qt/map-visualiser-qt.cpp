@@ -224,19 +224,16 @@ MapVisualiserQt::~MapVisualiserQt()
     //remove the not used map
     QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
     while (i != other_map.constEnd()) {
-        //if it's the last reference
-        if(!displayed_map.contains(*i))
-        {
-            delete (*i)->logicalMap.parsed_layer.walkable;
-            delete (*i)->logicalMap.parsed_layer.water;
-            qDeleteAll((*i)->tiledMap->tilesets());
-            delete (*i)->tiledMap;
-            delete (*i)->tiledRender;
-            delete (*i);
-        }
+        delete (*i)->logicalMap.parsed_layer.walkable;
+        delete (*i)->logicalMap.parsed_layer.water;
+        qDeleteAll((*i)->tiledMap->tilesets());
+        delete (*i)->tiledMap;
+        delete (*i)->tiledRender;
+        delete (*i);
         other_map.remove((*i)->logicalMap.map_file);
         i = other_map.constBegin();//needed
     }
+
     delete mapItem;
     delete playerTileset;
     delete playerMapObject;
