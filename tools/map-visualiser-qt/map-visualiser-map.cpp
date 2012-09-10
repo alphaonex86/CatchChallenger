@@ -161,6 +161,8 @@ void MapVisualiserQt::loadCurrentMap()
 
     loadNearMap(tempMapObject->logicalMap.map_file);
 
+    loadPlayerFromCurrentMap();
+
     //remove the not displayed map
     {
         QSet<QString>::const_iterator i = displayed_map.constBegin();
@@ -171,7 +173,8 @@ void MapVisualiserQt::loadCurrentMap()
                 displayed_map.remove(*i);
                 i = displayed_map.constBegin();
             }
-            ++i;
+            else
+                ++i;
         }
     }
     //remove the not used map
@@ -192,7 +195,6 @@ void MapVisualiserQt::loadCurrentMap()
             ++i;
     }
 
-    loadPlayerFromCurrentMap();
     loadedNearMap.clear();
 }
 
@@ -200,7 +202,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
 {
     if(loadedNearMap.contains(fileName))
         return;
-    qDebug() << QString("loadNearMap(): %1").arg(fileName);
 
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
@@ -262,12 +263,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }
-                    else
-                    {
-                        qDebug() << current_map_rect;
-                        qDebug() << border_map_rect;
-                        qDebug() << QString("loadNearMap(): bottom: the map not touch %1").arg(fileName);
-                    }
                 }
                 else
                     qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(fileName);
@@ -275,8 +270,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
             else
                 qDebug() << QString("loadNearMap(): bottom: not correctly loaded %1").arg(fileName);
         }
-        else
-            qDebug() << QString("loadNearMap(): bottom: the next map is out of range %1").arg(fileName);
     }
     //if have top border
     if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
@@ -304,12 +297,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }
-                    else
-                    {
-                        qDebug() << current_map_rect;
-                        qDebug() << border_map_rect;
-                        qDebug() << QString("loadNearMap(): top: the map not touch %1").arg(fileName);
-                    }
                 }
                 else
                     qDebug() << QString("loadNearMap(): top: have not mutual border %1").arg(fileName);
@@ -317,8 +304,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
             else
                 qDebug() << QString("loadNearMap(): top: not correctly loaded %1").arg(fileName);
         }
-        else
-            qDebug() << QString("loadNearMap(): top: the next map is out of range %1").arg(fileName);
     }
     //if have right border
     if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
@@ -346,12 +331,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }
-                    else
-                    {
-                        qDebug() << current_map_rect;
-                        qDebug() << border_map_rect;
-                        qDebug() << QString("loadNearMap(): right: the map not touch %1").arg(fileName);
-                    }
                 }
                 else
                     qDebug() << QString("loadNearMap(): right: have not mutual border %1").arg(fileName);
@@ -359,8 +338,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
             else
                 qDebug() << QString("loadNearMap(): right: not correctly loaded %1").arg(fileName);
         }
-        else
-            qDebug() << QString("loadNearMap(): right: the next map is out of range %1").arg(fileName);
     }
     //if have left border
     if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
@@ -388,12 +365,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }
-                    else
-                    {
-                        qDebug() << current_map_rect;
-                        qDebug() << border_map_rect;
-                        qDebug() << QString("loadNearMap(): left: the map not touch %1").arg(fileName);
-                    }
                 }
                 else
                     qDebug() << QString("loadNearMap(): left: have not mutual border %1").arg(fileName);
@@ -401,8 +372,6 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
             else
                 qDebug() << QString("loadNearMap(): left: not correctly loaded %1").arg(fileName);
         }
-        else
-            qDebug() << QString("loadNearMap(): left: the next map is out of range %1").arg(fileName);
     }
 }
 
