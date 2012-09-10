@@ -32,16 +32,16 @@ void MapVisualiserQt::keyPressParse()
     if(inMove)
         return;
 
-    /*int y=0;
-    while(y<logicalMap.height)
+    int y=0;
+    while(y<current_map->logicalMap.height)
     {
         QString line;
         int x=0;
-        while(x<logicalMap.width)
+        while(x<current_map->logicalMap.width)
         {
             if(x==xPerso && y==yPerso)
                 line+="P";
-            else if(logicalMap.parsed_layer.walkable[x+y*logicalMap.width])
+            else if(current_map->logicalMap.parsed_layer.walkable[x+y*current_map->logicalMap.width])
                 line+="_";
             else
                 line+="X";
@@ -49,7 +49,7 @@ void MapVisualiserQt::keyPressParse()
         }
         qDebug() << line;
         y++;
-    }*/
+    }
 
     if(keyPressed.contains(16777234))
     {
@@ -338,18 +338,17 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
     else
         moveTimer.start();
 
-    /*
     qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
     int y=0;
-    while(y<logicalMap.height)
+    while(y<current_map->logicalMap.height)
     {
         QString line;
         int x=0;
-        while(x<logicalMap.width)
+        while(x<current_map->logicalMap.width)
         {
             if(x==xPerso && y==yPerso)
                 line+="P";
-            else if(logicalMap.parsed_layer.walkable[x+y*logicalMap.width])
+            else if(current_map->logicalMap.parsed_layer.walkable[x+y*current_map->logicalMap.width])
                 line+="_";
             else
                 line+="X";
@@ -357,7 +356,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
         }
         qDebug() << line;
         y++;
-    }*/
+    }
 
     //do it here only because it's one player, then max 3 call by second
     if(!justUpdateTheTile)

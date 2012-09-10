@@ -21,16 +21,16 @@
  </layer>
  <layer name="Collisions" width="30" height="32">
   <data encoding="base64" compression="zlib">
-   eJxLZmRgSMGCU6mIk3FgbHZSE2Czn9Z2YrMfW3hSCoyA2BgPNmGA2EttEATEwXhwyKi9VAFFQFyMhIXQ+CUMiDRMS6CCRYwe9mIDA20vKwP1MTH20huM2ktfe+ltNz57aZmuB6N/R+2lvr20bFPhs5fegJb1Ar66YaD9O2ovbe1Dx6TqJ8cOcu0mRg+pdhLjFmqZCQDCpFGD
+   eJxLZmRgSMGCU6mIk3FgbHZSE2Czn9Z2YrMfW3hSCoyA2BgPNmGA2EttEATEwXhwyKi9VAFFQFyMhIXQ+CUMiDRMS6CCRYwe9mIDA20vKwP1MTH20huM2ktfe+ltNz57aZmuB6N/R+2lvr20bFPhs5fegJb1Ar66YaD9O2ovbe1Dx6TqJ8cOcu0mRg+pduIzj1Kz0DEAuSxRgw==
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="32">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUUAoSGQfaBaNgFIwCSsBoHh4Fo2AUjIKRDUD1AHJdgM4nVT8+NcgYn1pi7CRkP6nmkOpOXHoGMwAA4QkKuQ==
+   eJxjYBgFo2AUUAoSGQfaBaNgFIwCSsBoHh4Fo2AUjIKRDUD1AHJdgM4nVT8+NcgYn1pi7CRkP6nmoLsTmzguM4jx12AAANfZCrk=
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="32">
-  <object type="border-bottom" gid="238" x="160" y="512">
+  <object type="border-bottom" gid="238" x="128" y="512">
    <properties>
     <property name="map" value="0.0.tmx"/>
    </properties>
