@@ -45,7 +45,7 @@
   </object>
   <object type="border-bottom" gid="238" x="64" y="480">
    <properties>
-    <property name="map" value="0.1.tmx"/>
+    <property name="map" value="0.-1.tmx"/>
    </properties>
   </object>
   <object type="border-right" gid="238" x="464" y="240">

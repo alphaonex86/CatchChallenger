@@ -29,7 +29,11 @@ public:
 
     QRectF boundingRect() const
     {
-        return mRendererList[mMapObject->objectGroup()]->boundingRect(mMapObject);
+        ObjectGroup * objectGroup=mMapObject->objectGroup();
+        if(mRendererList.contains(objectGroup))
+            return mRendererList[objectGroup]->boundingRect(mMapObject);
+        else
+            return QRectF();
     }
 
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
@@ -47,6 +51,7 @@ public:
 private:
     MapObject *mMapObject;
 public:
+    //interresting if have lot of object by group layer
     static QHash<ObjectGroup *,MapRenderer *> mRendererList;
 };
 QHash<ObjectGroup *,MapRenderer *> MapObjectItem::mRendererList;
@@ -236,7 +241,7 @@ MapVisualiserQt::~MapVisualiserQt()
 
     delete mapItem;
     delete playerTileset;
-    delete playerMapObject;
+    //delete playerMapObject;
     delete tagTileset;
 }
 
@@ -304,26 +309,14 @@ bool MapVisualiserQt::RectTouch(QRect r1,QRect r2)
         return false;
 
     if((r1.x()+r1.width())<r2.x())
-    {
-        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 1 not respected");
         return false;
-    }
     if((r2.x()+r2.width())<r1.x())
-    {
-        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 2 not respected");
         return false;
-    }
 
     if((r1.y()+r1.height())<r2.y())
-    {
-        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 3 not respected");
         return false;
-    }
     if((r2.y()+r2.height())<r1.y())
-    {
-        qDebug() << QString("MapVisualiserQt::RectTouch(): condition 4 not respected: %1+%2<%3").arg(r2.y()).arg(r2.width()).arg(r1.y());
         return false;
-    }
 
     return true;
 }

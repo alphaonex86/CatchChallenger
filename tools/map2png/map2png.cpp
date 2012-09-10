@@ -331,10 +331,10 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
                 {
                     tempMapObject->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border.bottom.x_offset-other_map[mapIndex]->logicalMap.border.top.x_offset;
+                    int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map[mapIndex]->logicalMap.border_semi.top.x_offset;
                     tempMapObject->logicalMap.border.bottom.x_offset=offset;
                     other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x-offset,tempMapObject->y+tempMapObject->logicalMap.height);
+                    loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y+tempMapObject->logicalMap.height);
                 }
             }
         }
@@ -353,10 +353,10 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
                 {
                     tempMapObject->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border.top.x_offset-other_map[mapIndex]->logicalMap.border.bottom.x_offset;
+                    int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
                     tempMapObject->logicalMap.border.top.x_offset=offset;
                     other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x-offset,tempMapObject->y-other_map[mapIndex]->logicalMap.height);
+                    loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y-other_map[mapIndex]->logicalMap.height);
                 }
             }
         }
@@ -375,10 +375,10 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
                 {
                     tempMapObject->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border.left.y_offset-other_map[mapIndex]->logicalMap.border.right.y_offset;
+                    int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map[mapIndex]->logicalMap.border_semi.right.y_offset;
                     tempMapObject->logicalMap.border.left.y_offset=offset;
                     other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x-other_map[mapIndex]->logicalMap.width,tempMapObject->y-offset);
+                    loadCurrentMap(mapIndex,tempMapObject->x-other_map[mapIndex]->logicalMap.width,tempMapObject->y+offset);
                 }
             }
         }
@@ -397,10 +397,10 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                 if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
                 {
                     tempMapObject->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border.right.y_offset-other_map[mapIndex]->logicalMap.border.left.y_offset;
+                    int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map[mapIndex]->logicalMap.border_semi.left.y_offset;
                     tempMapObject->logicalMap.border.right.y_offset=offset;
                     other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x+tempMapObject->logicalMap.width,tempMapObject->y-offset);
+                    loadCurrentMap(mapIndex,tempMapObject->x+tempMapObject->logicalMap.width,tempMapObject->y+offset);
                 }
             }
         }
