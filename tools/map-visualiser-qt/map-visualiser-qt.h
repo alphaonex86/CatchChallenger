@@ -93,14 +93,14 @@ private:
     QTimer moveTimer;
     QTimer lookToMove;
     QSet<int> keyPressed;
-    QSet<QString> mapUsed;
 
     QTimer blink_dyna_layer;
 
     Map_full *current_map;
     QHash<QString,Map_full *> other_map;
-    QSet<Map_full *> displayed_map;
-    QSet<QString> loadedNearMap;
+    QSet<QString> displayed_map;//the map really show
+
+    QSet<QString> loadedNearMap;//temp variable to have only the near map
 private slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
