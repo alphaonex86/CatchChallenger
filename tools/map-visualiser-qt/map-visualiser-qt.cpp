@@ -89,35 +89,37 @@ private:
 /**
  * Item that represents an object group.
  */
-class ObjectGroupItem : public QGraphicsItem
+ObjectGroupItem::ObjectGroupItem(ObjectGroup *objectGroup,
+                QGraphicsItem *parent)
+    : QGraphicsItem(parent),
+      mObjectGroup(objectGroup)
 {
-public:
-    ObjectGroupItem(ObjectGroup *objectGroup,
-                    QGraphicsItem *parent = 0)
-        : QGraphicsItem(parent),
-          mObjectGroup(objectGroup)
-    {
-//        setFlag(QGraphicsItem::ItemHasNoContents);
+    //setFlag(QGraphicsItem::ItemHasNoContents);
+}
 
-    }
+QRectF ObjectGroupItem::boundingRect() const
+{
+    return QRectF();
+}
 
-    QRectF boundingRect() const { return QRectF(); }
-    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *)
+void ObjectGroupItem::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *)
+{
+    updateObject();
+}
+
+void ObjectGroupItem::updateObject()
+{
+    // Create a child item for each object
+    QList<QGraphicsItem *> childs=childItems();
+    int index=0;
+    while(index<childs.size())
     {
-        // Create a child item for each object
-        QList<QGraphicsItem *> childs=childItems();
-        int index=0;
-        while(index<childs.size())
-        {
-            delete childs.at(index);
-            index++;
-        }
-        foreach (MapObject *object, mObjectGroup->objects())
-            new MapObjectItem(object, this);
+        delete childs.at(index);
+        index++;
     }
-public:
-    ObjectGroup *mObjectGroup;
-};
+    foreach (MapObject *object, mObjectGroup->objects())
+        new MapObjectItem(object, this);
+}
 
 /**
  * Item that represents a map.
@@ -152,8 +154,10 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
             tempItem.layer=tileLayer;
         } else if (ObjectGroup *objectGroup = layer->asObjectGroup()) {
             MapObjectItem::mRendererList[objectGroup]=renderer;
-            tempItem.graphic=new ObjectGroupItem(objectGroup, this);
+            ObjectGroupItem *newObject=new ObjectGroupItem(objectGroup, this);
+            tempItem.graphic=newObject;
             tempItem.layer=objectGroup;
+            ObjectGroupItemList.insert(map,newObject);
         }
         tempItem.graphic->setZValue(index++);
         displayed_layer.insert(map,tempItem);
@@ -180,7 +184,16 @@ void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
     int index=0;
     while(index<values.size())
     {
-        values.at(index).graphic->setPos(x*16,y*16);
+        values.at(index).graphic->setPos(x*TILE_SIZE,y*TILE_SIZE);
+        index++;
+    }
+
+    QList<ObjectGroupItem *> values2 = ObjectGroupItemList.values(map);
+    index=0;
+    while(index<values2.size())
+    {
+        qDebug() << QString("mObjectGroup->name(): %1").arg(values2.at(index)->mObjectGroup->name());
+        values2.at(index)->updateObject();
         index++;
     }
 }
@@ -213,15 +226,15 @@ MapVisualiserQt::MapVisualiserQt(QWidget *parent) :
     //scale(2,2);
 
     setScene(mScene);
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-    setDragMode(QGraphicsView::ScrollHandDrag);
+/*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    setDragMode(QGraphicsView::ScrollHandDrag);*/
     setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing
                          | QGraphicsView::DontSavePainterState);
     setBackgroundBrush(Qt::black);
     setFrameStyle(QFrame::NoFrame);
 
-    //viewport()->setAttribute(Qt::WA_StaticContents);
-    //setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+    viewport()->setAttribute(Qt::WA_StaticContents);
+    //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 }
 
 MapVisualiserQt::~MapVisualiserQt()
@@ -267,7 +280,7 @@ void MapVisualiserQt::viewMap(const QString &fileName)
     connect(&blink_dyna_layer,SIGNAL(timeout()),this,SLOT(blinkDynaLayer()));
 
     mScene->clear();
-    centerOn(0, 0);
+    //centerOn(0, 0);
 
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
@@ -295,12 +308,15 @@ void MapVisualiserQt::viewMap(const QString &fileName)
         xPerso=current_map->logicalMap.width/2;
         yPerso=current_map->logicalMap.height/2;
     }
-    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
 
     loadCurrentMap();
+    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
 
     qDebug() << startTime.elapsed();
     mScene->addItem(mapItem);
+    //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
+
+    viewport()->update();
 }
 
 bool MapVisualiserQt::RectTouch(QRect r1,QRect r2)
@@ -319,4 +335,27 @@ bool MapVisualiserQt::RectTouch(QRect r1,QRect r2)
         return false;
 
     return true;
+}
+
+void MapVisualiserQt::displayTheDebugMap()
+{
+    qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
+    int y=0;
+    while(y<current_map->logicalMap.height)
+    {
+        QString line;
+        int x=0;
+        while(x<current_map->logicalMap.width)
+        {
+            if(x==xPerso && y==yPerso)
+                line+="P";
+            else if(current_map->logicalMap.parsed_layer.walkable[x+y*current_map->logicalMap.width])
+                line+="_";
+            else
+                line+="X";
+            x++;
+        }
+        qDebug() << line;
+        y++;
+    }
 }
