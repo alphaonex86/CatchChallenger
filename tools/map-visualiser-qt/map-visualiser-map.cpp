@@ -161,22 +161,30 @@ void MapVisualiserQt::loadCurrentMap()
 
     loadNearMap(tempMapObject->logicalMap.map_file);
 
+    //remove the not displayed map
+    {
+        QSet<QString>::const_iterator i = displayed_map.constBegin();
+        while (i != displayed_map.constEnd()) {
+            if(!loadedNearMap.contains(*i))
+            {
+                mapItem->removeMap(other_map[*i]->tiledMap);
+                displayed_map.remove(*i);
+                i = displayed_map.constBegin();
+            }
+            ++i;
+        }
+    }
     //remove the not used map
     QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
     while (i != other_map.constEnd()) {
         if(!mapUsed.contains((*i)->logicalMap.map_file) && !loadedNearMap.contains((*i)->logicalMap.map_file))
         {
-            //if it's the last reference
-            if(!displayed_map.contains(*i))
-            {
-                mapItem->removeMap((*i)->tiledMap);
-                delete (*i)->logicalMap.parsed_layer.walkable;
-                delete (*i)->logicalMap.parsed_layer.water;
-                qDeleteAll((*i)->tiledMap->tilesets());
-                delete (*i)->tiledMap;
-                delete (*i)->tiledRender;
-                delete (*i);
-            }
+            delete (*i)->logicalMap.parsed_layer.walkable;
+            delete (*i)->logicalMap.parsed_layer.water;
+            qDeleteAll((*i)->tiledMap->tilesets());
+            delete (*i)->tiledMap;
+            delete (*i)->tiledRender;
+            delete (*i);
             other_map.remove((*i)->logicalMap.map_file);
             i = other_map.constBegin();//needed
         }
@@ -221,7 +229,11 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
     tempMapObject->logicalMap.border.right.map=NULL;
 
     //display the map
-    mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender);
+    if(!displayed_map.contains(fileName))
+    {
+        mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender);
+        displayed_map << fileName;
+    }
     mapItem->setMapPosition(tempMapObject->tiledMap,x,y);
 
     //if have bottom border
