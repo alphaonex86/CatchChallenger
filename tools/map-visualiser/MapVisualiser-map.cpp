@@ -129,7 +129,6 @@ void MapVisualiser::loadCurrentMap()
     QSet<QString> mapUsed;
     Map_full *tempMapObject=current_map;
 
-    loadPlayerFromCurrentMap();
     loadNearMap(tempMapObject->logicalMap.map_file);
 
     //load the teleporter
@@ -189,6 +188,7 @@ void MapVisualiser::loadCurrentMap()
     }
 
     loadedNearMap.clear();
+    loadPlayerFromCurrentMap();
 }
 
 void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y)
