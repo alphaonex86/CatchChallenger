@@ -143,7 +143,7 @@ bool MapVisualiser::RectTouch(QRect r1,QRect r2)
 
 void MapVisualiser::displayTheDebugMap()
 {
-    qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
+    /*qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
     int y=0;
     while(y<current_map->logicalMap.height)
     {
@@ -161,5 +161,5 @@ void MapVisualiser::displayTheDebugMap()
         }
         qDebug() << line;
         y++;
-    }
+    }*/
 }
