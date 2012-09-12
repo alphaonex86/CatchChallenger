@@ -400,8 +400,6 @@ void MapVisualiser::loadPlayerFromCurrentMap()
     {
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
-        else
-            qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains currentGroup");
         currentGroup->removeObject(playerMapObject);
         if(currentGroup!=current_map->objectGroup)
             qDebug() << QString("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
