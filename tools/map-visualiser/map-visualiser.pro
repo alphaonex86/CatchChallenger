@@ -3,7 +3,7 @@ DEPENDPATH += ../../general/libtiled/
 LIBS *= -ltiled
 
 TEMPLATE = app
-TARGET = map-visualiser-qt
+TARGET = map-visualiser
 
 QT += xml
 
@@ -12,18 +12,21 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 SOURCES += main.cpp \
-	 map-visualiser-qt.cpp \
     ../../general/base/MoveOnTheMap.cpp \
     ../../general/base/Map_loader.cpp \
     ../../general/base/Map.cpp \
     ../../general/base/DebugClass.cpp \
     ../../general/base/FacilityLib.cpp \
     ../../client/base/Map_client.cpp \
-    map-visualiser-map.cpp \
-    map-visualiser-move.cpp \
-    map-visualiser-move-player.cpp
+    TileLayerItem.cpp \
+    ObjectGroupItem.cpp \
+    MapObjectItem.cpp \
+    MapItem.cpp \
+    MapVisualiser.cpp \
+    MapVisualiser-move.cpp \
+    MapVisualiser-map.cpp
 
-HEADERS += map-visualiser-qt.h \
+HEADERS += \
     ../../general/base/Map_loader.h \
     ../../general/base/Map.h \
     ../../general/base/GeneralVariable.h \
@@ -32,7 +35,13 @@ HEADERS += map-visualiser-qt.h \
     ../../client/base/ClientStructures.h \
     ../../general/base/DebugClass.h \
     ../../general/base/FacilityLib.h \
-    ../../client/base/Map_client.h
+    ../../client/base/Map_client.h \
+    TileLayerItem.h \
+    ObjectGroupItem.h \
+    MapObjectItem.h \
+    MapItem.h \
+    MapVisualiser.h \
+    Variables.h
 
 RESOURCES += \
     resources.qrc

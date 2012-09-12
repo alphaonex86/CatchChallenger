@@ -1,4 +1,4 @@
-#include "map-visualiser-qt.h"
+#include "MapVisualiser.h"
 
 #include <QCoreApplication>
 #include <QGraphicsItem>
@@ -11,10 +11,8 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
-using namespace Tiled;
-
 //open the file, and load it into the variables
-QString MapVisualiserQt::loadOtherMap(const QString &fileName)
+QString MapVisualiser::loadOtherMap(const QString &fileName)
 {
     QFileInfo fileInformations(fileName);
     QString resolvedFileName=fileInformations.absoluteFilePath();
@@ -83,21 +81,21 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
 
     //load the render
     switch (tempMapObject->tiledMap->orientation()) {
-    case Map::Isometric:
-        tempMapObject->tiledRender = new IsometricRenderer(tempMapObject->tiledMap);
+    case Tiled::Map::Isometric:
+        tempMapObject->tiledRender = new Tiled::IsometricRenderer(tempMapObject->tiledMap);
         break;
-    case Map::Orthogonal:
+    case Tiled::Map::Orthogonal:
     default:
-        tempMapObject->tiledRender = new OrthogonalRenderer(tempMapObject->tiledMap);
+        tempMapObject->tiledRender = new Tiled::OrthogonalRenderer(tempMapObject->tiledMap);
         break;
     }
     tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
-    tempMapObject->objectGroup = new ObjectGroup(QString("Dyna management %1").arg(fileInformations.fileName()),0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
+    tempMapObject->objectGroup = new Tiled::ObjectGroup(QString("Dyna management %1").arg(fileInformations.fileName()),0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
 
     //add a tags
-    Tiled::MapObject * tagMapObject = new MapObject();
+    Tiled::MapObject * tagMapObject = new Tiled::MapObject();
     tagMapObject->setTile(tagTileset->tileAt(tagTilesetIndex));
     tagMapObject->setPosition(QPoint(tempMapObject->logicalMap.width/2,tempMapObject->logicalMap.height/2+1));
     tempMapObject->objectGroup->addObject(tagMapObject);
@@ -126,7 +124,7 @@ QString MapVisualiserQt::loadOtherMap(const QString &fileName)
     return resolvedFileName;
 }
 
-void MapVisualiserQt::loadCurrentMap()
+void MapVisualiser::loadCurrentMap()
 {
     QSet<QString> mapUsed;
     Map_full *tempMapObject=current_map;
@@ -193,7 +191,7 @@ void MapVisualiserQt::loadCurrentMap()
     loadedNearMap.clear();
 }
 
-void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y)
+void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y)
 {
     if(loadedNearMap.contains(fileName))
         return;
@@ -370,12 +368,12 @@ void MapVisualiserQt::loadNearMap(const QString &fileName, const qint32 &x, cons
     }
 }
 
-void MapVisualiserQt::unloadCurrentMap()
+void MapVisualiser::unloadCurrentMap()
 {
     unloadPlayerFromCurrentMap();
 }
 
-void MapVisualiserQt::blinkDynaLayer()
+void MapVisualiser::blinkDynaLayer()
 {
     current_map->objectGroup->setVisible(!current_map->objectGroup->isVisible());
     //do it here only because it's one player, then max 3 call by second

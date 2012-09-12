@@ -26,7 +26,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "map-visualiser-qt.h"
+#include "map-visualiser.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         options.fileToOpen=source;
     }
 
-    MapVisualiserQt w;
+    MapVisualiser w;
     w.viewMap(options.fileToOpen);
     w.show();
 
