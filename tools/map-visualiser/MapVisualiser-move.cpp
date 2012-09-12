@@ -1,4 +1,4 @@
-#include "map-visualiser-qt.h"
+#include "MapVisualiser.h"
 
 #include <QCoreApplication>
 #include <QGraphicsItem>
@@ -10,10 +10,9 @@
 #include <QPointer>
 
 #include "../../general/base/MoveOnTheMap.h"
+#include "ObjectGroupItem.h"
 
-using namespace Tiled;
-
-void MapVisualiserQt::keyPressEvent(QKeyEvent * event)
+void MapVisualiser::keyPressEvent(QKeyEvent * event)
 {
     //ignore the repeated event
     if(event->isAutoRepeat())
@@ -26,7 +25,7 @@ void MapVisualiserQt::keyPressEvent(QKeyEvent * event)
     keyPressParse();
 }
 
-void MapVisualiserQt::keyPressParse()
+void MapVisualiser::keyPressParse()
 {
     //ignore is already in move
     if(inMove)
@@ -123,7 +122,7 @@ void MapVisualiserQt::keyPressParse()
     viewport()->update();
 }
 
-void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
+void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
 {
     int baseTile=1;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
@@ -331,7 +330,7 @@ void MapVisualiserQt::moveStepSlot(bool justUpdateTheTile)
 }
 
 //have look into another direction, if the key remain pressed, apply like move
-void MapVisualiserQt::transformLookToMove()
+void MapVisualiser::transformLookToMove()
 {
     if(inMove)
         return;
@@ -380,7 +379,7 @@ void MapVisualiserQt::transformLookToMove()
     }
 }
 
-void MapVisualiserQt::keyReleaseEvent(QKeyEvent * event)
+void MapVisualiser::keyReleaseEvent(QKeyEvent * event)
 {
     //ignore the repeated event
     if(event->isAutoRepeat())
@@ -391,4 +390,37 @@ void MapVisualiserQt::keyReleaseEvent(QKeyEvent * event)
 
     if(keyPressed.size()>0)//another key pressed, repeat
         keyPressParse();
+}
+
+//call after enter on new map
+void MapVisualiser::loadPlayerFromCurrentMap()
+{
+    Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
+    if(currentGroup!=NULL)
+    {
+        if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+            ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
+        else
+            qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains currentGroup");
+        currentGroup->removeObject(playerMapObject);
+        if(currentGroup!=current_map->objectGroup)
+            qDebug() << QString("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+    }
+    if(ObjectGroupItem::objectGroupLink.contains(current_map->objectGroup))
+        ObjectGroupItem::objectGroupLink[current_map->objectGroup]->addObject(playerMapObject);
+    else
+        qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+
+    //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+}
+
+//call before leave the old map (and before loadPlayerFromCurrentMap())
+void MapVisualiser::unloadPlayerFromCurrentMap()
+{
+    //unload the player sprite
+    if(ObjectGroupItem::objectGroupLink.contains(playerMapObject->objectGroup()))
+        ObjectGroupItem::objectGroupLink[playerMapObject->objectGroup()]->removeObject(playerMapObject);
+    else
+        qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 }
