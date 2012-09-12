@@ -1,5 +1,8 @@
 #include "mapobject.h"
 #include "objectgroup.h"
+#include "MapItem.h"
+#include "MapObjectItem.h"
+#include "ObjectGroupItem.h"
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/Map.h"
@@ -28,53 +31,15 @@
 #include <QWidget>
 #include <QSet>
 #include <QMultiMap>
+#include <QHash>
 
-namespace Tiled {
-class Map;
-class MapRenderer;
-}
-
-#define STEPPERSO 1
-#define TILE_SIZE 16
-
-class ObjectGroupItem : public QGraphicsItem
-{
-public:
-    ObjectGroupItem(Tiled::ObjectGroup *objectGroup,QGraphicsItem *parent = 0);
-    QRectF boundingRect() const;
-    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
-    void updateObject();
-public:
-    Tiled::ObjectGroup *mObjectGroup;
-};
-
-class MapItem : public QGraphicsItem
-{
-public:
-    MapItem(QGraphicsItem *parent = 0);
-    void addMap(Tiled::Map *map, Tiled::MapRenderer *renderer);
-    void removeMap(Tiled::Map *map);
-    void setMapPosition(Tiled::Map *map, qint16 x, qint16 y);
-    QRectF boundingRect() const;
-    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
-private:
-    struct Map_graphics_link
-    {
-        QGraphicsItem * graphic;
-        Tiled::Layer *layer;
-    };
-    QMultiMap<Tiled::Map *,Map_graphics_link> displayed_layer;
-    QMultiMap<Tiled::Map *,ObjectGroupItem *> ObjectGroupItemList;
-    QSet<Tiled::Map *> displayed_map;
-};
-
-class MapVisualiserQt : public QGraphicsView
+class MapVisualiser : public QGraphicsView
 {
     Q_OBJECT
 
 public:
-    explicit MapVisualiserQt(QWidget *parent = 0);
-    ~MapVisualiserQt();
+    explicit MapVisualiser(QWidget *parent = 0);
+    ~MapVisualiser();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
     void keyPressParse();
