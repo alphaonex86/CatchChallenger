@@ -56,7 +56,7 @@ MapVisualiser::~MapVisualiser()
         i = other_map.constBegin();//needed
     }
 
-    delete mapItem;
+    //delete mapItem;
     delete playerTileset;
     //delete playerMapObject;
     delete tagTileset;
