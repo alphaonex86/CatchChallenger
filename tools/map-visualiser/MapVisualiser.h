@@ -53,6 +53,7 @@ private:
         Tiled::Map * tiledMap;
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
+        int objectGroupIndex;
     };
 
     Tiled::MapReader reader;
