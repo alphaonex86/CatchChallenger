@@ -30,7 +30,7 @@ class MapItem : public QGraphicsItem
 {
 public:
     MapItem(QGraphicsItem *parent = 0);
-    void addMap(Tiled::Map *map, Tiled::MapRenderer *renderer);
+    void addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex);
     void removeMap(Tiled::Map *map);
     void setMapPosition(Tiled::Map *map, qint16 x, qint16 y);
     QRectF boundingRect() const;
