@@ -37,6 +37,7 @@ public:
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 private:
     QMultiMap<Tiled::Map *,QGraphicsItem *> displayed_layer;
+    bool cache;
 };
 
 #endif
