@@ -92,7 +92,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
-    tempMapObject->objectGroup = new Tiled::ObjectGroup(QString("Dyna management %1").arg(fileInformations.fileName()),0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
+    tempMapObject->objectGroup = new Tiled::ObjectGroup("Dyna management",0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
 
     //add a tags
     Tiled::MapObject * tagMapObject = new Tiled::MapObject();
@@ -103,20 +103,37 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     if(tagTilesetIndex>=tagTileset->tileCount())
         tagTilesetIndex=0;
 
+    //search WalkBehind layer
     index=0;
     while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
+        if(tempMapObject->tiledMap->layerAt(index)->name()=="WalkBehind")
         {
-            tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
+            tempMapObject->objectGroupIndex=index;
+            tempMapObject->tiledMap->insertLayer(index,tempMapObject->objectGroup);
             break;
         }
         index++;
     }
     if(index==tempMapObject->tiledMap->layerCount())
     {
-        qDebug() << QString("Unable to locate the \"Collisions\" layer on the map: %1").arg(fileInformations.fileName());
-        tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
+        //search Collisions layer
+        index=0;
+        while(index<tempMapObject->tiledMap->layerCount())
+        {
+            if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
+            {
+                tempMapObject->objectGroupIndex=index+1;
+                tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
+                break;
+            }
+            index++;
+        }
+        if(index==tempMapObject->tiledMap->layerCount())
+        {
+            qDebug() << QString("Unable to locate the \"Collisions\" layer on the map: %1").arg(fileInformations.fileName());
+            tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
+        }
     }
 
     other_map[resolvedFileName]=tempMapObject;
@@ -225,7 +242,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
     //display the map
     if(!displayed_map.contains(fileName))
     {
-        mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender);
+        mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         displayed_map << fileName;
     }
     mapItem->setMapPosition(tempMapObject->tiledMap,x,y);

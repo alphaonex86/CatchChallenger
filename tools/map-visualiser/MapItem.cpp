@@ -15,21 +15,11 @@ MapItem::MapItem(QGraphicsItem *parent)
     cache=true;
 }
 
-void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer)
+void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
-    //align zIndex to Collision Layer
-    int index=0;
+    //align zIndex to "Dyna management" Layer
+    int index=-playerLayerIndex;
     QList<Tiled::Layer *> layers=map->layers();
-    while(index<layers.size())
-    {
-        if(layers.at(index)->name()=="Collisions")
-            break;
-        index++;
-    }
-    if(index==map->layers().size())
-        index=-map->layers().size()-1;
-    else
-        index=-index;
 
     QImage image;
     QGraphicsItem * graphicsItem=NULL;
