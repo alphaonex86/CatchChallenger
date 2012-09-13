@@ -1,10 +1,18 @@
 #include "MapItem.h"
 #include "Variables.h"
 
+#include <QGraphicsPixmapItem>
+#include <QPixmap>
+#include <QPainter>
+#include <QImage>
+#include <QDebug>
+
 MapItem::MapItem(QGraphicsItem *parent)
     : QGraphicsItem(parent)
 {
     setFlag(QGraphicsItem::ItemHasNoContents);
+
+    cache=true;
 }
 
 void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer)
@@ -23,20 +31,61 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer)
     else
         index=-index;
 
+    QImage image;
     QGraphicsItem * graphicsItem=NULL;
     // Create a child item for each layer
     foreach (Tiled::Layer *layer, layers) {
         if (Tiled::TileLayer *tileLayer = layer->asTileLayer()) {
             graphicsItem=new TileLayerItem(tileLayer, renderer, this);
+            if(cache && image.size().isNull())
+            {
+                image=QImage(QSize(graphicsItem->boundingRect().size().width(),graphicsItem->boundingRect().size().height()),QImage::Format_ARGB32);
+                image.fill(Qt::transparent);
+            }
+
+            if(!cache || image.size()!=graphicsItem->boundingRect().size())
+            {}
+            else
+            {
+                QPainter painter(&image);
+                renderer->drawTileLayer(&painter, tileLayer, graphicsItem->boundingRect());
+                delete graphicsItem;
+                graphicsItem=NULL;
+            }
         } else if (Tiled::ObjectGroup *objectGroup = layer->asObjectGroup()) {
+            if(cache && !image.size().isNull())
+            {
+                QPixmap tempPixmap;
+                if(tempPixmap.convertFromImage(image))
+                {
+                    graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
+                    graphicsItem->setZValue(index++);
+                    displayed_layer.insert(map,graphicsItem);
+                    image=QImage();
+                }
+            }
+
             ObjectGroupItem *newObject=new ObjectGroupItem(objectGroup, this);
             graphicsItem=newObject;
 
             ObjectGroupItem::objectGroupLink[objectGroup]=newObject;
             MapObjectItem::mRendererList[objectGroup]=renderer;
         }
-        graphicsItem->setZValue(index++);
-        displayed_layer.insert(map,graphicsItem);
+        if(graphicsItem!=NULL)
+        {
+            graphicsItem->setZValue(index++);
+            displayed_layer.insert(map,graphicsItem);
+        }
+    }
+    if(cache && !image.size().isNull())
+    {
+        QPixmap tempPixmap;
+        if(tempPixmap.convertFromImage(image))
+        {
+            graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
+            graphicsItem->setZValue(index++);
+            displayed_layer.insert(map,graphicsItem);
+        }
     }
 }
 
