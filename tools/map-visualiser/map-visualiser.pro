@@ -7,6 +7,8 @@ TARGET = map-visualiser
 
 QT += xml
 
+win32:RC_FILE += resources-windows.rc
+
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets
 }
@@ -22,7 +24,6 @@ SOURCES += main.cpp \
     ../../client/base/render/ObjectGroupItem.cpp \
     ../../client/base/render/MapVisualiser.cpp \
     ../../client/base/render/MapVisualiser-move.cpp \
-    ../../client/base/render/MapVisualiser-move-player.cpp \
     ../../client/base/render/MapVisualiser-map.cpp \
     ../../client/base/render/MapObjectItem.cpp \
     ../../client/base/render/MapItem.cpp \
