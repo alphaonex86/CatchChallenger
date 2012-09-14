@@ -117,12 +117,9 @@ void MapVisualiser::keyPressParse()
             lookToMove.start();
         }
     }
-
-    //do it here only because it's one player, then max 3 call by second
-    viewport()->update();
 }
 
-void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
+void MapVisualiser::moveStepSlot()
 {
     int baseTile=1;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
@@ -169,7 +166,7 @@ void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
         }
         break;
         default:
-        qDebug() << QString("moveStepSlot(): moveStep: %1, justUpdateTheTile: %2, wrong direction").arg(moveStep).arg(justUpdateTheTile);
+        qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction").arg(moveStep);
         return;
     }
 
@@ -220,7 +217,7 @@ void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&xPerso,&yPerso);
             break;
             default:
-            qDebug() << QString("moveStepSlot(): moveStep: %1, justUpdateTheTile: %2, wrong direction when moveStep>2").arg(moveStep).arg(justUpdateTheTile);
+            qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(moveStep);
             return;
         }
         //if the map have changed
@@ -257,7 +254,7 @@ void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
             {
                 direction=Pokecraft::Direction_move_at_left;
                 moveStep=0;
-                moveStepSlot(true);
+                moveStepSlot();
             }
         }
         else if(keyPressed.contains(16777236))
@@ -274,7 +271,7 @@ void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
             {
                 direction=Pokecraft::Direction_move_at_right;
                 moveStep=0;
-                moveStepSlot(true);
+                moveStepSlot();
             }
         }
         else if(keyPressed.contains(16777235))
@@ -291,7 +288,7 @@ void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
             {
                 direction=Pokecraft::Direction_move_at_top;
                 moveStep=0;
-                moveStepSlot(true);
+                moveStepSlot();
             }
         }
         else if(keyPressed.contains(16777237))
@@ -308,7 +305,7 @@ void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
             {
                 direction=Pokecraft::Direction_move_at_bottom;
                 moveStep=0;
-                moveStepSlot(true);
+                moveStepSlot();
             }
         }
         //now stop walking, no more arrow key is pressed
@@ -323,10 +320,6 @@ void MapVisualiser::moveStepSlot(bool justUpdateTheTile)
         moveTimer.start();
 
     displayTheDebugMap();
-
-    //do it here only because it's one player, then max 3 call by second
-    if(!justUpdateTheTile)
-        viewport()->update();
 }
 
 //have look into another direction, if the key remain pressed, apply like move

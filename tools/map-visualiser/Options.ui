@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>239</width>
-    <height>166</height>
+    <height>189</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -61,6 +61,9 @@
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
       <widget class="QLabel" name="label">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Target FPS:</string>
        </property>
@@ -99,12 +102,22 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QCheckBox" name="showFPS">
      <property name="enabled">
       <bool>false</bool>
      </property>
      <property name="text">
-      <string>Bot spam</string>
+      <string>Show the FPS</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="botSpawn">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Bot spawn</string>
      </property>
     </widget>
    </item>

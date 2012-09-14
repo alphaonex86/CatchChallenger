@@ -427,6 +427,11 @@ void MapVisualiser::unloadCurrentMap()
 void MapVisualiser::blinkDynaLayer()
 {
     current_map->objectGroup->setVisible(!current_map->objectGroup->isVisible());
-    //do it here only because it's one player, then max 3 call by second
-    viewport()->update();
+}
+
+void MapVisualiser::render()
+{
+    mScene->update();
+    //viewport()->update();
+    timerRender.start(waitRenderTime);
 }
