@@ -18,13 +18,15 @@ SOURCES += main.cpp \
     ../../general/base/DebugClass.cpp \
     ../../general/base/FacilityLib.cpp \
     ../../client/base/Map_client.cpp \
-    TileLayerItem.cpp \
-    ObjectGroupItem.cpp \
-    MapObjectItem.cpp \
-    MapItem.cpp \
-    MapVisualiser.cpp \
-    MapVisualiser-move.cpp \
-    MapVisualiser-map.cpp
+    ../../client/base/render/TileLayerItem.cpp \
+    ../../client/base/render/ObjectGroupItem.cpp \
+    ../../client/base/render/MapVisualiser.cpp \
+    ../../client/base/render/MapVisualiser-move.cpp \
+    ../../client/base/render/MapVisualiser-move-player.cpp \
+    ../../client/base/render/MapVisualiser-map.cpp \
+    ../../client/base/render/MapObjectItem.cpp \
+    ../../client/base/render/MapItem.cpp \
+    Options.cpp
 
 HEADERS += \
     ../../general/base/Map_loader.h \
@@ -36,12 +38,15 @@ HEADERS += \
     ../../general/base/DebugClass.h \
     ../../general/base/FacilityLib.h \
     ../../client/base/Map_client.h \
-    TileLayerItem.h \
-    ObjectGroupItem.h \
-    MapObjectItem.h \
-    MapItem.h \
-    MapVisualiser.h \
-    Variables.h
+    ../../client/base/render/TileLayerItem.h \
+    ../../client/base/render/ObjectGroupItem.h \
+    ../../client/base/render/MapVisualiser.h \
+    ../../client/base/render/MapObjectItem.h \
+    ../../client/base/render/MapItem.h \
+    Options.h
 
 RESOURCES += \
     resources.qrc
+
+FORMS += \
+    Options.ui

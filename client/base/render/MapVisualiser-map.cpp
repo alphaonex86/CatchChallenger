@@ -95,13 +95,47 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     tempMapObject->objectGroup = new Tiled::ObjectGroup("Dyna management",0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
 
     //add a tags
-    Tiled::MapObject * tagMapObject = new Tiled::MapObject();
-    tagMapObject->setTile(tagTileset->tileAt(tagTilesetIndex));
-    tagMapObject->setPosition(QPoint(tempMapObject->logicalMap.width/2,tempMapObject->logicalMap.height/2+1));
-    tempMapObject->objectGroup->addObject(tagMapObject);
-    tagTilesetIndex++;
-    if(tagTilesetIndex>=tagTileset->tileCount())
-        tagTilesetIndex=0;
+    if(debugTags)
+    {
+        Tiled::MapObject * tagMapObject = new Tiled::MapObject();
+        tagMapObject->setTile(tagTileset->tileAt(tagTilesetIndex));
+        tagMapObject->setPosition(QPoint(tempMapObject->logicalMap.width/2,tempMapObject->logicalMap.height/2+1));
+        tempMapObject->objectGroup->addObject(tagMapObject);
+        tagTilesetIndex++;
+        if(tagTilesetIndex>=tagTileset->tileCount())
+            tagTilesetIndex=0;
+    }
+    else //remove the hidden tags, and unknow layer
+    {
+        index=0;
+        while(index<tempMapObject->tiledMap->layerCount())
+        {
+            if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
+            {
+                //remove the unknow layer
+                if(objectGroup->name()!="Moving")
+                    delete tempMapObject->tiledMap->takeLayerAt(index);
+                else
+                {
+                    QList<Tiled::MapObject*> objects=objectGroup->objects();
+                    int index2=0;
+                    while(index2<objects.size())
+                    {
+                        //remove the unknow object
+                        if(objects.at(index2)->type()!="door")
+                        {
+                            objectGroup->removeObject(objects.at(index2));
+                            delete objects.at(index2);
+                        }
+                        index2++;
+                    }
+                    index++;
+                }
+            }
+            else
+                index++;
+        }
+    }
 
     //search WalkBehind layer
     index=0;
