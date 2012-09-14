@@ -18,7 +18,12 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
 {
     this->centerOnPlayer=centerOnPlayer;
     this->debugTags=debugTags;
-    this->targetFPS=targetFPS;
+
+    waitRenderTime=1000.0/(float)targetFPS;
+    if(waitRenderTime<1)
+        waitRenderTime=1;
+    timerRender.setSingleShot(true);
+    connect(&timerRender,SIGNAL(timeout()),this,SLOT(render()));
 
     current_map=NULL;
     mapItem=new MapItem(NULL,useCache);
@@ -46,6 +51,8 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
 
     //viewport()->setAttribute(Qt::WA_StaticContents);
     //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+
+    render();
 }
 
 MapVisualiser::~MapVisualiser()

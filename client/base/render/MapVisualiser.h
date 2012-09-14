@@ -84,7 +84,9 @@ private:
 
     bool centerOnPlayer;
     bool debugTags;
-    quint8 targetFPS;
+
+    quint8 waitRenderTime;
+    QTimer timerRender;
 private slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
@@ -92,9 +94,11 @@ private slots:
     void unloadCurrentMap();
     void loadPlayerFromCurrentMap();
     void unloadPlayerFromCurrentMap();
-    void moveStepSlot(bool justUpdateTheTile=false);
+    void moveStepSlot();
     void transformLookToMove();
     void blinkDynaLayer();
+
+    void render();
 };
 
 #endif
