@@ -1,7 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>player_skin.png</file>
-        <file>tags.png</file>
         <file>icon.png</file>
     </qresource>
 </RCC>

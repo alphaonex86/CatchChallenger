@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
     Map2Png w;
     w.viewMap(options.fileToOpen);
     w.show();
+    w.setWindowIcon(QIcon(":/icon.png"));
 
     return a.exec();
 }

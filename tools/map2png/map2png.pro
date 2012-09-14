@@ -31,3 +31,6 @@ HEADERS += map2png.h \
     ../../general/base/FacilityLib.h \
     ../../client/base/Map_client.h
 
+RESOURCES += \
+    resources.qrc
+

@@ -7,12 +7,12 @@
 #include <QImage>
 #include <QDebug>
 
-MapItem::MapItem(QGraphicsItem *parent)
+MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     : QGraphicsItem(parent)
 {
     setFlag(QGraphicsItem::ItemHasNoContents);
 
-    cache=true;
+    cache=useCache;
 }
 
 void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
@@ -42,7 +42,7 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
                 delete graphicsItem;
                 graphicsItem=NULL;
             }
-        } else if (Tiled::ObjectGroup *objectGroup = layer->asObjectGroup()) {
+        } else if(Tiled::ObjectGroup *objectGroup = layer->asObjectGroup()) {
             if(cache && !image.size().isNull())
             {
                 QPixmap tempPixmap;

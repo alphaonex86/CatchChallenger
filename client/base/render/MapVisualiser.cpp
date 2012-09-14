@@ -11,11 +11,18 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
-MapVisualiser::MapVisualiser(QWidget *parent) :
+MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const quint8 &targetFPS,const bool &useCache) :
     QGraphicsView(parent),
     mScene(new QGraphicsScene(this)),
     inMove(false)
 {
+    this->centerOnPlayer=centerOnPlayer;
+    this->debugTags=debugTags;
+    this->targetFPS=targetFPS;
+
+    current_map=NULL;
+    mapItem=new MapItem(NULL,useCache);
+
     xPerso=0;
     yPerso=0;
 
