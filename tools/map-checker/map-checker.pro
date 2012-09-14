@@ -34,3 +34,6 @@ HEADERS += Dialog.h \
 FORMS += \
     Dialog.ui
 
+RESOURCES += \
+    resources.qrc
+

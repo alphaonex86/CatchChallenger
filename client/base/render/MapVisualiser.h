@@ -38,7 +38,7 @@ class MapVisualiser : public QGraphicsView
     Q_OBJECT
 
 public:
-    explicit MapVisualiser(QWidget *parent = 0);
+    explicit MapVisualiser(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const quint8 &targetFPS=30,const bool &useCache=true);
     ~MapVisualiser();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -81,6 +81,10 @@ private:
     QSet<QString> displayed_map;//the map really show
 
     QSet<QString> loadedNearMap;//temp variable to have only the near map
+
+    bool centerOnPlayer;
+    bool debugTags;
+    quint8 targetFPS;
 private slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
