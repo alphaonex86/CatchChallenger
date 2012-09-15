@@ -23,11 +23,13 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
 
     QImage image;
     QGraphicsItem * graphicsItem=NULL;
+    QStringList mapNameList;
     // Create a child item for each layer
     int loopSize=layers.size();
     int index2=0;
     while(index2<loopSize)
     {
+        mapNameList << layers.at(index2)->name();
         if (Tiled::TileLayer *tileLayer = layers.at(index2)->asTileLayer()) {
             graphicsItem=new TileLayerItem(tileLayer, renderer, this);
             if(cache && image.size().isNull())
@@ -82,6 +84,8 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
             displayed_layer.insert(map,graphicsItem);
         }
     }
+    if(cache)
+        qDebug() << "Map: " << layers.size() << " layers (" << mapNameList.join(";") << "), but only " << displayed_layer.count(map) << " displayed";
 }
 
 void MapItem::removeMap(Tiled::Map *map)
