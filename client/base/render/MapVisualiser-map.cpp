@@ -433,5 +433,29 @@ void MapVisualiser::render()
 {
     mScene->update();
     //viewport()->update();
-    timerRender.start(waitRenderTime);
+}
+
+void MapVisualiser::paintEvent(QPaintEvent * event)
+{
+    timeRender.restart();
+
+    QGraphicsView::paintEvent(event);
+
+    quint32 elapsed=timeRender.elapsed();
+    if(waitRenderTime<elapsed)
+        timerRender.start(0);
+    else
+        timerRender.start(waitRenderTime-elapsed);
+
+    if(frameCounter<1000)
+        frameCounter++;
+}
+
+void MapVisualiser::updateFPS()
+{
+    qDebug() << (((float)frameCounter)*1000)/timeUpdateFPS.elapsed();
+
+    frameCounter=0;
+    timeUpdateFPS.restart();
+    timerUpdateFPS.start();
 }
