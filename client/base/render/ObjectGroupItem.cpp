@@ -15,13 +15,20 @@ ObjectGroupItem::ObjectGroupItem(Tiled::ObjectGroup *objectGroup,
     // Create a child item for each object
     QList<QGraphicsItem *> childs=childItems();
     int index=0;
+    int loopSize=childs.size();
     while(index<childs.size())
     {
         delete childs.at(index);
         index++;
     }
-    foreach (Tiled::MapObject *object, mObjectGroup->objects())
-        MapObjectItem::objectLink[object]=new MapObjectItem(object, this);
+    QList<Tiled::MapObject *> objects=mObjectGroup->objects();
+    loopSize=objects.size();
+    index=0;
+    while(index<loopSize)
+    {
+        MapObjectItem::objectLink[objects.at(index)]=new MapObjectItem(objects.at(index), this);
+        index++;
+    }
 }
 
 QRectF ObjectGroupItem::boundingRect() const

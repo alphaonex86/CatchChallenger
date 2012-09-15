@@ -26,9 +26,21 @@ void Options::on_browse_clicked()
 
 void Options::on_load_clicked()
 {
-    mapVisualiser=new MapVisualiser(NULL,ui->centerOnPlayer->isChecked(),ui->debugTags->isChecked(),ui->targetFPS->value(),ui->cache->isChecked());
-    mapVisualiser->viewMap(ui->baseFile->text());
+    mapVisualiser=new MapVisualiser(NULL,ui->centerOnPlayer->isChecked(),ui->debugTags->isChecked(),ui->cache->isChecked());
+
     mapVisualiser->setWindowIcon(QIcon(":/icon.png"));
+    mapVisualiser->setShowFPS(ui->showFPS->isChecked());
+    if(ui->doubleSize->isChecked())
+        mapVisualiser->scale(2,2);
+    else
+        mapVisualiser->scale(1,1);
+    if(ui->limitFPS->isChecked())
+        mapVisualiser->setTargetFPS(ui->targetFPS->value());
+    else
+        mapVisualiser->setTargetFPS(0);
+
+    mapVisualiser->viewMap(ui->baseFile->text());
     mapVisualiser->show();
+
     close();
 }
