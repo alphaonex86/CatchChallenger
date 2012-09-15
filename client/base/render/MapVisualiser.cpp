@@ -61,6 +61,24 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
     //viewport()->setAttribute(Qt::WA_StaticContents);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
 
+    playerTileset = new Tiled::Tileset("player",16,24);
+    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
+    if(QFile::exists(externalFile))
+    {
+        QImage externalImage(externalFile);
+        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
+            playerTileset->loadFromImage(externalImage,externalFile);
+        else
+            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+    }
+    else
+        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+    playerMapObject = new Tiled::MapObject();
+
+    tagTilesetIndex=0;
+    tagTileset = new Tiled::Tileset("tags",16,16);
+    tagTileset->loadFromImage(QImage(":/tags.png"),":/tags.png");
+
     render();
 }
 
@@ -91,26 +109,6 @@ void MapVisualiser::viewMap(const QString &fileName)
 
     QTime startTime;
     startTime.restart();
-
-    mapItem=new MapItem();
-
-    playerTileset = new Tiled::Tileset("player",16,24);
-    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
-    if(QFile::exists(externalFile))
-    {
-        QImage externalImage(externalFile);
-        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
-            playerTileset->loadFromImage(externalImage,externalFile);
-        else
-            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    }
-    else
-        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    playerMapObject = new Tiled::MapObject();
-
-    tagTilesetIndex=0;
-    tagTileset = new Tiled::Tileset("tags",16,16);
-    tagTileset->loadFromImage(QImage(":/tags.png"),":/tags.png");
 
     //commented to not blink
     //blink_dyna_layer.start(200);
