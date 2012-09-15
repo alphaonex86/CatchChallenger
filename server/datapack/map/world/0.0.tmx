@@ -3,7 +3,7 @@
  <properties>
   <property name="type" value="city"/>
  </properties>
- <tileset firstgid="1" source="../../../../server/datapack/map/tileset/texture.tsx"/>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
  <layer name="Walkable" width="30" height="30">
   <data encoding="base64" compression="zlib">
    eJydVVtuwkAMdBIEXKQ3gYPyOkhoVbgGVGo5RjcSK4yZsb18jOJNNjv2+LG9iAwFs4Le2D14V232D7LRGp3Bzo/ORd89v/T6u+BEcDa+RD4wDIB33omsCv7kFR9d3hekL+Os334BJ8MN6Ik0YPrqd17MiJfFh/KL6kCvszFP2p+BzlF8rPbe0VrzbQq2BTuggdUmW19Ma63jWHAs+AR8rL/qc+Je3DH5sFZrjWX3Wj+WNzNjmO63YL8+H/HqvSj/Nh+D4o1mIIo3qzHqvcrLZpS1Na/XNxHv/J5HNN/RuR7vZG8bsCPxoh6J4r0m8SWPGvHyW23WR56m6P0oz7UZxez1L5qXrN5GcAabtayPonsR5dDG6+UZ5deLz7srLC+LM6pntL8lXqYXmlfojsrwe/ll9x6bVy2zufIeJN/re6JzpK9dXyTf6xo/Di/LEbM9/zO5R/dR9E+0h/mHei0bT9Yn9m80m7JaZfOFOFt1a43VmxeMJ6t1C+qZ//c4o00=
