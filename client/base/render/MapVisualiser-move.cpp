@@ -228,7 +228,6 @@ void MapVisualiser::moveStepSlot()
                 qDebug() << QString("map changed not located: %1").arg(map->map_file);
             else
             {
-                qDebug() << QString("map changed located: %1").arg(map->map_file);
                 unloadCurrentMap();
                 other_map[current_map->logicalMap.map_file]=current_map;
                 current_map=other_map[map->map_file];
@@ -314,7 +313,6 @@ void MapVisualiser::moveStepSlot()
             playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
             inMove=false;
         }
-        //qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
     }
     else
         moveTimer.start();

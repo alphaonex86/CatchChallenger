@@ -3,15 +3,15 @@
  <properties>
   <property name="type" value="city"/>
  </properties>
- <tileset firstgid="1" source="../tileset/texture.tsx"/>
+ <tileset firstgid="1" source="../../../../server/datapack/map/tileset/texture.tsx"/>
  <layer name="Walkable" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJzFlVFywjAMRI3JQO9/KOhJWo5BPuiM2L6V5Hy0H5oQ7Ejyanc9xxjnPebruf3R7xnqzn+un+1x6yv1qnf9xq1V+W973BvxCfjHvA6juJ/6/trjuxGPpH7sYYPaG6z95DhaP2KttRWHbbyfPT6P1o95NP8cjMeEOFJfcZ+yRnN3+4/Wj6EYKEZT1iJOl9MY10Z8nH7jqNzTc2sQBg4/nW/knepJaxLf3cyoL+c5yv/O7LUfrUNcUc2Qp2SeTO8unIYJe6rv/Ij6oLzkDeSv1X/kua5udrdl95L7hjhFc3Me6HjpzkreqnonfLLza5/VTDSf47jToMOA1onr5Pfx3fGrmpvqr/IohyXdQ7Sn8jjKTf6ecTnrTc/u9Kz4O++h7zLf15k5fFb01vEsyk2zcp7t7oPMczt8Us1U+q80QPMljyS9Z/UzfpL+s3wdbqi/u286eXWPw7DST5ebnd4yfpA3dDXd3ZedR7W0iufq2as7MavXncFKaP4nZ/hFEA==
+   eJzFVtuNwzAMM5ws1uskfQ1yl3TvukCDEiwpywhw/RCSwLYoipLiWkqZmtXXc/6n9wq49cv40R63PoLX++Yzbq3nf6a9LteMxX5djthHVtuJzvOzxwXPzmKtkh2a/Rg7BvozBtcAruEZxrs2Oxu7GJ/IX+kecT4FeAqfNXV8WTeMAzlHfBU+64rGOeAcbe8jnJ92b/bXbBH55/wytqqtLGfERV4KX2FyvWd5K1ysddeH27froSxv1NnxRs1Zk1F9mftSPjljDAof1/bgXwxW9F/hmPbiK27uH6Pi2YtfS44rPl2db7Uc2SrwWXenCc+dp/2C721m8NzC/SfCZ39qzqr5r/LF59Vexq90nnOPPNy9ROmmYlD40Wxx//WoLtV9yNVr1H/ujuL6IrqXoDn9VZ1FPaHi6M0srr9bed91VH1Hvhy++k87/hyHsmOA53oA8Tiu0XmFNRrVJ9e+0w7nxTqA72rAxdTbM1EszpYO1wym2xfVtbsHuDiy2vTicr2UyWcmnh5u1OcOL6vBiLH/B5++b44=
   </data>
  </layer>
  <layer name="Collisions" width="32" height="32">
   <data encoding="base64" compression="zlib">
-   eJztl2EKgCAMhVO7SHWS6ijW/a+QPxKGiG5zalQPHmTJvrnCpVXDcCB9Mp2KaQl8rrC55NYroVxtuDx92ziPYAzvw+deIbtEMb4fp/hS9YXrhKwcX0phzWN1b8WH7yF2XYsf+/568VO5cPjKzdUIG0JMyt42uXkzwgsyHnVvfROf01u+zl/dvA3hvRJfUrD3SvV2qnqt/ef//Cfww//fHpI+a0jxW+VR++wlwabmVBr3S74Aa7xrYA==
+   eJztl0EOQBEMRDkr7n8F2x8RxR+diJmk276pRUdTDCFPVtmsUc+0wN/VrBdrXoSst0HzLLVsb2XneXt8psQXn+UBsVtv5aOyRfw7+d/sZWYPc/+ILz6T3/5/GULfGii+l4/TtxeCverpb9+XqgJyKWAA
   </data>
  </layer>
  <layer name="WalkBehind" width="32" height="32">
