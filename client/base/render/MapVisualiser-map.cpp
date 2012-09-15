@@ -170,6 +170,30 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
         }
     }
 
+    //move the Moving layer on dyna layer
+    index=0;
+    while(index<tempMapObject->tiledMap->layerCount())
+    {
+        if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
+        {
+            //remove the unknow layer
+            if(objectGroup->name()=="Moving")
+            {
+                Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
+                if(tempMapObject->objectGroupIndex-1<=0)
+                    tempMapObject->tiledMap->insertLayer(0,layer);
+                else
+                {
+                    if(index>tempMapObject->objectGroupIndex)
+                        tempMapObject->objectGroupIndex++;
+                    tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,layer);
+                }
+                break;
+            }
+        }
+        index++;
+    }
+
     other_map[resolvedFileName]=tempMapObject;
 
     return resolvedFileName;
