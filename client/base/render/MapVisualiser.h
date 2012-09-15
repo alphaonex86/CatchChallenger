@@ -87,6 +87,10 @@ private:
 
     quint8 waitRenderTime;
     QTimer timerRender;
+    QTime timeRender;
+    quint16 frameCounter;
+    QTimer timerUpdateFPS;
+    QTime timeUpdateFPS;
 private slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
@@ -99,6 +103,8 @@ private slots:
     void blinkDynaLayer();
 
     void render();
+    void paintEvent(QPaintEvent * event);
+    void updateFPS();
 };
 
 #endif

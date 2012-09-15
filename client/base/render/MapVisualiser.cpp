@@ -19,11 +19,18 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
     this->centerOnPlayer=centerOnPlayer;
     this->debugTags=debugTags;
 
+    timerUpdateFPS.setSingleShot(true);
+    timerUpdateFPS.setInterval(1000);
+    timeUpdateFPS.restart();
+    frameCounter=0;
+    timeRender.restart();
     waitRenderTime=1000.0/(float)targetFPS;
     if(waitRenderTime<1)
         waitRenderTime=1;
     timerRender.setSingleShot(true);
     connect(&timerRender,SIGNAL(timeout()),this,SLOT(render()));
+    connect(&timerUpdateFPS,SIGNAL(timeout()),this,SLOT(updateFPS()));
+    timerUpdateFPS.start();
 
     current_map=NULL;
     mapItem=new MapItem(NULL,useCache);
