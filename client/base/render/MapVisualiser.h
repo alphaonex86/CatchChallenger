@@ -22,6 +22,7 @@
 #define MAP_VISUALISER_H
 
 #include <QGraphicsView>
+#include <QGraphicsSimpleTextItem>
 #include <QTimer>
 #include <QKeyEvent>
 #include <QGraphicsItem>
@@ -38,7 +39,7 @@ class MapVisualiser : public QGraphicsView
     Q_OBJECT
 
 public:
-    explicit MapVisualiser(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const quint8 &targetFPS=30,const bool &useCache=true);
+    explicit MapVisualiser(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true);
     ~MapVisualiser();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -46,6 +47,10 @@ public:
     void viewMap(const QString &fileName);
     bool RectTouch(QRect r1,QRect r2);
     void displayTheDebugMap();
+
+    bool showFPS();
+    void setShowFPS(const bool &showFPS);
+    void setTargetFPS(int targetFPS);
 private:
     struct Map_full
     {
@@ -91,6 +96,8 @@ private:
     quint16 frameCounter;
     QTimer timerUpdateFPS;
     QTime timeUpdateFPS;
+    QGraphicsSimpleTextItem *FPSText;
+    bool mShowFPS;
 private slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();

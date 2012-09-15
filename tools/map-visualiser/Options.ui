@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>239</width>
-    <height>211</height>
+    <height>233</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,22 +60,19 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QLabel" name="label">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="QCheckBox" name="limitFPS">
        <property name="text">
-        <string>Target FPS:</string>
+        <string>Limit FPS to:</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QSpinBox" name="targetFPS">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="suffix">
-        <string>FPS</string>
+        <string> FPS</string>
        </property>
        <property name="minimum">
         <number>30</number>
@@ -88,6 +85,9 @@
     <widget class="QCheckBox" name="debugTags">
      <property name="text">
       <string>Debug tags</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -103,11 +103,18 @@
    </item>
    <item>
     <widget class="QCheckBox" name="showFPS">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
      <property name="text">
       <string>Show the FPS</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="doubleSize">
+     <property name="text">
+      <string>Double size</string>
      </property>
     </widget>
    </item>
@@ -186,5 +193,22 @@
  <resources>
   <include location="resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>limitFPS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>targetFPS</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>101</x>
+     <y>41</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>132</x>
+     <y>38</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

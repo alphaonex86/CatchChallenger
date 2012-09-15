@@ -24,8 +24,11 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
     QImage image;
     QGraphicsItem * graphicsItem=NULL;
     // Create a child item for each layer
-    foreach (Tiled::Layer *layer, layers) {
-        if (Tiled::TileLayer *tileLayer = layer->asTileLayer()) {
+    int loopSize=layers.size();
+    int index2=0;
+    while(index2<loopSize)
+    {
+        if (Tiled::TileLayer *tileLayer = layers.at(index2)->asTileLayer()) {
             graphicsItem=new TileLayerItem(tileLayer, renderer, this);
             if(cache && image.size().isNull())
             {
@@ -42,14 +45,14 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
                 delete graphicsItem;
                 graphicsItem=NULL;
             }
-        } else if(Tiled::ObjectGroup *objectGroup = layer->asObjectGroup()) {
+        } else if(Tiled::ObjectGroup *objectGroup = layers.at(index2)->asObjectGroup()) {
             if(cache && !image.size().isNull())
             {
                 QPixmap tempPixmap;
                 if(tempPixmap.convertFromImage(image))
                 {
                     graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
-                    graphicsItem->setZValue(index++);
+                    graphicsItem->setZValue(index-1);
                     displayed_layer.insert(map,graphicsItem);
                     image=QImage();
                 }
@@ -63,9 +66,11 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
         }
         if(graphicsItem!=NULL)
         {
-            graphicsItem->setZValue(index++);
+            graphicsItem->setZValue(index);
             displayed_layer.insert(map,graphicsItem);
         }
+        index++;
+        index2++;
     }
     if(cache && !image.size().isNull())
     {
@@ -73,7 +78,7 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
         if(tempPixmap.convertFromImage(image))
         {
             graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
-            graphicsItem->setZValue(index++);
+            graphicsItem->setZValue(index);
             displayed_layer.insert(map,graphicsItem);
         }
     }
