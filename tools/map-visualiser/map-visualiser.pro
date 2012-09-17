@@ -5,7 +5,7 @@ LIBS *= -ltiled
 TEMPLATE = app
 TARGET = map-visualiser
 
-QT += xml
+QT += xml opengl
 
 win32:RC_FILE += resources-windows.rc
 
@@ -23,11 +23,11 @@ SOURCES += main.cpp \
     ../../client/base/render/TileLayerItem.cpp \
     ../../client/base/render/ObjectGroupItem.cpp \
     ../../client/base/render/MapVisualiser.cpp \
-    ../../client/base/render/MapVisualiser-move.cpp \
     ../../client/base/render/MapVisualiser-map.cpp \
     ../../client/base/render/MapObjectItem.cpp \
     ../../client/base/render/MapItem.cpp \
-    Options.cpp
+    Options.cpp \
+    MapController.cpp
 
 HEADERS += \
     ../../general/base/Map_loader.h \
@@ -44,7 +44,8 @@ HEADERS += \
     ../../client/base/render/MapVisualiser.h \
     ../../client/base/render/MapObjectItem.h \
     ../../client/base/render/MapItem.h \
-    Options.h
+    Options.h \
+    MapController.h
 
 RESOURCES += \
     resources.qrc

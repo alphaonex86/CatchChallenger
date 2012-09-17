@@ -8,16 +8,17 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QPointer>
+#include <QMessageBox>
 
 #include "../../general/base/MoveOnTheMap.h"
 
-MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
+MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     QGraphicsView(parent),
-    mScene(new QGraphicsScene(this)),
-    inMove(false)
+    mScene(new QGraphicsScene(this))
 {
     setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
+    setCacheMode(QGraphicsView::CacheBackground);
 
     this->centerOnPlayer=centerOnPlayer;
     this->debugTags=debugTags;
@@ -38,16 +39,6 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
     current_map=NULL;
     mapItem=new MapItem(NULL,useCache);
 
-    xPerso=0;
-    yPerso=0;
-
-    lookToMove.setInterval(200);
-    lookToMove.setSingleShot(true);
-    connect(&lookToMove,SIGNAL(timeout()),this,SLOT(transformLookToMove()));
-
-    moveTimer.setInterval(66);
-    moveTimer.setSingleShot(true);
-    connect(&moveTimer,SIGNAL(timeout()),this,SLOT(moveStepSlot()));
     setWindowTitle(tr("map-visualiser-qt"));
 
     setScene(mScene);
@@ -56,24 +47,18 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
     setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing
                          | QGraphicsView::DontSavePainterState);
     setBackgroundBrush(Qt::black);
-    setFrameStyle(QFrame::NoFrame);
+    setFrameStyle(0);
 
     //viewport()->setAttribute(Qt::WA_StaticContents);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
-
-    playerTileset = new Tiled::Tileset("player",16,24);
-    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
-    if(QFile::exists(externalFile))
+    if(OpenGL)
     {
-        QImage externalImage(externalFile);
-        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
-            playerTileset->loadFromImage(externalImage,externalFile);
+        QGLWidget *widgetOpenGL=new QGLWidget(QGLFormat(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba));// | QGL::IndirectRendering -> do a crash
+        if(widgetOpenGL==NULL)
+            QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers");
         else
-            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+            setViewport(widgetOpenGL);
     }
-    else
-        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    playerMapObject = new Tiled::MapObject();
 
     tagTilesetIndex=0;
     tagTileset = new Tiled::Tileset("tags",16,16);
@@ -98,12 +83,11 @@ MapVisualiser::~MapVisualiser()
     }
 
     //delete mapItem;
-    delete playerTileset;
     //delete playerMapObject;
     delete tagTileset;
 }
 
-void MapVisualiser::viewMap(const QString &fileName)
+bool MapVisualiser::viewMap(const QString &fileName)
 {
     current_map=NULL;
 
@@ -119,33 +103,12 @@ void MapVisualiser::viewMap(const QString &fileName)
 
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
-        return;
+    {
+        QMessageBox::critical(this,"Error",mLastError);
+        return false;
+    }
     current_map=other_map[current_map_fileName];
     other_map.remove(current_map_fileName);
-
-    //the direction
-    direction=Pokecraft::Direction_look_at_bottom;
-    playerMapObject->setTile(playerTileset->tileAt(7));
-
-    //position
-    if(!current_map->logicalMap.rescue_points.empty())
-    {
-        xPerso=current_map->logicalMap.rescue_points.first().x;
-        yPerso=current_map->logicalMap.rescue_points.first().y;
-    }
-    else if(!current_map->logicalMap.bot_spawn_points.empty())
-    {
-        xPerso=current_map->logicalMap.bot_spawn_points.first().x;
-        yPerso=current_map->logicalMap.bot_spawn_points.first().y;
-    }
-    else
-    {
-        xPerso=current_map->logicalMap.width/2;
-        yPerso=current_map->logicalMap.height/2;
-    }
-
-    loadCurrentMap();
-    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
 
     mScene->addItem(mapItem);
     //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
@@ -162,6 +125,7 @@ void MapVisualiser::viewMap(const QString &fileName)
     setShowFPS(mShowFPS);
 
     render();
+    return true;
 }
 
 bool MapVisualiser::RectTouch(QRect r1,QRect r2)
@@ -182,33 +146,10 @@ bool MapVisualiser::RectTouch(QRect r1,QRect r2)
     return true;
 }
 
-void MapVisualiser::displayTheDebugMap()
-{
-    /*qDebug() << QString("xPerso: %1, yPerso: %2, map: %3").arg(xPerso).arg(yPerso).arg(current_map->logicalMap.map_file);
-    int y=0;
-    while(y<current_map->logicalMap.height)
-    {
-        QString line;
-        int x=0;
-        while(x<current_map->logicalMap.width)
-        {
-            if(x==xPerso && y==yPerso)
-                line+="P";
-            else if(current_map->logicalMap.parsed_layer.walkable[x+y*current_map->logicalMap.width])
-                line+="_";
-            else
-                line+="X";
-            x++;
-        }
-        qDebug() << line;
-        y++;
-    }*/
-}
-
 void MapVisualiser::render()
 {
-    mScene->update();
-    //viewport()->update();
+    //mScene->update();
+    viewport()->update();
 }
 
 void MapVisualiser::paintEvent(QPaintEvent * event)
@@ -259,4 +200,22 @@ void MapVisualiser::setTargetFPS(int targetFPS)
         if(waitRenderTime<1)
             waitRenderTime=1;
     }
+}
+
+void MapVisualiser::keyPressEvent(QKeyEvent * event)
+{
+    //ignore the repeated event
+    if(event->isAutoRepeat())
+        return;
+
+    emit newKeyPressEvent(event);
+}
+
+void MapVisualiser::keyReleaseEvent(QKeyEvent * event)
+{
+    //ignore the repeated event
+    if(event->isAutoRepeat())
+        return;
+
+    emit newKeyReleaseEvent(event);
 }
