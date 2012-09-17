@@ -34,7 +34,7 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
             graphicsItem=new TileLayerItem(tileLayer, renderer, this);
             if(cache && image.size().isNull())
             {
-                image=QImage(QSize(graphicsItem->boundingRect().size().width(),graphicsItem->boundingRect().size().height()),QImage::Format_ARGB32);
+                image=QImage(QSize(graphicsItem->boundingRect().size().width(),graphicsItem->boundingRect().size().height()),QImage::Format_ARGB32_Premultiplied);
                 image.fill(Qt::transparent);
             }
 

@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-#include "../../client/base/render/MapVisualiser.h"
+#include "MapController.h"
 
 namespace Ui {
 class Options;
@@ -24,7 +24,7 @@ private slots:
 
 private:
     Ui::Options *ui;
-    MapVisualiser *mapVisualiser;
+    MapController *mapController;
 };
 
 #endif // OPTIONS_H
