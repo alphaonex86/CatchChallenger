@@ -99,6 +99,7 @@ private:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
     MapItem* mapItem;
+    QString mLastError;
 
     QHash<QString,Map_full *> other_map;
 private slots:
