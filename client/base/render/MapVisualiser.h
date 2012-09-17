@@ -33,25 +33,24 @@
 #include <QSet>
 #include <QMultiMap>
 #include <QHash>
+#include <QGLWidget>
 
 class MapVisualiser : public QGraphicsView
 {
     Q_OBJECT
 
 public:
-    explicit MapVisualiser(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true);
+    explicit MapVisualiser(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiser();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
-    void keyPressParse();
-    void viewMap(const QString &fileName);
+    bool viewMap(const QString &fileName);
     bool RectTouch(QRect r1,QRect r2);
-    void displayTheDebugMap();
 
     bool showFPS();
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
-private:
+
     struct Map_full
     {
         Pokecraft::Map_client logicalMap;
@@ -60,35 +59,23 @@ private:
         Tiled::ObjectGroup * objectGroup;
         int objectGroupIndex;
     };
-
+    Map_full *current_map;
+    QHash<QString,Map_full *> other_map;
+    QSet<QString> displayed_map;//the map really show
+private:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
     MapItem* mapItem;
 
-    Tiled::MapObject * playerMapObject;
-    Tiled::Tileset * playerTileset;
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
-    int moveStep;
-    Pokecraft::Direction direction;
-    quint8 xPerso,yPerso;
-    bool inMove;
-
-    QTimer timer;
-    QTimer moveTimer;
-    QTimer lookToMove;
-    QSet<int> keyPressed;
-
     QTimer blink_dyna_layer;
-
-    Map_full *current_map;
-    QHash<QString,Map_full *> other_map;
-    QSet<QString> displayed_map;//the map really show
 
     QSet<QString> loadedNearMap;//temp variable to have only the near map
 
     bool centerOnPlayer;
     bool debugTags;
+    QString mLastError;
 
     quint8 waitRenderTime;
     QTimer timerRender;
@@ -98,20 +85,20 @@ private:
     QTime timeUpdateFPS;
     QGraphicsSimpleTextItem *FPSText;
     bool mShowFPS;
-private slots:
+public slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
+private slots:
     void loadNearMap(const QString &fileName, const qint32 &x=0, const qint32 &y=0);
-    void unloadCurrentMap();
-    void loadPlayerFromCurrentMap();
-    void unloadPlayerFromCurrentMap();
-    void moveStepSlot();
-    void transformLookToMove();
+
     void blinkDynaLayer();
 
     void render();
     void paintEvent(QPaintEvent * event);
     void updateFPS();
+signals:
+    void newKeyPressEvent(QKeyEvent * event);
+    void newKeyReleaseEvent(QKeyEvent *event);
 };
 
 #endif

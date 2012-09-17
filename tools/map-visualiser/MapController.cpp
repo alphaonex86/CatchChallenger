@@ -1,18 +1,69 @@
-#include "MapVisualiser.h"
+#include "MapController.h"
 
-#include <QCoreApplication>
-#include <QGraphicsItem>
-#include <QGraphicsScene>
-#include <QStyleOptionGraphicsItem>
-#include <QTime>
-#include <QDebug>
-#include <QFileInfo>
-#include <QPointer>
+MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+    mapVisualiser(NULL,centerOnPlayer,debugTags,useCache,OpenGL)
+{
+    mapVisualiser.setWindowIcon(QIcon(":/icon.png"));
+    inMove=false;
+    xPerso=0;
+    yPerso=0;
 
-#include "../../general/base/MoveOnTheMap.h"
-#include "ObjectGroupItem.h"
+    lookToMove.setInterval(200);
+    lookToMove.setSingleShot(true);
+    connect(&lookToMove,SIGNAL(timeout()),this,SLOT(transformLookToMove()));
 
-void MapVisualiser::keyPressEvent(QKeyEvent * event)
+    moveTimer.setInterval(66);
+    moveTimer.setSingleShot(true);
+    connect(&moveTimer,SIGNAL(timeout()),this,SLOT(moveStepSlot()));
+
+    connect(&mapVisualiser,SIGNAL(newKeyPressEvent(QKeyEvent*)),this,SLOT(keyPressEvent(QKeyEvent*)));
+    connect(&mapVisualiser,SIGNAL(newKeyReleaseEvent(QKeyEvent*)),this,SLOT(keyReleaseEvent(QKeyEvent*)));
+
+    playerTileset = new Tiled::Tileset("player",16,24);
+    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
+    if(QFile::exists(externalFile))
+    {
+        QImage externalImage(externalFile);
+        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
+            playerTileset->loadFromImage(externalImage,externalFile);
+        else
+            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+    }
+    else
+        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+    playerMapObject = new Tiled::MapObject();
+
+    //the direction
+    direction=Pokecraft::Direction_look_at_bottom;
+    playerMapObject->setTile(playerTileset->tileAt(7));
+}
+
+MapController::~MapController()
+{
+    delete playerTileset;
+}
+
+bool MapController::showFPS()
+{
+    return mapVisualiser.showFPS();
+}
+
+void MapController::setShowFPS(const bool &showFPS)
+{
+    mapVisualiser.setShowFPS(showFPS);
+}
+
+void MapController::setTargetFPS(int targetFPS)
+{
+    mapVisualiser.setTargetFPS(targetFPS);
+}
+
+void MapController::setScale(int scale)
+{
+    mapVisualiser.scale(scale,scale);
+}
+
+void MapController::keyPressEvent(QKeyEvent * event)
 {
     //ignore the repeated event
     if(event->isAutoRepeat())
@@ -25,20 +76,18 @@ void MapVisualiser::keyPressEvent(QKeyEvent * event)
     keyPressParse();
 }
 
-void MapVisualiser::keyPressParse()
+void MapController::keyPressParse()
 {
     //ignore is already in move
     if(inMove)
         return;
-
-    displayTheDebugMap();
 
     if(keyPressed.contains(16777234))
     {
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_left)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the left!
             //the first step
             direction=Pokecraft::Direction_move_at_left;
@@ -59,7 +108,7 @@ void MapVisualiser::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_right)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the right!
             //the first step
             direction=Pokecraft::Direction_move_at_right;
@@ -80,7 +129,7 @@ void MapVisualiser::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_top)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the top!
             //the first step
             direction=Pokecraft::Direction_move_at_top;
@@ -101,7 +150,7 @@ void MapVisualiser::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_bottom)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=Pokecraft::Direction_move_at_bottom;
@@ -119,7 +168,7 @@ void MapVisualiser::keyPressParse()
     }
 }
 
-void MapVisualiser::moveStepSlot()
+void MapController::moveStepSlot()
 {
     int baseTile=1;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
@@ -195,8 +244,8 @@ void MapVisualiser::moveStepSlot()
     //if have finish the step
     if(moveStep>3)
     {
-        Pokecraft::Map * old_map=&current_map->logicalMap;
-        Pokecraft::Map * map=&current_map->logicalMap;
+        Pokecraft::Map * old_map=&mapVisualiser.current_map->logicalMap;
+        Pokecraft::Map * map=&mapVisualiser.current_map->logicalMap;
         //set the final value (direction, position, ...)
         switch(direction)
         {
@@ -223,16 +272,16 @@ void MapVisualiser::moveStepSlot()
         //if the map have changed
         if(old_map!=map)
         {
-            loadOtherMap(map->map_file);
-            if(!other_map.contains(map->map_file))
+            mapVisualiser.loadOtherMap(map->map_file);
+            if(!mapVisualiser.other_map.contains(map->map_file))
                 qDebug() << QString("map changed not located: %1").arg(map->map_file);
             else
             {
-                unloadCurrentMap();
-                other_map[current_map->logicalMap.map_file]=current_map;
-                current_map=other_map[map->map_file];
-                loadCurrentMap();
-                displayTheDebugMap();
+                unloadPlayerFromCurrentMap();
+                mapVisualiser.other_map[mapVisualiser.current_map->logicalMap.map_file]=mapVisualiser.current_map;
+                mapVisualiser.current_map=mapVisualiser.other_map[map->map_file];
+                mapVisualiser.loadCurrentMap();
+                loadPlayerFromCurrentMap();
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -242,7 +291,7 @@ void MapVisualiser::moveStepSlot()
         if(keyPressed.contains(16777234))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_left;
                 playerMapObject->setTile(playerTileset->tileAt(10));
@@ -259,7 +308,7 @@ void MapVisualiser::moveStepSlot()
         else if(keyPressed.contains(16777236))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_right;
                 playerMapObject->setTile(playerTileset->tileAt(4));
@@ -276,7 +325,7 @@ void MapVisualiser::moveStepSlot()
         else if(keyPressed.contains(16777235))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_top;
                 playerMapObject->setTile(playerTileset->tileAt(1));
@@ -293,7 +342,7 @@ void MapVisualiser::moveStepSlot()
         else if(keyPressed.contains(16777237))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_bottom;
                 playerMapObject->setTile(playerTileset->tileAt(7));
@@ -316,12 +365,10 @@ void MapVisualiser::moveStepSlot()
     }
     else
         moveTimer.start();
-
-    displayTheDebugMap();
 }
 
 //have look into another direction, if the key remain pressed, apply like move
-void MapVisualiser::transformLookToMove()
+void MapController::transformLookToMove()
 {
     if(inMove)
         return;
@@ -329,7 +376,7 @@ void MapVisualiser::transformLookToMove()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_left;
             inMove=true;
@@ -338,7 +385,7 @@ void MapVisualiser::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_right;
             inMove=true;
@@ -347,7 +394,7 @@ void MapVisualiser::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_top;
             inMove=true;
@@ -356,7 +403,7 @@ void MapVisualiser::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_bottom;
             inMove=true;
@@ -370,7 +417,7 @@ void MapVisualiser::transformLookToMove()
     }
 }
 
-void MapVisualiser::keyReleaseEvent(QKeyEvent * event)
+void MapController::keyReleaseEvent(QKeyEvent * event)
 {
     //ignore the repeated event
     if(event->isAutoRepeat())
@@ -383,8 +430,38 @@ void MapVisualiser::keyReleaseEvent(QKeyEvent * event)
         keyPressParse();
 }
 
+bool MapController::viewMap(const QString &fileName)
+{
+    if(!mapVisualiser.viewMap(fileName))
+        return false;
+
+    //position
+    if(!mapVisualiser.current_map->logicalMap.rescue_points.empty())
+    {
+        xPerso=mapVisualiser.current_map->logicalMap.rescue_points.first().x;
+        yPerso=mapVisualiser.current_map->logicalMap.rescue_points.first().y;
+    }
+    else if(!mapVisualiser.current_map->logicalMap.bot_spawn_points.empty())
+    {
+        xPerso=mapVisualiser.current_map->logicalMap.bot_spawn_points.first().x;
+        yPerso=mapVisualiser.current_map->logicalMap.bot_spawn_points.first().y;
+    }
+    else
+    {
+        xPerso=mapVisualiser.current_map->logicalMap.width/2;
+        yPerso=mapVisualiser.current_map->logicalMap.height/2;
+    }
+
+    mapVisualiser.loadCurrentMap();
+    loadPlayerFromCurrentMap();
+    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+    mapVisualiser.show();
+
+    return true;
+}
+
 //call after enter on new map
-void MapVisualiser::loadPlayerFromCurrentMap()
+void MapController::loadPlayerFromCurrentMap()
 {
     Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
     if(currentGroup!=NULL)
@@ -392,11 +469,11 @@ void MapVisualiser::loadPlayerFromCurrentMap()
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
         currentGroup->removeObject(playerMapObject);
-        if(currentGroup!=current_map->objectGroup)
+        if(currentGroup!=mapVisualiser.current_map->objectGroup)
             qDebug() << QString("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
-    if(ObjectGroupItem::objectGroupLink.contains(current_map->objectGroup))
-        ObjectGroupItem::objectGroupLink[current_map->objectGroup]->addObject(playerMapObject);
+    if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.current_map->objectGroup))
+        ObjectGroupItem::objectGroupLink[mapVisualiser.current_map->objectGroup]->addObject(playerMapObject);
     else
         qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
 
@@ -405,7 +482,7 @@ void MapVisualiser::loadPlayerFromCurrentMap()
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
-void MapVisualiser::unloadPlayerFromCurrentMap()
+void MapController::unloadPlayerFromCurrentMap()
 {
     //unload the player sprite
     if(ObjectGroupItem::objectGroupLink.contains(playerMapObject->objectGroup()))
@@ -413,3 +490,4 @@ void MapVisualiser::unloadPlayerFromCurrentMap()
     else
         qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 }
+
