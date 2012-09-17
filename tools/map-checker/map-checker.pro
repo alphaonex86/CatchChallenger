@@ -7,6 +7,8 @@ TARGET = map-checker
 
 QT += xml
 
+win32:RC_FILE += resources-windows.rc
+
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets
 }

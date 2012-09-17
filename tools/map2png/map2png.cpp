@@ -221,6 +221,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     tempMapObject->tiledMap = reader.readMap(resolvedFileName);
     if (!tempMapObject->tiledMap)
     {
+        mLastError=reader.errorString();
         qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
         return QString();
     }
@@ -244,6 +245,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     Pokecraft::Map_loader map_loader;
     if(!map_loader.tryLoadMap(resolvedFileName))
     {
+        mLastError=map_loader.errorString();
         qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString());
         delete tempMapObject->tiledMap;
         return QString();
@@ -418,7 +420,10 @@ void Map2Png::viewMap(const QString &fileName)
 
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
+    {
+        QMessageBox::critical(this,"Error",mLastError);
         return;
+    }
     loadCurrentMap(current_map_fileName,0,0);
 
     displayMap();
