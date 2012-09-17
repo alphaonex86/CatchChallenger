@@ -25,6 +25,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     tempMapObject->tiledMap = reader.readMap(resolvedFileName);
     if (!tempMapObject->tiledMap)
     {
+        mLastError=reader.errorString();
         qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
         delete tempMapObject;
         return QString();
@@ -32,6 +33,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     Pokecraft::Map_loader map_loader;
     if(!map_loader.tryLoadMap(resolvedFileName))
     {
+        mLastError=map_loader.errorString();
         qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString());
         int index=0;
         while(index<tempMapObject->tiledMap->tilesets().size())
@@ -263,7 +265,6 @@ void MapVisualiser::loadCurrentMap()
     }
 
     loadedNearMap.clear();
-    loadPlayerFromCurrentMap();
 }
 
 void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y)
@@ -441,11 +442,6 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                 qDebug() << QString("loadNearMap(): left: not correctly loaded %1").arg(fileName);
         }
     }
-}
-
-void MapVisualiser::unloadCurrentMap()
-{
-    unloadPlayerFromCurrentMap();
 }
 
 void MapVisualiser::blinkDynaLayer()
