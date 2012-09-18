@@ -203,7 +203,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
 
 void MapVisualiser::loadCurrentMap()
 {
-    displayed_map.clear();
+    loadedNearMap.clear();
 
     QSet<QString> mapUsed;
     Map_full *tempMapObject=current_map;
@@ -265,8 +265,6 @@ void MapVisualiser::loadCurrentMap()
         else
             ++i;
     }
-
-    loadedNearMap.clear();
 }
 
 void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y)
