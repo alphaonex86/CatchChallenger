@@ -23,9 +23,6 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
 {
     if(!mMapObject->isVisible())
         return;
-    if(mMapObject->objectGroup()!=NULL)
-        if(!mMapObject->objectGroup()->isVisible())
-            return;
     const QColor &color = mMapObject->objectGroup()->color();
     mRendererList[mMapObject->objectGroup()]->drawMapObject(p, mMapObject,
                              color.isValid() ? color : Qt::darkGray);

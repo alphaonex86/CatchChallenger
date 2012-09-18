@@ -169,17 +169,12 @@ struct Map_to_send
 
     QList<Map_semi_teleport> teleport;
 
-	struct Rescue_Point
+    struct Map_Point
 	{
 		COORD_TYPE x,y;
 	};
-	QList<Rescue_Point> rescue_points;
-
-	struct Bot_Spawn_Point
-	{
-		COORD_TYPE x,y;
-	};
-	QList<Bot_Spawn_Point> bot_spawn_points;
+    QList<Map_Point> rescue_points;
+    QList<Map_Point> bot_spawn_points;
 };
 }
 

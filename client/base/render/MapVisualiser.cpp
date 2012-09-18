@@ -64,22 +64,36 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
     tagTileset = new Tiled::Tileset("tags",16,16);
     tagTileset->loadFromImage(QImage(":/tags.png"),":/tags.png");
 
+    mScene->addItem(mapItem);
+    //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
+
+    FPSText=new QGraphicsSimpleTextItem(mapItem);
+    FPSText->setVisible(mShowFPS);
+    mScene->addItem(FPSText);
+    FPSText->setPos(2,2);
+    QFont bold;
+    bold.setBold(true);
+    FPSText->setFont(bold);
+    FPSText->setPen(QPen(Qt::black));
+    FPSText->setBrush(Qt::white);
+    setShowFPS(mShowFPS);
+
     render();
 }
 
 MapVisualiser::~MapVisualiser()
 {
     //remove the not used map
-    QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
-    while (i != other_map.constEnd()) {
+    QHash<QString,Map_full *>::const_iterator i = all_map.constBegin();
+    while (i != all_map.constEnd()) {
         delete (*i)->logicalMap.parsed_layer.walkable;
         delete (*i)->logicalMap.parsed_layer.water;
         qDeleteAll((*i)->tiledMap->tilesets());
         delete (*i)->tiledMap;
         delete (*i)->tiledRender;
         delete (*i);
-        other_map.remove((*i)->logicalMap.map_file);
-        i = other_map.constBegin();//needed
+        all_map.remove((*i)->logicalMap.map_file);
+        i = all_map.constBegin();//needed
     }
 
     //delete mapItem;
@@ -98,31 +112,13 @@ bool MapVisualiser::viewMap(const QString &fileName)
     //blink_dyna_layer.start(200);
     connect(&blink_dyna_layer,SIGNAL(timeout()),this,SLOT(blinkDynaLayer()));
 
-    mScene->clear();
-    //centerOn(0, 0);
-
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
     {
         QMessageBox::critical(this,"Error",mLastError);
         return false;
     }
-    current_map=other_map[current_map_fileName];
-    other_map.remove(current_map_fileName);
-
-    mScene->addItem(mapItem);
-    //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
-
-    FPSText=new QGraphicsSimpleTextItem(mapItem);
-    FPSText->setVisible(mShowFPS);
-    mScene->addItem(FPSText);
-    FPSText->setPos(2,2);
-    QFont bold;
-    bold.setBold(true);
-    FPSText->setFont(bold);
-    FPSText->setPen(QPen(Qt::black));
-    FPSText->setBrush(Qt::white);
-    setShowFPS(mShowFPS);
+    current_map=all_map[current_map_fileName];
 
     render();
     return true;
@@ -144,6 +140,13 @@ bool MapVisualiser::RectTouch(QRect r1,QRect r2)
         return false;
 
     return true;
+}
+
+MapVisualiser::Map_full * MapVisualiser::getMap(QString map)
+{
+    if(all_map.contains(map))
+        return all_map[map];
+    return NULL;
 }
 
 void MapVisualiser::render()

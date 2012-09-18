@@ -28,6 +28,7 @@ public:
     ObjectGroupItem(Tiled::ObjectGroup *objectGroup,QGraphicsItem *parent = 0);
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
+    bool isVisible() const;
     void addObject(Tiled::MapObject *object);
     void removeObject(Tiled::MapObject *object);
 public:
