@@ -16,7 +16,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
 {
     QFileInfo fileInformations(fileName);
     QString resolvedFileName=fileInformations.absoluteFilePath();
-    if(other_map.contains(resolvedFileName))
+    if(all_map.contains(resolvedFileName))
         return resolvedFileName;
 
     Map_full *tempMapObject=new Map_full();
@@ -196,13 +196,15 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
         index++;
     }
 
-    other_map[resolvedFileName]=tempMapObject;
+    all_map[resolvedFileName]=tempMapObject;
 
     return resolvedFileName;
 }
 
 void MapVisualiser::loadCurrentMap()
 {
+    displayed_map.clear();
+
     QSet<QString> mapUsed;
     Map_full *tempMapObject=current_map;
 
@@ -217,10 +219,10 @@ void MapVisualiser::loadCurrentMap()
         if(!mapIndex.isEmpty())
         {
             //if the teleporter is in range
-            if(tempMapObject->logicalMap.teleport_semi[index].destination_x<other_map[mapIndex]->logicalMap.width && tempMapObject->logicalMap.teleport_semi[index].destination_y<other_map[mapIndex]->logicalMap.height)
+            if(tempMapObject->logicalMap.teleport_semi[index].destination_x<all_map[mapIndex]->logicalMap.width && tempMapObject->logicalMap.teleport_semi[index].destination_y<all_map[mapIndex]->logicalMap.height)
             {
                 int virtual_position=tempMapObject->logicalMap.teleport_semi[index].source_x+tempMapObject->logicalMap.teleport_semi[index].source_y*tempMapObject->logicalMap.width;
-                tempMapObject->logicalMap.teleporter[virtual_position].map=&other_map[mapIndex]->logicalMap;
+                tempMapObject->logicalMap.teleporter[virtual_position].map=&all_map[mapIndex]->logicalMap;
                 tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
                 tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
 
@@ -238,7 +240,7 @@ void MapVisualiser::loadCurrentMap()
         while (i != displayed_map.constEnd()) {
             if(!loadedNearMap.contains(*i))
             {
-                mapItem->removeMap(other_map[*i]->tiledMap);
+                mapItem->removeMap(all_map[*i]->tiledMap);
                 displayed_map.remove(*i);
                 i = displayed_map.constBegin();
             }
@@ -247,8 +249,8 @@ void MapVisualiser::loadCurrentMap()
         }
     }
     //remove the not used map
-    QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
-    while (i != other_map.constEnd()) {
+    QHash<QString,Map_full *>::const_iterator i = all_map.constBegin();
+    while (i != all_map.constEnd()) {
         if(!mapUsed.contains((*i)->logicalMap.map_file) && !loadedNearMap.contains((*i)->logicalMap.map_file))
         {
             delete (*i)->logicalMap.parsed_layer.walkable;
@@ -257,8 +259,8 @@ void MapVisualiser::loadCurrentMap()
             delete (*i)->tiledMap;
             delete (*i)->tiledRender;
             delete (*i);
-            other_map.remove((*i)->logicalMap.map_file);
-            i = other_map.constBegin();//needed
+            all_map.remove((*i)->logicalMap.map_file);
+            i = all_map.constBegin();//needed
         }
         else
             ++i;
@@ -273,18 +275,13 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
         return;
 
     Map_full *tempMapObject;
-    if(!other_map.contains(fileName))
+    if(!all_map.contains(fileName))
     {
-        if(current_map->logicalMap.map_file!=fileName)
-        {
-            qDebug() << QString("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
-            return;
-        }
-        else
-            tempMapObject=current_map;
+        qDebug() << QString("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
+        return;
     }
     else
-        tempMapObject=other_map[fileName];
+        tempMapObject=all_map[fileName];
 
     loadedNearMap << fileName;
 
@@ -317,18 +314,18 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
             if(!mapIndex.isEmpty())
             {
                 //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
+                if(fileName==all_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
                 {
-                    int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map[mapIndex]->logicalMap.border_semi.top.x_offset;
+                    int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-all_map[mapIndex]->logicalMap.border_semi.top.x_offset;
                     const quint32 x_sub=x+offset;
                     const quint32 y_sub=y+tempMapObject->logicalMap.height;
-                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
                     {
-                        tempMapObject->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.bottom.map=&all_map[mapIndex]->logicalMap;
                         tempMapObject->logicalMap.border.bottom.x_offset=-offset;
-                        other_map[mapIndex]->logicalMap.border.top.x_offset=offset;
+                        all_map[mapIndex]->logicalMap.border.top.x_offset=offset;
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }
@@ -351,18 +348,18 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
             if(!mapIndex.isEmpty())
             {
                 //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
+                if(fileName==all_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
                 {
-                    int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
+                    int offset=tempMapObject->logicalMap.border_semi.top.x_offset-all_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
                     const quint32 x_sub=x+offset;
-                    const quint32 y_sub=y-other_map[mapIndex]->logicalMap.height;
-                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    const quint32 y_sub=y-all_map[mapIndex]->logicalMap.height;
+                    QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
                     {
-                        tempMapObject->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.top.map=&all_map[mapIndex]->logicalMap;
                         tempMapObject->logicalMap.border.top.x_offset=-offset;
-                        other_map[mapIndex]->logicalMap.border.bottom.x_offset=offset;
+                        all_map[mapIndex]->logicalMap.border.bottom.x_offset=offset;
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }
@@ -385,18 +382,18 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
             if(!mapIndex.isEmpty())
             {
                 //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
+                if(fileName==all_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
                 {
-                    int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map[mapIndex]->logicalMap.border_semi.left.y_offset;
+                    int offset=tempMapObject->logicalMap.border_semi.right.y_offset-all_map[mapIndex]->logicalMap.border_semi.left.y_offset;
                     const quint32 x_sub=x+tempMapObject->logicalMap.width;
                     const quint32 y_sub=y+offset;
-                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
                     {
-                        tempMapObject->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.right.map=&all_map[mapIndex]->logicalMap;
                         tempMapObject->logicalMap.border.right.y_offset=-offset;
-                        other_map[mapIndex]->logicalMap.border.left.y_offset=offset;
+                        all_map[mapIndex]->logicalMap.border.left.y_offset=offset;
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }
@@ -419,18 +416,18 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
             if(!mapIndex.isEmpty())
             {
                 //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
+                if(fileName==all_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
                 {
-                    int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map[mapIndex]->logicalMap.border_semi.right.y_offset;
-                    const quint32 x_sub=x-other_map[mapIndex]->logicalMap.width;
+                    int offset=tempMapObject->logicalMap.border_semi.left.y_offset-all_map[mapIndex]->logicalMap.border_semi.right.y_offset;
+                    const quint32 x_sub=x-all_map[mapIndex]->logicalMap.width;
                     const quint32 y_sub=y+offset;
-                    QRect border_map_rect(x_sub,y_sub,other_map[mapIndex]->logicalMap.width,other_map[mapIndex]->logicalMap.height);
+                    QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
                     {
-                        tempMapObject->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
+                        tempMapObject->logicalMap.border.left.map=&all_map[mapIndex]->logicalMap;
                         tempMapObject->logicalMap.border.left.y_offset=-offset;
-                        other_map[mapIndex]->logicalMap.border.right.y_offset=offset;
+                        all_map[mapIndex]->logicalMap.border.right.y_offset=offset;
 
                         loadNearMap(mapIndex,x_sub,y_sub);
                     }

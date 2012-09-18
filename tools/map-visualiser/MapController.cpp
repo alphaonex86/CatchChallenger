@@ -31,16 +31,25 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     }
     else
         playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+    botTileset = new Tiled::Tileset("bot",16,24);
+    botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
     playerMapObject = new Tiled::MapObject();
 
     //the direction
     direction=Pokecraft::Direction_look_at_bottom;
     playerMapObject->setTile(playerTileset->tileAt(7));
+
+    //the bot management
+    connect(&timerBotMove,SIGNAL(timeout()),this,SLOT(botMove()));
+    connect(&timerBotManagement,SIGNAL(timeout()),this,SLOT(botManagement()));
+    timerBotMove.start(66);
+    timerBotManagement.start(3000);
 }
 
 MapController::~MapController()
 {
     delete playerTileset;
+    delete botTileset;
 }
 
 bool MapController::showFPS()
@@ -273,15 +282,16 @@ void MapController::moveStepSlot()
         if(old_map!=map)
         {
             mapVisualiser.loadOtherMap(map->map_file);
-            if(!mapVisualiser.other_map.contains(map->map_file))
+            if(!mapVisualiser.all_map.contains(map->map_file))
                 qDebug() << QString("map changed not located: %1").arg(map->map_file);
             else
             {
                 unloadPlayerFromCurrentMap();
-                mapVisualiser.other_map[mapVisualiser.current_map->logicalMap.map_file]=mapVisualiser.current_map;
-                mapVisualiser.current_map=mapVisualiser.other_map[map->map_file];
+                mapVisualiser.all_map[mapVisualiser.current_map->logicalMap.map_file]=mapVisualiser.current_map;
+                mapVisualiser.current_map=mapVisualiser.all_map[map->map_file];
                 mapVisualiser.loadCurrentMap();
                 loadPlayerFromCurrentMap();
+                botManagement();
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -454,6 +464,7 @@ bool MapController::viewMap(const QString &fileName)
 
     mapVisualiser.loadCurrentMap();
     loadPlayerFromCurrentMap();
+    botManagement();
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
     mapVisualiser.show();
 
@@ -467,8 +478,11 @@ void MapController::loadPlayerFromCurrentMap()
     if(currentGroup!=NULL)
     {
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+        {
+            qDebug() << "MapController::loadPlayerFromCurrentMap(): removeObject" << playerMapObject;
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
-        currentGroup->removeObject(playerMapObject);
+        }
+        //currentGroup->removeObject(playerMapObject);
         if(currentGroup!=mapVisualiser.current_map->objectGroup)
             qDebug() << QString("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
@@ -486,8 +500,107 @@ void MapController::unloadPlayerFromCurrentMap()
 {
     //unload the player sprite
     if(ObjectGroupItem::objectGroupLink.contains(playerMapObject->objectGroup()))
+    {
+        qDebug() << "MapController::unloadPlayerFromCurrentMap(): removeObject" << playerMapObject;
         ObjectGroupItem::objectGroupLink[playerMapObject->objectGroup()]->removeObject(playerMapObject);
+    }
     else
         qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 }
 
+void MapController::botMove()
+{
+}
+
+void MapController::botManagement()
+{
+    int index;
+    //remove bot where the map is not displayed
+    index=0;
+    while(index<botList.size())
+    {
+        if(!mapVisualiser.displayed_map.contains(botList.at(index).map))
+        {
+            if(mapVisualiser.all_map.contains(botList.at(index).map))
+            {
+                qDebug() << "MapController::botManagement(): Remove bot for missing map: " << botList.at(index).mapObject;
+                mapVisualiser.all_map[botList.at(index).map]->objectGroup->removeObject(botList.at(index).mapObject);
+                delete botList.at(index).mapObject;
+            }
+            else
+            {
+                //the map have been removed then the map object too
+            }
+            botList.removeAt(index);
+        }
+        else
+            index++;
+    }
+    //remove random bot
+    index=0;
+    while(index<botList.size())
+    {
+        if(true)//rand()%100<20
+        {
+            if(mapVisualiser.all_map.contains(botList.at(index).map))
+            {
+                if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[botList.at(index).map]->objectGroup))
+                    ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
+                else
+                    qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains botList.at(index).mapObject at remove random bot");
+                delete botList.at(index).mapObject;
+            }
+            else
+            {
+                //the map have been removed then the map object too
+            }
+            botList.removeAt(index);
+        }
+        else
+            index++;
+    }
+    //list bot spawn
+    {
+        QSet<QString>::const_iterator i = mapVisualiser.displayed_map.constBegin();
+        while (i != mapVisualiser.displayed_map.constEnd()) {
+            MapVisualiser::Map_full * map=mapVisualiser.getMap(*i);
+            if(map!=NULL)
+            {
+                index=0;
+                while(index<map->logicalMap.bot_spawn_points.size())
+                {
+                    BotSpawnPoint point;
+                    point.map=map;
+                    point.x=map->logicalMap.bot_spawn_points.at(index).x;
+                    point.y=map->logicalMap.bot_spawn_points.at(index).y;
+                    botSpawnPointList << point;
+                    index++;
+                }
+            }
+            ++i;
+        }
+    }
+    //add bot
+    index=botList.size();
+    while(index<4)//do 4 bot
+    {
+        BotSpawnPoint point=botSpawnPointList[rand()%botSpawnPointList.size()];
+
+        Bot bot;
+        bot.map=point.map->logicalMap.map_file;
+        bot.mapObject=new Tiled::MapObject();
+        bot.x=point.x;
+        bot.y=point.y;
+
+        if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[bot.map]->objectGroup))
+            ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
+        else
+            qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
+        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+        bot.mapObject->setPosition(QPoint(bot.x,bot.y+1));
+
+        bot.mapObject->setTile(botTileset->tileAt(7));
+        botList << bot;
+        index++;
+    }
+}

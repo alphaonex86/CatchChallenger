@@ -37,11 +37,28 @@ private slots:
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     void unloadPlayerFromCurrentMap();
 
+    void botMove();
+    void botManagement();
 private:
+    struct Bot
+    {
+        quint8 x,y;
+        Tiled::MapObject * mapObject;
+        QString map;
+    };
+    QList<Bot> botList;
+    struct BotSpawnPoint
+    {
+        MapVisualiser::Map_full * map;
+        quint8 x,y;
+    };
+    QList<BotSpawnPoint> botSpawnPointList;
+
     MapVisualiser mapVisualiser;
 
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
+    Tiled::Tileset * botTileset;
     int moveStep;
     Pokecraft::Direction direction;
     quint8 xPerso,yPerso;
@@ -51,6 +68,9 @@ private:
     QTimer moveTimer;
     QTimer lookToMove;
     QSet<int> keyPressed;
+
+    QTimer timerBotMove;
+    QTimer timerBotManagement;
 };
 
 #endif // MAPCONTROLLER_H

@@ -40,10 +40,18 @@ void ObjectGroupItem::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidge
 {
 }
 
+bool ObjectGroupItem::isVisible() const
+{
+    return mObjectGroup->isVisible();
+}
+
 void ObjectGroupItem::addObject(Tiled::MapObject *object)
 {
-    if(!MapObjectItem::objectLink.contains(object))
+    if(MapObjectItem::objectLink.contains(object))
+    {
         qDebug() << "Tiled object already present on the layer";
+        return;
+    }
     MapObjectItem::objectLink[object]=new MapObjectItem(object, this);
 
     mObjectGroup->addObject(object);
