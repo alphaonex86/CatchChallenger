@@ -291,7 +291,6 @@ void MapController::moveStepSlot()
                 mapVisualiser.current_map=mapVisualiser.all_map[map->map_file];
                 mapVisualiser.loadCurrentMap();
                 loadPlayerFromCurrentMap();
-                botManagement();
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -464,7 +463,7 @@ bool MapController::viewMap(const QString &fileName)
 
     mapVisualiser.loadCurrentMap();
     loadPlayerFromCurrentMap();
-    botManagement();
+
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
     mapVisualiser.show();
 
@@ -493,6 +492,31 @@ void MapController::loadPlayerFromCurrentMap()
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+
+    //list bot spawn
+    botSpawnPointList.clear();
+    {
+        QSet<QString>::const_iterator i = mapVisualiser.loadedNearMap.constBegin();
+        while (i != mapVisualiser.loadedNearMap.constEnd()) {
+            MapVisualiser::Map_full * map=mapVisualiser.getMap(*i);
+            if(map!=NULL)
+            {
+                int index=0;
+                while(index<map->logicalMap.bot_spawn_points.size())
+                {
+                    BotSpawnPoint point;
+                    point.map=map;
+                    point.x=map->logicalMap.bot_spawn_points.at(index).x;
+                    point.y=map->logicalMap.bot_spawn_points.at(index).y;
+                    botSpawnPointList << point;
+                    index++;
+                }
+            }
+            ++i;
+        }
+    }
+
+    botManagement();
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -506,6 +530,8 @@ void MapController::unloadPlayerFromCurrentMap()
     }
     else
         qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
+
+    botSpawnPointList.clear();
 }
 
 void MapController::botMove()
@@ -519,11 +545,11 @@ void MapController::botManagement()
     index=0;
     while(index<botList.size())
     {
-        if(!mapVisualiser.displayed_map.contains(botList.at(index).map))
+        if(!mapVisualiser.loadedNearMap.contains(botList.at(index).map))
         {
+            qDebug() << "MapController::botManagement(): Remove bot for missing map: " << botList.at(index).mapObject;
             if(mapVisualiser.all_map.contains(botList.at(index).map))
             {
-                qDebug() << "MapController::botManagement(): Remove bot for missing map: " << botList.at(index).mapObject;
                 mapVisualiser.all_map[botList.at(index).map]->objectGroup->removeObject(botList.at(index).mapObject);
                 delete botList.at(index).mapObject;
             }
@@ -540,8 +566,9 @@ void MapController::botManagement()
     index=0;
     while(index<botList.size())
     {
-        if(true)//rand()%100<20
+        if(false)//rand()%100<20
         {
+            qDebug() << "MapController::botManagement(): Remove bot for random: " << botList.at(index).mapObject;
             if(mapVisualiser.all_map.contains(botList.at(index).map))
             {
                 if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[botList.at(index).map]->objectGroup))
@@ -559,48 +586,35 @@ void MapController::botManagement()
         else
             index++;
     }
-    //list bot spawn
+    //add bot
+    if(!botSpawnPointList.isEmpty())
     {
-        QSet<QString>::const_iterator i = mapVisualiser.displayed_map.constBegin();
-        while (i != mapVisualiser.displayed_map.constEnd()) {
-            MapVisualiser::Map_full * map=mapVisualiser.getMap(*i);
-            if(map!=NULL)
-            {
-                index=0;
-                while(index<map->logicalMap.bot_spawn_points.size())
-                {
-                    BotSpawnPoint point;
-                    point.map=map;
-                    point.x=map->logicalMap.bot_spawn_points.at(index).x;
-                    point.y=map->logicalMap.bot_spawn_points.at(index).y;
-                    botSpawnPointList << point;
-                    index++;
-                }
-            }
-            ++i;
+        index=botList.size();
+        while(index<1)//do 1 bot
+        {
+            BotSpawnPoint point=botSpawnPointList[rand()%botSpawnPointList.size()];
+
+            Bot bot;
+            bot.map=point.map->logicalMap.map_file;
+            bot.mapObject=new Tiled::MapObject();
+            bot.x=point.x;
+            bot.y=point.y;
+
+            if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[bot.map]->objectGroup))
+                ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
+            else
+                qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
+            qDebug() << "MapController::botManagement(): Add bot for map: " << bot.map;
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            bot.mapObject->setPosition(QPoint(bot.x,bot.y+1));
+
+            bot.mapObject->setTile(botTileset->tileAt(7));
+            botList << bot;
+            index++;
         }
     }
-    //add bot
-    index=botList.size();
-    while(index<4)//do 4 bot
+    else
     {
-        BotSpawnPoint point=botSpawnPointList[rand()%botSpawnPointList.size()];
-
-        Bot bot;
-        bot.map=point.map->logicalMap.map_file;
-        bot.mapObject=new Tiled::MapObject();
-        bot.x=point.x;
-        bot.y=point.y;
-
-        if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[bot.map]->objectGroup))
-            ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
-        else
-            qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
-        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        bot.mapObject->setPosition(QPoint(bot.x,bot.y+1));
-
-        bot.mapObject->setTile(botTileset->tileAt(7));
-        botList << bot;
-        index++;
+        qDebug() << "Bot spawn list is empty";
     }
 }
