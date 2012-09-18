@@ -59,8 +59,10 @@ public:
         Tiled::ObjectGroup * objectGroup;
         int objectGroupIndex;
     };
+    Map_full * getMap(QString map);
+
     Map_full *current_map;
-    QHash<QString,Map_full *> other_map;
+    QHash<QString,Map_full *> all_map;
     QSet<QString> displayed_map;//the map really show
 private:
     Tiled::MapReader reader;
