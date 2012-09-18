@@ -12,8 +12,8 @@ class Map_client : public Map
 {
 public:
     QList<Map_semi_teleport> teleport_semi;
-    QList<Map_to_send::Rescue_Point> rescue_points;
-    QList<Map_to_send::Bot_Spawn_Point> bot_spawn_points;
+    QList<Map_to_send::Map_Point> rescue_points;
+    QList<Map_to_send::Map_Point> bot_spawn_points;
 	
     Map_semi_border border_semi;
 	

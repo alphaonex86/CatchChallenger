@@ -218,18 +218,6 @@ void EventDispatcher::preload_the_map()
 							DebugClass::debugConsole(QString("BotSpawn (bot_spawn_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
 							index_sub++;
 						}
-						index_sub=0;
-						size_sub_loop=map_temp.map_to_send.rescue_points.size();
-						while(index_sub<size_sub_loop)
-						{
-							GeneralData::ServerPrivateVariables::BotSpawn tempPoint;
-							tempPoint.map=returnList.at(index);
-							tempPoint.x=map_temp.map_to_send.rescue_points.at(index_sub).x;
-							tempPoint.y=map_temp.map_to_send.rescue_points.at(index_sub).y;
-							generalData.serverPrivateVariables.botSpawn << tempPoint;
-							DebugClass::debugConsole(QString("BotSpawn (rescue_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
-							index_sub++;
-						}
 					}
 
 					Map_semi map_semi;
