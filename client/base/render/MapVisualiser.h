@@ -63,7 +63,7 @@ public:
 
     Map_full *current_map;
     QHash<QString,Map_full *> all_map;
-    QSet<QString> displayed_map;//the map really show
+    QSet<QString> loadedNearMap;//temp variable to have only the near map
 private:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
@@ -73,7 +73,7 @@ private:
     int tagTilesetIndex;
     QTimer blink_dyna_layer;
 
-    QSet<QString> loadedNearMap;//temp variable to have only the near map
+    QSet<QString> displayed_map;//the map really show
 
     bool centerOnPlayer;
     bool debugTags;
