@@ -617,22 +617,22 @@ void MapController::botMoveStepSlot(Bot *bot)
         Pokecraft::Map * old_map=&mapVisualiser.all_map[bot->map]->logicalMap;
         Pokecraft::Map * map=&mapVisualiser.all_map[bot->map]->logicalMap;
         //set the final value (direction, position, ...)
-        switch(direction)
+        switch(bot->direction)
         {
             case Pokecraft::Direction_move_at_left:
-            direction=Pokecraft::Direction_look_at_left;
+            bot->direction=Pokecraft::Direction_look_at_left;
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&bot->x,&bot->y);
             break;
             case Pokecraft::Direction_move_at_right:
-            direction=Pokecraft::Direction_look_at_right;
+            bot->direction=Pokecraft::Direction_look_at_right;
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&bot->x,&bot->y);
             break;
             case Pokecraft::Direction_move_at_top:
-            direction=Pokecraft::Direction_look_at_top;
+            bot->direction=Pokecraft::Direction_look_at_top;
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&bot->x,&bot->y);
             break;
             case Pokecraft::Direction_move_at_bottom:
-            direction=Pokecraft::Direction_look_at_bottom;
+            bot->direction=Pokecraft::Direction_look_at_bottom;
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&bot->x,&bot->y);
             break;
             default:
@@ -656,7 +656,7 @@ void MapController::botMoveStepSlot(Bot *bot)
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         bot->mapObject->setPosition(QPoint(bot->x,bot->y+1));
 
-        inMove=false;
+        bot->inMove=false;
     }
 }
 
