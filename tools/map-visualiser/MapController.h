@@ -24,23 +24,6 @@ public:
     void setBotNumber(quint16 botNumber);
 
     bool viewMap(const QString &fileName);
-private slots:
-    void keyPressEvent(QKeyEvent * event);
-    void keyReleaseEvent(QKeyEvent * event);
-    void keyPressParse();
-
-    void moveStepSlot();
-    //have look into another direction, if the key remain pressed, apply like move
-    void transformLookToMove();
-
-    //call after enter on new map
-    void loadPlayerFromCurrentMap();
-    //call before leave the old map (and before loadPlayerFromCurrentMap())
-    void unloadPlayerFromCurrentMap();
-
-    void botMove();
-    void botManagement();
-    void botMoveStepSlot();
 private:
     struct Bot
     {
@@ -78,6 +61,23 @@ private:
 
     QTimer timerBotMove;
     QTimer timerBotManagement;
+private slots:
+    void keyPressEvent(QKeyEvent * event);
+    void keyReleaseEvent(QKeyEvent * event);
+    void keyPressParse();
+
+    void moveStepSlot();
+    //have look into another direction, if the key remain pressed, apply like move
+    void transformLookToMove();
+
+    //call after enter on new map
+    void loadPlayerFromCurrentMap();
+    //call before leave the old map (and before loadPlayerFromCurrentMap())
+    void unloadPlayerFromCurrentMap();
+
+    void botMove();
+    void botManagement();
+    void botMoveStepSlot(Bot *bot);
 };
 
 #endif // MAPCONTROLLER_H
