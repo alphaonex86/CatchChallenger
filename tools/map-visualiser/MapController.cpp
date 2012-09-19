@@ -538,7 +538,7 @@ void MapController::unloadPlayerFromCurrentMap()
     botSpawnPointList.clear();
 }
 
-void MapController::botMoveStepSlot(Bot *bot)
+bool MapController::botMoveStepSlot(Bot *bot)
 {
     int baseTile=1;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
@@ -586,7 +586,7 @@ void MapController::botMoveStepSlot(Bot *bot)
         break;
         default:
         qDebug() << QString("botMoveStepSlot(): moveStep: %1, wrong direction").arg(bot->moveStep);
-        return;
+        return false;
     }
 
     //apply the right step of the base step defined previously by the direction
@@ -637,7 +637,7 @@ void MapController::botMoveStepSlot(Bot *bot)
             break;
             default:
             qDebug() << QString("botMoveStepSlot(): bot->moveStep: %1, wrong direction when bot->moveStep>2").arg(bot->moveStep);
-            return;
+            return false;
         }
         //if the map have changed
         if(old_map!=map)
@@ -646,36 +646,46 @@ void MapController::botMoveStepSlot(Bot *bot)
             if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[old_map->map_file]->objectGroup))
                 ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[old_map->map_file]->objectGroup]->removeObject(bot->mapObject);
             else
-                qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
+                qDebug() << QString("botMoveStepSlot(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
             //add bot
             if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[map->map_file]->objectGroup))
                 ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
             else
-                qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at add to change the map");
+                return false;
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         bot->mapObject->setPosition(QPoint(bot->x,bot->y+1));
 
         bot->inMove=false;
     }
+    return true;
 }
 
 void MapController::botMove()
 {
     int index;
+    QSet<int> continuedMove;
     //continue the move
     index=0;
     while(index<botList.size())
     {
         if(botList.at(index).inMove)
-            botMoveStepSlot(&botList[index]);
+        {
+            if(!botMoveStepSlot(&botList[index]))
+            {
+                delete botList.at(index).mapObject;
+                botList.removeAt(index);
+                index--;
+            }
+            continuedMove << index;
+        }
         index++;
     }
     //start move
     index=0;
     while(index<botList.size())
     {
-        if(!botList.at(index).inMove)
+        if(!botList.at(index).inMove && !continuedMove.contains(index))
         {
             QList<Pokecraft::Direction> directions_allowed;
             if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,mapVisualiser.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
@@ -697,16 +707,16 @@ void MapController::botMove()
                 switch(final_direction)
                 {
                     case Pokecraft::Direction_move_at_left:
-                        moveStepSlot();
+                        botMoveStepSlot(&botList[index]);
                     break;
                     case Pokecraft::Direction_move_at_right:
-                        moveStepSlot();
+                        botMoveStepSlot(&botList[index]);
                     break;
                     case Pokecraft::Direction_move_at_top:
-                        moveStepSlot();
+                        botMoveStepSlot(&botList[index]);
                     break;
                     case Pokecraft::Direction_move_at_bottom:
-                        moveStepSlot();
+                        botMoveStepSlot(&botList[index]);
                     break;
                     default:
                     qDebug() << QString("transformLookToMove(): wrong direction");
@@ -727,7 +737,6 @@ void MapController::botManagement()
     {
         if(!mapVisualiser.loadedNearMap.contains(botList.at(index).map))
         {
-            qDebug() << "MapController::botManagement(): Remove bot for missing map: " << botList.at(index).mapObject;
             if(mapVisualiser.all_map.contains(botList.at(index).map))
             {
                 mapVisualiser.all_map[botList.at(index).map]->objectGroup->removeObject(botList.at(index).mapObject);
@@ -748,7 +757,6 @@ void MapController::botManagement()
     {
         if(index>=botNumber /* if to much bot */ || rand()%100<20)
         {
-            qDebug() << "MapController::botManagement(): Remove bot for random: " << botList.at(index).mapObject;
             if(mapVisualiser.all_map.contains(botList.at(index).map))
             {
                 if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[botList.at(index).map]->objectGroup))
@@ -788,7 +796,6 @@ void MapController::botManagement()
             else
                 qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
 
-            qDebug() << "MapController::botManagement(): Add bot for map: " << bot.map;
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             bot.mapObject->setPosition(QPoint(bot.x,bot.y+1));
 

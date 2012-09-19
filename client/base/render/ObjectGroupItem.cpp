@@ -54,7 +54,6 @@ bool ObjectGroupItem::isVisible() const
 
 void ObjectGroupItem::addObject(Tiled::MapObject *object)
 {
-    qDebug() << "ObjectGroupItem::addObject:" << object;
     if(MapObjectItem::objectLink.contains(object))
     {
         qDebug() << "Tiled object already present on the layer:" << object;
@@ -67,7 +66,6 @@ void ObjectGroupItem::addObject(Tiled::MapObject *object)
 
 void ObjectGroupItem::removeObject(Tiled::MapObject *object)
 {
-    qDebug() << "ObjectGroupItem::removeObject:" << object;
     if(!MapObjectItem::objectLink.contains(object))
         qDebug() << "The tiled object not exist on this layer";
     else
