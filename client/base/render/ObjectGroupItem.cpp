@@ -13,20 +13,27 @@ ObjectGroupItem::ObjectGroupItem(Tiled::ObjectGroup *objectGroup,
     setFlag(QGraphicsItem::ItemHasNoContents);
 
     // Create a child item for each object
-    QList<QGraphicsItem *> childs=childItems();
-    int index=0;
-    int loopSize=childs.size();
-    while(index<childs.size())
-    {
-        delete childs.at(index);
-        index++;
-    }
     QList<Tiled::MapObject *> objects=mObjectGroup->objects();
-    loopSize=objects.size();
-    index=0;
+    int loopSize=objects.size();
+    int index=0;
     while(index<loopSize)
     {
         MapObjectItem::objectLink[objects.at(index)]=new MapObjectItem(objects.at(index), this);
+        index++;
+    }
+}
+
+ObjectGroupItem::~ObjectGroupItem()
+{
+    QList<Tiled::MapObject *> objects=mObjectGroup->objects();
+    int loopSize=objects.size();
+    int index=0;
+    while(index<loopSize)
+    {
+        if(!MapObjectItem::objectLink.contains(objects.at(index)))
+            qDebug() << "The tiled object not exist on this layer (destructor)";
+        else
+            MapObjectItem::objectLink.remove(objects.at(index));
         index++;
     }
 }
@@ -47,9 +54,10 @@ bool ObjectGroupItem::isVisible() const
 
 void ObjectGroupItem::addObject(Tiled::MapObject *object)
 {
+    qDebug() << "ObjectGroupItem::addObject:" << object;
     if(MapObjectItem::objectLink.contains(object))
     {
-        qDebug() << "Tiled object already present on the layer";
+        qDebug() << "Tiled object already present on the layer:" << object;
         return;
     }
     MapObjectItem::objectLink[object]=new MapObjectItem(object, this);
@@ -59,6 +67,7 @@ void ObjectGroupItem::addObject(Tiled::MapObject *object)
 
 void ObjectGroupItem::removeObject(Tiled::MapObject *object)
 {
+    qDebug() << "ObjectGroupItem::removeObject:" << object;
     if(!MapObjectItem::objectLink.contains(object))
         qDebug() << "The tiled object not exist on this layer";
     else

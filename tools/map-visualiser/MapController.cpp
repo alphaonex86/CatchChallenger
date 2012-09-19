@@ -34,6 +34,7 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     botTileset = new Tiled::Tileset("bot",16,24);
     botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
     playerMapObject = new Tiled::MapObject();
+    botNumber = 0;
 
     //the direction
     direction=Pokecraft::Direction_look_at_bottom;
@@ -70,6 +71,12 @@ void MapController::setTargetFPS(int targetFPS)
 void MapController::setScale(int scale)
 {
     mapVisualiser.scale(scale,scale);
+}
+
+void MapController::setBotNumber(quint16 botNumber)
+{
+    this->botNumber=botNumber;
+    botManagement();
 }
 
 void MapController::keyPressEvent(QKeyEvent * event)
@@ -534,8 +541,66 @@ void MapController::unloadPlayerFromCurrentMap()
     botSpawnPointList.clear();
 }
 
+void MapController::botMoveStepSlot()
+{
+
 void MapController::botMove()
 {
+    int index;
+    //continue the move
+    index=0;
+    while(index<botList.size())
+    {
+        if(botList.at(index).inMove)
+        {
+        }
+        index++;
+    }
+    //start move
+    index=0;
+    while(index<botList.size())
+    {
+        if(!botList.at(index).inMove)
+        {
+            QList<Pokecraft::Direction> directions_allowed;
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,map,x,y,true))
+                directions_allowed << Pokecraft::Direction_move_at_left;
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,map,x,y,true))
+                directions_allowed << Pokecraft::Direction_move_at_right;
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,map,x,y,true))
+                directions_allowed << Pokecraft::Direction_move_at_top;
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,map,x,y,true))
+                directions_allowed << Pokecraft::Direction_move_at_bottom;
+            if(directions_allowed.size()>0)
+            {
+                int random = rand()%directions_allowed.size();
+                Pokecraft::Direction final_direction=directions_allowed.at(random);
+
+                botList[index].direction=final_direction;
+                botList[index].inMove=true;
+                botList[index].moveStep=1;
+                switch(final_direction)
+                {
+                    case Pokecraft::Direction_move_at_left:
+                        moveStepSlot();
+                    break;
+                    case Pokecraft::Direction_move_at_right:
+                        moveStepSlot();
+                    break;
+                    case Pokecraft::Direction_move_at_top:
+                        moveStepSlot();
+                    break;
+                    case Pokecraft::Direction_move_at_bottom:
+                        moveStepSlot();
+                    break;
+                    default:
+                    qDebug() << QString("transformLookToMove(): wrong direction");
+                    return;
+                }
+            }
+        }
+        index++;
+    }
 }
 
 void MapController::botManagement()
@@ -566,7 +631,7 @@ void MapController::botManagement()
     index=0;
     while(index<botList.size())
     {
-        if(false)//rand()%100<20
+        if(index>=botNumber /* if to much bot */ || rand()%100<20)
         {
             qDebug() << "MapController::botManagement(): Remove bot for random: " << botList.at(index).mapObject;
             if(mapVisualiser.all_map.contains(botList.at(index).map))
@@ -590,7 +655,7 @@ void MapController::botManagement()
     if(!botSpawnPointList.isEmpty())
     {
         index=botList.size();
-        while(index<1)//do 1 bot
+        while(index<botNumber)//do botNumber bot
         {
             BotSpawnPoint point=botSpawnPointList[rand()%botSpawnPointList.size()];
 
@@ -599,11 +664,15 @@ void MapController::botManagement()
             bot.mapObject=new Tiled::MapObject();
             bot.x=point.x;
             bot.y=point.y;
+            bot.direction=Pokecraft::Direction_look_at_bottom;
+            bot.inMove=false;
+            bot.moveStep=0;
 
             if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[bot.map]->objectGroup))
                 ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
             else
                 qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
+
             qDebug() << "MapController::botManagement(): Add bot for map: " << bot.map;
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             bot.mapObject->setPosition(QPoint(bot.x,bot.y+1));
