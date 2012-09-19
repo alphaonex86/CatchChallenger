@@ -374,10 +374,7 @@ void MapController::moveStepSlot()
         }
         //now stop walking, no more arrow key is pressed
         else
-        {
-            playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
             inMove=false;
-        }
     }
     else
         moveTimer.start();
@@ -541,8 +538,127 @@ void MapController::unloadPlayerFromCurrentMap()
     botSpawnPointList.clear();
 }
 
-void MapController::botMoveStepSlot()
+void MapController::botMoveStepSlot(Bot *bot)
 {
+    int baseTile=1;
+    //move the player for intermediate step and define the base tile (define the stopped step with direction)
+    switch(bot->direction)
+    {
+        case Pokecraft::Direction_move_at_left:
+        baseTile=10;
+        switch(bot->moveStep)
+        {
+            case 1:
+            case 2:
+            bot->mapObject->setX(bot->mapObject->x()-0.33);
+            break;
+        }
+        break;
+        case Pokecraft::Direction_move_at_right:
+        baseTile=4;
+        switch(bot->moveStep)
+        {
+            case 1:
+            case 2:
+            bot->mapObject->setX(bot->mapObject->x()+0.33);
+            break;
+        }
+        break;
+        case Pokecraft::Direction_move_at_top:
+        baseTile=1;
+        switch(bot->moveStep)
+        {
+            case 1:
+            case 2:
+            bot->mapObject->setY(bot->mapObject->y()-0.33);
+            break;
+        }
+        break;
+        case Pokecraft::Direction_move_at_bottom:
+        baseTile=7;
+        switch(bot->moveStep)
+        {
+            case 1:
+            case 2:
+            bot->mapObject->setY(bot->mapObject->y()+0.33);
+            break;
+        }
+        break;
+        default:
+        qDebug() << QString("botMoveStepSlot(): moveStep: %1, wrong direction").arg(bot->moveStep);
+        return;
+    }
+
+    //apply the right step of the base step defined previously by the direction
+    switch(bot->moveStep)
+    {
+        //stopped step
+        case 0:
+        bot->mapObject->setTile(botTileset->tileAt(baseTile+0));
+        break;
+        //transition step
+        case 1:
+        bot->mapObject->setTile(botTileset->tileAt(baseTile-1));
+        break;
+        case 2:
+        bot->mapObject->setTile(botTileset->tileAt(baseTile+1));
+        break;
+        //stopped step
+        case 3:
+        bot->mapObject->setTile(botTileset->tileAt(baseTile+0));
+        break;
+    }
+
+    bot->moveStep++;
+
+    //if have finish the step
+    if(bot->moveStep>3)
+    {
+        Pokecraft::Map * old_map=&mapVisualiser.all_map[bot->map]->logicalMap;
+        Pokecraft::Map * map=&mapVisualiser.all_map[bot->map]->logicalMap;
+        //set the final value (direction, position, ...)
+        switch(direction)
+        {
+            case Pokecraft::Direction_move_at_left:
+            direction=Pokecraft::Direction_look_at_left;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&bot->x,&bot->y);
+            break;
+            case Pokecraft::Direction_move_at_right:
+            direction=Pokecraft::Direction_look_at_right;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&bot->x,&bot->y);
+            break;
+            case Pokecraft::Direction_move_at_top:
+            direction=Pokecraft::Direction_look_at_top;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&bot->x,&bot->y);
+            break;
+            case Pokecraft::Direction_move_at_bottom:
+            direction=Pokecraft::Direction_look_at_bottom;
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&bot->x,&bot->y);
+            break;
+            default:
+            qDebug() << QString("botMoveStepSlot(): bot->moveStep: %1, wrong direction when bot->moveStep>2").arg(bot->moveStep);
+            return;
+        }
+        //if the map have changed
+        if(old_map!=map)
+        {
+            //remove bot
+            if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[old_map->map_file]->objectGroup))
+                ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[old_map->map_file]->objectGroup]->removeObject(bot->mapObject);
+            else
+                qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
+            //add bot
+            if(ObjectGroupItem::objectGroupLink.contains(mapVisualiser.all_map[map->map_file]->objectGroup))
+                ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
+            else
+                qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at add to change the map");
+        }
+        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+        bot->mapObject->setPosition(QPoint(bot->x,bot->y+1));
+
+        inMove=false;
+    }
+}
 
 void MapController::botMove()
 {
@@ -552,8 +668,7 @@ void MapController::botMove()
     while(index<botList.size())
     {
         if(botList.at(index).inMove)
-        {
-        }
+            botMoveStepSlot(&botList[index]);
         index++;
     }
     //start move
@@ -563,13 +678,13 @@ void MapController::botMove()
         if(!botList.at(index).inMove)
         {
             QList<Pokecraft::Direction> directions_allowed;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,map,x,y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,mapVisualiser.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_left;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,map,x,y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,mapVisualiser.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_right;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,map,x,y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,mapVisualiser.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_top;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,map,x,y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,mapVisualiser.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_bottom;
             if(directions_allowed.size()>0)
             {
