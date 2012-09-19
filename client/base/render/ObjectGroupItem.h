@@ -26,6 +26,7 @@ class ObjectGroupItem : public QGraphicsItem
 {
 public:
     ObjectGroupItem(Tiled::ObjectGroup *objectGroup,QGraphicsItem *parent = 0);
+    ~ObjectGroupItem();
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
     bool isVisible() const;

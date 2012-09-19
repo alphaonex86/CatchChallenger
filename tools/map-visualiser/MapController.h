@@ -21,6 +21,7 @@ public:
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
     void setScale(int scale);
+    void setBotNumber(quint16 botNumber);
 
     bool viewMap(const QString &fileName);
 private slots:
@@ -39,12 +40,17 @@ private slots:
 
     void botMove();
     void botManagement();
+    void botMoveStepSlot();
 private:
     struct Bot
     {
         quint8 x,y;
         Tiled::MapObject * mapObject;
         QString map;
+
+        int moveStep;
+        Pokecraft::Direction direction;
+        bool inMove;
     };
     QList<Bot> botList;
     struct BotSpawnPoint
@@ -53,6 +59,7 @@ private:
         quint8 x,y;
     };
     QList<BotSpawnPoint> botSpawnPointList;
+    quint16 botNumber;
 
     MapVisualiser mapVisualiser;
 
