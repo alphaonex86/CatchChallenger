@@ -22,7 +22,7 @@ public:
 	//debug function
 	static QString directionToString(const Direction &direction);
 
-	static bool canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE y,bool checkCollision);
+    static bool canGoTo(const Direction &direction, const Map &map, const quint8 &x, const quint8 &y, const bool &checkCollision);
     static bool move(Direction direction, Map ** map, quint8 *x, quint8 *y);
     static bool teleport(Map ** map, quint8 *x, quint8 *y);
 protected:
