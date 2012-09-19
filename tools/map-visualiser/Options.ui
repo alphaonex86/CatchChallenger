@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>239</width>
-    <height>236</height>
+    <height>234</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -129,24 +129,20 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_4">
-     <item>
-      <widget class="QSpinBox" name="botCount">
-       <property name="suffix">
-        <string> bots</string>
-       </property>
-       <property name="minimum">
-        <number>0</number>
-       </property>
-       <property name="maximum">
-        <number>9999</number>
-       </property>
-       <property name="value">
-        <number>25</number>
-       </property>
-      </widget>
-     </item>
-    </layout>
+    <widget class="QSpinBox" name="botCount">
+     <property name="suffix">
+      <string> bots</string>
+     </property>
+     <property name="minimum">
+      <number>0</number>
+     </property>
+     <property name="maximum">
+      <number>9999</number>
+     </property>
+     <property name="value">
+      <number>1</number>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QCheckBox" name="centerOnPlayer">
