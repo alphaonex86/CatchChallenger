@@ -481,10 +481,7 @@ void MapController::loadPlayerFromCurrentMap()
     if(currentGroup!=NULL)
     {
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
-        {
-            qDebug() << "MapController::loadPlayerFromCurrentMap(): removeObject" << playerMapObject;
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
-        }
         //currentGroup->removeObject(playerMapObject);
         if(currentGroup!=mapVisualiser.current_map->objectGroup)
             qDebug() << QString("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
@@ -528,10 +525,7 @@ void MapController::unloadPlayerFromCurrentMap()
 {
     //unload the player sprite
     if(ObjectGroupItem::objectGroupLink.contains(playerMapObject->objectGroup()))
-    {
-        qDebug() << "MapController::unloadPlayerFromCurrentMap(): removeObject" << playerMapObject;
         ObjectGroupItem::objectGroupLink[playerMapObject->objectGroup()]->removeObject(playerMapObject);
-    }
     else
         qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 
@@ -652,12 +646,14 @@ bool MapController::botMoveStepSlot(Bot *bot)
                 ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
             else
                 return false;
+            bot->map=map->map_file;
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         bot->mapObject->setPosition(QPoint(bot->x,bot->y+1));
 
         bot->inMove=false;
     }
+
     return true;
 }
 
@@ -739,7 +735,7 @@ void MapController::botManagement()
         {
             if(mapVisualiser.all_map.contains(botList.at(index).map))
             {
-                mapVisualiser.all_map[botList.at(index).map]->objectGroup->removeObject(botList.at(index).mapObject);
+                ObjectGroupItem::objectGroupLink[mapVisualiser.all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
                 delete botList.at(index).mapObject;
             }
             else
