@@ -80,10 +80,8 @@ QString MoveOnTheMap::directionToString(const Direction &direction)
 	return "???";
 }
 
-bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE y,bool checkCollision)
+bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision)
 {
-	if(map==NULL)
-		return false;
 	switch(direction)
 	{
 		case Direction_move_at_left:
@@ -91,35 +89,35 @@ bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE 
 			{
 				if(!checkCollision)
 					return true;
-				return map->parsed_layer.walkable[x-1+y*(map->width)];
+                return map.parsed_layer.walkable[x-1+y*(map.width)];
 			}
-			else if(map->border.left.map==NULL)
+            else if(map.border.left.map==NULL)
 				return false;
-			else if(y<-map->border.left.y_offset)
+            else if(y<-map.border.left.y_offset)
 				return false;
 			else
 			{
 				if(!checkCollision)
 					return true;
-				return map->border.left.map->parsed_layer.walkable[map->border.left.map->width-1+(y+map->border.left.y_offset)*(map->border.left.map->width)];
+                return map.border.left.map->parsed_layer.walkable[map.border.left.map->width-1+(y+map.border.left.y_offset)*(map.border.left.map->width)];
 			}
 		break;
 		case Direction_move_at_right:
-			if(x<(map->width-1))
+            if(x<(map.width-1))
 			{
 				if(!checkCollision)
 					return true;
-				return map->parsed_layer.walkable[x+1+y*(map->width)];
+                return map.parsed_layer.walkable[x+1+y*(map.width)];
 			}
-			else if(map->border.right.map==NULL)
+            else if(map.border.right.map==NULL)
 				return false;
-			else if(y<-map->border.right.y_offset)
+            else if(y<-map.border.right.y_offset)
 				return false;
 			else
 			{
 				if(!checkCollision)
 					return true;
-				return map->border.right.map->parsed_layer.walkable[0+(y+map->border.right.y_offset)*(map->border.right.map->width)];
+                return map.border.right.map->parsed_layer.walkable[0+(y+map.border.right.y_offset)*(map.border.right.map->width)];
 			}
 		break;
 		case Direction_move_at_top:
@@ -127,40 +125,41 @@ bool MoveOnTheMap::canGoTo(Direction direction,Map *map,COORD_TYPE x,COORD_TYPE 
 			{
 				if(!checkCollision)
 					return true;
-				return map->parsed_layer.walkable[x+(y-1)*(map->width)];
+                return map.parsed_layer.walkable[x+(y-1)*(map.width)];
 			}
-			else if(map->border.top.map==NULL)
+            else if(map.border.top.map==NULL)
 				return false;
-			else if(x<-map->border.top.x_offset)
+            else if(x<-map.border.top.x_offset)
 				return false;
 			else
 			{
 				if(!checkCollision)
 					return true;
-				return map->border.top.map->parsed_layer.walkable[x+map->border.top.x_offset+(map->border.top.map->height-1)*(map->border.top.map->width)];
+                return map.border.top.map->parsed_layer.walkable[x+map.border.top.x_offset+(map.border.top.map->height-1)*(map.border.top.map->width)];
 			}
 		break;
 		case Direction_move_at_bottom:
-			if(y<(map->height-1))
+            if(y<(map.height-1))
 			{
 				if(!checkCollision)
 					return true;
-				return map->parsed_layer.walkable[x+(y+1)*(map->width)];
+                return map.parsed_layer.walkable[x+(y+1)*(map.width)];
 			}
-			else if(map->border.bottom.map==NULL)
+            else if(map.border.bottom.map==NULL)
 				return false;
-			else if(x<-map->border.bottom.x_offset)
+            else if(x<-map.border.bottom.x_offset)
 				return false;
 			else
 			{
 				if(!checkCollision)
 					return true;
-                return map->border.bottom.map->parsed_layer.walkable[x+map->border.bottom.x_offset+0];
+                return map.border.bottom.map->parsed_layer.walkable[x+map.border.bottom.x_offset+0];
 			}
 		break;
 		default:
 			return false;
 	}
+    return false;
 }
 
 bool MoveOnTheMap::teleport(Map ** map,COORD_TYPE *x,COORD_TYPE *y)
@@ -180,7 +179,7 @@ bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE *x,COORD_TYPE 
 {
 	if(*map==NULL)
 		return false;
-    if(!canGoTo(direction,*map,*x,*y,true))
+    if(!canGoTo(direction,**map,*x,*y,true))
 		return false;
 	switch(direction)
 	{

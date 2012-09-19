@@ -103,7 +103,7 @@ void MapController::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_left)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the left!
             //the first step
             direction=Pokecraft::Direction_move_at_left;
@@ -124,7 +124,7 @@ void MapController::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_right)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the right!
             //the first step
             direction=Pokecraft::Direction_move_at_right;
@@ -145,7 +145,7 @@ void MapController::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_top)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the top!
             //the first step
             direction=Pokecraft::Direction_move_at_top;
@@ -166,7 +166,7 @@ void MapController::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_bottom)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=Pokecraft::Direction_move_at_bottom;
@@ -307,7 +307,7 @@ void MapController::moveStepSlot()
         if(keyPressed.contains(16777234))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_left;
                 playerMapObject->setTile(playerTileset->tileAt(10));
@@ -324,7 +324,7 @@ void MapController::moveStepSlot()
         else if(keyPressed.contains(16777236))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_right;
                 playerMapObject->setTile(playerTileset->tileAt(4));
@@ -341,7 +341,7 @@ void MapController::moveStepSlot()
         else if(keyPressed.contains(16777235))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_top;
                 playerMapObject->setTile(playerTileset->tileAt(1));
@@ -358,7 +358,7 @@ void MapController::moveStepSlot()
         else if(keyPressed.contains(16777237))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
             {
                 direction=Pokecraft::Direction_look_at_bottom;
                 playerMapObject->setTile(playerTileset->tileAt(7));
@@ -389,7 +389,7 @@ void MapController::transformLookToMove()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_left;
             inMove=true;
@@ -398,7 +398,7 @@ void MapController::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_right;
             inMove=true;
@@ -407,7 +407,7 @@ void MapController::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_top;
             inMove=true;
@@ -416,7 +416,7 @@ void MapController::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,&mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,mapVisualiser.current_map->logicalMap,xPerso,yPerso,true))
         {
             direction=Pokecraft::Direction_move_at_bottom;
             inMove=true;
