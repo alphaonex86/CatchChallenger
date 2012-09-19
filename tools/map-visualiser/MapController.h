@@ -77,7 +77,7 @@ private slots:
 
     void botMove();
     void botManagement();
-    void botMoveStepSlot(Bot *bot);
+    bool botMoveStepSlot(Bot *bot);
 };
 
 #endif // MAPCONTROLLER_H
