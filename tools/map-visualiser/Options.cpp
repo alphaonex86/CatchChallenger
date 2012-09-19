@@ -37,6 +37,7 @@ void Options::on_load_clicked()
         mapController->setTargetFPS(ui->targetFPS->value());
     else
         mapController->setTargetFPS(0);
+    mapController->setBotNumber(ui->botCount->value());
 
     mapController->viewMap(ui->baseFile->text());
 

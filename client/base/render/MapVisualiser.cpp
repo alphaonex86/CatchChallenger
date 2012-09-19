@@ -50,10 +50,15 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
     setFrameStyle(0);
 
     //viewport()->setAttribute(Qt::WA_StaticContents);
+    viewport()->setAttribute(Qt::WA_TranslucentBackground);
+    //Qt::WA_NoSystemBackground
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
     if(OpenGL)
     {
         QGLWidget *widgetOpenGL=new QGLWidget(QGLFormat(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba));// | QGL::IndirectRendering -> do a crash
+        //setSampleBuffers
+        //widgetOpenGL->setRgba(true);
+        //widgetOpenGL->setAlpha(true);
         if(widgetOpenGL==NULL)
             QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers");
         else
