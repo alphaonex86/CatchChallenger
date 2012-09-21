@@ -2,9 +2,9 @@
 #include "../../general/base/MoveOnTheMap.h"
 
 MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    mapVisualiserPlayer(parent,centerOnPlayer,debugTags,useCache,OpenGL)
+    MapVisualiserPlayer(parent,centerOnPlayer,debugTags,useCache,OpenGL)
 {
-    mapVisualiserPlayer.setWindowIcon(QIcon(":/icon.png"));
+    setWindowIcon(QIcon(":/icon.png"));
 
     botTileset = new Tiled::Tileset("bot",16,24);
     botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
@@ -23,24 +23,9 @@ MapController::~MapController()
     delete botTileset;
 }
 
-bool MapController::showFPS()
+void MapController::setScale(int scaleSize)
 {
-    return mapVisualiserPlayer.showFPS();
-}
-
-void MapController::setShowFPS(const bool &showFPS)
-{
-    mapVisualiserPlayer.setShowFPS(showFPS);
-}
-
-void MapController::setTargetFPS(int targetFPS)
-{
-    mapVisualiserPlayer.setTargetFPS(targetFPS);
-}
-
-void MapController::setScale(int scale)
-{
-    mapVisualiserPlayer.scale(scale,scale);
+    scale(scaleSize,scaleSize);
 }
 
 void MapController::setBotNumber(quint16 botNumber)
@@ -125,8 +110,8 @@ bool MapController::botMoveStepSlot(Bot *bot)
     //if have finish the step
     if(bot->moveStep>3)
     {
-        Pokecraft::Map * old_map=&mapVisualiserPlayer.all_map[bot->map]->logicalMap;
-        Pokecraft::Map * map=&mapVisualiserPlayer.all_map[bot->map]->logicalMap;
+        Pokecraft::Map * old_map=&all_map[bot->map]->logicalMap;
+        Pokecraft::Map * map=&all_map[bot->map]->logicalMap;
         //set the final value (direction, position, ...)
         switch(bot->direction)
         {
@@ -154,13 +139,13 @@ bool MapController::botMoveStepSlot(Bot *bot)
         if(old_map!=map)
         {
             //remove bot
-            if(ObjectGroupItem::objectGroupLink.contains(mapVisualiserPlayer.all_map[old_map->map_file]->objectGroup))
-                ObjectGroupItem::objectGroupLink[mapVisualiserPlayer.all_map[old_map->map_file]->objectGroup]->removeObject(bot->mapObject);
+            if(ObjectGroupItem::objectGroupLink.contains(all_map[old_map->map_file]->objectGroup))
+                ObjectGroupItem::objectGroupLink[all_map[old_map->map_file]->objectGroup]->removeObject(bot->mapObject);
             else
                 qDebug() << QString("botMoveStepSlot(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
             //add bot
-            if(ObjectGroupItem::objectGroupLink.contains(mapVisualiserPlayer.all_map[map->map_file]->objectGroup))
-                ObjectGroupItem::objectGroupLink[mapVisualiserPlayer.all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
+            if(ObjectGroupItem::objectGroupLink.contains(all_map[map->map_file]->objectGroup))
+                ObjectGroupItem::objectGroupLink[all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
             else
                 return false;
             bot->map=map->map_file;
@@ -201,13 +186,13 @@ void MapController::botMove()
         if(!botList.at(index).inMove && !continuedMove.contains(index))
         {
             QList<Pokecraft::Direction> directions_allowed;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,mapVisualiserPlayer.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_left;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,mapVisualiserPlayer.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_right;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,mapVisualiserPlayer.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_top;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,mapVisualiserPlayer.all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << Pokecraft::Direction_move_at_bottom;
             if(directions_allowed.size()>0)
             {
@@ -248,11 +233,11 @@ void MapController::botManagement()
     index=0;
     while(index<botList.size())
     {
-        if(!mapVisualiserPlayer.loadedNearMap.contains(botList.at(index).map))
+        if(!loadedNearMap.contains(botList.at(index).map))
         {
-            if(mapVisualiserPlayer.all_map.contains(botList.at(index).map))
+            if(all_map.contains(botList.at(index).map))
             {
-                ObjectGroupItem::objectGroupLink[mapVisualiserPlayer.all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
+                ObjectGroupItem::objectGroupLink[all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
                 delete botList.at(index).mapObject;
             }
             else
@@ -270,10 +255,10 @@ void MapController::botManagement()
     {
         if(index>=botNumber /* if to much bot */ || rand()%100<20)
         {
-            if(mapVisualiserPlayer.all_map.contains(botList.at(index).map))
+            if(all_map.contains(botList.at(index).map))
             {
-                if(ObjectGroupItem::objectGroupLink.contains(mapVisualiserPlayer.all_map[botList.at(index).map]->objectGroup))
-                    ObjectGroupItem::objectGroupLink[mapVisualiserPlayer.all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
+                if(ObjectGroupItem::objectGroupLink.contains(all_map[botList.at(index).map]->objectGroup))
+                    ObjectGroupItem::objectGroupLink[all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
                 else
                     qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains botList.at(index).mapObject at remove random bot");
                 delete botList.at(index).mapObject;
@@ -304,8 +289,8 @@ void MapController::botManagement()
             bot.inMove=false;
             bot.moveStep=0;
 
-            if(ObjectGroupItem::objectGroupLink.contains(mapVisualiserPlayer.all_map[bot.map]->objectGroup))
-                ObjectGroupItem::objectGroupLink[mapVisualiserPlayer.all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
+            if(ObjectGroupItem::objectGroupLink.contains(all_map[bot.map]->objectGroup))
+                ObjectGroupItem::objectGroupLink[all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
             else
                 qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
 
