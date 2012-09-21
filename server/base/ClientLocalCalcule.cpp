@@ -148,12 +148,12 @@ void ClientLocalCalcule::newRandomNumber(const QByteArray &randomData)
 
 bool ClientLocalCalcule::singleMove(const Direction &direction)
 {
-	if(!MoveOnTheMap::canGoTo(direction,map,x,y,true))
+    Map* map=this->map;
+    if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
 	{
 		emit error(QString("ClientLocalCalcule::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
 		return false;
 	}
-	Map* map=this->map;
     MoveOnTheMap::move(direction,&map,&x,&y);
 	this->map=static_cast<Map_server_MapVisibility_simple*>(map);
 	return true;

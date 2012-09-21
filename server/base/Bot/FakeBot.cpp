@@ -67,7 +67,7 @@ void FakeBot::start_step()
 void FakeBot::random_new_step()
 {
 	Direction final_direction;
-	while(predefinied_step.size()>0 && !canGoTo(predefinied_step.first(),map,x,y,true))
+    while(predefinied_step.size()>0 && !canGoTo(predefinied_step.first(),*map,x,y,true))
 	{
 		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), unable to go on: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MoveOnTheMap::directionToString(predefinied_step.first())));
 		predefinied_step.removeFirst();
@@ -80,13 +80,13 @@ void FakeBot::random_new_step()
 	else
 	{
 		QList<Direction> directions_allowed;
-		if(canGoTo(Direction_move_at_left,map,x,y,true))
+        if(canGoTo(Direction_move_at_left,*map,x,y,true))
 			directions_allowed << Direction_move_at_left;
-		if(canGoTo(Direction_move_at_right,map,x,y,true))
+        if(canGoTo(Direction_move_at_right,*map,x,y,true))
 			directions_allowed << Direction_move_at_right;
-		if(canGoTo(Direction_move_at_top,map,x,y,true))
+        if(canGoTo(Direction_move_at_top,*map,x,y,true))
 			directions_allowed << Direction_move_at_top;
-		if(canGoTo(Direction_move_at_bottom,map,x,y,true))
+        if(canGoTo(Direction_move_at_bottom,*map,x,y,true))
 			directions_allowed << Direction_move_at_bottom;
 		loop_size=directions_allowed.size();
 		if(details)
@@ -108,7 +108,7 @@ void FakeBot::random_new_step()
 	//to group the signle move into move line
 	MoveOnTheMap::newDirection(final_direction);
 	//to do the real move
-    if(!move(final_direction,(Map **)&map,&x,&y))
+	if(!move(final_direction,(Map **)&map,&x,&y))
 	{
 		DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 2, id: %1, x: %2, y:%3, can't move on direction of: %4").arg(api.getId()).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
 		map=NULL;
