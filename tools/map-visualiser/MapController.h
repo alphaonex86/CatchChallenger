@@ -10,10 +10,7 @@ public:
     explicit MapController(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapController();
 
-    bool showFPS();
-    void setShowFPS(const bool &showFPS);
-    void setTargetFPS(int targetFPS);
-    void setScale(int scale);
+    void setScale(int scaleSize);
     void setBotNumber(quint16 botNumber);
 private:
     struct Bot
@@ -35,8 +32,6 @@ private:
     QList<BotSpawnPoint> botSpawnPointList;
     quint16 botNumber;
     Tiled::Tileset * botTileset;
-
-    MapVisualiserPlayer mapVisualiserPlayer;
 
     QTimer timerBotMove;
     QTimer timerBotManagement;
