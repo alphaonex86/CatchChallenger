@@ -1,20 +1,13 @@
 #ifndef MAPCONTROLLER_H
 #define MAPCONTROLLER_H
 
-#include <QObject>
+#include "../../client/base/render/MapVisualiserPlayer.h"
 
-#include "../../general/base/GeneralStructures.h"
-#include "../../general/base/Map.h"
-#include "../../general/base/MoveOnTheMap.h"
-#include "../../client/base/Map_client.h"
-#include "../../general/base/Map_loader.h"
-#include "../../client/base/render/MapVisualiser.h"
-
-class MapController : public QObject
+class MapController : public MapVisualiserPlayer
 {
     Q_OBJECT
 public:
-    explicit MapController(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapController(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapController();
 
     bool showFPS();
@@ -22,8 +15,6 @@ public:
     void setTargetFPS(int targetFPS);
     void setScale(int scale);
     void setBotNumber(quint16 botNumber);
-
-    bool viewMap(const QString &fileName);
 private:
     struct Bot
     {
@@ -43,41 +34,21 @@ private:
     };
     QList<BotSpawnPoint> botSpawnPointList;
     quint16 botNumber;
-
-    MapVisualiser mapVisualiser;
-
-    Tiled::MapObject * playerMapObject;
-    Tiled::Tileset * playerTileset;
     Tiled::Tileset * botTileset;
-    int moveStep;
-    Pokecraft::Direction direction;
-    quint8 xPerso,yPerso;
-    bool inMove;
 
-    QTimer timer;
-    QTimer moveTimer;
-    QTimer lookToMove;
-    QSet<int> keyPressed;
+    MapVisualiserPlayer mapVisualiserPlayer;
 
     QTimer timerBotMove;
     QTimer timerBotManagement;
 private slots:
-    void keyPressEvent(QKeyEvent * event);
-    void keyReleaseEvent(QKeyEvent * event);
-    void keyPressParse();
-
-    void moveStepSlot();
-    //have look into another direction, if the key remain pressed, apply like move
-    void transformLookToMove();
+    void botMove();
+    void botManagement();
+    bool botMoveStepSlot(Bot *bot);
 
     //call after enter on new map
     void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     void unloadPlayerFromCurrentMap();
-
-    void botMove();
-    void botManagement();
-    bool botMoveStepSlot(Bot *bot);
 };
 
 #endif // MAPCONTROLLER_H

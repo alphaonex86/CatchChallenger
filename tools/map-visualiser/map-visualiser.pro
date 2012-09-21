@@ -27,7 +27,8 @@ SOURCES += main.cpp \
     ../../client/base/render/MapObjectItem.cpp \
     ../../client/base/render/MapItem.cpp \
     Options.cpp \
-    MapController.cpp
+    MapController.cpp \
+    ../../client/base/render/MapVisualiserPlayer.cpp
 
 HEADERS += \
     ../../general/base/Map_loader.h \
@@ -45,7 +46,8 @@ HEADERS += \
     ../../client/base/render/MapObjectItem.h \
     ../../client/base/render/MapItem.h \
     Options.h \
-    MapController.h
+    MapController.h \
+    ../../client/base/render/MapVisualiserPlayer.h
 
 RESOURCES += \
     resources.qrc
