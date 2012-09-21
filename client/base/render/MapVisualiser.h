@@ -42,9 +42,7 @@ class MapVisualiser : public QGraphicsView
 public:
     explicit MapVisualiser(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiser();
-    void keyPressEvent(QKeyEvent * event);
-    void keyReleaseEvent(QKeyEvent *event);
-    bool viewMap(const QString &fileName);
+    virtual bool viewMap(const QString &fileName);
     bool RectTouch(QRect r1,QRect r2);
 
     bool showFPS();
@@ -64,7 +62,7 @@ public:
     Map_full *current_map;
     QHash<QString,Map_full *> all_map;
     QSet<QString> loadedNearMap;//temp variable to have only the near map
-private:
+protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
     MapItem* mapItem;
@@ -98,9 +96,6 @@ private slots:
     void render();
     void paintEvent(QPaintEvent * event);
     void updateFPS();
-signals:
-    void newKeyPressEvent(QKeyEvent * event);
-    void newKeyReleaseEvent(QKeyEvent *event);
 };
 
 #endif

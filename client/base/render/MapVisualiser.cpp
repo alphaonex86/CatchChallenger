@@ -51,16 +51,18 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
 
     //viewport()->setAttribute(Qt::WA_StaticContents);
     viewport()->setAttribute(Qt::WA_TranslucentBackground);
-    //Qt::WA_NoSystemBackground
+    viewport()->setAttribute(Qt::WA_NoSystemBackground);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
     if(OpenGL)
     {
-        QGLWidget *widgetOpenGL=new QGLWidget(QGLFormat(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba));// | QGL::IndirectRendering -> do a crash
+        QGLFormat format(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
         //setSampleBuffers
-        //widgetOpenGL->setRgba(true);
-        //widgetOpenGL->setAlpha(true);
+        format.setRgba(true);
+        format.setAlpha(true);
+
+        QGLWidget *widgetOpenGL=new QGLWidget(format);// | QGL::IndirectRendering -> do a crash
         if(widgetOpenGL==NULL)
-            QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers");
+            QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers: create widget");
         else
             setViewport(widgetOpenGL);
     }
@@ -208,22 +210,4 @@ void MapVisualiser::setTargetFPS(int targetFPS)
         if(waitRenderTime<1)
             waitRenderTime=1;
     }
-}
-
-void MapVisualiser::keyPressEvent(QKeyEvent * event)
-{
-    //ignore the repeated event
-    if(event->isAutoRepeat())
-        return;
-
-    emit newKeyPressEvent(event);
-}
-
-void MapVisualiser::keyReleaseEvent(QKeyEvent * event)
-{
-    //ignore the repeated event
-    if(event->isAutoRepeat())
-        return;
-
-    emit newKeyReleaseEvent(event);
 }
