@@ -506,7 +506,7 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
 {
 	mapHaveChanged=false;
-	if(!MoveOnTheMap::canGoTo(direction,map,x,y,false))
+    if(!MoveOnTheMap::canGoTo(direction,*map,x,y,false))
 		return false;
 	old_map=map;
 	new_map=map;
