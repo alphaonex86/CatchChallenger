@@ -26,7 +26,7 @@ void Options::on_browse_clicked()
 
 void Options::on_load_clicked()
 {
-    mapController=new MapController(ui->centerOnPlayer->isChecked(),ui->debugTags->isChecked(),ui->cache->isChecked(),ui->openGL->isChecked());
+    mapController=new MapController(NULL,ui->centerOnPlayer->isChecked(),ui->debugTags->isChecked(),ui->cache->isChecked(),ui->openGL->isChecked());
 
     mapController->setShowFPS(ui->showFPS->isChecked());
     if(ui->doubleSize->isChecked())
