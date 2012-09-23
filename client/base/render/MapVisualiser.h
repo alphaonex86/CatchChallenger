@@ -1,5 +1,3 @@
-#include "mapobject.h"
-#include "objectgroup.h"
 #include "MapItem.h"
 #include "MapObjectItem.h"
 #include "ObjectGroupItem.h"
@@ -9,14 +7,14 @@
 #include "../../client/base/Map_client.h"
 #include "../../general/base/Map_loader.h"
 
-#include "isometricrenderer.h"
-#include "map.h"
-#include "mapobject.h"
-#include "mapreader.h"
-#include "objectgroup.h"
-#include "orthogonalrenderer.h"
-#include "tilelayer.h"
-#include "tileset.h"
+#include "../../general/libtiled/isometricrenderer.h"
+#include "../../general/libtiled/map.h"
+#include "../../general/libtiled/mapobject.h"
+#include "../../general/libtiled/mapreader.h"
+#include "../../general/libtiled/objectgroup.h"
+#include "../../general/libtiled/orthogonalrenderer.h"
+#include "../../general/libtiled/tilelayer.h"
+#include "../../general/libtiled/tileset.h"
 
 #ifndef MAP_VISUALISER_H
 #define MAP_VISUALISER_H
@@ -40,9 +38,8 @@ class MapVisualiser : public QGraphicsView
     Q_OBJECT
 
 public:
-    explicit MapVisualiser(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapVisualiser(QWidget *parent = 0,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiser();
-    virtual bool viewMap(const QString &fileName);
     bool RectTouch(QRect r1,QRect r2);
 
     bool showFPS();
@@ -69,11 +66,9 @@ protected:
 
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
-    QTimer blink_dyna_layer;
 
     QSet<QString> displayed_map;//the map really show
 
-    bool centerOnPlayer;
     bool debugTags;
     QString mLastError;
 
@@ -89,13 +84,12 @@ public slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
 private slots:
-    void loadNearMap(const QString &fileName, const qint32 &x=0, const qint32 &y=0);
+    void loadNearMap(const QString &fileName, const qint32 &x=0, const qint32 &y=0, const qint32 &x_pixel=0, const qint32 &y_pixel=0);
 
-    void blinkDynaLayer();
-
-    void render();
     void paintEvent(QPaintEvent * event);
     void updateFPS();
+protected slots:
+    void render();
 };
 
 #endif
