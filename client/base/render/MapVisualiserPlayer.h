@@ -17,7 +17,7 @@ protected:
     Tiled::Tileset * playerTileset;
     int moveStep;
     Pokecraft::Direction direction;
-    quint8 xPerso,yPerso;
+    quint8 x,y;
     bool inMove;
 
     bool centerOnPlayer;
