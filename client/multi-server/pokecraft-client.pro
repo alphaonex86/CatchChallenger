@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     ../base/render/MapVisualiser-map.cpp \
     ../base/render/MapObjectItem.cpp \
     ../base/render/MapItem.cpp \
-    ../base/Map_client.cpp
+    ../base/Map_client.cpp \
+    MapController.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -61,7 +62,8 @@ HEADERS  += mainwindow.h \
     ../base/render/MapVisualiser.h \
     ../base/render/MapObjectItem.h \
     ../base/render/MapItem.h \
-    ../base/Map_client.h
+    ../base/Map_client.h \
+    MapController.h
 
 FORMS    += mainwindow.ui
 

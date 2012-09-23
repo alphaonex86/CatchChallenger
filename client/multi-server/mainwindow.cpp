@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
 	qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
 
+    mapController=new MapController(this,true,false,true,false);
 	Pokecraft::ProtocolParsing::initialiseTheVariable();
 	client=new Pokecraft::Api_client_real(&socket);
 	ui->setupUi(this);
@@ -40,7 +41,11 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(client,SIGNAL(logged()),this,SLOT(logged()));
 	connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
 	connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),SLOT(stateChanged(QAbstractSocket::SocketState)));
-	connect(client,SIGNAL(haveTheDatapack()),SLOT(haveTheDatapack()));
+    connect(client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()));
+    connect(client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
+
+    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),mapController,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)));
+    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),mapController,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)));
 
 	//chat
 	connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
@@ -63,6 +68,7 @@ MainWindow::~MainWindow()
 	client->tryDisconnect();
 	delete client;
 	delete ui;
+    delete mapController;
 }
 
 void MainWindow::resetAll()
@@ -89,6 +95,7 @@ void MainWindow::resetAll()
 
 void MainWindow::have_current_player_info()
 {
+    qDebug() << "have_current_player_info()";
 	Pokecraft::Player_public_informations informations=client->get_player_informations().public_informations;
 	ui->label_connecting_status->setText(tr("Loading the datapack..."));
 	ui->player_informations_id->setText(tr("N°ID/%1").arg(0));
@@ -187,15 +194,13 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 		return;
 	}
 	client->tryConnect(host,port);
+    mapController->setDatapackPath(client->get_datapack_base_name());
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
 	if(socketState==QAbstractSocket::UnconnectedState)
-	{
-		resetAll();
-		ui->stackedWidget->setCurrentIndex(0);
-	}
+        resetAll();
 	else
 	{
 		ui->stackedWidget->setCurrentIndex(1);
@@ -258,8 +263,10 @@ void MainWindow::haveNewError()
 
 void MainWindow::newError(QString error,QString detailedError)
 {
-	QMessageBox::critical(this,tr("Error"),error);
-	qDebug() << detailedError;
+    qDebug() << detailedError.toLocal8Bit();
+    socket.close();
+    resetAll();
+    QMessageBox::critical(this,tr("Error"),error);
 }
 
 void MainWindow::error(QString error)

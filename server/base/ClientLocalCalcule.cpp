@@ -36,7 +36,7 @@ bool ClientLocalCalcule::checkCollision()
 
 void ClientLocalCalcule::getRandomNumberIfNeeded()
 {
-	if(player_informations->public_and_private_informations.public_informations.randomNumber.size()<=POKECRAFT_SERVER_MIN_RANDOM_LIST_SIZE)
+    if(player_informations->public_and_private_informations.randomNumber.size()<=POKECRAFT_SERVER_MIN_RANDOM_LIST_SIZE)
 		emit askRandomNumber();
 }
 
@@ -120,6 +120,7 @@ void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 	}
 	out << x;
 	out << y;
+    qDebug() << "put_on_the_map merge" << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type) << "=" << (quint8)orientation << "|" << (quint8)player_informations->public_and_private_informations.public_informations.type;
 	out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
 	out << player_informations->public_and_private_informations.public_informations.speed;
 	out << player_informations->public_and_private_informations.public_informations.clan;
@@ -143,7 +144,7 @@ bool ClientLocalCalcule::moveThePlayer(const quint8 &previousMovedUnit,const Dir
 
 void ClientLocalCalcule::newRandomNumber(const QByteArray &randomData)
 {
-	player_informations->public_and_private_informations.public_informations.randomNumber+=randomData;
+    player_informations->public_and_private_informations.randomNumber+=randomData;
 }
 
 bool ClientLocalCalcule::singleMove(const Direction &direction)

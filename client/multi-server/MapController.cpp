@@ -6,35 +6,22 @@
 MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(parent,centerOnPlayer,debugTags,useCache,OpenGL)
 {
-    setWindowIcon(QIcon(":/icon.png"));
-
     botTileset = new Tiled::Tileset("bot",16,24);
     botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
     botNumber = 0;
+
+    player_informations_is_set=false;
 
     //the bot management
     connect(&timerBotMove,SIGNAL(timeout()),this,SLOT(botMove()));
     connect(&timerBotManagement,SIGNAL(timeout()),this,SLOT(botManagement()));
     timerBotMove.start(66);
     timerBotManagement.start(3000);
-    
-    playerTileset = new Tiled::Tileset("player",16,24);
-    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
-    if(QFile::exists(externalFile))
-    {
-        QImage externalImage(externalFile);
-        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
-            playerTileset->loadFromImage(externalImage,externalFile);
-        else
-            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    }
-    else
-        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    playerMapObject = new Tiled::MapObject();
 
-    //the direction
-    direction=Pokecraft::Direction_look_at_bottom;
-    playerMapObject->setTile(playerTileset->tileAt(7));
+    playerMapObject = new Tiled::MapObject();
+    playerTileset = new Tiled::Tileset("player",16,24);
+    if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
+        qDebug() << "Unable the load the default tileset";
 }
 
 MapController::~MapController()
@@ -54,7 +41,7 @@ void MapController::setBotNumber(quint16 botNumber)
     botManagement();
 }
 
-bool MapController::botMoveStepSlot(Bot *bot)
+bool MapController::botMoveStepSlot(OtherPlayer *bot)
 {
     int baseTile=1;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
@@ -248,7 +235,7 @@ void MapController::botMove()
 
 void MapController::botManagement()
 {
-    int index;
+/*    int index;
     //remove bot where the map is not displayed
     index=0;
     while(index<botList.size())
@@ -273,7 +260,7 @@ void MapController::botManagement()
     index=0;
     while(index<botList.size())
     {
-        if(index>=botNumber /* if to much bot */ || rand()%100<20)
+        if(index>=botNumber  rand()%100<20)
         {
             if(all_map.contains(botList.at(index).map))
             {
@@ -300,7 +287,7 @@ void MapController::botManagement()
         {
             BotSpawnPoint point=botSpawnPointList[rand()%botSpawnPointList.size()];
 
-            Bot bot;
+            OtherPlayer bot;
             bot.map=point.map->logicalMap.map_file;
             bot.mapObject=new Tiled::MapObject();
             bot.x=point.x;
@@ -325,7 +312,7 @@ void MapController::botManagement()
     else
     {
         qDebug() << "Bot spawn list is empty";
-    }
+    }*/
 }
 
 //call after enter on new map
@@ -367,7 +354,7 @@ void MapController::unloadPlayerFromCurrentMap()
     botSpawnPointList.clear();
 }
 
-bool MapController::viewMap(const QString &fileName)
+bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8 &y)
 {
     current_map=NULL;
 
@@ -381,27 +368,87 @@ bool MapController::viewMap(const QString &fileName)
 
     render();
 
-    //position
-    if(!current_map->logicalMap.rescue_points.empty())
-    {
-        x=current_map->logicalMap.rescue_points.first().x;
-        y=current_map->logicalMap.rescue_points.first().y;
-    }
-    else if(!current_map->logicalMap.bot_spawn_points.empty())
-    {
-        x=current_map->logicalMap.bot_spawn_points.first().x;
-        y=current_map->logicalMap.bot_spawn_points.first().y;
-    }
-    else
-    {
-        x=current_map->logicalMap.width/2;
-        y=current_map->logicalMap.height/2;
-    }
-
     loadCurrentMap();
     loadPlayerFromCurrentMap();
 
     show();
 
+    //position
+    this->x=x;
+    this->y=y;
+
     return true;
+}
+
+//map move
+void MapController::insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction)
+{
+    if(player_informations_is_set && player.simplifiedId==player_informations.public_informations.simplifiedId)
+    {
+        //the player skin
+        playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png");
+
+        //the direction
+        this->direction=direction;
+        switch(direction)
+        {
+            case Pokecraft::Direction_look_at_top:
+            case Pokecraft::Direction_move_at_top:
+                playerMapObject->setTile(playerTileset->tileAt(1));
+            break;
+            case Pokecraft::Direction_look_at_right:
+            case Pokecraft::Direction_move_at_right:
+                playerMapObject->setTile(playerTileset->tileAt(4));
+            break;
+            case Pokecraft::Direction_look_at_bottom:
+            case Pokecraft::Direction_move_at_bottom:
+                playerMapObject->setTile(playerTileset->tileAt(7));
+            break;
+            case Pokecraft::Direction_look_at_left:
+            case Pokecraft::Direction_move_at_left:
+                playerMapObject->setTile(playerTileset->tileAt(10));
+            break;
+            default:
+            QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
+            return;
+        }
+
+        loadMap(datapackPath+"map/"+mapName,x,y);
+    }
+}
+
+void MapController::move_player(quint16 id,QList<QPair<quint8,Pokecraft::Direction> > movement)
+{
+}
+
+void MapController::remove_player(quint16 id)
+{
+}
+
+void MapController::reinsert_player(quint16 id,quint8 x,quint8 y,Pokecraft::Direction direction)
+{
+}
+
+void MapController::reinsert_player(quint16 id,QString mapName,quint8 x,quint8 y,Pokecraft::Direction direction)
+{
+}
+
+void MapController::dropAllPlayerOnTheMap()
+{
+}
+
+//player info
+void MapController::have_current_player_info(Pokecraft::Player_private_and_public_informations informations)
+{
+    this->player_informations=informations;
+    player_informations_is_set=true;
+}
+
+//the datapack
+void MapController::setDatapackPath(const QString &path)
+{
+    if(path.endsWith("/") || path.endsWith("\\"))
+        datapackPath=path;
+    else
+        datapackPath=path+"/";
 }

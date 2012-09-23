@@ -147,7 +147,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			emit message(QString("Not free id to login"));
 		}
 		else
-		{
+        {
 			player_informations->is_logged=true;
 			player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
 			simplifiedIdList.removeFirst();
@@ -156,7 +156,21 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			player_informations->id=loginQuery.value(0).toUInt();
 			player_informations->public_and_private_informations.public_informations.pseudo=loginQuery.value(1).toString();
 			player_informations->public_and_private_informations.public_informations.skin=loginQuery.value(2).toString();
-			player_informations->public_and_private_informations.public_informations.type=(Player_type)loginQuery.value(7).toUInt();
+            QString type=loginQuery.value(7).toString();
+            if(type=="normal")
+                player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
+            else if(type=="premium")
+                player_informations->public_and_private_informations.public_informations.type=Player_type_premium;
+            else if(type=="gm")
+                player_informations->public_and_private_informations.public_informations.type=Player_type_gm;
+            else if(type=="dev")
+                player_informations->public_and_private_informations.public_informations.type=Player_type_dev;
+            else
+            {
+                emit message(QString("Mysql wrong type value").arg(type));
+                player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
+            }
+            qDebug() << "player type:" << player_informations->public_and_private_informations.public_informations.type;
 			player_informations->public_and_private_informations.cash=0;
 			player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
 			if(!loadTheRawUTF8String())
