@@ -3,7 +3,7 @@
 #include "../../general/base/MoveOnTheMap.h"
 
 MapVisualiserPlayer::MapVisualiserPlayer(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiser(parent,centerOnPlayer,debugTags,useCache,OpenGL)
+    MapVisualiser(parent,debugTags,useCache,OpenGL)
 {
     inMove=false;
     xPerso=0;
@@ -34,6 +34,15 @@ MapVisualiserPlayer::MapVisualiserPlayer(QWidget *parent,const bool &centerOnPla
     //the direction
     direction=Pokecraft::Direction_look_at_bottom;
     playerMapObject->setTile(playerTileset->tileAt(7));
+
+    this->centerOnPlayer=centerOnPlayer;
+
+    if(centerOnPlayer)
+    {
+        setSceneRect(-2000,-2000,4000,4000);
+        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -216,6 +225,9 @@ void MapVisualiserPlayer::moveStepSlot()
         break;
     }
 
+    if(centerOnPlayer)
+        centerOn(MapObjectItem::objectLink[playerMapObject]);
+
     moveStep++;
 
     //if have finish the step
@@ -263,6 +275,8 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+        if(centerOnPlayer)
+            centerOn(MapObjectItem::objectLink[playerMapObject]);
 
         //check if one arrow key is pressed to continue to move into this direction
         if(keyPressed.contains(16777234))
@@ -404,37 +418,6 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
         keyPressParse();
 }
 
-bool MapVisualiserPlayer::viewMap(const QString &fileName)
-{
-    if(!MapVisualiser::viewMap(fileName))
-        return false;
-
-    //position
-    if(!current_map->logicalMap.rescue_points.empty())
-    {
-        xPerso=current_map->logicalMap.rescue_points.first().x;
-        yPerso=current_map->logicalMap.rescue_points.first().y;
-    }
-    else if(!current_map->logicalMap.bot_spawn_points.empty())
-    {
-        xPerso=current_map->logicalMap.bot_spawn_points.first().x;
-        yPerso=current_map->logicalMap.bot_spawn_points.first().y;
-    }
-    else
-    {
-        xPerso=current_map->logicalMap.width/2;
-        yPerso=current_map->logicalMap.height/2;
-    }
-
-    loadCurrentMap();
-    loadPlayerFromCurrentMap();
-
-    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
-    show();
-
-    return true;
-}
-
 //call after enter on new map
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
@@ -454,6 +437,8 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+    if(centerOnPlayer)
+        centerOn(MapObjectItem::objectLink[playerMapObject]);
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())

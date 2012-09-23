@@ -146,9 +146,6 @@
    </item>
    <item>
     <widget class="QCheckBox" name="centerOnPlayer">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
      <property name="text">
       <string>Center on player</string>
      </property>

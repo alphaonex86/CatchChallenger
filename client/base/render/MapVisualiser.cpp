@@ -12,7 +12,7 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
-MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+MapVisualiser::MapVisualiser(QWidget *parent,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     QGraphicsView(parent),
     mScene(new QGraphicsScene(this))
 {
@@ -20,7 +20,6 @@ MapVisualiser::MapVisualiser(QWidget *parent,const bool &centerOnPlayer,const bo
     setRenderHint(QPainter::TextAntialiasing,false);
     setCacheMode(QGraphicsView::CacheBackground);
 
-    this->centerOnPlayer=centerOnPlayer;
     this->debugTags=debugTags;
 
     timerUpdateFPS.setSingleShot(true);
@@ -106,29 +105,6 @@ MapVisualiser::~MapVisualiser()
     //delete mapItem;
     //delete playerMapObject;
     delete tagTileset;
-}
-
-bool MapVisualiser::viewMap(const QString &fileName)
-{
-    current_map=NULL;
-
-    QTime startTime;
-    startTime.restart();
-
-    //commented to not blink
-    //blink_dyna_layer.start(200);
-    connect(&blink_dyna_layer,SIGNAL(timeout()),this,SLOT(blinkDynaLayer()));
-
-    QString current_map_fileName=loadOtherMap(fileName);
-    if(current_map_fileName.isEmpty())
-    {
-        QMessageBox::critical(this,"Error",mLastError);
-        return false;
-    }
-    current_map=all_map[current_map_fileName];
-
-    render();
-    return true;
 }
 
 bool MapVisualiser::RectTouch(QRect r1,QRect r2)

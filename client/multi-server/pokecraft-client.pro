@@ -4,7 +4,9 @@
 #
 #-------------------------------------------------
 
-include(libtiled/libtiled.pri)
+INCLUDEPATH += ../../general/libtiled/
+DEPENDPATH += ../../general/libtiled/
+LIBS *= -ltiled
 
 QT       += core gui network opengl xml
 
@@ -16,40 +18,30 @@ SOURCES += main.cpp\
 	mainwindow.cpp \
     ../../general/base/DebugClass.cpp \
     ../../general/base/ChatParsing.cpp \
-    pokecraft-clients/player.cpp \
-    pokecraft-clients/MultiMap.cpp \
-    pokecraft-clients/craft-clients.cpp \
-    pokecraft-clients/objectgroupitem.cpp \
-    pokecraft-clients/objectitem.cpp \
-    pokecraft-clients/spriteimage.cpp \
-    pokecraft-clients/tilelayeritem.cpp \
-    pokecraft-clients/gamedata.cpp \
-    pokecraft-clients/graphicsviewkeyinput.cpp \
     ../../general/base/QFakeSocket.cpp \
     ../../general/base/QFakeServer.cpp \
     ../../general/base/ProtocolParsing.cpp \
     ../../general/base/MoveOnTheMap.cpp \
     ../../general/base/Map_loader.cpp \
     ../../general/base/Map.cpp \
-    ../base/MoveOnTheMap_Client.cpp \
     ../base/Api_protocol.cpp \
     ../base/Api_client_virtual.cpp \
-    ../base/Api_client_real.cpp
+    ../base/Api_client_real.cpp \
+    ../../general/base/FacilityLib.cpp \
+    ../base/render/TileLayerItem.cpp \
+    ../base/render/ObjectGroupItem.cpp \
+    ../base/render/MapVisualiserPlayer.cpp \
+    ../base/render/MapVisualiser.cpp \
+    ../base/render/MapVisualiser-map.cpp \
+    ../base/render/MapObjectItem.cpp \
+    ../base/render/MapItem.cpp \
+    ../base/Map_client.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/DebugClass.h \
     ../../general/base/ChatParsing.h \
     ../../general/base/VariableGeneral.h \
-    pokecraft-clients/player.h \
-    pokecraft-clients/graphicsviewkeyinput.h \
-    pokecraft-clients/MultiMap.h \
-    pokecraft-clients/craft-clients.h \
-    pokecraft-clients/objectgroupitem.h \
-    pokecraft-clients/objectitem.h \
-    pokecraft-clients/spriteimage.h \
-    pokecraft-clients/tilelayeritem.h \
-    pokecraft-clients/gamedata.h \
     ../../general/base/QFakeServer.h \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/MoveOnTheMap.h \
@@ -61,7 +53,15 @@ HEADERS  += mainwindow.h \
     ../base/ClientStructures.h \
     ../base/Api_protocol.h \
     ../base/Api_client_virtual.h \
-    ../base/Api_client_real.h
+    ../base/Api_client_real.h \
+    ../../general/base/FacilityLib.h \
+    ../base/render/TileLayerItem.h \
+    ../base/render/ObjectGroupItem.h \
+    ../base/render/MapVisualiserPlayer.h \
+    ../base/render/MapVisualiser.h \
+    ../base/render/MapObjectItem.h \
+    ../base/render/MapItem.h \
+    ../base/Map_client.h
 
 FORMS    += mainwindow.ui
 

@@ -10,7 +10,6 @@ class MapVisualiserPlayer : public MapVisualiser
 public:
     explicit MapVisualiserPlayer(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiserPlayer();
-    virtual bool viewMap(const QString &fileName);
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
 protected:
@@ -20,6 +19,8 @@ protected:
     Pokecraft::Direction direction;
     quint8 xPerso,yPerso;
     bool inMove;
+
+    bool centerOnPlayer;
 
     QTimer timer;
     QTimer moveTimer;

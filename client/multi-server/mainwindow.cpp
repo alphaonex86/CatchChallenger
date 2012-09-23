@@ -1,13 +1,16 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "pokecraft-clients/gamedata.h"
 
+#include "../base/render/MapVisualiserPlayer.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
 	qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
+	qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
+	qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
+
 	Pokecraft::ProtocolParsing::initialiseTheVariable();
 	client=new Pokecraft::Api_client_real(&socket);
 	ui->setupUi(this);
@@ -38,17 +41,20 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
 	connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),SLOT(stateChanged(QAbstractSocket::SocketState)));
 	connect(client,SIGNAL(haveTheDatapack()),SLOT(haveTheDatapack()));
-//	connect(client,SIGNAL(new_chat_text(quint32,quint8,QString)),this,SLOT(new_chat_text(quint32,quint8,QString)));
+
+	//chat
+	connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
+	connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
+
 	connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
 	//connect(client,SIGNAL(new_player_info()),this,SLOT(update_chat()));
 	connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()));
-        subclient = NULL;
-        graphicsview = NULL;
 	stateChanged(QAbstractSocket::UnconnectedState);
 	stopFlood.setSingleShot(false);
 	stopFlood.start(1500);
 	numberForFlood=0;
 	haveShowDisconnectionReason=false;
+    ui->horizontalLayout_mainDisplay->addWidget(new MapVisualiserPlayer(NULL,true,false,true,false));
 	resetAll();
 }
 
@@ -64,7 +70,8 @@ void MainWindow::resetAll()
 	ui->frame_main_display_interface_player->hide();
 	ui->label_interface_number_of_player->setText("?/?");
 	ui->stackedWidget->setCurrentIndex(0);
-	chat_list_player_id.clear();
+	chat_list_player_pseudo.clear();
+	chat_list_player_type.clear();
 	chat_list_type.clear();
 	chat_list_text.clear();
 	ui->textBrowser_chat->clear();
@@ -78,53 +85,18 @@ void MainWindow::resetAll()
 		ui->lineEditPass->setFocus();
 	else
 		ui->pushButtonTryLogin->setFocus();
-        if(graphicsview!=NULL)
-        {
-                gameData::forceDestroyInstance();
-                delete graphicsview;
-                graphicsview = NULL;
-        }
-        if(subclient!=NULL)
-        {
-                delete subclient;
-                subclient=NULL;
-        }
 }
 
 void MainWindow::have_current_player_info()
 {
 	Pokecraft::Player_public_informations informations=client->get_player_informations().public_informations;
 	ui->label_connecting_status->setText(tr("Loading the datapack..."));
-	ui->player_informations_id->setText(tr("N°ID/%1").arg(0));
+	ui->player_informations_id->setText(tr("NÂ°ID/%1").arg(0));
 	ui->player_informations_pseudo->setText(informations.pseudo);
 	ui->player_informations_cash->setText("0$");
 	QPixmap playerImage(client->get_datapack_base_name()+"skin/mainCaracter/"+informations.skin+"/front.png");
 	if(!playerImage.isNull())
 		ui->player_informations_front->setPixmap(playerImage);
-        //gameData::destroyInstanceAtTheLastCall();
-        //gameData::getInstance();
-        //gameData::getInstance();
-        gameData* data = gameData::instance();
-        data->showDebug("[new game ?]");
-        if(data!=0)
-        {
-	    data->setClient(client);
-	    connect(client,SIGNAL(haveTheDatapack()),data,SLOT(haveDatapack()));
-        }
-        if(graphicsview == NULL)
-        {
-                graphicsview = new graphicsviewkeyinput();
-                ui->horizontalLayout_main_display_8->insertWidget(0,graphicsview);
-        }
-        if(subclient==NULL)
-        {
-                subclient = new craftClients(graphicsview);
-		subclient->setCurrentPlayer(client->get_player_informations());
-		connect(client,SIGNAL(insert_player(quint32,QString,quint16,quint16,quint8,quint16)),subclient,SLOT(insertPlayer(quint32,QString,quint16,quint16,quint8,quint16)));
-		connect(client,SIGNAL(remove_player(quint32)),subclient,SLOT(removePlayer(quint32)));
-		connect(client,SIGNAL(move_player(quint32,QList<QPair<quint8,quint8> >)),subclient,SLOT(movePlayer(quint32,QList<QPair<quint8,quint8> >)));
-                data->setSubClient(subclient);
-        }
 }
 
 void MainWindow::haveTheDatapack()
@@ -314,13 +286,13 @@ void MainWindow::on_lineEdit_chat_text_returnPressed()
 	if(text.contains(QRegExp("^ +$")))
 	{
 		ui->lineEdit_chat_text->clear();
-		new_chat_text(0,7,"Space text not allowed");
+		new_system_text(Pokecraft::Chat_type_system,"Space text not allowed");
 		return;
 	}
 	if(text.size()>256)
 	{
 		ui->lineEdit_chat_text->clear();
-		new_chat_text(0,7,"Message too long");
+		new_system_text(Pokecraft::Chat_type_system,"Message too long");
 		return;
 	}
 	if(!text.startsWith('/'))
@@ -328,21 +300,19 @@ void MainWindow::on_lineEdit_chat_text_returnPressed()
 		if(text==lastMessageSend)
 		{
 			ui->lineEdit_chat_text->clear();
-			new_chat_text(0,7,"Send message like as previous");
+			new_system_text(Pokecraft::Chat_type_system,"Send message like as previous");
 			return;
 		}
 		if(numberForFlood>2)
 		{
 			ui->lineEdit_chat_text->clear();
-			new_chat_text(0,7,"Stop flood");
+			new_system_text(Pokecraft::Chat_type_system,"Stop flood");
 			return;
 		}
 	}
 	numberForFlood++;
 	lastMessageSend=text;
-	ui->lineEdit_chat_text->setText("");
-        gameData::instance()->newMessage(text);
-        gameData::destroyInstanceAtTheLastCall();
+    ui->lineEdit_chat_text->setText("");
 	if(!text.startsWith("/pm "))
 		client->sendChatText((Pokecraft::Chat_type)(ui->comboBox_chat_type->currentIndex()+2),text);
 	else if(text.contains(QRegExp("^/pm [^ ]+ .+$")))
@@ -361,43 +331,58 @@ void MainWindow::removeNumberForFlood()
 	numberForFlood--;
 }
 
-void MainWindow::new_chat_text(quint32 player_id,quint8 chat_type,QString text)
+void MainWindow::new_system_text(Pokecraft::Chat_type chat_type,QString text)
 {
-	chat_list_player_id << player_id;
-	chat_list_type << (Pokecraft::Chat_type)chat_type;
+	qDebug() << QString("new_system_text: %1").arg(text);
+	chat_list_player_type << Pokecraft::Player_type_normal;
+	chat_list_player_pseudo << "";
+	chat_list_type << chat_type;
 	chat_list_text << text;
-	while(chat_list_player_id.size()>64)
+	while(chat_list_player_type.size()>64)
 	{
-		chat_list_player_id.removeFirst();
-	}
-	while(chat_list_type.size()>64)
+		chat_list_player_type.removeFirst();
+		chat_list_player_pseudo.removeFirst();
 		chat_list_type.removeFirst();
-	while(chat_list_text.size()>64)
 		chat_list_text.removeFirst();
+	}
+	update_chat();
+}
+
+void MainWindow::new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type)
+{
+	qDebug() << QString("new_chat_text: %1 by  %2").arg(text).arg(pseudo);
+	chat_list_player_type << type;
+	chat_list_player_pseudo << pseudo;
+	chat_list_type << chat_type;
+	chat_list_text << text;
+	while(chat_list_player_type.size()>64)
+	{
+		chat_list_player_type.removeFirst();
+		chat_list_player_pseudo.removeFirst();
+		chat_list_type.removeFirst();
+		chat_list_text.removeFirst();
+	}
 	update_chat();
 }
 
 void MainWindow::update_chat()
 {
-/*        QList<Player_public_informations> player_informations_list=client->get_player_informations_list();
 	QString nameHtml;
 	int index=0;
-	while(index<chat_list_player_id.size())
+	while(index<chat_list_player_pseudo.size())
 	{
 		bool addPlayerInfo=true;
-		if(chat_list_type.at(index)==Chat_type_system || chat_list_type.at(index)==Chat_type_system_important)
+		if(chat_list_type.at(index)==Pokecraft::Chat_type_system || chat_list_type.at(index)==Pokecraft::Chat_type_system_important)
 			addPlayerInfo=false;
 		int index_player=-1;
-		if(addPlayerInfo)
-			index_player=client->indexOfPlayerInformations(chat_list_player_id.at(index));
 		if(!addPlayerInfo)
-			nameHtml+=ChatParsing::new_chat_message("",Player_type_normal,chat_list_type.at(index),chat_list_text.at(index));
+			nameHtml+=Pokecraft::ChatParsing::new_chat_message("",Pokecraft::Player_type_normal,chat_list_type.at(index),chat_list_text.at(index));
 		else if(index_player!=-1)
-			nameHtml+=ChatParsing::new_chat_message(player_informations_list.at(index_player).pseudo,player_informations_list.at(index_player).type,chat_list_type.at(index),chat_list_text.at(index));
+			nameHtml+=Pokecraft::ChatParsing::new_chat_message(chat_list_player_pseudo.at(index),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index));
 		index++;
 	}
 	ui->textBrowser_chat->setHtml(nameHtml);
-	ui->textBrowser_chat->scrollToAnchor(QString::number(index-1));*/
+	ui->textBrowser_chat->scrollToAnchor(QString::number(index-1));
 }
 
 QString MainWindow::toHtmlEntities(QString text)
