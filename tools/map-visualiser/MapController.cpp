@@ -17,6 +17,24 @@ MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bo
     connect(&timerBotManagement,SIGNAL(timeout()),this,SLOT(botManagement()));
     timerBotMove.start(66);
     timerBotManagement.start(3000);
+    
+    playerTileset = new Tiled::Tileset("player",16,24);
+    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
+    if(QFile::exists(externalFile))
+    {
+        QImage externalImage(externalFile);
+        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
+            playerTileset->loadFromImage(externalImage,externalFile);
+        else
+            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+    }
+    else
+        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
+    playerMapObject = new Tiled::MapObject();
+
+    //the direction
+    direction=Pokecraft::Direction_look_at_bottom;
+    playerMapObject->setTile(playerTileset->tileAt(7));
 }
 
 MapController::~MapController()
@@ -353,9 +371,6 @@ bool MapController::viewMap(const QString &fileName)
 {
     current_map=NULL;
 
-    QTime startTime;
-    startTime.restart();
-
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
     {
@@ -369,18 +384,18 @@ bool MapController::viewMap(const QString &fileName)
     //position
     if(!current_map->logicalMap.rescue_points.empty())
     {
-        xPerso=current_map->logicalMap.rescue_points.first().x;
-        yPerso=current_map->logicalMap.rescue_points.first().y;
+        x=current_map->logicalMap.rescue_points.first().x;
+        y=current_map->logicalMap.rescue_points.first().y;
     }
     else if(!current_map->logicalMap.bot_spawn_points.empty())
     {
-        xPerso=current_map->logicalMap.bot_spawn_points.first().x;
-        yPerso=current_map->logicalMap.bot_spawn_points.first().y;
+        x=current_map->logicalMap.bot_spawn_points.first().x;
+        y=current_map->logicalMap.bot_spawn_points.first().y;
     }
     else
     {
-        xPerso=current_map->logicalMap.width/2;
-        yPerso=current_map->logicalMap.height/2;
+        x=current_map->logicalMap.width/2;
+        y=current_map->logicalMap.height/2;
     }
 
     loadCurrentMap();

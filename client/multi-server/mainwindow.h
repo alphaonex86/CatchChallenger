@@ -11,7 +11,7 @@
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../base/Api_client_real.h"
-#include "../base/render/MapVisualiserPlayer.h"
+#include "MapController.h"
 
 namespace Ui {
     class MainWindow;
@@ -42,7 +42,7 @@ private slots:
 	void logged();
 	void protocol_is_good();
 	void have_current_player_info();
-	void haveTheDatapack();
+    void haveTheDatapack();
 	void on_lineEdit_chat_text_returnPressed();
 	//chat
 	void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
@@ -85,7 +85,7 @@ private:
 	QString toSmilies(QString text);
 	QStringList server_list;
 	QTcpSocket socket;
-    MapVisualiserPlayer *mapVisualiserPlayer;
+    MapController *mapController;
 };
 
 #endif // MAINWINDOW_H

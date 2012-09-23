@@ -93,7 +93,7 @@ signals:
 	void new_system_text(Pokecraft::Chat_type chat_type,QString text);
 
 	//player info
-	void have_current_player_info(Pokecraft::Player_private_and_public_informations info,QString pseudo);
+    void have_current_player_info(Pokecraft::Player_private_and_public_informations informations);
 
 	//datapack
 	void haveTheDatapack();
