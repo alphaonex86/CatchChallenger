@@ -217,9 +217,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 						return;//ignore this error*/
 					}
 
-
 					if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
+                    {
 						player_informations.public_informations=public_informations;
+                        emit have_current_player_info(player_informations);
+                    }
 					emit insert_player(public_informations,mapFile,x,y,direction);
 					index_sub_loop++;
 				}
@@ -977,6 +979,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 				}
 				break;
 				default:
+                    emit newError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1").arg(subCodeType));
+                    return;
 				break;
 			}
 		}
@@ -988,7 +992,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
 	}
 	if((in.device()->size()-in.device()->pos())!=0)
 	{
-		emit newError(tr("Procotol wrong or corrupted"),QString("remaining data: parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        emit newError(tr("Procotol wrong or corrupted"),QString("error: remaining data: parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
 		return;
 	}
 }

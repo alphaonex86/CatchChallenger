@@ -44,7 +44,7 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 				//Send datapack file list
 				case 0x000C:
 				{
-					QByteArray rawData=qUncompress(data);
+                    QByteArray rawData=qUncompress(data);
 					QDataStream in(rawData);
 					in.setVersion(QDataStream::Qt_4_4);
 					if((in.device()->size()-in.device()->pos())!=((int)sizeof(quint8))*datapackFilesList.size())
@@ -69,7 +69,8 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 					}
 					datapackFilesList.clear();
 					cleanDatapack("");
-					emit haveTheDatapack();
+                    emit haveTheDatapack();
+                    return;//cut because the compressed data is used
 				}
 				break;
 				default:
@@ -86,7 +87,8 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
 	}
 	if((in.device()->size()-in.device()->pos())!=0)
 	{
-		emit newError(tr("Procotol wrong or corrupted"),QString("remaining data: Api_client_real::parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        QByteArray data_remaining=data.right(data.size()-in.device()->pos());
+        emit newError(tr("Procotol wrong or corrupted"),QString("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data_remaining.toHex())));
 		return;
 	}
 }

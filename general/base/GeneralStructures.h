@@ -83,12 +83,12 @@ struct Player_public_informations
 	Player_type type;
 	QString skin;
 	SPEED_TYPE speed;
-	QByteArray randomNumber;
 };
 
 struct Player_private_and_public_informations
 {
 	Player_public_informations public_informations;
+    QByteArray randomNumber;//for the battle
 	quint64 cash;
 };
 

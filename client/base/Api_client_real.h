@@ -56,9 +56,7 @@ private:
 	QList<query_files> query_files_list;
 	QString datapack_base_name;
 	bool wait_datapack_content;
-	QStringList datapackFilesList;
-signals:
-	void haveTheDatapack();
+    QStringList datapackFilesList;
 private slots:
 	void disconnected();
 	void writeNewFile(const QString &fileName,const QByteArray &data,const quint32 &mtime);

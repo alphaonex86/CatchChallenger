@@ -6,8 +6,8 @@ MapVisualiserPlayer::MapVisualiserPlayer(QWidget *parent,const bool &centerOnPla
     MapVisualiser(parent,debugTags,useCache,OpenGL)
 {
     inMove=false;
-    xPerso=0;
-    yPerso=0;
+    x=0;
+    y=0;
 
     lookToMove.setInterval(200);
     lookToMove.setSingleShot(true);
@@ -16,24 +16,6 @@ MapVisualiserPlayer::MapVisualiserPlayer(QWidget *parent,const bool &centerOnPla
     moveTimer.setInterval(66);
     moveTimer.setSingleShot(true);
     connect(&moveTimer,SIGNAL(timeout()),this,SLOT(moveStepSlot()));
-
-    playerTileset = new Tiled::Tileset("player",16,24);
-    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
-    if(QFile::exists(externalFile))
-    {
-        QImage externalImage(externalFile);
-        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
-            playerTileset->loadFromImage(externalImage,externalFile);
-        else
-            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    }
-    else
-        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    playerMapObject = new Tiled::MapObject();
-
-    //the direction
-    direction=Pokecraft::Direction_look_at_bottom;
-    playerMapObject->setTile(playerTileset->tileAt(7));
 
     this->centerOnPlayer=centerOnPlayer;
 
@@ -73,7 +55,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_left)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
                 return;//Can't do at the left!
             //the first step
             direction=Pokecraft::Direction_move_at_left;
@@ -94,7 +76,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_right)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
                 return;//Can't do at the right!
             //the first step
             direction=Pokecraft::Direction_move_at_right;
@@ -115,7 +97,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_top)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
                 return;//Can't do at the top!
             //the first step
             direction=Pokecraft::Direction_move_at_top;
@@ -136,7 +118,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_bottom)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=Pokecraft::Direction_move_at_bottom;
@@ -240,19 +222,19 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             case Pokecraft::Direction_move_at_left:
             direction=Pokecraft::Direction_look_at_left;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&xPerso,&yPerso);
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
             break;
             case Pokecraft::Direction_move_at_right:
             direction=Pokecraft::Direction_look_at_right;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&xPerso,&yPerso);
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
             break;
             case Pokecraft::Direction_move_at_top:
             direction=Pokecraft::Direction_look_at_top;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&xPerso,&yPerso);
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
             break;
             case Pokecraft::Direction_move_at_bottom:
             direction=Pokecraft::Direction_look_at_bottom;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&xPerso,&yPerso);
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
             break;
             default:
             qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(moveStep);
@@ -274,7 +256,7 @@ void MapVisualiserPlayer::moveStepSlot()
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+        playerMapObject->setPosition(QPoint(x,y+1));
         if(centerOnPlayer)
             centerOn(MapObjectItem::objectLink[playerMapObject]);
 
@@ -282,7 +264,7 @@ void MapVisualiserPlayer::moveStepSlot()
         if(keyPressed.contains(16777234))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_left;
                 playerMapObject->setTile(playerTileset->tileAt(10));
@@ -299,7 +281,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(16777236))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_right;
                 playerMapObject->setTile(playerTileset->tileAt(4));
@@ -316,7 +298,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(16777235))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_top;
                 playerMapObject->setTile(playerTileset->tileAt(1));
@@ -333,7 +315,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(16777237))
         {
             //if can go, then do the move
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,xPerso,yPerso,true))
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_bottom;
                 playerMapObject->setTile(playerTileset->tileAt(7));
@@ -364,7 +346,7 @@ void MapVisualiserPlayer::transformLookToMove()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_left;
             inMove=true;
@@ -373,7 +355,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_right;
             inMove=true;
@@ -382,7 +364,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_top;
             inMove=true;
@@ -391,7 +373,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,xPerso,yPerso,true))
+        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_bottom;
             inMove=true;
@@ -436,7 +418,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    playerMapObject->setPosition(QPoint(xPerso,yPerso+1));
+    playerMapObject->setPosition(QPoint(x,y+1));
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink[playerMapObject]);
 }
