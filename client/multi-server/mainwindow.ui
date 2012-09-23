@@ -43,7 +43,7 @@
        <string notr="true">background-image: url(:/images/interface/player/background.png);</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="page">
        <property name="styleSheet">
@@ -525,7 +525,7 @@ color: rgb(255, 255, 255);</string>
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_main_display_8">
+         <layout class="QHBoxLayout" name="horizontalLayout_mainDisplay">
           <property name="spacing">
            <number>0</number>
           </property>

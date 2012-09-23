@@ -1,6 +1,8 @@
 #include "MapController.h"
 #include "../../general/base/MoveOnTheMap.h"
 
+#include <QMessageBox>
+
 MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(parent,centerOnPlayer,debugTags,useCache,OpenGL)
 {
@@ -345,4 +347,46 @@ void MapController::unloadPlayerFromCurrentMap()
     MapVisualiserPlayer::unloadPlayerFromCurrentMap();
 
     botSpawnPointList.clear();
+}
+
+bool MapController::viewMap(const QString &fileName)
+{
+    current_map=NULL;
+
+    QTime startTime;
+    startTime.restart();
+
+    QString current_map_fileName=loadOtherMap(fileName);
+    if(current_map_fileName.isEmpty())
+    {
+        QMessageBox::critical(this,"Error",mLastError);
+        return false;
+    }
+    current_map=all_map[current_map_fileName];
+
+    render();
+
+    //position
+    if(!current_map->logicalMap.rescue_points.empty())
+    {
+        xPerso=current_map->logicalMap.rescue_points.first().x;
+        yPerso=current_map->logicalMap.rescue_points.first().y;
+    }
+    else if(!current_map->logicalMap.bot_spawn_points.empty())
+    {
+        xPerso=current_map->logicalMap.bot_spawn_points.first().x;
+        yPerso=current_map->logicalMap.bot_spawn_points.first().y;
+    }
+    else
+    {
+        xPerso=current_map->logicalMap.width/2;
+        yPerso=current_map->logicalMap.height/2;
+    }
+
+    loadCurrentMap();
+    loadPlayerFromCurrentMap();
+
+    show();
+
+    return true;
 }

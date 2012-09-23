@@ -1,11 +1,11 @@
-#include "isometricrenderer.h"
-#include "map.h"
-#include "mapobject.h"
-#include "mapreader.h"
-#include "objectgroup.h"
-#include "orthogonalrenderer.h"
-#include "tilelayer.h"
-#include "tileset.h"
+#include "../../general/libtiled/isometricrenderer.h"
+#include "../../general/libtiled/map.h"
+#include "../../general/libtiled/mapobject.h"
+#include "../../general/libtiled/mapreader.h"
+#include "../../general/libtiled/objectgroup.h"
+#include "../../general/libtiled/orthogonalrenderer.h"
+#include "../../general/libtiled/tilelayer.h"
+#include "../../general/libtiled/tileset.h"
 
 #ifndef OBJECTGROUPITEM_H
 #define OBJECTGROUPITEM_H

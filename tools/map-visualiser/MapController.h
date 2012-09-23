@@ -12,6 +12,8 @@ public:
 
     void setScale(int scaleSize);
     void setBotNumber(quint16 botNumber);
+
+    bool viewMap(const QString &fileName);
 private:
     struct Bot
     {

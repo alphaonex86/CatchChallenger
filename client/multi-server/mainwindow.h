@@ -5,12 +5,13 @@
 #include <QMessageBox>
 #include <QRegExp>
 #include <QAbstractSocket>
+#include <QSettings>
+#include <QTimer>
 
 #include "../../general/base/ChatParsing.h"
-#include "pokecraft-clients/graphicsviewkeyinput.h"
-#include "pokecraft-clients/craft-clients.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../base/Api_client_real.h"
+#include "../base/render/MapVisualiserPlayer.h"
 
 namespace Ui {
     class MainWindow;
@@ -43,7 +44,11 @@ private slots:
 	void have_current_player_info();
 	void haveTheDatapack();
 	void on_lineEdit_chat_text_returnPressed();
-	void new_chat_text(quint32 player_id,quint8 chat_type,QString text);
+	//chat
+	void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
+	void new_system_text(Pokecraft::Chat_type chat_type,QString text);
+
+	//autoconnect
 	void on_pushButton_interface_bag_pressed();
 	void on_pushButton_interface_bag_released();
 	void on_pushButton_interface_monster_list_pressed();
@@ -67,7 +72,8 @@ private:
 	Ui::MainWindow *ui;
 	Pokecraft::Api_client_real *client;
 	void resetAll();
-	QList<quint32> chat_list_player_id;
+	QStringList chat_list_player_pseudo;
+	QList<Pokecraft::Player_type> chat_list_player_type;
 	QList<Pokecraft::Chat_type> chat_list_type;
 	QList<QString> chat_list_text;
 	QString toHtmlEntities(QString text);
@@ -77,10 +83,9 @@ private:
 	int numberForFlood;
 	bool haveShowDisconnectionReason;
 	QString toSmilies(QString text);
-        graphicsviewkeyinput *graphicsview;
-        craftClients *subclient;
 	QStringList server_list;
 	QTcpSocket socket;
+    MapVisualiserPlayer *mapVisualiserPlayer;
 };
 
 #endif // MAINWINDOW_H

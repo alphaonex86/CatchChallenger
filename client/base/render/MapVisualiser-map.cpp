@@ -267,7 +267,7 @@ void MapVisualiser::loadCurrentMap()
     }
 }
 
-void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y)
+void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel)
 {
     if(loadedNearMap.contains(fileName))
         return;
@@ -299,7 +299,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
         mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         displayed_map << fileName;
     }
-    mapItem->setMapPosition(tempMapObject->tiledMap,x,y);
+    mapItem->setMapPosition(tempMapObject->tiledMap,x_pixel,y_pixel);
 
     //if have bottom border
     if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
@@ -315,8 +315,8 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                 if(fileName==all_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
                 {
                     int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-all_map[mapIndex]->logicalMap.border_semi.top.x_offset;
-                    const quint32 x_sub=x+offset;
-                    const quint32 y_sub=y+tempMapObject->logicalMap.height;
+                    const qint32 x_sub=x+offset;
+                    const qint32 y_sub=y+tempMapObject->logicalMap.height;
                     QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
@@ -325,7 +325,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.bottom.x_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.top.x_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub);
+                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
                     }
                 }
                 else
@@ -349,8 +349,8 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                 if(fileName==all_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
                 {
                     int offset=tempMapObject->logicalMap.border_semi.top.x_offset-all_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
-                    const quint32 x_sub=x+offset;
-                    const quint32 y_sub=y-all_map[mapIndex]->logicalMap.height;
+                    const qint32 x_sub=x+offset;
+                    const qint32 y_sub=y-all_map[mapIndex]->logicalMap.height;
                     QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
@@ -359,7 +359,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.top.x_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.bottom.x_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub);
+                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
                     }
                 }
                 else
@@ -383,8 +383,8 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                 if(fileName==all_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
                 {
                     int offset=tempMapObject->logicalMap.border_semi.right.y_offset-all_map[mapIndex]->logicalMap.border_semi.left.y_offset;
-                    const quint32 x_sub=x+tempMapObject->logicalMap.width;
-                    const quint32 y_sub=y+offset;
+                    const qint32 x_sub=x+tempMapObject->logicalMap.width;
+                    const qint32 y_sub=y+offset;
                     QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
@@ -393,7 +393,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.right.y_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.left.y_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub);
+                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
                     }
                 }
                 else
@@ -417,8 +417,8 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                 if(fileName==all_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
                 {
                     int offset=tempMapObject->logicalMap.border_semi.left.y_offset-all_map[mapIndex]->logicalMap.border_semi.right.y_offset;
-                    const quint32 x_sub=x-all_map[mapIndex]->logicalMap.width;
-                    const quint32 y_sub=y+offset;
+                    const qint32 x_sub=x-all_map[mapIndex]->logicalMap.width;
+                    const qint32 y_sub=y+offset;
                     QRect border_map_rect(x_sub,y_sub,all_map[mapIndex]->logicalMap.width,all_map[mapIndex]->logicalMap.height);
                     //if the new map touch the current map
                     if(RectTouch(current_map_rect,border_map_rect))
@@ -427,7 +427,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.left.y_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.right.y_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub);
+                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
                     }
                 }
                 else
@@ -438,9 +438,3 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
         }
     }
 }
-
-void MapVisualiser::blinkDynaLayer()
-{
-    current_map->objectGroup->setVisible(!current_map->objectGroup->isVisible());
-}
-

@@ -3,25 +3,25 @@
  <properties>
   <property name="type" value="city"/>
  </properties>
- <tileset firstgid="1" source="../tileset/texture.tsx"/>
- <layer name="under-water" width="32" height="30">
+ <tileset firstgid="1" source="../../../../server/datapack/map/tileset/texture.tsx"/>
+ <layer name="UnderWather" width="32" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzbENACAMBLFnObL/RswADQTZ0tWXAAAAL5gjqYN++e/wv/vvagFIlwpn
-  </data>
- </layer>
- <layer name="Walkable" width="32" height="30">
-  <data encoding="base64" compression="zlib">
-   eJzNlstRAzEMhr2PG6QIoJIklUBIISmF14VHESHDhUcR5EroAXlmNZh/JNuyl8Dhm12PN/osWfakdc51RDs8e+Hdc9Q4d2zkpPkZC2PjGP3hXK0/ll8X5BmuZSy/RhfxY51K/VKdJWdqn8baf+wrnkc3rrcmfyme5sdvec2l/lhcbc+l72r9qbOm+fm9xi958Yyl1jGlWDMjc6H/LDmn6nVBXBJXiTMk9RPOSX0Su488a+KR2CT2V+tprf+l+0iKj35pf7U1xM4fj1slJo9j+cf2ugdHGJP3NIfrwX9j+A2Cfp/TE7HdE9hr66GeOT0Qu1dS947U663gzz2TWm9pOeAc+qfEzMA8I3ftHIS9yP5T4szAMmN9Wh2k/K3+kvXhmn7TL7GA+veBf7VnPz+9n++TWwN3xD3xUOH3vLvvu+HZwAvxSrxV1t+P+exZavlB7IhPox970nNesJel/rF66YD+6xwSk+Zv/CX8B/8Xe6TdTA==
-  </data>
- </layer>
- <layer name="WalkBottom" width="32" height="30">
-  <data encoding="base64" compression="zlib">
-   eJztzkEJAAAIADH7B1FjagsRNrj/RQBf5VZbX48AAMADAwyuAfY=
+   eJztzsEJAAAIAzGdzv03cgXxJZJA39cIAADggsrdvvS3X/WZak7fCmk=
   </data>
  </layer>
  <layer name="Water" width="32" height="30">
   <data encoding="base64" compression="zlib">
    eJzt0uEJABAQhuGzDCbBJNh/Ajbg5Ep6n/r+Xb0lIgAAAMAbvBMJRotu3U/zJhutbPRP/dLXvD/9+/06b5rRuuH/0xg87yub
+  </data>
+ </layer>
+ <layer name="Walkable" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJzNlFtSwzAMRd2kG4GupO1KeHQhLIXXD49FFIYfoIugv7R7QB6iwb0jyVbcZMjMmSaTVEeyJTchhJZout+pcB85mYRw6mQ2OYyFsfEZ/em7Wr9VX5vUmeZyLL9Ga/hxnfr6pXWWnLl9Otb+Y1/xe3RjvjX1S/E0P37LOff1W3G1PZe+q/XnZk3z832NX/LijOXymFOshZOl0H+emnPrdU3cELeZGZL6Cd9JfWKdR5E18UK8ZvZX62mt/6XzSIqPfml/tRys+ePnRonJz1b91l5PwZHG5D0t4a7z3zv+g6A/1vRGbEcCe23drWdJD1jnSu7ckXq9EfylM6n1llYDvkP/nFg4WBbUrs1B2ovsPyPOHawK8tPWQarf6++TH+aE/qGvi3C4/jx/0X81sj+dPz5PHhw8Ek/Ec4U/8hX+zoZ3Bx/EJ7Hp6U97gGfPc30TO2Lv9Euzchl+e3YMvzUzQ1//3T800f8D1Lqhzw==
+  </data>
+ </layer>
+ <layer name="WalkBottom" width="32" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzsENACAMw8D0Xdh/A8qYZAqqSj7Jf0sApjqu3O0eAQAAwFcZ0nI7uk9meTuPAh0=
   </data>
  </layer>
  <layer name="Collisions" width="32" height="30">

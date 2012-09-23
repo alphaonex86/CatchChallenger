@@ -1,5 +1,4 @@
 #include "MapItem.h"
-#include "Variables.h"
 
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
@@ -106,7 +105,7 @@ void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
     int index=0;
     while(index<values.size())
     {
-        values.at(index)->setPos(x*TILE_SIZE,y*TILE_SIZE);
+        values.at(index)->setPos(x,y);
         index++;
     }
 }
