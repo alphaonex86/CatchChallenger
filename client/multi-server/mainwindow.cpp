@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
 	qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
 
-    mapController=new MapController(this,true,false,true,false);
+    mapController=new MapController(NULL,true,false,true,false);
 	Pokecraft::ProtocolParsing::initialiseTheVariable();
 	client=new Pokecraft::Api_client_real(&socket);
 	ui->setupUi(this);
@@ -44,8 +44,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()));
     connect(client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
 
+    //connect the map controler
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),mapController,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)));
     connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),mapController,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)));
+    connect(mapController,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)));
 
 	//chat
 	connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
@@ -59,7 +61,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	stopFlood.start(1500);
 	numberForFlood=0;
 	haveShowDisconnectionReason=false;
-    ui->horizontalLayout_mainDisplay->addWidget(new MapVisualiserPlayer(NULL,true,false,true,false));
+    ui->horizontalLayout_mainDisplay->addWidget(mapController);
+    mapController->setFocus();
 	resetAll();
 }
 
@@ -525,4 +528,9 @@ void MainWindow::on_toolButton_quit_interface_released()
 void MainWindow::on_pushButton_interface_trainer_clicked()
 {
 	ui->stackedWidget->setCurrentIndex(3);
+}
+
+void MainWindow::on_lineEdit_chat_text_lostFocus()
+{
+    mapController->setFocus();
 }
