@@ -10,7 +10,7 @@ LIBS *= -ltiled
 
 QT       += core gui network opengl xml
 
-TARGET = pokecraft-client
+TARGET = pokecraft-single-player
 TEMPLATE = app
 
 

@@ -37,6 +37,8 @@ protected:
     virtual void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadPlayerFromCurrentMap();
+signals:
+    void send_player_direction(const Pokecraft::Direction &the_direction);
 };
 
 #endif
