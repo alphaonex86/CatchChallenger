@@ -356,6 +356,10 @@ void MapController::unloadPlayerFromCurrentMap()
 
 bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8 &y)
 {
+    //position
+    this->x=x;
+    this->y=y;
+
     current_map=NULL;
 
     QString current_map_fileName=loadOtherMap(fileName);
@@ -372,10 +376,6 @@ bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8
     loadPlayerFromCurrentMap();
 
     show();
-
-    //position
-    this->x=x;
-    this->y=y;
 
     return true;
 }

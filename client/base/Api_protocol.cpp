@@ -219,6 +219,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 
 					if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
                     {
+                        setLastDirection(direction);
 						player_informations.public_informations=public_informations;
                         emit have_current_player_info(player_informations);
                     }

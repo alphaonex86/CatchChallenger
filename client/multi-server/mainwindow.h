@@ -68,6 +68,8 @@ private slots:
 	void on_toolButton_quit_interface_pressed();
 	void on_toolButton_quit_interface_released();
 	void on_pushButton_interface_trainer_clicked();
+    void on_lineEdit_chat_text_lostFocus();
+
 private:
 	Ui::MainWindow *ui;
 	Pokecraft::Api_client_real *client;
