@@ -33,6 +33,13 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
 
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 {
+    //ignore the no arrow key
+    if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down)
+    {
+        event->ignore();
+        return;
+    }
+
     //ignore the repeated event
     if(event->isAutoRepeat())
         return;
@@ -50,7 +57,7 @@ void MapVisualiserPlayer::keyPressParse()
     if(inMove)
         return;
 
-    if(keyPressed.contains(16777234))
+    if(keyPressed.contains(Qt::Key_Left))
     {
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_left)
@@ -71,7 +78,7 @@ void MapVisualiserPlayer::keyPressParse()
             lookToMove.start();
         }
     }
-    else if(keyPressed.contains(16777236))
+    else if(keyPressed.contains(Qt::Key_Right))
     {
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_right)
@@ -92,7 +99,7 @@ void MapVisualiserPlayer::keyPressParse()
             lookToMove.start();
         }
     }
-    else if(keyPressed.contains(16777235))
+    else if(keyPressed.contains(Qt::Key_Up))
     {
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_top)
@@ -113,7 +120,7 @@ void MapVisualiserPlayer::keyPressParse()
             lookToMove.start();
         }
     }
-    else if(keyPressed.contains(16777237))
+    else if(keyPressed.contains(Qt::Key_Down))
     {
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_bottom)
@@ -134,6 +141,7 @@ void MapVisualiserPlayer::keyPressParse()
             lookToMove.start();
         }
     }
+    send_player_direction(direction);
 }
 
 void MapVisualiserPlayer::moveStepSlot()
@@ -261,7 +269,7 @@ void MapVisualiserPlayer::moveStepSlot()
             centerOn(MapObjectItem::objectLink[playerMapObject]);
 
         //check if one arrow key is pressed to continue to move into this direction
-        if(keyPressed.contains(16777234))
+        if(keyPressed.contains(Qt::Key_Left))
         {
             //if can go, then do the move
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
@@ -278,7 +286,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 moveStepSlot();
             }
         }
-        else if(keyPressed.contains(16777236))
+        else if(keyPressed.contains(Qt::Key_Right))
         {
             //if can go, then do the move
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
@@ -295,7 +303,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 moveStepSlot();
             }
         }
-        else if(keyPressed.contains(16777235))
+        else if(keyPressed.contains(Qt::Key_Up))
         {
             //if can go, then do the move
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
@@ -312,7 +320,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 moveStepSlot();
             }
         }
-        else if(keyPressed.contains(16777237))
+        else if(keyPressed.contains(Qt::Key_Down))
         {
             //if can go, then do the move
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
@@ -332,6 +340,7 @@ void MapVisualiserPlayer::moveStepSlot()
         //now stop walking, no more arrow key is pressed
         else
             inMove=false;
+        send_player_direction(direction);
     }
     else
         moveTimer.start();
@@ -346,7 +355,7 @@ void MapVisualiserPlayer::transformLookToMove()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(keyPressed.contains(16777234) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Left) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_left;
             inMove=true;
@@ -355,7 +364,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(keyPressed.contains(16777236) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Right) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_right;
             inMove=true;
@@ -364,7 +373,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(keyPressed.contains(16777235) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Up) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_top;
             inMove=true;
@@ -373,7 +382,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(keyPressed.contains(16777237) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Down) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_bottom;
             inMove=true;
@@ -389,6 +398,13 @@ void MapVisualiserPlayer::transformLookToMove()
 
 void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
 {
+    //ignore the no arrow key
+    if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down)
+    {
+        event->ignore();
+        return;
+    }
+
     //ignore the repeated event
     if(event->isAutoRepeat())
         return;

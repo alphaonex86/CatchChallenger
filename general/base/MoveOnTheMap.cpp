@@ -6,8 +6,13 @@ using namespace Pokecraft;
 
 MoveOnTheMap::MoveOnTheMap()
 {
-	last_direction=Direction_look_at_bottom;
-	last_step=0;
+    setLastDirection(Direction_look_at_bottom);
+}
+
+void MoveOnTheMap::setLastDirection(const Direction &the_direction)
+{
+    last_direction=the_direction;
+    last_step=0;
 }
 
 void MoveOnTheMap::newDirection(const Direction &the_new_direction)

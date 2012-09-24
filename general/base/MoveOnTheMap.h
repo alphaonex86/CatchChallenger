@@ -19,6 +19,7 @@ class MoveOnTheMap
 public:
 	MoveOnTheMap();
 	virtual void newDirection(const Direction &the_direction);
+    virtual void setLastDirection(const Direction &the_direction);
 	//debug function
 	static QString directionToString(const Direction &direction);
 
