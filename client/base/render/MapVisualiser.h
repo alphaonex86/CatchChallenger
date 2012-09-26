@@ -38,7 +38,7 @@ class MapVisualiser : public QGraphicsView
     Q_OBJECT
 
 public:
-    explicit MapVisualiser(QWidget *parent = 0,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapVisualiser(const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiser();
     bool RectTouch(QRect r1,QRect r2);
 

@@ -1,13 +1,14 @@
-#ifndef MAPCONTROLLER_H
-#define MAPCONTROLLER_H
+#ifndef POKECRAFT_MAPCONTROLLER_H
+#define POKECRAFT_MAPCONTROLLER_H
 
 #include "../../client/base/render/MapVisualiserPlayer.h"
+#include "../../client/base/Api_protocol.h"
 
 class MapController : public MapVisualiserPlayer
 {
     Q_OBJECT
 public:
-    explicit MapController(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapController(Pokecraft::Api_protocol *client,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapController();
 
     void setScale(int scaleSize);
@@ -54,6 +55,8 @@ private:
 
     QTimer timerBotMove;
     QTimer timerBotManagement;
+
+    Pokecraft::Api_protocol *client;
 private slots:
     void botMove();
     void botManagement();

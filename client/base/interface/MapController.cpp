@@ -3,8 +3,8 @@
 
 #include <QMessageBox>
 
-MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiserPlayer(parent,centerOnPlayer,debugTags,useCache,OpenGL)
+MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+    MapVisualiserPlayer(client,centerOnPlayer,debugTags,useCache,OpenGL)
 {
     botTileset = new Tiled::Tileset("bot",16,24);
     botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
@@ -22,6 +22,11 @@ MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bo
     playerTileset = new Tiled::Tileset("player",16,24);
     if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
         qDebug() << "Unable the load the default tileset";
+
+    //connect the map controler
+    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)));
+    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)));
+    connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)));
 }
 
 MapController::~MapController()
