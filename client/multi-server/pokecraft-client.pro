@@ -36,7 +36,6 @@ SOURCES += main.cpp\
     ../base/render/MapObjectItem.cpp \
     ../base/render/MapItem.cpp \
     ../base/Map_client.cpp \
-    ../base/interface/basewindow.cpp \
     ../base/interface/BaseWindow.cpp \
     ../base/interface/MapController.cpp
 
@@ -65,7 +64,6 @@ HEADERS  += mainwindow.h \
     ../base/render/MapObjectItem.h \
     ../base/render/MapItem.h \
     ../base/Map_client.h \
-    ../base/interface/basewindow.h \
     ../base/interface/BaseWindow.h \
     ../base/interface/MapController.h
 

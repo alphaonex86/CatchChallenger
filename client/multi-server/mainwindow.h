@@ -35,18 +35,9 @@ private slots:
 	void stateChanged(QAbstractSocket::SocketState socketState);
 	void error(QAbstractSocket::SocketError socketError);
 	void haveNewError();
-	void newError(QString error,QString detailedError);
-	void error(QString error);
 	void message(QString message);
     void disconnected(QString reason);
     void protocol_is_good();
-
-    //autoconnect
-	void on_toolButton_interface_quit_clicked();
-	void on_toolButton_quit_interface_clicked();
-	void on_pushButton_interface_trainer_clicked();
-    void on_lineEdit_chat_text_lostFocus();
-
 private:
 	Ui::MainWindow *ui;
 	Pokecraft::Api_client_real *client;
@@ -61,8 +52,7 @@ private:
 	int numberForFlood;
     bool haveShowDisconnectionReason;
 	QStringList server_list;
-	QTcpSocket socket;
-    MapController *mapController;
+    QTcpSocket socket;
     Pokecraft::BaseWindow *baseWindow;
 };
 
