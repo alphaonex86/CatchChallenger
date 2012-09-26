@@ -11,8 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
 	qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
 
-	client=new Pokecraft::Api_client_real(&socket);
-    mapController=new MapController(client,true,false,true,false);
+    client=new Pokecraft::Api_client_real(&socket);
     baseWindow=new Pokecraft::BaseWindow(client);
 	ui->setupUi(this);
     ui->stackedWidget->addWidget(baseWindow);
@@ -36,19 +35,18 @@ MainWindow::MainWindow(QWidget *parent) :
 	}
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
 	connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
-	connect(client,SIGNAL(error(QString)),this,SLOT(error(QString)));
 	connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
 	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
-    connect(client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
 
 	stopFlood.setSingleShot(false);
 	stopFlood.start(1500);
 	numberForFlood=0;
 	haveShowDisconnectionReason=false;
-    ui->stackedWidget->addWidget(mapController);
-    mapController->setFocus();
-	resetAll();
+    ui->stackedWidget->addWidget(baseWindow);
+    baseWindow->setMultiPlayer(true);
+
+    stateChanged(QAbstractSocket::UnconnectedState);
 }
 
 MainWindow::~MainWindow()
@@ -57,7 +55,6 @@ MainWindow::~MainWindow()
 	delete client;
     delete baseWindow;
 	delete ui;
-    delete mapController;
 }
 
 void MainWindow::resetAll()
@@ -75,7 +72,7 @@ void MainWindow::resetAll()
 		ui->lineEditPass->setFocus();
 	else
 		ui->pushButtonTryLogin->setFocus();
-    stateChanged(QAbstractSocket::UnconnectedState);
+    //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
 }
 
 void MainWindow::disconnected(QString reason)
@@ -146,8 +143,9 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 		QMessageBox::warning(this,"Error","Wrong port number conversion");
 		return;
 	}
-	client->tryConnect(host,port);
-    mapController->setDatapackPath(client->get_datapack_base_name());
+
+    ui->stackedWidget->setCurrentIndex(1);
+    client->tryConnect(host,port);
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -204,42 +202,9 @@ void MainWindow::haveNewError()
 //	QMessageBox::critical(this,tr("Error"),client->errorString());
 }
 
-void MainWindow::newError(QString error,QString detailedError)
-{
-    qDebug() << detailedError.toLocal8Bit();
-    socket.close();
-    resetAll();
-    QMessageBox::critical(this,tr("Error"),error);
-}
-
-void MainWindow::error(QString error)
-{
-	newError("Error with the protocol",error);
-}
-
 void MainWindow::message(QString message)
 {
 	qDebug() << message;
-}
-
-void MainWindow::on_toolButton_interface_quit_clicked()
-{
-	client->tryDisconnect();
-}
-
-void MainWindow::on_toolButton_quit_interface_clicked()
-{
-	ui->stackedWidget->setCurrentIndex(2);
-}
-
-void MainWindow::on_pushButton_interface_trainer_clicked()
-{
-	ui->stackedWidget->setCurrentIndex(3);
-}
-
-void MainWindow::on_lineEdit_chat_text_lostFocus()
-{
-    mapController->setFocus();
 }
 
 void MainWindow::protocol_is_good()
