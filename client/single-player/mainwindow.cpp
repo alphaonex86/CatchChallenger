@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QDir>
 
 #include "../base/render/MapVisualiserPlayer.h"
 
@@ -11,11 +12,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
 	qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
 
+    QDir().mkdir(QCoreApplication::applicationDirPath()+"/savegames/");
+
     mapController=new MapController(NULL,true,false,true,false);
 	Pokecraft::ProtocolParsing::initialiseTheVariable();
 	client=new Pokecraft::Api_client_real(&socket);
 	ui->setupUi(this);
-	if(settings.contains("login"))
+    /*if(settings.contains("login"))
 		ui->lineEditLogin->setText(settings.value("login").toString());
 	if(settings.contains("pass"))
 	{
@@ -32,7 +35,11 @@ MainWindow::MainWindow(QWidget *parent) :
 		int index=ui->comboBoxServerList->findText(settings.value("last_server").toString());
 		if(index!=-1)
 			ui->comboBoxServerList->setCurrentIndex(index);
-	}
+    }*/
+
+    Pokecraft::ServerSettings settings;
+    internalServer.setSettings(settings);
+
 	connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
 	connect(client,SIGNAL(error(QString)),this,SLOT(error(QString)));
 	connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
@@ -53,7 +60,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
 	connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
 
-	connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
 	//connect(client,SIGNAL(new_player_info()),this,SLOT(update_chat()));
 	connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()));
 	stateChanged(QAbstractSocket::UnconnectedState);
@@ -76,13 +82,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::resetAll()
 {
-	ui->frame_main_display_interface_player->hide();
+/*	ui->frame_main_display_interface_player->hide();
 	ui->label_interface_number_of_player->setText("?/?");
 	ui->stackedWidget->setCurrentIndex(0);
-	chat_list_player_pseudo.clear();
-	chat_list_player_type.clear();
-	chat_list_type.clear();
-	chat_list_text.clear();
 	ui->textBrowser_chat->clear();
 	ui->comboBox_chat_type->setCurrentIndex(0);
         ui->lineEdit_chat_text->setText("");
@@ -93,7 +95,11 @@ void MainWindow::resetAll()
 	else if(ui->lineEditPass->text().isEmpty())
 		ui->lineEditPass->setFocus();
 	else
-		ui->pushButtonTryLogin->setFocus();
+        ui->pushButtonTryLogin->setFocus();*/
+    chat_list_player_pseudo.clear();
+    chat_list_player_type.clear();
+    chat_list_type.clear();
+    chat_list_text.clear();
 }
 
 void MainWindow::have_current_player_info()
@@ -145,59 +151,6 @@ void MainWindow::changeEvent(QEvent *e)
 	default:
 	break;
 	}
-}
-
-void MainWindow::on_pushButtonTryLogin_pressed()
-{
-	ui->pushButtonTryLogin->setStyleSheet("border-radius:15px;border-color:#000;border:1px solid #000;background-color:rgb(220, 220, 220);padding:1px 10px;color:rgb(150,150,150);");
-}
-
-void MainWindow::on_pushButtonTryLogin_released()
-{
-	ui->pushButtonTryLogin->setStyleSheet("border-radius:15px;border-color:#000;border:1px solid #000;background-color:rgb(255, 255, 255);padding:1px 10px;color:rgb(0,0,0);");
-}
-
-void MainWindow::on_lineEditLogin_returnPressed()
-{
-	ui->lineEditPass->setFocus();
-}
-
-void MainWindow::on_lineEditPass_returnPressed()
-{
-	on_pushButtonTryLogin_clicked();
-}
-
-void MainWindow::on_pushButtonTryLogin_clicked()
-{
-	settings.setValue("login",ui->lineEditLogin->text());
-	if(ui->checkBoxRememberPassword->isChecked())
-		settings.setValue("pass",ui->lineEditPass->text());
-	else
-		settings.remove("pass");
-	if(!ui->comboBoxServerList->currentText().contains(QRegExp("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
-	{
-		QMessageBox::warning(this,"Error","The server is not as form: [host]:[port]");
-		return;
-	}
-	if(!server_list.contains(ui->comboBoxServerList->currentText()))
-	{
-		server_list.insert(0,ui->comboBoxServerList->currentText());
-		settings.setValue("server_list",server_list);
-	}
-	settings.setValue("last_server",ui->comboBoxServerList->currentText());
-	QString host=ui->comboBoxServerList->currentText();
-	host.remove(QRegExp(":[0-9]{1,5}$"));
-	QString port_string=ui->comboBoxServerList->currentText();
-	port_string.remove(QRegExp("^.*:"));
-	bool ok;
-	quint16 port=port_string.toInt(&ok);
-	if(!ok)
-	{
-		QMessageBox::warning(this,"Error","Wrong port number conversion");
-		return;
-	}
-	client->tryConnect(host,port);
-    mapController->setDatapackPath(client->get_datapack_base_name());
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -284,54 +237,8 @@ void MainWindow::message(QString message)
 
 void MainWindow::protocol_is_good()
 {
-	client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
+//	client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
 	ui->label_connecting_status->setText(tr("Try login..."));
-}
-
-void MainWindow::on_lineEdit_chat_text_returnPressed()
-{
-	QString text=ui->lineEdit_chat_text->text();
-	if(text.isEmpty())
-		return;
-	if(text.contains(QRegExp("^ +$")))
-	{
-		ui->lineEdit_chat_text->clear();
-		new_system_text(Pokecraft::Chat_type_system,"Space text not allowed");
-		return;
-	}
-	if(text.size()>256)
-	{
-		ui->lineEdit_chat_text->clear();
-		new_system_text(Pokecraft::Chat_type_system,"Message too long");
-		return;
-	}
-	if(!text.startsWith('/'))
-	{
-		if(text==lastMessageSend)
-		{
-			ui->lineEdit_chat_text->clear();
-			new_system_text(Pokecraft::Chat_type_system,"Send message like as previous");
-			return;
-		}
-		if(numberForFlood>2)
-		{
-			ui->lineEdit_chat_text->clear();
-			new_system_text(Pokecraft::Chat_type_system,"Stop flood");
-			return;
-		}
-	}
-	numberForFlood++;
-	lastMessageSend=text;
-    ui->lineEdit_chat_text->setText("");
-	if(!text.startsWith("/pm "))
-		client->sendChatText((Pokecraft::Chat_type)(ui->comboBox_chat_type->currentIndex()+2),text);
-	else if(text.contains(QRegExp("^/pm [^ ]+ .+$")))
-	{
-		QString pseudo=text;
-		pseudo.replace(QRegExp("^/pm ([^ ]+) .+$"), "\\1");
-		text.replace(QRegExp("^/pm [^ ]+ (.+)$"), "\\1");
-		client->sendPM(text,pseudo);
-	}
 }
 
 void MainWindow::removeNumberForFlood()
@@ -391,8 +298,8 @@ void MainWindow::update_chat()
 			nameHtml+=Pokecraft::ChatParsing::new_chat_message(chat_list_player_pseudo.at(index),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index));
 		index++;
 	}
-	ui->textBrowser_chat->setHtml(nameHtml);
-	ui->textBrowser_chat->scrollToAnchor(QString::number(index-1));
+/*	ui->textBrowser_chat->setHtml(nameHtml);
+    ui->textBrowser_chat->scrollToAnchor(QString::number(index-1));*/
 }
 
 QString MainWindow::toHtmlEntities(QString text)
@@ -474,18 +381,6 @@ void MainWindow::on_toolButton_interface_map_released()
 	ui->toolButton_interface_map->setStyleSheet(css);
 }
 
-void MainWindow::number_of_player(quint16 number,quint16 max)
-{
-	ui->frame_main_display_interface_player->show();
-	ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
-}
-
-void MainWindow::on_comboBox_chat_type_currentIndexChanged(int index)
-{
-	Q_UNUSED(index)
-	update_chat();
-}
-
 void MainWindow::on_toolButton_interface_quit_clicked()
 {
 	client->tryDisconnect();
@@ -530,7 +425,14 @@ void MainWindow::on_pushButton_interface_trainer_clicked()
 	ui->stackedWidget->setCurrentIndex(3);
 }
 
-void MainWindow::on_lineEdit_chat_text_lostFocus()
+void MainWindow::on_SaveGame_New_clicked()
 {
-    mapController->setFocus();
+/*    int index=0;
+    QString saveGameFolder;
+    do
+    {
+        saveGameFolder=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
+        index++;
+    } while(QDir(saveGameFolder).exists());
+    QDir(saveGameFolder).mkdir();*/
 }

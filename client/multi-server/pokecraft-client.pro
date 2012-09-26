@@ -36,7 +36,9 @@ SOURCES += main.cpp\
     ../base/render/MapObjectItem.cpp \
     ../base/render/MapItem.cpp \
     ../base/Map_client.cpp \
-    MapController.cpp
+    ../base/interface/basewindow.cpp \
+    ../base/interface/BaseWindow.cpp \
+    ../base/interface/MapController.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -63,15 +65,19 @@ HEADERS  += mainwindow.h \
     ../base/render/MapObjectItem.h \
     ../base/render/MapItem.h \
     ../base/Map_client.h \
-    MapController.h
+    ../base/interface/basewindow.h \
+    ../base/interface/BaseWindow.h \
+    ../base/interface/MapController.h
 
-FORMS    += mainwindow.ui
-
-RESOURCES += \
-    ../resources/resources.qrc
+FORMS    += mainwindow.ui \
+    ../base/interface/BaseWindow.ui
 
 OTHER_FILES += \
     Pokecraft_client
 
 win32:RC_FILE += resources-windows.rc
+
+RESOURCES += \
+    ../base/resources/resources.qrc \
+    ../base/resources/resources-multi.qrc
 
