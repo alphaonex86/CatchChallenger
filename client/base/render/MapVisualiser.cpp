@@ -12,8 +12,7 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
-MapVisualiser::MapVisualiser(QWidget *parent,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    QGraphicsView(parent),
+MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     mScene(new QGraphicsScene(this))
 {
     setRenderHint(QPainter::Antialiasing,false);

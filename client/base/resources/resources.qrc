@@ -1,0 +1,26 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/pokecraft.png</file>
+        <file>images/background-dialog.png</file>
+        <file>images/background.png</file>
+        <file>images/empty.png</file>
+        <file>images/light-white.png</file>
+        <file>images/player_default/back.png</file>
+        <file>images/player_default/front.png</file>
+        <file>images/player_default/trainer.png</file>
+        <file>images/interface/quit.png</file>
+        <file>images/interface/background.png</file>
+        <file>images/interface/baroption.png</file>
+        <file>images/interface/option-chest.png</file>
+        <file>images/interface/option-map.png</file>
+        <file>images/interface/option-monstropedia.png</file>
+        <file>images/interface/option-player.png</file>
+        <file>images/interface/option-unknow.png</file>
+        <file>images/interface/player.png</file>
+        <file>images/interface/pokemonbar.png</file>
+        <file>images/interface/player/point.png</file>
+        <file>images/interface/player/background.png</file>
+        <file>images/interface/player/ball.png</file>
+        <file>images/interface/player/bande.png</file>
+    </qresource>
+</RCC>

@@ -2,9 +2,10 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
-MapVisualiserPlayer::MapVisualiserPlayer(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiser(parent,debugTags,useCache,OpenGL)
+MapVisualiserPlayer::MapVisualiserPlayer(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+    MapVisualiser(debugTags,useCache,OpenGL)
 {
+    this->client=client;
     inMove=false;
     x=0;
     y=0;
