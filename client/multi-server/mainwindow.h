@@ -11,7 +11,8 @@
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../base/Api_client_real.h"
-#include "MapController.h"
+#include "../base/interface/MapController.h"
+#include "../base/interface/BaseWindow.h"
 
 namespace Ui {
     class MainWindow;
@@ -37,36 +38,12 @@ private slots:
 	void newError(QString error,QString detailedError);
 	void error(QString error);
 	void message(QString message);
-	void disconnected(QString reason);
-	void notLogged(QString reason);
-	void logged();
-	void protocol_is_good();
-	void have_current_player_info();
-    void haveTheDatapack();
-	void on_lineEdit_chat_text_returnPressed();
-	//chat
-	void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
-	void new_system_text(Pokecraft::Chat_type chat_type,QString text);
+    void disconnected(QString reason);
+    void protocol_is_good();
 
-	//autoconnect
-	void on_pushButton_interface_bag_pressed();
-	void on_pushButton_interface_bag_released();
-	void on_pushButton_interface_monster_list_pressed();
-	void on_pushButton_interface_monster_list_released();
-	void on_pushButton_interface_trainer_pressed();
-	void on_pushButton_interface_trainer_released();
-	void on_toolButton_interface_map_pressed();
-	void on_toolButton_interface_map_released();
-	void number_of_player(quint16 number,quint16 max);
-	void on_comboBox_chat_type_currentIndexChanged(int index);
-	void update_chat();
-	void removeNumberForFlood();
+    //autoconnect
 	void on_toolButton_interface_quit_clicked();
-	void on_toolButton_interface_quit_pressed();
-	void on_toolButton_interface_quit_released();
 	void on_toolButton_quit_interface_clicked();
-	void on_toolButton_quit_interface_pressed();
-	void on_toolButton_quit_interface_released();
 	void on_pushButton_interface_trainer_clicked();
     void on_lineEdit_chat_text_lostFocus();
 
@@ -77,17 +54,16 @@ private:
 	QStringList chat_list_player_pseudo;
 	QList<Pokecraft::Player_type> chat_list_player_type;
 	QList<Pokecraft::Chat_type> chat_list_type;
-	QList<QString> chat_list_text;
-	QString toHtmlEntities(QString text);
+    QList<QString> chat_list_text;
 	QSettings settings;
 	QString lastMessageSend;
 	QTimer stopFlood;
 	int numberForFlood;
-	bool haveShowDisconnectionReason;
-	QString toSmilies(QString text);
+    bool haveShowDisconnectionReason;
 	QStringList server_list;
 	QTcpSocket socket;
     MapController *mapController;
+    Pokecraft::BaseWindow *baseWindow;
 };
 
 #endif // MAINWINDOW_H

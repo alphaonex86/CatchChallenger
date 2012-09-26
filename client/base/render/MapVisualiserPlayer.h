@@ -2,13 +2,14 @@
 #define MAP_VISUALISER_PLAYER_H
 
 #include "MapVisualiser.h"
+#include "../Api_protocol.h"
 
 class MapVisualiserPlayer : public MapVisualiser
 {
     Q_OBJECT
 
 public:
-    explicit MapVisualiserPlayer(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapVisualiserPlayer(Pokecraft::Api_protocol *client,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiserPlayer();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -26,6 +27,8 @@ protected:
     QTimer moveTimer;
     QTimer lookToMove;
     QSet<int> keyPressed;
+
+    Pokecraft::Api_protocol *client;
 private slots:
     void keyPressParse();
 
