@@ -23,10 +23,13 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
         qDebug() << "Unable the load the default tileset";
 
+    mHaveTheDatapack=false;
+
     //connect the map controler
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)));
     connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)));
     connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)));
+    connect(client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()));
 }
 
 MapController::~MapController()
@@ -370,7 +373,7 @@ bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
     {
-        QMessageBox::critical(this,"Error",mLastError);
+        QMessageBox::critical(NULL,"Error",mLastError);
         return false;
     }
     current_map=all_map[current_map_fileName];
@@ -385,9 +388,47 @@ bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8
     return true;
 }
 
+void MapController::haveTheDatapack()
+{
+    if(mHaveTheDatapack)
+        return;
+    mHaveTheDatapack=true;
+    int index;
+
+    index=0;
+    while(index<delayedInsert.size())
+    {
+        insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapName,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
+        index++;
+    }
+    index=0;
+    while(index<delayedMove.size())
+    {
+        move_player(delayedMove.at(index).id,delayedMove.at(index).movement);
+        index++;
+    }
+    index=0;
+    while(index<delayedRemove.size())
+    {
+        remove_player(delayedRemove.at(index));
+        index++;
+    }
+}
+
 //map move
 void MapController::insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction)
 {
+    if(!mHaveTheDatapack)
+    {
+        DelayedInsert tempItem;
+        tempItem.player=player;
+        tempItem.mapName=mapName;
+        tempItem.x=x;
+        tempItem.y=y;
+        tempItem.direction=direction;
+        delayedInsert << tempItem;
+        return;
+    }
     if(player_informations_is_set && player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
         //the player skin
@@ -424,10 +465,23 @@ void MapController::insert_player(Pokecraft::Player_public_informations player,Q
 
 void MapController::move_player(quint16 id,QList<QPair<quint8,Pokecraft::Direction> > movement)
 {
+    if(!mHaveTheDatapack)
+    {
+        DelayedMove tempItem;
+        tempItem.id=id;
+        tempItem.movement=movement;
+        delayedMove << tempItem;
+        return;
+    }
 }
 
 void MapController::remove_player(quint16 id)
 {
+    if(!mHaveTheDatapack)
+    {
+        delayedRemove << id;
+        return;
+    }
 }
 
 void MapController::reinsert_player(quint16 id,quint8 x,quint8 y,Pokecraft::Direction direction)

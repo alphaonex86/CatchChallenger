@@ -4,14 +4,15 @@
 using namespace Pokecraft;
 
 BaseWindow::BaseWindow(Api_client_real *client) :
-    ui(new Ui::BaseWindow)
+    ui(new Ui::BaseWindowUI)
 {
     this->client=client;
+    socketState=QAbstractSocket::UnconnectedState;
 
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<Player_type>("Player_type");
 
-    mapController=new MapController(NULL,true,false,true,false);
+    mapController=new MapController(client,true,false,true,false);
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
 
@@ -25,13 +26,13 @@ BaseWindow::BaseWindow(Api_client_real *client) :
     connect(client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
 
     //connect the map controler
-    connect(client,SIGNAL(have_current_player_info(Player_private_and_public_informations)),mapController,SLOT(have_current_player_info(Player_private_and_public_informations)));
-    connect(client,SIGNAL(insert_player(Player_public_informations,QString,quint16,quint16,Direction)),mapController,SLOT(insert_player(Player_public_informations,QString,quint16,quint16,Direction)));
-    connect(mapController,SIGNAL(send_player_direction(Direction)),client,SLOT(send_player_direction(Direction)));
+    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),mapController,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)));
+    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),mapController,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)));
+    connect(mapController,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)));
 
 	//chat
-    connect(client,SIGNAL(new_chat_text(Chat_type,QString,QString,Player_type)),this,SLOT(new_chat_text(Chat_type,QString,QString,Player_type)));
-    connect(client,SIGNAL(new_system_text(Chat_type,QString)),this,SLOT(new_system_text(Chat_type,QString)));
+    connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
+    connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
 
 	connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
 	//connect(client,SIGNAL(new_player_info()),this,SLOT(update_chat()));
@@ -43,18 +44,20 @@ BaseWindow::BaseWindow(Api_client_real *client) :
 	haveShowDisconnectionReason=false;
     ui->horizontalLayout_mainDisplay->addWidget(mapController);
     mapController->setFocus();
+    mapController->setDatapackPath(client->get_datapack_base_name());
 	resetAll();
 }
 
 BaseWindow::~BaseWindow()
 {
-	delete client;
 	delete ui;
     delete mapController;
 }
 
 void BaseWindow::setMultiPlayer(bool multiplayer)
 {
+    ui->frame_main_display_right->setVisible(multiplayer);
+    ui->frame_main_display_interface_player->setVisible(multiplayer);
 }
 
 void BaseWindow::resetAll()
@@ -100,48 +103,6 @@ void BaseWindow::changeEvent(QEvent *e)
 	break;
 	default:
 	break;
-	}
-}
-
-void BaseWindow::error(QAbstractSocket::SocketError socketError)
-{
-	resetAll();
-	switch(socketError)
-	{
-	case QAbstractSocket::RemoteHostClosedError:
-		if(haveShowDisconnectionReason)
-		{
-			haveShowDisconnectionReason=false;
-			return;
-		}
-		QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server"));
-	break;
-	case QAbstractSocket::ConnectionRefusedError:
-		QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server"));
-	break;
-	case QAbstractSocket::SocketTimeoutError:
-		QMessageBox::information(this,tr("Connection closed"),tr("Socket time out, server too long"));
-	break;
-	case QAbstractSocket::HostNotFoundError:
-		QMessageBox::information(this,tr("Connection closed"),tr("The host address was not found."));
-	break;
-	case QAbstractSocket::SocketAccessError:
-		QMessageBox::information(this,tr("Connection closed"),tr("The socket operation failed because the application lacked the required privileges."));
-	break;
-	case QAbstractSocket::SocketResourceError:
-		QMessageBox::information(this,tr("Connection closed"),tr("The local system ran out of resources"));
-	break;
-	case QAbstractSocket::NetworkError:
-		QMessageBox::information(this,tr("Connection closed"),tr("An error occurred with the network"));
-	break;
-	case QAbstractSocket::UnsupportedSocketOperationError:
-		QMessageBox::information(this,tr("Connection closed"),tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)"));
-	break;
-	case QAbstractSocket::SslHandshakeFailedError:
-		QMessageBox::information(this,tr("Connection closed"),tr("The SSL/TLS handshake failed, so the connection was closed"));
-	break;
-	default:
-		QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError));
 	}
 }
 
@@ -304,12 +265,12 @@ void BaseWindow::on_toolButton_interface_quit_clicked()
 
 void BaseWindow::on_toolButton_quit_interface_clicked()
 {
-	ui->stackedWidget->setCurrentIndex(2);
+    client->tryDisconnect();
 }
 
 void BaseWindow::on_pushButton_interface_trainer_clicked()
 {
-	ui->stackedWidget->setCurrentIndex(3);
+    ui->stackedWidget->setCurrentIndex(2);
 }
 
 void BaseWindow::on_lineEdit_chat_text_lostFocus()
@@ -321,7 +282,6 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState!=QAbstractSocket::UnconnectedState)
     {
-        ui->stackedWidget->setCurrentIndex(0);
         if(socketState==QAbstractSocket::ConnectedState)
         {
             ui->label_connecting_status->setText(tr("Try initialise the protocol..."));
@@ -350,5 +310,20 @@ void BaseWindow::haveTheDatapack()
     ui->label_connecting_status->setText(tr("Loading the player informations..."));
     this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
 
-    ui->stackedWidget->setCurrentIndex(2);
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void BaseWindow::newError(QString error,QString detailedError)
+{
+    qDebug() << detailedError.toLocal8Bit();
+    if(socketState!=QAbstractSocket::ConnectedState)
+        return;
+    client->tryDisconnect();
+    resetAll();
+    QMessageBox::critical(this,tr("Error"),error);
+}
+
+void BaseWindow::error(QString error)
+{
+    newError("Error with the protocol",error);
 }
