@@ -15,7 +15,7 @@
 #define POKECRAFT_BASEWINDOW_H
 
 namespace Ui {
-    class BaseWindow;
+    class BaseWindowUI;
 }
 
 namespace Pokecraft {
@@ -32,7 +32,6 @@ protected:
 public slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
 private slots:
-	void error(QAbstractSocket::SocketError socketError);
 	void message(QString message);
 	void disconnected(QString reason);
 	void notLogged(QString reason);
@@ -41,6 +40,8 @@ private slots:
     void haveTheDatapack();
 	void on_lineEdit_chat_text_returnPressed();
     void protocol_is_good();
+    void newError(QString error,QString detailedError);
+    void error(QString error);
 
 	//chat
 	void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
@@ -56,7 +57,7 @@ private slots:
 	void on_pushButton_interface_trainer_clicked();
     void on_lineEdit_chat_text_lostFocus();
 private:
-	Ui::BaseWindow *ui;
+    Ui::BaseWindowUI *ui;
     Pokecraft::Api_client_real *client;
 	QStringList chat_list_player_pseudo;
 	QList<Pokecraft::Player_type> chat_list_player_type;
@@ -71,6 +72,7 @@ private:
 	QString toSmilies(QString text);
     QStringList server_list;
     MapController *mapController;
+    QAbstractSocket::SocketState socketState;
 };
 }
 

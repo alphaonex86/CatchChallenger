@@ -52,11 +52,29 @@ private:
     bool player_informations_is_set;
 
     QString datapackPath;
+    bool mHaveTheDatapack;
 
     QTimer timerBotMove;
     QTimer timerBotManagement;
 
     Pokecraft::Api_protocol *client;
+
+    struct DelayedInsert
+    {
+        Pokecraft::Player_public_informations player;
+        QString mapName;
+        quint16 x;
+        quint16 y;
+        Pokecraft::Direction direction;
+    };
+    QList<DelayedInsert> delayedInsert;
+    struct DelayedMove
+    {
+        quint16 id;
+        QList<QPair<quint8,Pokecraft::Direction> > movement;
+    };
+    QList<DelayedMove> delayedMove;
+    QList<quint16> delayedRemove;
 private slots:
     void botMove();
     void botManagement();
@@ -68,6 +86,7 @@ private slots:
     void unloadPlayerFromCurrentMap();
 
     bool loadMap(const QString &fileName,const quint8 &x,const quint8 &y);
+    void haveTheDatapack();
 };
 
 #endif // MAPCONTROLLER_H
