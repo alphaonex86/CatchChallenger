@@ -1,5 +1,5 @@
 #include "MapVisibilityAlgorithm_Simple.h"
-#include "../EventDispatcher.h"
+#include "../GlobalData.h"
 #include "../../VariableServer.h"
 
 using namespace Pokecraft;
@@ -39,7 +39,7 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 void MapVisibilityAlgorithm_Simple::insertClient()
 {
 	loop_size=static_cast<Map_server_MapVisibility_simple*>(map)->clients.size();
-	if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
+    if(likely(loop_size<=GlobalData::serverSettings.mapVisibility.simple.max))
 	{
 		//insert the new client
 		index=0;
@@ -79,7 +79,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 		#ifdef DEBUG_MESSAGE_CLIENT_MOVE
 		emit message(QString("map have change %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
 		#endif
-		if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
+        if(likely(loop_size<=GlobalData::serverSettings.mapVisibility.simple.max))
 		{
 			//insert the new client
 			index=0;
@@ -116,7 +116,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
 		#endif
 
 		//normal operation
-		if(likely(loop_size<=EventDispatcher::generalData.serverSettings.mapVisibility.simple.max))
+        if(likely(loop_size<=GlobalData::serverSettings.mapVisibility.simple.max))
 		{
 			index=0;
 			while(index<loop_size)
@@ -151,7 +151,7 @@ void MapVisibilityAlgorithm_Simple::dropAllClients()
 void MapVisibilityAlgorithm_Simple::removeClient()
 {
 	loop_size=static_cast<Map_server_MapVisibility_simple*>(map)->clients.size();
-	if(unlikely(loop_size==(EventDispatcher::generalData.serverSettings.mapVisibility.simple.reshow) && static_cast<Map_server_MapVisibility_simple*>(map)->show==false))
+    if(unlikely(loop_size==(GlobalData::serverSettings.mapVisibility.simple.reshow) && static_cast<Map_server_MapVisibility_simple*>(map)->show==false))
 	{
 		static_cast<Map_server_MapVisibility_simple*>(map)->show=true;
 		//insert all the client because it start to be visible
@@ -163,7 +163,7 @@ void MapVisibilityAlgorithm_Simple::removeClient()
 		}
 	}
 	//nothing removed because all clients are already hide
-	else if(unlikely(loop_size>(EventDispatcher::generalData.serverSettings.mapVisibility.simple.max+1)))
+    else if(unlikely(loop_size>(GlobalData::serverSettings.mapVisibility.simple.max+1)))
 	{
 	}
 	else //normal working
@@ -230,7 +230,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
 				(to_send_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
 				>=
 					//size of on insert
-					EventDispatcher::generalData.serverPrivateVariables.sizeofInsertRequest
+                    GlobalData::serverPrivateVariables.sizeofInsertRequest
 				))
 	{
 		#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
@@ -320,7 +320,7 @@ void MapVisibilityAlgorithm_Simple::send_insert()
 	out << (quint8)0x01;
 	purgeBuffer_outputData+=map->rawMapFile;
 	out.device()->seek(out.device()->pos()+map->rawMapFile.size());
-	if(EventDispatcher::generalData.serverSettings.max_players<=255)
+    if(GlobalData::serverSettings.max_players<=255)
 		out << (quint8)to_send_insert.size();
 	else
 		out << (quint16)to_send_insert.size();
@@ -343,7 +343,7 @@ void MapVisibilityAlgorithm_Simple::send_insert()
 			.arg(QString(i_insert.value()->player_informations->rawSkin.toHex()))
 			 );
 		#endif
-		if(EventDispatcher::generalData.serverSettings.max_players<=255)
+        if(GlobalData::serverSettings.max_players<=255)
 			out << (quint8)i_insert.key();
 		else
 			out << (quint16)i_insert.key();
@@ -384,7 +384,7 @@ void MapVisibilityAlgorithm_Simple::send_move()
 	purgeBuffer_indexMovement=0;
 	i_move = to_send_move.constBegin();
 	i_move_end = to_send_move.constEnd();
-	if(EventDispatcher::generalData.serverSettings.max_players<=255)
+    if(GlobalData::serverSettings.max_players<=255)
 		out << (quint8)to_send_move.size();
 	else
 		out << (quint16)to_send_move.size();
@@ -397,7 +397,7 @@ void MapVisibilityAlgorithm_Simple::send_move()
 			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			 );
 		#endif
-		if(EventDispatcher::generalData.serverSettings.max_players<=255)
+        if(GlobalData::serverSettings.max_players<=255)
 			out << (quint8)i_move.key();
 		else
 			out << (quint16)i_move.key();
@@ -433,7 +433,7 @@ void MapVisibilityAlgorithm_Simple::send_remove()
 	//////////////////////////// remove //////////////////////////
 	i_remove = to_send_remove.constBegin();
 	i_remove_end = to_send_remove.constEnd();
-	if(EventDispatcher::generalData.serverSettings.max_players<=255)
+    if(GlobalData::serverSettings.max_players<=255)
 		out << (quint8)to_send_remove.size();
 	else
 		out << (quint16)to_send_remove.size();
@@ -446,7 +446,7 @@ void MapVisibilityAlgorithm_Simple::send_remove()
 			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			 );
 		#endif
-		if(EventDispatcher::generalData.serverSettings.max_players<=255)
+        if(GlobalData::serverSettings.max_players<=255)
 			out << (quint8)*i_remove;
 		else
 			out << (quint16)*i_remove;
@@ -471,7 +471,7 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 	out.setVersion(QDataStream::Qt_4_4);
 
 	//////////////////////////// re-insert //////////////////////////
-	if(EventDispatcher::generalData.serverSettings.max_players<=255)
+    if(GlobalData::serverSettings.max_players<=255)
 		out << (quint8)to_send_over_move.size();
 	else
 		out << (quint16)to_send_over_move.size();
@@ -490,7 +490,7 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 			.arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
 			 );
 		#endif
-		if(EventDispatcher::generalData.serverSettings.max_players<=255)
+        if(GlobalData::serverSettings.max_players<=255)
 			out << (quint8)i_insert.key();
 		else
 			out << (quint16)i_insert.key();

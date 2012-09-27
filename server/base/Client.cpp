@@ -1,5 +1,6 @@
 #include "Client.h"
-#include "EventDispatcher.h"
+#include "GlobalData.h"
+#include "../../general/base/QFakeSocket.h"
 
 using namespace Pokecraft;
 
@@ -7,7 +8,7 @@ using namespace Pokecraft;
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
-Client::Client(QAbstractSocket *socket,bool isFake)
+Client::Client(QAbstractSocket *socket,bool isFake,ClientMapManagement *clientMapManagement)
 {	
 	this->socket			= socket;
 	player_informations.isFake=isFake;
@@ -17,23 +18,14 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	clientNetworkRead=new ClientNetworkRead(&player_informations,socket);
 	clientNetworkWrite=new ClientNetworkWrite(socket);
 	clientLocalCalcule=new ClientLocalCalcule();
+    this->clientMapManagement=clientMapManagement;
 
 	connect(clientNetworkRead,SIGNAL(newInputQuery(quint8,quint8)),clientNetworkWrite,SLOT(newInputQuery(quint8,quint8)));
 	connect(clientNetworkRead,SIGNAL(newInputQuery(quint8,quint16,quint8)),clientNetworkWrite,SLOT(newInputQuery(quint8,quint16,quint8)));
 	connect(clientNetworkWrite,SIGNAL(newOutputQuery(quint8,quint8)),clientNetworkRead,SLOT(newOutputQuery(quint8,quint8)));
 	connect(clientNetworkWrite,SIGNAL(newOutputQuery(quint8,quint16,quint8)),clientNetworkRead,SLOT(newOutputQuery(quint8,quint16,quint8)));
 
-	switch(EventDispatcher::generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm)
-	{
-		default:
-		case MapVisibilityAlgorithm_simple:
-			clientMapManagement=new MapVisibilityAlgorithm_Simple();
-		break;
-		case MapVisibilityAlgorithm_none:
-			clientMapManagement=new MapVisibilityAlgorithm_None();
-		break;
-	}
-	if(EventDispatcher::generalData.serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
+    if(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
 	{
 		connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
@@ -41,7 +33,7 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 		connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientMapManagement,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
 		connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-		connect(&EventDispatcher::generalData.serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),clientMapManagement,SLOT(purgeBuffer()),Qt::QueuedConnection);
+        connect(&GlobalData::serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),clientMapManagement,SLOT(purgeBuffer()),Qt::QueuedConnection);
 	}
 
 	player_informations.is_logged=false;
@@ -66,11 +58,11 @@ Client::Client(QAbstractSocket *socket,bool isFake)
 	is_ready_to_stop=false;
 	ask_is_ready_to_stop=false;
 
-	clientBroadCast->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(0));
-	clientHeavyLoad->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(3));
-	clientMapManagement->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(1));
-	clientNetworkRead->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(2));
-	clientLocalCalcule->moveToThread(EventDispatcher::generalData.serverPrivateVariables.eventThreaderList.at(6));
+    clientBroadCast->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
+    clientHeavyLoad->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(3));
+    clientMapManagement->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(1));
+    clientNetworkRead->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(2));
+    clientLocalCalcule->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(6));
 
 	//set variables
 	clientBroadCast->setVariable(&player_informations);
@@ -233,9 +225,9 @@ void Client::disconnectNextStep()
 		//remove the player
 		if(player_informations.is_logged)
 		{
-			EventDispatcher::generalData.serverPrivateVariables.connected_players--;
-			if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
-				EventDispatcher::generalData.serverPrivateVariables.player_updater.removeConnectedPlayer();
+            GlobalData::serverPrivateVariables.connected_players--;
+            if(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber)
+                GlobalData::serverPrivateVariables.player_updater.removeConnectedPlayer();
 		}
 		player_informations.is_logged=false;
 
@@ -296,9 +288,9 @@ void Client::send_player_informations()
 	#endif
 	emit new_player_is_connected(player_informations);
 	this->player_informations=player_informations;
-	EventDispatcher::generalData.serverPrivateVariables.connected_players++;
-	if(EventDispatcher::generalData.serverSettings.commmonServerSettings.sendPlayerNumber)
-		EventDispatcher::generalData.serverPrivateVariables.player_updater.addConnectedPlayer();
+    GlobalData::serverPrivateVariables.connected_players++;
+    if(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber)
+        GlobalData::serverPrivateVariables.player_updater.addConnectedPlayer();
 
 	//remove the useless connection
 	/*disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));

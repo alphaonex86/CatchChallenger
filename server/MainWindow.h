@@ -10,7 +10,8 @@
 #include <QTimer>
 #include <QTime>
 
-#include "base/EventDispatcher.h"
+#include "EventDispatcher.h"
+#include "base/GlobalData.h"
 #include "../general/base/DebugClass.h"
 #include "../general/base/GeneralStructures.h"
 #include "../general/base/ChatParsing.h"

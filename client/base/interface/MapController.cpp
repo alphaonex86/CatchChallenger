@@ -484,11 +484,11 @@ void MapController::remove_player(quint16 id)
     }
 }
 
-void MapController::reinsert_player(quint16 id,quint8 x,quint8 y,Pokecraft::Direction direction)
+void MapController::reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)
 {
 }
 
-void MapController::reinsert_player(quint16 id,QString mapName,quint8 x,quint8 y,Pokecraft::Direction direction)
+void MapController::reinsert_player(quint16,QString,quint8,quint8,Pokecraft::Direction)
 {
 }
 

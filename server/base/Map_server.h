@@ -1,5 +1,5 @@
-#ifndef POKECRAFT_MAP_SERVER_H
-#define POKECRAFT_MAP_SERVER_H
+#ifndef POKECRAFT_MAP_VISIBILITY_SIMPLE_SERVER_H
+#define POKECRAFT_MAP_VISIBILITY_SIMPLE_SERVER_H
 
 #include "../../general/base/Map.h"
 
@@ -51,4 +51,4 @@ public:
 };
 }
 
-#endif // MAP_SERVER_H
+#endif

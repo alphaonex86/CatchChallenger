@@ -11,12 +11,14 @@
 #include <QHash>
 #include <QHashIterator>
 #include <QSqlQuery>
+#include <QSqlError>
 
-#include "../general/base/DebugClass.h"
+#include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "EventThreader.h"
 #include "../VariableServer.h"
 #include "Map_server.h"
+#include "SqlFunction.h"
 
 /** \brief Do here only the calcule local to the client
  * That's mean map collision, monster event into grass, fight, object usage, ...

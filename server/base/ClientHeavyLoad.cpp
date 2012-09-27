@@ -1,7 +1,8 @@
 #include "ClientHeavyLoad.h"
-#include "EventDispatcher.h"
+#include "GlobalData.h"
 
-#include "../general/base/FacilityLib.h"
+#include "../../general/base/FacilityLib.h"
+#include "SqlFunction.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +32,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	out.setVersion(QDataStream::Qt_4_4);
 	if(player_informations->isFake)
 	{
-		if(EventDispatcher::generalData.serverPrivateVariables.botSpawn.size()==0)
+        if(GlobalData::serverPrivateVariables.botSpawn.size()==0)
 		{
 			out << (quint8)0x01;
 			out << QString("Not bot point");
@@ -40,7 +41,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		}
 		else
 		{
-			if(!EventDispatcher::generalData.serverPrivateVariables.map_list.contains(EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).map))
+            if(!GlobalData::serverPrivateVariables.map_list.contains(GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map))
 			{
 				out << (quint8)0x01;
 				out << QString("Bot point not resolved");
@@ -60,13 +61,13 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
 				simplifiedIdList.removeFirst();
 				player_informations->public_and_private_informations.public_informations.clan=0;
-				player_informations->id=999999999-EventDispatcher::generalData.serverPrivateVariables.number_of_bots_logged;
+                player_informations->id=999999999-GlobalData::serverPrivateVariables.number_of_bots_logged;
 				player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
 				player_informations->public_and_private_informations.public_informations.skin="";//useless for serveur benchmark
 				player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
 				player_informations->public_and_private_informations.cash=0;
 				player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
-				EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << player_informations->id;
+                GlobalData::serverPrivateVariables.connected_players_id_list << player_informations->id;
 				if(!loadTheRawUTF8String())
 				{
 					emit message(QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->id)));
@@ -79,17 +80,17 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit send_player_informations();
 				emit isLogged();
 				//remplace x and y by real spawn point
-				emit put_on_the_map(EventDispatcher::generalData.serverPrivateVariables.map_list[EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).map],
-						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).x,
-						    EventDispatcher::generalData.serverPrivateVariables.botSpawn.at(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex).y,
+                emit put_on_the_map(GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
+                            GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
+                            GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
 						    Orientation_bottom);
-				EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex++;
-				if(EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex>=EventDispatcher::generalData.serverPrivateVariables.botSpawn.size())
-					EventDispatcher::generalData.serverPrivateVariables.botSpawnIndex=0;
-				EventDispatcher::generalData.serverPrivateVariables.number_of_bots_logged++;
+                GlobalData::serverPrivateVariables.botSpawnIndex++;
+                if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
+                    GlobalData::serverPrivateVariables.botSpawnIndex=0;
+                GlobalData::serverPrivateVariables.number_of_bots_logged++;
 				out << (quint8)02;
-				out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
-				if(EventDispatcher::generalData.serverSettings.max_players<=255)
+                out << (quint16)GlobalData::serverSettings.max_players;
+                if(GlobalData::serverSettings.max_players<=255)
 					out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
 				else
 					out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
@@ -100,18 +101,18 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 		return;
 	}
 	QSqlQuery loginQuery;
-	switch(EventDispatcher::generalData.serverSettings.database.type)
+    switch(GlobalData::serverSettings.database.type)
 	{
 		default:
-		case GeneralData::ServerSettings::Database::DatabaseType_Mysql:
+        case ServerSettings::Database::DatabaseType_Mysql:
 			loginQuery=QString("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
-				.arg(Client::quoteSqlVariable(login))
-				.arg(Client::quoteSqlVariable(QString(hash.toHex())));
+                .arg(SqlFunction::quoteSqlVariable(login))
+                .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
 		break;
-		case GeneralData::ServerSettings::Database::DatabaseType_SQLite:
+        case ServerSettings::Database::DatabaseType_SQLite:
 			loginQuery=QString("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
-				.arg(Client::quoteSqlVariable(login))
-				.arg(Client::quoteSqlVariable(QString(hash.toHex())));
+                .arg(SqlFunction::quoteSqlVariable(login))
+                .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
 		break;
 	}
 	if(!loginQuery.exec())
@@ -132,7 +133,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 	else
 	{
 		loginQuery.next();
-		if(EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
+        if(GlobalData::serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
 		{
 			out << (quint8)0x01;
 			out << QString("Already logged");
@@ -151,7 +152,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 			player_informations->is_logged=true;
 			player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
 			simplifiedIdList.removeFirst();
-			EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list << loginQuery.value(0).toUInt();
+            GlobalData::serverPrivateVariables.connected_players_id_list << loginQuery.value(0).toUInt();
 			player_informations->public_and_private_informations.public_informations.clan=loginQuery.value(8).toUInt();
 			player_informations->id=loginQuery.value(0).toUInt();
 			player_informations->public_and_private_informations.public_informations.pseudo=loginQuery.value(1).toString();
@@ -187,11 +188,11 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit message(QString("Wrong orientation corrected: %1").arg(orentation));
 				orentation=3;
 			}//id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
-			if(EventDispatcher::generalData.serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
+            if(GlobalData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
 			{
 				out << (quint8)02;
-				out << (quint16)EventDispatcher::generalData.serverSettings.max_players;
-				if(EventDispatcher::generalData.serverSettings.max_players<=255)
+                out << (quint16)GlobalData::serverSettings.max_players;
+                if(GlobalData::serverSettings.max_players<=255)
 					out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
 				else
 					out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
@@ -201,7 +202,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 				emit send_player_informations();
 				emit isLogged();
 				emit put_on_the_map(
-					EventDispatcher::generalData.serverPrivateVariables.map_list[loginQuery.value(6).toString()],//map pointer
+                    GlobalData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],//map pointer
 					loginQuery.value(3).toInt(),//position_x
 					loginQuery.value(4).toInt(),//position_y
 					(Orientation)orentation
@@ -244,7 +245,7 @@ void ClientHeavyLoad::askIfIsReadyToStop()
 	if(player_informations->is_logged)
 	{
 		simplifiedIdList << player_informations->public_and_private_informations.public_informations.simplifiedId;
-		EventDispatcher::generalData.serverPrivateVariables.connected_players_id_list.remove(player_informations->id);
+        GlobalData::serverPrivateVariables.connected_players_id_list.remove(player_informations->id);
 	}
 	emit isReadyToStop();
 }
@@ -276,7 +277,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 			emit error(QString("start with wrong string: %1").arg(fileName));
 			return;
 		}
-		if(!fileName.contains(EventDispatcher::generalData.serverPrivateVariables.datapack_rightFileName))
+        if(!fileName.contains(GlobalData::serverPrivateVariables.datapack_rightFileName))
 		{
 			//emit error(QString("file have not match the regex: %1").arg(fileName));
 			//return;
@@ -284,7 +285,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 		}
 		else
 		{
-			if(sendFileIfNeeded(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+fileName,fileName,mtime,true))
+            if(sendFileIfNeeded(GlobalData::serverPrivateVariables.datapack_basePath+fileName,fileName,mtime,true))
 				out << (quint8)0x01;
 			else
 				out << (quint8)0x02;
@@ -334,7 +335,7 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fi
 void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &files)
 {
 	//do source check
-	QDir finalDatapackFolder(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+suffix);
+    QDir finalDatapackFolder(GlobalData::serverPrivateVariables.datapack_basePath+suffix);
 	QString fileName;
 	QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
 	int sizeEntryList=entryList.size();
@@ -346,10 +347,10 @@ void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &file
 		else
 		{
 			fileName=suffix+fileInfo.fileName();
-			if(fileName.contains(EventDispatcher::generalData.serverPrivateVariables.datapack_rightFileName))
+            if(fileName.contains(GlobalData::serverPrivateVariables.datapack_rightFileName))
 			{
 				if(!files.contains(fileName))
-					sendFileIfNeeded(EventDispatcher::generalData.serverPrivateVariables.datapack_basePath+fileName,fileName,0,false);
+                    sendFileIfNeeded(GlobalData::serverPrivateVariables.datapack_basePath+fileName,fileName,0,false);
 			}
 		}
 	}

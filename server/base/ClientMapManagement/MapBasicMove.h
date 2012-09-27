@@ -9,9 +9,9 @@
 #include <QHash>
 #include <QHashIterator>
 
-#include "../general/base/DebugClass.h"
-#include "../general/base/GeneralVariable.h"
-#include "../general/base/MoveOnTheMap.h"
+#include "../../../general/base/DebugClass.h"
+#include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/MoveOnTheMap.h"
 #include "../ServerStructures.h"
 #include "../../VariableServer.h"
 

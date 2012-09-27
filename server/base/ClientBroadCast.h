@@ -9,8 +9,8 @@
 #include <QSemaphore>
 
 #include "ServerStructures.h"
-#include "../general/base/DebugClass.h"
-#include "../general/base/GeneralStructures.h"
+#include "../../general/base/DebugClass.h"
+#include "../../general/base/GeneralStructures.h"
 #include "../VariableServer.h"
 
 namespace Pokecraft {

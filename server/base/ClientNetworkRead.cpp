@@ -1,5 +1,5 @@
 #include "ClientNetworkRead.h"
-#include "EventDispatcher.h"
+#include "GlobalData.h"
 
 using namespace Pokecraft;
 
@@ -59,12 +59,12 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 				{
 					QString protocol;
 					in >> protocol;
-					if(EventDispatcher::generalData.serverPrivateVariables.connected_players>=EventDispatcher::generalData.serverSettings.max_players)
+                    if(GlobalData::serverPrivateVariables.connected_players>=GlobalData::serverSettings.max_players)
 					{
 						out << (quint8)0x03;		//server full
 						out << QString("Server full");
 						emit postReply(queryNumber,outputData);
-						emit error(QString("Server full (%1/%2)").arg(EventDispatcher::generalData.serverPrivateVariables.connected_players).arg(EventDispatcher::generalData.serverSettings.max_players));
+                        emit error(QString("Server full (%1/%2)").arg(GlobalData::serverPrivateVariables.connected_players).arg(GlobalData::serverSettings.max_players));
 						return;
 					}
 					if(protocol==PROTOCOL_HEADER)

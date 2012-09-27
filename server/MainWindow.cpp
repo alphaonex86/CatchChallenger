@@ -416,7 +416,7 @@ void MainWindow::load_settings()
 
 void MainWindow::send_settings()
 {
-	GeneralData::ServerSettings formatedServerSettings;
+    ServerSettings formatedServerSettings;
 
 	//the listen
 	formatedServerSettings.server_port					= ui->server_port->value();
@@ -444,13 +444,13 @@ void MainWindow::send_settings()
 	switch(ui->db_type->currentIndex())
 	{
 		case 0:
-			formatedServerSettings.database.type					= GeneralData::ServerSettings::Database::DatabaseType_Mysql;
+            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_Mysql;
 		break;
 		case 1:
-			formatedServerSettings.database.type					= GeneralData::ServerSettings::Database::DatabaseType_SQLite;
+            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_SQLite;
 		break;
 		default:
-			formatedServerSettings.database.type					= GeneralData::ServerSettings::Database::DatabaseType_Mysql;
+            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_Mysql;
 		break;
 	}
 	formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();

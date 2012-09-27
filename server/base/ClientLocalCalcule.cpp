@@ -1,6 +1,6 @@
 #include "ClientLocalCalcule.h"
 #include "../../general/base/ProtocolParsing.h"
-#include "EventDispatcher.h"
+#include "GlobalData.h"
 
 /** \todo do client near list for the local player
   the list is limited to 50
@@ -60,20 +60,20 @@ void ClientLocalCalcule::extraStop()
 		if(!player_informations->is_logged || player_informations->isFake)
 			return;
 		QSqlQuery updateMapPositionQuery;
-		switch(EventDispatcher::generalData.serverSettings.database.type)
+        switch(GlobalData::serverSettings.database.type)
 		{
 			default:
-			case GeneralData::ServerSettings::Database::DatabaseType_Mysql:
+            case ServerSettings::Database::DatabaseType_Mysql:
 				updateMapPositionQuery=QString("UPDATE player SET map_name=%1,position_x=%2,position_y=%3,orientation=%4 WHERE id=%5")
-					.arg(Client::quoteSqlVariable(map->map_file))
+                    .arg(SqlFunction::quoteSqlVariable(map->map_file))
 					.arg(x)
 					.arg(y)
 					.arg((quint8)orientation)
 					.arg(player_informations->id);
 			break;
-			case GeneralData::ServerSettings::Database::DatabaseType_SQLite:
+            case ServerSettings::Database::DatabaseType_SQLite:
 				updateMapPositionQuery=QString("UPDATE player SET map_name=%1,position_x=%2,position_y=%3,orientation=%4 WHERE id=%5")
-					.arg(Client::quoteSqlVariable(map->map_file))
+                    .arg(SqlFunction::quoteSqlVariable(map->map_file))
 					.arg(x)
 					.arg(y)
 					.arg((quint8)orientation)
@@ -108,7 +108,7 @@ void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 	outputData[0]=0x01;
 	outputData+=map->rawMapFile;
 	out.device()->seek(out.device()->size());
-	if(EventDispatcher::generalData.serverSettings.max_players<=255)
+    if(GlobalData::serverSettings.max_players<=255)
 	{
 		out << (quint8)0x01;
 		out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;

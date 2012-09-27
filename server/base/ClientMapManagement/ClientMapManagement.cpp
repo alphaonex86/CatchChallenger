@@ -1,5 +1,4 @@
 #include "ClientMapManagement.h"
-#include "../EventDispatcher.h"
 
 using namespace Pokecraft;
 

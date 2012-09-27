@@ -7,7 +7,7 @@
 #include <QSemaphore>
 #include <QTimer>
 
-#include "../general/base/DebugClass.h"
+#include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "ClientBroadCast.h"
 #include "ClientHeavyLoad.h"
@@ -16,7 +16,7 @@
 #include "ClientNetworkWrite.h"
 #include "ClientLocalCalcule.h"
 #include "EventThreader.h"
-#include "../general/base/GeneralStructures.h"
+#include "../../general/base/GeneralStructures.h"
 #include "../VariableServer.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
@@ -29,7 +29,7 @@ class Client : public QObject
 {
 	Q_OBJECT
 public:
-	explicit Client(QAbstractSocket *socket,bool isFake);
+    explicit Client(QAbstractSocket *socket, bool isFake, ClientMapManagement *clientMapManagement);
 	~Client();
 	//to get some info
 	QString getPseudo();
