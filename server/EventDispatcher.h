@@ -12,14 +12,14 @@
 #include <QSemaphore>
 
 #include "../general/base/DebugClass.h"
-#include "ServerStructures.h"
-#include "Client.h"
+#include "base/ServerStructures.h"
+#include "base/Client.h"
 #include "../general/base/Map_loader.h"
-#include "Bot/FakeBot.h"
+#include "base/Bot/FakeBot.h"
 #include "../general/base/ProtocolParsing.h"
 #include "../general/base/QFakeServer.h"
 #include "../general/base/QFakeSocket.h"
-#include "Map_server.h"
+#include "base/Map_server.h"
 
 #ifndef POKECRAFT_EVENTDISPATCHER_H
 #define POKECRAFT_EVENTDISPATCHER_H
@@ -31,16 +31,13 @@ class EventDispatcher : public QObject
 public:
 	explicit EventDispatcher();
 	~EventDispatcher();
-	void setSettings(GeneralData::ServerSettings settings);
+    void setSettings(ServerSettings settings);
 	//stat function
 	bool isListen();
 	bool isStopped();
 	bool isInBenchmark();
 	quint16 player_current();
 	quint16 player_max();
-
-	//shared into all the program
-	static GeneralData generalData;
 public slots:
 	//to manipulate the server for restart and stop
 	void start_server();
@@ -102,6 +99,8 @@ private:
 	void addBot();
 	QTimer nextStep;//all function call singal sync, then not pointer needed
 	bool initialize_the_database();
+    //player related
+    ClientMapManagement * getClientMapManagement();
 private slots:
 	//new connection
 	void newConnection();

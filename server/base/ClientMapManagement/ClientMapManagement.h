@@ -9,7 +9,7 @@
 #include <QHash>
 #include <QHashIterator>
 
-#include "../general/base/DebugClass.h"
+#include "../../../general/base/DebugClass.h"
 #include "../ServerStructures.h"
 #include "../EventThreader.h"
 #include "../../VariableServer.h"

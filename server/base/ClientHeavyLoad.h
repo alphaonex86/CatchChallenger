@@ -19,7 +19,7 @@
 
 #include "ServerStructures.h"
 #include "../VariableServer.h"
-#include "../general/base/DebugClass.h"
+#include "../../general/base/DebugClass.h"
 
 namespace Pokecraft {
 class ClientHeavyLoad : public QObject
