@@ -8,9 +8,9 @@
 #include <QRegExp>
 
 #include "ServerStructures.h"
-#include "../general/base/DebugClass.h"
-#include "../general/base/ProtocolParsing.h"
-#include "../general/base/GeneralVariable.h"
+#include "../../general/base/DebugClass.h"
+#include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
 
 namespace Pokecraft {
