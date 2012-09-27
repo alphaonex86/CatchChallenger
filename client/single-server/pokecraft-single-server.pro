@@ -10,7 +10,7 @@ LIBS *= -ltiled
 
 QT       += core gui network opengl xml
 
-TARGET = pokecraft-client
+TARGET = pokecraft-single-server
 TEMPLATE = app
 
 
@@ -73,7 +73,7 @@ FORMS    += mainwindow.ui \
 OTHER_FILES += \
     Pokecraft_client
 
-win32:RC_FILE += resources-windows.rc
+win32:RC_FILE += ../base/resources/resources-windows.rc
 
 RESOURCES += \
     ../base/resources/resources.qrc \

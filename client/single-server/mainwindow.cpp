@@ -3,6 +3,9 @@
 
 #include "../base/render/MapVisualiserPlayer.h"
 
+#define SERVER_DNS_OR_IP "pokecraft"
+#define SERVER_PORT 42489
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -21,17 +24,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	{
 		ui->lineEditPass->setText(settings.value("pass").toString());
 		ui->checkBoxRememberPassword->setChecked(true);
-	}
-	if(settings.contains("server_list"))
-		server_list=settings.value("server_list").toStringList();
-	if(server_list.size()==0)
-		server_list << client->getHost()+":"+QString::number(client->getPort());
-	ui->comboBoxServerList->addItems(server_list);
-	if(settings.contains("last_server"))
-	{
-		int index=ui->comboBoxServerList->findText(settings.value("last_server").toString());
-		if(index!=-1)
-			ui->comboBoxServerList->setCurrentIndex(index);
 	}
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
 	connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
@@ -121,28 +113,9 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 		settings.setValue("pass",ui->lineEditPass->text());
 	else
 		settings.remove("pass");
-	if(!ui->comboBoxServerList->currentText().contains(QRegExp("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
-	{
-		QMessageBox::warning(this,"Error","The server is not as form: [host]:[port]");
-		return;
-	}
-	if(!server_list.contains(ui->comboBoxServerList->currentText()))
-	{
-		server_list.insert(0,ui->comboBoxServerList->currentText());
-		settings.setValue("server_list",server_list);
-	}
-	settings.setValue("last_server",ui->comboBoxServerList->currentText());
-	QString host=ui->comboBoxServerList->currentText();
-	host.remove(QRegExp(":[0-9]{1,5}$"));
-	QString port_string=ui->comboBoxServerList->currentText();
-	port_string.remove(QRegExp("^.*:"));
-	bool ok;
-	quint16 port=port_string.toInt(&ok);
-	if(!ok)
-	{
-		QMessageBox::warning(this,"Error","Wrong port number conversion");
-		return;
-	}
+
+    QString host=SERVER_DNS_OR_IP;
+    quint16 port=SERVER_PORT;
 
     ui->stackedWidget->setCurrentIndex(1);
     client->tryConnect(host,port);

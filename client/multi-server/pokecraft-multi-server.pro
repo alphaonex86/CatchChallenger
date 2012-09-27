@@ -8,9 +8,9 @@ INCLUDEPATH += ../../general/libtiled/
 DEPENDPATH += ../../general/libtiled/
 LIBS *= -ltiled
 
-QT       += core gui network opengl xml sql
+QT       += core gui network opengl xml
 
-TARGET = pokecraft-single-player
+TARGET = pokecraft-multi-server
 TEMPLATE = app
 
 
@@ -36,26 +36,8 @@ SOURCES += main.cpp\
     ../base/render/MapObjectItem.cpp \
     ../base/render/MapItem.cpp \
     ../base/Map_client.cpp \
-    MapController.cpp \
-    ../../server/base/BroadCastWithoutSender.cpp \
-    ../../server/base/PlayerUpdater.cpp \
-    ../../server/base/Map_server.cpp \
-    ../../server/base/EventThreader.cpp \
-    ../../server/base/ClientNetworkWrite.cpp \
-    ../../server/base/ClientNetworkRead.cpp \
-    ../../server/base/ClientLocalCalcule.cpp \
-    ../../server/base/ClientHeavyLoad.cpp \
-    ../../server/base/ClientBroadCast.cpp \
-    ../../server/base/Client.cpp \
-    ../../server/base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
-    ../../server/base/ClientMapManagement/MapBasicMove.cpp \
-    ../../server/base/ClientMapManagement/ClientMapManagement.cpp \
-    ../../server/base/Bot/FakeBot.cpp \
-    ../../server/base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
-    ../../server/base/GlobalData.cpp \
-    ../../server/base/SqlFunction.cpp \
-    InternalServer.cpp \
-    NewGame.cpp
+    ../base/interface/BaseWindow.cpp \
+    ../base/interface/MapController.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -82,37 +64,18 @@ HEADERS  += mainwindow.h \
     ../base/render/MapObjectItem.h \
     ../base/render/MapItem.h \
     ../base/Map_client.h \
-    MapController.h \
-    ../../server/base/ServerStructures.h \
-    ../../server/base/PlayerUpdater.h \
-    ../../server/base/Map_server.h \
-    ../../server/base/EventThreader.h \
-    ../../server/base/ClientNetworkWrite.h \
-    ../../server/base/ClientNetworkRead.h \
-    ../../server/base/ClientLocalCalcule.h \
-    ../../server/base/ClientHeavyLoad.h \
-    ../../server/base/ClientBroadCast.h \
-    ../../server/base/Client.h \
-    ../../server/base/BroadCastWithoutSender.h \
-    ../../server/base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
-    ../../server/base/ClientMapManagement/MapBasicMove.h \
-    ../../server/base/ClientMapManagement/ClientMapManagement.h \
-    ../../server/base/Bot/FakeBot.h \
-    ../../server/base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
-    ../../server/base/GlobalData.h \
-    ../../server/base/SqlFunction.h \
-    InternalServer.h \
-    NewGame.h
+    ../base/interface/BaseWindow.h \
+    ../base/interface/MapController.h
 
 FORMS    += mainwindow.ui \
-    NewGame.ui
-
-RESOURCES += \
-    resources/resources.qrc \
-    ../base/resources/resources.qrc
+    ../base/interface/BaseWindow.ui
 
 OTHER_FILES += \
     Pokecraft_client
 
 win32:RC_FILE += ../base/resources/resources-windows.rc
+
+RESOURCES += \
+    ../base/resources/resources.qrc \
+    ../base/resources/resources-multi.qrc
 

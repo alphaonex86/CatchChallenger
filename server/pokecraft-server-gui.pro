@@ -16,11 +16,15 @@ win32:CONFIG   += console
 
 SOURCES += MainWindow.cpp \
     main.cpp \
-    ../general/base/FacilityLib.cpp
+    ../general/base/FacilityLib.cpp \
+    base/GlobalData.cpp \
+    base/SqlFunction.cpp
 HEADERS  += MainWindow.h \
-    ../general/base/FacilityLib.h
+    ../general/base/FacilityLib.h \
+    base/GlobalData.h \
+    base/SqlFunction.h
 
-SOURCES += base/EventDispatcher.cpp \
+SOURCES += EventDispatcher.cpp \
     base/EventThreader.cpp \
     base/Client.cpp \
     base/ClientHeavyLoad.cpp \
@@ -48,7 +52,7 @@ SOURCES += base/EventDispatcher.cpp \
     ../client/base/Api_client_real.cpp \
     ../client/base/Api_client_virtual.cpp
 HEADERS += VariableServer.h \
-    base/EventDispatcher.h \
+    EventDispatcher.h \
     base/ServerStructures.h \
     base/EventThreader.h \
     base/Client.h \

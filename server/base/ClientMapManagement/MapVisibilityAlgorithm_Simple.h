@@ -2,6 +2,8 @@
 #define POKECRAFT_MAPVISIBILITYALGORITHM_SIMPLE_H
 
 #include "ClientMapManagement.h"
+#include "../Map_server.h"
+#include "../../../general/base/Map.h"
 
 namespace Pokecraft {
 class MapVisibilityAlgorithm_Simple : public ClientMapManagement
