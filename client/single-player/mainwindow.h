@@ -7,6 +7,7 @@
 #include <QAbstractSocket>
 #include <QSettings>
 #include <QTimer>
+#include <QSpacerItem>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -27,21 +28,19 @@ public:
 protected:
 	void changeEvent(QEvent *e);
 private slots:
-	void on_pushButtonTryLogin_pressed();
-	void on_pushButtonTryLogin_released();
-	void on_lineEditLogin_returnPressed();
-	void on_lineEditPass_returnPressed();
-	void on_pushButtonTryLogin_clicked();
 	void stateChanged(QAbstractSocket::SocketState socketState);
 	void error(QAbstractSocket::SocketError socketError);
 	void haveNewError();
 	void message(QString message);
     void disconnected(QString reason);
     void protocol_is_good();
+    void on_SaveGame_New_clicked();
 private:
 	Ui::MainWindow *ui;
 	Pokecraft::Api_client_real *client;
 	void resetAll();
+    bool rmpath(const QDir &dir);
+    void updateSavegameList();
 	QStringList chat_list_player_pseudo;
 	QList<Pokecraft::Player_type> chat_list_player_type;
 	QList<Pokecraft::Chat_type> chat_list_type;
@@ -54,6 +53,8 @@ private:
 	QStringList server_list;
     QTcpSocket socket;
     Pokecraft::BaseWindow *baseWindow;
+    QList<QLabel *> savegame;
+    QSpacerItem *spacer;
 };
 
 #endif // MAINWINDOW_H

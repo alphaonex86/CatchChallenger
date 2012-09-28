@@ -36,7 +36,6 @@ SOURCES += main.cpp\
     ../base/render/MapObjectItem.cpp \
     ../base/render/MapItem.cpp \
     ../base/Map_client.cpp \
-    MapController.cpp \
     ../../server/base/BroadCastWithoutSender.cpp \
     ../../server/base/PlayerUpdater.cpp \
     ../../server/base/Map_server.cpp \
@@ -55,13 +54,14 @@ SOURCES += main.cpp\
     ../../server/base/GlobalData.cpp \
     ../../server/base/SqlFunction.cpp \
     InternalServer.cpp \
-    NewGame.cpp
+    NewGame.cpp \
+    ../base/interface/MapController.cpp \
+    ../base/interface/BaseWindow.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/DebugClass.h \
     ../../general/base/ChatParsing.h \
-    ../../general/base/VariableGeneral.h \
     ../../general/base/QFakeServer.h \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/MoveOnTheMap.h \
@@ -69,7 +69,6 @@ HEADERS  += mainwindow.h \
     ../../general/base/Map.h \
     ../../general/base/GeneralVariable.h \
     ../../general/base/QFakeSocket.h \
-    ../base/MoveOnTheMap_Client.h \
     ../base/ClientStructures.h \
     ../base/Api_protocol.h \
     ../base/Api_client_virtual.h \
@@ -82,7 +81,6 @@ HEADERS  += mainwindow.h \
     ../base/render/MapObjectItem.h \
     ../base/render/MapItem.h \
     ../base/Map_client.h \
-    MapController.h \
     ../../server/base/ServerStructures.h \
     ../../server/base/PlayerUpdater.h \
     ../../server/base/Map_server.h \
@@ -102,14 +100,18 @@ HEADERS  += mainwindow.h \
     ../../server/base/GlobalData.h \
     ../../server/base/SqlFunction.h \
     InternalServer.h \
-    NewGame.h
+    NewGame.h \
+    ../base/interface/BaseWindow.h \
+    ../base/interface/MapController.h
 
 FORMS    += mainwindow.ui \
-    NewGame.ui
+    NewGame.ui \
+    ../base/interface/BaseWindow.ui
 
 RESOURCES += \
-    resources/resources.qrc \
-    ../base/resources/resources.qrc
+    resources/resources-single-player.qrc \
+    ../base/resources/resources.qrc \
+    ../base/resources/resources-multi.qrc
 
 OTHER_FILES += \
     Pokecraft_client
