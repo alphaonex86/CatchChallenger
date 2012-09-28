@@ -93,7 +93,7 @@
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/dialog-full.png);</string>
+             <string notr="true">background-image: url(:/images/savegame-select.png);</string>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <property name="spacing">
@@ -128,6 +128,13 @@
                <layout class="QVBoxLayout" name="verticalLayout">
                 <item>
                  <widget class="QScrollArea" name="scrollArea">
+                  <property name="styleSheet">
+                   <string notr="true">QScrollArea {
+	background-image: url(:/images/light-white.png);
+border: 1px solid #000;
+}
+QLabel { padding:2px; }</string>
+                  </property>
                   <property name="widgetResizable">
                    <bool>true</bool>
                   </property>
@@ -136,41 +143,17 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>746</width>
-                     <height>294</height>
+                     <width>750</width>
+                     <height>298</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_5">
                     <item>
-                     <widget class="QLabel" name="label">
-                      <property name="styleSheet">
-                       <string notr="true">QLabel::hover { 
-	border: 1px solid #bbb;
-	background-color: rgb(180,180,180,50);
-    border-radius: 10px;
-}
-QLabel { 
-	padding:2px;
-}
-</string>
-                      </property>
+                     <widget class="QLabel" name="savegameEmpty">
                       <property name="text">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;Test&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot; color:#a0a0a0;&quot;&gt;04/05/2012 10:50PM&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot; color:#a0a0a0;&quot;&gt;City (2 days played)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; color:#a0a0a0;&quot;&gt;Empty&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                      </widget>
-                    </item>
-                    <item>
-                     <spacer name="verticalSpacer_6">
-                      <property name="orientation">
-                       <enum>Qt::Vertical</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>20</width>
-                        <height>232</height>
-                       </size>
-                      </property>
-                     </spacer>
                     </item>
                    </layout>
                   </widget>
@@ -1166,7 +1149,6 @@ border-image: url(:/images/empty.png);</string>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
   <include location="../base/resources/resources.qrc"/>
-  <include location="../resources/resources.qrc"/>
  </resources>
  <connections/>
 </ui>
