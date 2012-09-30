@@ -14,6 +14,7 @@
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
+#include "SaveGameLabel.h"
 
 namespace Ui {
     class MainWindow;
@@ -35,6 +36,14 @@ private slots:
     void disconnected(QString reason);
     void protocol_is_good();
     void on_SaveGame_New_clicked();
+    void savegameLabelClicked();
+    void savegameLabelUpdate();
+    void on_SaveGame_Delete_clicked();
+    void on_SaveGame_Rename_clicked();
+    void on_SaveGame_Copy_clicked();
+
+    void on_SaveGame_Play_clicked();
+
 private:
 	Ui::MainWindow *ui;
 	Pokecraft::Api_client_real *client;
@@ -53,7 +62,10 @@ private:
 	QStringList server_list;
     QTcpSocket socket;
     Pokecraft::BaseWindow *baseWindow;
-    QList<QLabel *> savegame;
+    QList<SaveGameLabel *> savegame;
+    QHash<SaveGameLabel *,QString> savegamePath;
+    QHash<SaveGameLabel *,bool> savegameWithMetaData;
+    SaveGameLabel * selectedSavegame;
     QSpacerItem *spacer;
 };
 

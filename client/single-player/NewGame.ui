@@ -47,6 +47,9 @@
         <string notr="true">background-image: url(:/images/light-white.png);
 border-image: url(:/images/empty.png);</string>
        </property>
+       <property name="text">
+        <string>New game</string>
+       </property>
        <property name="placeholderText">
         <string>game name</string>
        </property>
