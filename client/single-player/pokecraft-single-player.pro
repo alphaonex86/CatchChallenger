@@ -56,7 +56,8 @@ SOURCES += main.cpp\
     InternalServer.cpp \
     NewGame.cpp \
     ../base/interface/MapController.cpp \
-    ../base/interface/BaseWindow.cpp
+    ../base/interface/BaseWindow.cpp \
+    SaveGameLabel.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -102,7 +103,8 @@ HEADERS  += mainwindow.h \
     InternalServer.h \
     NewGame.h \
     ../base/interface/BaseWindow.h \
-    ../base/interface/MapController.h
+    ../base/interface/MapController.h \
+    SaveGameLabel.h
 
 FORMS    += mainwindow.ui \
     NewGame.ui \

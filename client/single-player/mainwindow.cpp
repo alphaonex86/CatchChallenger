@@ -3,6 +3,7 @@
 #include "NewGame.h"
 
 #include <QSettings>
+#include <QInputDialog>
 
 #include "../base/render/MapVisualiserPlayer.h"
 
@@ -38,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
     /*    ui->stackedWidget->setCurrentIndex(1);
     client->tryConnect(host,port);*/
     updateSavegameList();
+
+    selectedSavegame=NULL;
 }
 
 MainWindow::~MainWindow()
@@ -196,6 +199,33 @@ void MainWindow::on_SaveGame_New_clicked()
         rmpath(savegamesPath);
         return;
     }
+    updateSavegameList();
+}
+
+void MainWindow::savegameLabelClicked()
+{
+    SaveGameLabel * selectedSavegame=qobject_cast<SaveGameLabel *>(QObject::sender());
+    if(selectedSavegame==NULL)
+        return;
+    this->selectedSavegame=selectedSavegame;
+    savegameLabelUpdate();
+}
+
+void MainWindow::savegameLabelUpdate()
+{
+    int index=0;
+    while(index<savegame.size())
+    {
+        if(savegame.at(index)==selectedSavegame)
+            savegame.at(index)->setStyleSheet("QLabel{border:1px solid #6b6;background-color:rgb(100,180,100,120);border-radius:10px;}QLabel::hover{border:1px solid #494;background-color:rgb(70,150,70,120);border-radius:10px;}");
+        else
+            savegame.at(index)->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
+        index++;
+    }
+    ui->SaveGame_Play->setEnabled(selectedSavegame!=NULL && savegameWithMetaData[selectedSavegame]);
+    ui->SaveGame_Rename->setEnabled(selectedSavegame!=NULL && savegameWithMetaData[selectedSavegame]);
+    ui->SaveGame_Copy->setEnabled(selectedSavegame!=NULL && savegameWithMetaData[selectedSavegame]);
+    ui->SaveGame_Delete->setEnabled(selectedSavegame!=NULL);
 }
 
 bool MainWindow::rmpath(const QDir &dir)
@@ -234,58 +264,154 @@ bool MainWindow::rmpath(const QDir &dir)
 
 void MainWindow::updateSavegameList()
 {
+    QString lastSelectedPath;
+    if(selectedSavegame!=NULL)
+        lastSelectedPath=savegamePath[selectedSavegame];
+    selectedSavegame=NULL;
     int index=0;
-    while(index<savegame.size())
+    while(savegame.size()>0)
     {
-        delete savegame.at(index);
+        delete savegame.at(0);
+        savegame.removeAt(0);
         index++;
     }
+    savegamePath.clear();
+    savegameWithMetaData.clear();
     index=0;
     while(QDir(QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/").exists())
     {
+        bool ok=false;
         QString savegamesPath=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
-        QLabel *newEntry=new QLabel();
+        SaveGameLabel *newEntry=new SaveGameLabel();
+        connect(newEntry,SIGNAL(clicked()),this,SLOT(savegameLabelClicked()));
         newEntry->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
-        QString dateString=QFileInfo(savegamesPath+"metadata.conf").lastModified().toString("dd/MM/yyyy hh:mm:ssAP");
-
-        if(!metaData.isWritable())
-            newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>Bug</span>").arg("Bug").arg(dateString));
+        QString dateString;
+        if(!QFileInfo(savegamesPath+"metadata.conf").exists())
+            newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">Missing metadata</span><br/><span style=\"color:#909090;\">Missing metadata<br/>Bug</span>"));
         else
         {
-            if(metaData.status()==QSettings::NoError)
-            {
-                bool ok;
-                int time_played_number=metaData.value("time_played").toUInt(&ok);
-                QString time_played;
-                if(!ok)
-                    time_played="Time player: bug";
-                else if(time_played_number>=3600*24)
-                    time_played=QObject::tr("%n day(s) played","",time_played_number/3600*24);
-                else if(time_played_number>=3600)
-                    time_played=QObject::tr("%n hour(s) played","",time_played_number/3600);
-                else
-                    time_played=QObject::tr("%n minute(s) played","",time_played_number/60);
-                newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3 (%4)</span>")
-                                  .arg(metaData.value("title").toString())
-                                  .arg(dateString)
-                                  .arg(metaData.value("location").toString())
-                                  .arg(time_played)
-                                  );
-            }
+            dateString=QFileInfo(savegamesPath+"metadata.conf").lastModified().toString("dd/MM/yyyy hh:mm:ssAP");
+            if(!metaData.isWritable())
+                newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>Bug</span>").arg("Bug").arg(dateString));
             else
-                newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>Bug</span>").arg(metaData.value("title").toString()).arg(dateString));
+            {
+                if(metaData.status()==QSettings::NoError)
+                {
+                    if(metaData.contains("title") && metaData.contains("location") && metaData.contains("time_played"))
+                    {
+                        int time_played_number=metaData.value("time_played").toUInt(&ok);
+                        QString time_played;
+                        if(!ok)
+                            time_played="Time player: bug";
+                        else if(time_played_number>=3600*24)
+                            time_played=QObject::tr("%n day(s) played","",time_played_number/3600*24);
+                        else if(time_played_number>=3600)
+                            time_played=QObject::tr("%n hour(s) played","",time_played_number/3600);
+                        else
+                            time_played=QObject::tr("%n minute(s) played","",time_played_number/60);
+                        newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3 (%4)</span>")
+                                          .arg(metaData.value("title").toString())
+                                          .arg(dateString)
+                                          .arg(metaData.value("location").toString())
+                                          .arg(time_played)
+                                          );
+                    }
+                }
+                else
+                    newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>Bug</span>").arg(metaData.value("title").toString()).arg(dateString));
+            }
         }
         ui->scrollAreaWidgetContents->layout()->addWidget(newEntry);
 
+        if(lastSelectedPath==savegamesPath)
+            selectedSavegame=newEntry;
         savegame << newEntry;
+        savegamePath[newEntry]=savegamesPath;
+        savegameWithMetaData[newEntry]=ok;
         index++;
     }
     ui->savegameEmpty->setVisible(index==0);
     if(index>0)
     {
+        ui->scrollAreaWidgetContents->layout()->removeItem(spacer);
         delete spacer;
         spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
         ui->scrollAreaWidgetContents->layout()->addItem(spacer);
     }
+    savegameLabelUpdate();
+}
+
+void MainWindow::on_SaveGame_Delete_clicked()
+{
+    if(selectedSavegame==NULL)
+        return;
+
+    if(!rmpath(savegamePath[selectedSavegame]))
+    {
+        QMessageBox::critical(this,tr("Error"),QString("Unable to remove the savegame"));
+        return;
+    }
+
+    updateSavegameList();
+}
+
+void MainWindow::on_SaveGame_Rename_clicked()
+{
+    if(selectedSavegame==NULL)
+        return;
+
+    QString savegamesPath=savegamePath[selectedSavegame];
+    if(!savegameWithMetaData[selectedSavegame])
+        return;
+    QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
+    if(!QFileInfo(savegamesPath+"metadata.conf").exists())
+    {
+        QMessageBox::critical(this,tr("Error"),QString("No meta data file"));
+        return;
+    }
+    QString newName=QInputDialog::getText(NULL,"New name","Write the new name",QLineEdit::Normal,metaData.value("title").toString());
+    if(newName.isEmpty())
+        return;
+    metaData.setValue("title",newName);
+
+    updateSavegameList();
+}
+
+void MainWindow::on_SaveGame_Copy_clicked()
+{
+    if(selectedSavegame==NULL)
+        return;
+
+    QString savegamesPath=savegamePath[selectedSavegame];
+    if(!savegameWithMetaData[selectedSavegame])
+        return;
+    int index=0;
+    while(QDir(QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/").exists())
+        index++;
+    QString destinationPath=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
+    if(!QDir().mkpath(destinationPath))
+    {
+        QMessageBox::critical(this,tr("Error"),QString("Unable to write another savegame"));
+        return;
+    }
+    if(!QFile::copy(savegamesPath+"metadata.conf",destinationPath+"metadata.conf"))
+    {
+        rmpath(destinationPath);
+        QMessageBox::critical(this,tr("Error"),QString("Unable to write another savegame (Error: metadata.conf)"));
+        return;
+    }
+    if(!QFile::copy(savegamesPath+"pokecraft.db.sqlite",destinationPath+"pokecraft.db.sqlite"))
+    {
+        rmpath(destinationPath);
+        QMessageBox::critical(this,tr("Error"),QString("Unable to write another savegame (Error: pokecraft.db.sqlite)"));
+        return;
+    }
+    QSettings metaData(destinationPath+"metadata.conf",QSettings::IniFormat);
+    metaData.setValue("title",tr("Copy of %1").arg(metaData.value("title").toString()));
+    updateSavegameList();
+}
+
+void MainWindow::on_SaveGame_Play_clicked()
+{
 }

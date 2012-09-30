@@ -1149,6 +1149,7 @@ border-image: url(:/images/empty.png);</string>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
   <include location="../base/resources/resources.qrc"/>
+  <include location="resources/resources-single-player.qrc"/>
  </resources>
  <connections/>
 </ui>
