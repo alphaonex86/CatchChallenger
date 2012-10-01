@@ -425,6 +425,7 @@ void InternalServer::start_internal_server()
     DebugClass::debugConsole(QString("Connected to sqlite at %1 (%2)").arg(GlobalData::serverSettings.database.mysql.host).arg(GlobalData::serverPrivateVariables.db->isOpen()));
 	preload_the_data();
     stat=Up;
+    emit isReady();
 	return;
 }
 
@@ -526,9 +527,9 @@ void InternalServer::removeOneClient()
 
 void InternalServer::newConnection()
 {
+    DebugClass::debugConsole(QString("newConnection(): new client connected"));
     while(server.hasPendingConnections())
 	{
-		DebugClass::debugConsole(QString("new client connected"));
         QFakeSocket *socket = server.nextPendingConnection();
 		if(socket!=NULL)
 		{

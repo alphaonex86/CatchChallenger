@@ -27,6 +27,8 @@ public:
 	~BaseWindow();
 	void setMultiPlayer(bool multiplayer);
     void resetAll();
+    void serverIsLoading();
+    void serverIsReady();
 protected:
 	void changeEvent(QEvent *e);
 public slots:
