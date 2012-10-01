@@ -149,7 +149,7 @@ void MainWindow::message(QString message)
 
 void MainWindow::protocol_is_good()
 {
-    client->tryLogin("","");
+    client->tryLogin("admin","admin");
 }
 
 void MainWindow::try_stop_server()
@@ -437,8 +437,15 @@ void MainWindow::on_SaveGame_Play_clicked()
         delete internalServer;
     internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
     connect(internalServer,SIGNAL(try_stop_server()),this,SLOT(try_stop_server()));
+    connect(internalServer,SIGNAL(isReady()),this,SLOT(serverIsReady()));
 
     ui->stackedWidget->setCurrentIndex(1);
+    baseWindow->serverIsLoading();
+}
+
+void MainWindow::serverIsReady()
+{
+    baseWindow->serverIsReady();
     socket.connectToHostImplementation();
 }
 

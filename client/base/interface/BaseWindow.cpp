@@ -76,6 +76,16 @@ void BaseWindow::resetAll()
 	lastMessageSend="";
 }
 
+void BaseWindow::serverIsLoading()
+{
+    ui->label_connecting_status->setText(tr("Preparing the game data"));
+}
+
+void BaseWindow::serverIsReady()
+{
+    ui->label_connecting_status->setText(tr("Game data is ready"));
+}
+
 void BaseWindow::disconnected(QString reason)
 {
 	QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
@@ -280,6 +290,10 @@ void BaseWindow::on_lineEdit_chat_text_lostFocus()
 
 void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
+    if(this->socketState==socketState)
+        return;
+    this->socketState=socketState;
+
     if(socketState!=QAbstractSocket::UnconnectedState)
     {
         if(socketState==QAbstractSocket::ConnectedState)
