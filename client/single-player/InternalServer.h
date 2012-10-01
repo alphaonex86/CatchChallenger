@@ -82,6 +82,7 @@ signals:
     void try_initAll();
     void try_stop_server();
     void need_be_started();
+    void isReady();
 };
 }
 

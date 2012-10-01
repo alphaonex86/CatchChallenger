@@ -46,6 +46,7 @@ private slots:
     void on_SaveGame_Copy_clicked();
     void on_SaveGame_Play_clicked();
     void needQuit();
+    void serverIsReady();
 private:
 	Ui::MainWindow *ui;
     Pokecraft::Api_client_virtual *client;
