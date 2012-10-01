@@ -1,5 +1,6 @@
 #include "EventDispatcher.h"
 #include "base/GlobalData.h"
+#include "../../general/base/FacilityLib.h"
 
 /*
   When disconnect the fake client, stop the benchmark
@@ -158,7 +159,7 @@ void EventDispatcher::preload_the_map()
 	Map_loader map_temp;
 	QList<Map_semi> semi_loaded_map;
 	QStringList map_name;
-    QStringList returnList=listFolder(GlobalData::serverPrivateVariables.datapack_mapPath,"");
+	QStringList returnList=FacilityLib::listFolder(GlobalData::serverPrivateVariables.datapack_mapPath);
 
 	//load the map
 	int size=returnList.size();
@@ -878,22 +879,6 @@ QString EventDispatcher::listenIpAndPort(QString server_ip,quint16 server_port)
 	if(server_ip=="")
 		server_ip="*";
 	return server_ip+":"+QString::number(server_port);
-}
-
-QStringList EventDispatcher::listFolder(const QString& folder,const QString& suffix)
-{
-	QStringList returnList;
-	QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
-	int sizeEntryList=entryList.size();
-	for (int index=0;index<sizeEntryList;++index)
-	{
-		QFileInfo fileInfo=entryList.at(index);
-		if(fileInfo.isDir())
-			returnList+=listFolder(folder,suffix+fileInfo.fileName()+"/");//put unix separator because it's transformed into that's under windows too
-		else if(fileInfo.isFile())
-			returnList+=suffix+fileInfo.fileName();
-	}
-	return returnList;
 }
 
 void EventDispatcher::newConnection()

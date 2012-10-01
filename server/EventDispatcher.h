@@ -63,7 +63,6 @@ private:
 	void unload_the_map();
 	void unload_the_visibility_algorithm();
 	//internal usefull function
-	QStringList listFolder(const QString& folder,const QString& suffix);
 	QString listenIpAndPort(QString server_ip,quint16 server_port);
 	void connect_the_last_client();
 	//store about the network

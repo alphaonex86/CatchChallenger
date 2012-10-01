@@ -1123,3 +1123,8 @@ void Api_protocol::resetAll()
 	//to send trame
 	lastQueryNumber=1;
 }
+
+QString Api_protocol::get_datapack_base_name()
+{
+    return datapack_base_name;
+}

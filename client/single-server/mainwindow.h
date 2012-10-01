@@ -38,6 +38,7 @@ private slots:
 	void message(QString message);
     void disconnected(QString reason);
     void protocol_is_good();
+    void needQuit();
 private:
 	Ui::MainWindow *ui;
 	Pokecraft::Api_client_real *client;
