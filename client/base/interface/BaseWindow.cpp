@@ -3,7 +3,7 @@
 
 using namespace Pokecraft;
 
-BaseWindow::BaseWindow(Api_client_real *client) :
+BaseWindow::BaseWindow(Api_protocol *client) :
     ui(new Ui::BaseWindowUI)
 {
     this->client=client;

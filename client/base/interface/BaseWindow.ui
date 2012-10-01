@@ -47,10 +47,10 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="styleSheet">
-        <string notr="true">background-image: url(:/images/interface/player/background.png);</string>
+        <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -548,6 +548,9 @@ background-image: url(:/images/empty.png);</string>
         </layout>
        </widget>
        <widget class="QWidget" name="page_4">
+        <property name="styleSheet">
+         <string notr="true">background-image: url(:/images/interface/player/background.png);</string>
+        </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
          <item>
           <spacer name="verticalSpacer_3">
@@ -1014,7 +1017,6 @@ border-image: url(:/images/empty.png);</string>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
   <include location="../resources/resources.qrc"/>
-  <include location="../resources/resources-multi.qrc"/>
  </resources>
  <connections/>
 </ui>

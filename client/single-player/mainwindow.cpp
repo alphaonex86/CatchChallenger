@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
 	qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
 
-    client=new Pokecraft::Api_client_real(&socket);
+    client=new Pokecraft::Api_client_virtual(&socket);
     baseWindow=new Pokecraft::BaseWindow(client);
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
 	ui->setupUi(this);
@@ -26,13 +26,15 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
 	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
+    connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)));
+    connect(baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()));
 
 	stopFlood.setSingleShot(false);
 	stopFlood.start(1500);
 	numberForFlood=0;
 	haveShowDisconnectionReason=false;
     ui->stackedWidget->addWidget(baseWindow);
-    baseWindow->setMultiPlayer(true);
+    baseWindow->setMultiPlayer(false);
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
@@ -41,14 +43,17 @@ MainWindow::MainWindow(QWidget *parent) :
     updateSavegameList();
 
     selectedSavegame=NULL;
+    internalServer=NULL;
 }
 
 MainWindow::~MainWindow()
 {
-	client->tryDisconnect();
+    socket.disconnectFromHostImplementation();
 	delete client;
     delete baseWindow;
 	delete ui;
+    if(internalServer!=NULL)
+        delete internalServer;
 }
 
 void MainWindow::resetAll()
@@ -145,6 +150,13 @@ void MainWindow::message(QString message)
 void MainWindow::protocol_is_good()
 {
     client->tryLogin("","");
+}
+
+void MainWindow::try_stop_server()
+{
+    if(internalServer!=NULL)
+        delete internalServer;
+    internalServer=NULL;
 }
 
 void MainWindow::on_SaveGame_New_clicked()
@@ -414,4 +426,23 @@ void MainWindow::on_SaveGame_Copy_clicked()
 
 void MainWindow::on_SaveGame_Play_clicked()
 {
+    if(selectedSavegame==NULL)
+        return;
+
+    QString savegamesPath=savegamePath[selectedSavegame];
+    if(!savegameWithMetaData[selectedSavegame])
+        return;
+
+    if(internalServer!=NULL)
+        delete internalServer;
+    internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
+    connect(internalServer,SIGNAL(try_stop_server()),this,SLOT(try_stop_server()));
+
+    ui->stackedWidget->setCurrentIndex(1);
+    socket.connectToHostImplementation();
+}
+
+void MainWindow::needQuit()
+{
+    client->tryDisconnect();
 }
