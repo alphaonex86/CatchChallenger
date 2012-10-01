@@ -23,7 +23,7 @@ class BaseWindow : public QWidget
 {
 	Q_OBJECT
 public:
-    explicit BaseWindow(Pokecraft::Api_client_real *client);
+    explicit BaseWindow(Pokecraft::Api_protocol *client);
 	~BaseWindow();
 	void setMultiPlayer(bool multiplayer);
     void resetAll();
@@ -58,7 +58,7 @@ private slots:
     void on_lineEdit_chat_text_lostFocus();
 private:
     Ui::BaseWindowUI *ui;
-    Pokecraft::Api_client_real *client;
+    Pokecraft::Api_protocol *client;
 	QStringList chat_list_player_pseudo;
 	QList<Pokecraft::Player_type> chat_list_player_type;
 	QList<Pokecraft::Chat_type> chat_list_type;
@@ -73,6 +73,8 @@ private:
     QStringList server_list;
     MapController *mapController;
     QAbstractSocket::SocketState socketState;
+signals:
+    void needQuit();
 };
 }
 

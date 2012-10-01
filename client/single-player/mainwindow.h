@@ -9,12 +9,14 @@
 #include <QTimer>
 #include <QSpacerItem>
 
+#include "../../general/base/QFakeSocket.h"
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
 #include "SaveGameLabel.h"
+#include "InternalServer.h"
 
 namespace Ui {
     class MainWindow;
@@ -35,18 +37,18 @@ private slots:
 	void message(QString message);
     void disconnected(QString reason);
     void protocol_is_good();
+    void try_stop_server();
     void on_SaveGame_New_clicked();
     void savegameLabelClicked();
     void savegameLabelUpdate();
     void on_SaveGame_Delete_clicked();
     void on_SaveGame_Rename_clicked();
     void on_SaveGame_Copy_clicked();
-
     void on_SaveGame_Play_clicked();
-
+    void needQuit();
 private:
 	Ui::MainWindow *ui;
-	Pokecraft::Api_client_real *client;
+    Pokecraft::Api_client_virtual *client;
 	void resetAll();
     bool rmpath(const QDir &dir);
     void updateSavegameList();
@@ -60,13 +62,14 @@ private:
 	int numberForFlood;
     bool haveShowDisconnectionReason;
 	QStringList server_list;
-    QTcpSocket socket;
+    Pokecraft::QFakeSocket socket;
     Pokecraft::BaseWindow *baseWindow;
     QList<SaveGameLabel *> savegame;
     QHash<SaveGameLabel *,QString> savegamePath;
     QHash<SaveGameLabel *,bool> savegameWithMetaData;
     SaveGameLabel * selectedSavegame;
     QSpacerItem *spacer;
+    Pokecraft::InternalServer * internalServer;
 };
 
 #endif // MAINWINDOW_H

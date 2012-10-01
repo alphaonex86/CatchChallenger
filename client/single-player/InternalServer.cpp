@@ -1,18 +1,14 @@
 #include "InternalServer.h"
 #include "../../server/base/GlobalData.h"
-
-/*
-  When disconnect the fake client, stop the benchmark
-  */
+#include "../../general/base/FacilityLib.h"
 
 using namespace Pokecraft;
 
-bool InternalServer::oneInstanceRunning=false;
-
-InternalServer::InternalServer()
+InternalServer::InternalServer(const QString &dbPath)
 {
-	ProtocolParsing::initialiseTheVariable();
+    ProtocolParsing::initialiseTheVariable();
 
+    GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber = false;
     GlobalData::serverPrivateVariables.db                   = NULL;
     GlobalData::serverPrivateVariables.timer_player_map     = NULL;
     lunchInitFunction                                       = NULL;
@@ -37,9 +33,6 @@ InternalServer::InternalServer()
 
     GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
 
-	QStringList names;
-    names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher";
-
 	qRegisterMetaType<Chat_type>("Chat_type");
 	qRegisterMetaType<Player_internal_informations>("Player_internal_informations");
 	qRegisterMetaType<QList<quint32> >("QList<quint32>");
@@ -53,16 +46,19 @@ InternalServer::InternalServer()
 	qRegisterMetaType<QSqlQuery>("QSqlQuery");
 
     connect(&server,SIGNAL(newConnection()),this,SLOT(newConnection()));
-	connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
-	connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
+    connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
+    connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
 
 	stat=Down;
+    theSinglePlayer=NULL;
+    this->dbPath=dbPath;
     moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(4));
 
 	connect(this,SIGNAL(try_initAll()),this,SLOT(initAll()),Qt::QueuedConnection);
 	emit try_initAll();
 
-	srand(time(NULL));
+    srand(time(NULL));
+    emit need_be_started();
 }
 
 /** call only when the server is down
@@ -92,24 +88,6 @@ InternalServer::~InternalServer()
 	}
 }
 
-void InternalServer::setSettings(ServerSettings settings)
-{
-	//check the settings here
-	if(settings.max_players<1)
-		settings.max_players=200;
-	ProtocolParsing::setMaxPlayers(settings.max_players);
-	//load it
-    GlobalData::serverSettings=settings;
-    DebugClass::debugConsole(QString("GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber: %1").arg(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber));
-
-	quint8 player_list_size;
-	if(settings.max_players<=255)
-		player_list_size=sizeof(quint8);
-	else
-		player_list_size=sizeof(quint16);
-    GlobalData::serverPrivateVariables.sizeofInsertRequest=player_list_size+sizeof(quint8)+sizeof(quint8)+sizeof(quint8);
-}
-
 void InternalServer::initAll()
 {
     lunchInitFunction=new QTimer();
@@ -121,8 +99,7 @@ void InternalServer::preload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=false;
 
-	preload_the_map();
-	preload_the_visibility_algorithm();
+    preload_the_map();
 
 	ClientHeavyLoad::simplifiedIdList.clear();
 	int index=0;
@@ -140,7 +117,7 @@ void InternalServer::preload_the_map()
 	Map_loader map_temp;
 	QList<Map_semi> semi_loaded_map;
 	QStringList map_name;
-    QStringList returnList=listFolder(GlobalData::serverPrivateVariables.datapack_mapPath,"");
+    QStringList returnList=FacilityLib::listFolder(GlobalData::serverPrivateVariables.datapack_mapPath,"");
 
 	//load the map
 	int size=returnList.size();
@@ -155,9 +132,6 @@ void InternalServer::preload_the_map()
 			{
                 switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
 				{
-					case MapVisibilityAlgorithm_simple:
-                        GlobalData::serverPrivateVariables.map_list[returnList.at(index)]=new Map_server_MapVisibility_simple;
-					break;
 					case MapVisibilityAlgorithm_none:
 					default:
                         GlobalData::serverPrivateVariables.map_list[returnList.at(index)]=new Map;
@@ -173,9 +147,6 @@ void InternalServer::preload_the_map()
 				bool continueTheLoading=true;
                 switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
 				{
-					case MapVisibilityAlgorithm_simple:
-                        continueTheLoading=GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();
-					break;
 					case MapVisibilityAlgorithm_none:
 					default:
 					break;
@@ -419,38 +390,24 @@ void InternalServer::preload_the_map()
 	DebugClass::debugConsole(QString("finish preload the map"));
 }
 
-void InternalServer::preload_the_visibility_algorithm()
-{
-    QHash<QString,Map *>::const_iterator i = GlobalData::serverPrivateVariables.map_list.constBegin();
-    QHash<QString,Map *>::const_iterator i_end = GlobalData::serverPrivateVariables.map_list.constEnd();
-    switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-	{
-		case MapVisibilityAlgorithm_simple:
-		while (i != i_end)
-		{
-			static_cast<Map_server_MapVisibility_simple *>(i.value())->show=true;
-			i++;
-		}
-		break;
-		default:
-		break;
-	}
-}
-
 //start with allow real player to connect
 void InternalServer::start_internal_server()
 {
-	if(oneInstanceRunning)
-	{
-		DebugClass::debugConsole("Other instance already running");
-		return;
-	}
 	if(stat!=Down)
 	{
 		DebugClass::debugConsole("In wrong stat");
 		return;
 	}
     stat=InUp;
+
+    if(!server.listen())
+    {
+        DebugClass::debugConsole(QString("Unable to listen the internal server"));
+        stat=Down;
+        emit error(QString("Unable to listen the internal server"));
+        return;
+    }
+
 	QHostAddress address = QHostAddress::Any;
 
 	if(!initialize_the_database())
@@ -465,11 +422,9 @@ void InternalServer::start_internal_server()
         emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
 		return;
 	}
-    DebugClass::debugConsole(QString("Connected to %1 at %2 (%3)").arg(GlobalData::serverPrivateVariables.db_type_string).arg(GlobalData::serverSettings.database.mysql.host).arg(GlobalData::serverPrivateVariables.db->isOpen()));
+    DebugClass::debugConsole(QString("Connected to sqlite at %1 (%2)").arg(GlobalData::serverSettings.database.mysql.host).arg(GlobalData::serverPrivateVariables.db->isOpen()));
 	preload_the_data();
-	stat=Up;
-	oneInstanceRunning=true;
-	emit is_started(true);
+    stat=Up;
 	return;
 }
 
@@ -481,28 +436,10 @@ bool InternalServer::initialize_the_database()
         delete GlobalData::serverPrivateVariables.db;
         GlobalData::serverPrivateVariables.db=NULL;
 	}
-    switch(GlobalData::serverSettings.database.type)
-	{
-		default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-        GlobalData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL");
-        GlobalData::serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
-        GlobalData::serverPrivateVariables.db->setHostName(GlobalData::serverSettings.database.mysql.host);
-        GlobalData::serverPrivateVariables.db->setDatabaseName(GlobalData::serverSettings.database.mysql.db);
-        GlobalData::serverPrivateVariables.db->setUserName(GlobalData::serverSettings.database.mysql.login);
-        GlobalData::serverPrivateVariables.db->setPassword(GlobalData::serverSettings.database.mysql.pass);
-        GlobalData::serverPrivateVariables.db_type_string="mysql";
-		return true;
-		break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-        GlobalData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
-        GlobalData::serverPrivateVariables.db->setDatabaseName(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
-        GlobalData::serverPrivateVariables.db_type_string="sqlite";
-		return true;
-		break;
-	}
+    GlobalData::serverPrivateVariables.db = new QSqlDatabase();
+    *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
+    GlobalData::serverPrivateVariables.db->setDatabaseName(dbPath);
+    return true;
 }
 
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
@@ -511,8 +448,7 @@ void InternalServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
-	unload_the_map();
-	unload_the_visibility_algorithm();
+    unload_the_map();
 
 	ClientHeavyLoad::simplifiedIdList.clear();
 }
@@ -532,25 +468,17 @@ void InternalServer::unload_the_map()
     GlobalData::serverPrivateVariables.botSpawn.clear();
 }
 
-void InternalServer::unload_the_visibility_algorithm()
-{
-}
-
 void InternalServer::check_if_now_stopped()
 {
-    if(client_list.size()!=0 || GlobalData::serverPrivateVariables.fake_clients.size()!=0)
-		return;
 	if(stat!=InDown)
 		return;
 	DebugClass::debugConsole("Fully stopped");
     if(GlobalData::serverPrivateVariables.db!=NULL)
         GlobalData::serverPrivateVariables.db->close();
-	//server.close();
+    server.close();
 	stat=Down;
-	oneInstanceRunning=false;
 
-	unload_the_data();
-	emit is_started(false);
+    unload_the_data();
 }
 
 //call by normal stop
@@ -565,12 +493,8 @@ void InternalServer::stop_internal_server()
 	DebugClass::debugConsole("Try stop");
     stat=InDown;
 
-	int index=0;
-	while(index<client_list.size())
-	{
-		client_list.at(index)->disconnectClient();
-		index++;
-	}
+    if(theSinglePlayer!=NULL)
+        theSinglePlayer->disconnectClient();
 
 	/* commented because it need be unloaded after all the player
 	unload_the_data();*/
@@ -592,28 +516,13 @@ void InternalServer::removeOneClient()
 	{
 		DebugClass::debugConsole("is not ready to stop!");
 		return;
-	}
-	client_list.removeOne(client);
-	client->deleteLater();
+    }
+    theSinglePlayer->deleteLater();
+    theSinglePlayer=NULL;
 	check_if_now_stopped();
 }
 
 /////////////////////////////////////// player related //////////////////////////////////////
-QStringList InternalServer::listFolder(const QString& folder,const QString& suffix)
-{
-	QStringList returnList;
-	QFileInfoList entryList=QDir(folder+suffix).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
-	int sizeEntryList=entryList.size();
-	for (int index=0;index<sizeEntryList;++index)
-	{
-		QFileInfo fileInfo=entryList.at(index);
-		if(fileInfo.isDir())
-			returnList+=listFolder(folder,suffix+fileInfo.fileName()+"/");//put unix separator because it's transformed into that's under windows too
-		else if(fileInfo.isFile())
-			returnList+=suffix+fileInfo.fileName();
-	}
-	return returnList;
-}
 
 void InternalServer::newConnection()
 {
@@ -623,17 +532,12 @@ void InternalServer::newConnection()
         QFakeSocket *socket = server.nextPendingConnection();
 		if(socket!=NULL)
 		{
-            client_list << new Client(socket,false,new MapVisibilityAlgorithm_None());
-			connect_the_last_client();
+            theSinglePlayer = new Client(socket,false,new MapVisibilityAlgorithm_None());
+            connect(theSinglePlayer,SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
 		}
 		else
 			DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
     }
-}
-
-void InternalServer::connect_the_last_client()
-{
-	connect(client_list.last(),SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
 }
 
 bool InternalServer::isListen()
@@ -644,16 +548,4 @@ bool InternalServer::isListen()
 bool InternalServer::isStopped()
 {
 	return (stat==Down);
-}
-
-/////////////////////////////////// Async the call ///////////////////////////////////
-/// \brief Called when event loop is setup
-void InternalServer::start_server()
-{
-	emit need_be_started();
-}
-
-void InternalServer::stop_server()
-{
-	emit try_stop_server();
 }
