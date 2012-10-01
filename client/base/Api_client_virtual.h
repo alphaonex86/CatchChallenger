@@ -15,6 +15,7 @@
 #include <QDateTime>
 #include <QCryptographicHash>
 
+#include "../../general/base/QFakeSocket.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
@@ -26,8 +27,10 @@ class Api_client_virtual : public Api_protocol
 {
 	Q_OBJECT
 public:
-	explicit Api_client_virtual(QAbstractSocket *socket);
+    explicit Api_client_virtual(QAbstractSocket *socket);
 	~Api_client_virtual();
+    void sendDatapackContent();
+    void tryDisconnect();
 };
 }
 

@@ -10,6 +10,9 @@ LIBS *= -ltiled
 
 QT       += core gui network opengl xml sql
 
+QMAKE_CFLAGS += -O0 -fomit-frame-pointer
+QMAKE_CXXFLAGS += -O0 -fomit-frame-pointer
+
 TARGET = pokecraft-single-player
 TEMPLATE = app
 

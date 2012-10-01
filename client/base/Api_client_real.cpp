@@ -265,8 +265,3 @@ void Api_client_real::cleanDatapack(QString suffix)
 	if(entryList.size()==0)
 		finalDatapackFolder.rmpath(datapack_base_name+suffix);
 }
-
-QString Api_client_real::get_datapack_base_name()
-{
-	return datapack_base_name;
-}

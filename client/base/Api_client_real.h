@@ -38,8 +38,7 @@ public:
 	//datapack related
 	void sendDatapackContent();
 	const QStringList listDatapack(QString suffix);
-	void cleanDatapack(QString suffix);
-	QString get_datapack_base_name();
+    void cleanDatapack(QString suffix);
 protected:
 	void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 	void resetAll();
@@ -54,7 +53,6 @@ private:
 		QStringList filesName;
 	};
 	QList<query_files> query_files_list;
-	QString datapack_base_name;
 	bool wait_datapack_content;
     QStringList datapackFilesList;
 private slots:

@@ -6,8 +6,8 @@
 
 QT       += core gui network xml sql widgets
 
-QMAKE_CFLAGS += -pipe -march=native -O0 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ftree-vectorize
-QMAKE_CXXFLAGS += -pipe -march=native -O0 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ftree-vectorize
+QMAKE_CFLAGS += -O0
+QMAKE_CXXFLAGS += -O0
 
 TARGET = pokecraft-server-gui
 TEMPLATE = app

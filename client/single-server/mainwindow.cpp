@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
 	connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(&socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
+    connect(baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()));
 
 	stopFlood.setSingleShot(false);
 	stopFlood.start(1500);
@@ -183,4 +184,9 @@ void MainWindow::message(QString message)
 void MainWindow::protocol_is_good()
 {
     client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
+}
+
+void MainWindow::needQuit()
+{
+    client->tryDisconnect();
 }

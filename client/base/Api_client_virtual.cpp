@@ -13,8 +13,19 @@ using namespace Pokecraft;
 Api_client_virtual::Api_client_virtual(QAbstractSocket *socket) :
 	Api_protocol(socket)
 {
+    datapack_base_name=QString("%1/datapack/").arg(QApplication::applicationDirPath());
 }
 
 Api_client_virtual::~Api_client_virtual()
 {
+}
+
+void Api_client_virtual::sendDatapackContent()
+{
+    emit haveTheDatapack();
+}
+
+void Api_client_virtual::tryDisconnect()
+{
+    static_cast<QFakeSocket *>(socket)->disconnectFromHostImplementation();
 }
