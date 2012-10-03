@@ -14,6 +14,7 @@
 #include <QSqlQuery>
 
 #include "../../general/base/GeneralStructures.h"
+#include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
 
 namespace Pokecraft {
@@ -28,25 +29,26 @@ class Map_server_MapVisibility_simple;
 
 struct Map_player_info
 {
-	Map *map;
-	int x,y;
-	QString skin;
+    Map *map;
+    int x,y;
+    QString skin;
 };
 
 enum MapVisibilityAlgorithm
 {
-	MapVisibilityAlgorithm_simple,
-	MapVisibilityAlgorithm_none
+    MapVisibilityAlgorithm_simple,
+    MapVisibilityAlgorithm_none
 };
 
 struct Player_internal_informations
 {
-	Player_private_and_public_informations public_and_private_informations;
-	bool isFake;
-	bool is_logged;
-	quint32 id;
-	QByteArray rawPseudo;
-	QByteArray rawSkin;
+    Player_private_and_public_informations public_and_private_informations;
+    bool isFake;
+    bool isVirtual;
+    bool is_logged;
+    quint32 id;
+    QByteArray rawPseudo;
+    QByteArray rawSkin;
 };
 
 struct ServerSettings
@@ -130,8 +132,6 @@ struct ServerPrivateVariables
     QSet<quint32> connected_players_id_list;
 
     //bot
-    QList<FakeBot *> fake_clients;
-    quint32 number_of_bots_logged;
     struct BotSpawn
     {
         QString map;
@@ -139,6 +139,8 @@ struct ServerPrivateVariables
         COORD_TYPE y;
     };
     QList<BotSpawn> botSpawn;
+    QList<FakeBot *> fake_clients;
+    quint32 number_of_bots_logged;
     int botSpawnIndex;
 };
 

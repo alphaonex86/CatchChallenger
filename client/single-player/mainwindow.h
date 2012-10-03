@@ -24,17 +24,17 @@ namespace Ui {
 
 class MainWindow : public QMainWindow
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	explicit MainWindow(QWidget *parent = 0);
-	~MainWindow();
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
 protected:
-	void changeEvent(QEvent *e);
+    void changeEvent(QEvent *e);
 private slots:
-	void stateChanged(QAbstractSocket::SocketState socketState);
-	void error(QAbstractSocket::SocketError socketError);
-	void haveNewError();
-	void message(QString message);
+    void stateChanged(QAbstractSocket::SocketState socketState);
+    void error(QAbstractSocket::SocketError socketError);
+    void haveNewError();
+    void message(QString message);
     void disconnected(QString reason);
     void protocol_is_good();
     void try_stop_server();
@@ -48,21 +48,22 @@ private slots:
     void needQuit();
     void serverIsReady();
 private:
-	Ui::MainWindow *ui;
+    Ui::MainWindow *ui;
     Pokecraft::Api_client_virtual *client;
-	void resetAll();
+    void resetAll();
     bool rmpath(const QDir &dir);
     void updateSavegameList();
-	QStringList chat_list_player_pseudo;
-	QList<Pokecraft::Player_type> chat_list_player_type;
-	QList<Pokecraft::Chat_type> chat_list_type;
+    QStringList chat_list_player_pseudo;
+    QList<Pokecraft::Player_type> chat_list_player_type;
+    QList<Pokecraft::Chat_type> chat_list_type;
     QList<QString> chat_list_text;
-	QSettings settings;
-	QString lastMessageSend;
-	QTimer stopFlood;
-	int numberForFlood;
+    QSettings settings;
+    QString lastMessageSend;
+    QTimer stopFlood;
+    int numberForFlood;
     bool haveShowDisconnectionReason;
-	QStringList server_list;
+    QStringList server_list;
+    Pokecraft::ConnectedSocket *connectSocket;
     Pokecraft::QFakeSocket socket;
     Pokecraft::BaseWindow *baseWindow;
     QList<SaveGameLabel *> savegame;

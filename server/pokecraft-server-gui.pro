@@ -18,11 +18,13 @@ SOURCES += MainWindow.cpp \
     main.cpp \
     ../general/base/FacilityLib.cpp \
     base/GlobalData.cpp \
-    base/SqlFunction.cpp
+    base/SqlFunction.cpp \
+    ../general/base/ConnectedSocket.cpp
 HEADERS  += MainWindow.h \
     ../general/base/FacilityLib.h \
     base/GlobalData.h \
-    base/SqlFunction.h
+    base/SqlFunction.h \
+    ../general/base/ConnectedSocket.h
 
 SOURCES += EventDispatcher.cpp \
     base/EventThreader.cpp \

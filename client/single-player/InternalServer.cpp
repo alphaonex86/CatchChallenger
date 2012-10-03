@@ -44,7 +44,7 @@ InternalServer::InternalServer(const QString &dbPath)
     qRegisterMetaType<Player_public_informations>("Player_public_informations");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
 
-    connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()));
+    connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::DirectConnection);
     connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
     connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
 
@@ -531,11 +531,12 @@ void InternalServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
-            theSinglePlayer = new Client(socket,false,new MapVisibilityAlgorithm_None());
+            //delete new ConnectedSocket(socket)
+            theSinglePlayer = new Client(new ConnectedSocket(socket),false,true,new MapVisibilityAlgorithm_None());
             connect(theSinglePlayer,SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
         }
         else
-            DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
+            DebugClass::debugConsole("NULL client at InternalServer::newConnection()");
     }
 }
 

@@ -10,8 +10,8 @@ LIBS *= -ltiled
 
 QT       += core gui network opengl xml sql
 
-QMAKE_CFLAGS += -O0 -fomit-frame-pointer
-QMAKE_CXXFLAGS += -O0 -fomit-frame-pointer
+QMAKE_CFLAGS += -O0
+QMAKE_CXXFLAGS += -O0
 
 TARGET = pokecraft-single-player
 TEMPLATE = app
@@ -60,7 +60,8 @@ SOURCES += main.cpp\
     NewGame.cpp \
     ../base/interface/MapController.cpp \
     ../base/interface/BaseWindow.cpp \
-    SaveGameLabel.cpp
+    SaveGameLabel.cpp \
+    ../../general/base/ConnectedSocket.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -107,7 +108,8 @@ HEADERS  += mainwindow.h \
     NewGame.h \
     ../base/interface/BaseWindow.h \
     ../base/interface/MapController.h \
-    SaveGameLabel.h
+    SaveGameLabel.h \
+    ../../general/base/ConnectedSocket.h
 
 FORMS    += mainwindow.ui \
     NewGame.ui \

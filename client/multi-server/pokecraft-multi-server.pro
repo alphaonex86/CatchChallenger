@@ -8,6 +8,9 @@ INCLUDEPATH += ../../general/libtiled/
 DEPENDPATH += ../../general/libtiled/
 LIBS *= -ltiled
 
+QMAKE_CFLAGS += -O0
+QMAKE_CXXFLAGS += -O0
+
 QT       += core gui network opengl xml
 
 TARGET = pokecraft-multi-server
@@ -37,7 +40,8 @@ SOURCES += main.cpp\
     ../base/render/MapItem.cpp \
     ../base/Map_client.cpp \
     ../base/interface/BaseWindow.cpp \
-    ../base/interface/MapController.cpp
+    ../base/interface/MapController.cpp \
+    ../../general/base/ConnectedSocket.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -65,7 +69,8 @@ HEADERS  += mainwindow.h \
     ../base/render/MapItem.h \
     ../base/Map_client.h \
     ../base/interface/BaseWindow.h \
-    ../base/interface/MapController.h
+    ../base/interface/MapController.h \
+    ../../general/base/ConnectedSocket.h
 
 FORMS    += mainwindow.ui \
     ../base/interface/BaseWindow.ui

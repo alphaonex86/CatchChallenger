@@ -107,7 +107,7 @@ private slots:
     void newConnection();
     //remove all finished client
     void removeOneClient();
-    void removeOneBot();
+    //void removeOneBot();
     //parse general order from the client
     void serverCommand(QString command,QString extraText);
     //init, constructor, destructor
