@@ -19,16 +19,17 @@
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/ConnectedSocket.h"
 #include "ClientStructures.h"
 #include "Api_protocol.h"
 
 namespace Pokecraft {
 class Api_client_virtual : public Api_protocol
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-    explicit Api_client_virtual(QAbstractSocket *socket);
-	~Api_client_virtual();
+    explicit Api_client_virtual(ConnectedSocket *socket);
+    ~Api_client_virtual();
     void sendDatapackContent();
     void tryDisconnect();
 };

@@ -752,7 +752,7 @@ void EventDispatcher::removeOneClient()
     check_if_now_stopped();
 }
 
-void EventDispatcher::removeOneBot()
+/*void EventDispatcher::removeOneBot()
 {
     FakeBot *client=qobject_cast<FakeBot *>(QObject::sender());
     if(client==NULL)
@@ -763,7 +763,7 @@ void EventDispatcher::removeOneBot()
     GlobalData::serverPrivateVariables.fake_clients.removeOne(client);
     client->deleteLater();
     check_if_now_stopped();
-}
+}*/
 
 void EventDispatcher::removeBots()
 {
@@ -771,7 +771,6 @@ void EventDispatcher::removeBots()
     int index=0;
     while(index<list_size)
     {
-        GlobalData::serverPrivateVariables.fake_clients.at(index)->stop();
         GlobalData::serverPrivateVariables.fake_clients.at(index)->disconnect();
         //disconnect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()));
         //connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
@@ -785,7 +784,7 @@ void EventDispatcher::removeBots()
 void EventDispatcher::addBot()
 {
     GlobalData::serverPrivateVariables.fake_clients << new FakeBot();
-    client_list << new Client(GlobalData::serverPrivateVariables.fake_clients.last()->socket.getTheOtherSocket(),true,getClientMapManagement());
+    client_list << new Client(&GlobalData::serverPrivateVariables.fake_clients.last()->socket,true,true,getClientMapManagement());
     connect_the_last_client();
 
     if(GlobalData::serverPrivateVariables.fake_clients.size()==1)
@@ -896,7 +895,7 @@ void EventDispatcher::newConnection()
         QTcpSocket *socket = server->nextPendingConnection();
         if(socket!=NULL)
         {
-            client_list << new Client(socket,false,getClientMapManagement());
+            client_list << new Client(new ConnectedSocket(socket),false,false,getClientMapManagement());
             connect_the_last_client();
         }
         else
