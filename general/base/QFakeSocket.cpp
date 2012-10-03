@@ -7,163 +7,160 @@
 
 using namespace Pokecraft;
 
-QFakeSocket::QFakeSocket() :
-	QAbstractSocket(QAbstractSocket::UnknownSocketType,0)
+QFakeSocket::QFakeSocket()
 {
-	setSocketError(QAbstractSocket::UnknownSocketError);
-	setSocketState(QAbstractSocket::UnconnectedState);
-	theOtherSocket=NULL;
-	RX_size=0;
+    theOtherSocket=NULL;
+    RX_size=0;
+    open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
 void QFakeSocket::abort()
 {
-	#ifdef FAKESOCKETDEBUG
-	DebugClass::debugConsole(QString("disconnectFromHostImplementation()"));
-	#endif
+    #ifdef FAKESOCKETDEBUG
+    DebugClass::debugConsole(QString("QFakeSocket::abort()"));
+    #endif
+    disconnectFromHost();
 }
 
-void QFakeSocket::disconnectFromHostImplementation()
+void QFakeSocket::disconnectFromHost()
 {
-	#ifdef FAKESOCKETDEBUG
-	DebugClass::debugConsole(QString("disconnectFromHostImplementation()"));
-	#endif
-	if(theOtherSocket==NULL)
-		return;
-	QFakeSocket *tempOtherSocket=theOtherSocket;
-	theOtherSocket=NULL;
-	tempOtherSocket->disconnectFromHost();
-	tempOtherSocket->disconnectFromHostImplementation();
-	{
-		QMutexLocker lock(&mutex);
-		data.clear();
-	}
-	setSocketState(QAbstractSocket::UnconnectedState);
-	emit stateChanged(QAbstractSocket::UnconnectedState);
-	emit disconnected();
+    if(theOtherSocket==NULL)
+        return;
+    #ifdef FAKESOCKETDEBUG
+    DebugClass::debugConsole(QString("QFakeSocket::disconnectFromHost()"));
+    #endif
+    QFakeSocket *tempOtherSocket=theOtherSocket;
+    theOtherSocket=NULL;
+    tempOtherSocket->disconnectFromHost();
+    {
+        QMutexLocker lock(&mutex);
+        data.clear();
+    }
+    emit stateChanged(QAbstractSocket::UnconnectedState);
+    emit disconnected();
 }
 
-void QFakeSocket::connectToHostImplementation()
+void QFakeSocket::connectToHost()
 {
-	#ifdef FAKESOCKETDEBUG
-	DebugClass::debugConsole(QString("connectToHostImplementation()"));
-	#endif
-	if(theOtherSocket!=NULL)
-		return;
-	QFakeServer::server.addPendingConnection(this);
-	setSocketState(QAbstractSocket::ConnectedState);
-	emit stateChanged(QAbstractSocket::ConnectedState);
-	emit connected();
+    #ifdef FAKESOCKETDEBUG
+    DebugClass::debugConsole(QString("QFakeSocket::connectToHost()"));
+    #endif
+    if(theOtherSocket!=NULL)
+        return;
+    QFakeServer::server.addPendingConnection(this);
+    emit stateChanged(QAbstractSocket::ConnectedState);
+    emit connected();
 }
 
 qint64	QFakeSocket::bytesAvailableWithMutex()
 {
-	qint64 size;
-	{
-		QMutexLocker lock(&mutex);
-		#ifdef FAKESOCKETDEBUG
-		DebugClass::debugConsole(QString("bytesAvailable(): data.size(): %1").arg(data.size()));
-		#endif
-		size=data.size();
-	}
-	return size;
+    qint64 size;
+    {
+        QMutexLocker lock(&mutex);
+        #ifdef FAKESOCKETDEBUG
+        DebugClass::debugConsole(QString("bytesAvailable(): data.size(): %1").arg(data.size()));
+        #endif
+        size=data.size();
+    }
+    return size;
 }
 
-qint64	QFakeSocket::bytesAvailable () const
+qint64	QFakeSocket::bytesAvailable() const
 {
-	return const_cast<QFakeSocket *>(this)->bytesAvailableWithMutex();
+    return const_cast<QFakeSocket *>(this)->bytesAvailableWithMutex();
 }
 
-qint64	QFakeSocket::bytesToWrite () const
+void	QFakeSocket::close()
 {
-	return 0;
-}
-
-bool	QFakeSocket::canReadLine () const
-{
-	return false;
-}
-
-void	QFakeSocket::close ()
-{
-	disconnectFromHost();
-}
-
-bool	QFakeSocket::waitForBytesWritten ( int msecs )
-{
-	Q_UNUSED(msecs);
-	return true;
-}
-
-bool	QFakeSocket::waitForReadyRead ( int msecs )
-{
-	Q_UNUSED(msecs);
-	return true;
+    disconnectFromHost();
 }
 
 bool QFakeSocket::isValid()
 {
-	return theOtherSocket!=NULL;
+    return theOtherSocket!=NULL;
 }
 
 QFakeSocket * QFakeSocket::getTheOtherSocket()
 {
-	return theOtherSocket;
+    return theOtherSocket;
 }
 
 quint64 QFakeSocket::getRXSize()
 {
-	return RX_size;
+    return RX_size;
 }
 
 quint64 QFakeSocket::getTXSize()
 {
-	if(theOtherSocket==NULL)
-		return 0;
-	return theOtherSocket->getRXSize();
+    if(theOtherSocket==NULL)
+        return 0;
+    return theOtherSocket->getRXSize();
+}
+
+QAbstractSocket::SocketError QFakeSocket::error() const
+{
+    return QAbstractSocket::UnknownSocketError;
+}
+
+QAbstractSocket::SocketState QFakeSocket::state() const
+{
+    if(theOtherSocket==NULL)
+        return QAbstractSocket::UnconnectedState;
+    else
+        return QAbstractSocket::ConnectedState;
 }
 
 qint64	QFakeSocket::readData(char * rawData, qint64 maxSize)
 {
-	QMutexLocker lock(&mutex);
-	QByteArray extractedData=this->data.mid(0,maxSize);
-	#ifdef FAKESOCKETDEBUG
-	DebugClass::debugConsole(QString("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(QString(extractedData.toHex())));
-	#endif
-	memcpy(rawData,extractedData.data(),extractedData.size());
-	this->data.remove(0,extractedData.size());
-	return extractedData.size();
+    QMutexLocker lock(&mutex);
+    QByteArray extractedData=this->data.mid(0,maxSize);
+    #ifdef FAKESOCKETDEBUG
+    DebugClass::debugConsole(QString("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(QString(extractedData.toHex())));
+    #endif
+    memcpy(rawData,extractedData.data(),extractedData.size());
+    this->data.remove(0,extractedData.size());
+    return extractedData.size();
 }
 
-qint64	QFakeSocket::writeData ( const char * rawData, qint64 size )
+qint64	QFakeSocket::writeData(const char * rawData, qint64 size)
 {
-	if(theOtherSocket==NULL)
-	{
-		DebugClass::debugConsole("writeData(): theOtherSocket==NULL");
-		emit error(QAbstractSocket::NetworkError);
-		return size;
-	}
-	QByteArray dataToSend;
-	{
-		QMutexLocker lock(&mutex);
-		#ifdef FAKESOCKETDEBUG
-		DebugClass::debugConsole(QString("writeData(): size: %1").arg(size));
-		#endif
-		dataToSend=QByteArray(rawData,size);
-	}
-	theOtherSocket->internal_writeData(dataToSend);
-	return size;
+    if(theOtherSocket==NULL)
+    {
+        DebugClass::debugConsole("writeData(): theOtherSocket==NULL");
+        emit error(QAbstractSocket::NetworkError);
+        return size;
+    }
+    QByteArray dataToSend;
+    {
+        QMutexLocker lock(&mutex);
+        #ifdef FAKESOCKETDEBUG
+        DebugClass::debugConsole(QString("writeData(): size: %1").arg(size));
+        #endif
+        dataToSend=QByteArray(rawData,size);
+    }
+    theOtherSocket->internal_writeData(dataToSend);
+    return size;
 }
 
 void QFakeSocket::internal_writeData(QByteArray rawData)
 {
-	{
-		QMutexLocker lock(&mutex);
-		#ifdef FAKESOCKETDEBUG
-		DebugClass::debugConsole(QString("internal_writeData(): size: %1").arg(rawData.size()));
-		#endif
-		RX_size+=rawData.size();
-		this->data+=rawData;
-	}
-	emit readyRead();
+    {
+        QMutexLocker lock(&mutex);
+        #ifdef FAKESOCKETDEBUG
+        DebugClass::debugConsole(QString("internal_writeData(): size: %1").arg(rawData.size()));
+        #endif
+        RX_size+=rawData.size();
+        this->data+=rawData;
+    }
+    emit readyRead();
+}
+
+bool QFakeSocket::isSequential() const
+{
+    return true;
+}
+
+bool QFakeSocket::canReadLine () const
+{
+    return false;
 }

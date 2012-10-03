@@ -40,7 +40,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="styleSheet">
-       <string notr="true">background-image: url(:/images/interface/player/background.png);</string>
+       <string notr="true"/>
       </property>
       <property name="currentIndex">
        <number>0</number>

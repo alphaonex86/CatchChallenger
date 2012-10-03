@@ -4,45 +4,45 @@
 #include <QAbstractSocket>
 #include <QMutex>
 #include <QByteArray>
+#include <QIODevice>
 
 namespace Pokecraft {
-class QFakeSocket : public QAbstractSocket
+class QFakeSocket : public QIODevice
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	friend class QFakeServer;
+    friend class QFakeServer;
 //	friend class QFakeSocket;
-	explicit QFakeSocket();
-	void abort();
-	void disconnectFromHostImplementation();
-	void connectToHostImplementation();
-	qint64	bytesAvailable () const;
-	qint64	bytesToWrite () const;
-	bool	canReadLine () const;
-	void	close ();
-	bool	waitForBytesWritten ( int msecs = 30000 );
-	bool	waitForReadyRead ( int msecs = 30000 );
-	bool isValid();
-	QFakeSocket * getTheOtherSocket();
-	quint64 getRXSize();
-	quint64 getTXSize();
+    explicit QFakeSocket();
+    void abort();
+    void disconnectFromHost();
+    void connectToHost();
+    qint64	bytesAvailable() const;
+    void	close();
+    bool isValid();
+    QFakeSocket * getTheOtherSocket();
+    quint64 getRXSize();
+    quint64 getTXSize();
+    QAbstractSocket::SocketError error() const;
+    QAbstractSocket::SocketState state() const;
+    bool isValid() const;
+signals:
+    void	connected();
+    void	disconnected();
+    void	error(QAbstractSocket::SocketError socketError);
+    void	stateChanged(QAbstractSocket::SocketState socketState);
 protected:
-	qint64	readData ( char * rawData, qint64 maxSize );
-	qint64	writeData(const char * rawData, qint64 size);
-/*signals:
-	void	connected();
-	void	disconnected();
-	void	error ( QAbstractSocket::SocketError socketError );
-	void	stateChanged ( QAbstractSocket::SocketState socketState );
-	void	readyRead();*/
-protected:
-	QFakeSocket *theOtherSocket;
+    QFakeSocket *theOtherSocket;
+    virtual bool isSequential() const;
+    virtual bool canReadLine() const;
+    virtual qint64	readData(char * data, qint64 maxSize);
+    virtual qint64	writeData(const char * data, qint64 maxSize);
 private:
-	QByteArray data;
-	QMutex mutex;
-	void internal_writeData(QByteArray rawData);
-	quint64 RX_size;
-	qint64	bytesAvailableWithMutex();
+    QByteArray data;
+    QMutex mutex;
+    void internal_writeData(QByteArray rawData);
+    quint64 RX_size;
+    qint64	bytesAvailableWithMutex();
 };
 }
 

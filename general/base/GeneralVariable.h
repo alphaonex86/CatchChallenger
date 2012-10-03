@@ -3,18 +3,14 @@
 
 #define PROTOCOL_HEADER "pokecraft-0.0.0.1"
 
-#define CLIENT_VERSION "0.0.1.0"
-#define API_CLIENT_VERSION "0.0.3.1"
-#define SERVER_VERSION "0.0.3.1"
-
 #define POKECRAFT_EXTRA_CHECK
 
 /*
+*/
 #define FAKESOCKETDEBUG
 #define PROTOCOLPARSINGINPUTDEBUG
 #define PROTOCOLPARSINGDEBUG
 #define DEBUG_PROTOCOLPARSING_RAW_NETWORK
-*/
 
 /*
  *#define DEBUG_MESSAGE_MAP_TP
@@ -24,6 +20,6 @@
 #define DEBUG_MESSAGE_MAP_RAW
 //*/
 
-#define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]+\\.[a-z]{3,4}$"
+#define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]*[0-9a-zA-Z]\\.[a-z]{3,4}$"
 
 #endif // GENERALVARIABLE_H

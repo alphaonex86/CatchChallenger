@@ -10,8 +10,8 @@ using namespace Pokecraft;
 
 //need host + port here to have datapack base
 
-Api_client_virtual::Api_client_virtual(QAbstractSocket *socket) :
-	Api_protocol(socket)
+Api_client_virtual::Api_client_virtual(ConnectedSocket *socket) :
+    Api_protocol(socket)
 {
     datapack_base_name=QString("%1/datapack/").arg(QApplication::applicationDirPath());
 }
@@ -27,5 +27,5 @@ void Api_client_virtual::sendDatapackContent()
 
 void Api_client_virtual::tryDisconnect()
 {
-    static_cast<QFakeSocket *>(socket)->disconnectFromHostImplementation();
+    socket->disconnectFromHost();
 }
