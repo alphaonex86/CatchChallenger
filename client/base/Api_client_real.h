@@ -24,40 +24,40 @@
 namespace Pokecraft {
 class Api_client_real : public Api_protocol
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	explicit Api_client_real(QAbstractSocket *socket);
-	~Api_client_real();
+    explicit Api_client_real(ConnectedSocket *socket);
+    ~Api_client_real();
 
-	//connection related
-	void tryConnect(QString host,quint16 port);
-	void tryDisconnect();
-	QString getHost();
-	quint16 getPort();
+    //connection related
+    void tryConnect(QString host,quint16 port);
+    void tryDisconnect();
+    QString getHost();
+    quint16 getPort();
 
-	//datapack related
-	void sendDatapackContent();
-	const QStringList listDatapack(QString suffix);
+    //datapack related
+    void sendDatapackContent();
+    const QStringList listDatapack(QString suffix);
     void cleanDatapack(QString suffix);
 protected:
-	void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
-	void resetAll();
+    void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    void resetAll();
 private:
-	QString host;
-	quint16 port;
+    QString host;
+    quint16 port;
 
-	//file list
-	struct query_files
-	{
-		quint8 id;
-		QStringList filesName;
-	};
-	QList<query_files> query_files_list;
-	bool wait_datapack_content;
+    //file list
+    struct query_files
+    {
+        quint8 id;
+        QStringList filesName;
+    };
+    QList<query_files> query_files_list;
+    bool wait_datapack_content;
     QStringList datapackFilesList;
 private slots:
-	void disconnected();
-	void writeNewFile(const QString &fileName,const QByteArray &data,const quint32 &mtime);
+    void disconnected();
+    void writeNewFile(const QString &fileName,const QByteArray &data,const quint32 &mtime);
 };
 }
 

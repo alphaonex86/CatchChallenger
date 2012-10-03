@@ -9,8 +9,8 @@ namespace Pokecraft {
 class FacilityLib
 {
 public:
-	static QByteArray toUTF8(const QString &text);
-	static QStringList listFolder(const QString& folder,const QString& suffix="");
+    static QByteArray toUTF8(const QString &text);
+    static QStringList listFolder(const QString& folder,const QString& suffix="");
 };
 }
 

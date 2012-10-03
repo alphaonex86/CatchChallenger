@@ -8,10 +8,11 @@ using namespace Pokecraft;
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
-Client::Client(QAbstractSocket *socket,bool isFake,ClientMapManagement *clientMapManagement)
+Client::Client(ConnectedSocket *socket,bool isFake,bool isVirtual,ClientMapManagement *clientMapManagement)
 {
     this->socket			= socket;
     player_informations.isFake=isFake;
+    player_informations.isVirtual=isVirtual;
 
     clientBroadCast=new ClientBroadCast();
     clientHeavyLoad=new ClientHeavyLoad();
@@ -38,7 +39,7 @@ Client::Client(QAbstractSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     player_informations.is_logged=false;
 
-    if(!player_informations.isFake)
+    if(!player_informations.isVirtual)
     {
         remote_ip=socket->peerAddress().toString();
         port=socket->peerPort();
@@ -155,7 +156,7 @@ Client::~Client()
 /// \brief new error at connexion
 void Client::connectionError(QAbstractSocket::SocketError error)
 {
-    QTcpSocket *socket=qobject_cast<QTcpSocket *>(QObject::sender());
+    ConnectedSocket *socket=qobject_cast<ConnectedSocket *>(QObject::sender());
     if(socket==NULL)
     {
         normalOutput("Unlocated client socket at error");
@@ -182,8 +183,6 @@ void Client::disconnectClient()
     if(socket!=NULL)
     {
         socket->disconnectFromHost();
-        if(player_informations.isFake)
-            static_cast<QFakeSocket *>(socket)->disconnectFromHostImplementation();
         if(socket->state()!=QAbstractSocket::UnconnectedState)
             socket->waitForDisconnected();
         socket=NULL;
@@ -330,12 +329,4 @@ Map_player_info Client::getMapPlayerInfo()
     Map_player_info temp=clientMapManagement->getMapPlayerInfo();
     temp.skin=player_informations.public_and_private_informations.public_informations.skin;
     return temp;
-}
-
-QString Client::quoteSqlVariable(QString variable)
-{
-    variable.replace("\\","\\\\");
-    variable.replace("\"","\\\"");
-    variable.replace("'","\\'");
-    return variable;
 }
