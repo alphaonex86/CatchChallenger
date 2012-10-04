@@ -784,7 +784,7 @@ void EventDispatcher::removeBots()
 void EventDispatcher::addBot()
 {
     GlobalData::serverPrivateVariables.fake_clients << new FakeBot();
-    client_list << new Client(&GlobalData::serverPrivateVariables.fake_clients.last()->socket,true,true,getClientMapManagement());
+    client_list << new Client(&GlobalData::serverPrivateVariables.fake_clients.last()->socket,true,getClientMapManagement());
     connect_the_last_client();
 
     if(GlobalData::serverPrivateVariables.fake_clients.size()==1)
@@ -895,7 +895,7 @@ void EventDispatcher::newConnection()
         QTcpSocket *socket = server->nextPendingConnection();
         if(socket!=NULL)
         {
-            client_list << new Client(new ConnectedSocket(socket),false,false,getClientMapManagement());
+            client_list << new Client(new ConnectedSocket(socket),false,getClientMapManagement());
             connect_the_last_client();
         }
         else
