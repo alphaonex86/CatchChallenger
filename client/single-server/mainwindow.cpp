@@ -59,6 +59,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::resetAll()
 {
+    client->resetAll();
     baseWindow->resetAll();
     ui->stackedWidget->setCurrentIndex(0);
     chat_list_player_pseudo.clear();
