@@ -8,6 +8,7 @@ InternalServer::InternalServer(const QString &dbPath)
 {
     ProtocolParsing::initialiseTheVariable();
 
+    GlobalData::serverSettings.max_players=1;
     GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber = false;
     GlobalData::serverPrivateVariables.db                   = NULL;
     GlobalData::serverPrivateVariables.timer_player_map     = NULL;
@@ -44,7 +45,7 @@ InternalServer::InternalServer(const QString &dbPath)
     qRegisterMetaType<Player_public_informations>("Player_public_informations");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
 
-    connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::DirectConnection);
+    connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
     connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
     connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
 
