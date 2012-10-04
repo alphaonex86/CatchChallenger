@@ -15,6 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
     qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
     qRegisterMetaType<Pokecraft::Player_type>("QAbstractSocket::SocketState");
+    qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
+    qRegisterMetaType<Pokecraft::Player_public_informations>("Pokecraft::Player_public_informations");
+    qRegisterMetaType<Pokecraft::Direction>("Pokecraft::Direction");
 
     connectSocket=new Pokecraft::ConnectedSocket(&socket);
     client=new Pokecraft::Api_client_virtual(connectSocket);
@@ -22,8 +25,10 @@ MainWindow::MainWindow(QWidget *parent) :
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
     ui->stackedWidget->addWidget(baseWindow);
+    selectedSavegame=NULL;
+    internalServer=NULL;
 
-    connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
+    connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
     connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
     connect(connectSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
@@ -31,10 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(connectSocket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
     connect(baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()),Qt::QueuedConnection);
 
-    stopFlood.setSingleShot(false);
-    stopFlood.start(1500);
-    numberForFlood=0;
-    haveShowDisconnectionReason=false;
     ui->stackedWidget->addWidget(baseWindow);
     baseWindow->setMultiPlayer(false);
 
@@ -43,40 +44,34 @@ MainWindow::MainWindow(QWidget *parent) :
     /*    ui->stackedWidget->setCurrentIndex(1);
     client->tryConnect(host,port);*/
     updateSavegameList();
-
-    selectedSavegame=NULL;
-    internalServer=NULL;
 }
 
 MainWindow::~MainWindow()
 {
-
     connectSocket->disconnectFromHost();
+    if(internalServer!=NULL)
+        internalServer->deleteLater();
     delete client;
     delete baseWindow;
     delete ui;
-    delete connectSocket;
-    if(internalServer!=NULL)
-        delete internalServer;
+    connectSocket->deleteLater();
 }
 
 void MainWindow::resetAll()
 {
+    client->resetAll();
     baseWindow->resetAll();
     ui->stackedWidget->setCurrentIndex(0);
-    chat_list_player_pseudo.clear();
-    chat_list_player_type.clear();
-    chat_list_type.clear();
-    chat_list_text.clear();
     lastMessageSend="";
+    if(internalServer!=NULL)
+        internalServer->deleteLater();
+    internalServer=NULL;
 
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
 }
 
-void MainWindow::disconnected(QString reason)
+void MainWindow::disconnected(QString)
 {
-    QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
-    haveShowDisconnectionReason=true;
     resetAll();
 }
 
@@ -105,11 +100,6 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
-        if(haveShowDisconnectionReason)
-        {
-            haveShowDisconnectionReason=false;
-            return;
-        }
         QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server"));
     break;
     case QAbstractSocket::ConnectionRefusedError:
@@ -158,8 +148,9 @@ void MainWindow::protocol_is_good()
 
 void MainWindow::try_stop_server()
 {
+    connectSocket->disconnectFromHost();
     if(internalServer!=NULL)
-        delete internalServer;
+        internalServer->deleteLater();
     internalServer=NULL;
 }
 
@@ -300,7 +291,7 @@ void MainWindow::updateSavegameList()
         QString savegamesPath=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
         SaveGameLabel *newEntry=new SaveGameLabel();
-        connect(newEntry,SIGNAL(clicked()),this,SLOT(savegameLabelClicked()));
+        connect(newEntry,SIGNAL(clicked()),this,SLOT(savegameLabelClicked()),Qt::QueuedConnection);
         newEntry->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
         QString dateString;
         if(!QFileInfo(savegamesPath+"metadata.conf").exists())
@@ -438,10 +429,10 @@ void MainWindow::on_SaveGame_Play_clicked()
         return;
 
     if(internalServer!=NULL)
-        delete internalServer;
+        internalServer->deleteLater();
     internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
-    connect(internalServer,SIGNAL(try_stop_server()),this,SLOT(try_stop_server()));
-    connect(internalServer,SIGNAL(isReady()),this,SLOT(serverIsReady()));
+    connect(internalServer,SIGNAL(try_stop_server()),this,SLOT(try_stop_server()),Qt::QueuedConnection);
+    connect(internalServer,SIGNAL(isReady()),this,SLOT(serverIsReady()),Qt::QueuedConnection);
 
     ui->stackedWidget->setCurrentIndex(1);
     baseWindow->serverIsLoading();

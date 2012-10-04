@@ -6,7 +6,6 @@
 #include <QObject>
 #include <QList>
 #include <QString>
-#include <QSemaphore>
 #include <QTimer>
 #include <QHash>
 #include <QHashIterator>
@@ -28,32 +27,32 @@
 namespace Pokecraft {
 class ClientLocalCalcule : public MapBasicMove
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	explicit ClientLocalCalcule();
-	virtual ~ClientLocalCalcule();
+    explicit ClientLocalCalcule();
+    virtual ~ClientLocalCalcule();
 private:
-	bool checkCollision();
-	void getRandomNumberIfNeeded();
+    bool checkCollision();
+    void getRandomNumberIfNeeded();
 
-	//info linked
-	Orientation			at_start_orientation;
-	Map *				at_start_map_name;
-	COORD_TYPE			at_start_x,at_start_y;
-	static QString			temp_direction;
+    //info linked
+    Orientation			at_start_orientation;
+    Map *				at_start_map_name;
+    COORD_TYPE			at_start_x,at_start_y;
+    static QString			temp_direction;
 
-	//map move
-	bool singleMove(const Direction &direction);
+    //map move
+    bool singleMove(const Direction &direction);
 public slots:
-	void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
-	bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
-	//random linked signals
-	void newRandomNumber(const QByteArray &randomData);
+    void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    //random linked signals
+    void newRandomNumber(const QByteArray &randomData);
 private slots:
-	virtual void extraStop();
+    virtual void extraStop();
 signals:
-	void dbQuery(const QSqlQuery &sqlQuery);
-	void askRandomNumber();
+    void dbQuery(const QSqlQuery &sqlQuery);
+    void askRandomNumber();
 };
 }
 

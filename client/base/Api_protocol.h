@@ -42,6 +42,9 @@ public:
     virtual void sendDatapackContent() = 0;
     virtual void tryDisconnect() = 0;
     QString get_datapack_base_name();
+
+    //to reset all
+    void resetAll();
 private:
     //status for the query
     bool is_logged;
@@ -68,9 +71,6 @@ protected:
     //to send trame
     ProtocolParsingOutput *output;
     quint8 queryNumber();
-
-    //to reset all
-    void resetAll();
 
     //datapack
     QString datapack_base_name;

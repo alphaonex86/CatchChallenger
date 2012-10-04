@@ -9,7 +9,6 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QDir>
-#include <QSemaphore>
 
 #include "../general/base/DebugClass.h"
 #include "base/ServerStructures.h"
