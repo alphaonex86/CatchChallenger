@@ -12,6 +12,7 @@
 #include <QVariant>
 #include <QSet>
 #include <QSqlQuery>
+#include <QDataStream>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
@@ -44,7 +45,6 @@ struct Player_internal_informations
 {
     Player_private_and_public_informations public_and_private_informations;
     bool isFake;
-    bool isVirtual;
     bool is_logged;
     quint32 id;
     QByteArray rawPseudo;
