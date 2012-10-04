@@ -533,7 +533,7 @@ void InternalServer::newConnection()
         if(socket!=NULL)
         {
             //delete new ConnectedSocket(socket)
-            theSinglePlayer = new Client(new ConnectedSocket(socket),false,true,new MapVisibilityAlgorithm_None());
+            theSinglePlayer = new Client(new ConnectedSocket(socket),false,new MapVisibilityAlgorithm_None());
             connect(theSinglePlayer,SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
         }
         else

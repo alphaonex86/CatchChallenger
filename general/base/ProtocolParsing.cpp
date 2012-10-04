@@ -127,9 +127,7 @@ void ProtocolParsingInput::parseIncommingData()
         {
             if(socket->bytesAvailable()<(int)sizeof(quint8))//ignore because first int is cuted!
                 return;
-            qDebug() << "socket->bytesAvailable()" << socket->bytesAvailable();
             in >> mainCodeType;
-            qDebug() << "socket->bytesAvailable()" << socket->bytesAvailable();
             #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
             #endif

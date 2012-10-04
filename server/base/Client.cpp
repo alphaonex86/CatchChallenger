@@ -8,11 +8,11 @@ using namespace Pokecraft;
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
-Client::Client(ConnectedSocket *socket,bool isFake,bool isVirtual,ClientMapManagement *clientMapManagement)
+Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMapManagement)
 {
     this->socket			= socket;
     player_informations.isFake=isFake;
-    player_informations.isVirtual=isVirtual;
+    player_informations.is_logged=false;
 
     clientBroadCast=new ClientBroadCast();
     clientHeavyLoad=new ClientHeavyLoad();
@@ -37,24 +37,11 @@ Client::Client(ConnectedSocket *socket,bool isFake,bool isVirtual,ClientMapManag
         connect(&GlobalData::serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),clientMapManagement,SLOT(purgeBuffer()),Qt::QueuedConnection);
     }
 
-    player_informations.is_logged=false;
-
-    if(!player_informations.isVirtual)
-    {
-        remote_ip=socket->peerAddress().toString();
-        port=socket->peerPort();
-        connect(socket,	SIGNAL(error(QAbstractSocket::SocketError)),	this, SLOT(connectionError(QAbstractSocket::SocketError)));
-        normalOutput(QString("Connected client: %1, %2").arg(remote_ip).arg(port));
-    }
-    else
-    {
-        remote_ip="NA";
-        port=9999;
-    }
-    if(socket==NULL)
-        normalOutput(QString("Connected client: socket is NULL"));
-    else
-        connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
+    remote_ip=socket->peerAddress().toString();
+    port=socket->peerPort();
+    connect(socket,	SIGNAL(error(QAbstractSocket::SocketError)),	this, SLOT(connectionError(QAbstractSocket::SocketError)));
+    normalOutput(QString("Connected client: %1, %2").arg(remote_ip).arg(port));
+    connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
 
     is_ready_to_stop=false;
     ask_is_ready_to_stop=false;
