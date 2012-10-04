@@ -27,39 +27,28 @@ void ClientHeavyLoad::setVariable(Player_internal_informations *player_informati
 
 void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash)
 {
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
     if(player_informations->isFake)
     {
         if(GlobalData::serverPrivateVariables.botSpawn.size()==0)
         {
-            out << (quint8)0x01;
-            out << QString("Not bot point");
-            emit postReply(query_id,outputData);
-            emit message(QString("Not bot point"));
+            loginIsWrong(query_id,"Not bot point","Not bot point");
+            return;
         }
         else
         {
             if(!GlobalData::serverPrivateVariables.map_list.contains(GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map))
             {
-                out << (quint8)0x01;
-                out << QString("Bot point not resolved");
-                emit postReply(query_id,outputData);
-                emit message(QString("Bot point not resolved"));
+                loginIsWrong(query_id,"Bot point not resolved","Bot point not resolved");
+                return;
             }
             else if(simplifiedIdList.size()<=0)
             {
-                out << (quint8)0x01;
-                out << QString("Not free id to login");
-                emit postReply(query_id,outputData);
-                emit message(QString("Not free id to login"));
+                loginIsWrong(query_id,"Not free id to login","Not free id to login");
+                return;
             }
             else
             {
-                player_informations->is_logged=true;
                 player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
-                simplifiedIdList.removeFirst();
                 player_informations->public_and_private_informations.public_informations.clan=0;
                 player_informations->id=999999999-GlobalData::serverPrivateVariables.number_of_bots_logged;
                 player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
@@ -67,38 +56,28 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
                 player_informations->public_and_private_informations.cash=0;
                 player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
-                GlobalData::serverPrivateVariables.connected_players_id_list << player_informations->id;
                 if(!loadTheRawUTF8String())
                 {
-                    emit message(QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->id)));
-                    out << (quint8)01;
-                    out << QString("Convert into utf8 have wrong size");
-                    emit postReply(query_id,outputData);
-                    emit error("Convert into utf8 have wrong size");
+                    loginIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->id)));
                     return;
                 }
-                emit send_player_informations();
-                emit isLogged();
-                //remplace x and y by real spawn point
-                emit put_on_the_map(GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
-                            GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
-                            GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
-                            Orientation_bottom);
-                GlobalData::serverPrivateVariables.botSpawnIndex++;
-                if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
-                    GlobalData::serverPrivateVariables.botSpawnIndex=0;
-                GlobalData::serverPrivateVariables.number_of_bots_logged++;
-                out << (quint8)02;
-                out << (quint16)GlobalData::serverSettings.max_players;
-                if(GlobalData::serverSettings.max_players<=255)
-                    out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
-                else
-                    out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
-                out << (quint32)player_informations->public_and_private_informations.cash;
-                emit postReply(query_id,outputData);
+                //all is rights
+                {
+                    loginIsRight(query_id,
+                                 player_informations->id,
+                                 GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
+                                 GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
+                                 GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
+                                 Orientation_bottom);
+
+                    GlobalData::serverPrivateVariables.botSpawnIndex++;
+                    if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
+                        GlobalData::serverPrivateVariables.botSpawnIndex=0;
+                    GlobalData::serverPrivateVariables.number_of_bots_logged++;
+                    return;
+                }
             }
         }
-        return;
     }
     QSqlQuery loginQuery;
     switch(GlobalData::serverSettings.database.type)
@@ -117,42 +96,34 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     }
     if(!loginQuery.exec())
     {
-        out << (quint8)0x01;
-        out << QString("Mysql error");
-        emit postReply(query_id,outputData);
-        emit message(loginQuery.lastQuery()+": "+loginQuery.lastError().text());
+        loginIsWrong(query_id,"Mysql error",loginQuery.lastQuery()+": "+loginQuery.lastError().text());
         return;
     }
     if(loginQuery.size()==0)
     {
-        out << (quint8)0x01;
-        out << QString("Bad login");
-        emit postReply(query_id,outputData);
-        emit error("Bad login for: "+login+", hash: "+hash.toHex());
+        loginIsWrong(query_id,"Bad login","Bad login for: "+login+", hash: "+hash.toHex());
+        return;
     }
     else
     {
-        loginQuery.next();
-        if(GlobalData::serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
+        if(!loginQuery.next())
         {
-            out << (quint8)0x01;
-            out << QString("Already logged");
-            emit postReply(query_id,outputData);
-            emit error("Already logged");
+            loginIsWrong(query_id,"Wrong login/pass",QString("No login/pass found into the db, login: \"%1\", pass: \"%2\"").arg(login).arg(QString(hash.toHex())));
+            return;
+        }
+        else if(GlobalData::serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
+        {
+            loginIsWrong(query_id,"Already logged","Already logged");
+            return;
         }
         else if(simplifiedIdList.size()<=0)
         {
-            out << (quint8)0x01;
-            out << QString("Not free id to login");
-            emit postReply(query_id,outputData);
-            emit message(QString("Not free id to login"));
+            loginIsWrong(query_id,"Not free id to login","Not free id to login");
+            return;
         }
         else
         {
-            player_informations->is_logged=true;
-            player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
-            simplifiedIdList.removeFirst();
-            GlobalData::serverPrivateVariables.connected_players_id_list << loginQuery.value(0).toUInt();
+
             player_informations->public_and_private_informations.public_informations.clan=loginQuery.value(8).toUInt();
             player_informations->id=loginQuery.value(0).toUInt();
             player_informations->public_and_private_informations.public_informations.pseudo=loginQuery.value(1).toString();
@@ -176,10 +147,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
             if(!loadTheRawUTF8String())
             {
-                out << (quint8)01;
-                out << QString("Convert into utf8 have wrong size");
-                emit postReply(query_id,outputData);
-                emit error("Convert into utf8 have wrong size");
+                loginIsWrong(query_id,"Convert into utf8 have wrong size","Convert into utf8 have wrong size");
                 return;
             }
             int orentation=loginQuery.value(5).toInt();
@@ -188,36 +156,70 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 emit message(QString("Wrong orientation corrected: %1").arg(orentation));
                 orentation=3;
             }//id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
+            //all is rights
             if(GlobalData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
             {
-                out << (quint8)02;
-                out << (quint16)GlobalData::serverSettings.max_players;
-                if(GlobalData::serverSettings.max_players<=255)
-                    out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
-                else
-                    out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
-                out << (quint32)player_informations->public_and_private_informations.cash;
-                emit message(QString("Logged: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
-                emit postReply(query_id,outputData);
-                emit send_player_informations();
-                emit isLogged();
-                emit put_on_the_map(
-                    GlobalData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],//map pointer
-                    loginQuery.value(3).toInt(),//position_x
-                    loginQuery.value(4).toInt(),//position_y
-                    (Orientation)orentation
-                );
+                loginIsRight(query_id,
+                             player_informations->id,
+                             GlobalData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
+                             loginQuery.value(3).toInt(),
+                             loginQuery.value(4).toInt(),
+                             (Orientation)orentation);
             }
             else
             {
-                out << (quint8)01;
-                out << QString("Map not found");
-                emit postReply(query_id,outputData);
-                emit error("Map not found: "+loginQuery.value(6).toString());
+                loginIsWrong(query_id,"Map not found","Map not found: "+loginQuery.value(6).toString());
                 return;
             }
         }
     }
+}
+
+void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
+{
+    //load the variables
+    GlobalData::serverPrivateVariables.connected_players_id_list << id;
+    player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
+    simplifiedIdList.removeFirst();
+    player_informations->is_logged=true;
+
+    //send the network reply
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)02;
+    out << (quint16)GlobalData::serverSettings.max_players;
+    if(GlobalData::serverSettings.max_players<=255)
+        out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
+    else
+        out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
+    out << (quint32)player_informations->public_and_private_informations.cash;
+    emit postReply(query_id,outputData);
+
+    //send signals into the server
+    emit message(QString("Logged: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+    emit send_player_informations();
+    emit isLogged();
+    emit put_on_the_map(
+                map,//map pointer
+        x,//position_x
+        y,//position_y
+        orientation
+    );
+}
+
+void ClientHeavyLoad::loginIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage)
+{
+    //network send
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)01;
+    out << QString(messageToSend);
+    emit postReply(query_id,outputData);
+
+    //send to server to stop the connection
+    emit error(debugMessage);
 }
 
 bool ClientHeavyLoad::loadTheRawUTF8String()
