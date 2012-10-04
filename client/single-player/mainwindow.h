@@ -35,7 +35,7 @@ private slots:
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();
     void message(QString message);
-    void disconnected(QString reason);
+    void disconnected(QString);
     void protocol_is_good();
     void try_stop_server();
     void on_SaveGame_New_clicked();
@@ -53,15 +53,8 @@ private:
     void resetAll();
     bool rmpath(const QDir &dir);
     void updateSavegameList();
-    QStringList chat_list_player_pseudo;
-    QList<Pokecraft::Player_type> chat_list_player_type;
-    QList<Pokecraft::Chat_type> chat_list_type;
-    QList<QString> chat_list_text;
     QSettings settings;
     QString lastMessageSend;
-    QTimer stopFlood;
-    int numberForFlood;
-    bool haveShowDisconnectionReason;
     QStringList server_list;
     Pokecraft::ConnectedSocket *connectSocket;
     Pokecraft::QFakeSocket socket;

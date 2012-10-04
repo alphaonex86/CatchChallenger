@@ -2,9 +2,6 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QByteArray>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QSemaphore>
 #include <QTimer>
 
 #include "../../general/base/DebugClass.h"
