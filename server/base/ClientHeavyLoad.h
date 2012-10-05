@@ -34,7 +34,7 @@ public slots:
     virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
-    void dbQuery(QSqlQuery sqlQuery);
+    void dbQuery(const QString &queryText);
     void askedRandomNumber();
     //normal slots
     void askIfIsReadyToStop();

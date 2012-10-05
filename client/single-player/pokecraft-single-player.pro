@@ -118,7 +118,8 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     resources/resources-single-player.qrc \
     ../base/resources/resources.qrc \
-    ../base/resources/resources-multi.qrc
+    ../base/resources/resources-multi.qrc \
+    ../../server/databases/resources-db-sqlite.qrc
 
 OTHER_FILES += \
     Pokecraft_client

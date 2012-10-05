@@ -51,7 +51,7 @@ public slots:
 private slots:
     virtual void extraStop();
 signals:
-    void dbQuery(const QSqlQuery &sqlQuery);
+    void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
 };
 }

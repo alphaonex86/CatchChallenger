@@ -65,6 +65,7 @@ private:
     SaveGameLabel * selectedSavegame;
     QSpacerItem *spacer;
     Pokecraft::InternalServer * internalServer;
+    QString pass;
 };
 
 #endif // MAINWINDOW_H

@@ -11,6 +11,7 @@ class FacilityLib
 public:
     static QByteArray toUTF8(const QString &text);
     static QStringList listFolder(const QString& folder,const QString& suffix="");
+    static QString randomPassword(const QString& string,const quint8& length);
 };
 }
 
