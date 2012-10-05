@@ -6,6 +6,7 @@
 #include <QInputDialog>
 
 #include "../base/render/MapVisualiserPlayer.h"
+#include "../base/FacilityLib.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -66,6 +67,7 @@ void MainWindow::resetAll()
     if(internalServer!=NULL)
         internalServer->deleteLater();
     internalServer=NULL;
+    pass.clear();
 
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
 }
@@ -143,7 +145,7 @@ void MainWindow::message(QString message)
 
 void MainWindow::protocol_is_good()
 {
-    client->tryLogin("admin","admin");
+    client->tryLogin("admin",pass);
 }
 
 void MainWindow::try_stop_server()
@@ -156,6 +158,7 @@ void MainWindow::try_stop_server()
 
 void MainWindow::on_SaveGame_New_clicked()
 {
+    //load the information
     NewGame nameGame(this);
     if(!nameGame.haveSkin())
     {
@@ -166,6 +169,8 @@ void MainWindow::on_SaveGame_New_clicked()
     if(!nameGame.haveTheInformation())
         return;
     int index=0;
+
+    //locate the new folder and create it
     while(QDir().exists(QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)))
         index++;
     QString savegamesPath=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
@@ -174,12 +179,41 @@ void MainWindow::on_SaveGame_New_clicked()
         QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
         return;
     }
-    if(!QFile::copy(":/pokecraft.db.sqlite",savegamesPath+"pokecraft.db.sqlite"))
+
+    //initialize the db
+    QFile dbSource(":/pokecraft.db.sqlite");
+    if(!dbSource.open(QIODevice::ReadOnly))
+    {
+        QMessageBox::critical(this,tr("Error"),QString("Unable to open the db model: %1").arg(savegamesPath));
+        rmpath(savegamesPath);
+        return;
+    }
+    QByteArray dbData=dbSource.readAll();
+    if(dbData.isEmpty())
+    {
+        QMessageBox::critical(this,tr("Error"),QString("Unable to read the db model: %1").arg(savegamesPath));
+        rmpath(savegamesPath);
+        return;
+    }
+    dbSource.close();
+    QFile dbDestination(savegamesPath+"pokecraft.db.sqlite");
+    if(!dbDestination.open(QIODevice::WriteOnly))
     {
         QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
         rmpath(savegamesPath);
         return;
     }
+    if(!dbDestination.write(dbData))
+    {
+        dbDestination.close();
+        QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
+        rmpath(savegamesPath);
+        return;
+    }
+    dbDestination.close();
+
+    //initialise the meta data
+    QString pass=Pokecraft::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16);
     bool settingOk=true;
     {
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
@@ -192,6 +226,7 @@ void MainWindow::on_SaveGame_New_clicked()
                 metaData.setValue("title",nameGame.gameName());
                 metaData.setValue("location","Starting city");
                 metaData.setValue("time_played",0);
+                metaData.setValue("pass",pass);
             }
             else
             {
@@ -200,12 +235,42 @@ void MainWindow::on_SaveGame_New_clicked()
             }
         }
     }
+
+    //check if meta data is ok, and db can be open
     if(!settingOk)
     {
         QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
         rmpath(savegamesPath);
         return;
     }
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(savegamesPath+"pokecraft.db.sqlite");
+    if(!db.open())
+    {
+        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: open database)"));
+        rmpath(savegamesPath);
+        return;
+    }
+
+
+    //empty the player db and put the new player into it
+    QSqlQuery sqlQuery;
+    if(!sqlQuery.exec(QString("DELETE FROM \"player\"")))
+    {
+        db.close();
+        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: clean the table: %1)").arg(sqlQuery.lastError().text()));
+        rmpath(savegamesPath);
+        return;
+    }
+    if(!sqlQuery.exec(QString("INSERT INTO \"player\" VALUES(NULL,'admin','%1','%2','%3',1,1,'bottom','world/0.0.tmx','normal',NULL);").arg(pass).arg(nameGame.pseudo()).arg(nameGame.skin())))
+    {
+        db.close();
+        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: initialize the entry: %1)").arg(sqlQuery.lastError().text()));
+        rmpath(savegamesPath);
+        return;
+    }
+    db.close();
+
     updateSavegameList();
 }
 
@@ -305,7 +370,7 @@ void MainWindow::updateSavegameList()
             {
                 if(metaData.status()==QSettings::NoError)
                 {
-                    if(metaData.contains("title") && metaData.contains("location") && metaData.contains("time_played"))
+                    if(metaData.contains("title") && metaData.contains("location") && metaData.contains("time_played") && metaData.contains("pass"))
                     {
                         int time_played_number=metaData.value("time_played").toUInt(&ok);
                         QString time_played;
@@ -428,6 +493,13 @@ void MainWindow::on_SaveGame_Play_clicked()
     if(!savegameWithMetaData[selectedSavegame])
         return;
 
+    QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
+    if(!metaData.contains("pass"))
+    {
+        QMessageBox::critical(NULL,tr("Error"),tr("Unable to load internal value"));
+        return;
+    }
+    pass=metaData.value("pass").toString();
     if(internalServer!=NULL)
         internalServer->deleteLater();
     internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
