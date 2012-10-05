@@ -79,26 +79,27 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             }
         }
     }
-    QSqlQuery loginQuery;
+    QString queryText;
     switch(GlobalData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            loginQuery=QString("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            loginQuery=QString("SELECT id,login,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
     }
-    if(!loginQuery.exec())
+    QSqlQuery loginQuery(queryText);
+    /*if(!loginQuery.exec(queryText))
     {
         loginIsWrong(query_id,"Mysql error",loginQuery.lastQuery()+": "+loginQuery.lastError().text());
         return;
-    }
+    }*/
     if(loginQuery.size()==0)
     {
         loginIsWrong(query_id,"Bad login","Bad login for: "+login+", hash: "+hash.toHex());
@@ -378,8 +379,9 @@ QString ClientHeavyLoad::SQL_text_quote(QString text)
     return text.replace("'","\\'");
 }
 
-void ClientHeavyLoad::dbQuery(QSqlQuery sqlQuery)
+void ClientHeavyLoad::dbQuery(const QString &queryText)
 {
+    QSqlQuery sqlQuery(queryText);
     if(!sqlQuery.exec())
     {
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
