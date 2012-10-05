@@ -212,8 +212,13 @@ void MainWindow::on_SaveGame_New_clicked()
     }
     dbDestination.close();
 
-    //initialise the meta data
+    //initialise the pass
     QString pass=Pokecraft::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16);
+    QCryptographicHash hash(QCryptographicHash::Sha1);
+    hash.addData(pass.toUtf8());
+    QByteArray passHash=hash.result();
+
+    //initialise the meta data
     bool settingOk=true;
     {
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
@@ -262,7 +267,7 @@ void MainWindow::on_SaveGame_New_clicked()
         rmpath(savegamesPath);
         return;
     }
-    if(!sqlQuery.exec(QString("INSERT INTO \"player\" VALUES(NULL,'admin','%1','%2','%3',1,1,'bottom','world/0.0.tmx','normal',NULL);").arg(pass).arg(nameGame.pseudo()).arg(nameGame.skin())))
+    if(!sqlQuery.exec(QString("INSERT INTO \"player\" VALUES(NULL,'admin','%1','%2','%3',1,1,'bottom','world/0.0.tmx','normal',NULL);").arg(QString(passHash.toHex())).arg(nameGame.pseudo()).arg(nameGame.skin())))
     {
         db.close();
         QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: initialize the entry: %1)").arg(sqlQuery.lastError().text()));
