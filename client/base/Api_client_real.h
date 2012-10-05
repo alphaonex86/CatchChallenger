@@ -28,6 +28,7 @@ class Api_client_real : public Api_protocol
 public:
     explicit Api_client_real(ConnectedSocket *socket);
     ~Api_client_real();
+    void resetAll();
 
     //connection related
     void tryConnect(QString host,quint16 port);
@@ -41,7 +42,6 @@ public:
     void cleanDatapack(QString suffix);
 protected:
     void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
-    void resetAll();
 private:
     QString host;
     quint16 port;
