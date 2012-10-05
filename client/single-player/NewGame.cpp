@@ -27,6 +27,7 @@ NewGame::NewGame(QWidget *parent) :
 
     currentSkin=0;
     updateSkin();
+    ui->pseudo->setFocus();
 }
 
 NewGame::~NewGame()

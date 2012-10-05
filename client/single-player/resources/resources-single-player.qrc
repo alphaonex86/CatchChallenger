@@ -2,6 +2,5 @@
     <qresource prefix="/">
         <file>images/player-select.png</file>
         <file>images/savegame-select.png</file>
-        <file>pokecraft.db.sqlite</file>
     </qresource>
 </RCC>

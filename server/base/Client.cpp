@@ -78,7 +78,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
 
-    connect(clientLocalCalcule,SIGNAL(dbQuery(QSqlQuery)),clientHeavyLoad,SLOT(dbQuery(QSqlQuery)),Qt::QueuedConnection);
+    connect(clientLocalCalcule,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
     connect(clientLocalCalcule,SIGNAL(askRandomNumber()),clientHeavyLoad,SLOT(askedRandomNumber()),Qt::QueuedConnection);
 
     //connect the player information
@@ -183,7 +183,7 @@ void Client::disconnectClient()
     clientNetworkWrite->disconnect();
 
     //connect to save
-    connect(clientLocalCalcule,SIGNAL(dbQuery(QSqlQuery)),clientHeavyLoad,SLOT(dbQuery(QSqlQuery)),Qt::QueuedConnection);
+    connect(clientLocalCalcule,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
 
     //connect to quit
     connect(clientNetworkRead,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);

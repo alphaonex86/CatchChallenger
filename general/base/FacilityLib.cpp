@@ -34,3 +34,17 @@ QStringList FacilityLib::listFolder(const QString& folder,const QString& suffix)
     }
     return returnList;
 }
+
+QString FacilityLib::randomPassword(const QString& string,const quint8& length)
+{
+    if(string.size()<2)
+        return "";
+    QString randomPassword;
+    int index=0;
+    while(index<length)
+    {
+        randomPassword+=string[rand()%string.size()];
+        index++;
+    }
+    return randomPassword;
+}
