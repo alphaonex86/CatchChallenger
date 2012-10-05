@@ -151,11 +151,20 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 loginIsWrong(query_id,"Convert into utf8 have wrong size","Convert into utf8 have wrong size");
                 return;
             }
-            int orentation=loginQuery.value(5).toInt();
-            if(orentation<1 || orentation>8)
+            QString orientationString=loginQuery.value(5).toString();
+            Orientation orentation;
+            if(orientationString=="top")
+                orentation=Orientation_top;
+            else if(orientationString=="bottom")
+                orentation=Orientation_bottom;
+            else if(orientationString=="left")
+                orentation=Orientation_left;
+            else if(orientationString=="right")
+                orentation=Orientation_right;
+            else
             {
-                emit message(QString("Wrong orientation corrected: %1").arg(orentation));
-                orentation=3;
+                orentation=Orientation_bottom;
+                emit message(QString("Wrong orientation corrected with bottom"));
             }//id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
             //all is rights
             if(GlobalData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
