@@ -136,6 +136,7 @@ void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 
     outputData[0]=0x01;
     outputData+=map->rawMapFile;
+    emit message(QString("ClientLocalCalcule::put_on_the_map: %1").arg(QString(outputData.toHex())));
     out.device()->seek(out.device()->size());
     if(GlobalData::serverSettings.max_players<=255)
     {

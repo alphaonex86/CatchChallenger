@@ -1,7 +1,9 @@
 #include "ClientHeavyLoad.h"
 #include "GlobalData.h"
 
+#include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/Map.h"
 #include "SqlFunction.h"
 
 #include <stdio.h>
@@ -143,7 +145,6 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 emit message(QString("Mysql wrong type value").arg(type));
                 player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
             }
-            qDebug() << "player type:" << player_informations->public_and_private_informations.public_informations.type;
             player_informations->public_and_private_informations.cash=0;
             player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
             if(!loadTheRawUTF8String())
@@ -187,6 +188,14 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 
 void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
 {
+    #ifdef POKECRAFT_EXTRA_CHECK
+    if(map->rawMapFile.size())
+    {
+        loginIsWrong(query_id,"Internal error",QString("Raw map is wrong: %1").arg(map->map_file));
+        return;
+    }
+    #endif
+
     //load the variables
     GlobalData::serverPrivateVariables.connected_players_id_list << id;
     player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
@@ -207,7 +216,7 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
     emit postReply(query_id,outputData);
 
     //send signals into the server
-    emit message(QString("Logged: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+    emit message(QString("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
     emit send_player_informations();
     emit isLogged();
     emit put_on_the_map(

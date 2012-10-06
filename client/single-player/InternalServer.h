@@ -66,6 +66,7 @@ private:
 
     Client *theSinglePlayer;
     QString dbPath;
+    EventThreader thread;
 private slots:
     //new connection
     void newConnection();
