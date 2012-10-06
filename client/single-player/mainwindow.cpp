@@ -162,7 +162,7 @@ void MainWindow::on_SaveGame_New_clicked()
     NewGame nameGame(this);
     if(!nameGame.haveSkin())
     {
-        QMessageBox::critical(this,tr("Error"),QString("Sorry but no skin found into: %1").arg(QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/skin/fighter/").absoluteFilePath()));
+        QMessageBox::critical(this,tr("Error"),QString("Sorry but no skin found into: %1").arg(QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
         return;
     }
     nameGame.exec();

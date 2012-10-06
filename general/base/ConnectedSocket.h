@@ -17,6 +17,7 @@ class ConnectedSocket : public QIODevice
 public:
     explicit ConnectedSocket(QFakeSocket *socket,QObject *parent = 0);
     explicit ConnectedSocket(QTcpSocket *socket,QObject *parent = 0);
+    ~ConnectedSocket();
     void	abort();
     void	connectToHost(const QString & hostName,quint16 port);
     void	connectToHost(const QHostAddress & address,quint16 port);
