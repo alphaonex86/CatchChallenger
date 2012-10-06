@@ -189,7 +189,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
 {
     #ifdef POKECRAFT_EXTRA_CHECK
-    if(map->rawMapFile.size())
+    if(map->rawMapFile.isEmpty())
     {
         loginIsWrong(query_id,"Internal error",QString("Raw map is wrong: %1").arg(map->map_file));
         return;
