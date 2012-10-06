@@ -121,6 +121,9 @@ struct ServerPrivateVariables
     //interconnected thread
     //QMutex clientBroadCastListMutex;
 
+    //datapack
+    QHash<quint8,QString> skinList;
+
     //map
     QHash<QString,Map *> map_list;
     QTimer timer_to_send_insert_move_remove;
@@ -139,7 +142,8 @@ struct ServerPrivateVariables
         COORD_TYPE y;
     };
     QList<BotSpawn> botSpawn;
-    QList<FakeBot *> fake_clients;
+    QList<FakeBot *> fakeBotList;
+    QSet<QFakeSocket *> botSockets;
     quint32 number_of_bots_logged;
     int botSpawnIndex;
 };

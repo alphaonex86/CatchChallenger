@@ -26,10 +26,10 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     mHaveTheDatapack=false;
 
     //connect the map controler
-    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)));
-    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)));
-    connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)));
-    connect(client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()));
+    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
+    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()),Qt::QueuedConnection);
 }
 
 MapController::~MapController()
@@ -418,7 +418,7 @@ void MapController::haveTheDatapack()
 //map move
 void MapController::insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction)
 {
-    if(!mHaveTheDatapack)
+    if(!mHaveTheDatapack || !player_informations_is_set)
     {
         DelayedInsert tempItem;
         tempItem.player=player;
@@ -429,10 +429,14 @@ void MapController::insert_player(Pokecraft::Player_public_informations player,Q
         delayedInsert << tempItem;
         return;
     }
-    if(player_informations_is_set && player.simplifiedId==player_informations.public_informations.simplifiedId)
+    if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
         //the player skin
-        playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png");
+        QImage image(datapackPath+DATAPACK_BASE_PATH_SKIN+player.skin+"/trainer.png");
+        if(!image.isNull())
+            playerTileset->loadFromImage(image,datapackPath+DATAPACK_BASE_PATH_SKIN+player.skin+"/trainer.png");
+        else
+            qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+player.skin+"/trainer.png";
 
         //the direction
         this->direction=direction;
@@ -459,13 +463,13 @@ void MapController::insert_player(Pokecraft::Player_public_informations player,Q
             return;
         }
 
-        loadMap(datapackPath+"map/"+mapName,x,y);
+        loadMap(datapackPath+DATAPACK_BASE_PATH_MAP+mapName,x,y);
     }
 }
 
 void MapController::move_player(quint16 id,QList<QPair<quint8,Pokecraft::Direction> > movement)
 {
-    if(!mHaveTheDatapack)
+    if(!mHaveTheDatapack || !player_informations_is_set)
     {
         DelayedMove tempItem;
         tempItem.id=id;
@@ -477,7 +481,7 @@ void MapController::move_player(quint16 id,QList<QPair<quint8,Pokecraft::Directi
 
 void MapController::remove_player(quint16 id)
 {
-    if(!mHaveTheDatapack)
+    if(!mHaveTheDatapack || !player_informations_is_set)
     {
         delayedRemove << id;
         return;
@@ -499,6 +503,11 @@ void MapController::dropAllPlayerOnTheMap()
 //player info
 void MapController::have_current_player_info(Pokecraft::Player_private_and_public_informations informations)
 {
+    if(player_informations_is_set)
+    {
+        qDebug() << "player information already set";
+        return;
+    }
     this->player_informations=informations;
     player_informations_is_set=true;
 }

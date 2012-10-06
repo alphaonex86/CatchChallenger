@@ -43,7 +43,6 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     normalOutput(QString("Connected client: %1, %2").arg(remote_ip).arg(port));
     connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
 
-    is_ready_to_stop=false;
     ask_is_ready_to_stop=false;
 
     clientBroadCast->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
@@ -162,8 +161,6 @@ void Client::disconnectClient()
     if(ask_is_ready_to_stop)
         return;
     ask_is_ready_to_stop=true;
-    if(is_ready_to_stop)
-        return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("Disconnected client");
     #endif
@@ -203,8 +200,6 @@ void Client::disconnectClient()
 
 void Client::disconnectNextStep()
 {
-    if(is_ready_to_stop)
-        return;
     stopped_object++;
     if(stopped_object==5)
     {

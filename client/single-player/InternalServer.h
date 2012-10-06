@@ -20,70 +20,26 @@
 #include "../../general/base/QFakeServer.h"
 #include "../../general/base/QFakeSocket.h"
 #include "../../server/base/Map_server.h"
+#include "../../server/base/BaseServer.h"
 
 #ifndef POKECRAFT_INTERNALSERVER_H
 #define POKECRAFT_INTERNALSERVER_H
 
 namespace Pokecraft {
-class InternalServer : public QObject
+class InternalServer : public BaseServer
 {
     Q_OBJECT
 public:
     explicit InternalServer(const QString &dbPath);
-    ~InternalServer();
-    //stat function
-    bool isListen();
-    bool isStopped();
+    virtual ~InternalServer();
 private:
-    //to load/unload the content
-    struct Map_semi
-    {
-        //conversion x,y to position: x+y*width
-        Map* map;
-        Map_semi_border border;
-        Map_to_send old_map;
-    };
-    void preload_the_data();
-    void preload_the_map();
-    void unload_the_data();
-    void unload_the_map();
-
-    /// \brief To lunch event only when the event loop is setup
-    QTimer *lunchInitFunction;
-
-    //stat
-    enum ServerStat
-    {
-        Down=0,
-        InUp=1,
-        Up=2,
-        InDown=3
-    };
-    ServerStat stat;
-
-    bool initialize_the_database();
-    //FakeServer server;//wrong, create another object, here need use the global static object
-
-    Client *theSinglePlayer;
-    QString dbPath;
     EventThreader thread;
+    QString dbPath;
 private slots:
-    //new connection
-    void newConnection();
-    //remove all finished client
-    void removeOneClient();
-    //init, constructor, destructor
-    void initAll();//call before all
     //starting function
-    void stop_internal_server();
-    void check_if_now_stopped();
     void start_internal_server();
-signals:
-    void error(const QString &error);
-    void try_initAll();
-    void try_stop_server();
-    void need_be_started();
-    void isReady();
+protected:
+    QString sqlitePath();
 };
 }
 

@@ -53,6 +53,8 @@ private slots:
     void newError(QString error,QString detailedError);
     void newSocketError(QAbstractSocket::SocketError error);
     void disconnected();
+signals:
+    void isDisconnected();
 };
 }
 

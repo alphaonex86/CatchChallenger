@@ -23,10 +23,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)),Qt::QueuedConnection);
 
     //connect the map controler
-    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),mapController,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
-    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),mapController,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(mapController,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
-
+    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
     //chat
     connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),Qt::QueuedConnection);
     connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)),Qt::QueuedConnection);
@@ -273,7 +270,7 @@ void BaseWindow::on_toolButton_interface_quit_clicked()
 
 void BaseWindow::on_toolButton_quit_interface_clicked()
 {
-    client->tryDisconnect();
+    ui->stackedWidget->setCurrentIndex(1);
 }
 
 void BaseWindow::on_pushButton_interface_trainer_clicked()
@@ -310,12 +307,16 @@ void BaseWindow::have_current_player_info()
     qDebug() << "have_current_player_info()";
     Player_public_informations informations=client->get_player_informations().public_informations;
     ui->label_connecting_status->setText(tr("Loading the datapack..."));
-    ui->player_informations_id->setText(tr("N°ID/%1").arg(0));
     ui->player_informations_pseudo->setText(informations.pseudo);
     ui->player_informations_cash->setText("0$");
-    QPixmap playerImage(client->get_datapack_base_name()+"skin/mainCaracter/"+informations.skin+"/front.png");
+    QPixmap playerImage(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+informations.skin+"/front.png");
     if(!playerImage.isNull())
         ui->player_informations_front->setPixmap(playerImage);
+    else
+    {
+        ui->player_informations_front->setPixmap(QPixmap(":/images/player_default/front.png"));
+        qDebug() << "Unable to load the player image: "+client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+informations.skin+"/front.png";
+    }
 }
 
 void BaseWindow::haveTheDatapack()

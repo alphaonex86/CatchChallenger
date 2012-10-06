@@ -28,6 +28,20 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket,QObject *parent) :
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
+ConnectedSocket::~ConnectedSocket()
+{
+    if(tcpSocket!=NULL)
+    {
+        delete tcpSocket;
+        tcpSocket=NULL;
+    }
+    if(fakeSocket!=NULL)
+    {
+        delete fakeSocket;
+        fakeSocket=NULL;
+    }
+}
+
 void ConnectedSocket::abort()
 {
     if(fakeSocket!=NULL)
