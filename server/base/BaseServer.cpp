@@ -1,50 +1,12 @@
-#include "EventDispatcher.h"
-#include "base/GlobalData.h"
-#include "../general/base/FacilityLib.h"
-
-/*
-  When disconnect the fake client, stop the benchmark
-  */
+#include "BaseServer.h"
+#include "../../server/base/GlobalData.h"
+#include "../../general/base/FacilityLib.h"
 
 using namespace Pokecraft;
 
-bool EventDispatcher::oneInstanceRunning=false;
-
-EventDispatcher::EventDispatcher()
+BaseServer::BaseServer()
 {
     ProtocolParsing::initialiseTheVariable();
-
-    GlobalData::serverPrivateVariables.connected_players	= 0;
-    GlobalData::serverPrivateVariables.number_of_bots_logged= 0;
-    GlobalData::serverPrivateVariables.db                   = NULL;
-    GlobalData::serverPrivateVariables.timer_player_map     = NULL;
-    server                                                  = NULL;
-    lunchInitFunction                                       = NULL;
-    timer_benchmark_stop                                    = NULL;
-
-    GlobalData::serverPrivateVariables.botSpawnIndex=0;
-    GlobalData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
-    GlobalData::serverPrivateVariables.datapack_rightFileName	= QRegExp(DATAPACK_FILE_REGEX);
-
-    GlobalData::serverSettings.database.type=ServerSettings::Database::DatabaseType_Mysql;
-
-    GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
-    GlobalData::serverSettings.mapVisibility.simple.max		= 30;
-    GlobalData::serverSettings.mapVisibility.simple.reshow		= 20;
-    GlobalData::serverPrivateVariables.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
-
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//broad cast (0)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//map management (1)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//network read (2)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//heavy load (3)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//local calcule (4)
-    botThread = new EventThreader();
-    eventDispatcherThread = new EventThreader();
-
-    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
-
-    QStringList names;
-    names << "broad cast" << "map management" << "network read" << "heavy load" << "event dispatcher" << "benchmark";
 
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<Player_internal_informations>("Player_internal_informations");
@@ -54,101 +16,63 @@ EventDispatcher::EventDispatcher()
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<Direction>("Direction");
-    qRegisterMetaType<Map_server_MapVisibility_simple*>("Map_final*");
+    qRegisterMetaType<Map_server_MapVisibility_simple*>("Map_server_MapVisibility_simple*");
     qRegisterMetaType<Player_public_informations>("Player_public_informations");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
 
-    connect(this,SIGNAL(try_start_benchmark(quint16,quint16,bool)),this,SLOT(start_internal_benchmark(quint16,quint16,bool)),Qt::QueuedConnection);
-    connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
-    connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
+    GlobalData::serverPrivateVariables.connected_players	= 0;
+    GlobalData::serverPrivateVariables.number_of_bots_logged= 0;
+    GlobalData::serverPrivateVariables.db                   = NULL;
+    GlobalData::serverPrivateVariables.timer_player_map     = NULL;
 
-    in_benchmark_mode=false;
+    GlobalData::serverPrivateVariables.botSpawnIndex=0;
+    GlobalData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
+    GlobalData::serverPrivateVariables.datapack_rightFileName	= QRegExp(DATAPACK_FILE_REGEX);
+
+    GlobalData::serverSettings.database.type=ServerSettings::Database::DatabaseType_Mysql;
+    GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
+    GlobalData::serverSettings.mapVisibility.simple.max		= 30;
+    GlobalData::serverSettings.mapVisibility.simple.reshow		= 20;
+    GlobalData::serverPrivateVariables.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
+
+    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
     stat=Down;
-    moveToThread(eventDispatcherThread);
+
+    connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
 
     connect(this,SIGNAL(try_initAll()),this,SLOT(initAll()),Qt::QueuedConnection);
     emit try_initAll();
 
-    nextStep.start(POKECRAFT_SERVER_NORMAL_SPEED*50);
     srand(time(NULL));
 }
 
 /** call only when the server is down
  * \warning this function is thread safe because it quit all thread before remove */
-EventDispatcher::~EventDispatcher()
+BaseServer::~BaseServer()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
-    lunchInitFunction->deleteLater();
-    timer_benchmark_stop->deleteLater();
-    int index=0;
-    while(index<GlobalData::serverPrivateVariables.eventThreaderList.size())
-    {
-        GlobalData::serverPrivateVariables.eventThreaderList.at(index)->quit();
-        index++;
-    }
-    while(GlobalData::serverPrivateVariables.eventThreaderList.size()>0)
-    {
-        EventThreader * tempThread=GlobalData::serverPrivateVariables.eventThreaderList.first();
-        GlobalData::serverPrivateVariables.eventThreaderList.removeFirst();
-        tempThread->wait();
-        delete tempThread;
-    }
+    GlobalData::serverPrivateVariables.eventThreaderList.clear();
     if(GlobalData::serverPrivateVariables.db!=NULL)
     {
         GlobalData::serverPrivateVariables.db->close();
         delete GlobalData::serverPrivateVariables.db;
         GlobalData::serverPrivateVariables.db=NULL;
     }
-    if(server!=NULL)
-    {
-        server->close();
-        delete server;
-        server=NULL;
-    }
-
-    botThread->quit();
-    botThread->wait();
-    delete botThread;
-    eventDispatcherThread->quit();
-    eventDispatcherThread->wait();
-    delete eventDispatcherThread;
 }
 
-void EventDispatcher::setSettings(ServerSettings settings)
+void BaseServer::initAll()
 {
-    //check the settings here
-    if(settings.max_players<1)
-        settings.max_players=200;
-    ProtocolParsing::setMaxPlayers(settings.max_players);
-    //load it
-    GlobalData::serverSettings=settings;
-    DebugClass::debugConsole(QString("GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber: %1").arg(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber));
-
-    quint8 player_list_size;
-    if(settings.max_players<=255)
-        player_list_size=sizeof(quint8);
-    else
-        player_list_size=sizeof(quint16);
-    GlobalData::serverPrivateVariables.sizeofInsertRequest=player_list_size+sizeof(quint8)+sizeof(quint8)+sizeof(quint8);
-}
-
-void EventDispatcher::initAll()
-{
-    lunchInitFunction=new QTimer();
-    timer_benchmark_stop=new QTimer();
-    timer_benchmark_stop->setInterval(60000);//1min
-    timer_benchmark_stop->setSingleShot(true);
-    connect(timer_benchmark_stop,SIGNAL(timeout()),this,SLOT(stop_benchmark()),Qt::QueuedConnection);
+    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
 }
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
 
-void EventDispatcher::preload_the_data()
+void BaseServer::preload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=false;
 
     preload_the_map();
-    preload_the_visibility_algorithm();
+    preload_the_skin();
 
     ClientHeavyLoad::simplifiedIdList.clear();
     int index=0;
@@ -159,9 +83,9 @@ void EventDispatcher::preload_the_data()
     }
 }
 
-void EventDispatcher::preload_the_map()
+void BaseServer::preload_the_map()
 {
-    GlobalData::serverPrivateVariables.datapack_mapPath=GlobalData::serverPrivateVariables.datapack_basePath+"map/";
+    GlobalData::serverPrivateVariables.datapack_mapPath=GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MAP;
     DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalData::serverPrivateVariables.datapack_mapPath));
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
@@ -171,7 +95,6 @@ void EventDispatcher::preload_the_map()
     //load the map
     int size=returnList.size();
     int index=0;
-    int index_sub,size_sub_loop;
     QRegExp mapFilter("\\.tmx$");
     while(index<size)
     {
@@ -198,7 +121,7 @@ void EventDispatcher::preload_the_map()
                 GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
 
                 bool continueTheLoading=true;
-		continueTheLoading=GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();//load the rawUTF8, send in all case to have the start position
+                continueTheLoading=GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();//load the rawUTF8, send in all case to have the start position
                 switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithm_simple:
@@ -212,21 +135,7 @@ void EventDispatcher::preload_the_map()
                 {
                     map_name << returnList.at(index);
 
-                    if(in_benchmark_mode)
-                    {
-                        index_sub=0;
-                        size_sub_loop=map_temp.map_to_send.bot_spawn_points.size();
-                        while(index_sub<size_sub_loop)
-                        {
-                            ServerPrivateVariables::BotSpawn tempPoint;
-                            tempPoint.map=returnList.at(index);
-                            tempPoint.x=map_temp.map_to_send.bot_spawn_points.at(index_sub).x;
-                            tempPoint.y=map_temp.map_to_send.bot_spawn_points.at(index_sub).y;
-                            GlobalData::serverPrivateVariables.botSpawn << tempPoint;
-                            DebugClass::debugConsole(QString("BotSpawn (bot_spawn_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
-                            index_sub++;
-                        }
-                    }
+                    parseJustLoadedMap(map_temp.map_to_send,returnList.at(index));
 
                     Map_semi map_semi;
                     map_semi.map				= GlobalData::serverPrivateVariables.map_list[returnList.at(index)];
@@ -462,7 +371,11 @@ void EventDispatcher::preload_the_map()
     DebugClass::debugConsole(QString("finish preload the map"));
 }
 
-void EventDispatcher::preload_the_visibility_algorithm()
+void BaseServer::preload_the_skin()
+{
+}
+
+void BaseServer::preload_the_visibility_algorithm()
 {
     QHash<QString,Map *>::const_iterator i = GlobalData::serverPrivateVariables.map_list.constBegin();
     QHash<QString,Map *>::const_iterator i_end = GlobalData::serverPrivateVariables.map_list.constEnd();
@@ -475,82 +388,18 @@ void EventDispatcher::preload_the_visibility_algorithm()
             i++;
         }
         break;
+        case MapVisibilityAlgorithm_none:
+        break;
         default:
         break;
     }
 }
 
-void EventDispatcher::load_settings()
+void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
 {
-    GlobalData::serverPrivateVariables.connected_players	= 0;
-    GlobalData::serverPrivateVariables.number_of_bots_logged= 0;
 }
 
-//start with allow real player to connect
-void EventDispatcher::start_internal_server()
-{
-    if(server==NULL)
-    {
-        server=new QTcpServer();
-        //to do in the thread
-        connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
-    }
-    if(server->isListening())
-    {
-        DebugClass::debugConsole(QString("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
-        emit error(QString("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
-        return;
-    }
-    if(oneInstanceRunning)
-    {
-        DebugClass::debugConsole("Other instance already running");
-        return;
-    }
-    if(stat!=Down)
-    {
-        DebugClass::debugConsole("In wrong stat");
-        return;
-    }
-    stat=InUp;
-    load_settings();
-    QHostAddress address = QHostAddress::Any;
-    if(!server_ip.isEmpty())
-        address.setAddress(GlobalData::serverSettings.server_ip);
-    if(!server->listen(address,GlobalData::serverSettings.server_port))
-    {
-        DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalData::serverSettings.server_port)).arg(server->errorString()));
-        stat=Down;
-        emit error(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalData::serverSettings.server_port)).arg(server->errorString()));
-        return;
-    }
-    if(server_ip.isEmpty())
-        DebugClass::debugConsole(QString("Listen *:%1").arg(GlobalData::serverSettings.server_port));
-    else
-        DebugClass::debugConsole("Listen "+server_ip+":"+QString::number(GlobalData::serverSettings.server_port));
-    DebugClass::debugConsole("Connecting to the database...");
-
-    if(!initialize_the_database())
-        return;
-
-    if(GlobalData::serverPrivateVariables.db->isOpen())
-        GlobalData::serverPrivateVariables.db->close();
-    if(!GlobalData::serverPrivateVariables.db->open())
-    {
-        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
-        server->close();
-        stat=Down;
-        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
-        return;
-    }
-    DebugClass::debugConsole(QString("Connected to %1 at %2 (%3)").arg(GlobalData::serverPrivateVariables.db_type_string).arg(GlobalData::serverSettings.database.mysql.host).arg(GlobalData::serverPrivateVariables.db->isOpen()));
-    preload_the_data();
-    stat=Up;
-    oneInstanceRunning=true;
-    emit is_started(true);
-    return;
-}
-
-bool EventDispatcher::initialize_the_database()
+bool BaseServer::initialize_the_database()
 {
     if(GlobalData::serverPrivateVariables.db!=NULL)
     {
@@ -561,6 +410,8 @@ bool EventDispatcher::initialize_the_database()
     switch(GlobalData::serverSettings.database.type)
     {
         default:
+        DebugClass::debugConsole(QString("database type unknow"));
+        return false;
         case ServerSettings::Database::DatabaseType_Mysql:
         GlobalData::serverPrivateVariables.db = new QSqlDatabase();
         *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL");
@@ -570,66 +421,37 @@ bool EventDispatcher::initialize_the_database()
         GlobalData::serverPrivateVariables.db->setUserName(GlobalData::serverSettings.database.mysql.login);
         GlobalData::serverPrivateVariables.db->setPassword(GlobalData::serverSettings.database.mysql.pass);
         GlobalData::serverPrivateVariables.db_type_string="mysql";
-        return true;
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
         GlobalData::serverPrivateVariables.db = new QSqlDatabase();
         *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
-        GlobalData::serverPrivateVariables.db->setDatabaseName(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
+        GlobalData::serverPrivateVariables.db->setDatabaseName(sqlitePath());
         GlobalData::serverPrivateVariables.db_type_string="sqlite";
-        return true;
         break;
     }
-}
-
-//start without real player possibility
-void EventDispatcher::start_internal_benchmark(quint16 second,quint16 number_of_client,const bool &benchmark_map)
-{
-    if(oneInstanceRunning)
+    if(!GlobalData::serverPrivateVariables.db->open())
     {
-        DebugClass::debugConsole("Other instance already running");
-        return;
+        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
+        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
+        return false;
     }
-    if(stat!=Down)
-    {
-        DebugClass::debugConsole("Is in wrong stat for benchmark");
-        return;
-    }
-    timer_benchmark_stop->setInterval(second*1000);
-    benchmark_latency=0;
-    stat=InUp;
-    load_settings();
-    //firstly get the spawn point
-    if(benchmark_map)
-        GlobalData::serverPrivateVariables.datapack_basePath=":/datapack/";
-    else
-        GlobalData::serverPrivateVariables.datapack_basePath=QCoreApplication::applicationDirPath()+"/datapack/";
-    preload_the_data();
-
-    int index=0;
-    while(index<number_of_client)
-    {
-        addBot();
-        index++;
-    }
-    timer_benchmark_stop->start();
-    stat=Up;
-    oneInstanceRunning=true;
+    DebugClass::debugConsole(QString("Connected to sqlite at %1 (%2)").arg(GlobalData::serverSettings.database.mysql.host).arg(GlobalData::serverPrivateVariables.db->isOpen()));
+    return true;
 }
 
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
 
-void EventDispatcher::unload_the_data()
+void BaseServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
+    unload_the_skin();
     unload_the_map();
-    unload_the_visibility_algorithm();
 
     ClientHeavyLoad::simplifiedIdList.clear();
 }
 
-void EventDispatcher::unload_the_map()
+void BaseServer::unload_the_map()
 {
     QHash<QString,Map *>::const_iterator i = GlobalData::serverPrivateVariables.map_list.constBegin();
     QHash<QString,Map *>::const_iterator i_end = GlobalData::serverPrivateVariables.map_list.constEnd();
@@ -644,67 +466,36 @@ void EventDispatcher::unload_the_map()
     GlobalData::serverPrivateVariables.botSpawn.clear();
 }
 
-void EventDispatcher::unload_the_visibility_algorithm()
+void BaseServer::unload_the_skin()
 {
 }
 
-//call by stop benchmark
-void EventDispatcher::stop_benchmark()
+void BaseServer::unload_the_visibility_algorithm()
 {
-    if(in_benchmark_mode==false)
-    {
-        DebugClass::debugConsole("Double stop_benchmark detected!");
-        return;
-    }
-    DebugClass::debugConsole("Stop the benchmark");
-    double TX_speed=0;
-    double RX_speed=0;
-    double TX_size=0;
-    double RX_size=0;
-    double second=0;
-    if(GlobalData::serverPrivateVariables.fake_clients.size()>=1)
-    {
-        second=((double)time_benchmark_first_client.elapsed()/1000);
-        if(second>0)
-        {
-            TX_size=GlobalData::serverPrivateVariables.fake_clients.first()->get_TX_size();
-            RX_size=GlobalData::serverPrivateVariables.fake_clients.first()->get_RX_size();
-            TX_speed=((double)TX_size)/second;
-            RX_speed=((double)RX_size)/second;
-        }
-    }
-    stat=Up;
-    stop_internal_server();
-    stat=Down;
-    oneInstanceRunning=false;
-    in_benchmark_mode=false;
-    emit benchmark_result(benchmark_latency,TX_speed,RX_speed,TX_size,RX_size,second);
 }
 
-void EventDispatcher::check_if_now_stopped()
+void BaseServer::check_if_now_stopped()
 {
-    if(client_list.size()!=0 || GlobalData::serverPrivateVariables.fake_clients.size()!=0)
+    if(client_list.size()!=0)
         return;
     if(stat!=InDown)
         return;
+    stat=InDown;
     DebugClass::debugConsole("Fully stopped");
     if(GlobalData::serverPrivateVariables.db!=NULL)
         GlobalData::serverPrivateVariables.db->close();
-    //server.close();
-    stat=Down;
-    oneInstanceRunning=false;
-    if(server!=NULL)
-    {
-        server->close();
-        delete server;
-        server=NULL;
-    }
+    QFakeServer::server.close();
+
     unload_the_data();
-    emit is_started(false);
+}
+
+QString BaseServer::sqlitePath()
+{
+    return QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite";
 }
 
 //call by normal stop
-void EventDispatcher::stop_internal_server()
+void BaseServer::stop_internal_server()
 {
     if(stat!=Up && stat!=InDown)
     {
@@ -714,11 +505,7 @@ void EventDispatcher::stop_internal_server()
     }
     DebugClass::debugConsole("Try stop");
     stat=InDown;
-    removeBots();
-    if(server!=NULL)
-    {
-        server->close();
-    }
+
     int index=0;
     while(index<client_list.size())
     {
@@ -726,80 +513,11 @@ void EventDispatcher::stop_internal_server()
         index++;
     }
 
-    /* commented because it need be unloaded after all the player
-    unload_the_data();*/
-
     check_if_now_stopped();
-}
-
-/////////////////////////////////////////////////// Object removing /////////////////////////////////////
-
-void EventDispatcher::removeOneClient()
-{
-    Client *client=qobject_cast<Client *>(QObject::sender());
-    if(client==NULL)
-    {
-        DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
-        return;
-    }
-    if(!client->is_ready_to_stop)
-    {
-        DebugClass::debugConsole("is not ready to stop!");
-        return;
-    }
-    client_list.removeOne(client);
-    client->deleteLater();
-    check_if_now_stopped();
-}
-
-/*void EventDispatcher::removeOneBot()
-{
-    FakeBot *client=qobject_cast<FakeBot *>(QObject::sender());
-    if(client==NULL)
-    {
-        DebugClass::debugConsole("removeOneBot(): NULL client at disconnection");
-        return;
-    }
-    GlobalData::serverPrivateVariables.fake_clients.removeOne(client);
-    client->deleteLater();
-    check_if_now_stopped();
-}*/
-
-void EventDispatcher::removeBots()
-{
-    int list_size=GlobalData::serverPrivateVariables.fake_clients.size();
-    int index=0;
-    while(index<list_size)
-    {
-        GlobalData::serverPrivateVariables.fake_clients.at(index)->disconnect();
-        //disconnect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()));
-        //connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
-        //delete after the signal
-        index++;
-    }
-}
-
-/////////////////////////////////////// Add object //////////////////////////////////////
-
-void EventDispatcher::addBot()
-{
-    GlobalData::serverPrivateVariables.fake_clients << new FakeBot();
-    client_list << new Client(&GlobalData::serverPrivateVariables.fake_clients.last()->socket,true,getClientMapManagement());
-    connect_the_last_client();
-
-    if(GlobalData::serverPrivateVariables.fake_clients.size()==1)
-    {
-        //GlobalData::serverPrivateVariables.fake_clients.last()->show_details();
-        time_benchmark_first_client.start();
-    }
-    connect(&nextStep,SIGNAL(timeout()),GlobalData::serverPrivateVariables.fake_clients.last(),SLOT(doStep()),Qt::QueuedConnection);
-    GlobalData::serverPrivateVariables.fake_clients.last()->moveToThread(botThread);
-    GlobalData::serverPrivateVariables.fake_clients.last()->start_step();
-    GlobalData::serverPrivateVariables.fake_clients.last()->tryLink();
 }
 
 /////////////////////////////////////// player related //////////////////////////////////////
-ClientMapManagement * EventDispatcher::getClientMapManagement()
+ClientMapManagement * BaseServer::getClientMapManagement()
 {
     switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
@@ -813,156 +531,57 @@ ClientMapManagement * EventDispatcher::getClientMapManagement()
     }
 }
 
-///////////////////////////////////// Generic command //////////////////////////////////
 
-void EventDispatcher::serverCommand(QString command,QString extraText)
+/////////////////////////////////////////////////// Object removing /////////////////////////////////////
+
+void BaseServer::removeOneClient()
 {
     Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
     {
-        DebugClass::debugConsole("NULL client at serverCommand()");
+        DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
         return;
     }
-    if(command=="restart")
-        emit need_be_restarted();
-    else if(command=="stop")
-        emit need_be_stopped();
-    else if(command=="addbots" || command=="removebots")
-    {
-        if(stat!=Up)
-        {
-            DebugClass::debugConsole("Is in wrong stat for bots manipulation");
-            return;
-        }
-        if(in_benchmark_mode)
-        {
-            DebugClass::debugConsole("Is in benchmark mode, unable to do bots manipulation");
-            return;
-        }
-        if(command=="addbots")
-        {
-            if(!GlobalData::serverPrivateVariables.fake_clients.empty())
-            {
-                //client->local_sendPM(client->getPseudo(),"Remove previous bots firstly");
-                DebugClass::debugConsole("Remove previous bots firstly");
-                return;
-            }
-            Map_player_info map_player_info=client->getMapPlayerInfo();
-            quint16 number_player=2;
-            if(extraText!="")
-            {
-                bool ok;
-                number_player=extraText.toUInt(&ok);
-                if(!ok)
-                {
-                    DebugClass::debugConsole("the arguement is not as number!");
-                    return;
-                }
-            }
-            if(number_player>(GlobalData::serverSettings.max_players-client_list.size()))
-                number_player=GlobalData::serverSettings.max_players-client_list.size();
-            int index=0;
-            while(index<number_player && client_list.size()<GlobalData::serverSettings.max_players)
-            {
-                addBot();//add way to locate the bot spawn
-                index++;
-            }
-        }
-        else if(command=="removebots")
-        {
-            removeBots();
-        }
-        else
-            DebugClass::debugConsole(QString("unknow command in bots case: %1").arg(command));
-    }
-    else
-        DebugClass::debugConsole(QString("unknow command: %1").arg(command));
+    client_list.removeOne(client);
+    client->deleteLater();
+    check_if_now_stopped();
 }
 
-//////////////////////////////////// Function secondary //////////////////////////////
-QString EventDispatcher::listenIpAndPort(QString server_ip,quint16 server_port)
-{
-    if(server_ip=="")
-        server_ip="*";
-    return server_ip+":"+QString::number(server_port);
-}
+/////////////////////////////////////// player related //////////////////////////////////////
 
-void EventDispatcher::newConnection()
+void BaseServer::newConnection()
 {
-    while(server->hasPendingConnections())
+    while(QFakeServer::server.hasPendingConnections())
     {
-        DebugClass::debugConsole(QString("new client connected"));
-        QTcpSocket *socket = server->nextPendingConnection();
+        QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
+            DebugClass::debugConsole(QString("newConnection(): new client connected by fake socket"));
             client_list << new Client(new ConnectedSocket(socket),false,getClientMapManagement());
             connect_the_last_client();
         }
         else
-            DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
+            DebugClass::debugConsole("NULL client at BaseServer::newConnection()");
     }
 }
 
-void EventDispatcher::connect_the_last_client()
+void BaseServer::connect_the_last_client()
 {
     connect(client_list.last(),SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
-    if(!in_benchmark_mode)
-    {
-        connect(client_list.last(),SIGNAL(emit_serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
-        connect(client_list.last(),SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
-        connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
-        connect(client_list.last(),SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
-    }
+
+    connect(client_list.last(),SIGNAL(emit_serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
+    connect(client_list.last(),SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
+    connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
+    /// \todo remove this to remplace with the BroadCastWithoutSender
+    connect(client_list.last(),SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
 }
 
-bool EventDispatcher::isListen()
+bool BaseServer::isListen()
 {
-    if(in_benchmark_mode)
-        return false;
     return (stat==Up);
 }
 
-bool EventDispatcher::isStopped()
+bool BaseServer::isStopped()
 {
-    if(in_benchmark_mode)
-        return false;
     return (stat==Down);
-}
-
-bool EventDispatcher::isInBenchmark()
-{
-    return in_benchmark_mode;
-}
-
-quint16 EventDispatcher::player_current()
-{
-    return GlobalData::serverPrivateVariables.connected_players;
-}
-
-quint16 EventDispatcher::player_max()
-{
-    return GlobalData::serverSettings.max_players;
-}
-
-/////////////////////////////////// Async the call ///////////////////////////////////
-/// \brief Called when event loop is setup
-void EventDispatcher::start_server()
-{
-    emit need_be_started();
-}
-
-void EventDispatcher::stop_server()
-{
-    emit try_stop_server();
-}
-
-void EventDispatcher::start_benchmark(quint16 second,quint16 number_of_client,bool benchmark_map)
-{
-    if(in_benchmark_mode)
-    {
-        DebugClass::debugConsole("Already in benchmark");
-        return;
-    }
-    in_benchmark_mode=true;
-    emit try_start_benchmark(second,number_of_client,benchmark_map);
 }

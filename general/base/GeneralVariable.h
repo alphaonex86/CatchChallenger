@@ -21,5 +21,7 @@
 //*/
 
 #define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]*[0-9a-zA-Z]\\.[a-z]{3,4}$"
+#define DATAPACK_BASE_PATH_MAP "map/"
+#define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
 
 #endif // GENERALVARIABLE_H

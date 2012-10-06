@@ -1,4 +1,5 @@
 #include "NewGame.h"
+#include "../../general/base/GeneralVariable.h"
 #include "ui_NewGame.h"
 
 #include <QDir>
@@ -12,7 +13,7 @@ NewGame::NewGame(QWidget *parent) :
 {
     ui->setupUi(this);
     ok=false;
-    skinPath=QCoreApplication::applicationDirPath()+"/datapack/skin/fighter/";
+    skinPath=QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_SKIN;
     int index=1;
     while(QFileInfo(skinPath+QString::number(index)).isDir())
     {

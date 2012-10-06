@@ -61,7 +61,8 @@ SOURCES += main.cpp\
     ../base/interface/MapController.cpp \
     ../base/interface/BaseWindow.cpp \
     SaveGameLabel.cpp \
-    ../../general/base/ConnectedSocket.cpp
+    ../../general/base/ConnectedSocket.cpp \
+    ../../server/base/BaseServer.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -110,7 +111,8 @@ HEADERS  += mainwindow.h \
     ../base/interface/MapController.h \
     SaveGameLabel.h \
     ../../general/base/ConnectedSocket.h \
-    ../../server/VariableServer.h
+    ../../server/VariableServer.h \
+    ../../server/base/BaseServer.h
 
 FORMS    += mainwindow.ui \
     NewGame.ui \

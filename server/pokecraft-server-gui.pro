@@ -19,14 +19,18 @@ SOURCES += MainWindow.cpp \
     ../general/base/FacilityLib.cpp \
     base/GlobalData.cpp \
     base/SqlFunction.cpp \
-    ../general/base/ConnectedSocket.cpp
+    ../general/base/ConnectedSocket.cpp \
+    NormalServer.cpp \
+    base/BaseServer.cpp
 HEADERS  += MainWindow.h \
     ../general/base/FacilityLib.h \
     base/GlobalData.h \
     base/SqlFunction.h \
-    ../general/base/ConnectedSocket.h
+    ../general/base/ConnectedSocket.h \
+    NormalServer.h \
+    base/BaseServer.h
 
-SOURCES += EventDispatcher.cpp \
+SOURCES += \
     base/EventThreader.cpp \
     base/Client.cpp \
     base/ClientHeavyLoad.cpp \
@@ -54,7 +58,6 @@ SOURCES += EventDispatcher.cpp \
     ../client/base/Api_client_real.cpp \
     ../client/base/Api_client_virtual.cpp
 HEADERS += VariableServer.h \
-    EventDispatcher.h \
     base/ServerStructures.h \
     base/EventThreader.h \
     base/Client.h \
