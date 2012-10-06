@@ -31,7 +31,6 @@ Api_protocol::~Api_protocol()
 //have message without reply
 void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
-    DebugClass::debugConsole(QString("mainCodeType: %1").arg(mainCodeType));
     if(!is_logged)
     {
         emit newError(tr("Procotol wrong or corrupted"),QString("is not logged with main ident: %1").arg(mainCodeType));
