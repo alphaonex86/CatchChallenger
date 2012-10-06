@@ -25,11 +25,11 @@ InternalServer::InternalServer(const QString &dbPath)
     GlobalData::serverSettings.mapVisibility.simple.reshow		= 20;
     GlobalData::serverPrivateVariables.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//broad cast (0)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//map management (1)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//network read (2)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//heavy load (3)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//local calcule (4)
+    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//broad cast (0)
+    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//map management (1)
+    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//network read (2)
+    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//heavy load (3)
+    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//local calcule (4)
 
     GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
 
@@ -66,19 +66,9 @@ InternalServer::~InternalServer()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
     lunchInitFunction->deleteLater();
-    int index=0;
-    while(index<GlobalData::serverPrivateVariables.eventThreaderList.size())
-    {
-        GlobalData::serverPrivateVariables.eventThreaderList.at(index)->quit();
-        index++;
-    }
-    while(GlobalData::serverPrivateVariables.eventThreaderList.size()>0)
-    {
-        EventThreader * tempThread=GlobalData::serverPrivateVariables.eventThreaderList.first();
-        GlobalData::serverPrivateVariables.eventThreaderList.removeFirst();
-        tempThread->wait();
-        delete tempThread;
-    }
+    thread.quit();
+    thread.wait();
+    GlobalData::serverPrivateVariables.eventThreaderList.clear();
     if(GlobalData::serverPrivateVariables.db!=NULL)
     {
         GlobalData::serverPrivateVariables.db->close();
@@ -144,6 +134,7 @@ void InternalServer::preload_the_map()
                 GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
 
                 bool continueTheLoading=true;
+                continueTheLoading=GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();//load the rawUTF8, send in all case to have the start position
                 switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithm_none:
