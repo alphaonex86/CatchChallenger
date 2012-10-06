@@ -6,6 +6,10 @@ using namespace Pokecraft;
 BaseWindow::BaseWindow(Api_protocol *client) :
     ui(new Ui::BaseWindowUI)
 {
+    qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
+    qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
+    qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
+
     this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
 

@@ -6,6 +6,11 @@
 MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(client,centerOnPlayer,debugTags,useCache,OpenGL)
 {
+    qRegisterMetaType<Pokecraft::Direction>("Pokecraft::Direction");
+    qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
+    qRegisterMetaType<Pokecraft::Player_public_informations>("Pokecraft::Player_public_informations");
+    qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
+
     botTileset = new Tiled::Tileset("bot",16,24);
     botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
     botNumber = 0;

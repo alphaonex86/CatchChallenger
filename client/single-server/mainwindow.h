@@ -55,7 +55,6 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     Pokecraft::ConnectedSocket *socket;
-    QTcpSocket tcpSocket;
     Pokecraft::BaseWindow *baseWindow;
 };
 
