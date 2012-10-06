@@ -20,8 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<Pokecraft::Player_public_informations>("Pokecraft::Player_public_informations");
     qRegisterMetaType<Pokecraft::Direction>("Pokecraft::Direction");
 
-    connectSocket=new Pokecraft::ConnectedSocket(&socket);
-    client=new Pokecraft::Api_client_virtual(connectSocket);
+    socket=new Pokecraft::ConnectedSocket(new Pokecraft::QFakeSocket());
+    client=new Pokecraft::Api_client_virtual(socket);
     baseWindow=new Pokecraft::BaseWindow(client);
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
@@ -32,9 +32,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
     connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)),Qt::QueuedConnection);
-    connect(connectSocket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
-    connect(connectSocket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
-    connect(connectSocket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
+    connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
+    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
+    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
     connect(baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()),Qt::QueuedConnection);
 
     ui->stackedWidget->addWidget(baseWindow);
@@ -49,13 +49,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    connectSocket->disconnectFromHost();
+    socket->disconnectFromHost();
     if(internalServer!=NULL)
         internalServer->deleteLater();
     delete client;
     delete baseWindow;
     delete ui;
-    connectSocket->deleteLater();
+    socket->deleteLater();
 }
 
 void MainWindow::resetAll()
@@ -150,7 +150,7 @@ void MainWindow::protocol_is_good()
 
 void MainWindow::try_stop_server()
 {
-    connectSocket->disconnectFromHost();
+    socket->disconnectFromHost();
     if(internalServer!=NULL)
         internalServer->deleteLater();
     internalServer=NULL;
@@ -518,7 +518,7 @@ void MainWindow::on_SaveGame_Play_clicked()
 void MainWindow::serverIsReady()
 {
     baseWindow->serverIsReady();
-    connectSocket->connectToHost("localhost",9999);
+    socket->connectToHost("localhost",9999);
 }
 
 void MainWindow::needQuit()

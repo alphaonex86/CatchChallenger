@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
     qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
 
-    socket=new Pokecraft::ConnectedSocket(&tcpSocket);
+    socket=new Pokecraft::ConnectedSocket(new QTcpSocket());
     client=new Pokecraft::Api_client_real(socket);
     baseWindow=new Pokecraft::BaseWindow(client);
     ui->setupUi(this);
