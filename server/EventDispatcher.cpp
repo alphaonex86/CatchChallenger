@@ -198,10 +198,10 @@ void EventDispatcher::preload_the_map()
                 GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
 
                 bool continueTheLoading=true;
+		continueTheLoading=GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();//load the rawUTF8, send in all case to have the start position
                 switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithm_simple:
-                        continueTheLoading=GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();
                     break;
                     case MapVisibilityAlgorithm_none:
                     default:

@@ -109,7 +109,8 @@ HEADERS  += mainwindow.h \
     ../base/interface/BaseWindow.h \
     ../base/interface/MapController.h \
     SaveGameLabel.h \
-    ../../general/base/ConnectedSocket.h
+    ../../general/base/ConnectedSocket.h \
+    ../../server/VariableServer.h
 
 FORMS    += mainwindow.ui \
     NewGame.ui \

@@ -38,10 +38,10 @@ void ClientNetworkRead::stop()
     deleteLater();
 }
 
-void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & data)
+void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("parseInputBeforeLogin(): data: %1").arg(QString(data.toHex())));
+    emit message(QString("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -150,7 +150,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
     }
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("parseInputAfterLogin(): data: %1").arg(QString(data.toHex())));
+    emit message(QString("parseMessage(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -192,7 +192,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
     }
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("parseInputAfterLogin(): data: %1").arg(QString(data.toHex())));
+    emit message(QString("parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -358,7 +358,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
     }
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("parseInputAfterLogin(): data: %1").arg(QString(data.toHex())));
+    emit message(QString("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);

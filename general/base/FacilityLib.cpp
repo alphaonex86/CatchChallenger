@@ -6,14 +6,16 @@
 
 using namespace Pokecraft;
 
+QByteArray FacilityLib::UTF8EmptyData=QByteArray().fill(0x00,1);
+
 QByteArray FacilityLib::toUTF8(const QString &text)
 {
     if(text.isEmpty() || text.size()>255)
-        return QByteArray();
+        return UTF8EmptyData;
     QByteArray returnedData,data;
     data=text.toUtf8();
     if(data.size()==0 || data.size()>255)
-        return QByteArray();
+        return UTF8EmptyData;
     returnedData[0]=data.size();
     returnedData+=data;
     return returnedData;
