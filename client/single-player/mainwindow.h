@@ -47,6 +47,7 @@ private slots:
     void on_SaveGame_Play_clicked();
     void needQuit();
     void is_started(bool started);
+    void play(const QString &savegamesPath);
 private:
     Ui::MainWindow *ui;
     Pokecraft::Api_client_virtual *client;
