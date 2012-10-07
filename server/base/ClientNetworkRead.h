@@ -7,6 +7,7 @@
 #include <QStringList>
 #include <QRegExp>
 
+#include "BroadCastWithoutSender.h"
 #include "ServerStructures.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/ProtocolParsing.h"
@@ -54,8 +55,6 @@ signals:
     void sendPM(const QString &text,const QString &pseudo);
     void sendChatText(const Chat_type &chatType,const QString &text);
     void sendBroadCastCommand(const QString &command,const QString &extraText);
-    //to manipulate the server for restart and stop
-    void serverCommand(const QString &command,const QString &extraText);
 private:
     // for status
     bool have_send_protocol;

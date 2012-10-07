@@ -76,7 +76,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     return;
                 }
                 quint16 playerSizeList;
-                if(max_player<=255)
+                if(max_visible_player<=255)
                 {
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -101,7 +101,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 {
                     //player id
                     Player_public_informations public_informations;
-                    if(max_player<=255)
+                    if(max_visible_player<=255)
                     {
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -228,7 +228,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             //move the player
             quint8 directionInt,moveListSize;
             quint16 playerSizeList;
-            if(max_player<=255)
+            if(max_visible_player<=255)
             {
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -337,7 +337,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         {
             //remove player
             quint16 playerSizeList;
-            if(max_player<=255)
+            if(max_visible_player<=255)
             {
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -424,7 +424,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
         case 0xC5:
         {
             quint16 playerSizeList;
-            if(max_player<=255)
+            if(max_visible_player<=255)
             {
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
@@ -449,7 +449,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             {
                 //player id
                 quint16 simplifiedId;
-                if(max_player<=255)
+                if(max_visible_player<=255)
                 {
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -540,7 +540,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     return;
                 }
                 quint16 playerSizeList;
-                if(max_player<=255)
+                if(max_visible_player<=255)
                 {
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                     {
@@ -565,7 +565,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 {
                     //player id
                     quint16 simplifiedId;
-                    if(max_player<=255)
+                    if(max_visible_player<=255)
                     {
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -923,7 +923,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             return;
                         }
                         in >> max_player;
-                        Pokecraft::ProtocolParsing::setMaxPlayers(max_player);
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+                            return;
+                        }
+                        in >> max_visible_player;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
@@ -1107,6 +1112,7 @@ void Api_protocol::resetAll()
     is_logged=false;
     have_send_protocol=false;
     max_player=65535;
+    max_visible_player=65535;
 
     //to send trame
     lastQueryNumber=1;

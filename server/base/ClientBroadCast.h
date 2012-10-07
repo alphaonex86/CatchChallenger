@@ -7,6 +7,7 @@
 #include <QByteArray>
 #include <QList>
 
+#include "BroadCastWithoutSender.h"
 #include "ServerStructures.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/GeneralStructures.h"
