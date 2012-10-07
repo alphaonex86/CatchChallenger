@@ -58,6 +58,9 @@ private slots:
     void on_toolButton_quit_interface_clicked();
     void on_pushButton_interface_trainer_clicked();
     void on_lineEdit_chat_text_lostFocus();
+
+    //player
+    void updatePlayerImage();
 private:
     Ui::BaseWindowUI *ui;
     Pokecraft::Api_protocol *client;
@@ -76,6 +79,7 @@ private:
     MapController *mapController;
     QAbstractSocket::SocketState socketState;
     QStringList skinFolderList;
+    bool haveDatapack,havePlayerInformations;
 signals:
     void needQuit();
 };
