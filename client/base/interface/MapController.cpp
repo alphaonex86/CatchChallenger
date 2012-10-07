@@ -26,10 +26,8 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
 
     playerMapObject = new Tiled::MapObject();
     playerTileset = new Tiled::Tileset("player",16,24);
-    if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
-        qDebug() << "Unable the load the default tileset";
 
-    mHaveTheDatapack=false;
+    resetAll();
 
     //connect the map controler
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
@@ -46,6 +44,9 @@ MapController::~MapController()
 
 void MapController::resetAll()
 {
+    if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
+        qDebug() << "Unable the load the default tileset";
+
     mHaveTheDatapack=false;
 }
 

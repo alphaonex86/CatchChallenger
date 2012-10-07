@@ -13,6 +13,7 @@
 #include "ClientNetworkWrite.h"
 #include "ClientLocalCalcule.h"
 #include "EventThreader.h"
+#include "BroadCastWithoutSender.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../VariableServer.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple.h"
@@ -58,29 +59,16 @@ private slots:
     void send_player_informations();
     //remove and stop related
     void disconnectNextStep();
-
-    //??? in private slot?
-    void serverCommand(QString command,QString extraText);
-    void local_sendPM(QString text,QString pseudo);
-    void local_sendChatText(Chat_type chatType,QString text);
 signals:
     //remove and stop related
     void askIfIsReadyToStop();
     void isReadyToDelete();
-
-    //to pass to the event manager to display the information
-    void new_player_is_connected(const Player_internal_informations &player);
-    void player_is_disconnected(const QString &pseudo);
-    void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
 
     //to async the message
     void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_server_MapVisibility_simple *map,Orientation orientation,QString skin);
     void fake_send_data(const QByteArray &data);
     void fake_send_received_data(const QByteArray &data);
     void try_ask_stop();
-
-    //to send to event manger to have command
-    void emit_serverCommand(const QString&,const QString&);
 public slots:
     void disconnectClient();
     /// \warning it need be complete protocol trame
