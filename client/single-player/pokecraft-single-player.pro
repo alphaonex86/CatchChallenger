@@ -18,7 +18,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-	mainwindow.cpp \
+        mainwindow.cpp \
     ../../general/base/DebugClass.cpp \
     ../../general/base/ChatParsing.cpp \
     ../../general/base/QFakeSocket.cpp \
@@ -128,4 +128,4 @@ OTHER_FILES += \
     Pokecraft_client
 
 win32:RC_FILE += ../base/resources/resources-windows.rc
-
+win32:RESOURCES += ../../server/base/resources/resources-windows-qt-plugin.qrc
