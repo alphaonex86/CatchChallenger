@@ -35,7 +35,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
-    connect(baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()),Qt::QueuedConnection);
 
     ui->stackedWidget->addWidget(baseWindow);
     baseWindow->setMultiPlayer(false);
@@ -49,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    needQuit();
     socket->disconnectFromHost();
     if(internalServer!=NULL)
         internalServer->deleteLater();
@@ -68,6 +68,7 @@ void MainWindow::resetAll()
         internalServer->deleteLater();
     internalServer=NULL;
     pass.clear();
+    needQuit();
 
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
 }
@@ -146,6 +147,7 @@ void MainWindow::message(QString message)
 void MainWindow::protocol_is_good()
 {
     client->tryLogin("admin",pass);
+    timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
 }
 
 void MainWindow::try_stop_server()
@@ -154,6 +156,7 @@ void MainWindow::try_stop_server()
     if(internalServer!=NULL)
         internalServer->deleteLater();
     internalServer=NULL;
+    needQuit();
 }
 
 void MainWindow::on_SaveGame_New_clicked()
@@ -219,12 +222,10 @@ void MainWindow::on_SaveGame_New_clicked()
     QByteArray passHash=hash.result();
 
     //initialise the meta data
-    bool settingOk=true;
+    bool settingOk=false;
     {
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
-        if(!metaData.isWritable())
-            settingOk=false;
-        else
+        if(metaData.isWritable())
         {
             if(metaData.status()==QSettings::NoError)
             {
@@ -232,12 +233,10 @@ void MainWindow::on_SaveGame_New_clicked()
                 metaData.setValue("location","Starting city");
                 metaData.setValue("time_played",0);
                 metaData.setValue("pass",pass);
+                settingOk=true;
             }
             else
-            {
                 qDebug() << "Settings error: " << metaData.status();
-                settingOk=false;
-            }
         }
     }
 
@@ -383,16 +382,30 @@ void MainWindow::updateSavegameList()
                         QString time_played;
                         if(!ok)
                             time_played="Time player: bug";
-                        else if(time_played_number>=3600*24)
+                        else if(time_played_number>=3600*24*10)
                             time_played=QObject::tr("%n day(s) played","",time_played_number/3600*24);
+                        else if(time_played_number>=3600*24)
+                            time_played=QObject::tr("%n day(s) and %1 played","",time_played_number/3600*24).arg(QObject::tr("%n hour(s)","",time_played_number%3600*24));
                         else if(time_played_number>=3600)
-                            time_played=QObject::tr("%n hour(s) played","",time_played_number/3600);
+                            time_played=QObject::tr("%n hour(s) and %1 played","",time_played_number/3600).arg(QObject::tr("%n minute(s)","",time_played_number%3600));
                         else
-                            time_played=QObject::tr("%n minute(s) played","",time_played_number/60);
+                            time_played=QObject::tr("%n minute(s) and %1 played","",time_played_number/60).arg(QObject::tr("%n second(s)","",time_played_number%60));
+
+                        //load the map name
+                        QString mapName=metaData.value("location").toString();
+                        Tiled::MapReader reader;
+                        Tiled::Map * tiledMap = reader.readMap(QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
+                        if(tiledMap)
+                        {
+                            if(tiledMap->properties().contains("name"))
+                                mapName=tiledMap->properties().value("name");
+                            delete tiledMap;
+                        }
+
                         newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3 (%4)</span>")
                                           .arg(metaData.value("title").toString())
                                           .arg(dateString)
-                                          .arg(metaData.value("location").toString())
+                                          .arg(mapName)
                                           .arg(time_played)
                                           );
                     }
@@ -506,14 +519,44 @@ void MainWindow::on_SaveGame_Play_clicked()
 void MainWindow::is_started(bool started)
 {
     if(!started)
+    {
+        needQuit();
         return;
+    }
     baseWindow->serverIsReady();
     socket->connectToHost("localhost",9999);
 }
 
 void MainWindow::needQuit()
 {
-    client->tryDisconnect();
+    if(!haveLaunchedGame)
+        return;
+    haveLaunchedGame=false;
+
+    bool settingOk=false;
+    QSettings metaData(launchedGamePath+"metadata.conf",QSettings::IniFormat);
+    if(metaData.isWritable())
+    {
+        if(metaData.status()==QSettings::NoError)
+        {
+            QString locaction=baseWindow->lastLocation();
+            QString mapPath=QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_MAP;
+            if(locaction.startsWith(mapPath))
+                locaction.remove(0,mapPath.size());
+            if(!locaction.isEmpty())
+                metaData.setValue("location",locaction);
+            metaData.setValue("time_played",metaData.value("time_played").toUInt()+(QDateTime::currentDateTimeUtc().toTime_t()-timeLaunched));
+            settingOk=true;
+        }
+        else
+            qDebug() << "Settings error: " << metaData.status();
+    }
+    updateSavegameList();
+    if(!settingOk)
+    {
+        QMessageBox::critical(NULL,tr("Error"),tr("Unable to save internal value at game stopping"));
+        return;
+    }
 }
 
 void MainWindow::play(const QString &savegamesPath)
@@ -524,9 +567,14 @@ void MainWindow::play(const QString &savegamesPath)
         QMessageBox::critical(NULL,tr("Error"),tr("Unable to load internal value"));
         return;
     }
+    launchedGamePath=savegamesPath;
+    haveLaunchedGame=true;
     pass=metaData.value("pass").toString();
     if(internalServer!=NULL)
+    {
         internalServer->deleteLater();
+        needQuit();
+    }
     internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
     connect(internalServer,SIGNAL(try_stop_server()),this,SLOT(try_stop_server()),Qt::QueuedConnection);
     connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);

@@ -33,6 +33,7 @@ public slots:
     //the datapack
     void setDatapackPath(const QString &path);
 private:
+    //the other player
     struct OtherPlayer
     {
         quint8 x,y;
@@ -52,19 +53,20 @@ private:
     QList<BotSpawnPoint> botSpawnPointList;
     quint16 botNumber;
     Tiled::Tileset * botTileset;
+    QTimer timerBotMove;
+    QTimer timerBotManagement;
 
+    //current player
     Pokecraft::Player_private_and_public_informations player_informations;
     bool player_informations_is_set;
+    Pokecraft::Api_protocol *client;
 
+    //datapack
     QStringList skinFolderList;
     QString datapackPath;
     bool mHaveTheDatapack;
 
-    QTimer timerBotMove;
-    QTimer timerBotManagement;
-
-    Pokecraft::Api_protocol *client;
-
+    //the delayed action
     struct DelayedInsert
     {
         Pokecraft::Player_public_informations player;
