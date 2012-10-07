@@ -252,7 +252,7 @@ void MainWindow::on_SaveGame_New_clicked()
     db.setDatabaseName(savegamesPath+"pokecraft.db.sqlite");
     if(!db.open())
     {
-        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: open database)"));
+        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nError: open database: %1").arg(db.lastError().text()));
         rmpath(savegamesPath);
         return;
     }
@@ -277,6 +277,8 @@ void MainWindow::on_SaveGame_New_clicked()
     db.close();
 
     updateSavegameList();
+
+    play(savegamesPath);
 }
 
 void MainWindow::savegameLabelClicked()
@@ -498,6 +500,24 @@ void MainWindow::on_SaveGame_Play_clicked()
     if(!savegameWithMetaData[selectedSavegame])
         return;
 
+    play(savegamesPath);
+}
+
+void MainWindow::is_started(bool started)
+{
+    if(!started)
+        return;
+    baseWindow->serverIsReady();
+    socket->connectToHost("localhost",9999);
+}
+
+void MainWindow::needQuit()
+{
+    client->tryDisconnect();
+}
+
+void MainWindow::play(const QString &savegamesPath)
+{
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
     if(!metaData.contains("pass"))
     {
@@ -513,17 +533,4 @@ void MainWindow::on_SaveGame_Play_clicked()
 
     ui->stackedWidget->setCurrentIndex(1);
     baseWindow->serverIsLoading();
-}
-
-void MainWindow::is_started(bool started)
-{
-    if(!started)
-        return;
-    baseWindow->serverIsReady();
-    socket->connectToHost("localhost",9999);
-}
-
-void MainWindow::needQuit()
-{
-    client->tryDisconnect();
 }

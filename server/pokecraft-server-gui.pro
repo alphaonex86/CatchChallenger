@@ -96,3 +96,4 @@ RESOURCES += \
     resources-server.qrc
 
 win32:RC_FILE += resources-windows.rc
+win32:RESOURCES += base/resources/resources-windows-qt-plugin.qrc
