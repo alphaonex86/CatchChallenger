@@ -74,7 +74,6 @@ void NormalServer::setSettings(ServerSettings settings)
     ProtocolParsing::setMaxPlayers(settings.max_players);
     //load it
     GlobalData::serverSettings=settings;
-    DebugClass::debugConsole(QString("GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber: %1").arg(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber));
 
     quint8 player_list_size;
     if(settings.max_players<=255)
@@ -118,11 +117,10 @@ void NormalServer::connect_the_last_client()
 {
     BaseServer::connect_the_last_client();
 
-    connect(client_list.last(),SIGNAL(emit_serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
-    connect(client_list.last(),SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
-    connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
-    /// \todo remove this to remplace with the BroadCastWithoutSender
-    connect(client_list.last(),SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
 }
 
 void NormalServer::load_settings()
@@ -360,7 +358,7 @@ void NormalServer::addBot()
 
 ///////////////////////////////////// Generic command //////////////////////////////////
 
-void NormalServer::serverCommand(QString command,QString extraText)
+void NormalServer::serverCommand(const QString &command, const QString &extraText)
 {
     Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
@@ -392,7 +390,6 @@ void NormalServer::serverCommand(QString command,QString extraText)
                 DebugClass::debugConsole("Remove previous bots firstly");
                 return;
             }
-            Map_player_info map_player_info=client->getMapPlayerInfo();
             quint16 number_player=2;
             if(extraText!="")
             {
