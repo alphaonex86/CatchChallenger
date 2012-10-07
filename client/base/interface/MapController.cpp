@@ -1,5 +1,6 @@
 #include "MapController.h"
 #include "../../general/base/MoveOnTheMap.h"
+#include "../../general/base/FacilityLib.h"
 
 #include <QMessageBox>
 
@@ -41,6 +42,11 @@ MapController::~MapController()
 {
     delete playerTileset;
     delete botTileset;
+}
+
+void MapController::resetAll()
+{
+    mHaveTheDatapack=false;
 }
 
 void MapController::setScale(int scaleSize)
@@ -393,33 +399,6 @@ bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8
     return true;
 }
 
-void MapController::haveTheDatapack()
-{
-    if(mHaveTheDatapack)
-        return;
-    mHaveTheDatapack=true;
-    int index;
-
-    index=0;
-    while(index<delayedInsert.size())
-    {
-        insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapName,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
-        index++;
-    }
-    index=0;
-    while(index<delayedMove.size())
-    {
-        move_player(delayedMove.at(index).id,delayedMove.at(index).movement);
-        index++;
-    }
-    index=0;
-    while(index<delayedRemove.size())
-    {
-        remove_player(delayedRemove.at(index));
-        index++;
-    }
-}
-
 //map move
 void MapController::insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction)
 {
@@ -437,11 +416,16 @@ void MapController::insert_player(Pokecraft::Player_public_informations player,Q
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
         //the player skin
-        QImage image(datapackPath+DATAPACK_BASE_PATH_SKIN+player.skin+"/trainer.png");
-        if(!image.isNull())
-            playerTileset->loadFromImage(image,datapackPath+DATAPACK_BASE_PATH_SKIN+player.skin+"/trainer.png");
+        if(player.skinId<skinFolderList.size())
+        {
+            QImage image(datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+            if(!image.isNull())
+                playerTileset->loadFromImage(image,datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+            else
+                qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png";
+        }
         else
-            qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+player.skin+"/trainer.png";
+            qDebug() << "The skin id: "+QString::number(player.skinId)+"into a list of: "+skinFolderList.size()+" item(s)";
 
         //the direction
         this->direction=direction;
@@ -524,4 +508,32 @@ void MapController::setDatapackPath(const QString &path)
         datapackPath=path;
     else
         datapackPath=path+"/";
+}
+
+void MapController::haveTheDatapack()
+{
+    if(mHaveTheDatapack)
+        return;
+    mHaveTheDatapack=true;
+    int index;
+
+    index=0;
+    while(index<delayedInsert.size())
+    {
+        insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapName,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
+        index++;
+    }
+    index=0;
+    while(index<delayedMove.size())
+    {
+        move_player(delayedMove.at(index).id,delayedMove.at(index).movement);
+        index++;
+    }
+    index=0;
+    while(index<delayedRemove.size())
+    {
+        remove_player(delayedRemove.at(index));
+        index++;
+    }
+    skinFolderList=Pokecraft::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_MAP);
 }

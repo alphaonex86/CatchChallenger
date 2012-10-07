@@ -200,21 +200,9 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                         emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
                         return;
                     }
-                    quint8 skinSize;
-                    in >> skinSize;
-                    if((in.device()->size()-in.device()->pos())<(int)skinSize)
-                    {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-                        return;
-                    }
-                    rawText=data.mid(in.device()->pos(),skinSize);
-                    public_informations.skin=QString::fromUtf8(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
-                    if(public_informations.skin.isEmpty())
-                    {
-                        /*emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed for skin: %1, rawData: %2").arg(mainCodeType).arg(QString(rawText.toHex())));
-                        return;//ignore this error*/
-                    }
+                    quint8 skinId;
+                    in >> skinId;
+                    public_informations.skinId=skinId;
 
                     if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
                     {

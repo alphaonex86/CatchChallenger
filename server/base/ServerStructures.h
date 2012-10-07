@@ -48,7 +48,6 @@ struct Player_internal_informations
     bool is_logged;
     quint32 id;
     QByteArray rawPseudo;
-    QByteArray rawSkin;
 };
 
 struct ServerSettings
@@ -122,7 +121,7 @@ struct ServerPrivateVariables
     //QMutex clientBroadCastListMutex;
 
     //datapack
-    QHash<quint8,QString> skinList;
+    QHash<QString,quint8> skinList;
 
     //map
     QHash<QString,Map *> map_list;

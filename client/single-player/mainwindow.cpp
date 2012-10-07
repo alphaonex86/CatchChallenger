@@ -509,14 +509,16 @@ void MainWindow::on_SaveGame_Play_clicked()
         internalServer->deleteLater();
     internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
     connect(internalServer,SIGNAL(try_stop_server()),this,SLOT(try_stop_server()),Qt::QueuedConnection);
-    connect(internalServer,SIGNAL(isReady()),this,SLOT(serverIsReady()),Qt::QueuedConnection);
+    connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);
 
     ui->stackedWidget->setCurrentIndex(1);
     baseWindow->serverIsLoading();
 }
 
-void MainWindow::serverIsReady()
+void MainWindow::is_started(bool started)
 {
+    if(!started)
+        return;
     baseWindow->serverIsReady();
     socket->connectToHost("localhost",9999);
 }

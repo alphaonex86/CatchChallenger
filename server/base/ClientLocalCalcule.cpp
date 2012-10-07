@@ -157,8 +157,7 @@ void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 
     outputData+=player_informations->rawPseudo;
     out.device()->seek(out.device()->pos()+player_informations->rawPseudo.size());
-    outputData+=player_informations->rawSkin;
-    out.device()->seek(out.device()->pos()+player_informations->rawSkin.size());
+    out << player_informations->public_and_private_informations.public_informations.skinId;
 
     emit sendPacket(0xC0,outputData);
 

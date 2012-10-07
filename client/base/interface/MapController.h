@@ -6,6 +6,7 @@
 
 #include <QString>
 #include <QList>
+#include <QStringList>
 
 class MapController : public MapVisualiserPlayer
 {
@@ -14,6 +15,7 @@ public:
     explicit MapController(Pokecraft::Api_protocol *client, const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
     ~MapController();
 
+    void resetAll();
     void setScale(int scaleSize);
     void setBotNumber(quint16 botNumber);
 public slots:
@@ -54,6 +56,7 @@ private:
     Pokecraft::Player_private_and_public_informations player_informations;
     bool player_informations_is_set;
 
+    QStringList skinFolderList;
     QString datapackPath;
     bool mHaveTheDatapack;
 
