@@ -29,6 +29,7 @@ public:
     void resetAll();
     void serverIsLoading();
     void serverIsReady();
+    QString lastLocation() const;
 protected:
     void changeEvent(QEvent *e);
 public slots:
@@ -80,8 +81,6 @@ private:
     QAbstractSocket::SocketState socketState;
     QStringList skinFolderList;
     bool haveDatapack,havePlayerInformations;
-signals:
-    void needQuit();
 };
 }
 

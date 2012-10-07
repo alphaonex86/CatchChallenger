@@ -17,22 +17,28 @@ public:
     ~MapVisualiserPlayer();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
+    QString lastLocation() const;
 protected:
+    //player
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
     int moveStep;
     Pokecraft::Direction direction;
     quint8 x,y;
     bool inMove;
+    QString mLastLocation;
+    Pokecraft::Api_protocol *client;
 
+    //display
     bool centerOnPlayer;
 
+    //timer
     QTimer timer;
     QTimer moveTimer;
     QTimer lookToMove;
-    QSet<int> keyPressed;
 
-    Pokecraft::Api_protocol *client;
+    //control
+    QSet<int> keyPressed;
 private slots:
     void keyPressParse();
 

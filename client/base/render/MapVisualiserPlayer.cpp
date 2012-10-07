@@ -417,6 +417,11 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
         keyPressParse();
 }
 
+QString MapVisualiserPlayer::lastLocation() const
+{
+    return mLastLocation;
+}
+
 //call after enter on new map
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
@@ -433,6 +438,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         ObjectGroupItem::objectGroupLink[current_map->objectGroup]->addObject(playerMapObject);
     else
         qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+    mLastLocation=current_map->logicalMap.map_file;
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
