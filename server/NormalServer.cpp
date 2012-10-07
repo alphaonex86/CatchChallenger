@@ -114,6 +114,17 @@ void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const QStri
     }
 }
 
+void NormalServer::connect_the_last_client()
+{
+    BaseServer::connect_the_last_client();
+
+    connect(client_list.last(),SIGNAL(emit_serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
+    connect(client_list.last(),SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
+    connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
+    /// \todo remove this to remplace with the BroadCastWithoutSender
+    connect(client_list.last(),SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
+}
+
 void NormalServer::load_settings()
 {
     GlobalData::serverPrivateVariables.connected_players	= 0;

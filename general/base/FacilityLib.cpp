@@ -50,3 +50,21 @@ QString FacilityLib::randomPassword(const QString& string,const quint8& length)
     }
     return randomPassword;
 }
+
+QStringList FacilityLib::skinIdList(const QString& skinPath)
+{
+    QStringList skinFolderList;
+    QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    int sizeEntryList=entryList.size();
+    for (int index=0;index<sizeEntryList;++index)
+    {
+        QFileInfo fileInfo=entryList.at(index);
+        if(fileInfo.isDir())
+            if(QFile(fileInfo.absoluteFilePath()+"/back.png").exists() && QFile(fileInfo.absoluteFilePath()+"/front.png").exists() && QFile(fileInfo.absoluteFilePath()+"/trainer.png").exists())
+                skinFolderList << fileInfo.fileName();
+    }
+    skinFolderList.sort();
+    while(skinFolderList.size()>255)
+        skinFolderList.removeLast();
+    return skinFolderList;
+}

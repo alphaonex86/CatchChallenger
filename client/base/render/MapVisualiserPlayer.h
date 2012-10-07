@@ -4,6 +4,10 @@
 #include "MapVisualiser.h"
 #include "../Api_protocol.h"
 
+#include <QSet>
+#include <QString>
+#include <QTimer>
+
 class MapVisualiserPlayer : public MapVisualiser
 {
     Q_OBJECT

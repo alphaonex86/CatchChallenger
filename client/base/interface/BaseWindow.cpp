@@ -1,5 +1,6 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
+#include "../../general/base/FacilityLib.h"
 
 using namespace Pokecraft;
 
@@ -71,6 +72,7 @@ void BaseWindow::resetAll()
         ui->lineEdit_chat_text->setText("");
     update_chat();
     lastMessageSend="";
+    mapController->resetAll();
 }
 
 void BaseWindow::serverIsLoading()
@@ -309,22 +311,34 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
 void BaseWindow::have_current_player_info()
 {
     qDebug() << "have_current_player_info()";
+    skinFolderList=Pokecraft::FacilityLib::skinIdList(client->get_datapack_base_name()+DATAPACK_BASE_PATH_MAP);
     Player_public_informations informations=client->get_player_informations().public_informations;
     ui->label_connecting_status->setText(tr("Loading the datapack..."));
     ui->player_informations_pseudo->setText(informations.pseudo);
     ui->player_informations_cash->setText("0$");
-    QPixmap playerImage(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+informations.skin+"/front.png");
-    if(!playerImage.isNull())
-        ui->player_informations_front->setPixmap(playerImage);
+    QPixmap playerImage;
+    if(informations.skinId<skinFolderList.size())
+    {
+        playerImage=QPixmap(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png");
+        if(!playerImage.isNull())
+            ui->player_informations_front->setPixmap(playerImage);
+        else
+        {
+            ui->player_informations_front->setPixmap(QPixmap(":/images/player_default/front.png"));
+            qDebug() << "Unable to load the player image: "+client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png";
+        }
+    }
     else
     {
         ui->player_informations_front->setPixmap(QPixmap(":/images/player_default/front.png"));
-        qDebug() << "Unable to load the player image: "+client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+informations.skin+"/front.png";
+        qDebug() << "The skin id: "+QString::number(informations.skinId)+"into a list of: "+skinFolderList.size()+" item(s)";
     }
 }
 
 void BaseWindow::haveTheDatapack()
 {
+    skinFolderList=Pokecraft::FacilityLib::skinIdList(client->get_datapack_base_name()+DATAPACK_BASE_PATH_MAP);
+
     ui->label_connecting_status->setText(tr("Loading the player informations..."));
     this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
 

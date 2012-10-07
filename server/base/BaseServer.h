@@ -36,6 +36,7 @@ public:
     virtual bool isStopped();
 protected slots:
     virtual void start_internal_server() = 0;
+    virtual void stop_internal_server();
     //init, constructor, destructor
     virtual void initAll();//call before all
     //remove all finished client
@@ -53,7 +54,6 @@ protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     virtual void connect_the_last_client();
     //starting function
-    virtual void stop_internal_server();
     virtual void check_if_now_stopped();
     virtual QString sqlitePath();
     //player related
