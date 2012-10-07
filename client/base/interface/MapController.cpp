@@ -425,7 +425,7 @@ void MapController::insert_player(Pokecraft::Player_public_informations player,Q
                 qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png";
         }
         else
-            qDebug() << "The skin id: "+QString::number(player.skinId)+"into a list of: "+skinFolderList.size()+" item(s)";
+            qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapController::insert_player()";
 
         //the direction
         this->direction=direction;
@@ -515,7 +515,9 @@ void MapController::haveTheDatapack()
     if(mHaveTheDatapack)
         return;
     mHaveTheDatapack=true;
+
     int index;
+    skinFolderList=Pokecraft::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
     index=0;
     while(index<delayedInsert.size())
@@ -535,5 +537,4 @@ void MapController::haveTheDatapack()
         remove_player(delayedRemove.at(index));
         index++;
     }
-    skinFolderList=Pokecraft::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_MAP);
 }
