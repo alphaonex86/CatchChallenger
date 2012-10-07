@@ -305,10 +305,3 @@ void Client::local_sendChatText(Chat_type chatType,QString text)
 {
     emit new_chat_message(player_informations.public_and_private_informations.public_informations.pseudo,chatType,text);
 }
-
-Map_player_info Client::getMapPlayerInfo()
-{
-    Map_player_info temp=clientMapManagement->getMapPlayerInfo();
-    temp.skin=player_informations.public_and_private_informations.public_informations.skin;
-    return temp;
-}
