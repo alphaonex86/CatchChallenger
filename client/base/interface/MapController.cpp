@@ -509,6 +509,7 @@ void MapController::setDatapackPath(const QString &path)
         datapackPath=path;
     else
         datapackPath=path+"/";
+    mLastLocation.clear();
 }
 
 void MapController::haveTheDatapack()

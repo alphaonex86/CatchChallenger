@@ -7,6 +7,7 @@
 #include <QAbstractSocket>
 #include <QSettings>
 #include <QTimer>
+#include <QDateTime>
 #include <QSpacerItem>
 
 #include "../../general/base/QFakeSocket.h"
@@ -65,7 +66,11 @@ private:
     SaveGameLabel * selectedSavegame;
     QSpacerItem *spacer;
     Pokecraft::InternalServer * internalServer;
+    //loaded game
     QString pass;
+    quint64 timeLaunched;
+    QString launchedGamePath;
+    bool haveLaunchedGame;
 };
 
 #endif // MAINWINDOW_H
