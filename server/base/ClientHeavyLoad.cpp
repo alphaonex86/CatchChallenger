@@ -32,37 +32,26 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     if(player_informations->isFake)
     {
         if(GlobalData::serverPrivateVariables.botSpawn.size()==0)
-        {
             loginIsWrong(query_id,"Not bot point","Not bot point");
-            return;
-        }
         else
         {
             if(!GlobalData::serverPrivateVariables.map_list.contains(GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map))
-            {
                 loginIsWrong(query_id,"Bot point not resolved","Bot point not resolved");
-                return;
-            }
             else if(simplifiedIdList.size()<=0)
-            {
                 loginIsWrong(query_id,"Not free id to login","Not free id to login");
-                return;
-            }
             else
             {
                 player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
                 player_informations->public_and_private_informations.public_informations.clan=0;
                 player_informations->id=999999999-GlobalData::serverPrivateVariables.number_of_bots_logged;
                 player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
-                player_informations->public_and_private_informations.public_informations.skin="";//useless for serveur benchmark
+                player_informations->public_and_private_informations.public_informations.skinId=0x00;//use the first skin by alaphabetic order
                 player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
                 player_informations->public_and_private_informations.cash=0;
                 player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
                 if(!loadTheRawUTF8String())
-                {
                     loginIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->id)));
-                    return;
-                }
+                else
                 //all is rights
                 {
                     loginIsRight(query_id,
@@ -76,10 +65,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                     if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
                         GlobalData::serverPrivateVariables.botSpawnIndex=0;
                     GlobalData::serverPrivateVariables.number_of_bots_logged++;
-                    return;
                 }
             }
         }
+        return;
     }
     QString queryText;
     switch(GlobalData::serverSettings.database.type)
@@ -103,34 +92,29 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
         return;
     }*/
     if(loginQuery.size()==0)
-    {
         loginIsWrong(query_id,"Bad login","Bad login for: "+login+", hash: "+hash.toHex());
-        return;
-    }
     else
     {
         if(!loginQuery.next())
-        {
             loginIsWrong(query_id,"Wrong login/pass",QString("No login/pass found into the db, login: \"%1\", pass: \"%2\"").arg(login).arg(QString(hash.toHex())));
-            return;
-        }
         else if(GlobalData::serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
-        {
             loginIsWrong(query_id,"Already logged","Already logged");
-            return;
-        }
         else if(simplifiedIdList.size()<=0)
-        {
             loginIsWrong(query_id,"Not free id to login","Not free id to login");
-            return;
-        }
         else
         {
 
             player_informations->public_and_private_informations.public_informations.clan=loginQuery.value(8).toUInt();
             player_informations->id=loginQuery.value(0).toUInt();
             player_informations->public_and_private_informations.public_informations.pseudo=loginQuery.value(1).toString();
-            player_informations->public_and_private_informations.public_informations.skin=loginQuery.value(2).toString();
+            QString skinString=loginQuery.value(2).toString();
+            if(GlobalData::serverPrivateVariables.skinList.contains(skinString))
+                player_informations->public_and_private_informations.public_informations.skinId=GlobalData::serverPrivateVariables.skinList[skinString];
+            else
+            {
+                qDebug() << "Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have";
+                player_informations->public_and_private_informations.public_informations.skinId=GlobalData::serverPrivateVariables.skinList[skinString];
+            }
             QString type=loginQuery.value(7).toString();
             if(type=="normal")
                 player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
@@ -178,10 +162,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                              (Orientation)orentation);
             }
             else
-            {
                 loginIsWrong(query_id,"Map not found","Map not found: "+loginQuery.value(6).toString());
-                return;
-            }
+
         }
     }
 }
@@ -249,15 +231,6 @@ bool ClientHeavyLoad::loadTheRawUTF8String()
         emit message(QString("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return false;
     }
-
-    player_informations->rawSkin=FacilityLib::toUTF8(player_informations->public_and_private_informations.public_informations.skin);
-    if(player_informations->rawSkin.size()==0)
-    {
-        player_informations->rawSkin[0]=0x00;
-        /*emit message(QString("Unable to convert the skin to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.skin));
-        //return false;//ignore this error*/
-    }
-
     return true;
 }
 

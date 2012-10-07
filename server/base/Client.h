@@ -30,7 +30,6 @@ public:
     ~Client();
     //to get some info
     QString getPseudo();
-    Map_player_info getMapPlayerInfo();
 private:
     bool ask_is_ready_to_stop;
     //-------------------

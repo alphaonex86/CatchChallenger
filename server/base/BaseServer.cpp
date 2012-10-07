@@ -38,7 +38,8 @@ BaseServer::BaseServer()
     stat=Down;
 
     connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
-
+    connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
+    connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
     connect(this,SIGNAL(try_initAll()),this,SLOT(initAll()),Qt::QueuedConnection);
     emit try_initAll();
 
@@ -61,7 +62,7 @@ BaseServer::~BaseServer()
 
 void BaseServer::initAll()
 {
-    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
+    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));/// \bug QObject::moveToThread: Current thread (0x79e1f0) is not the object's thread (0x6b4690)
 }
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
@@ -372,6 +373,13 @@ void BaseServer::preload_the_map()
 
 void BaseServer::preload_the_skin()
 {
+    QStringList skinFolderList=FacilityLib::skinIdList(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MAP);
+    int index=0;
+    while(index<skinFolderList.size())
+    {
+        GlobalData::serverPrivateVariables.skinList[skinFolderList.at(index)]=index;
+        index++;
+    }
 }
 
 void BaseServer::preload_the_visibility_algorithm()
@@ -467,6 +475,7 @@ void BaseServer::unload_the_map()
 
 void BaseServer::unload_the_skin()
 {
+    GlobalData::serverPrivateVariables.skinList.clear();
 }
 
 void BaseServer::unload_the_visibility_algorithm()
@@ -567,12 +576,6 @@ void BaseServer::newConnection()
 void BaseServer::connect_the_last_client()
 {
     connect(client_list.last(),SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
-
-    connect(client_list.last(),SIGNAL(emit_serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
-    connect(client_list.last(),SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
-    connect(client_list.last(),SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
-    /// \todo remove this to remplace with the BroadCastWithoutSender
-    connect(client_list.last(),SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
 }
 
 bool BaseServer::isListen()
