@@ -87,6 +87,11 @@ void BaseWindow::serverIsReady()
     ui->label_connecting_status->setText(tr("Game data is ready"));
 }
 
+QString BaseWindow::lastLocation() const
+{
+    return mapController->lastLocation();
+}
+
 void BaseWindow::disconnected(QString reason)
 {
     if(haveShowDisconnectionReason)
