@@ -75,6 +75,7 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
         emit message(QString("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
         return;
     }
+    BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QString("to %1: %2").arg(pseudo).arg(text));
     playerByPseudo[pseudo]->receivePM(text,this->player_informations->public_and_private_informations.public_informations.pseudo);
 }
 
@@ -127,6 +128,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
             emit error("Unable to chat with clan, you have not clan");
         else
         {
+            BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             int index=0;
             while(index<list_size)
             {
@@ -154,6 +156,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     }*/
     else
     {
+        BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
         int index=0;
         while(index<list_size)
         {

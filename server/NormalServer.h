@@ -80,7 +80,7 @@ private slots:
     void removeOneBot();
     //void removeOneBot();
     //parse general order from the client
-    void serverCommand(QString command,QString extraText);
+    void serverCommand(const QString &command,const QString &extraText);
     //starting function
     void stop_internal_server();
     void stop_benchmark();

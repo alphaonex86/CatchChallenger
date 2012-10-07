@@ -97,11 +97,8 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     //packet parsed (broadcast)
     connect(clientNetworkRead,	SIGNAL(sendChatText(Chat_type,QString)),			clientBroadCast,	SLOT(sendChatText(Chat_type,QString)),				Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(sendPM(QString,QString)),				clientBroadCast,	SLOT(sendPM(QString,QString)),					Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sendChatText(Chat_type,QString)),			this,			SLOT(local_sendChatText(Chat_type,QString)),			Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sendPM(QString,QString)),				this,			SLOT(local_sendPM(QString,QString)),				Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(sendBroadCastCommand(QString,QString)),			clientBroadCast,	SLOT(sendBroadCastCommand(QString,QString)),			Qt::QueuedConnection);
     connect(clientBroadCast,	SIGNAL(kicked()),						this,			SLOT(kicked()),							Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(serverCommand(QString,QString)),				this,			SLOT(serverCommand(QString,QString)),			Qt::QueuedConnection);
 
     //connect the message
     connect(clientBroadCast,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
@@ -195,7 +192,7 @@ void Client::disconnectClient()
     connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
     emit askIfIsReadyToStop();
 
-    emit player_is_disconnected(player_informations.public_and_private_informations.public_informations.pseudo);
+    BroadCastWithoutSender::broadCastWithoutSender.emit_player_is_disconnected(player_informations.public_and_private_informations.public_informations.pseudo);
 }
 
 void Client::disconnectNextStep()
@@ -267,7 +264,7 @@ void Client::send_player_informations()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QString("load the normal player id: %1, simplified id: %2").arg(player_informations.id).arg(player_informations.public_and_private_informations.public_informations.simplifiedId));
     #endif
-    emit new_player_is_connected(player_informations);
+    BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(player_informations);
     this->player_informations=player_informations;
     GlobalData::serverPrivateVariables.connected_players++;
     if(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber)
@@ -284,24 +281,7 @@ QString Client::getPseudo()
     return player_informations.public_and_private_informations.public_informations.pseudo;
 }
 
-void Client::serverCommand(QString command,QString extraText)
-{
-    //verified by previous code
-    normalOutput(QString("command to do: %1 with args: %2").arg(command).arg(extraText));
-    emit emit_serverCommand(command,extraText);
-}
-
 void Client::fake_receive_data(QByteArray data)
 {
     emit fake_send_received_data(data);
-}
-
-void Client::local_sendPM(QString text,QString pseudo)
-{
-    emit new_chat_message(player_informations.public_and_private_informations.public_informations.pseudo,Chat_type_pm,QString("to: %1, %2").arg(pseudo).arg(text));
-}
-
-void Client::local_sendChatText(Chat_type chatType,QString text)
-{
-    emit new_chat_message(player_informations.public_and_private_informations.public_informations.pseudo,chatType,text);
 }

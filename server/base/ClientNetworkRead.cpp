@@ -293,12 +293,12 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                                 }
                                 else if(command=="stop" || command=="restart")
                                 {
-                                    emit serverCommand(command,text);
+                                    BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
                                 }
                                 else if(command=="addbots" || command=="removebots")
                                 {
-                                    emit serverCommand(command,text);
+                                    BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
                                 }
                                 else

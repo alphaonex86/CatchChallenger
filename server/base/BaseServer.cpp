@@ -62,7 +62,9 @@ BaseServer::~BaseServer()
 
 void BaseServer::initAll()
 {
-    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));/// \bug QObject::moveToThread: Current thread (0x79e1f0) is not the object's thread (0x6b4690)
+    /// \bug QObject::moveToThread: Current thread (0x79e1f0) is not the object's thread (0x6b4690)
+    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
+    BroadCastWithoutSender::broadCastWithoutSender.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
 }
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
@@ -373,7 +375,7 @@ void BaseServer::preload_the_map()
 
 void BaseServer::preload_the_skin()
 {
-    QStringList skinFolderList=FacilityLib::skinIdList(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MAP);
+    QStringList skinFolderList=FacilityLib::skinIdList(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     int index=0;
     while(index<skinFolderList.size())
     {
@@ -394,8 +396,10 @@ void BaseServer::preload_the_visibility_algorithm()
             static_cast<Map_server_MapVisibility_simple *>(i.value())->show=true;
             i++;
         }
+        GlobalData::serverSettings.max_visible_players=GlobalData::serverSettings.mapVisibility.simple.max;
         break;
         case MapVisibilityAlgorithm_none:
+        GlobalData::serverSettings.max_visible_players=0;
         break;
         default:
         break;
