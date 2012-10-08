@@ -25,7 +25,6 @@ public slots:
     void postReply(const quint8 &queryNumber,const QByteArray &data);
     //normal slots
     void askIfIsReadyToStop();
-    void stop();
 private:
     ConnectedSocket * socket;
 signals:
