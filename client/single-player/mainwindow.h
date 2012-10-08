@@ -31,6 +31,7 @@ public:
     ~MainWindow();
 protected:
     void changeEvent(QEvent *e);
+    void closeEvent(QCloseEvent *event);
 private slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
@@ -41,6 +42,7 @@ private slots:
     void try_stop_server();
     void on_SaveGame_New_clicked();
     void savegameLabelClicked();
+    void savegameLabelDoubleClicked();
     void savegameLabelUpdate();
     void on_SaveGame_Delete_clicked();
     void on_SaveGame_Rename_clicked();
@@ -61,11 +63,13 @@ private:
     Pokecraft::ConnectedSocket *socket;
     Pokecraft::BaseWindow *baseWindow;
     QList<SaveGameLabel *> savegame;
-    QHash<SaveGameLabel *,QString> savegamePath;
+    QHash<SaveGameLabel *,QString> savegamePathList;
     QHash<SaveGameLabel *,bool> savegameWithMetaData;
     SaveGameLabel * selectedSavegame;
     QSpacerItem *spacer;
     Pokecraft::InternalServer * internalServer;
+    QString datapackPath;
+    QString savegamePath;
     //loaded game
     QString pass;
     quint64 timeLaunched;

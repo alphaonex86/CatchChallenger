@@ -14,17 +14,21 @@ NewGame::NewGame(QWidget *parent) :
     ui->setupUi(this);
     ok=false;
     skinPath=QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_SKIN;
-    int index=1;
-    while(QFileInfo(skinPath+QString::number(index)).isDir())
+    QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    int index=0;
+    while(index<entryList.size())
     {
-        QString currentPath=skinPath+QString::number(index);
-        if(QFile::exists(currentPath+"/back.png") && QFile::exists(currentPath+"/front.png") && QFile::exists(currentPath+"/trainer.png"))
-            skinNumber << index;
+        if(entryList.at(index).isDir())
+        {
+            QString currentPath=skinPath+entryList.at(index).fileName();
+            if(QFile::exists(currentPath+"/back.png") && QFile::exists(currentPath+"/front.png") && QFile::exists(currentPath+"/trainer.png"))
+                skinList << entryList.at(index).fileName();
+        }
         index++;
     }
 
-    ui->previousSkin->setVisible(skinNumber.size()>=2);
-    ui->nextSkin->setVisible(skinNumber.size()>=2);
+    ui->previousSkin->setVisible(skinList.size()>=2);
+    ui->nextSkin->setVisible(skinList.size()>=2);
 
     currentSkin=0;
     updateSkin();
@@ -39,11 +43,11 @@ NewGame::~NewGame()
 void NewGame::updateSkin()
 {
     skinLoaded=false;
-    if(currentSkin>=skinNumber.size() || currentSkin<-1)
+    if(currentSkin>=skinList.size() || currentSkin<-1)
         return;
     ui->previousSkin->setEnabled(currentSkin>0);
-    ui->nextSkin->setEnabled(currentSkin<(skinNumber.size()-1));
-    QString path=skinPath+QString::number(skinNumber.at(currentSkin))+"/front.png";
+    ui->nextSkin->setEnabled(currentSkin<(skinList.size()-1));
+    QString path=skinPath+skinList.at(currentSkin)+"/front.png";
     QImage skin=QImage(path);
     if(skin.isNull())
     {
@@ -79,12 +83,12 @@ QString NewGame::pseudo()
 
 QString NewGame::skin()
 {
-    return skinPath+QString::number(currentSkin)+"/";
+    return skinPath+skinList.at(currentSkin)+"/";
 }
 
 bool NewGame::haveSkin()
 {
-    return skinNumber.size()>0;
+    return skinList.size()>0;
 }
 
 void NewGame::on_ok_clicked()
@@ -107,7 +111,7 @@ void NewGame::on_pseudo_returnPressed()
 
 void NewGame::on_nextSkin_clicked()
 {
-    if(currentSkin<(skinNumber.size()-1))
+    if(currentSkin<(skinList.size()-1))
         currentSkin++;
     else
         return;

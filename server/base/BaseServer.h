@@ -34,6 +34,7 @@ public:
     //stat function
     virtual bool isListen();
     virtual bool isStopped();
+    virtual void stop();
 protected slots:
     virtual void start_internal_server() = 0;
     virtual void stop_internal_server();

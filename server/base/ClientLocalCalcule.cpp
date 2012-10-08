@@ -88,12 +88,16 @@ void ClientLocalCalcule::extraStop()
         #endif
         if(!player_informations->is_logged || player_informations->isFake)
             return;
-        QSqlQuery updateMapPositionQuery;
+        at_start_map_name=map;
+        at_start_x=x;
+        at_start_y=y;
+        at_start_orientation=orientation;
+        QString updateMapPositionQuery;
         switch(GlobalData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                updateMapPositionQuery=QString("UPDATE player SET map_name=%1,position_x=%2,position_y=%3,orientation=%4 WHERE id=%5")
+                updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
                     .arg(SqlFunction::quoteSqlVariable(map->map_file))
                     .arg(x)
                     .arg(y)
@@ -101,7 +105,7 @@ void ClientLocalCalcule::extraStop()
                     .arg(player_informations->id);
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                updateMapPositionQuery=QString("UPDATE player SET map_name=%1,position_x=%2,position_y=%3,orientation=%4 WHERE id=%5")
+                updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
                     .arg(SqlFunction::quoteSqlVariable(map->map_file))
                     .arg(x)
                     .arg(y)
@@ -109,8 +113,7 @@ void ClientLocalCalcule::extraStop()
                     .arg(player_informations->id);
             break;
         }
-        if(!updateMapPositionQuery.exec())
-            DebugClass::debugConsole(QString("Sql query failed: %1, error: %2").arg(updateMapPositionQuery.lastQuery()).arg(updateMapPositionQuery.lastError().text()));
+        emit dbQuery(updateMapPositionQuery);
     }
 }
 
