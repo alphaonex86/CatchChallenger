@@ -250,11 +250,6 @@ void ClientHeavyLoad::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
-void ClientHeavyLoad::stop()
-{
-    deleteLater();
-}
-
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps)
 {

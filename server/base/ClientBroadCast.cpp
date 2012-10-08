@@ -86,11 +86,6 @@ void ClientBroadCast::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
-void ClientBroadCast::stop()
-{
-    deleteLater();
-}
-
 void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &text,const QString &sender_pseudo,const Player_type &sender_player_type)
 {
     /* Multiple message when multiple player connected
