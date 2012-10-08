@@ -26,7 +26,6 @@ public slots:
     void fake_receive_data(const QByteArray &data);
     //normal slots
     void askIfIsReadyToStop();
-    void stop();
 private:
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
     //have message without reply

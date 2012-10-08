@@ -50,7 +50,6 @@ public slots:
     virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     //normal slots
     virtual void askIfIsReadyToStop();
-    virtual void stop();
 private:
     //temp variable for put on map
     /*quint8 moveThePlayer_index_move;*//// \warning not static because have multiple thread access

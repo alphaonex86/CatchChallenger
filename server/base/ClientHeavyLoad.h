@@ -38,7 +38,6 @@ public slots:
     void askedRandomNumber();
     //normal slots
     void askIfIsReadyToStop();
-    void stop();
 private:
     // ------------------------------
     bool sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime);

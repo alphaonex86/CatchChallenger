@@ -119,18 +119,13 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientHeavyLoad,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
     connect(clientNetworkWrite,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
     connect(clientLocalCalcule,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
+    //stop
     connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
     connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
     connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
     connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
     connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
     connect(this,SIGNAL(askIfIsReadyToStop()),clientLocalCalcule,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(stop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(stop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(stop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(stop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(stop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientLocalCalcule,SLOT(stop()),Qt::QueuedConnection);
 
     stopped_object=0;
 }
@@ -189,15 +184,6 @@ void Client::disconnectClient()
         socket=NULL;
     }
     clientNetworkRead->stopRead();
-    /*clientLocalCalcule->disconnect();
-    clientNetworkRead->disconnect();
-    clientBroadCast->disconnect();
-    clientHeavyLoad->disconnect();
-    clientMapManagement->disconnect();
-    clientNetworkWrite->disconnect();*/
-
-    //connect to save
-    //connect(clientLocalCalcule,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
 
     emit askIfIsReadyToStop();
 
@@ -219,15 +205,19 @@ void Client::disconnectNextStep()
         }
         player_informations.is_logged=false;
 
-        //reconnect to real stop
-        /*clientNetworkRead->disconnect();
-        clientBroadCast->disconnect();
-        clientHeavyLoad->disconnect();
-        clientMapManagement->disconnect();
-        clientNetworkWrite->disconnect();
-        clientLocalCalcule->disconnect();*/
         emit askIfIsReadyToStop();
 
+        DebugClass::debugConsole(QString("first client stop"));
+        return;
+    }
+    if(stopped_object==12)
+    {
+        clientBroadCast->deleteLater();
+        clientHeavyLoad->deleteLater();
+        clientMapManagement->deleteLater();
+        clientNetworkRead->deleteLater();
+        clientNetworkWrite->deleteLater();
+        clientLocalCalcule->deleteLater();
         //now the object is not usable
         clientBroadCast=NULL;
         clientHeavyLoad=NULL;
@@ -238,8 +228,13 @@ void Client::disconnectNextStep()
 
         DebugClass::debugConsole(QString("isReadyToDelete()"));
         emit isReadyToDelete();
+        return;
     }
-
+    if(stopped_object>12)
+    {
+        DebugClass::debugConsole(QString("remove count error"));
+        return;
+    }
 }
 
 //* do the message by the general broadcast */

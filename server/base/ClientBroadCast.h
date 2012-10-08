@@ -45,7 +45,6 @@ public slots:
     void send_player_informations();
     //normal slots
     void askIfIsReadyToStop();
-    void stop();
     void sendSystemMessage(const QString &text,const bool &important=false);
 signals:
     //normal signals

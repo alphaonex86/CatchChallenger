@@ -33,11 +33,6 @@ void ClientNetworkRead::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
-void ClientNetworkRead::stop()
-{
-    deleteLater();
-}
-
 void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
