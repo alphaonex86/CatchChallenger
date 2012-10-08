@@ -50,6 +50,7 @@ BaseServer::BaseServer()
  * \warning this function is thread safe because it quit all thread before remove */
 BaseServer::~BaseServer()
 {
+    DebugClass::debugConsole("BaseServer::~BaseServer()");
     GlobalData::serverPrivateVariables.stopIt=true;
     GlobalData::serverPrivateVariables.eventThreaderList.clear();
     if(GlobalData::serverPrivateVariables.db!=NULL)
@@ -492,11 +493,12 @@ void BaseServer::check_if_now_stopped()
         return;
     if(stat!=InDown)
         return;
-    stat=InDown;
+
     DebugClass::debugConsole("Fully stopped");
     if(GlobalData::serverPrivateVariables.db!=NULL)
         GlobalData::serverPrivateVariables.db->close();
-    QFakeServer::server.close();
+    stat=Down;
+    emit is_started(false);
 
     unload_the_data();
 }
@@ -524,6 +526,7 @@ void BaseServer::stop_internal_server()
         client_list.at(index)->disconnectClient();
         index++;
     }
+    QFakeServer::server.close();
 
     check_if_now_stopped();
 }
@@ -548,6 +551,7 @@ ClientMapManagement * BaseServer::getClientMapManagement()
 
 void BaseServer::removeOneClient()
 {
+    DebugClass::debugConsole("removeOneClient()");
     Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
     {
@@ -579,6 +583,7 @@ void BaseServer::newConnection()
 
 void BaseServer::connect_the_last_client()
 {
+    DebugClass::debugConsole("BaseServer::connect_the_last_client()");
     connect(client_list.last(),SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
 }
 
@@ -590,4 +595,9 @@ bool BaseServer::isListen()
 bool BaseServer::isStopped()
 {
     return (stat==Down);
+}
+
+void BaseServer::stop()
+{
+    emit try_stop_server();
 }

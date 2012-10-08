@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->addWidget(baseWindow);
     selectedSavegame=NULL;
     internalServer=NULL;
+    datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
+    savegamePath=QCoreApplication::applicationDirPath()+"/savegames/";
 
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
@@ -51,22 +53,34 @@ MainWindow::~MainWindow()
     needQuit();
     socket->disconnectFromHost();
     if(internalServer!=NULL)
-        internalServer->deleteLater();
+        delete internalServer;
+    internalServer=NULL;
     delete client;
     delete baseWindow;
     delete ui;
     socket->deleteLater();
 }
 
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    event->ignore();
+    this->hide();
+    socket->disconnectFromHost();
+    if(internalServer==NULL)
+        QCoreApplication::quit();
+}
+
 void MainWindow::resetAll()
 {
+    if(internalServer!=NULL)
+        internalServer->stop();
     client->resetAll();
     baseWindow->resetAll();
     ui->stackedWidget->setCurrentIndex(0);
     lastMessageSend="";
-    if(internalServer!=NULL)
+/*    if(internalServer!=NULL)
         internalServer->deleteLater();
-    internalServer=NULL;
+    internalServer=NULL;*/
     pass.clear();
     needQuit();
 
@@ -152,9 +166,8 @@ void MainWindow::protocol_is_good()
 
 void MainWindow::try_stop_server()
 {
-    socket->disconnectFromHost();
     if(internalServer!=NULL)
-        internalServer->deleteLater();
+        delete internalServer;
     internalServer=NULL;
     needQuit();
 }
@@ -165,7 +178,7 @@ void MainWindow::on_SaveGame_New_clicked()
     NewGame nameGame(this);
     if(!nameGame.haveSkin())
     {
-        QMessageBox::critical(this,tr("Error"),QString("Sorry but no skin found into: %1").arg(QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
+        QMessageBox::critical(this,tr("Error"),QString("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
         return;
     }
     nameGame.exec();
@@ -174,9 +187,9 @@ void MainWindow::on_SaveGame_New_clicked()
     int index=0;
 
     //locate the new folder and create it
-    while(QDir().exists(QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)))
+    while(QDir().exists(savegamePath+QString::number(index)))
         index++;
-    QString savegamesPath=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
+    QString savegamesPath=savegamePath+QString::number(index)+"/";
     if(!QDir().mkpath(savegamesPath))
     {
         QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
@@ -289,6 +302,12 @@ void MainWindow::savegameLabelClicked()
     savegameLabelUpdate();
 }
 
+void MainWindow::savegameLabelDoubleClicked()
+{
+    savegameLabelClicked();
+    on_SaveGame_Play_clicked();
+}
+
 void MainWindow::savegameLabelUpdate()
 {
     int index=0;
@@ -344,7 +363,7 @@ void MainWindow::updateSavegameList()
 {
     QString lastSelectedPath;
     if(selectedSavegame!=NULL)
-        lastSelectedPath=savegamePath[selectedSavegame];
+        lastSelectedPath=savegamePathList[selectedSavegame];
     selectedSavegame=NULL;
     int index=0;
     while(savegame.size()>0)
@@ -353,16 +372,24 @@ void MainWindow::updateSavegameList()
         savegame.removeAt(0);
         index++;
     }
-    savegamePath.clear();
+    savegamePathList.clear();
     savegameWithMetaData.clear();
+    QFileInfoList entryList=QDir(savegamePath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     index=0;
-    while(QDir(QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/").exists())
+    while(index<entryList.size())
     {
         bool ok=false;
-        QString savegamesPath=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
+        QFileInfo fileInfo=entryList.at(index);
+        if(!fileInfo.isDir())
+        {
+            index++;
+            continue;
+        }
+        QString savegamesPath=fileInfo.absoluteFilePath()+"/";
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
         SaveGameLabel *newEntry=new SaveGameLabel();
         connect(newEntry,SIGNAL(clicked()),this,SLOT(savegameLabelClicked()),Qt::QueuedConnection);
+        connect(newEntry,SIGNAL(doubleClicked()),this,SLOT(savegameLabelDoubleClicked()),Qt::QueuedConnection);
         newEntry->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
         QString dateString;
         if(!QFileInfo(savegamesPath+"metadata.conf").exists())
@@ -394,7 +421,7 @@ void MainWindow::updateSavegameList()
                         //load the map name
                         QString mapName=metaData.value("location").toString();
                         Tiled::MapReader reader;
-                        Tiled::Map * tiledMap = reader.readMap(QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
+                        Tiled::Map * tiledMap = reader.readMap(datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
                         if(tiledMap)
                         {
                             if(tiledMap->properties().contains("name"))
@@ -419,7 +446,7 @@ void MainWindow::updateSavegameList()
         if(lastSelectedPath==savegamesPath)
             selectedSavegame=newEntry;
         savegame << newEntry;
-        savegamePath[newEntry]=savegamesPath;
+        savegamePathList[newEntry]=savegamesPath;
         savegameWithMetaData[newEntry]=ok;
         index++;
     }
@@ -439,7 +466,7 @@ void MainWindow::on_SaveGame_Delete_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    if(!rmpath(savegamePath[selectedSavegame]))
+    if(!rmpath(savegamePathList[selectedSavegame]))
     {
         QMessageBox::critical(this,tr("Error"),QString("Unable to remove the savegame"));
         return;
@@ -453,7 +480,7 @@ void MainWindow::on_SaveGame_Rename_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePath[selectedSavegame];
+    QString savegamesPath=savegamePathList[selectedSavegame];
     if(!savegameWithMetaData[selectedSavegame])
         return;
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
@@ -475,13 +502,13 @@ void MainWindow::on_SaveGame_Copy_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePath[selectedSavegame];
+    QString savegamesPath=savegamePathList[selectedSavegame];
     if(!savegameWithMetaData[selectedSavegame])
         return;
     int index=0;
-    while(QDir(QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/").exists())
+    while(QDir(savegamePath+QString::number(index)+"/").exists())
         index++;
-    QString destinationPath=QCoreApplication::applicationDirPath()+"/savegames/"+QString::number(index)+"/";
+    QString destinationPath=savegamePath+QString::number(index)+"/";
     if(!QDir().mkpath(destinationPath))
     {
         QMessageBox::critical(this,tr("Error"),QString("Unable to write another savegame"));
@@ -509,7 +536,7 @@ void MainWindow::on_SaveGame_Play_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePath[selectedSavegame];
+    QString savegamesPath=savegamePathList[selectedSavegame];
     if(!savegameWithMetaData[selectedSavegame])
         return;
 
@@ -518,9 +545,12 @@ void MainWindow::on_SaveGame_Play_clicked()
 
 void MainWindow::is_started(bool started)
 {
+    qDebug() << "is_started(): " << started;
     if(!started)
     {
         needQuit();
+        if(!isVisible())
+            QCoreApplication::quit();
         return;
     }
     baseWindow->serverIsReady();
@@ -540,7 +570,7 @@ void MainWindow::needQuit()
         if(metaData.status()==QSettings::NoError)
         {
             QString locaction=baseWindow->lastLocation();
-            QString mapPath=QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_MAP;
+            QString mapPath=datapackPath+DATAPACK_BASE_PATH_MAP;
             if(locaction.startsWith(mapPath))
                 locaction.remove(0,mapPath.size());
             if(!locaction.isEmpty())
@@ -572,11 +602,10 @@ void MainWindow::play(const QString &savegamesPath)
     pass=metaData.value("pass").toString();
     if(internalServer!=NULL)
     {
-        internalServer->deleteLater();
+        delete internalServer;
         needQuit();
     }
     internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
-    connect(internalServer,SIGNAL(try_stop_server()),this,SLOT(try_stop_server()),Qt::QueuedConnection);
     connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);
 
     ui->stackedWidget->setCurrentIndex(1);

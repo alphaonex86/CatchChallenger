@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <QTime>
+
+#define WAIT(a) {QTime time;while(time.elapsed()<a){}}
+
 using namespace Pokecraft;
 
 QList<quint16> ClientHeavyLoad::simplifiedIdList;
@@ -85,6 +89,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
     }
+    WAIT(1000);
     QSqlQuery loginQuery(queryText);
     /*if(!loginQuery.exec(queryText))
     {
@@ -375,10 +380,8 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
 {
     QSqlQuery sqlQuery(queryText);
     if(!sqlQuery.exec())
-    {
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
-        return;
-    }
+    WAIT(1000);
 }
 
 void ClientHeavyLoad::askedRandomNumber()

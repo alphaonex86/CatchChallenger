@@ -142,7 +142,7 @@ void MapVisualiserPlayer::keyPressParse()
             lookToMove.start();
         }
     }
-    send_player_direction(direction);
+    emit send_player_direction(direction);
 }
 
 void MapVisualiserPlayer::moveStepSlot()
@@ -341,7 +341,7 @@ void MapVisualiserPlayer::moveStepSlot()
         //now stop walking, no more arrow key is pressed
         else
             inMove=false;
-        send_player_direction(direction);
+        emit send_player_direction(direction);
     }
     else
         moveTimer.start();
@@ -362,6 +362,7 @@ void MapVisualiserPlayer::transformLookToMove()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
         }
         break;
         case Pokecraft::Direction_look_at_right:
@@ -371,6 +372,7 @@ void MapVisualiserPlayer::transformLookToMove()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
         }
         break;
         case Pokecraft::Direction_look_at_top:
@@ -380,6 +382,7 @@ void MapVisualiserPlayer::transformLookToMove()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
@@ -389,6 +392,7 @@ void MapVisualiserPlayer::transformLookToMove()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
         }
         break;
         default:
