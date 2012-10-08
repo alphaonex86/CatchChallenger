@@ -10,7 +10,7 @@ class NewGame;
 class NewGame : public QDialog
 {
     Q_OBJECT
-    
+
 public:
     explicit NewGame(QWidget *parent = 0);
     ~NewGame();
@@ -31,7 +31,7 @@ private:
     Ui::NewGame *ui;
     bool ok;
     bool skinLoaded;
-    QList<int> skinNumber;
+    QStringList skinList;
     int currentSkin;
     QString skinPath;
     bool okCanBeEnabled();

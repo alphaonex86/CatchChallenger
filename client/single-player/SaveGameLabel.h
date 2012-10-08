@@ -2,6 +2,7 @@
 #define QSAVEGAMELABEL_H
 
 #include <QLabel>
+#include <QTime>
 
 class SaveGameLabel : public QLabel
 {
@@ -13,6 +14,10 @@ protected:
     void mouseReleaseEvent(QMouseEvent *);
 signals:
     void clicked();
+    void doubleClicked();
+private:
+    QTime lastClick;
+    bool haveFirstClick;
 };
 
 #endif // QSAVEGAMELABEL_H
