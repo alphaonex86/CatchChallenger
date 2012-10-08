@@ -60,9 +60,3 @@ void ClientNetworkWrite::askIfIsReadyToStop()
 {
     emit isReadyToStop();
 }
-
-void ClientNetworkWrite::stop()
-{
-    deleteLater();
-}
-
