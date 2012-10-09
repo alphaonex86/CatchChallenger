@@ -3,8 +3,8 @@
 
 #include <QMessageBox>
 
-MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiserPlayer(parent,centerOnPlayer,debugTags,useCache,OpenGL)
+MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     setWindowIcon(QIcon(":/icon.png"));
 
@@ -17,7 +17,7 @@ MapController::MapController(QWidget *parent,const bool &centerOnPlayer,const bo
     connect(&timerBotManagement,SIGNAL(timeout()),this,SLOT(botManagement()));
     timerBotMove.start(66);
     timerBotManagement.start(3000);
-    
+
     playerTileset = new Tiled::Tileset("player",16,24);
     QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
     if(QFile::exists(externalFile))

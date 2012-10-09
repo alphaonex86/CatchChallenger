@@ -2,8 +2,8 @@
 #define POKECRAFT_CONNECTEDSOCKET_H
 
 #include <QIODevice>
-#include <QAbstractSocket>
 #include <QTcpSocket>
+#include <QAbstractSocket>
 #include <QObject>
 #include <QHostAddress>
 #include <QByteArray>

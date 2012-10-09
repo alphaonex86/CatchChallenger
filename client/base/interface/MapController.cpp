@@ -5,7 +5,7 @@
 #include <QMessageBox>
 
 MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiserPlayer(client,centerOnPlayer,debugTags,useCache,OpenGL)
+    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     qRegisterMetaType<Pokecraft::Direction>("Pokecraft::Direction");
     qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
@@ -16,6 +16,7 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
     botNumber = 0;
 
+    this->client=client;
     player_informations_is_set=false;
 
     //the bot management
