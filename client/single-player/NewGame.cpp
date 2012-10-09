@@ -83,7 +83,7 @@ QString NewGame::pseudo()
 
 QString NewGame::skin()
 {
-    return skinPath+skinList.at(currentSkin)+"/";
+    return skinList.at(currentSkin);
 }
 
 bool NewGame::haveSkin()
