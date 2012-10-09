@@ -397,10 +397,8 @@ void BaseServer::preload_the_visibility_algorithm()
             static_cast<Map_server_MapVisibility_simple *>(i.value())->show=true;
             i++;
         }
-        GlobalData::serverSettings.max_visible_players=GlobalData::serverSettings.mapVisibility.simple.max;
         break;
         case MapVisibilityAlgorithm_none:
-        GlobalData::serverSettings.max_visible_players=0;
         break;
         default:
         break;
@@ -506,6 +504,24 @@ void BaseServer::check_if_now_stopped()
 QString BaseServer::sqlitePath()
 {
     return QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite";
+}
+
+void BaseServer::loadAndFixSettings()
+{
+    //check the settings here
+    if(GlobalData::serverSettings.max_players<1)
+        GlobalData::serverSettings.max_players=200;
+    ProtocolParsing::setMaxPlayers(GlobalData::serverSettings.max_players);
+
+    quint8 player_list_size;
+    if(GlobalData::serverSettings.max_players<=255)
+        player_list_size=sizeof(quint8);
+    else
+        player_list_size=sizeof(quint16);
+    GlobalData::serverPrivateVariables.sizeofInsertRequest=player_list_size+sizeof(quint8)+sizeof(quint8)+sizeof(quint8);
+
+    if(GlobalData::serverSettings.mapVisibility.simple.max>GlobalData::serverSettings.max_players)
+        GlobalData::serverSettings.mapVisibility.simple.max=GlobalData::serverSettings.max_players;
 }
 
 //call by normal stop

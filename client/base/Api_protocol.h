@@ -65,7 +65,6 @@ protected:
 
     //stored local player info
     quint16 max_player;
-    quint16 max_visible_player;
     Player_private_and_public_informations player_informations;
     QString pseudo;
 

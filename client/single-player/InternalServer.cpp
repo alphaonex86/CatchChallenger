@@ -44,6 +44,7 @@ void InternalServer::start_internal_server()
         return;
     }
     stat=InUp;
+    loadAndFixSettings();
 
     if(!QFakeServer::server.listen())
     {
