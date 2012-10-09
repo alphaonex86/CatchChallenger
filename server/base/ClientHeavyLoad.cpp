@@ -195,7 +195,6 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)02;
     out << (quint16)GlobalData::serverSettings.max_players;
-    out << (quint16)GlobalData::serverSettings.max_visible_players;
     if(GlobalData::serverSettings.max_players<=255)
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
     else
