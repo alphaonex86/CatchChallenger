@@ -87,7 +87,6 @@ struct ServerSettings
 
     //connection
     quint16 max_players;
-    quint16 max_visible_players;
 
     //visibility algorithm
     struct MapVisibility

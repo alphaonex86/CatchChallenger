@@ -68,19 +68,10 @@ NormalServer::~NormalServer()
 
 void NormalServer::setSettings(ServerSettings settings)
 {
-    //check the settings here
-    if(settings.max_players<1)
-        settings.max_players=200;
-    ProtocolParsing::setMaxPlayers(settings.max_players);
     //load it
     GlobalData::serverSettings=settings;
 
-    quint8 player_list_size;
-    if(settings.max_players<=255)
-        player_list_size=sizeof(quint8);
-    else
-        player_list_size=sizeof(quint16);
-    GlobalData::serverPrivateVariables.sizeofInsertRequest=player_list_size+sizeof(quint8)+sizeof(quint8)+sizeof(quint8);
+    loadAndFixSettings();
 }
 
 void NormalServer::initAll()

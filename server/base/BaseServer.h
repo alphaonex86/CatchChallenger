@@ -57,6 +57,7 @@ protected:
     //starting function
     virtual void check_if_now_stopped();
     virtual QString sqlitePath();
+    virtual void loadAndFixSettings();
     //player related
     virtual ClientMapManagement * getClientMapManagement();
 
