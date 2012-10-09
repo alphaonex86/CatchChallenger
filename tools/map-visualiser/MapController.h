@@ -7,7 +7,7 @@ class MapController : public MapVisualiserPlayer
 {
     Q_OBJECT
 public:
-    explicit MapController(QWidget *parent = 0,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapController(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapController();
 
     void setScale(int scaleSize);
