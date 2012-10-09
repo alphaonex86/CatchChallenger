@@ -2,10 +2,9 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
-MapVisualiserPlayer::MapVisualiserPlayer(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiser(debugTags,useCache,OpenGL)
 {
-    this->client=client;
     inMove=false;
     x=0;
     y=0;
@@ -26,6 +25,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(Pokecraft::Api_protocol *client,const b
         setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
+    stepAlternance=false;
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -157,7 +157,9 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             case 1:
             case 2:
-            playerMapObject->setX(playerMapObject->x()-0.33);
+            case 3:
+            case 4:
+            playerMapObject->setX(playerMapObject->x()-0.20);
             break;
         }
         break;
@@ -167,7 +169,9 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             case 1:
             case 2:
-            playerMapObject->setX(playerMapObject->x()+0.33);
+            case 3:
+            case 4:
+            playerMapObject->setX(playerMapObject->x()+0.20);
             break;
         }
         break;
@@ -177,7 +181,9 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             case 1:
             case 2:
-            playerMapObject->setY(playerMapObject->y()-0.33);
+            case 3:
+            case 4:
+            playerMapObject->setY(playerMapObject->y()-0.20);
             break;
         }
         break;
@@ -187,7 +193,9 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             case 1:
             case 2:
-            playerMapObject->setY(playerMapObject->y()+0.33);
+            case 3:
+            case 4:
+            playerMapObject->setY(playerMapObject->y()+0.20);
             break;
         }
         break;
@@ -204,14 +212,15 @@ void MapVisualiserPlayer::moveStepSlot()
         playerMapObject->setTile(playerTileset->tileAt(baseTile+0));
         break;
         //transition step
-        case 1:
-        playerMapObject->setTile(playerTileset->tileAt(baseTile-1));
-        break;
         case 2:
-        playerMapObject->setTile(playerTileset->tileAt(baseTile+1));
+        if(stepAlternance)
+            playerMapObject->setTile(playerTileset->tileAt(baseTile-1));
+        else
+            playerMapObject->setTile(playerTileset->tileAt(baseTile+1));
+        stepAlternance=!stepAlternance;
         break;
         //stopped step
-        case 3:
+        case 4:
         playerMapObject->setTile(playerTileset->tileAt(baseTile+0));
         break;
     }
@@ -222,7 +231,7 @@ void MapVisualiserPlayer::moveStepSlot()
     moveStep++;
 
     //if have finish the step
-    if(moveStep>3)
+    if(moveStep>5)
     {
         Pokecraft::Map * old_map=&current_map->logicalMap;
         Pokecraft::Map * map=&current_map->logicalMap;

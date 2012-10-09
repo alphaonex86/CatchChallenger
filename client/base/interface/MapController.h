@@ -55,11 +55,11 @@ private:
     Tiled::Tileset * botTileset;
     QTimer timerBotMove;
     QTimer timerBotManagement;
+    Pokecraft::Api_protocol *client;
 
     //current player
     Pokecraft::Player_private_and_public_informations player_informations;
     bool player_informations_is_set;
-    Pokecraft::Api_protocol *client;
 
     //datapack
     QStringList skinFolderList;
