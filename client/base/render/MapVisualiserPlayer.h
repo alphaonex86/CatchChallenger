@@ -2,7 +2,6 @@
 #define MAP_VISUALISER_PLAYER_H
 
 #include "MapVisualiser.h"
-#include "../Api_protocol.h"
 
 #include <QSet>
 #include <QString>
@@ -13,7 +12,7 @@ class MapVisualiserPlayer : public MapVisualiser
     Q_OBJECT
 
 public:
-    explicit MapVisualiserPlayer(Pokecraft::Api_protocol *client,const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiserPlayer();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -26,8 +25,8 @@ protected:
     Pokecraft::Direction direction;
     quint8 x,y;
     bool inMove;
+    bool stepAlternance;
     QString mLastLocation;
-    Pokecraft::Api_protocol *client;
 
     //display
     bool centerOnPlayer;

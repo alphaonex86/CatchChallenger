@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QString>
 #include <QCoreApplication>
-#include <QTcpSocket>
 #include <QString>
 #include <QByteArray>
 #include <QList>
