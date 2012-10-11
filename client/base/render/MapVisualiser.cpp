@@ -91,8 +91,12 @@ MapVisualiser::~MapVisualiser()
     //remove the not used map
     QHash<QString,Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
-        delete (*i)->logicalMap.parsed_layer.walkable;
-        delete (*i)->logicalMap.parsed_layer.water;
+        if((*i)->logicalMap.parsed_layer.walkable!=NULL)
+            delete (*i)->logicalMap.parsed_layer.walkable;
+        if((*i)->logicalMap.parsed_layer.water!=NULL)
+            delete (*i)->logicalMap.parsed_layer.water;
+        if((*i)->logicalMap.parsed_layer.grass!=NULL)
+            delete (*i)->logicalMap.parsed_layer.grass;
         qDeleteAll((*i)->tiledMap->tilesets());
         delete (*i)->tiledMap;
         delete (*i)->tiledRender;

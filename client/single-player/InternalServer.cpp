@@ -71,3 +71,11 @@ QString InternalServer::sqlitePath()
 {
     return dbPath;
 }
+
+/////////////////////////////////////////////////// Object removing /////////////////////////////////////
+
+void InternalServer::removeOneClient()
+{
+    BaseServer::removeOneClient();
+    check_if_now_stopped();
+}

@@ -13,7 +13,7 @@
 */
 
 /*
- *#define DEBUG_MESSAGE_MAP_TP
+#define DEBUG_MESSAGE_MAP_TP
 #define DEBUG_MESSAGE_MAP
 #define DEBUG_MESSAGE_MAP_BORDER
 #define DEBUG_MESSAGE_MAP_OBJECT
@@ -23,5 +23,6 @@
 #define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]*[0-9a-zA-Z]\\.[a-z]{3,4}$"
 #define DATAPACK_BASE_PATH_MAP "map/"
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
+#define DATAPACK_BASE_PATH_ANIMATION "animation/"
 
 #endif // GENERALVARIABLE_H

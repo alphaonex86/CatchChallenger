@@ -38,17 +38,31 @@ protected:
 
     //control
     QSet<int> keyPressed;
+
+    //grass
+    bool haveGrassCurrentObject;
+    Tiled::MapObject * grassCurrentObject;
+    bool haveNextCurrentObject;
+    Tiled::MapObject * nextCurrentObject;
+    Tiled::Tileset * animationTileset;
 private slots:
     void keyPressParse();
 
     void moveStepSlot();
     //have look into another direction, if the key remain pressed, apply like move
     void transformLookToMove();
+
+    //grass
+    virtual void startGrassAnimation(const Pokecraft::Direction &direction);
+    virtual void stopGrassAnimation();
+    void loadGrassTile();
 protected:
     //call after enter on new map
     virtual void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadPlayerFromCurrentMap();
+
+    void setAnimationTilset(QString animationTilset);
 signals:
     void send_player_direction(const Pokecraft::Direction &the_direction);
 };
