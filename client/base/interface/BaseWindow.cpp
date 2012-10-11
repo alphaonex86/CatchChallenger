@@ -15,6 +15,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     socketState=QAbstractSocket::UnconnectedState;
 
     mapController=new MapController(client,true,false,true,false);
+    mapController->setScale(2);
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
 
