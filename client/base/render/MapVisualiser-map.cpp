@@ -51,6 +51,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     tempMapObject->logicalMap.height                                = map_loader.map_to_send.height;
     tempMapObject->logicalMap.parsed_layer.walkable                 = map_loader.map_to_send.parsed_layer.walkable;
     tempMapObject->logicalMap.parsed_layer.water                    = map_loader.map_to_send.parsed_layer.water;
+    tempMapObject->logicalMap.parsed_layer.grass                    = map_loader.map_to_send.parsed_layer.grass;
     tempMapObject->logicalMap.map_file                              = resolvedFileName;
     tempMapObject->logicalMap.border.bottom.map                     = NULL;
     tempMapObject->logicalMap.border.top.map                        = NULL;
@@ -193,6 +194,22 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
                 break;
             }
         }
+        else if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
+        {
+            if(tileLayer->name()=="Grass")
+            {
+                Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
+                if(tempMapObject->objectGroupIndex-1<=0)
+                    tempMapObject->tiledMap->insertLayer(0,layer);
+                else
+                {
+                    if(index>tempMapObject->objectGroupIndex)
+                        tempMapObject->objectGroupIndex++;
+                    tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,layer);
+                }
+                break;
+            }
+        }
         index++;
     }
 
@@ -253,8 +270,12 @@ void MapVisualiser::loadCurrentMap()
     while (i != all_map.constEnd()) {
         if(!mapUsed.contains((*i)->logicalMap.map_file) && !loadedNearMap.contains((*i)->logicalMap.map_file))
         {
-            delete (*i)->logicalMap.parsed_layer.walkable;
-            delete (*i)->logicalMap.parsed_layer.water;
+            if((*i)->logicalMap.parsed_layer.walkable!=NULL)
+                delete (*i)->logicalMap.parsed_layer.walkable;
+            if((*i)->logicalMap.parsed_layer.water!=NULL)
+                delete (*i)->logicalMap.parsed_layer.water;
+            if((*i)->logicalMap.parsed_layer.grass!=NULL)
+                delete (*i)->logicalMap.parsed_layer.grass;
             qDeleteAll((*i)->tiledMap->tilesets());
             delete (*i)->tiledMap;
             delete (*i)->tiledRender;

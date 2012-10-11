@@ -164,6 +164,7 @@ struct Map_to_send
     {
         bool *walkable;
         bool *water;
+        bool *grass;
     };
     MapToSend_ParsedLayer parsed_layer;
 

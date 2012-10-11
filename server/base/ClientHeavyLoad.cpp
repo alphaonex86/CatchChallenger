@@ -89,7 +89,6 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
     }
-    WAIT(1000);
     QSqlQuery loginQuery(queryText);
     /*if(!loginQuery.exec(queryText))
     {
@@ -375,7 +374,6 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
     QSqlQuery sqlQuery(queryText);
     if(!sqlQuery.exec())
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
-    WAIT(1000);
 }
 
 void ClientHeavyLoad::askedRandomNumber()

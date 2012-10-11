@@ -121,6 +121,7 @@ void BaseServer::preload_the_map()
                 GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
                 GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
                 GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
+                GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
                 GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
 
                 bool continueTheLoading=true;
@@ -467,8 +468,12 @@ void BaseServer::unload_the_map()
     QHash<QString,Map *>::const_iterator i_end = GlobalData::serverPrivateVariables.map_list.constEnd();
     while (i != i_end)
     {
-        delete i.value()->parsed_layer.walkable;
-        delete i.value()->parsed_layer.water;
+        if(i.value()->parsed_layer.walkable!=NULL)
+            delete i.value()->parsed_layer.walkable;
+        if(i.value()->parsed_layer.water!=NULL)
+            delete i.value()->parsed_layer.water;
+        if(i.value()->parsed_layer.grass!=NULL)
+            delete i.value()->parsed_layer.grass;
         delete i.value();
         i++;
     }
@@ -576,7 +581,6 @@ void BaseServer::removeOneClient()
     }
     client_list.removeOne(client);
     client->deleteLater();
-    check_if_now_stopped();
 }
 
 /////////////////////////////////////// player related //////////////////////////////////////

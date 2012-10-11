@@ -40,6 +40,9 @@ private slots:
     void start_internal_server();
 protected:
     QString sqlitePath();
+protected slots:
+    //remove all finished client
+    virtual void removeOneClient();
 };
 }
 

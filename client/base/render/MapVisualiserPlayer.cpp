@@ -13,7 +13,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     lookToMove.setSingleShot(true);
     connect(&lookToMove,SIGNAL(timeout()),this,SLOT(transformLookToMove()));
 
-    moveTimer.setInterval(66);
+    moveTimer.setInterval(250/5);
     moveTimer.setSingleShot(true);
     connect(&moveTimer,SIGNAL(timeout()),this,SLOT(moveStepSlot()));
 
@@ -26,14 +26,25 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     stepAlternance=false;
+    animationTileset=new Tiled::Tileset("animation",16,16);
+    nextCurrentObject=new Tiled::MapObject();
+    grassCurrentObject=new Tiled::MapObject();
+    haveGrassCurrentObject=false;
+    haveNextCurrentObject=false;
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
 {
+    delete animationTileset;
+    delete nextCurrentObject;
+    delete grassCurrentObject;
 }
 
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 {
+    if(current_map==NULL)
+        return;
+
     //ignore the no arrow key
     if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down)
     {
@@ -70,6 +81,8 @@ void MapVisualiserPlayer::keyPressParse()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -91,6 +104,8 @@ void MapVisualiserPlayer::keyPressParse()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -112,6 +127,8 @@ void MapVisualiserPlayer::keyPressParse()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -133,6 +150,8 @@ void MapVisualiserPlayer::keyPressParse()
             inMove=true;
             moveStep=1;
             moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -142,7 +161,6 @@ void MapVisualiserPlayer::keyPressParse()
             lookToMove.start();
         }
     }
-    emit send_player_direction(direction);
 }
 
 void MapVisualiserPlayer::moveStepSlot()
@@ -227,6 +245,7 @@ void MapVisualiserPlayer::moveStepSlot()
 
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink[playerMapObject]);
+    loadGrassTile();
 
     moveStep++;
 
@@ -277,6 +296,7 @@ void MapVisualiserPlayer::moveStepSlot()
         playerMapObject->setPosition(QPoint(x,y+1));
         if(centerOnPlayer)
             centerOn(MapObjectItem::objectLink[playerMapObject]);
+        stopGrassAnimation();
 
         //check if one arrow key is pressed to continue to move into this direction
         if(keyPressed.contains(Qt::Key_Left))
@@ -294,6 +314,8 @@ void MapVisualiserPlayer::moveStepSlot()
                 direction=Pokecraft::Direction_move_at_left;
                 moveStep=0;
                 moveStepSlot();
+                emit send_player_direction(direction);
+                startGrassAnimation(direction);
             }
         }
         else if(keyPressed.contains(Qt::Key_Right))
@@ -311,6 +333,8 @@ void MapVisualiserPlayer::moveStepSlot()
                 direction=Pokecraft::Direction_move_at_right;
                 moveStep=0;
                 moveStepSlot();
+                emit send_player_direction(direction);
+                startGrassAnimation(direction);
             }
         }
         else if(keyPressed.contains(Qt::Key_Up))
@@ -328,6 +352,8 @@ void MapVisualiserPlayer::moveStepSlot()
                 direction=Pokecraft::Direction_move_at_top;
                 moveStep=0;
                 moveStepSlot();
+                emit send_player_direction(direction);
+                startGrassAnimation(direction);
             }
         }
         else if(keyPressed.contains(Qt::Key_Down))
@@ -345,12 +371,16 @@ void MapVisualiserPlayer::moveStepSlot()
                 direction=Pokecraft::Direction_move_at_bottom;
                 moveStep=0;
                 moveStepSlot();
+                emit send_player_direction(direction);
+                startGrassAnimation(direction);
             }
         }
         //now stop walking, no more arrow key is pressed
         else
+        {
+            emit send_player_direction(direction);
             inMove=false;
-        emit send_player_direction(direction);
+        }
     }
     else
         moveTimer.start();
@@ -372,6 +402,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         break;
         case Pokecraft::Direction_look_at_right:
@@ -382,6 +413,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         break;
         case Pokecraft::Direction_look_at_top:
@@ -392,6 +424,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
@@ -402,6 +435,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
+            startGrassAnimation(direction);
         }
         break;
         default:
@@ -412,6 +446,9 @@ void MapVisualiserPlayer::transformLookToMove()
 
 void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
 {
+    if(current_map==NULL)
+        return;
+
     //ignore the no arrow key
     if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down)
     {
@@ -433,6 +470,14 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
 QString MapVisualiserPlayer::lastLocation() const
 {
     return mLastLocation;
+}
+
+void MapVisualiserPlayer::setAnimationTilset(QString animationTilset)
+{
+    animationTileset->loadFromImage(QImage(":/images/player_default/animation.png"),":/images/player_default/animation.png");
+    if(QFile::exists(animationTilset))
+        if(!animationTileset->loadFromImage(QImage(animationTilset),animationTilset))
+            qDebug() << "Unable the load the datapack animation tileset: " << animationTilset;
 }
 
 //call after enter on new map
@@ -467,4 +512,92 @@ void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
         ObjectGroupItem::objectGroupLink[playerMapObject->objectGroup()]->removeObject(playerMapObject);
     else
         qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
+}
+
+void MapVisualiserPlayer::startGrassAnimation(const Pokecraft::Direction &direction)
+{
+    switch(direction)
+    {
+        case Pokecraft::Direction_move_at_left:
+        case Pokecraft::Direction_move_at_right:
+        case Pokecraft::Direction_move_at_top:
+        case Pokecraft::Direction_move_at_bottom:
+        break;
+        default:
+        return;
+    }
+
+    if(!haveGrassCurrentObject)
+    {
+        haveGrassCurrentObject=Pokecraft::MoveOnTheMap::haveGrass(current_map->logicalMap,x,y);
+        if(haveGrassCurrentObject)
+        {
+            ObjectGroupItem::objectGroupLink[current_map->objectGroup]->addObject(grassCurrentObject);
+            grassCurrentObject->setPosition(QPoint(x,y+1));
+            grassCurrentObject->setTile(animationTileset->tileAt(2));
+        }
+    }
+    else
+        qDebug() << "haveGrassCurrentObject true here, it's wrong!";
+
+    if(!haveNextCurrentObject)
+    {
+        haveNextCurrentObject=false;
+        Pokecraft::Map * map_destination=&current_map->logicalMap;
+        COORD_TYPE x_destination=x;
+        COORD_TYPE y_destination=y;
+        if(Pokecraft::MoveOnTheMap::move(direction,&map_destination,&x_destination,&y_destination))
+            if(loadedNearMap.contains(map_destination->map_file))
+                haveNextCurrentObject=Pokecraft::MoveOnTheMap::haveGrass(*map_destination,x_destination,y_destination);
+        if(haveNextCurrentObject)
+        {
+            ObjectGroupItem::objectGroupLink[all_map[map_destination->map_file]->objectGroup]->addObject(nextCurrentObject);
+            nextCurrentObject->setPosition(QPoint(x_destination,y_destination+1));
+            nextCurrentObject->setTile(animationTileset->tileAt(1));
+        }
+    }
+    else
+        qDebug() << "haveNextCurrentObject true here, it's wrong!";
+}
+
+void MapVisualiserPlayer::stopGrassAnimation()
+{
+    if(haveGrassCurrentObject)
+    {
+        ObjectGroupItem::objectGroupLink[grassCurrentObject->objectGroup()]->removeObject(grassCurrentObject);
+        haveGrassCurrentObject=false;
+    }
+    if(haveNextCurrentObject)
+    {
+        ObjectGroupItem::objectGroupLink[nextCurrentObject->objectGroup()]->removeObject(nextCurrentObject);
+        haveNextCurrentObject=false;
+    }
+}
+
+void MapVisualiserPlayer::loadGrassTile()
+{
+    if(haveGrassCurrentObject)
+    {
+        switch(moveStep)
+        {
+            case 0:
+            case 1:
+            break;
+            case 2:
+                grassCurrentObject->setTile(animationTileset->tileAt(0));
+            break;
+        }
+    }
+    if(haveNextCurrentObject)
+    {
+        switch(moveStep)
+        {
+            case 0:
+            case 1:
+            break;
+            case 3:
+                nextCurrentObject->setTile(animationTileset->tileAt(2));
+            break;
+        }
+    }
 }
