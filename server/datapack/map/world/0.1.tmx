@@ -1,45 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="30" height="32" tilewidth="16" tileheight="16">
+<map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
  <properties>
   <property name="type" value="city"/>
  </properties>
  <tileset firstgid="1" source="../tileset/texture.tsx"/>
- <layer name="Walkable" width="30" height="32">
+ <layer name="Walkable" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJy9lVtuwlAMRC8Q0e5/UdCVFJbRIDWSNTrjBx98WAm5xGOPx5PzWuuyx/n/un3oPsancaua6HyCQ78ph8tf5b3tcW/Ej8mnOMf1Ep5Tvb97PBrxBNyIvQHmBmdHjilu5FQxtW+dTbxOceP7NHPqX3dh2q/yG/uLofj0/yluDO058qv38Z3X8+tpra9GfJ+YR8WkoJ4dXzpH2gvFIv262VA9zjtIJ262WofmJy3oDmjt5BP6X50raYN2kTh2fZPGMp+ke8qnXChfdO/83X1r3vkukVe5bwZplnJUHqj7Snxk/Wp9xD15pNOs2yXXM51rvoxzp5tqPrpHGW+VBgg78yTyBuK70mZWk/bq9jLTLe2M48zNxvFB+5t5VraX1DtpqtJ/5Y2uXj3PZpLN1fGi9VT7mmmho+XKfzqzzzjr5qP9oPqcl3a9oFNTNn/H/YSr7rzcbkx4m/aa+YXD6XI9iSPnH0HyRHA=
+   eJyVlEESwzAIA/P4+t/pMeNB2uXAuLUJRkjyeZ7n/OP3iXOtU5xPTHtTTN9R3t3H1GvKNZHyNzWnc/M9zeee781NOk91W9/T77RncCV8G/1s6t29pV43WqSZp/pTLzR74pr4SDk0f9sP1W330/y3Xmp3WuxGv2lWpGN7Tnoy/0krpMHET5uZvbtx2oJ83HRptWo0kHTQ3omWs8FgeCJ+DM7GocG68YnRxkY7VqsbTzZvmv2kucannTG9FQ0/+bv5pnFp8TVMxqvbGpueN7NLvaactia9GfyWJ+OPVJs0R361PNGbQZib72x/bU3RuGwzJL1TH4aXFFTvBSTp0dE=
   </data>
  </layer>
- <layer name="Grass" width="30" height="32">
+ <layer name="WalkBottom" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJzt0LkNAAAIAzFWYf8lmYGOx5ZSn5QIADbK5nR1J/v2s+7tLjBXAckJEQU=
+   eJxjYCAdhAJxGBSHk6GfXDBq76i9o/aO2jtqL+3tdSQDOyPZ60KmGWEjDGcPEB4qgBGImbBgZhrbKwbE4lgwK43sh/mTBYe9MCxBZXtx+ZPW9moDsQ4RWJfK9o6CUTAKcAMAe7U+Og==
   </data>
  </layer>
- <layer name="LedgesDown" width="30" height="32">
+ <layer name="LedgesLeft" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztw6ENAAAIA7D9b3mYByYRiDZpAgBwY0oA+GIBFX0C4A==
+   eJztzTEBAAAIA6D1D2MJixljHlCABACAhim9W3qBfw47CgFy
   </data>
  </layer>
- <layer name="Collisions" width="30" height="32">
+ <layer name="LedgesRight" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxLZmRgSMGCU6mIk3FgbHZSE2Czn9Z2YrMfW3hSCoyA2BgPNmGA2EttEATEwXhwyKi9VAFFQFyMhIXQ+CUMiDRMS6CCRYwe9mIDA20vKwP1MTH20huM2ktfe+ltNz57aZmuB6N/R+2lvr20bFPhs5fegJb1Ar66YaD9O2ovbe1Dx6TqJ8cOcu0mRg+pduIzj1Kz0DEAuSxRgw==
+   eJztzTEBAAAEADD90yihlwouDluBRQAAMJFHbz17gT0Nwn8COw==
   </data>
  </layer>
- <layer name="WalkBehind" width="30" height="32">
+ <layer name="LedgesDown" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUUAoSGQfaBaNgFIwCSsBoHh4Fo2AUjIKRDUD1AHJdgM4nVT8+NcgYn1pi7CRkP6nmoLsTmzguM4jx12AAANfZCrk=
+   eJztwzENAAAMA6D6dzg3s9CrFyQkAACwcUVg5wHhmgei
   </data>
  </layer>
- <objectgroup name="Moving" width="30" height="32">
-  <object type="border-bottom" gid="238" x="128" y="512">
+ <objectgroup name="Moving" width="30" height="30">
+  <object type="border-right" gid="247" x="464" y="240">
    <properties>
-    <property name="map" value="0.0.tmx"/>
+    <property name="map" value="1.1"/>
    </properties>
   </object>
-  <object name="bot spawn" type="bot spawn" gid="68" x="240" y="432"/>
-  <object type="border-left" gid="238" x="0" y="80">
+  <object type="border-top" gid="247" x="224" y="16">
    <properties>
-    <property name="map" value="-1.1.tmx"/>
+    <property name="map" value="0.0"/>
+   </properties>
+  </object>
+  <object type="border-left" gid="247" x="0" y="240">
+   <properties>
+    <property name="map" value="-1.1"/>
    </properties>
   </object>
  </objectgroup>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaOA9uAGkepu0dQVo2AUDE4QNUAYAJIQDD8=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztwzEJAAAMA7Cam39Loyr6JJAEAACAutGVB83/CBc=
+  </data>
+ </layer>
 </map>
