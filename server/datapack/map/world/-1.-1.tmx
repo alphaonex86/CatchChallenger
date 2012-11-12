@@ -11,34 +11,29 @@
  </layer>
  <layer name="WalkBottom" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztllEOwiAMhnc1E6+gxjP4sCOI8wpuegW3S1oSGpumhcEovkjyPwAZH38pdH2X3w6gY9Cp4Hvf+sT8FeRAt0Zc5A2gEXQPfSdwnSC6zxzuI/BQL9AcxLkz0xM0FXC914GxFjKfirPfM42P5F3ioldtzynuu/v61tax4FK+FnNLLq61hotn25pL87gW1+cYzy1rrnbGMS7eBb7X3PdKinWMq/nO5XrPCxvbyt2DdgVaw+V5Qbml4lzMg5hnC67mWeOeQZcCbeXWrL+/5mId5PfemjuRPs1pC65UF/hbZ8H13jC+Cxu35kr1gL51tbkY49Q/WW0uxpi/4dZcqW604K5tf25++wCWPKj8
+   eJzLZxgYkD9q76i9o/aO2jtq77Cx1wGIHSnE5NgbCsRhFOKham8kEGeTgSm1N5wM/Qyj9o7aO2rvqL2j9g5aewFlLjT+
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="30">
-  <object type="border-top" gid="247" x="224" y="16">
+  <object type="border-right" gid="247" x="464" y="240">
    <properties>
-    <property name="map" value="-1.-1"/>
+    <property name="map" value="0.-1"/>
    </properties>
   </object>
   <object type="border-bottom" gid="247" x="224" y="480">
    <properties>
-    <property name="map" value="-1.1"/>
-   </properties>
-  </object>
-  <object type="border-right" gid="247" x="464" y="240">
-   <properties>
-    <property name="map" value="0.0"/>
+    <property name="map" value="-1.0"/>
    </properties>
   </object>
  </objectgroup>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzUERAAAEADA59Q8ggg7u8NkKLONHer1er3f9rad3wuv1er1e770GXWwLfQ==
+   eJztzbENADAMwzDfmSfy/1b0CmegAM2cJFN6C3+3EZfL5XK5XC6Xy+Vecx+9CyFS
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztzTEBAAAIAyDLrX8Ay9jBx0MoQOpGvF6v99HbR++G1+v1er3eP+8ANhII8g==
+   eJztzbEAAAAAArDk8lcKo2cTWPNRr9fr9Xq9Xq/X6/Ve3wHRTggX
   </data>
  </layer>
 </map>

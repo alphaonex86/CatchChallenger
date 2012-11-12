@@ -3,54 +3,53 @@
  <properties>
   <property name="type" value="city"/>
  </properties>
- <tileset firstgid="1" source="../../../../server/datapack/map/tileset/texture.tsx"/>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
  <layer name="Walkable" width="19" height="16">
   <data encoding="base64" compression="zlib">
-   eJybyMDAMHEUj2IScB8Q9wPxBCqYtQ6I1wPxBiqYdQ6IzwPxhUEQRqMYN6YmAADa3qJ8
+   eJyrYGBgqBjFo3gUj2I6YWoCAEFOhZk=
   </data>
  </layer>
  <layer name="WalkBottom" width="19" height="16">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFowA38GMcaBfQB/gT6U9QeBCrdiSBPGCY5ANxAZ3DBgDtHwKP
+   eJxjYBgFo4B+4AEavxSIy4C4HE38HhlmdwFxNxD3kKEXHcwH4gVAvJBEffepYPdQBJ+B+AsQf6WzvQDI2Qpd
   </data>
  </layer>
  <layer name="Collisions" width="19" height="16">
   <data encoding="base64" compression="zlib">
-   eJzjZ2Bg4KcS1qciRgd+QOwPxAFAHIhDzh+LHAgYMKLy84A4H4gLgLgQZCYjAsPk8qFy+MwZBaQBPmD48RMZhoTU6gHl9Ik0ixS1IwV4MuLnkwIyGfHzaQkA2UUOSg==
+   eJzjZWBg4KUSVqIiNqciRgfeQOxDBPbFohcdJABxIhE4iQizRgHxYAsQb6WS2pNAfIpIs0hRO1LAaQJ8WgIAgl8WkA==
   </data>
  </layer>
  <layer name="WallDecoration" width="19" height="16">
   <data encoding="base64" compression="zlib">
-   eJzjYyAMBBkR7A9A/BGLGgEg1iPCLENGwmoMiDBnFIyCUTAKAN3fAqI=
+   eJzjYaAO4ANiRSqZpQzEZlQyy4JK5oyCUTAKBh8AAFrlAM0=
   </data>
  </layer>
  <layer name="WalkBehind" width="19" height="16">
   <data encoding="base64" compression="zlib">
-   eJxjYBicQIBxcJkzCkbBKBh8AACNRgAj
+   eJxjYKAPOAPEZ+lkF6nAj4pmJVPRrFEwCmgFthHgDxUAAHtSA7c=
   </data>
  </layer>
  <objectgroup name="Moving" width="19" height="16">
-  <object type="teleport on push" gid="238" x="128" y="256">
+  <object type="teleport on push" gid="247" x="128" y="256">
    <properties>
-    <property name="map" value="../world/0.0.tmx"/>
+    <property name="map" value="../world/1.1"/>
     <property name="x" value="23"/>
-    <property name="y" value="6"/>
+    <property name="y" value="9"/>
    </properties>
   </object>
-  <object type="teleport on push" gid="238" x="144" y="256">
+  <object type="teleport on push" gid="247" x="144" y="256">
    <properties>
-    <property name="map" value="../world/0.0.tmx"/>
+    <property name="map" value="../world/1.1"/>
     <property name="x" value="23"/>
-    <property name="y" value="6"/>
+    <property name="y" value="9"/>
    </properties>
   </object>
-  <object type="teleport on push" gid="238" x="160" y="256">
+  <object type="teleport on push" gid="247" x="160" y="256">
    <properties>
-    <property name="map" value="../world/0.0.tmx"/>
+    <property name="map" value="../world/1.1"/>
     <property name="x" value="23"/>
-    <property name="y" value="6"/>
+    <property name="y" value="9"/>
    </properties>
   </object>
-  <object name="bot spawn" type="bot spawn" gid="68" x="144" y="240"/>
  </objectgroup>
 </map>
