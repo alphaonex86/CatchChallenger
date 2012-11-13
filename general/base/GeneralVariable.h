@@ -24,5 +24,6 @@
 #define DATAPACK_BASE_PATH_MAP "map/"
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
 #define DATAPACK_BASE_PATH_ANIMATION "animation/"
+#define DATAPACK_BASE_PATH_ITEM "items/"
 
 #endif // GENERALVARIABLE_H

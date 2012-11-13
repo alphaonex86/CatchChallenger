@@ -10,6 +10,7 @@
 #include <QPointer>
 
 #include "../../general/base/MoveOnTheMap.h"
+#include "../../general/libtiled/tile.h"
 
 //open the file, and load it into the variables
 QString MapVisualiser::loadOtherMap(const QString &fileName)
@@ -179,7 +180,6 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     {
         if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
         {
-            //remove the unknow layer
             if(objectGroup->name()=="Moving")
             {
                 Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
@@ -191,23 +191,63 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
                         tempMapObject->objectGroupIndex++;
                     tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,layer);
                 }
-                break;
             }
         }
         else if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
         {
             if(tileLayer->name()=="Grass")
             {
-                Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
+                grass = tempMapObject->tiledMap->takeLayerAt(index);
                 if(tempMapObject->objectGroupIndex-1<=0)
-                    tempMapObject->tiledMap->insertLayer(0,layer);
+                    tempMapObject->tiledMap->insertLayer(0,grass);
                 else
                 {
                     if(index>tempMapObject->objectGroupIndex)
                         tempMapObject->objectGroupIndex++;
-                    tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,layer);
+                    tempMapObject->tiledMap->insertLayer(tempMapObject->objectGroupIndex-1,grass);
                 }
-                break;
+                grassOver = grass->clone();
+                grassOver->setName("Grass over");
+                tempMapObject->tiledMap->addLayer(grassOver);
+
+                QSet<Tiled::Tileset*> tilesets=grassOver->usedTilesets();
+                QSet<Tiled::Tileset*>::const_iterator i = tilesets.constBegin();
+                while (i != tilesets.constEnd()) {
+                     Tiled::Tileset* oldTileset=*i;
+                     Tiled::MapReader mapReader;
+                     qDebug() << "Try open:" << oldTileset->fileName();
+                     QFile tsxFile(oldTileset->fileName());
+                     if(tsxFile.open(QIODevice::ReadOnly))
+                     {
+                         Tiled::Tileset* newTileset=mapReader.readTileset(&tsxFile,QFileInfo(tsxFile).absoluteFilePath());
+                         if(newTileset!=NULL)
+                         {
+                             Tiled::Tile * currentTile;
+                             QSet<Tiled::Tile *> tileUsed;
+                             int indexTile=0;
+                             while(indexTile<=newTileset->tileCount())
+                             {
+                                 currentTile=newTileset->tileAt(indexTile);
+                                 if(currentTile!=NULL)
+                                     if(!tileUsed.contains(currentTile))
+                                     {
+                                         qDebug() << "New tile" << tileUsed;
+                                         QPixmap pixmap=currentTile->image();
+                                         pixmap.fill();
+                                         currentTile->setImage(pixmap);
+                                         tileUsed << currentTile;
+                                     }
+                                 indexTile++;
+                             }
+                             grassOver->replaceReferencesToTileset(*i,newTileset);
+                         }
+                         else
+                             qDebug() << "Unable to load the tileset:" << oldTileset->fileName() << ", error:" << mapReader.errorString();
+                     }
+                     else
+                         qDebug() << "Unable to open the tsx file:" << tsxFile.fileName() << ", error:" << tsxFile.errorString();
+                     ++i;
+                 }
             }
         }
         index++;

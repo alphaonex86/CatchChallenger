@@ -25,16 +25,18 @@ ObjectGroupItem::ObjectGroupItem(Tiled::ObjectGroup *objectGroup,
 
 ObjectGroupItem::~ObjectGroupItem()
 {
-    QList<Tiled::MapObject *> objects=mObjectGroup->objects();
-    int loopSize=objects.size();
-    int index=0;
-    while(index<loopSize)
     {
-        if(!MapObjectItem::objectLink.contains(objects.at(index)))
-            qDebug() << "The tiled object not exist on this layer (destructor)";
-        else
-            MapObjectItem::objectLink.remove(objects.at(index));
-        index++;
+        QList<Tiled::MapObject *> objects=mObjectGroup->objects();
+        int loopSize=objects.size();
+        int index=0;
+        while(index<loopSize)
+        {
+            if(!MapObjectItem::objectLink.contains(objects.at(index)))
+                qDebug() << "The tiled object not exist on this layer (destructor)";
+            else
+                MapObjectItem::objectLink.remove(objects.at(index));
+            index++;
+        }
     }
 }
 

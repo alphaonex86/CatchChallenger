@@ -17,13 +17,6 @@ class Map;
 class MoveOnTheMap
 {
 public:
-    struct LocationAfterMove
-    {
-        Map *map;
-        quint8 x;
-        quint8 y;
-    };
-
     MoveOnTheMap();
     virtual void newDirection(const Direction &the_direction);
     virtual void setLastDirection(const Direction &the_direction);

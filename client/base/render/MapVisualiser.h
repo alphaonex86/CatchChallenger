@@ -15,6 +15,7 @@
 #include "../../general/libtiled/orthogonalrenderer.h"
 #include "../../general/libtiled/tilelayer.h"
 #include "../../general/libtiled/tileset.h"
+#include "../../general/libtiled/tile.h"
 
 #ifndef MAP_VISUALISER_H
 #define MAP_VISUALISER_H
@@ -80,6 +81,9 @@ protected:
     QTime timeUpdateFPS;
     QGraphicsSimpleTextItem *FPSText;
     bool mShowFPS;
+
+    Tiled::Layer *grass;
+    Tiled::Layer *grassOver;
 public slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
