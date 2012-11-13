@@ -320,7 +320,6 @@ void BaseWindow::have_current_player_info()
 {
     if(havePlayerInformations)
         return;
-    qDebug() << "have_current_player_info()";
     havePlayerInformations=true;
     Player_private_and_public_informations informations=client->get_player_informations();
     ui->label_connecting_status->setText(tr("Loading the datapack..."));
@@ -381,4 +380,18 @@ void BaseWindow::updatePlayerImage()
             qDebug() << "The skin id: "+QString::number(informations.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
         }
     }
+}
+
+void Pokecraft::BaseWindow::on_pushButton_interface_bag_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(3);
+}
+
+void Pokecraft::BaseWindow::on_toolButton_quit_interface_2_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void Pokecraft::BaseWindow::on_listWidget_itemSelectionChanged()
+{
 }

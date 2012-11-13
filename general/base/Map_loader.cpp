@@ -53,13 +53,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         return false;
     }
     xmlContent=mapFile.readAll();
+    mapFile.close();
     bool ok;
     QDomDocument domDocument;
     QString errorStr;
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        error=QString("%1, Parse error at line %2, column %3: %4").arg("informations.xml").arg(errorLine).arg(errorColumn).arg(errorStr);
+        error=QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return false;
     }
     QDomElement root = domDocument.documentElement();
@@ -122,13 +123,13 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         map_to_send.property[SubChild.attribute("name")]=SubChild.attribute("value");
                     else
                     {
-                        error=QString("Missing attribute name or value: child.tagName(): %1").arg(child.tagName());
+                        error=QString("Missing attribute name or value: child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(SubChild.lineNumber());
                         return false;
                     }
                 }
                 else
                 {
-                    error=QString("Is not Element: child.tagName(): %1").arg(SubChild.tagName());
+                    error=QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber());
                     return false;
                 }
                 SubChild = SubChild.nextSiblingElement("property");
@@ -136,7 +137,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         }
         else
         {
-            error=QString("Is Element: child.tagName(): %1").arg(child.tagName());
+            error=QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
             return false;
         }
     }
@@ -146,9 +147,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     while(!child.isNull())
     {
         if(!child.hasAttribute("name"))
-            DebugClass::debugConsole(QString("Has not attribute \"name\": child.tagName(): %1").arg(child.tagName()));
+            DebugClass::debugConsole(QString("Has not attribute \"name\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         else if(!child.isElement())
-            DebugClass::debugConsole(QString("Is Element: child.tagName(): %1, name: %2").arg(child.tagName().arg(child.attribute("name"))));
+            DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
             if(child.attribute("name")=="Moving")
@@ -421,8 +422,6 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         }
         child = child.nextSiblingElement("layer");
     }
-
-    mapFile.close();
 
     QByteArray null_data;
     null_data.resize(4);

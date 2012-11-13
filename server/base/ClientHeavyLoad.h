@@ -32,6 +32,7 @@ public:
     static QList<quint16> simplifiedIdList;
 public slots:
     virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
+    virtual void askLoginBot(const quint8 &query_id);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
     void dbQuery(const QString &queryText);
@@ -51,6 +52,9 @@ private:
     bool loadTheRawUTF8String();
     void loginIsRight(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
     void loginIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage);
+    //load linked data (like item, quests, ...)
+    void loadLinkedData();
+    void loadItems();
 signals:
     //normal signals
     void error(const QString &error);

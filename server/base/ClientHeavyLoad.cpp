@@ -35,43 +35,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 {
     if(player_informations->isFake)
     {
-        if(GlobalData::serverPrivateVariables.botSpawn.size()==0)
-            loginIsWrong(query_id,"Not bot point","Not bot point");
-        else
-        {
-            if(!GlobalData::serverPrivateVariables.map_list.contains(GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map))
-                loginIsWrong(query_id,"Bot point not resolved","Bot point not resolved");
-            else if(simplifiedIdList.size()<=0)
-                loginIsWrong(query_id,"Not free id to login","Not free id to login");
-            else
-            {
-                player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
-                player_informations->public_and_private_informations.public_informations.clan=0;
-                player_informations->id=999999999-GlobalData::serverPrivateVariables.number_of_bots_logged;
-                player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
-                player_informations->public_and_private_informations.public_informations.skinId=0x00;//use the first skin by alaphabetic order
-                player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
-                player_informations->public_and_private_informations.cash=0;
-                player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
-                if(!loadTheRawUTF8String())
-                    loginIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->id)));
-                else
-                //all is rights
-                {
-                    loginIsRight(query_id,
-                                 player_informations->id,
-                                 GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
-                                 GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
-                                 GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
-                                 Orientation_bottom);
-
-                    GlobalData::serverPrivateVariables.botSpawnIndex++;
-                    if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
-                        GlobalData::serverPrivateVariables.botSpawnIndex=0;
-                    GlobalData::serverPrivateVariables.number_of_bots_logged++;
-                }
-            }
-        }
+        askLoginBot(query_id);
         return;
     }
     QString queryText;
@@ -90,11 +54,6 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
         break;
     }
     QSqlQuery loginQuery(queryText);
-    /*if(!loginQuery.exec(queryText))
-    {
-        loginIsWrong(query_id,"Mysql error",loginQuery.lastQuery()+": "+loginQuery.lastError().text());
-        return;
-    }*/
     if(loginQuery.size()==0)
         loginIsWrong(query_id,"Bad login","Bad login for: "+login+", hash: "+hash.toHex());
     else
@@ -107,17 +66,27 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             loginIsWrong(query_id,"Not free id to login","Not free id to login");
         else
         {
-
-            player_informations->public_and_private_informations.public_informations.clan=loginQuery.value(8).toUInt();
-            player_informations->id=loginQuery.value(0).toUInt();
+            bool ok;
+            player_informations->public_and_private_informations.public_informations.clan=loginQuery.value(8).toUInt(&ok);
+            if(!ok)
+            {
+                emit message(QString("clan id is not an number, clan disabled"));
+                player_informations->public_and_private_informations.public_informations.clan=0;//no clan
+            }
+            player_informations->id=loginQuery.value(0).toUInt(&ok);
+            if(!ok)
+            {
+                loginIsWrong(query_id,"Wrong account data",QString("Player is is not a number: %1").arg(loginQuery.value(0).toString()));
+                return;
+            }
             player_informations->public_and_private_informations.public_informations.pseudo=loginQuery.value(1).toString();
             QString skinString=loginQuery.value(2).toString();
             if(GlobalData::serverPrivateVariables.skinList.contains(skinString))
                 player_informations->public_and_private_informations.public_informations.skinId=GlobalData::serverPrivateVariables.skinList[skinString];
             else
             {
-                qDebug() << "Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have";
-                player_informations->public_and_private_informations.public_informations.skinId=GlobalData::serverPrivateVariables.skinList[skinString];
+                emit message(QString("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
+                player_informations->public_and_private_informations.public_informations.skinId=0;
             }
             QString type=loginQuery.value(7).toString();
             if(type=="normal")
@@ -158,16 +127,69 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             //all is rights
             if(GlobalData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
             {
+                quint8 x=loginQuery.value(3).toUInt(&ok);
+                if(!ok)
+                {
+                    loginIsWrong(query_id,"Wrong account data","x coord is not a number");
+                    return;
+                }
+                quint8 y=loginQuery.value(4).toUInt(&ok);
+                if(!ok)
+                {
+                    loginIsWrong(query_id,"Wrong account data","y coord is not a number");
+                    return;
+                }
                 loginIsRight(query_id,
                              player_informations->id,
                              GlobalData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
-                             loginQuery.value(3).toInt(),
-                             loginQuery.value(4).toInt(),
+                             x,
+                             y,
                              (Orientation)orentation);
             }
             else
                 loginIsWrong(query_id,"Map not found","Map not found: "+loginQuery.value(6).toString());
 
+        }
+    }
+}
+
+void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
+{
+    if(GlobalData::serverPrivateVariables.botSpawn.size()==0)
+        loginIsWrong(query_id,"Not bot point","Not bot point");
+    else
+    {
+        if(!GlobalData::serverPrivateVariables.map_list.contains(GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map))
+            loginIsWrong(query_id,"Bot point not resolved","Bot point not resolved");
+        else if(simplifiedIdList.size()<=0)
+            loginIsWrong(query_id,"Not free id to login","Not free id to login");
+        else
+        {
+            player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
+            player_informations->public_and_private_informations.public_informations.clan=0;
+            player_informations->id=999999999-GlobalData::serverPrivateVariables.number_of_bots_logged;
+            player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
+            player_informations->public_and_private_informations.public_informations.skinId=0x00;//use the first skin by alaphabetic order
+            player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
+            player_informations->public_and_private_informations.cash=0;
+            player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
+            if(!loadTheRawUTF8String())
+                loginIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->id)));
+            else
+            //all is rights
+            {
+                loginIsRight(query_id,
+                             player_informations->id,
+                             GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
+                             GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
+                             GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
+                             Orientation_bottom);
+
+                GlobalData::serverPrivateVariables.botSpawnIndex++;
+                if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
+                    GlobalData::serverPrivateVariables.botSpawnIndex=0;
+                GlobalData::serverPrivateVariables.number_of_bots_logged++;
+            }
         }
     }
 }
@@ -211,6 +233,8 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
         y,//position_y
         orientation
     );
+
+    loadLinkedData();
 }
 
 void ClientHeavyLoad::loginIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage)
@@ -225,6 +249,88 @@ void ClientHeavyLoad::loginIsWrong(const quint8 &query_id,const QString &message
 
     //send to server to stop the connection
     emit error(debugMessage);
+}
+
+//load linked data (like item, quests, ...)
+void ClientHeavyLoad::loadLinkedData()
+{
+    loadItems();
+}
+
+void ClientHeavyLoad::loadItems()
+{
+    //network send
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+
+    //do the query
+    QString queryText;
+    switch(GlobalData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=\"%1\"")
+                .arg(player_informations->id);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=\"%1\"")
+                .arg(player_informations->id);
+        break;
+    }
+    bool ok;
+    QSqlQuery loginQuery(queryText);
+    out << (quint32)loginQuery.size();
+
+    //parse the result
+    while(loginQuery.next())
+    {
+        quint32 id=loginQuery.value(0).toUInt(&ok);
+        if(!ok)
+        {
+            emit message(QString("item id is not a number, skip"));
+            continue;
+        }
+        quint32 quantity=loginQuery.value(1).toUInt(&ok);
+        if(!ok)
+        {
+            emit message(QString("quantity is not a number, skip"));
+            continue;
+        }
+        if(quantity==0)
+        {
+            switch(GlobalData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    QSqlQuery loginQuery(QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
+                                         .arg(player_informations->id)
+                                         .arg(id)
+                                         );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    QSqlQuery loginQuery(QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
+                                     .arg(player_informations->id)
+                                     .arg(id)
+                                     );
+                break;
+            }
+            emit message(QString("The item %1 have been dropped because the quantity is 0").arg(item_id));
+            continue;
+        }
+        if(!GlobalData::serverPrivateVariables.itemsId.contains(id))
+        {
+            emit message(QString("The item %1 is ignored because it's not into the items list").arg(item_id));
+            continue;
+        }
+        player_informations->public_and_private_informations.items[id]=quantity;
+
+        out << (quint32)id;
+        out << (quint32)quantity;
+    }
+
+    //send the items
+    emit sendPacket(0xD0,0x0001,outputData);
 }
 
 bool ClientHeavyLoad::loadTheRawUTF8String()
