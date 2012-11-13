@@ -1077,7 +1077,7 @@ border-image: url(:/images/empty.png);
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
-           <widget class="QListWidget" name="listWidget">
+           <widget class="QListWidget" name="inventory">
             <property name="geometry">
              <rect>
               <x>250</x>
