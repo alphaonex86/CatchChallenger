@@ -2,6 +2,8 @@
 #include "ui_BaseWindow.h"
 #include "../../general/base/FacilityLib.h"
 
+#include <QListWidgetItem>
+
 using namespace Pokecraft;
 
 BaseWindow::BaseWindow(Api_protocol *client) :
@@ -37,6 +39,10 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)),Qt::QueuedConnection);
     //connect(client,SIGNAL(new_player_info()),this,SLOT(update_chat()),Qt::QueuedConnection);
     connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()),Qt::QueuedConnection);
+
+    //connect the datapack loader
+    connect(&datapackLoader,SIGNAL(datapackParsed()),this,SLOT(datapackParsed()),Qt::QueuedConnection);
+    connect(this,SIGNAL(parseDatapack(QString)),&datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -76,6 +82,10 @@ void BaseWindow::resetAll()
     mapController->resetAll();
     haveDatapack=false;
     havePlayerInformations=false;
+    datapackLoader.resetAll();
+    haveInventory=false;
+    datapackIsParsed=false;
+    ui->inventory->clear();
 }
 
 void BaseWindow::serverIsLoading()
@@ -109,7 +119,7 @@ void BaseWindow::notLogged(QString reason)
 
 void BaseWindow::logged()
 {
-    ui->label_connecting_status->setText(tr("Loading the starting data..."));
+    updateConnectingStatus();
     client->sendDatapackContent();
 }
 
@@ -322,10 +332,10 @@ void BaseWindow::have_current_player_info()
         return;
     havePlayerInformations=true;
     Player_private_and_public_informations informations=client->get_player_informations();
-    ui->label_connecting_status->setText(tr("Loading the datapack..."));
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
     updatePlayerImage();
+    updateConnectingStatus();
 }
 
 void BaseWindow::haveTheDatapack()
@@ -335,10 +345,69 @@ void BaseWindow::haveTheDatapack()
     haveDatapack=true;
     updatePlayerImage();
 
-    ui->label_connecting_status->setText(tr("Loading the player informations..."));
-    this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
+    if(havePlayerInformations)
+        emit parseDatapack(client->get_datapack_base_name());
+    updateConnectingStatus();
+}
 
-    ui->stackedWidget->setCurrentIndex(1);
+void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
+{
+    this->items=items;
+    haveInventory=true;
+    updateConnectingStatus();
+    load_inventory();
+}
+
+void BaseWindow::load_inventory()
+{
+    if(haveInventory && datapackIsParsed)
+    {
+        QHashIterator<quint32,quint32> i(items);
+         while (i.hasNext()) {
+             i.next();
+             QListWidgetItem *item=new QListWidgetItem();
+             if(DatapackClientLoader::items.contains(i.key()))
+             {
+                 item->setIcon(DatapackClientLoader::items[i.key()]);
+                 if(i.value()>1)
+                     item->setText(QString::number(i.value()));
+             }
+             else
+             {
+                 item->setIcon(DatapackClientLoader::defaultInventoryImage);
+                 if(i.value()>1)
+                     item->setText("??? (x"+QString::number(i.value())+")");
+                 else
+                     item->setText("???");
+             }
+             ui->inventory->addItem(item);
+         }
+    }
+}
+
+void BaseWindow::datapackParsed()
+{
+    datapackIsParsed=true;
+    load_inventory();
+    updateConnectingStatus();
+}
+
+void BaseWindow::updateConnectingStatus()
+{
+    QStringList waitedData;
+    if(!haveInventory || !havePlayerInformations)
+        waitedData << tr("loading the player informations");
+    if(!haveDatapack)
+        waitedData << tr("loading the datapack");
+    else if(!datapackIsParsed)
+        waitedData << tr("opening the datapack");
+    if(waitedData.isEmpty())
+    {
+        this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
+        ui->stackedWidget->setCurrentIndex(1);
+        return;
+    }
+    ui->label_connecting_status->setText(tr("Waiting: %1").arg(waitedData.join(", ")));
 }
 
 void BaseWindow::newError(QString error,QString detailedError)

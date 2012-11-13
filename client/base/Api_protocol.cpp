@@ -789,6 +789,38 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
             switch(subCodeType)
             {
                 //random seeds as input
+                case 0x0001:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                        return;
+                    }
+                    QHash<quint32,quint32> items;
+                    quint32 inventorySize,id,quantity;
+                    in >> inventorySize;
+                    quint32 index=0;
+                    while(index<inventorySize)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2; for the id").arg(mainCodeType).arg(subCodeType));
+                            return;
+                        }
+                        in >> id;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, for the quantity").arg(mainCodeType).arg(subCodeType));
+                            return;
+                        }
+                        in >> quantity;
+                        items[id]=quantity;
+                        index++;
+                    }
+                    emit have_inventory(items);
+                }
+                break;
+                //random seeds as input
                 case 0x0009:
                 {
                     emit random_seeds(data);
@@ -1023,7 +1055,7 @@ bool Api_protocol::sendProtocol()
     return true;
 }
 
-bool Api_protocol::tryLogin(QString login,QString pass)
+bool Api_protocol::tryLogin(const QString &login, const QString &pass)
 {
     if(!have_send_protocol)
     {
@@ -1068,7 +1100,7 @@ void Api_protocol::send_player_direction(const Direction &the_direction)
     newDirection(the_direction);
 }
 
-void Api_protocol::sendChatText(Chat_type chatType,QString text)
+void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
 {
     if((chatType<2 || chatType>5) && chatType!=6)
     {
@@ -1085,7 +1117,7 @@ void Api_protocol::sendChatText(Chat_type chatType,QString text)
         emit new_chat_text(chatType,text,player_informations.public_informations.pseudo,player_informations.public_informations.type);
 }
 
-void Api_protocol::sendPM(QString text,QString pseudo)
+void Api_protocol::sendPM(const QString &text,const QString &pseudo)
 {
     emit new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
     if(this->pseudo==pseudo)

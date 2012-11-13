@@ -10,6 +10,7 @@
 #include "../base/Api_client_real.h"
 #include "../base/Api_protocol.h"
 #include "MapController.h"
+#include "DatapackClientLoader.h"
 
 #ifndef POKECRAFT_BASEWINDOW_H
 #define POKECRAFT_BASEWINDOW_H
@@ -38,9 +39,6 @@ private slots:
     void message(QString message);
     void disconnected(QString reason);
     void notLogged(QString reason);
-    void logged();
-    void have_current_player_info();
-    void haveTheDatapack();
     void on_lineEdit_chat_text_returnPressed();
     void protocol_is_good();
     void newError(QString error,QString detailedError);
@@ -60,14 +58,24 @@ private slots:
     void on_pushButton_interface_trainer_clicked();
     void on_lineEdit_chat_text_lostFocus();
 
-    //player
-    void updatePlayerImage();
+    //player UI
     void on_pushButton_interface_bag_clicked();
-
     void on_toolButton_quit_interface_2_clicked();
-
     void on_listWidget_itemSelectionChanged();
+    //player
+    void logged();
+    void updatePlayerImage();
+    void have_current_player_info();
+    void have_inventory(const QHash<quint32,quint32> &items);
+    void load_inventory();
 
+    //datapack
+    void haveTheDatapack();
+protected slots:
+    //datapack
+    void datapackParsed();
+    //UI
+    void updateConnectingStatus();
 private:
     Ui::BaseWindowUI *ui;
     Pokecraft::Api_protocol *client;
@@ -86,7 +94,14 @@ private:
     MapController *mapController;
     QAbstractSocket::SocketState socketState;
     QStringList skinFolderList;
-    bool haveDatapack,havePlayerInformations;
+    bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
+    DatapackClientLoader datapackLoader;
+
+    //player info
+    QHash<quint32,quint32> items;
+signals:
+    //datapack
+    void parseDatapack(const QString &datapackPath);
 };
 }
 
