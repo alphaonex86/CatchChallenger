@@ -32,5 +32,6 @@
         <file>images/inventory/interface.png</file>
         <file>images/inventory/left.png</file>
         <file>images/inventory/right.png</file>
+        <file>images/inventory/unknow-object.png</file>
     </qresource>
 </RCC>

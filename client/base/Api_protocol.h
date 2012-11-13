@@ -30,7 +30,7 @@ public:
     ~Api_protocol();
 
     //protocol command
-    bool tryLogin(QString login,QString pass);
+    bool tryLogin(const QString &login,const QString &pass);
     bool sendProtocol();
 
     //get the stored data
@@ -74,42 +74,43 @@ protected:
     //datapack
     QString datapack_base_name;
 signals:
-    void newError(QString error,QString detailedError);
+    void newError(const QString &error,const QString &detailedError);
 
     //protocol/connection info
-    void disconnected(QString reason);
-    void notLogged(QString reason);
+    void disconnected(const QString &reason);
+    void notLogged(const QString &reason);
     void logged();
     void protocol_is_good();
 
     //general info
-    void number_of_player(quint16 number,quint16 max_player);
-    void random_seeds(QByteArray data);
+    void number_of_player(const quint16 &number,const quint16 &max_player);
+    void random_seeds(const QByteArray &data);
 
     //map move
-    void insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction);
-    void move_player(quint16 id,QList<QPair<quint8,Direction> > movement);
-    void remove_player(quint16 id);
-    void reinsert_player(quint16 id,quint8 x,quint8 y,Pokecraft::Direction direction);
-    void reinsert_player(quint16 id,QString mapName,quint8 x,quint8 y,Pokecraft::Direction direction);
+    void insert_player(const Pokecraft::Player_public_informations &player,const QString &mapName,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
+    void move_player(const quint16 &id,const QList<QPair<quint8,Direction> > &movement);
+    void remove_player(const quint16 &id);
+    void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction);
+    void reinsert_player(const quint16 &id,const QString &mapName,const quint8 &x,const quint8 y,const Pokecraft::Direction &direction);
     void dropAllPlayerOnTheMap();
 
     //chat
-    void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
-    void new_system_text(Pokecraft::Chat_type chat_type,QString text);
+    void new_chat_text(const Pokecraft::Chat_type &chat_type,const QString &text,const QString &pseudo,const Pokecraft::Player_type &type);
+    void new_system_text(const Pokecraft::Chat_type &chat_type,const QString &text);
 
     //player info
-    void have_current_player_info(Pokecraft::Player_private_and_public_informations informations);
+    void have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations);
+    void have_inventory(const QHash<quint32,quint32> &items);
 
     //datapack
     void haveTheDatapack();
     void newFile(const QString &fileName,const QByteArray &data,const quint32 &mtime);
-    void removeFile(QString fileName);
+    void removeFile(const QString &fileName);
 public slots:
     void send_player_direction(const Pokecraft::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const Pokecraft::Direction &direction);
-    void sendChatText(Pokecraft::Chat_type chatType,QString text);
-    void sendPM(QString text,QString pseudo);
+    void sendChatText(const Pokecraft::Chat_type &chatType,const QString &text);
+    void sendPM(const QString &text,const QString &pseudo);
 };
 }
 
