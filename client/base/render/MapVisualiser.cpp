@@ -37,7 +37,8 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     current_map=NULL;
     mapItem=new MapItem(NULL,useCache);
 
-    setWindowTitle(tr("map-visualiser-qt"));
+    grass=NULL;
+    grassOver=NULL;
 
     setScene(mScene);
 /*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);

@@ -82,10 +82,12 @@ protected:
     virtual void preload_the_data();
     virtual void preload_the_map();
     virtual void preload_the_skin();
+    virtual void preload_the_items();
     virtual void preload_the_visibility_algorithm();
     virtual void unload_the_data();
     virtual void unload_the_map();
     virtual void unload_the_skin();
+    virtual void unload_the_items();
     virtual void unload_the_visibility_algorithm();
 
     virtual bool initialize_the_database();
