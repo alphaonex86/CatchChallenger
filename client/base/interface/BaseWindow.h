@@ -62,6 +62,12 @@ private slots:
 
     //player
     void updatePlayerImage();
+    void on_pushButton_interface_bag_clicked();
+
+    void on_toolButton_quit_interface_2_clicked();
+
+    void on_listWidget_itemSelectionChanged();
+
 private:
     Ui::BaseWindowUI *ui;
     Pokecraft::Api_protocol *client;

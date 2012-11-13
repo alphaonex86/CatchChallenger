@@ -107,10 +107,13 @@ struct ServerPrivateVariables
 {
     //bd
     QSqlDatabase *db;//use pointer here to init in correct thread
+    QString db_type_string;
+
+    //datapack
     QString datapack_basePath;
     QString datapack_mapPath;
     QRegExp datapack_rightFileName;
-    QString db_type_string;
+    QSet<quint32> itemsId;
 
     //general data
     QList<EventThreader *> eventThreaderList;

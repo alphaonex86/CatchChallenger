@@ -139,7 +139,6 @@ void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 
     outputData[0]=0x01;
     outputData+=map->rawMapFile;
-    emit message(QString("ClientLocalCalcule::put_on_the_map: %1").arg(QString(outputData.toHex())));
     out.device()->seek(out.device()->size());
     if(GlobalData::serverSettings.max_players<=255)
     {
@@ -153,7 +152,9 @@ void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     }
     out << x;
     out << y;
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
     qDebug() << "put_on_the_map merge" << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type) << "=" << (quint8)orientation << "|" << (quint8)player_informations->public_and_private_informations.public_informations.type;
+    #endif
     out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
     out << player_informations->public_and_private_informations.public_informations.speed;
     out << player_informations->public_and_private_informations.public_informations.clan;

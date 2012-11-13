@@ -2,6 +2,9 @@
 #include "../../server/base/GlobalData.h"
 #include "../../general/base/FacilityLib.h"
 
+#include <QFile>
+#include <QByteArray>
+
 using namespace Pokecraft;
 
 BaseServer::BaseServer()
@@ -50,7 +53,6 @@ BaseServer::BaseServer()
  * \warning this function is thread safe because it quit all thread before remove */
 BaseServer::~BaseServer()
 {
-    DebugClass::debugConsole("BaseServer::~BaseServer()");
     GlobalData::serverPrivateVariables.stopIt=true;
     GlobalData::serverPrivateVariables.eventThreaderList.clear();
     if(GlobalData::serverPrivateVariables.db!=NULL)
@@ -76,6 +78,7 @@ void BaseServer::preload_the_data()
 
     preload_the_map();
     preload_the_skin();
+    preload_the_items();
 
     ClientHeavyLoad::simplifiedIdList.clear();
     int index=0;
@@ -372,7 +375,7 @@ void BaseServer::preload_the_map()
         index++;
     }
 
-    DebugClass::debugConsole(QString("finish preload the map"));
+    DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalData::serverPrivateVariables.map_list.size()));
 }
 
 void BaseServer::preload_the_skin()
@@ -384,6 +387,66 @@ void BaseServer::preload_the_skin()
         GlobalData::serverPrivateVariables.skinList[skinFolderList.at(index)]=index;
         index++;
     }
+
+    DebugClass::debugConsole(QString("%1 skin(s) loaded").arg(GlobalData::serverPrivateVariables.skinList.size()));
+}
+
+void BaseServer::preload_the_items()
+{
+    //open and quick check the file
+    QFile itemsFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_ITEM+"items.xml");
+    QByteArray xmlContent;
+    if(!itemsFile.open(QIODevice::ReadOnly))
+    {
+        DebugClass::debugConsole(QString("Unable to open the items file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString()));
+        return;
+    }
+    xmlContent=itemsFile.readAll();
+    itemsFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        DebugClass::debugConsole(QString("Unable to open the items file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="items")
+    {
+        DebugClass::debugConsole(QString("Unable to open the items file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName()));
+        return;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement item = root.firstChildElement("item");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+        {
+            if(item.hasAttribute("id"))
+            {
+                quint32 id=item.attribute("id").toULongLong(&ok);
+                if(ok)
+                {
+                    if(!GlobalData::serverPrivateVariables.itemsId.contains(id))
+                        GlobalData::serverPrivateVariables.itemsId << id;
+                    else
+                        DebugClass::debugConsole(QString("Unable to open the items file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                else
+                    DebugClass::debugConsole(QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+            }
+            else
+                DebugClass::debugConsole(QString("Unable to open the items file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+        }
+        else
+            DebugClass::debugConsole(QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+        item = item.nextSiblingElement("item");
+    }
+
+    DebugClass::debugConsole(QString("%1 item(s) loaded").arg(GlobalData::serverPrivateVariables.itemsId.size()));
 }
 
 void BaseServer::preload_the_visibility_algorithm()
@@ -456,6 +519,7 @@ void BaseServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
+    unload_the_items();
     unload_the_skin();
     unload_the_map();
 
@@ -488,6 +552,11 @@ void BaseServer::unload_the_skin()
 
 void BaseServer::unload_the_visibility_algorithm()
 {
+}
+
+void BaseServer::unload_the_items()
+{
+    GlobalData::serverPrivateVariables.itemsId.clear();
 }
 
 void BaseServer::check_if_now_stopped()
@@ -572,7 +641,6 @@ ClientMapManagement * BaseServer::getClientMapManagement()
 
 void BaseServer::removeOneClient()
 {
-    DebugClass::debugConsole("removeOneClient()");
     Client *client=qobject_cast<Client *>(QObject::sender());
     if(client==NULL)
     {

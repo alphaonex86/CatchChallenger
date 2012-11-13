@@ -193,7 +193,6 @@ void Client::disconnectClient()
 void Client::disconnectNextStep()
 {
     stopped_object++;
-    DebugClass::debugConsole(QString("stopped_object: %1").arg(stopped_object));
     if(stopped_object==6)
     {
         //remove the player
@@ -206,8 +205,6 @@ void Client::disconnectNextStep()
         player_informations.is_logged=false;
 
         emit askIfIsReadyToStop();
-
-        DebugClass::debugConsole(QString("first client stop"));
         return;
     }
     if(stopped_object==12)
@@ -226,7 +223,6 @@ void Client::disconnectNextStep()
         clientNetworkWrite=NULL;
         clientLocalCalcule=NULL;
 
-        DebugClass::debugConsole(QString("isReadyToDelete()"));
         emit isReadyToDelete();
         return;
     }
