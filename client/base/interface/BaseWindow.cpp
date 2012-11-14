@@ -12,6 +12,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
     qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
     qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
+    qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
 
     this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
@@ -32,6 +33,8 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
     //connect the map controler
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
+    connect(client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)),Qt::QueuedConnection);
+
     //chat
     connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),Qt::QueuedConnection);
     connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)),Qt::QueuedConnection);
@@ -55,6 +58,8 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
 BaseWindow::~BaseWindow()
 {
+    datapackLoader.quit();
+    datapackLoader.wait();
     delete ui;
     delete mapController;
 }
@@ -86,6 +91,7 @@ void BaseWindow::resetAll()
     haveInventory=false;
     datapackIsParsed=false;
     ui->inventory->clear();
+    items_graphical.clear();
 }
 
 void BaseWindow::serverIsLoading()
@@ -328,6 +334,7 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
 
 void BaseWindow::have_current_player_info()
 {
+    qDebug() << "BaseWindow::have_current_player_info()";
     if(havePlayerInformations)
         return;
     havePlayerInformations=true;
@@ -340,18 +347,19 @@ void BaseWindow::have_current_player_info()
 
 void BaseWindow::haveTheDatapack()
 {
+    qDebug() << "BaseWindow::haveTheDatapack()";
     if(haveDatapack)
         return;
     haveDatapack=true;
     updatePlayerImage();
 
-    if(havePlayerInformations)
-        emit parseDatapack(client->get_datapack_base_name());
+    emit parseDatapack(client->get_datapack_base_name());
     updateConnectingStatus();
 }
 
 void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
 {
+    qDebug() << "BaseWindow::have_inventory()";
     this->items=items;
     haveInventory=true;
     updateConnectingStatus();
@@ -360,25 +368,27 @@ void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
 
 void BaseWindow::load_inventory()
 {
+    qDebug() << "BaseWindow::load_inventory()";
     if(haveInventory && datapackIsParsed)
     {
         QHashIterator<quint32,quint32> i(items);
          while (i.hasNext()) {
              i.next();
              QListWidgetItem *item=new QListWidgetItem();
+             items_graphical[item]=i.key();
              if(DatapackClientLoader::items.contains(i.key()))
              {
-                 item->setIcon(DatapackClientLoader::items[i.key()]);
+                 item->setIcon(DatapackClientLoader::items[i.key()].image);
                  if(i.value()>1)
                      item->setText(QString::number(i.value()));
              }
              else
              {
-                 item->setIcon(DatapackClientLoader::defaultInventoryImage);
+                 item->setIcon(datapackLoader.defaultInventoryImage());
                  if(i.value()>1)
-                     item->setText("??? (x"+QString::number(i.value())+")");
+                     item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
                  else
-                     item->setText("???");
+                     item->setText(QString("id: %1").arg(i.key()));
              }
              ui->inventory->addItem(item);
          }
@@ -387,6 +397,7 @@ void BaseWindow::load_inventory()
 
 void BaseWindow::datapackParsed()
 {
+    qDebug() << "BaseWindow::datapackParsed()";
     datapackIsParsed=true;
     load_inventory();
     updateConnectingStatus();
@@ -461,6 +472,20 @@ void Pokecraft::BaseWindow::on_toolButton_quit_interface_2_clicked()
     ui->stackedWidget->setCurrentIndex(1);
 }
 
-void Pokecraft::BaseWindow::on_listWidget_itemSelectionChanged()
+void Pokecraft::BaseWindow::on_inventory_itemSelectionChanged()
 {
+    qDebug() << "on_inventory_itemSelectionChanged()";
+    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    if(items.size()!=1)
+    {
+        ui->inventory_image->setPixmap(datapackLoader.defaultInventoryImage());
+        ui->inventory_name->setText("");
+        ui->inventory_description->setText(tr("Select an object"));
+        return;
+    }
+    QListWidgetItem *item=items.first();
+    const DatapackClientLoader::item &content=DatapackClientLoader::items[items_graphical[item]];
+    ui->inventory_image->setPixmap(content.image);
+    ui->inventory_name->setText(content.name);
+    ui->inventory_description->setText(content.description);
 }

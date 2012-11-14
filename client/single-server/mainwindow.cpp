@@ -4,6 +4,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 
 #define SERVER_DNS_OR_IP "localhost"
+#define SERVER_NAME tr("Local")
 #define SERVER_PORT 42489
 #define REGISTER_URL "http://pokecraft.first-world.info/register.html"
 #define WEBSITE "http://pokecraft.first-world.info/"
@@ -33,7 +34,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
-    connect(baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()));
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -46,6 +46,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->label_login_website->setText(QString("<a href=\"%1\"><span style=\"text-decoration:underline;color:#0057ae;\">Web site</span></a>").arg(WEBSITE));
 
     stateChanged(QAbstractSocket::UnconnectedState);
+
+    setWindowTitle("Pokecraft - "+SERVER_NAME);
 }
 
 MainWindow::~MainWindow()

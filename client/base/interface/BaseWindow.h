@@ -4,6 +4,7 @@
 #include <QAbstractSocket>
 #include <QSettings>
 #include <QTimer>
+#include <QListWidgetItem>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -61,7 +62,7 @@ private slots:
     //player UI
     void on_pushButton_interface_bag_clicked();
     void on_toolButton_quit_interface_2_clicked();
-    void on_listWidget_itemSelectionChanged();
+    void on_inventory_itemSelectionChanged();
     //player
     void logged();
     void updatePlayerImage();
@@ -99,6 +100,7 @@ private:
 
     //player info
     QHash<quint32,quint32> items;
+    QHash<QListWidgetItem *,quint32> items_graphical;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
