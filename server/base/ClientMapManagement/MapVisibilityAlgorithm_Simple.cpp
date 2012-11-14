@@ -331,7 +331,7 @@ void MapVisibilityAlgorithm_Simple::send_insert()
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
         emit message(
-            QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6, direction | type: %7, rawPseudo: %8, rawSkin: %9")
+            QString("insert player_id: %1, mapName %2, x: %3, y: %4,direction: %5, for player: %6, direction | type: %7, rawPseudo: %8, skinId: %9")
             .arg(i_insert.key())
             .arg(i_insert.value()->map->map_file)
             .arg(i_insert.value()->x)
@@ -340,7 +340,7 @@ void MapVisibilityAlgorithm_Simple::send_insert()
             .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
             .arg(((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type))
             .arg(QString(i_insert.value()->player_informations->rawPseudo.toHex()))
-            .arg(QString(i_insert.value()->player_informations->rawSkin.toHex()))
+            .arg(i_insert.value()->player_informations->public_and_private_informations.public_informations.skinId)
              );
         #endif
         if(GlobalData::serverSettings.max_players<=255)
