@@ -610,12 +610,9 @@ void BaseServer::stop_internal_server()
     DebugClass::debugConsole("Try stop");
     stat=InDown;
 
-    int index=0;
-    while(index<client_list.size())
-    {
-        client_list.at(index)->disconnectClient();
-        index++;
-    }
+    QSetIterator<Client *> i(client_list);
+     while (i.hasNext())
+         i.next()->disconnectClient();
     QFakeServer::server.close();
 
     check_if_now_stopped();
@@ -647,7 +644,7 @@ void BaseServer::removeOneClient()
         DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
         return;
     }
-    client_list.removeOne(client);
+    client_list.remove(client);
     client->deleteLater();
 }
 
@@ -661,18 +658,18 @@ void BaseServer::newConnection()
         if(socket!=NULL)
         {
             DebugClass::debugConsole(QString("newConnection(): new client connected by fake socket"));
-            client_list << new Client(new ConnectedSocket(socket),false,getClientMapManagement());
-            connect_the_last_client();
+            connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
         }
         else
             DebugClass::debugConsole("NULL client at BaseServer::newConnection()");
     }
 }
 
-void BaseServer::connect_the_last_client()
+void BaseServer::connect_the_last_client(Client * client)
 {
+    client_list << client;
     DebugClass::debugConsole("BaseServer::connect_the_last_client()");
-    connect(client_list.last(),SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
+    connect(client,SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
 }
 
 bool BaseServer::isListen()

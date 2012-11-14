@@ -46,11 +46,13 @@ MainWindow::MainWindow(QWidget *parent) :
     /*    ui->stackedWidget->setCurrentIndex(1);
     client->tryConnect(host,port);*/
     updateSavegameList();
+
+    setWindowTitle("Pokecraft - "+tr("Single player"));
 }
 
 MainWindow::~MainWindow()
 {
-    needQuit();
+    saveTime();
     socket->disconnectFromHost();
     if(internalServer!=NULL)
         delete internalServer;
@@ -63,11 +65,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    qDebug() << "close event";
     event->ignore();
     this->hide();
     socket->disconnectFromHost();
     if(internalServer==NULL)
         QCoreApplication::quit();
+    else
+        qDebug() << "server is running, need wait to close";
 }
 
 void MainWindow::resetAll()
@@ -82,7 +87,7 @@ void MainWindow::resetAll()
         internalServer->deleteLater();
     internalServer=NULL;*/
     pass.clear();
-    needQuit();
+    saveTime();
 
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
 }
@@ -169,7 +174,7 @@ void MainWindow::try_stop_server()
     if(internalServer!=NULL)
         delete internalServer;
     internalServer=NULL;
-    needQuit();
+    saveTime();
 }
 
 void MainWindow::on_SaveGame_New_clicked()
@@ -410,11 +415,11 @@ void MainWindow::updateSavegameList()
                         if(!ok)
                             time_played="Time player: bug";
                         else if(time_played_number>=3600*24*10)
-                            time_played=QObject::tr("%n day(s) played","",time_played_number/3600*24);
+                            time_played=QObject::tr("%n day(s) played","",time_played_number/(3600*24));
                         else if(time_played_number>=3600*24)
-                            time_played=QObject::tr("%n day(s) and %1 played","",time_played_number/3600*24).arg(QObject::tr("%n hour(s)","",time_played_number%3600*24));
+                            time_played=QObject::tr("%n day(s) and %1 played","",time_played_number/3600*24).arg(QObject::tr("%n hour(s)","",(time_played_number%(3600*24))/3600));
                         else if(time_played_number>=3600)
-                            time_played=QObject::tr("%n hour(s) and %1 played","",time_played_number/3600).arg(QObject::tr("%n minute(s)","",time_played_number%3600));
+                            time_played=QObject::tr("%n hour(s) and %1 played","",time_played_number/3600).arg(QObject::tr("%n minute(s)","",(time_played_number%3600)/60));
                         else
                             time_played=QObject::tr("%n minute(s) and %1 played","",time_played_number/60).arg(QObject::tr("%n second(s)","",time_played_number%60));
 
@@ -545,47 +550,60 @@ void MainWindow::on_SaveGame_Play_clicked()
 
 void MainWindow::is_started(bool started)
 {
-    qDebug() << "is_started(): " << started;
+    qDebug() << QString("is_started(%1)").arg(started);
     if(!started)
     {
-        needQuit();
-        if(!isVisible())
-            QCoreApplication::quit();
-        return;
-    }
-    baseWindow->serverIsReady();
-    socket->connectToHost("localhost",9999);
-}
-
-void MainWindow::needQuit()
-{
-    if(!haveLaunchedGame)
-        return;
-    haveLaunchedGame=false;
-
-    bool settingOk=false;
-    QSettings metaData(launchedGamePath+"metadata.conf",QSettings::IniFormat);
-    if(metaData.isWritable())
-    {
-        if(metaData.status()==QSettings::NoError)
+        if(internalServer!=NULL)
         {
-            QString locaction=baseWindow->lastLocation();
-            QString mapPath=datapackPath+DATAPACK_BASE_PATH_MAP;
-            if(locaction.startsWith(mapPath))
-                locaction.remove(0,mapPath.size());
-            if(!locaction.isEmpty())
-                metaData.setValue("location",locaction);
-            metaData.setValue("time_played",metaData.value("time_played").toUInt()+(QDateTime::currentDateTimeUtc().toTime_t()-timeLaunched));
-            settingOk=true;
+            delete internalServer;
+            internalServer=NULL;
+        }
+        saveTime();
+        if(!isVisible())
+        {
+            qDebug() << QString("is_started(%1) and is not visible").arg(started);
+            QCoreApplication::quit();
         }
         else
-            qDebug() << "Settings error: " << metaData.status();
+            qDebug() << QString("is_started(%1) and is visible").arg(started);
     }
-    updateSavegameList();
-    if(!settingOk)
+    else
     {
-        QMessageBox::critical(NULL,tr("Error"),tr("Unable to save internal value at game stopping"));
-        return;
+        baseWindow->serverIsReady();
+        socket->connectToHost("localhost",9999);
+    }
+}
+
+void MainWindow::saveTime()
+{
+    //save the time
+    if(haveLaunchedGame)
+    {
+        bool settingOk=false;
+        QSettings metaData(launchedGamePath+"metadata.conf",QSettings::IniFormat);
+        if(metaData.isWritable())
+        {
+            if(metaData.status()==QSettings::NoError)
+            {
+                QString locaction=baseWindow->lastLocation();
+                QString mapPath=datapackPath+DATAPACK_BASE_PATH_MAP;
+                if(locaction.startsWith(mapPath))
+                    locaction.remove(0,mapPath.size());
+                if(!locaction.isEmpty())
+                    metaData.setValue("location",locaction);
+                metaData.setValue("time_played",metaData.value("time_played").toUInt()+(QDateTime::currentDateTimeUtc().toTime_t()-timeLaunched));
+                settingOk=true;
+            }
+            else
+                qDebug() << "Settings error: " << metaData.status();
+        }
+        updateSavegameList();
+        if(!settingOk)
+        {
+            QMessageBox::critical(NULL,tr("Error"),tr("Unable to save internal value at game stopping"));
+            return;
+        }
+        haveLaunchedGame=false;
     }
 }
 
@@ -603,7 +621,7 @@ void MainWindow::play(const QString &savegamesPath)
     if(internalServer!=NULL)
     {
         delete internalServer;
-        needQuit();
+        saveTime();
     }
     internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
     connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);

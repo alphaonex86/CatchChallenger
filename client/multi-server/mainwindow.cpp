@@ -49,6 +49,8 @@ MainWindow::MainWindow(QWidget *parent) :
     baseWindow->setMultiPlayer(true);
 
     stateChanged(QAbstractSocket::UnconnectedState);
+    
+    setWindowTitle("Pokecraft - "+tr("Multi server"));
 }
 
 MainWindow::~MainWindow()

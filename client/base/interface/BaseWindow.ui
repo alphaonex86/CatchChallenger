@@ -1008,17 +1008,17 @@ border-image: url(:/images/empty.png);
            <property name="styleSheet">
             <string notr="true">#inventory_layout{background-image: url(:/images/inventory/interface.png);}</string>
            </property>
-           <widget class="QLabel" name="label">
+           <widget class="QLabel" name="inventory_image">
             <property name="geometry">
              <rect>
               <x>50</x>
               <y>480</y>
-              <width>71</width>
-              <height>71</height>
+              <width>64</width>
+              <height>64</height>
              </rect>
             </property>
-            <property name="text">
-             <string>?</string>
+            <property name="pixmap">
+             <pixmap resource="../resources/resources.qrc">:/images/inventory/unknow-object.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -1061,13 +1061,13 @@ border-image: url(:/images/empty.png);
              <pixmap resource="../resources/resources.qrc">:/images/inventory/bag1.png</pixmap>
             </property>
            </widget>
-           <widget class="QLabel" name="label_10">
+           <widget class="QLabel" name="inventory_description">
             <property name="geometry">
              <rect>
               <x>150</x>
-              <y>510</y>
+              <y>530</y>
               <width>641</width>
-              <height>71</height>
+              <height>51</height>
              </rect>
             </property>
             <property name="text">
@@ -1101,24 +1101,6 @@ border-image: url(:/images/empty.png);
             <property name="viewMode">
              <enum>QListView::IconMode</enum>
             </property>
-            <item>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset resource="../resources/resources.qrc">
-               <normaloff>:/images/pokecraft.png</normaloff>:/images/pokecraft.png</iconset>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>New Item</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../resources/resources.qrc">
-               <normaloff>:/images/pokecraft.png</normaloff>:/images/pokecraft.png</iconset>
-             </property>
-            </item>
            </widget>
            <widget class="QToolButton" name="toolButton_quit_interface_2">
             <property name="geometry">
@@ -1155,6 +1137,22 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="text">
              <string>...</string>
+            </property>
+           </widget>
+           <widget class="QLabel" name="inventory_name">
+            <property name="geometry">
+             <rect>
+              <x>150</x>
+              <y>510</y>
+              <width>57</width>
+              <height>14</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
             </property>
            </widget>
           </widget>
