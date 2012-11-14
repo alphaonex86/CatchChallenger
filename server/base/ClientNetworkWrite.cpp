@@ -22,7 +22,7 @@ void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const quint16 &su
         return;
     if(!socket->isValid())
     {
-        emit error("device is not valid");
+        emit error("device is not valid at sendPacket(mainCodeType,subCodeType)");
         return;
     }
 }
@@ -36,7 +36,7 @@ void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const QByteArray 
         return;
     if(!socket->isValid())
     {
-        emit error("device is not valid");
+        emit error("device is not valid at sendPacket(mainCodeType)");
         return;
     }
 }
@@ -51,7 +51,7 @@ void ClientNetworkWrite::postReply(const quint8 &queryNumber,const QByteArray &d
         return;
     if(!socket->isValid())
     {
-        emit error("device is not valid");
+        emit error("device is not valid at postReply()");
         return;
     }
 }
