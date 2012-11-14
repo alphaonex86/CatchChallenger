@@ -14,8 +14,14 @@ public:
     void resetAll();
 
     //static items
-    static QHash<quint32,QPixmap> items;
-    static QPixmap defaultInventoryImage;
+    struct item
+    {
+        QPixmap image;
+        QString name;
+        QString description;
+    };
+    static QHash<quint32,item> items;
+    QPixmap defaultInventoryImage();
 protected:
     void run();
 public slots:
@@ -24,6 +30,7 @@ signals:
     void datapackParsed();
 private:
     QString datapackPath;
+    QPixmap mDefaultInventoryImage;
 private slots:
     void parseItems();
 };

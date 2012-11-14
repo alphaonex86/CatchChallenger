@@ -41,7 +41,8 @@ SOURCES += main.cpp\
     ../base/Map_client.cpp \
     ../base/interface/BaseWindow.cpp \
     ../base/interface/MapController.cpp \
-    ../../general/base/ConnectedSocket.cpp
+    ../../general/base/ConnectedSocket.cpp \
+    ../base/interface/DatapackClientLoader.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -70,7 +71,8 @@ HEADERS  += mainwindow.h \
     ../base/Map_client.h \
     ../base/interface/BaseWindow.h \
     ../base/interface/MapController.h \
-    ../../general/base/ConnectedSocket.h
+    ../../general/base/ConnectedSocket.h \
+    ../base/interface/DatapackClientLoader.h
 
 FORMS    += mainwindow.ui \
     ../base/interface/BaseWindow.ui
