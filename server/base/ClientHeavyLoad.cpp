@@ -263,6 +263,9 @@ void ClientHeavyLoad::loadItems()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
+    QByteArray outputData2;
+    QDataStream out2(&outputData2, QIODevice::WriteOnly);
+    out2.setVersion(QDataStream::Qt_4_4);
 
     //do the query
     QString queryText;
@@ -280,7 +283,6 @@ void ClientHeavyLoad::loadItems()
     }
     bool ok;
     QSqlQuery loginQuery(queryText);
-    out << (quint32)loginQuery.size();
 
     //parse the result
     while(loginQuery.next())
@@ -325,12 +327,13 @@ void ClientHeavyLoad::loadItems()
         }
         player_informations->public_and_private_informations.items[id]=quantity;
 
-        out << (quint32)id;
-        out << (quint32)quantity;
+        out2 << (quint32)id;
+        out2 << (quint32)quantity;
     }
 
+    out << (quint32)player_informations->public_and_private_informations.items.size();
     //send the items
-    emit sendPacket(0xD0,0x0001,outputData);
+    emit sendPacket(0xD0,0x0001,outputData+outputData2);
 }
 
 bool ClientHeavyLoad::loadTheRawUTF8String()
