@@ -53,7 +53,7 @@ signals:
     void is_started(bool);
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
-    virtual void connect_the_last_client();
+    virtual void connect_the_last_client(Client * client);
     //starting function
     virtual void check_if_now_stopped();
     virtual QString sqlitePath();
@@ -93,8 +93,8 @@ protected:
     virtual bool initialize_the_database();
     //FakeServer server;//wrong, create another object, here need use the global static object
 
-    //to keep client list
-    QList<Client *> client_list;
+    //to keep client list, QSet because it will have lot of more disconnecion than server closing
+    QSet<Client *> client_list;
 };
 }
 

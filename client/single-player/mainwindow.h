@@ -48,7 +48,7 @@ private slots:
     void on_SaveGame_Rename_clicked();
     void on_SaveGame_Copy_clicked();
     void on_SaveGame_Play_clicked();
-    void needQuit();
+    void saveTime();
     void is_started(bool started);
     void play(const QString &savegamesPath);
 private:

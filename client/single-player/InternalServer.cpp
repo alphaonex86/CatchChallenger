@@ -28,7 +28,6 @@ InternalServer::InternalServer(const QString &dbPath) :
  * \warning this function is thread safe because it quit all thread before remove */
 InternalServer::~InternalServer()
 {
-    DebugClass::debugConsole("InternalServer destroy");
     thread.quit();
     thread.wait();
 }

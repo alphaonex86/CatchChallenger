@@ -104,9 +104,9 @@ void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const QStri
     }
 }
 
-void NormalServer::connect_the_last_client()
+void NormalServer::connect_the_last_client(Client * client)
 {
-    BaseServer::connect_the_last_client();
+    BaseServer::connect_the_last_client(client);
 
     connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
@@ -270,6 +270,7 @@ void NormalServer::check_if_now_stopped()
     oneInstanceRunning=false;
     if(server!=NULL)
     {
+        server->close();
         delete server;
         server=NULL;
     }
@@ -283,7 +284,11 @@ void NormalServer::stop_internal_server()
 
     removeBots();
     if(server!=NULL)
+    {
         server->close();
+        server->deleteLater();
+        server=NULL;
+    }
 }
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////
@@ -296,9 +301,8 @@ void NormalServer::removeOneClient()
         DebugClass::debugConsole("removeOneClient(): NULL client at disconnection");
         return;
     }
-    client_list.removeOne(client);
+    client_list.remove(client);
     client->deleteLater();
-    check_if_now_stopped();
 }
 
 void NormalServer::removeOneBot()
@@ -311,7 +315,6 @@ void NormalServer::removeOneBot()
     }
     GlobalData::serverPrivateVariables.fakeBotList.removeOne(client);
     client->deleteLater();
-    check_if_now_stopped();
 }
 
 void NormalServer::removeBots()
@@ -431,14 +434,13 @@ void NormalServer::newConnection()
             {
                 DebugClass::debugConsole(QString("new client connected by fake socket"));
                 GlobalData::serverPrivateVariables.botSockets.remove(socket->getTheOtherSocket());
-                client_list << new Client(new ConnectedSocket(socket),true,getClientMapManagement());
+                 connect_the_last_client(new Client(new ConnectedSocket(socket),true,getClientMapManagement()));
             }
             else
             {
                 DebugClass::debugConsole(QString("new bot connected by fake socket"));
-                client_list << new Client(new ConnectedSocket(socket),false,getClientMapManagement());
+                 connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
             }
-            connect_the_last_client();
         }
         else
             DebugClass::debugConsole("NULL client with fake socket");
@@ -449,8 +451,7 @@ void NormalServer::newConnection()
         if(socket!=NULL)
         {
             DebugClass::debugConsole(QString("new client connected by tcp socket"));
-            client_list << new Client(new ConnectedSocket(socket),false,getClientMapManagement());
-            connect_the_last_client();
+            connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
         }
         else
             DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());

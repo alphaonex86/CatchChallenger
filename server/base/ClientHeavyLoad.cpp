@@ -299,28 +299,28 @@ void ClientHeavyLoad::loadItems()
         }
         if(quantity==0)
         {
+            QString queryText;
             switch(GlobalData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    QSqlQuery loginQuery(QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
+                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
                                          .arg(player_informations->id)
-                                         .arg(id)
-                                         );
+                                         .arg(id);
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    QSqlQuery loginQuery(QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
+                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
                                      .arg(player_informations->id)
-                                     .arg(id)
-                                     );
+                                     .arg(id);
                 break;
             }
-            emit message(QString("The item %1 have been dropped because the quantity is 0").arg(item_id));
+            QSqlQuery loginQuery(queryText);
+            emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }
         if(!GlobalData::serverPrivateVariables.itemsId.contains(id))
         {
-            emit message(QString("The item %1 is ignored because it's not into the items list").arg(item_id));
+            emit message(QString("The item %1 is ignored because it's not into the items list").arg(id));
             continue;
         }
         player_informations->public_and_private_informations.items[id]=quantity;

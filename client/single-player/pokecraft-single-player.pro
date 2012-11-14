@@ -62,7 +62,8 @@ SOURCES += main.cpp\
     ../base/interface/BaseWindow.cpp \
     SaveGameLabel.cpp \
     ../../general/base/ConnectedSocket.cpp \
-    ../../server/base/BaseServer.cpp
+    ../../server/base/BaseServer.cpp \
+    ../base/interface/DatapackClientLoader.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -112,7 +113,8 @@ HEADERS  += mainwindow.h \
     SaveGameLabel.h \
     ../../general/base/ConnectedSocket.h \
     ../../server/VariableServer.h \
-    ../../server/base/BaseServer.h
+    ../../server/base/BaseServer.h \
+    ../base/interface/DatapackClientLoader.h
 
 FORMS    += mainwindow.ui \
     NewGame.ui \

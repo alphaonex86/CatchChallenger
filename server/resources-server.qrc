@@ -7,9 +7,11 @@
         <file>datapack/map/world/0.-1.tmx</file>
         <file>datapack/map/world/0.1.tmx</file>
         <file>datapack/map/world/-1.0.tmx</file>
+        <file>datapack/map/world/-1.-1.tmx</file>
         <file>datapack/map/world/-1.1.tmx</file>
         <file>datapack/map/world/1.0.tmx</file>
-        <file>datapack/map/world/1.0b.tmx</file>
+        <file>datapack/map/world/1.-1.tmx</file>
+        <file>datapack/map/world/1.1.tmx</file>
         <file>datapack/map/world/map.tmx</file>
     </qresource>
 </RCC>
