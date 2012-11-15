@@ -26,3 +26,6 @@ FORMS    += MainWindow.ui \
 
 RESOURCES += \
     resources.qrc
+
+win32:RC_FILE += resources-windows.rc
+win32:RESOURCES += ../../server/base/resources/resources-windows-qt-plugin.qrc

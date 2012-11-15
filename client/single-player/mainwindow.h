@@ -75,6 +75,7 @@ private:
     quint64 timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
+    bool datapackPathExists;
 };
 
 #endif // MAINWINDOW_H

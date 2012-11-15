@@ -89,8 +89,8 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     //packet parsed (heavy)
     connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),
         clientHeavyLoad,SLOT(askLogin(quint8,QString,QByteArray)),Qt::QueuedConnection);
-    connect(clientNetworkRead,SIGNAL(datapackList(quint8,QStringList,QList<quint32>)),
-        clientHeavyLoad,SLOT(datapackList(quint8,QStringList,QList<quint32>)),Qt::QueuedConnection);
+    connect(clientNetworkRead,SIGNAL(datapackList(quint8,QStringList,QList<quint64>)),
+        clientHeavyLoad,SLOT(datapackList(quint8,QStringList,QList<quint64>)),Qt::QueuedConnection);
 
     //packet parsed (map management)
     connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientLocalCalcule,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);

@@ -13,7 +13,7 @@ BaseServer::BaseServer()
 
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<Player_internal_informations>("Player_internal_informations");
-    qRegisterMetaType<QList<quint32> >("QList<quint32>");
+    qRegisterMetaType<QList<quint64> >("QList<quint64>");
     qRegisterMetaType<Orientation>("Orientation");
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
     qRegisterMetaType<Chat_type>("Chat_type");

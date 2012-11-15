@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     internalServer=NULL;
     datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
     savegamePath=QCoreApplication::applicationDirPath()+"/savegames/";
+    datapackPathExists=QDir(datapackPath).exists();
 
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
@@ -48,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
     updateSavegameList();
 
     setWindowTitle("Pokecraft - "+tr("Single player"));
+    ui->SaveGame_New->setEnabled(datapackPathExists);
 }
 
 MainWindow::~MainWindow()
@@ -284,7 +286,7 @@ void MainWindow::on_SaveGame_New_clicked()
         rmpath(savegamesPath);
         return;
     }
-    if(!sqlQuery.exec(QString("INSERT INTO \"player\" VALUES(NULL,'admin','%1','%2','%3',1,1,'bottom','world/0.0.tmx','normal',NULL);").arg(QString(passHash.toHex())).arg(nameGame.pseudo()).arg(nameGame.skin())))
+    if(!sqlQuery.exec(QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\") VALUES(1,'admin','%1','%2','%3',1,1,'bottom','world/0.0.tmx','normal',NULL,0);").arg(QString(passHash.toHex())).arg(nameGame.pseudo()).arg(nameGame.skin())))
     {
         db.close();
         QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: initialize the entry: %1)").arg(sqlQuery.lastError().text()));
@@ -366,6 +368,11 @@ bool MainWindow::rmpath(const QDir &dir)
 
 void MainWindow::updateSavegameList()
 {
+    if(!datapackPathExists)
+    {
+        ui->savegameEmpty->setText(QString("<html><head/><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("No datapack!")));
+        return;
+    }
     QString lastSelectedPath;
     if(selectedSavegame!=NULL)
         lastSelectedPath=savegamePathList[selectedSavegame];
