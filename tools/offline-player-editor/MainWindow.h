@@ -6,6 +6,9 @@
 #include <QListWidgetItem>
 #include <QHash>
 #include <QString>
+#include <QIcon>
+
+#include "../../client/base/interface/DatapackClientLoader.h"
 
 namespace Ui {
 class MainWindow;
@@ -29,6 +32,13 @@ private slots:
     void on_playerList_itemActivated(QListWidgetItem *item);
     void on_selectPlayer_clicked();
     void on_cash_editingFinished();
+    void on_datapack_path_browse_clicked();
+    void on_datapack_path_textChanged(const QString &arg1);
+    void on_add_item_clicked();
+
+    void on_items_itemSelectionChanged();
+
+    void on_remove_item_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -37,8 +47,15 @@ private:
     quint32 player_id;
     bool havePlayerSelected;
     QHash<QString,quint32> player_id_list;
+    DatapackClientLoader datapackLoader;
+    QString datapack;
+    QHash<QString,QIcon> icons_cache;
+    //player items
+    QHash<quint32,quint32> items;
+    QHash<QListWidgetItem *,quint32> items_graphical;
 private:
     void try_connect();
+    void load_inventory();
 };
 
 #endif // MAINWINDOW_H

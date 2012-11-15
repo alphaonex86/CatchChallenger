@@ -13,11 +13,16 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        MainWindow.cpp
+        MainWindow.cpp \
+    ../../client/base/interface/DatapackClientLoader.cpp \
+    ItemDialog.cpp
 
-HEADERS  += MainWindow.h
+HEADERS  += MainWindow.h \
+    ../../client/base/interface/DatapackClientLoader.h \
+    ItemDialog.h
 
-FORMS    += MainWindow.ui
+FORMS    += MainWindow.ui \
+    ItemDialog.ui
 
 RESOURCES += \
     resources.qrc
