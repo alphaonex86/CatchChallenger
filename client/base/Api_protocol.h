@@ -104,7 +104,7 @@ signals:
 
     //datapack
     void haveTheDatapack();
-    void newFile(const QString &fileName,const QByteArray &data,const quint32 &mtime);
+    void newFile(const QString &fileName,const QByteArray &data,const quint64 &mtime);
     void removeFile(const QString &fileName);
 public slots:
     void send_player_direction(const Pokecraft::Direction &the_direction);

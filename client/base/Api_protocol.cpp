@@ -669,12 +669,12 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
                     in.device()->seek(in.device()->pos()+rawText.size());
                     QString fileName=QString::fromUtf8(rawText.data(),rawText.size());
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
                     {
                         emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                         return;
                     }
-                    quint32 mtime;
+                    quint64 mtime;
                     in >> mtime;
                     QDateTime date;
                     date.setTime_t(mtime);
@@ -989,7 +989,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         in >> player_informations.cash;
 
                         is_logged=true;
-                        //DebugClass::debugConsole("is logged with id: "+QString::number(player_informations.public_informations.simplifiedId));
+                        DebugClass::debugConsole(QString("is logged with id: %1, cash: %2, data: %3").arg(player_informations.public_informations.simplifiedId).arg(player_informations.cash).arg(QString(data.toHex())));
                         emit logged();
                     }
                     else
