@@ -98,7 +98,7 @@ private:
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
     DatapackClientLoader datapackLoader;
 
-    //player info
+    //player items
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
 signals:
