@@ -47,7 +47,7 @@ signals:
     void isReadyToStop();
     //packet parsed (heavy)
     void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
-    void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps);
+    void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps);
     //packet parsed (map management)
     void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     //packet parsed (broadcast)

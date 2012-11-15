@@ -43,12 +43,12 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
@@ -102,7 +102,13 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 emit message(QString("Mysql wrong type value").arg(type));
                 player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
             }
-            player_informations->public_and_private_informations.cash=0;
+            player_informations->public_and_private_informations.cash=loginQuery.value(9).toUInt(&ok);
+            if(!ok)
+            {
+                emit message(QString("cash id is not an number, cash set to 0"));
+                player_informations->public_and_private_informations.cash=0;
+            }
+
             player_informations->public_and_private_informations.public_informations.speed=POKECRAFT_SERVER_NORMAL_SPEED;
             if(!loadTheRawUTF8String())
             {
@@ -220,7 +226,7 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
     else
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
-    out << (quint32)player_informations->public_and_private_informations.cash;
+    out << (quint64)player_informations->public_and_private_informations.cash;
     emit postReply(query_id,outputData);
 
     //send signals into the server
@@ -358,7 +364,7 @@ void ClientHeavyLoad::askIfIsReadyToStop()
 }
 
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
-void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint32> &timestamps)
+void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -401,7 +407,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
 
 /** \brief send file if new or need be updated
  * \return return false if need be removed */
-bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint32 &mtime,const bool &checkMtime)
+bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint64 &mtime,const bool &checkMtime)
 {
     QFile file(filePath);
     if(file.size()>8*1024*1024)
@@ -458,7 +464,7 @@ void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &file
     }
 }
 
-bool ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content,const quint32 &mtime)
+bool ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content,const quint64 &mtime)
 {
     if(fileName.size()>255 || fileName.size()==0)
         return false;

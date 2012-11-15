@@ -1,5 +1,24 @@
+-- phpMyAdmin SQL Dump
+-- version 3.4.7.1
+-- http://www.phpmyadmin.net
+--
+-- Host: localhost
+-- Generation Time: Nov 15, 2012 at 07:02 AM
+-- Server version: 5.1.62
+-- PHP Version: 5.4.8--pl0-gentoo
+
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+
+--
+-- Database: `pokecraft`
+--
 
 -- --------------------------------------------------------
 
@@ -8,12 +27,20 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE IF NOT EXISTS `item` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
   `item_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
-  `number` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+  `quantity` int(11) NOT NULL,
+  PRIMARY KEY (`item_id`,`player_id`),
+  KEY `player_id` (`player_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `item`
+--
+
+INSERT INTO `item` (`item_id`, `player_id`, `quantity`) VALUES
+(1, 5, 1),
+(2, 5, 5);
 
 -- --------------------------------------------------------
 
@@ -57,6 +84,22 @@ CREATE TABLE IF NOT EXISTS `player` (
   `map_name` text NOT NULL,
   `type` enum('normal','premium','gm','dev') NOT NULL,
   `clan` int(11) NOT NULL,
+  `cash` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=6 ;
+
+--
+-- Dumping data for table `player`
+--
+
+INSERT INTO `player` (`id`, `login`, `password`, `pseudo`, `email`, `skin`, `position_x`, `position_y`, `orientation`, `map_name`, `type`, `clan`, `cash`) VALUES
+(1, 'toto', '0b9c2625dc21ef05f6ad4ddf47c5f203837aa32c', 'totoA', 'sdfg', 'main', 16, 16, 'right', 'world/0.0.tmx', 'normal', 0, 0),
+(2, 'tata', '90795a0ffaa8b88c0e250546d8439bc9c31e5a5e', 'tataIG', 'dsfg', 'main', 22, 23, 'left', 'world/0.0.tmx', 'normal', 0, 0),
+(3, 'rrfvtgb', 'af6b702da45fb15bb301324df5a874dd149c2683', 'rrfvtgbIG', '', 'main', 14, 15, 'left', 'world/0.0.tmx', 'premium', 0, 0),
+(4, 'titi', 'f7e79ca8eb0b31ee4d5d6c181416667ffee528ed', 'titiIG', '', 'main', 15, 12, 'top', 'world/0.0.tmx', 'normal', 0, 0),
+(5, 'alpha_one_x86', '98ef0c583c1fd72c14c2e521583eaf53872b7c04', 'alpha_one_x86IG', '', 'main', 5, 5, 'right', 'world/0.0.tmx', 'gm', 0, 0);
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
