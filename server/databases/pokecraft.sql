@@ -88,18 +88,3 @@ CREATE TABLE IF NOT EXISTS `player` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=6 ;
-
---
--- Dumping data for table `player`
---
-
-INSERT INTO `player` (`id`, `login`, `password`, `pseudo`, `email`, `skin`, `position_x`, `position_y`, `orientation`, `map_name`, `type`, `clan`, `cash`) VALUES
-(1, 'toto', '0b9c2625dc21ef05f6ad4ddf47c5f203837aa32c', 'totoA', 'sdfg', 'main', 16, 16, 'right', 'world/0.0.tmx', 'normal', 0, 0),
-(2, 'tata', '90795a0ffaa8b88c0e250546d8439bc9c31e5a5e', 'tataIG', 'dsfg', 'main', 22, 23, 'left', 'world/0.0.tmx', 'normal', 0, 0),
-(3, 'rrfvtgb', 'af6b702da45fb15bb301324df5a874dd149c2683', 'rrfvtgbIG', '', 'main', 14, 15, 'left', 'world/0.0.tmx', 'premium', 0, 0),
-(4, 'titi', 'f7e79ca8eb0b31ee4d5d6c181416667ffee528ed', 'titiIG', '', 'main', 15, 12, 'top', 'world/0.0.tmx', 'normal', 0, 0),
-(5, 'alpha_one_x86', '98ef0c583c1fd72c14c2e521583eaf53872b7c04', 'alpha_one_x86IG', '', 'main', 5, 5, 'right', 'world/0.0.tmx', 'gm', 0, 0);
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
