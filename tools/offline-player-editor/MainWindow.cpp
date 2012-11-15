@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "../../general/base/GeneralVariable.h"
+#include "ItemDialog.h"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -16,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    datapackLoader.quit();
+    datapackLoader.wait();
     delete ui;
 }
 
@@ -84,6 +88,7 @@ void MainWindow::try_connect()
         return;
     }
     ui->stackedWidget->setCurrentIndex(1);
+    datapackLoader.parseDatapack(datapack);
     updatePlayerList();
 }
 
@@ -102,13 +107,15 @@ void MainWindow::updatePlayerList()
     {
         default:
         case db_type_mysql:
-            queryText=QString("SELECT pseudo,id FROM player");
+            queryText=QString("SELECT pseudo,id,skin FROM player");
         break;
         case db_type_sqlite:
-            queryText=QString("SELECT pseudo,id FROM player");
+            queryText=QString("SELECT pseudo,id,skin FROM player");
         break;
     }
     QSqlQuery listQuery(queryText);
+    QIcon defaultIcon(":/im-user.png");
+    QIcon icon;
 
     //parse the result
     while(listQuery.next())
@@ -119,7 +126,26 @@ void MainWindow::updatePlayerList()
             quint32 id=listQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                QListWidgetItem *item=new QListWidgetItem(QIcon(":/im-user.png"),QString(listQuery.value(0).toString()));
+                if(icons_cache.contains(listQuery.value(2).toString()))
+                    icon=icons_cache[listQuery.value(2).toString()];
+                else
+                {
+                    QPixmap newIcon(datapack+DATAPACK_BASE_PATH_SKIN+listQuery.value(2).toString()+"/trainer.png");
+                    if(newIcon.isNull())
+                        icons_cache[listQuery.value(2).toString()]=defaultIcon;
+                    else
+                    {
+                        QPixmap cutedIcon=newIcon.copy(16,48,16,24);
+                        if(cutedIcon.isNull())
+                            icons_cache[listQuery.value(2).toString()]=defaultIcon;
+                        else
+                        {
+                            icons_cache[listQuery.value(2).toString()]=cutedIcon.scaled(48,72);
+                        }
+                    }
+                    icon=icons_cache[listQuery.value(2).toString()];
+                }
+                QListWidgetItem *item=new QListWidgetItem(icon,QString(listQuery.value(0).toString()));
                 player_id_list[listQuery.value(0).toString()]=id;
                 ui->playerList->addItem(item);
             }
@@ -137,8 +163,8 @@ void MainWindow::on_playerList_itemActivated(QListWidgetItem *item)
     //load the player information
     player_id=player_id_list[item->text()];
     havePlayerSelected=false;
-
     QString queryText;
+
     switch(db_type)
     {
         default:
@@ -150,9 +176,9 @@ void MainWindow::on_playerList_itemActivated(QListWidgetItem *item)
         break;
     }
     QSqlQuery infoPlayer(queryText);
-    if(infoPlayer.size()!=1)
+    if(infoPlayer.isValid())
     {
-        QMessageBox::warning(this,"Warning",QString("The player can't be loaded: %1").arg(infoPlayer.lastError().text()));
+        QMessageBox::warning(this,"Warning",QString("The player can't be loaded: %1\nQuery: %2").arg(infoPlayer.lastError().text()).arg(queryText));
         return;
     }
 
@@ -164,6 +190,32 @@ void MainWindow::on_playerList_itemActivated(QListWidgetItem *item)
         if(ok)
             ui->cash->setValue(cash);
     }
+
+    //load the inventory
+    items.clear();
+    switch(db_type)
+    {
+        default:
+        case db_type_mysql:
+            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1").arg(player_id);
+        break;
+        case db_type_sqlite:
+            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1").arg(player_id);
+        break;
+    }
+    QSqlQuery itemsPlayer(queryText);
+    while(itemsPlayer.next())
+    {
+        bool ok;
+        quint32 item_id=itemsPlayer.value(0).toUInt(&ok);
+        if(ok)
+        {
+            quint32 quantity=itemsPlayer.value(1).toUInt(&ok);
+            if(ok)
+                items[item_id]=quantity;
+        }
+    }
+    load_inventory();
 
     //change the page
     ui->stackedWidget->setCurrentIndex(2);
@@ -193,4 +245,116 @@ void MainWindow::on_cash_editingFinished()
         break;
     }
     QSqlQuery updateCashPlayer(queryText);
+}
+
+void MainWindow::on_datapack_path_browse_clicked()
+{
+    QString folder=QFileDialog::getExistingDirectory(this,"Select the SQLite database");
+    if(folder.isEmpty())
+        return;
+    ui->datapack_path->setText(folder);
+    on_datapack_path_textChanged(folder);
+}
+
+void MainWindow::on_datapack_path_textChanged(const QString &arg1)
+{
+    datapack=ui->datapack_path->text();
+    if(!datapack.endsWith('/') && !datapack.endsWith('\\'))
+        datapack+="/";
+    bool datapackIsValid=false;
+    if(!arg1.isEmpty() && QFile(datapack+"/"+DATAPACK_BASE_PATH_ITEM+"items.xml").exists())
+        datapackIsValid=true;
+    ui->groupBoxMysql->setEnabled(datapackIsValid);
+    ui->groupBoxSQLite->setEnabled(datapackIsValid);
+}
+
+void MainWindow::load_inventory()
+{
+    ui->items->clear();
+    items_graphical.clear();
+    QHashIterator<quint32,quint32> i(items);
+    while (i.hasNext()) {
+        i.next();
+        QListWidgetItem *item=new QListWidgetItem();
+        items_graphical[item]=i.key();
+        if(DatapackClientLoader::items.contains(i.key()))
+        {
+            item->setIcon(DatapackClientLoader::items[i.key()].image);
+            item->setText(QString("%1 (%2)").arg(DatapackClientLoader::items[i.key()].name).arg(i.value()));
+        }
+        else
+        {
+            item->setIcon(datapackLoader.defaultInventoryImage());
+            item->setText(QString("??? (id: %1, x%2)").arg(i.key()).arg(i.value()));
+        }
+        item->setToolTip(DatapackClientLoader::items[i.key()].description);
+        ui->items->addItem(item);
+    }
+}
+
+void MainWindow::on_add_item_clicked()
+{
+    ItemDialog itemDialog(this);
+    itemDialog.exec();
+    if(!itemDialog.haveItemSelected())
+        return;
+
+    QString queryText;
+    if(items.contains(itemDialog.itemId()))
+    {
+        items[itemDialog.itemId()]+=itemDialog.itemQuantity();
+        switch(db_type)
+        {
+            default:
+            case db_type_mysql:
+                queryText=QString("UPDATE item SET quantity=%1 WHERE player_id=%2 AND item_id=%3").arg(items[itemDialog.itemId()]).arg(player_id).arg(itemDialog.itemId());
+            break;
+            case db_type_sqlite:
+                queryText=QString("UPDATE item SET quantity=%1 WHERE player_id=%2 AND item_id=%3").arg(items[itemDialog.itemId()]).arg(player_id).arg(itemDialog.itemId());
+            break;
+        }
+    }
+    else
+    {
+        items[itemDialog.itemId()]=itemDialog.itemQuantity();
+        switch(db_type)
+        {
+            default:
+            case db_type_mysql:
+                queryText=QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);").arg(itemDialog.itemId()).arg(player_id).arg(items[itemDialog.itemId()]);
+            break;
+            case db_type_sqlite:
+                queryText=QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);").arg(itemDialog.itemId()).arg(player_id).arg(items[itemDialog.itemId()]);
+            break;
+        }
+    }
+    QSqlQuery updateItemPlayer(queryText);
+    load_inventory();
+}
+
+void MainWindow::on_items_itemSelectionChanged()
+{
+    ui->remove_item->setEnabled(ui->items->selectedItems().size()==1);
+}
+
+void MainWindow::on_remove_item_clicked()
+{
+    if(ui->items->selectedItems().size()!=1)
+        return;
+
+    QString queryText;
+    switch(db_type)
+    {
+        default:
+        case db_type_mysql:
+            queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2").arg(player_id).arg(items_graphical[ui->items->selectedItems().first()]);
+        break;
+        case db_type_sqlite:
+            queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2").arg(player_id).arg(items_graphical[ui->items->selectedItems().first()]);
+        break;
+    }
+    QSqlQuery updateItemPlayer(queryText);
+
+    items.remove(items_graphical[ui->items->selectedItems().first()]);
+    load_inventory();
 }
