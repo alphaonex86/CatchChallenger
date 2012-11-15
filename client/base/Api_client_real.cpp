@@ -17,7 +17,7 @@ Api_client_real::Api_client_real(ConnectedSocket *socket) :
     port=42489;
     datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
     connect(socket,SIGNAL(disconnected()),					this,SLOT(disconnected()));
-    connect(this,SIGNAL(newFile(QString,QByteArray,quint32)),		this,SLOT(writeNewFile(QString,QByteArray,quint32)));
+    connect(this,SIGNAL(newFile(QString,QByteArray,quint64)),		this,SLOT(writeNewFile(QString,QByteArray,quint64)));
     disconnected();
     dataClear();
 }
@@ -118,7 +118,7 @@ void Api_client_real::disconnected()
     resetAll();
 }
 
-void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &data,const quint32 &mtime)
+void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &data,const quint64 &mtime)
 {
     QFile file(datapack_base_name+"/"+fileName);
     QFileInfo fileInfo(file);
@@ -213,7 +213,7 @@ void Api_client_real::sendDatapackContent()
         out << datapackFilesList.at(index);
         struct stat info;
         stat(QString(datapack_base_name+datapackFilesList.at(index)).toLatin1().data(),&info);
-        out << (quint32)info.st_mtime;
+        out << (quint64)info.st_mtime;
         index++;
     }
     output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,qCompress(outputData,9));

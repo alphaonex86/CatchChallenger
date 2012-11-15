@@ -378,9 +378,9 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                     quint32 number_of_file;
                     in >> number_of_file;
                     QStringList files;
-                    QList<quint32> timestamps;
+                    QList<quint64> timestamps;
                     QString tempFileName;
-                    quint32 tempTimestamps;
+                    quint64 tempTimestamps;
                     quint32 index=0;
                     while(index<number_of_file)
                     {
@@ -391,7 +391,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                         }
                         in >> tempFileName;
                         files << tempFileName;
-                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
                         {
                             emit error(QString("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
                                 .arg(mainCodeType)
