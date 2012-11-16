@@ -21,11 +21,6 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     clientLocalCalcule=new ClientLocalCalcule();
     this->clientMapManagement=clientMapManagement;
 
-    connect(clientNetworkRead,SIGNAL(newInputQuery(quint8,quint8)),clientNetworkWrite,SLOT(newInputQuery(quint8,quint8)));
-    connect(clientNetworkRead,SIGNAL(newInputQuery(quint8,quint16,quint8)),clientNetworkWrite,SLOT(newInputQuery(quint8,quint16,quint8)));
-    connect(clientNetworkWrite,SIGNAL(newOutputQuery(quint8,quint8)),clientNetworkRead,SLOT(newOutputQuery(quint8,quint8)));
-    connect(clientNetworkWrite,SIGNAL(newOutputQuery(quint8,quint16,quint8)),clientNetworkRead,SLOT(newOutputQuery(quint8,quint16,quint8)));
-
     if(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
     {
         connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
@@ -58,10 +53,10 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     clientLocalCalcule->setVariable(&player_informations);
 
     //connect input/ouput
-    connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint16,quint8)),	clientNetworkWrite,SLOT(newInputQuery(quint8,quint16,quint8)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint8)),		clientNetworkWrite,SLOT(newInputQuery(quint8,quint8)),Qt::QueuedConnection);
-    connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint16,quint8)),	clientNetworkRead,SLOT(newOutputQuery(quint8,quint16,quint8)),Qt::QueuedConnection);
-    connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint8)),		clientNetworkRead,SLOT(newOutputQuery(quint8,quint8)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint16,quint8)),	clientNetworkWrite,SLOT(newInputQuery(quint8,quint16,quint8)));
+    connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint8)),		clientNetworkWrite,SLOT(newInputQuery(quint8,quint8)));
+    connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint16,quint8)),	clientNetworkRead,SLOT(newOutputQuery(quint8,quint16,quint8)));
+    connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint8)),		clientNetworkRead,SLOT(newOutputQuery(quint8,quint8)));
 
     //connect the write, to send packet on the network
     connect(clientNetworkRead,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
