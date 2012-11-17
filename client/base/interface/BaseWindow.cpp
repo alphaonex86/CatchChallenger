@@ -223,7 +223,7 @@ void BaseWindow::new_system_text(Chat_type chat_type,QString text)
 
 void BaseWindow::new_chat_text(Chat_type chat_type,QString text,QString pseudo,Player_type type)
 {
-    qDebug() << QString("new_chat_text: %1 by  %2").arg(text).arg(pseudo);
+    qDebug() << QString("new_chat_text: %1 by %2").arg(text).arg(pseudo);
     chat_list_player_type << type;
     chat_list_player_pseudo << pseudo;
     chat_list_type << chat_type;
@@ -240,6 +240,7 @@ void BaseWindow::new_chat_text(Chat_type chat_type,QString text,QString pseudo,P
 
 void BaseWindow::update_chat()
 {
+    qDebug() << QString("update_chat(): %1").arg(chat_list_player_pseudo.size());
     QString nameHtml;
     int index=0;
     while(index<chat_list_player_pseudo.size())
@@ -247,15 +248,14 @@ void BaseWindow::update_chat()
         bool addPlayerInfo=true;
         if(chat_list_type.at(index)==Chat_type_system || chat_list_type.at(index)==Chat_type_system_important)
             addPlayerInfo=false;
-        int index_player=-1;
         if(!addPlayerInfo)
             nameHtml+=ChatParsing::new_chat_message("",Player_type_normal,chat_list_type.at(index),chat_list_text.at(index));
-        else if(index_player!=-1)
+        else
             nameHtml+=ChatParsing::new_chat_message(chat_list_player_pseudo.at(index),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index));
         index++;
     }
     ui->textBrowser_chat->setHtml(nameHtml);
-    ui->textBrowser_chat->scrollToAnchor(QString::number(index-1));
+    //ui->textBrowser_chat->scrollToAnchor(QString::number(index-1));
 }
 
 QString BaseWindow::toHtmlEntities(QString text)

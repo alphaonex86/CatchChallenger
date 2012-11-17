@@ -62,6 +62,9 @@ protected:
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
     virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
+    //general data
+    virtual void defineMaxPlayers(const quint16 &maxPlayers) = 0;
+
     //stored local player info
     quint16 max_player;
     Player_private_and_public_informations player_informations;

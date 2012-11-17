@@ -61,7 +61,7 @@ void ProtocolParsing::initialiseTheVariable()
     ProtocolParsing::replyCodeClientToServer=0x41;
 }
 
-void ProtocolParsing::setMaxPlayers(quint16 maxPlayers)
+void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 {
     if(maxPlayers<=255)
     {

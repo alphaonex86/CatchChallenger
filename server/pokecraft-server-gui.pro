@@ -93,7 +93,8 @@ FORMS    += MainWindow.ui
 
 RESOURCES += \
     resources.qrc \
-    resources-server.qrc
+    resources-server.qrc \
+    ../client/base/resources/resources-multi.qrc
 
 win32:RC_FILE += resources-windows.rc
 win32:RESOURCES += base/resources/resources-windows-qt-plugin.qrc

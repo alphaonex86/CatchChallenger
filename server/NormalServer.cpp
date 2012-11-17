@@ -31,6 +31,11 @@ NormalServer::NormalServer() :
     in_benchmark_mode=false;
 
     nextStep.start(POKECRAFT_SERVER_NORMAL_SPEED*50);
+
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
 }
 
 /** call only when the server is down
@@ -102,16 +107,6 @@ void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const QStri
             index_sub++;
         }
     }
-}
-
-void NormalServer::connect_the_last_client(Client * client)
-{
-    BaseServer::connect_the_last_client(client);
-
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
 }
 
 void NormalServer::load_settings()
