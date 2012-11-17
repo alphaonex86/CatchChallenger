@@ -71,14 +71,6 @@ NormalServer::~NormalServer()
     delete eventDispatcherThread;
 }
 
-void NormalServer::setSettings(ServerSettings settings)
-{
-    //load it
-    GlobalData::serverSettings=settings;
-
-    loadAndFixSettings();
-}
-
 void NormalServer::initAll()
 {
     timer_benchmark_stop=new QTimer();

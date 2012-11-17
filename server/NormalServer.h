@@ -31,7 +31,6 @@ class NormalServer : public BaseServer
 public:
     explicit NormalServer();
     virtual ~NormalServer();
-    void setSettings(ServerSettings settings);
     //stat function
     bool isInBenchmark();
     quint16 player_current();

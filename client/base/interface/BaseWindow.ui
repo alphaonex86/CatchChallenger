@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -244,9 +244,17 @@ border-image: url(:/images/empty.png);</string>
                 </item>
                 <item>
                  <widget class="QComboBox" name="comboBox_chat_type">
+                  <property name="currentIndex">
+                   <number>1</number>
+                  </property>
                   <item>
                    <property name="text">
                     <string>All</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Local</string>
                    </property>
                   </item>
                   <item>

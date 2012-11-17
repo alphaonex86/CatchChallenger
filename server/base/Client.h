@@ -7,11 +7,12 @@
 #include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
 #include "ClientBroadCast.h"
+#include "ClientLocalBroadcast.h"
 #include "ClientHeavyLoad.h"
 #include "ClientMapManagement/ClientMapManagement.h"
 #include "ClientNetworkRead.h"
 #include "ClientNetworkWrite.h"
-#include "ClientLocalCalcule.h"
+#include "LocalClientHandler.h"
 #include "EventThreader.h"
 #include "BroadCastWithoutSender.h"
 #include "../../general/base/GeneralStructures.h"
@@ -40,7 +41,8 @@ private:
     ClientMapManagement *clientMapManagement;
     ClientNetworkRead *clientNetworkRead;
     ClientNetworkWrite *clientNetworkWrite;
-    ClientLocalCalcule *clientLocalCalcule;
+    LocalClientHandler *localClientHandler;
+    ClientLocalBroadcast *clientLocalBroadcast;
 
     //socket related
     ConnectedSocket *socket;

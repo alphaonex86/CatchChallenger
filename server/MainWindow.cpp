@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include <QFileDialog>
+
 using namespace Pokecraft;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -427,6 +429,8 @@ void MainWindow::load_settings()
     ui->db_mysql_pass->setText(db_mysql_pass);
     ui->db_mysql_base->setText(db_mysql_base);
 
+    ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
+
     send_settings();
 }
 
@@ -459,20 +463,27 @@ void MainWindow::send_settings()
 
     switch(ui->db_type->currentIndex())
     {
+        default:
         case 0:
             formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_Mysql;
         break;
         case 1:
             formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_SQLite;
         break;
+    }
+    switch(formatedServerSettings.database.type)
+    {
         default:
-            formatedServerSettings.database.type					= ServerSettings::Database::DatabaseType_Mysql;
+        case ServerSettings::Database::DatabaseType_Mysql:
+            formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
+            formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
+            formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
+            formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            formatedServerSettings.database.sqlite.file				= ui->db_sqlite_file->text();
         break;
     }
-    formatedServerSettings.database.mysql.host				= ui->db_mysql_host->text();
-    formatedServerSettings.database.mysql.db				= ui->db_mysql_base->text();
-    formatedServerSettings.database.mysql.login				= ui->db_mysql_login->text();
-    formatedServerSettings.database.mysql.pass				= ui->db_mysql_pass->text();
 
     //connection
     formatedServerSettings.max_players					= ui->max_player->value();
@@ -689,20 +700,21 @@ void MainWindow::on_db_type_currentIndexChanged(int index)
 
 void MainWindow::updateDbGroupbox()
 {
-    switch(ui->db_type->currentIndex())
-    {
-        case 1:
-            ui->groupBoxDbMysql->setEnabled(false);
-        break;
-        case 0:
-        default:
-            ui->groupBoxDbMysql->setEnabled(true);
-        break;
-    }
+    int index=ui->db_type->currentIndex();
+    ui->groupBoxDbMysql->setEnabled(index==0);
+    ui->groupBoxDbSQLite->setEnabled(index==1);
 }
 
 void Pokecraft::MainWindow::on_sendPlayerNumber_toggled(bool checked)
 {
     Q_UNUSED(checked);
     settings->setValue("sendPlayerNumber",ui->sendPlayerNumber->isChecked());
+}
+
+void Pokecraft::MainWindow::on_db_sqlite_browse_clicked()
+{
+    QString file=QFileDialog::getOpenFileName(this,"Select the SQLite database");
+    if(file.isEmpty())
+        return;
+    ui->db_sqlite_file->setText(file);
 }
