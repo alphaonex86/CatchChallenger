@@ -21,6 +21,7 @@ NormalServer::NormalServer() :
     GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//network read (2)
     GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//heavy load (3)
     GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//local calcule (4)
+    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//local broad cast (5)
 
     botThread = new EventThreader();
     eventDispatcherThread = new EventThreader();

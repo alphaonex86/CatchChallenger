@@ -155,6 +155,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                         emit newError(tr("Procotol wrong or corrupted"),QString("playerType have wrong value: %1, at main ident: %2, directionAndPlayerType: %3").arg(playerTypeInt).arg(mainCodeType).arg(directionAndPlayerType));
                         return;
                     }
+                    public_informations.type=playerType;
 
                     //the speed
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -207,7 +208,6 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
                     {
                         setLastDirection(direction);
-                        qDebug() << "player_informations->public_and_private_informations.public_informations.type: " << public_informations.type;
                         player_informations.public_informations=public_informations;
                         emit have_current_player_info(player_informations);
                     }
@@ -1011,7 +1011,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         in >> player_informations.cash;
 
                         is_logged=true;
-                        DebugClass::debugConsole(QString("is logged with id: %1, cash: %2, data: %3").arg(player_informations.public_informations.simplifiedId).arg(player_informations.cash).arg(QString(data.toHex())));
+                        DebugClass::debugConsole(QString("is logged with id: %1, cash: %2").arg(player_informations.public_informations.simplifiedId).arg(player_informations.cash));
                         emit logged();
                     }
                     else
