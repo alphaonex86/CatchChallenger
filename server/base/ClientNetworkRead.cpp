@@ -235,7 +235,12 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                     in >> text;
 
                     if(!text.startsWith('/'))
-                        emit sendChatText((Chat_type)chatType,text);
+                    {
+                        if(chatType==Chat_type_local)
+                            emit sendLocalChatText(text);
+                        else
+                            emit sendChatText((Chat_type)chatType,text);
+                    }
                     else
                     {
                         if(text.contains(commandRegExp))

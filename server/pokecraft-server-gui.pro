@@ -21,14 +21,18 @@ SOURCES += MainWindow.cpp \
     base/SqlFunction.cpp \
     ../general/base/ConnectedSocket.cpp \
     NormalServer.cpp \
-    base/BaseServer.cpp
+    base/BaseServer.cpp \
+    base/LocalClientHandler.cpp \
+    base/ClientLocalBroadcast.cpp
 HEADERS  += MainWindow.h \
     ../general/base/FacilityLib.h \
     base/GlobalData.h \
     base/SqlFunction.h \
     ../general/base/ConnectedSocket.h \
     NormalServer.h \
-    base/BaseServer.h
+    base/BaseServer.h \
+    base/LocalClientHandler.h \
+    base/ClientLocalBroadcast.h
 
 SOURCES += \
     base/EventThreader.cpp \
@@ -37,7 +41,6 @@ SOURCES += \
     base/ClientNetworkWrite.cpp \
     base/ClientNetworkRead.cpp \
     base/ClientBroadCast.cpp \
-    base/ClientLocalCalcule.cpp \
     base/PlayerUpdater.cpp \
     base/BroadCastWithoutSender.cpp \
     base/Map_server.cpp \
@@ -65,7 +68,6 @@ HEADERS += VariableServer.h \
     base/ClientNetworkWrite.h \
     base/ClientNetworkRead.h \
     base/ClientBroadCast.h \
-    base/ClientLocalCalcule.h \
     base/BroadCastWithoutSender.h \
     base/PlayerUpdater.h \
     base/Map_server.h \

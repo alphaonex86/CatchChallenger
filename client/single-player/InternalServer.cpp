@@ -4,17 +4,9 @@
 
 using namespace Pokecraft;
 
-InternalServer::InternalServer(const QString &dbPath) :
+InternalServer::InternalServer() :
     BaseServer()
 {
-    this->dbPath=dbPath;
-
-    GlobalData::serverSettings.max_players=1;
-    GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber = false;
-
-    GlobalData::serverSettings.database.type=ServerSettings::Database::DatabaseType_SQLite;
-    GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_none;
-
     GlobalData::serverPrivateVariables.eventThreaderList << &thread;//broad cast (0)
     GlobalData::serverPrivateVariables.eventThreaderList << &thread;//map management (1)
     GlobalData::serverPrivateVariables.eventThreaderList << &thread;//network read (2)
@@ -64,11 +56,6 @@ void InternalServer::start_internal_server()
     stat=Up;
     emit is_started(true);
     return;
-}
-
-QString InternalServer::sqlitePath()
-{
-    return dbPath;
 }
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////

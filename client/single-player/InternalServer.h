@@ -30,11 +30,10 @@ class InternalServer : public BaseServer
 {
     Q_OBJECT
 public:
-    explicit InternalServer(const QString &dbPath);
+    explicit InternalServer();
     virtual ~InternalServer();
 private:
     EventThreader thread;
-    QString dbPath;
 private slots:
     //starting function
     void start_internal_server();

@@ -45,7 +45,7 @@ SOURCES += main.cpp\
     ../../server/base/EventThreader.cpp \
     ../../server/base/ClientNetworkWrite.cpp \
     ../../server/base/ClientNetworkRead.cpp \
-    ../../server/base/ClientLocalCalcule.cpp \
+    ../../server/base/LocalClientHandler.cpp \
     ../../server/base/ClientHeavyLoad.cpp \
     ../../server/base/ClientBroadCast.cpp \
     ../../server/base/Client.cpp \
@@ -63,7 +63,8 @@ SOURCES += main.cpp\
     SaveGameLabel.cpp \
     ../../general/base/ConnectedSocket.cpp \
     ../../server/base/BaseServer.cpp \
-    ../base/interface/DatapackClientLoader.cpp
+    ../base/interface/DatapackClientLoader.cpp \
+    ../../server/base/ClientLocalBroadcast.cpp
 
 HEADERS  += mainwindow.h \
     ../../general/base/GeneralStructures.h \
@@ -94,7 +95,7 @@ HEADERS  += mainwindow.h \
     ../../server/base/EventThreader.h \
     ../../server/base/ClientNetworkWrite.h \
     ../../server/base/ClientNetworkRead.h \
-    ../../server/base/ClientLocalCalcule.h \
+    ../../server/base/LocalClientHandler.h \
     ../../server/base/ClientHeavyLoad.h \
     ../../server/base/ClientBroadCast.h \
     ../../server/base/Client.h \
@@ -114,7 +115,8 @@ HEADERS  += mainwindow.h \
     ../../general/base/ConnectedSocket.h \
     ../../server/VariableServer.h \
     ../../server/base/BaseServer.h \
-    ../base/interface/DatapackClientLoader.h
+    ../base/interface/DatapackClientLoader.h \
+    ../../server/base/ClientLocalBroadcast.h
 
 FORMS    += mainwindow.ui \
     NewGame.ui \

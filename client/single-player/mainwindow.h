@@ -51,6 +51,7 @@ private slots:
     void saveTime();
     void is_started(bool started);
     void play(const QString &savegamesPath);
+    void sendSettings(Pokecraft::InternalServer * internalServer, const QString &savegamesPath);
 private:
     Ui::MainWindow *ui;
     Pokecraft::Api_client_virtual *client;
