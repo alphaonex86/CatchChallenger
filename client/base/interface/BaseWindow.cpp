@@ -80,7 +80,7 @@ void BaseWindow::resetAll()
     chat_list_type.clear();
     chat_list_text.clear();
     ui->textBrowser_chat->clear();
-    ui->comboBox_chat_type->setCurrentIndex(0);
+    ui->comboBox_chat_type->setCurrentIndex(1);
         ui->lineEdit_chat_text->setText("");
     update_chat();
     lastMessageSend="";
@@ -187,7 +187,23 @@ void BaseWindow::on_lineEdit_chat_text_returnPressed()
     lastMessageSend=text;
     ui->lineEdit_chat_text->setText("");
     if(!text.startsWith("/pm "))
-        client->sendChatText((Chat_type)(ui->comboBox_chat_type->currentIndex()+2),text);
+    {
+        Chat_type chat_type;
+        switch(ui->comboBox_chat_type->currentIndex())
+        {
+        default:
+        case 0:
+            chat_type=Chat_type_all;
+        break;
+        case 1:
+            chat_type=Chat_type_local;
+        break;
+        case 2:
+            chat_type=Chat_type_clan;
+        break;
+        }
+        client->sendChatText(chat_type,text);
+    }
     else if(text.contains(QRegExp("^/pm [^ ]+ .+$")))
     {
         QString pseudo=text;

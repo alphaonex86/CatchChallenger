@@ -499,7 +499,7 @@ bool BaseServer::initialize_the_database()
         case ServerSettings::Database::DatabaseType_SQLite:
         GlobalData::serverPrivateVariables.db = new QSqlDatabase();
         *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
-        GlobalData::serverPrivateVariables.db->setDatabaseName(sqlitePath());
+        GlobalData::serverPrivateVariables.db->setDatabaseName(GlobalData::serverSettings.database.sqlite.file);
         GlobalData::serverPrivateVariables.db_type_string="sqlite";
         break;
     }
@@ -575,9 +575,12 @@ void BaseServer::check_if_now_stopped()
     unload_the_data();
 }
 
-QString BaseServer::sqlitePath()
+void BaseServer::setSettings(ServerSettings settings)
 {
-    return QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite";
+    //load it
+    GlobalData::serverSettings=settings;
+
+    loadAndFixSettings();
 }
 
 void BaseServer::loadAndFixSettings()

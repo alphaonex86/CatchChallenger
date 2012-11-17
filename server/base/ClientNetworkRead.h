@@ -53,6 +53,7 @@ signals:
     //packet parsed (broadcast)
     void sendPM(const QString &text,const QString &pseudo);
     void sendChatText(const Chat_type &chatType,const QString &text);
+    void sendLocalChatText(const QString &text);
     void sendBroadCastCommand(const QString &command,const QString &extraText);
 private:
     // for status

@@ -31,6 +31,7 @@ class BaseServer : public QObject
 public:
     explicit BaseServer();
     virtual ~BaseServer();
+    void setSettings(ServerSettings settings);
     //stat function
     virtual bool isListen();
     virtual bool isStopped();
@@ -56,7 +57,6 @@ protected:
     virtual void connect_the_last_client(Client * client);
     //starting function
     virtual void check_if_now_stopped();
-    virtual QString sqlitePath();
     virtual void loadAndFixSettings();
     //player related
     virtual ClientMapManagement * getClientMapManagement();
