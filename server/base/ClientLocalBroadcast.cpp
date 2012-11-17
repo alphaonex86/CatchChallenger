@@ -22,7 +22,8 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
     int size=static_cast<Map_server *>(map)->clientsForBroadcast.size();
     while(index<size)
     {
-        static_cast<Map_server *>(map)->clientsForBroadcast.at(index)->receiveChatText(text,player_informations);
+        if(static_cast<Map_server *>(map)->clientsForBroadcast.at(index)!=this)
+            static_cast<Map_server *>(map)->clientsForBroadcast.at(index)->receiveChatText(text,player_informations);
         index++;
     }
 }

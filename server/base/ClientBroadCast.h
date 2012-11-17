@@ -6,6 +6,7 @@
 #include <QString>
 #include <QByteArray>
 #include <QList>
+#include <QMultiHash>
 
 #include "BroadCastWithoutSender.h"
 #include "ServerStructures.h"
@@ -29,6 +30,7 @@ public:
     void setVariable(Player_internal_informations *player_informations);
     //player indexed list
     static QHash<QString,ClientBroadCast *> playerByPseudo;
+    static QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> playerByClan;
     static QList<ClientBroadCast *> clientBroadCastList;
 public slots:
     //global slot
