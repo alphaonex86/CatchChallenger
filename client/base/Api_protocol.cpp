@@ -207,6 +207,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
                     {
                         setLastDirection(direction);
+                        qDebug() << "player_informations->public_and_private_informations.public_informations.type: " << public_informations.type;
                         player_informations.public_informations=public_informations;
                         emit have_current_player_info(player_informations);
                     }
@@ -631,7 +632,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        emit newError(tr("Procotol wrong or corrupted"),QString("remaining data: parseMessage(%1,%3)").arg(mainCodeType));
+        emit newError(tr("Procotol wrong or corrupted"),QString("remaining data: parseMessage(%1,%2 %3)")
+                      .arg(mainCodeType)
+                      .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                      .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                      );
         return;
     }
 }
@@ -656,14 +661,14 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                 {
                     if((in.device()->size()-in.device()->pos())<(int)(int)(sizeof(quint8)))
                     {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                         return;
                     }
                     quint8 fileNameSize;
                     in >> fileNameSize;
                     if((in.device()->size()-in.device()->pos())<(int)fileNameSize)
                     {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                         return;
                     }
                     QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
@@ -697,7 +702,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     in >> chat_type_int;
                     if(chat_type_int<1 || chat_type_int>8)
                     {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong chat type with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong chat type with main ident: %1, subCodeType: %2, chat_type_int: %3").arg(mainCodeType).arg(subCodeType).arg(chat_type_int));
                         return;
                     }
                     Chat_type chat_type=(Chat_type)chat_type_int;
@@ -717,7 +722,12 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         in >> pseudoSize;
                         if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
                         {
-                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(pseudoSize)
+                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          );
                             return;
                         }
                         QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
@@ -725,7 +735,12 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         in.device()->seek(in.device()->pos()+rawText.size());
                         if(pseudo.isEmpty())
                         {
-                            emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
+                            emit newError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4")
+                                          .arg(mainCodeType)
+                                          .arg(subCodeType)
+                                          .arg(QString(rawText.toHex()))
+                                          .arg(rawText.size())
+                                          );
                             return;
                         }
                         quint8 player_type_int;
@@ -735,12 +750,13 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                             return;
                         }
                         in >> player_type_int;
-                        if(player_type_int<1 || player_type_int>4)
+                        Player_type player_type=(Player_type)player_type_int;
+                        if(player_type!=Player_type_normal && player_type!=Player_type_premium && player_type!=Player_type_gm && player_type!=Player_type_dev)
                         {
-                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong chat type with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong player type with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType).arg(player_type_int));
                             return;
                         }
-                        emit new_chat_text(chat_type,text,pseudo,(Player_type)player_type_int);
+                        emit new_chat_text(chat_type,text,pseudo,player_type);
                     }
                 }
                 break;
@@ -841,7 +857,12 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        emit newError(tr("Procotol wrong or corrupted"),QString("remaining data: parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
+        emit newError(tr("Procotol wrong or corrupted"),QString("remaining data: parseMessage(%1,%2,%3 %4)")
+                      .arg(mainCodeType)
+                      .arg(subCodeType)
+                      .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                      .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                      );
         return;
     }
 }
@@ -956,6 +977,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             return;
                         }
                         in >> max_player;
+                        setMaxPlayers(max_player);
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
@@ -1103,7 +1125,7 @@ void Api_protocol::send_player_direction(const Direction &the_direction)
 
 void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
 {
-    if((chatType<2 || chatType>5) && chatType!=6)
+    if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_aliance && chatType!=Chat_type_system && chatType!=Chat_type_system_important)
     {
         DebugClass::debugConsole("chatType wrong: "+QString::number(chatType));
         return;

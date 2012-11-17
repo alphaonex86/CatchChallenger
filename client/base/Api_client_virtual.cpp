@@ -29,3 +29,8 @@ void Api_client_virtual::tryDisconnect()
 {
     socket->disconnectFromHost();
 }
+
+//general data
+void Api_client_virtual::defineMaxPlayers(const quint16 &)
+{
+}

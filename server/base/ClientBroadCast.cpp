@@ -51,17 +51,6 @@ void ClientBroadCast::sendSystemMessage(const QString &text,const bool &importan
     }
 }
 
-void ClientBroadCast::receivePM(const QString &text,const QString &pseudo)
-{
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << pseudo;//id player here
-    out << (quint8)0x06;
-    out << text;
-    emit sendPacket(0xC2,0x0005,outputData);
-}
-
 void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 {
     if(this->player_informations->public_and_private_informations.public_informations.pseudo==pseudo)
@@ -76,7 +65,7 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
         return;
     }
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QString("to %1: %2").arg(pseudo).arg(text));
-    playerByPseudo[pseudo]->receivePM(text,this->player_informations->public_and_private_informations.public_informations.pseudo);
+    playerByPseudo[pseudo]->receiveChatText(Chat_type_pm,text,this->player_informations);
 }
 
 void ClientBroadCast::askIfIsReadyToStop()
@@ -86,7 +75,7 @@ void ClientBroadCast::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
-void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &text,const QString &sender_pseudo,const Player_type &sender_player_type)
+void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &text,const Player_internal_informations *sender_informations)
 {
     /* Multiple message when multiple player connected
     emit message(QString("receiveChatText(), text: %1, sender_player_id: %2, to player: %3").arg(text).arg(sender_player_id).arg(player_informations.id)); */
@@ -95,9 +84,12 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)chatType;
     out << text;
-    out << sender_pseudo;
-    out << (quint8)sender_player_type;
-    emit sendPacket(0xC2,0x0005,outputData);
+
+    QByteArray outputData2;
+    QDataStream out2(&outputData2, QIODevice::WriteOnly);
+    out2.setVersion(QDataStream::Qt_4_4);
+    out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
+    emit sendPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
 }
 
 void ClientBroadCast::receiveSystemText(const QString &text,const bool &important)
@@ -128,7 +120,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
             while(index<list_size)
             {
                 if(player_informations->public_and_private_informations.public_informations.clan==clientBroadCastList.at(index)->player_informations->public_and_private_informations.public_informations.clan && this!=clientBroadCastList.at(index))
-                    clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations->public_and_private_informations.public_informations.pseudo,player_informations->public_and_private_informations.public_informations.type);
+                    clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations);
                 index++;
             }
         }
@@ -156,7 +148,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
         while(index<list_size)
         {
             if(this!=clientBroadCastList.at(index))
-                clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations->public_and_private_informations.public_informations.pseudo,player_informations->public_and_private_informations.public_informations.type);
+                clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations);
             index++;
         }
     }

@@ -93,6 +93,12 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
     }
 }
 
+//general data
+void Api_client_real::defineMaxPlayers(const quint16 &maxPlayers)
+{
+    ProtocolParsing::setMaxPlayers(maxPlayers);
+}
+
 void Api_client_real::resetAll()
 {
     query_files_list.clear();

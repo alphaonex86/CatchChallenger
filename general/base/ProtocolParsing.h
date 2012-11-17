@@ -17,7 +17,7 @@ class ProtocolParsing : public QObject
 public:
     ProtocolParsing(ConnectedSocket * socket);
     static void initialiseTheVariable();
-    static void setMaxPlayers(quint16 maxPlayers);
+    static void setMaxPlayers(const quint16 &maxPlayers);
 protected:
     ConnectedSocket * socket;
     /********************** static *********************/

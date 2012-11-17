@@ -155,6 +155,7 @@ void ClientLocalCalcule::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
     qDebug() << "put_on_the_map merge" << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type) << "=" << (quint8)orientation << "|" << (quint8)player_informations->public_and_private_informations.public_informations.type;
     #endif
+    emit message("player_informations->public_and_private_informations.public_informations.type: "+QString::number((quint8)player_informations->public_and_private_informations.public_informations.type));
     out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
     out << player_informations->public_and_private_informations.public_informations.speed;
     out << player_informations->public_and_private_informations.public_informations.clan;
