@@ -32,6 +32,9 @@ public:
     ~Api_client_virtual();
     void sendDatapackContent();
     void tryDisconnect();
+protected:
+    //general data
+    void defineMaxPlayers(const quint16 &);
 };
 }
 
