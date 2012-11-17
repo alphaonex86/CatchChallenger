@@ -92,6 +92,8 @@ private slots:
     void on_db_type_currentIndexChanged(int index);
     void updateDbGroupbox();
     void on_sendPlayerNumber_toggled(bool checked);
+    void on_db_sqlite_browse_clicked();
+
 signals:
     void record_latency();
 };

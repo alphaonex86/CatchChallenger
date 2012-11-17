@@ -630,9 +630,24 @@ void MainWindow::play(const QString &savegamesPath)
         delete internalServer;
         saveTime();
     }
-    internalServer=new Pokecraft::InternalServer(savegamesPath+"pokecraft.db.sqlite");
+    internalServer=new Pokecraft::InternalServer();
+    sendSettings(internalServer,savegamesPath);
     connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);
 
     ui->stackedWidget->setCurrentIndex(1);
     baseWindow->serverIsLoading();
+}
+
+void MainWindow::sendSettings(Pokecraft::InternalServer * internalServer,const QString &savegamesPath)
+{
+    Pokecraft::ServerSettings formatedServerSettings;
+
+    formatedServerSettings.max_players=1;
+    formatedServerSettings.commmonServerSettings.sendPlayerNumber = false;
+
+    formatedServerSettings.database.type=Pokecraft::ServerSettings::Database::DatabaseType_SQLite;
+    formatedServerSettings.database.sqlite.file=savegamesPath+"pokecraft.db.sqlite";
+    formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= Pokecraft::MapVisibilityAlgorithm_none;
+
+    internalServer->setSettings(formatedServerSettings);
 }

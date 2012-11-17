@@ -82,6 +82,11 @@ struct ServerSettings
             QString pass;
         };
         Mysql mysql;
+        struct SQLite
+        {
+            QString file;
+        };
+        SQLite sqlite;
     };
     Database database;
 
