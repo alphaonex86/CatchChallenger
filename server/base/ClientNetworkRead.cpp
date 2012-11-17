@@ -209,7 +209,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                 }
                 quint8 chatType;
                 in >> chatType;
-                if(chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
+                if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
                 {
                     emit error("chat type error: "+QString::number(chatType));
                     return;
