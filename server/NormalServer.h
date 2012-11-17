@@ -100,7 +100,6 @@ signals:
     void benchmark_result(const int &latency,const double &TX_speed,const double &RX_speed,const double &TX_size,const double &RX_size,const double &second);
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &map_to_send,const QString &map_file);
-    virtual void connect_the_last_client(Client * client);
 };
 }
 

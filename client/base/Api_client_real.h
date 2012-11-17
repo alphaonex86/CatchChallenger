@@ -42,6 +42,9 @@ public:
     void cleanDatapack(QString suffix);
 protected:
     void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+
+    //general data
+    void defineMaxPlayers(const quint16 &maxPlayers);
 private:
     QString host;
     quint16 port;

@@ -32,9 +32,8 @@ public:
     static QList<ClientBroadCast *> clientBroadCastList;
 public slots:
     //global slot
-    void receivePM(const QString &text,const QString &pseudo);
     void sendPM(const QString &text,const QString &pseudo);
-    void receiveChatText(const Chat_type &chatType,const QString &text,const QString &sender_pseudo,const Player_type &sender_player_type);
+    void receiveChatText(const Chat_type &chatType, const QString &text, const Player_internal_informations *sender_informations);
     void receiveSystemText(const QString &text,const bool &important=false);
     void sendChatText(const Chat_type &chatType,const QString &text);
     void receive_instant_player_number(qint32 connected_players);
