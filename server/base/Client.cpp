@@ -8,6 +8,8 @@ using namespace Pokecraft;
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
+#define OBJECTTOSTOP 7
+
 Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMapManagement)
 {
     this->socket			= socket;
@@ -46,7 +48,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     clientNetworkRead->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(2));
     clientHeavyLoad->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(3));
     localClientHandler->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(4));
-    clientLocalBroadcast->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
+    clientLocalBroadcast->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(5));
 
     //set variables
     clientBroadCast->setVariable(&player_informations);
@@ -207,7 +209,7 @@ void Client::disconnectClient()
 void Client::disconnectNextStep()
 {
     stopped_object++;
-    if(stopped_object==7)
+    if(stopped_object==OBJECTTOSTOP)
     {
         //remove the player
         if(player_informations.is_logged)
@@ -221,7 +223,7 @@ void Client::disconnectNextStep()
         emit askIfIsReadyToStop();
         return;
     }
-    if(stopped_object==14)
+    if(stopped_object==(OBJECTTOSTOP*2))
     {
         clientBroadCast->deleteLater();
         clientHeavyLoad->deleteLater();
@@ -242,7 +244,7 @@ void Client::disconnectNextStep()
         emit isReadyToDelete();
         return;
     }
-    if(stopped_object>12)
+    if(stopped_object>(OBJECTTOSTOP*2))
     {
         DebugClass::debugConsole(QString("remove count error"));
         return;

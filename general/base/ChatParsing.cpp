@@ -62,11 +62,10 @@ QString ChatParsing::new_chat_message(QString pseudo,Player_type player_type,Cha
         default:
         break;
     }
-    returned_html+=QString("%1: ").arg(pseudo);
     if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
         returned_html+=QString("%1").arg(text);
     else
-        returned_html+=QString("%1").arg(toSmilies(toHtmlEntities(text)));
+        returned_html+=QString("%1: %2").arg(pseudo).arg(toSmilies(toHtmlEntities(text)));
     returned_html+="</div>";
     return returned_html;
 }

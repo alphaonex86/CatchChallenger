@@ -256,7 +256,6 @@ void BaseWindow::new_chat_text(Chat_type chat_type,QString text,QString pseudo,P
 
 void BaseWindow::update_chat()
 {
-    qDebug() << QString("update_chat(): %1").arg(chat_list_player_pseudo.size());
     QString nameHtml;
     int index=0;
     while(index<chat_list_player_pseudo.size())
