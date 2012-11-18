@@ -21,6 +21,7 @@ public:
         QString description;
     };
     static QHash<quint32,item> items;
+    static QStringList maps;
     QPixmap defaultInventoryImage();
 protected:
     void run();
@@ -33,6 +34,7 @@ private:
     QPixmap mDefaultInventoryImage;
 private slots:
     void parseItems();
+    void parseMaps();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

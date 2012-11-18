@@ -202,14 +202,6 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
 
 void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
 {
-    #ifdef POKECRAFT_EXTRA_CHECK
-    if(map->rawMapFile.isEmpty())
-    {
-        loginIsWrong(query_id,"Internal error",QString("Raw map is wrong: %1").arg(map->map_file));
-        return;
-    }
-    #endif
-
     //load the variables
     GlobalData::serverPrivateVariables.connected_players_id_list << id;
     player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
@@ -227,6 +219,7 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
     else
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
     out << (quint64)player_informations->public_and_private_informations.cash;
+    out << (quint32)GlobalData::serverPrivateVariables.map_list.size();
     emit postReply(query_id,outputData);
 
     //send signals into the server

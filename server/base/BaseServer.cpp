@@ -76,10 +76,10 @@ void BaseServer::preload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=false;
 
+    preload_the_datapack();
     preload_the_map();
     preload_the_skin();
     preload_the_items();
-    preload_the_datapack();
 
     ClientHeavyLoad::simplifiedIdList.clear();
     int index=0;
@@ -97,7 +97,7 @@ void BaseServer::preload_the_map()
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
-    QStringList all_map_name;
+    QStringList full_map_name;
     QStringList returnList=FacilityLib::listFolder(GlobalData::serverPrivateVariables.datapack_mapPath);
 
     //load the map
@@ -106,98 +106,78 @@ void BaseServer::preload_the_map()
     QRegExp mapFilter("\\.tmx$");
     while(index<size)
     {
-        if(returnList.at(index).contains(mapFilter))
+        QString fileName=returnList.at(index);
+        fileName.replace('\\','/');
+        if(fileName.contains(mapFilter) && GlobalData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
         {
-            DebugClass::debugConsole(QString("load the map: %1").arg(returnList.at(index)));
-            if(map_temp.tryLoadMap(GlobalData::serverPrivateVariables.datapack_mapPath+returnList.at(index)))
+            DebugClass::debugConsole(QString("load the map: %1").arg(fileName));
+            full_map_name << fileName;
+            if(map_temp.tryLoadMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName))
             {
                 switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithm_simple:
-                        GlobalData::serverPrivateVariables.map_list[returnList.at(index)]=new Map_server_MapVisibility_simple;
+                        GlobalData::serverPrivateVariables.map_list[fileName]=new Map_server_MapVisibility_simple;
                     break;
                     case MapVisibilityAlgorithm_none:
                     default:
-                        GlobalData::serverPrivateVariables.map_list[returnList.at(index)]=new Map;
+                        GlobalData::serverPrivateVariables.map_list[fileName]=new Map;
                     break;
                 }
 
-                GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->width			= map_temp.map_to_send.width;
-                GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->height			= map_temp.map_to_send.height;
-                GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
-                GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
-                GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
-                GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->map_file			= returnList.at(index);
+                GlobalData::serverPrivateVariables.map_list[fileName]->width			= map_temp.map_to_send.width;
+                GlobalData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
+                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
+                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
+                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
+                GlobalData::serverPrivateVariables.map_list[fileName]->map_file			= fileName;
 
-                bool continueTheLoading=true;
-                continueTheLoading=GlobalData::serverPrivateVariables.map_list[returnList.at(index)]->loadInternalVariables();//load the rawUTF8, send in all case to have the start position
-                switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+                GlobalData::serverPrivateVariables.map_list[fileName];
+                map_name << fileName;
+
+                parseJustLoadedMap(map_temp.map_to_send,fileName);
+
+                Map_semi map_semi;
+                map_semi.map				= GlobalData::serverPrivateVariables.map_list[fileName];
+
+                if(!map_temp.map_to_send.border.top.fileName.isEmpty())
                 {
-                    case MapVisibilityAlgorithm_simple:
-                    break;
-                    case MapVisibilityAlgorithm_none:
-                    default:
-                    break;
+                    map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
                 }
-
-                if(continueTheLoading)
+                if(!map_temp.map_to_send.border.bottom.fileName.isEmpty())
                 {
-                    all_map_name << returnList.at(index);
-                    map_name << returnList.at(index);
-
-                    parseJustLoadedMap(map_temp.map_to_send,returnList.at(index));
-
-                    Map_semi map_semi;
-                    map_semi.map				= GlobalData::serverPrivateVariables.map_list[returnList.at(index)];
-
-                    if(!map_temp.map_to_send.border.top.fileName.isEmpty())
-                    {
-                        map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.top.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
-                        map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
-                    }
-                    if(!map_temp.map_to_send.border.bottom.fileName.isEmpty())
-                    {
-                        map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.bottom.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
-                        map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
-                    }
-                    if(!map_temp.map_to_send.border.left.fileName.isEmpty())
-                    {
-                        map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.left.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
-                        map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
-                    }
-                    if(!map_temp.map_to_send.border.right.fileName.isEmpty())
-                    {
-                        map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.border.right.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
-                        map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
-                    }
-
-                    int sub_index=0;
-                    while(sub_index<map_temp.map_to_send.teleport.size())
-                    {
-                        map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+returnList.at(index),map_temp.map_to_send.teleport.at(sub_index).map,GlobalData::serverPrivateVariables.datapack_mapPath);
-                        sub_index++;
-                    }
-
-                    map_semi.old_map=map_temp.map_to_send;
-
-                    semi_loaded_map << map_semi;
+                    map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
                 }
+                if(!map_temp.map_to_send.border.left.fileName.isEmpty())
+                {
+                    map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
+                }
+                if(!map_temp.map_to_send.border.right.fileName.isEmpty())
+                {
+                    map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
+                }
+
+                int sub_index=0;
+                while(sub_index<map_temp.map_to_send.teleport.size())
+                {
+                    map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    sub_index++;
+                }
+
+                map_semi.old_map=map_temp.map_to_send;
+
+                semi_loaded_map << map_semi;
             }
             else
-                DebugClass::debugConsole(QString("error at loading: %1, error: %2").arg(returnList.at(index)).arg(map_temp.errorString()));
+                DebugClass::debugConsole(QString("error at loading: %1, error: %2").arg(fileName).arg(map_temp.errorString()));
         }
         index++;
     }
-
-    //load the map index
-    all_map_name.sort();
-    size=all_map_name.size();
-    index=0;
-    while(index<size)
-    {
-        GlobalData::serverPrivateVariables.mapIdList[all_map_name.at(index)]=index;
-        index++;
-    }
+    full_map_name.sort();
 
     //resolv the border map name into their pointer
     size=semi_loaded_map.size();
@@ -388,6 +368,15 @@ void BaseServer::preload_the_map()
         index++;
     }
 
+    size=full_map_name.size();
+    index=0;
+    while(index<size)
+    {
+        if(GlobalData::serverPrivateVariables.map_list.contains(full_map_name.at(index)))
+            GlobalData::serverPrivateVariables.map_list[full_map_name.at(index)]->id=index;
+        index++;
+    }
+
     DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalData::serverPrivateVariables.map_list.size()));
 }
 
@@ -558,10 +547,10 @@ void BaseServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
-    unload_the_datapack();
     unload_the_items();
     unload_the_skin();
     unload_the_map();
+    unload_the_datapack();
 
     ClientHeavyLoad::simplifiedIdList.clear();
 }
@@ -583,7 +572,6 @@ void BaseServer::unload_the_map()
     }
     GlobalData::serverPrivateVariables.map_list.clear();
     GlobalData::serverPrivateVariables.botSpawn.clear();
-    GlobalData::serverPrivateVariables.mapIdList.clear();
 }
 
 void BaseServer::unload_the_skin()
