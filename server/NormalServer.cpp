@@ -172,7 +172,6 @@ void NormalServer::start_internal_server()
         emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
         return;
     }
-    DebugClass::debugConsole(QString("Connected to %1 at %2 (%3)").arg(GlobalData::serverPrivateVariables.db_type_string).arg(GlobalData::serverSettings.database.mysql.host).arg(GlobalData::serverPrivateVariables.db->isOpen()));
     preload_the_data();
     stat=Up;
     oneInstanceRunning=true;
