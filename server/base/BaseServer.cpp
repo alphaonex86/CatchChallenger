@@ -79,6 +79,7 @@ void BaseServer::preload_the_data()
     preload_the_map();
     preload_the_skin();
     preload_the_items();
+    preload_the_datapack();
 
     ClientHeavyLoad::simplifiedIdList.clear();
     int index=0;
@@ -96,6 +97,7 @@ void BaseServer::preload_the_map()
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
+    QStringList all_map_name;
     QStringList returnList=FacilityLib::listFolder(GlobalData::serverPrivateVariables.datapack_mapPath);
 
     //load the map
@@ -140,6 +142,7 @@ void BaseServer::preload_the_map()
 
                 if(continueTheLoading)
                 {
+                    all_map_name << returnList.at(index);
                     map_name << returnList.at(index);
 
                     parseJustLoadedMap(map_temp.map_to_send,returnList.at(index));
@@ -183,6 +186,16 @@ void BaseServer::preload_the_map()
             else
                 DebugClass::debugConsole(QString("error at loading: %1, error: %2").arg(returnList.at(index)).arg(map_temp.errorString()));
         }
+        index++;
+    }
+
+    //load the map index
+    all_map_name.sort();
+    size=all_map_name.size();
+    index=0;
+    while(index<size)
+    {
+        GlobalData::serverPrivateVariables.mapIdList[all_map_name.at(index)]=index;
         index++;
     }
 
@@ -449,6 +462,32 @@ void BaseServer::preload_the_items()
     DebugClass::debugConsole(QString("%1 item(s) loaded").arg(GlobalData::serverPrivateVariables.itemsId.size()));
 }
 
+void BaseServer::preload_the_datapack()
+{
+    QStringList returnList=FacilityLib::listFolder(GlobalData::serverPrivateVariables.datapack_basePath);
+    int index=0;
+    int size=returnList.size();
+    while(index<size)
+    {
+        QString fileName=returnList.at(index);
+        if(fileName.contains(GlobalData::serverPrivateVariables.datapack_rightFileName))
+        {
+            QFile file(GlobalData::serverPrivateVariables.datapack_basePath+returnList.at(index));
+            if(file.size()<=8*1024*1024)
+            {
+                if(file.open(QIODevice::ReadOnly))
+                {
+                    fileName.replace("\\","/");//remplace if is under windows server
+                    GlobalData::serverPrivateVariables.filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
+                    file.close();
+                }
+            }
+        }
+        index++;
+    }
+    DebugClass::debugConsole(QString("%1 file(s) list for datapack cached").arg(GlobalData::serverPrivateVariables.filesList.size()));
+}
+
 void BaseServer::preload_the_visibility_algorithm()
 {
     QHash<QString,Map *>::const_iterator i = GlobalData::serverPrivateVariables.map_list.constBegin();
@@ -519,6 +558,7 @@ void BaseServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
+    unload_the_datapack();
     unload_the_items();
     unload_the_skin();
     unload_the_map();
@@ -543,6 +583,7 @@ void BaseServer::unload_the_map()
     }
     GlobalData::serverPrivateVariables.map_list.clear();
     GlobalData::serverPrivateVariables.botSpawn.clear();
+    GlobalData::serverPrivateVariables.mapIdList.clear();
 }
 
 void BaseServer::unload_the_skin()
@@ -557,6 +598,11 @@ void BaseServer::unload_the_visibility_algorithm()
 void BaseServer::unload_the_items()
 {
     GlobalData::serverPrivateVariables.itemsId.clear();
+}
+
+void BaseServer::unload_the_datapack()
+{
+    GlobalData::serverPrivateVariables.filesList.clear();
 }
 
 void BaseServer::check_if_now_stopped()

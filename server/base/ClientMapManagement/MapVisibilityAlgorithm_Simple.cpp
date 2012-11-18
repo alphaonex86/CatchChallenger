@@ -30,6 +30,9 @@ map_management_movement MapVisibilityAlgorithm_Simple::moveClient_tempMov;
 
 MapVisibilityAlgorithm_Simple::MapVisibilityAlgorithm_Simple()
 {
+    #ifdef POKECRAFT_SERVER_MAP_DROP_BLOCKED_MOVE
+    previousMovedUnitBlocked=0;
+    #endif
 }
 
 MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
@@ -123,11 +126,7 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
             {
                 current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
                 if(likely(current_client!=this))
-                    #if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
                     current_client->moveAnotherClientWithMap(player_informations->public_and_private_informations.public_informations.simplifiedId,this,movedUnit,direction);
-                    #else
-                    current_client->moveAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,movedUnit,direction);
-                    #endif
                 index++;
             }
         }
@@ -212,10 +211,9 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const SIMPLIFIED_PLAYER_
 }
 #endif
 
-#if defined(POKECRAFT_SERVER_VISIBILITY_CLEAR) && defined(POKECRAFT_SERVER_MAP_DROP_OVER_MOVE)
 void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction)
 {
-
+    #ifdef POKECRAFT_SERVER_MAP_DROP_OVER_MOVE
     //already into over move
     if(to_send_insert.contains(player_id) || to_send_over_move.contains(player_id))
     {
@@ -238,18 +236,35 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
         #endif
         to_send_move.remove(player_id);
         to_send_over_move[player_id]=the_another_player;
+        return;
     }
-    else
+    #endif
+    #ifdef POKECRAFT_SERVER_MAP_DROP_STOP_MOVE
+    if(to_send_move.contains(player_id) && !to_send_move[player_id].isEmpty())
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
-        emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
-        #endif
-        moveClient_tempMov.movedUnit=movedUnit;
-        moveClient_tempMov.direction=direction;
-        to_send_move[player_id] << moveClient_tempMov;
+        switch(to_send_move[player_id].last().direction)
+        {
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
+                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+                emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, compressed move").arg(player_id).arg(to_send_move[player_id].last().movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+                #endif
+                to_send_move[player_id].last().direction=direction;
+            return;
+            default:
+            break;
+        }
     }
+    #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+    emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, normal move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+    #endif
+    moveClient_tempMov.movedUnit=movedUnit;
+    moveClient_tempMov.direction=direction;
+    to_send_move[player_id] << moveClient_tempMov;
 }
-#endif
 
 #ifdef POKECRAFT_SERVER_VISIBILITY_CLEAR
 //remove the move/insert
@@ -505,7 +520,7 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
 {
     mapHaveChanged=false;
-    if(!MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+    if(!MoveOnTheMap::canGoTo(direction,*map,x,y,false))//check of colision disabled because do into LocalClientHandler
         return false;
     old_map=map;
     new_map=map;
@@ -542,8 +557,88 @@ void MapVisibilityAlgorithm_Simple::put_on_the_map(Map *map,const /*COORD_TYPE*/
 
 bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
+    //do on server part, because the client send when is blocked to sync the position
+    #ifdef POKECRAFT_SERVER_MAP_DROP_BLOCKED_MOVE
+    if(previousMovedUnitBlocked>0)
+    {
+        if(previousMovedUnit==0)
+        {
+            //send the move to the other client
+            moveClient(previousMovedUnitBlocked,direction);
+            previousMovedUnitBlocked=0;
+        }
+        else
+        {
+            emit error(QString("previousMovedUnitBlocked>0 but previousMovedUnit!=0"));
+            return false;
+        }
+    }
+    Direction temp_last_direction=last_direction;
+    switch(last_direction)
+    {
+        case Direction_move_at_top:
+            //move the player on the server map
+            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+                return false;
+            if(direction==Direction_look_at_top && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
+            {
+                //blocked into the wall
+                previousMovedUnitBlocked=previousMovedUnit;
+                return true;
+            }
+        break;
+        case Direction_move_at_right:
+            //move the player on the server map
+            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+                return false;
+            if(direction==Direction_look_at_right && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
+            {
+                //blocked into the wall
+                previousMovedUnitBlocked=previousMovedUnit;
+                return true;
+            }
+        break;
+        case Direction_move_at_bottom:
+            //move the player on the server map
+            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+                return false;
+            if(direction==Direction_look_at_bottom && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
+            {
+                //blocked into the wall
+                previousMovedUnitBlocked=previousMovedUnit;
+                return true;
+            }
+        break;
+        case Direction_move_at_left:
+            //move the player on the server map
+            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+                return false;
+            if(direction==Direction_look_at_left && !MoveOnTheMap::canGoTo(temp_last_direction,*map,x,y,true))
+            {
+                //blocked into the wall
+                previousMovedUnitBlocked=previousMovedUnit;
+                return true;
+            }
+        break;
+        case Direction_move_at_top:
+        case Direction_move_at_right:
+        case Direction_move_at_bottom:
+        case Direction_move_at_left:
+            //move the player on the server map
+            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+                return false;
+        break;
+        default:
+            emit error(QString("moveThePlayer(): direction not managed"));
+            return false;
+        break;
+    }
+    #else
+    //move the player on the server map
     if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
         return false;
+    #endif
+    //send the move to the other client
     moveClient(previousMovedUnit,direction);
     return true;
 }
