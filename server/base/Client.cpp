@@ -38,7 +38,9 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     remote_ip=socket->peerAddress().toString();
     port=socket->peerPort();
     connect(socket,	SIGNAL(error(QAbstractSocket::SocketError)),	this, SLOT(connectionError(QAbstractSocket::SocketError)));
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(QString("Connected client: %1, %2").arg(remote_ip).arg(port));
+    #endif
     connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
 
     ask_is_ready_to_stop=false;

@@ -12,6 +12,7 @@ InternalServer::InternalServer() :
     GlobalData::serverPrivateVariables.eventThreaderList << &thread;//network read (2)
     GlobalData::serverPrivateVariables.eventThreaderList << &thread;//heavy load (3)
     GlobalData::serverPrivateVariables.eventThreaderList << &thread;//local calcule (4)
+    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//local broad cast (5)
 
     emit need_be_started();
 }
