@@ -366,11 +366,13 @@ void ClientHeavyLoad::askIfIsReadyToStop()
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
 {
+    QHash<QString,quint64> filesList=GlobalData::serverPrivateVariables.filesList;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     int loopIndex=0;
     int loop_size=files.size();
+    //validate, remove or update the file actualy on the client
     while(loopIndex<loop_size)
     {
         QString fileName=files.at(loopIndex);
@@ -385,41 +387,45 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             emit error(QString("start with wrong string: %1").arg(fileName));
             return;
         }
-        if(!fileName.contains(GlobalData::serverPrivateVariables.datapack_rightFileName))
-        {
-            //emit error(QString("file have not match the regex: %1").arg(fileName));
-            //return;
-            out << (quint8)0x02;
-        }
+        if(!filesList.contains(fileName))
+            out << (quint8)0x02;//to delete
+        //the file on the client is already updated
         else
         {
-            if(sendFileIfNeeded(GlobalData::serverPrivateVariables.datapack_basePath+fileName,fileName,mtime,true))
-                out << (quint8)0x01;
+            if(filesList[fileName]==mtime)
+                out << (quint8)0x01;//found
             else
-                out << (quint8)0x02;
+            {
+                if(sendFile(fileName,filesList[fileName]))
+                    out << (quint8)0x01;//found but updated
+                else
+                {
+                    //disconnect to prevent desync of datapack
+                    emit error("Unable to open datapack file, disconnect to prevent desync of datapack");
+                    return;
+                }
+            }
+            filesList.remove(fileName);
         }
         loopIndex++;
     }
     //send not in the list
-    listDatapack("",files);
+    QHashIterator<QString,quint64> i(filesList);
+    while (i.hasNext()) {
+        i.next();
+        sendFile(i.key(),i.value());
+    }
     emit postReply(query_id,qCompress(outputData,9));
 }
 
-/** \brief send file if new or need be updated
- * \return return false if need be removed */
-bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fileName,const quint64 &mtime,const bool &checkMtime)
+bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
 {
-    QFile file(filePath);
-    if(file.size()>8*1024*1024)
+    if(fileName.size()>255 || fileName.size()==0)
         return false;
-    quint64 localMtime=QFileInfo(file).lastModified().toTime_t();
-    //the file on the client is already updated
-    if(checkMtime && localMtime==mtime)
-        return true;
-    //the file on the client not exists on the server, then remove it
-    if(!file.exists())
+    QByteArray fileNameRaw=FacilityLib::toUTF8(fileName);
+    if(fileNameRaw.size()>255 || fileNameRaw.size()==0)
         return false;
-    //the file need be downloaded because it's new
+    QFile file(GlobalData::serverPrivateVariables.datapack_basePath+fileName);
     if(file.open(QIODevice::ReadOnly))
     {
         QByteArray content=file.readAll();
@@ -429,54 +435,16 @@ bool ClientHeavyLoad::sendFileIfNeeded(const QString &filePath,const QString &fi
                  .arg(mtime)
                  .arg(localMtime)
         );*/
-        bool returnVal=sendFile(fileName,content,localMtime);
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << mtime;
+        emit sendPacket(0xC2,0x0003,fileNameRaw+outputData+content);
         file.close();
-        return returnVal;
+        return true;
     }
     else
-    {
-        emit message("Unable to open: "+filePath+", error: "+file.errorString());
         return false;
-    }
-}
-
-void ClientHeavyLoad::listDatapack(const QString &suffix,const QStringList &files)
-{
-    //do source check
-    QDir finalDatapackFolder(GlobalData::serverPrivateVariables.datapack_basePath+suffix);
-    QString fileName;
-    QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
-    int sizeEntryList=entryList.size();
-    for (int index=0;index<sizeEntryList;++index)
-    {
-        QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
-            listDatapack(suffix+fileInfo.fileName()+"/",files);//put unix separator because it's transformed into that's under windows too
-        else
-        {
-            fileName=suffix+fileInfo.fileName();
-            if(fileName.contains(GlobalData::serverPrivateVariables.datapack_rightFileName))
-            {
-                if(!files.contains(fileName))
-                    sendFileIfNeeded(GlobalData::serverPrivateVariables.datapack_basePath+fileName,fileName,0,false);
-            }
-        }
-    }
-}
-
-bool ClientHeavyLoad::sendFile(const QString &fileName,const QByteArray &content,const quint64 &mtime)
-{
-    if(fileName.size()>255 || fileName.size()==0)
-        return false;
-    QByteArray fileNameRaw=FacilityLib::toUTF8(fileName);
-    if(fileNameRaw.size()>255 || fileNameRaw.size()==0)
-        return false;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << mtime;
-    emit sendPacket(0xC2,0x0003,fileNameRaw+outputData+content);
-    return true;
 }
 
 QString ClientHeavyLoad::SQL_text_quote(QString text)

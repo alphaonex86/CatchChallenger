@@ -41,14 +41,10 @@ public slots:
     void askIfIsReadyToStop();
 private:
     // ------------------------------
-    bool sendFile(const QString &fileName, const QByteArray &content, const quint64 &mtime);
+    bool sendFile(const QString &fileName, const quint64 &mtime);
     QString SQL_text_quote(QString text);
     // ------------------------------
     Player_internal_informations *player_informations;
-    /** \brief send file if new or need be updated
-     * \return return false if need be removed */
-    bool sendFileIfNeeded(const QString &filePath, const QString &fileName, const quint64 &mtime, const bool &checkMtime=true);
-    void listDatapack(const QString &suffix,const QStringList &files);
     bool loadTheRawUTF8String();
     void loginIsRight(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
     void loginIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage);
