@@ -333,8 +333,12 @@ void MapVisibilityAlgorithm_Simple::send_insert()
     //////////////////////////// insert //////////////////////////
     /* can be only this map with this algo, then 1 map */
     out << (quint8)0x01;
-    purgeBuffer_outputData+=map->rawMapFile;
-    out.device()->seek(out.device()->pos()+map->rawMapFile.size());
+    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        out << (quint8)map->id;
+    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        out << (quint16)map->id;
+    else
+        out << (quint32)map->id;
     if(GlobalData::serverSettings.max_players<=255)
         out << (quint8)to_send_insert.size();
     else
@@ -564,7 +568,10 @@ bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUni
         if(previousMovedUnit==0)
         {
             if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+            {
+                previousMovedUnitBlocked=0;
                 return false;
+            }
             //send the move to the other client
             moveClient(previousMovedUnitBlocked,direction);
             previousMovedUnitBlocked=0;

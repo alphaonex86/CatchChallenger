@@ -134,7 +134,6 @@ struct ServerPrivateVariables
     QHash<QString,quint8> skinList;
 
     //map
-    QHash<QString,quint32> mapIdList;//keep separate to not load the Map* on the client for all map
     QHash<QString,Map *> map_list;
     QTimer timer_to_send_insert_move_remove;
     qint8 sizeofInsertRequest;

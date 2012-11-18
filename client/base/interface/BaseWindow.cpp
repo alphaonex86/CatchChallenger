@@ -46,6 +46,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     //connect the datapack loader
     connect(&datapackLoader,SIGNAL(datapackParsed()),this,SLOT(datapackParsed()),Qt::QueuedConnection);
     connect(this,SIGNAL(parseDatapack(QString)),&datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
+    connect(&datapackLoader,SIGNAL(datapackParsed()),mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -366,10 +367,8 @@ void BaseWindow::haveTheDatapack()
     if(haveDatapack)
         return;
     haveDatapack=true;
-    updatePlayerImage();
 
     emit parseDatapack(client->get_datapack_base_name());
-    updateConnectingStatus();
 }
 
 void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
@@ -379,6 +378,7 @@ void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
     haveInventory=true;
     updateConnectingStatus();
     load_inventory();
+    updateConnectingStatus();
 }
 
 void BaseWindow::load_inventory()
@@ -416,6 +416,7 @@ void BaseWindow::datapackParsed()
     datapackIsParsed=true;
     load_inventory();
     updateConnectingStatus();
+    updatePlayerImage();
 }
 
 void BaseWindow::updateConnectingStatus()

@@ -3,6 +3,7 @@
 
 #include "../../client/base/render/MapVisualiserPlayer.h"
 #include "../../client/base/Api_protocol.h"
+#include "DatapackClientLoader.h"
 
 #include <QString>
 #include <QList>
@@ -20,18 +21,19 @@ public:
     void setBotNumber(quint16 botNumber);
 public slots:
     //map move
-    void insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction);
-    void move_player(quint16 id,QList<QPair<quint8,Pokecraft::Direction> > movement);
-    void remove_player(quint16 id);
-    void reinsert_player(quint16 id,quint8 x,quint8 y,Pokecraft::Direction direction);
-    void reinsert_player(quint16 id,QString mapName,quint8 x,quint8 y,Pokecraft::Direction direction);
+    void insert_player(const Pokecraft::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
+    void move_player(const quint16 &id,const QList<QPair<quint8,Pokecraft::Direction> > &movement);
+    void remove_player(const quint16 &id);
+    void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction);
+    void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction);
     void dropAllPlayerOnTheMap();
 
     //player info
-    void have_current_player_info(Pokecraft::Player_private_and_public_informations informations);
+    void have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations);
 
     //the datapack
     void setDatapackPath(const QString &path);
+    void datapackParsed();
 private:
     //the other player
     struct OtherPlayer
@@ -56,6 +58,7 @@ private:
     QTimer timerBotMove;
     QTimer timerBotManagement;
     Pokecraft::Api_protocol *client;
+    DatapackClientLoader datapackLoader;
 
     //current player
     Pokecraft::Player_private_and_public_informations player_informations;
@@ -70,7 +73,7 @@ private:
     struct DelayedInsert
     {
         Pokecraft::Player_public_informations player;
-        QString mapName;
+        quint32 mapId;
         quint16 x;
         quint16 y;
         Pokecraft::Direction direction;
@@ -94,7 +97,6 @@ private slots:
     void unloadPlayerFromCurrentMap();
 
     bool loadMap(const QString &fileName,const quint8 &x,const quint8 &y);
-    void haveTheDatapack();
 };
 
 #endif // MAPCONTROLLER_H

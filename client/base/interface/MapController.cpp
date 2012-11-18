@@ -32,9 +32,8 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
 
     //connect the map controler
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
-    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,QString,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()),Qt::QueuedConnection);
 }
 
 MapController::~MapController()
@@ -402,13 +401,13 @@ bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8
 }
 
 //map move
-void MapController::insert_player(Pokecraft::Player_public_informations player,QString mapName,quint16 x,quint16 y,Pokecraft::Direction direction)
+void MapController::insert_player(const Pokecraft::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         DelayedInsert tempItem;
         tempItem.player=player;
-        tempItem.mapName=mapName;
+        tempItem.mapId=mapId;
         tempItem.x=x;
         tempItem.y=y;
         tempItem.direction=direction;
@@ -454,11 +453,11 @@ void MapController::insert_player(Pokecraft::Player_public_informations player,Q
             return;
         }
 
-        loadMap(datapackPath+DATAPACK_BASE_PATH_MAP+mapName,x,y);
+        loadMap(datapackPath+DATAPACK_BASE_PATH_MAP+datapackLoader.maps[mapId],x,y);
     }
 }
 
-void MapController::move_player(quint16 id,QList<QPair<quint8,Pokecraft::Direction> > movement)
+void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pokecraft::Direction> > &movement)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -470,7 +469,7 @@ void MapController::move_player(quint16 id,QList<QPair<quint8,Pokecraft::Directi
     }
 }
 
-void MapController::remove_player(quint16 id)
+void MapController::remove_player(const quint16 &id)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -479,11 +478,11 @@ void MapController::remove_player(quint16 id)
     }
 }
 
-void MapController::reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)
+void MapController::reinsert_player(const quint16 &,const quint8 &,const quint8 &,const Pokecraft::Direction &)
 {
 }
 
-void MapController::reinsert_player(quint16,QString,quint8,quint8,Pokecraft::Direction)
+void MapController::reinsert_player(const quint16 &, const quint32 &, const quint8 &, const quint8 &, const Pokecraft::Direction &)
 {
 }
 
@@ -492,7 +491,7 @@ void MapController::dropAllPlayerOnTheMap()
 }
 
 //player info
-void MapController::have_current_player_info(Pokecraft::Player_private_and_public_informations informations)
+void MapController::have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations)
 {
     if(player_informations_is_set)
     {
@@ -513,7 +512,7 @@ void MapController::setDatapackPath(const QString &path)
     mLastLocation.clear();
 }
 
-void MapController::haveTheDatapack()
+void MapController::datapackParsed()
 {
     if(mHaveTheDatapack)
         return;
@@ -527,7 +526,7 @@ void MapController::haveTheDatapack()
     index=0;
     while(index<delayedInsert.size())
     {
-        insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapName,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
+        insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapId,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
         index++;
     }
     index=0;

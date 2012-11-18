@@ -54,28 +54,39 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             int index=0;
             while(index<mapListSize)
             {
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                quint32 mapId;
+                if(number_of_map<=255)
                 {
-                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-                    return;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint8 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
                 }
-                quint8 mapNameSize;
-                in >> mapNameSize;
-                if((in.device()->size()-in.device()->pos())<(int)mapNameSize)
+                else if(number_of_map<=65535)
                 {
-                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-                    return;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint16 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
                 }
-                QByteArray rawText=data.mid(in.device()->pos(),mapNameSize);
-                QString mapFile=QString::fromUtf8(rawText.data(),rawText.size());
-                if(!mapFile.endsWith(".tmx"))
-                    mapFile+=".tmx";
-                in.device()->seek(in.device()->pos()+rawText.size());
-                if(mapFile.isEmpty())
+                else
                 {
-                    parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed for map: %1, rawData: %2").arg(mainCodeType).arg(QString(rawText.toHex())));
-                    return;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    in >> mapId;
                 }
+
                 quint16 playerSizeList;
                 if(max_player<=255)
                 {
@@ -212,7 +223,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                         player_informations.public_informations=public_informations;
                         emit have_current_player_info(player_informations);
                     }
-                    emit insert_player(public_informations,mapFile,x,y,direction);
+                    emit insert_player(public_informations,mapId,x,y,direction);
                     index_sub_loop++;
                 }
                 index++;
@@ -521,25 +532,37 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
             int index=0;
             while(index<mapListSize)
             {
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                quint32 mapId;
+                if(number_of_map<=255)
                 {
-                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-                    return;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint8 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
                 }
-                quint8 mapNameSize;
-                in >> mapNameSize;
-                if((in.device()->size()-in.device()->pos())<(int)mapNameSize)
+                else if(number_of_map<=65535)
                 {
-                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
-                    return;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint16 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
                 }
-                QByteArray rawText=data.mid(in.device()->pos(),mapNameSize);
-                QString mapFile=QString::fromUtf8(rawText.data(),rawText.size());
-                in.device()->seek(in.device()->pos()+rawText.size());
-                if(mapFile.isEmpty())
+                else
                 {
-                    parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: %1").arg(mainCodeType));
-                    return;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    in >> mapId;
                 }
                 quint16 playerSizeList;
                 if(max_player<=255)
@@ -613,7 +636,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     }
                     Direction direction=(Direction)directionInt;
 
-                    emit reinsert_player(simplifiedId,mapFile,x,y,direction);
+                    emit reinsert_player(simplifiedId,mapId,x,y,direction);
                     index_sub_loop++;
                 }
                 index++;
@@ -1010,6 +1033,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             return;
                         }
                         in >> player_informations.cash;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+                            return;
+                        }
+                        in >> number_of_map;
 
                         is_logged=true;
                         DebugClass::debugConsole(QString("is logged with id: %1, cash: %2").arg(player_informations.public_informations.simplifiedId).arg(player_informations.cash));
@@ -1170,7 +1199,7 @@ void Api_protocol::resetAll()
     is_logged=false;
     have_send_protocol=false;
     max_player=65535;
-    max_player=65535;
+    number_of_map=0;
 
     //to send trame
     lastQueryNumber=1;
