@@ -1,5 +1,6 @@
 #include "DatapackClientLoader.h"
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/FacilityLib.h"
 
 #include <QDomElement>
 #include <QDomDocument>
@@ -8,6 +9,7 @@
 #include <QDebug>
 
 QHash<quint32,DatapackClientLoader::item> DatapackClientLoader::items;
+QStringList DatapackClientLoader::maps;
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -29,6 +31,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 {
     this->datapackPath=datapackPath;
     parseItems();
+    parseMaps();
 
     emit datapackParsed();
 }
@@ -142,8 +145,29 @@ void DatapackClientLoader::parseItems()
     qDebug() << QString("%1 item(s) loaded").arg(DatapackClientLoader::items.size());
 }
 
+void DatapackClientLoader::parseMaps()
+{
+    QStringList returnList=Pokecraft::FacilityLib::listFolder(datapackPath+DATAPACK_BASE_PATH_MAP);
+
+    //load the map
+    int size=returnList.size();
+    int index=0;
+    QRegExp mapFilter("\\.tmx$");
+    while(index<size)
+    {
+        QString fileName=returnList.at(index);
+        if(fileName.contains(mapFilter))
+            maps << fileName;
+        index++;
+    }
+    maps.sort();
+
+    qDebug() << QString("%1 map(s) loaded").arg(maps.size());
+}
+
 void DatapackClientLoader::resetAll()
 {
     datapackPath.clear();
     items.clear();
+    maps.clear();
 }

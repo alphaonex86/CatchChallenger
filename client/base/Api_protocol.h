@@ -71,6 +71,7 @@ protected:
 
     //stored local player info
     quint16 max_player;
+    quint32 number_of_map;
     Player_private_and_public_informations player_informations;
     QString pseudo;
 
@@ -94,11 +95,11 @@ signals:
     void random_seeds(const QByteArray &data);
 
     //map move
-    void insert_player(const Pokecraft::Player_public_informations &player,const QString &mapName,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
+    void insert_player(const Pokecraft::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
     void move_player(const quint16 &id,const QList<QPair<quint8,Direction> > &movement);
     void remove_player(const quint16 &id);
     void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction);
-    void reinsert_player(const quint16 &id,const QString &mapName,const quint8 &x,const quint8 y,const Pokecraft::Direction &direction);
+    void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 y,const Pokecraft::Direction &direction);
     void dropAllPlayerOnTheMap();
 
     //chat

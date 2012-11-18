@@ -137,9 +137,13 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
 
-    outputData[0]=0x01;
-    outputData+=map->rawMapFile;
-    out.device()->seek(out.device()->size());
+    out << (quint8)0x01;
+    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        out << (quint8)map->id;
+    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        out << (quint16)map->id;
+    else
+        out << (quint32)map->id;
     if(GlobalData::serverSettings.max_players<=255)
     {
         out << (quint8)0x01;
