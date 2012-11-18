@@ -643,6 +643,7 @@ void MainWindow::sendSettings(Pokecraft::InternalServer * internalServer,const Q
     Pokecraft::ServerSettings formatedServerSettings;
 
     formatedServerSettings.max_players=1;
+    formatedServerSettings.tolerantMode=false;
     formatedServerSettings.commmonServerSettings.sendPlayerNumber = false;
 
     formatedServerSettings.database.type=Pokecraft::ServerSettings::Database::DatabaseType_SQLite;

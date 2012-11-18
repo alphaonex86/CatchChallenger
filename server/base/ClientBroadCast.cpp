@@ -171,7 +171,6 @@ void ClientBroadCast::send_player_informations()
 
 void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 {
-    emit message(QString("connected_players: %1").arg(connected_players));
     if(this->connected_players==connected_players)
         return;
     this->connected_players=connected_players;
@@ -182,7 +181,6 @@ void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
         out << (qint8)connected_players;
     else
         out << (qint16)connected_players;
-    emit message(QString("send connected_players: %1").arg(connected_players));
     emit sendPacket(0xC3,outputData);
 }
 

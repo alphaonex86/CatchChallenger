@@ -715,7 +715,6 @@ void BaseServer::newConnection()
 void BaseServer::connect_the_last_client(Client * client)
 {
     client_list << client;
-    DebugClass::debugConsole("BaseServer::connect_the_last_client()");
     connect(client,SIGNAL(isReadyToDelete()),this,SLOT(removeOneClient()),Qt::QueuedConnection);
 }
 
