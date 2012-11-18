@@ -93,7 +93,7 @@ private slots:
     void updateDbGroupbox();
     void on_sendPlayerNumber_toggled(bool checked);
     void on_db_sqlite_browse_clicked();
-
+    void on_tolerantMode_toggled(bool checked);
 signals:
     void record_latency();
 };

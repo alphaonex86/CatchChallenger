@@ -10,8 +10,8 @@ using namespace Pokecraft;
 
 //need host + port here to have datapack base
 
-Api_client_real::Api_client_real(ConnectedSocket *socket) :
-    Api_protocol(socket)
+Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
+    Api_protocol(socket,tolerantMode)
 {
     host="localhost";
     port=42489;
@@ -49,7 +49,7 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
                     in.setVersion(QDataStream::Qt_4_4);
                     if((in.device()->size()-in.device()->pos())!=((int)sizeof(quint8))*datapackFilesList.size())
                     {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size to return file list"));
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size to return file list"));
                         return;
                     }
                     quint8 reply_code;
@@ -88,7 +88,7 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
     if((in.device()->size()-in.device()->pos())!=0)
     {
         QByteArray data_remaining=data.right(data.size()-in.device()->pos());
-        emit newError(tr("Procotol wrong or corrupted"),QString("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data_remaining.toHex())));
+        parseError(tr("Procotol wrong or corrupted"),QString("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data_remaining.toHex())));
         return;
     }
 }

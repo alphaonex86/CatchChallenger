@@ -26,7 +26,7 @@ class Api_protocol : public ProtocolParsingInput, public MoveOnTheMap
 {
     Q_OBJECT
 public:
-    explicit Api_protocol(ConnectedSocket *socket);
+    explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
 
     //protocol command
@@ -48,6 +48,7 @@ private:
     //status for the query
     bool is_logged;
     bool have_send_protocol;
+    bool tolerantMode;
 
     //to send trame
     quint8 lastQueryNumber;
@@ -61,6 +62,9 @@ protected:
     //send reply
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
     virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+
+    //error
+    void parseError(const QString &userMessage, const QString &errorString);
 
     //general data
     virtual void defineMaxPlayers(const quint16 &maxPlayers) = 0;
