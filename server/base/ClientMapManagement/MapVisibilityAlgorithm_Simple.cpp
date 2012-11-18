@@ -563,9 +563,12 @@ bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUni
     {
         if(previousMovedUnit==0)
         {
+            if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
+                return false;
             //send the move to the other client
             moveClient(previousMovedUnitBlocked,direction);
             previousMovedUnitBlocked=0;
+            return true;
         }
         else
         {
