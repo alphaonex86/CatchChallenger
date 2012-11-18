@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -1074,7 +1074,7 @@ border-image: url(:/images/empty.png);
              <rect>
               <x>150</x>
               <y>530</y>
-              <width>641</width>
+              <width>611</width>
               <height>51</height>
              </rect>
             </property>
@@ -1152,8 +1152,8 @@ border-image: url(:/images/empty.png);
              <rect>
               <x>150</x>
               <y>510</y>
-              <width>57</width>
-              <height>14</height>
+              <width>641</width>
+              <height>16</height>
              </rect>
             </property>
             <property name="font">
