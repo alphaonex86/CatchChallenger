@@ -19,13 +19,11 @@ PlayerUpdater::PlayerUpdater()
 
 void PlayerUpdater::addConnectedPlayer()
 {
-    DebugClass::debugConsole("PlayerUpdater::addConnectedPlayer()");
     emit send_addConnectedPlayer();
 }
 
 void PlayerUpdater::removeConnectedPlayer()
 {
-    DebugClass::debugConsole("PlayerUpdater::removeConnectedPlayer()");
     emit send_removeConnectedPlayer();
 }
 

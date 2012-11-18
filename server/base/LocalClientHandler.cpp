@@ -123,9 +123,6 @@ void LocalClientHandler::extraStop()
  * the overhead for the network it just at the connexion */
 void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("ClientLocalCalcule put_on_the_map(): map: %1, x: %2, y: %3").arg(map->map_file).arg(x).arg(y));
-    #endif
     MapBasicMove::put_on_the_map(map,x,y,orientation);
     at_start_orientation=orientation;
     at_start_map_name=map;
@@ -156,10 +153,9 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     }
     out << x;
     out << y;
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     qDebug() << "put_on_the_map merge" << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type) << "=" << (quint8)orientation << "|" << (quint8)player_informations->public_and_private_informations.public_informations.type;
     #endif
-    emit message("player_informations->public_and_private_informations.public_informations.type: "+QString::number((quint8)player_informations->public_and_private_informations.public_informations.type));
     out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
     out << player_informations->public_and_private_informations.public_informations.speed;
     out << player_informations->public_and_private_informations.public_informations.clan;
@@ -190,7 +186,7 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     Map* map=this->map;
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
     {
-        emit error(QString("ClientLocalCalcule::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        emit error(QString("LocalClientHandler::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
     MoveOnTheMap::move(direction,&map,&x,&y);
