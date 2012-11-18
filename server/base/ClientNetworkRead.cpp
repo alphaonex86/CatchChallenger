@@ -88,7 +88,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                 }
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
-                    emit error("wrong size");
+                    parseError("wrong size");
                     return;
                 }
                 if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
@@ -97,7 +97,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                     QString login;
                     in >> login;
                     if((data.size()-in.device()->pos())!=20)
-                        emit error(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainCodeType).arg(data.size()-in.device()->pos()));
+                        parseError(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainCodeType).arg(data.size()-in.device()->pos()));
                     else if(is_logging_in_progess)
                     {
                         out << (quint8)1;
@@ -121,17 +121,17 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                 }
             break;
             default:
-                emit error("wrong data before login with mainIdent: "+QString::number(mainCodeType)+", subIdent: "+QString::number(subCodeType));
+                parseError("wrong data before login with mainIdent: "+QString::number(mainCodeType)+", subIdent: "+QString::number(subCodeType));
             break;
         }
         break;
         default:
-            emit error("wrong data before login with mainIdent: "+QString::number(mainCodeType));
+            parseError("wrong data before login with mainIdent: "+QString::number(mainCodeType));
         break;
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        emit error(QString("remaining data: parseInputBeforeLogin(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("remaining data: parseInputBeforeLogin(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
 }
@@ -140,7 +140,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
 {
     if(!player_informations->is_logged)
     {
-        emit error(QString("is not logged, parseMessage(%1)").arg(mainCodeType));
+        parseError(QString("is not logged, parseMessage(%1)").arg(mainCodeType));
         return;
     }
     //do the work here
@@ -154,26 +154,26 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
         case 0x40:
         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
         {
-            emit error("Wrong size in move packet");
+            parseError("Wrong size in move packet");
             return;
         }
         in >> previousMovedUnit;
         in >> direction;
         if(direction<1 || direction>8)
         {
-            emit error(QString("Bad direction number: %1").arg(direction));
+            parseError(QString("Bad direction number: %1").arg(direction));
             return;
         }
         emit moveThePlayer(previousMovedUnit,(Direction)direction);
         break;
         default:
-            emit error("unknow main ident: "+QString::number(mainCodeType));
+            parseError("unknow main ident: "+QString::number(mainCodeType));
             return;
         break;
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        emit error(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
 }
@@ -182,7 +182,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 {
     if(!player_informations->is_logged)
     {
-        emit error(QString("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
+        parseError(QString("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
     }
     //do the work here
@@ -204,14 +204,14 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
             {
                 if((data.size()-in.device()->pos())<=((int)sizeof(quint8)))
                 {
-                    emit error("wrong remaining size for chat");
+                    parseError("wrong remaining size for chat");
                     return;
                 }
                 quint8 chatType;
                 in >> chatType;
                 if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_pm)
                 {
-                    emit error("chat type error: "+QString::number(chatType));
+                    parseError("chat type error: "+QString::number(chatType));
                     return;
                 }
                 if(chatType==Chat_type_pm)
@@ -318,19 +318,19 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
             }
             break;
             default:
-                emit error(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            emit error("unknow main ident: "+QString::number(mainCodeType));
+            parseError("unknow main ident: "+QString::number(mainCodeType));
             return;
         break;
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        emit error(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
 }
@@ -341,11 +341,11 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &quer
     Q_UNUSED(data);
     if(!player_informations->is_logged)
     {
-        emit error(QString("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseError(QString("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
     //do the work here
-    emit error(QString("no query with only the main code for now, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
+    parseError(QString("no query with only the main code for now, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
     return;
 }
 
@@ -377,7 +377,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                     in.setVersion(QDataStream::Qt_4_4);
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                     {
-                        emit error(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                         return;
                     }
                     quint32 number_of_file;
@@ -391,14 +391,14 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                     {
                         if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                         {
-                            emit error(QString("error at datapack file list query"));
+                            parseError(QString("error at datapack file list query"));
                             return;
                         }
                         in >> tempFileName;
                         files << tempFileName;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
                         {
-                            emit error(QString("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
+                            parseError(QString("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
                                 .arg(mainCodeType)
                                 .arg(subCodeType)
                                 .arg(in.device()->size()-in.device()->pos())
@@ -412,7 +412,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                     }
                     if(in.device()->size()!=in.device()->pos())
                     {
-                        emit error(QString("remaining data: %1, subIdent: %2").arg(mainCodeType).arg(subCodeType));
+                        parseError(QString("remaining data: %1, subIdent: %2").arg(mainCodeType).arg(subCodeType));
                         return;
                     }
                     emit datapackList(queryNumber,files,timestamps);
@@ -421,19 +421,19 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
             }
             break;
             default:
-                emit error(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            emit error("unknow main ident: "+QString::number(mainCodeType));
+            parseError("unknow main ident: "+QString::number(mainCodeType));
             return;
         break;
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        emit error(QString("remaining data: parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("remaining data: parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
 }
@@ -444,10 +444,10 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &
     Q_UNUSED(data);
     if(!player_informations->is_logged)
     {
-        emit error(QString("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
+        parseError(QString("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
     }
-    emit error(QString("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
+    parseError(QString("The server for now not ask anything: %1, %2").arg(mainCodeType).arg(queryNumber));
     return;
 }
 
@@ -456,11 +456,19 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 
     Q_UNUSED(data);
     if(!player_informations->is_logged)
     {
-        emit error(QString("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
-    emit error(QString("The server for now not ask anything: %1, %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    parseError(QString("The server for now not ask anything: %1, %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
     return;
+}
+
+void ClientNetworkRead::parseError(const QString &errorString)
+{
+    if(GlobalData::serverSettings.tolerantMode)
+        emit message(QString("Packed dropped, due to: %1").arg(errorString));
+    else
+        emit error(errorString);
 }
 
 /// \warning it need be complete protocol trame

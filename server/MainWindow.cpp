@@ -296,6 +296,8 @@ void MainWindow::load_settings()
         settings->setValue("benchmark_clients",400);
     if(!settings->contains("sendPlayerNumber"))
         settings->setValue("sendPlayerNumber",false);
+    if(!settings->contains("tolerantMode"))
+        settings->setValue("tolerantMode",false);
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))
@@ -358,6 +360,7 @@ void MainWindow::load_settings()
     ui->benchmark_benchmarkMap->setChecked(settings->value("benchmark_map").toBool());
     ui->benchmark_seconds->setValue(settings->value("benchmark_seconds").toUInt());
     ui->benchmark_clients->setValue(settings->value("benchmark_clients").toUInt());
+    ui->tolerantMode->setChecked(settings->value("tolerantMode").toBool());
 
     quint32 tempValue=0;
     settings->beginGroup("MapVisibilityAlgorithm");
@@ -487,6 +490,7 @@ void MainWindow::send_settings()
 
     //connection
     formatedServerSettings.max_players					= ui->max_player->value();
+    formatedServerSettings.tolerantMode                 = ui->tolerantMode->isChecked();
 
     //visibility algorithm
     switch(ui->MapVisibilityAlgorithm->currentIndex())
@@ -717,4 +721,9 @@ void Pokecraft::MainWindow::on_db_sqlite_browse_clicked()
     if(file.isEmpty())
         return;
     ui->db_sqlite_file->setText(file);
+}
+
+void Pokecraft::MainWindow::on_tolerantMode_toggled(bool checked)
+{
+    settings->setValue("tolerantMode",checked);
 }
