@@ -598,7 +598,9 @@ QString Map_loader::resolvRelativeMap(const QString &fileName,const QString &lin
     if(newPath.startsWith(datapackPath))
     {
         newPath.remove(0,datapackPath.size());
+        #if defined (DEBUG_MESSAGE_MAP_BORDER) || defined (DEBUG_MESSAGE_MAP_TP)
         DebugClass::debugConsole(QString("map link resolved: %1 (%2)").arg(newPath).arg(link));
+        #endif
         return newPath;
     }
     DebugClass::debugConsole(QString("map link not resolved: %1").arg(link));

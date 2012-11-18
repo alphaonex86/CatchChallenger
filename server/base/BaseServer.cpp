@@ -93,7 +93,9 @@ void BaseServer::preload_the_data()
 void BaseServer::preload_the_map()
 {
     GlobalData::serverPrivateVariables.datapack_mapPath=GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MAP;
+    #ifdef DEBUG_MESSAGE_MAP_LOAD
     DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalData::serverPrivateVariables.datapack_mapPath));
+    #endif
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
@@ -110,7 +112,9 @@ void BaseServer::preload_the_map()
         fileName.replace('\\','/');
         if(fileName.contains(mapFilter) && GlobalData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
         {
+            #ifdef DEBUG_MESSAGE_MAP_LOAD
             DebugClass::debugConsole(QString("load the map: %1").arg(fileName));
+            #endif
             full_map_name << fileName;
             if(map_temp.tryLoadMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName))
             {
@@ -233,6 +237,7 @@ void BaseServer::preload_the_map()
                 }
                 else
                 {
+                    #ifdef DEBUG_MESSAGE_MAP_LOAD
                     DebugClass::debugConsole(QString("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
                                  .arg(semi_loaded_map[index].map->map_file)
                                  .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
@@ -240,6 +245,7 @@ void BaseServer::preload_the_map()
                                  .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
                                  .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
                                  .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+                    #endif
                     semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
                     semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
                     semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
@@ -253,6 +259,7 @@ void BaseServer::preload_the_map()
                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+
             sub_index++;
         }
         index++;
@@ -537,7 +544,10 @@ bool BaseServer::initialize_the_database()
         emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
         return false;
     }
-    DebugClass::debugConsole(QString("Connected to sqlite at %1 (%2)").arg(GlobalData::serverSettings.database.mysql.host).arg(GlobalData::serverPrivateVariables.db->isOpen()));
+    DebugClass::debugConsole(QString("Connected to %1 at %2 (%3)")
+                             .arg(GlobalData::serverPrivateVariables.db_type_string)
+                             .arg(GlobalData::serverSettings.database.mysql.host)
+                             .arg(GlobalData::serverPrivateVariables.db->isOpen()));
     return true;
 }
 
