@@ -37,6 +37,8 @@ private:
     //send reply
     void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
     void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+
+    void parseError(const QString &errorString);
 signals:
     //normal signals
     void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray());
