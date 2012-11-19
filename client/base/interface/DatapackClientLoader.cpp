@@ -8,18 +8,25 @@
 #include <QByteArray>
 #include <QDebug>
 
-QHash<quint32,DatapackClientLoader::item> DatapackClientLoader::items;
-QStringList DatapackClientLoader::maps;
+DatapackClientLoader DatapackClientLoader::datapackLoader;
 
 DatapackClientLoader::DatapackClientLoader()
 {
-    mDefaultInventoryImage=QPixmap(":/images/inventory/unknow-object.png");
+    mDefaultInventoryImage=NULL;
     start();
+}
+
+DatapackClientLoader::~DatapackClientLoader()
+{
+    if(mDefaultInventoryImage==NULL)
+        delete mDefaultInventoryImage;
+    quit();
+    wait();
 }
 
 QPixmap DatapackClientLoader::defaultInventoryImage()
 {
-    return mDefaultInventoryImage;
+    return *mDefaultInventoryImage;
 }
 
 void DatapackClientLoader::run()
@@ -84,7 +91,7 @@ void DatapackClientLoader::parseItems()
                             if(image.isNull())
                             {
                                 qDebug() << QString("Unable to open the items image: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(datapackPath+DATAPACK_BASE_PATH_ITEM+item.attribute("image")).arg(item.tagName()).arg(item.lineNumber());
-                                DatapackClientLoader::items[id].image=mDefaultInventoryImage;
+                                DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
                             }
                             else
                                 DatapackClientLoader::items[id].image=image;
@@ -92,7 +99,7 @@ void DatapackClientLoader::parseItems()
                         else
                         {
                             qDebug() << QString("No image, load the default, id number already set: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
-                            DatapackClientLoader::items[id].image=mDefaultInventoryImage;
+                            DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
                         }
                         DatapackClientLoader::items[id].image=DatapackClientLoader::items[id].image.scaled(64,64);
 
@@ -167,6 +174,8 @@ void DatapackClientLoader::parseMaps()
 
 void DatapackClientLoader::resetAll()
 {
+    if(mDefaultInventoryImage==NULL)
+        mDefaultInventoryImage=new QPixmap(":/images/inventory/unknow-object.png");
     datapackPath.clear();
     items.clear();
     maps.clear();

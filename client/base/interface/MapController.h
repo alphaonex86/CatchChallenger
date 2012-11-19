@@ -3,7 +3,6 @@
 
 #include "../../client/base/render/MapVisualiserPlayer.h"
 #include "../../client/base/Api_protocol.h"
-#include "DatapackClientLoader.h"
 
 #include <QString>
 #include <QList>
@@ -58,7 +57,6 @@ private:
     QTimer timerBotMove;
     QTimer timerBotManagement;
     Pokecraft::Api_protocol *client;
-    DatapackClientLoader datapackLoader;
 
     //current player
     Pokecraft::Player_private_and_public_informations player_informations;
