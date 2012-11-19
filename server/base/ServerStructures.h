@@ -151,7 +151,7 @@ struct ServerPrivateVariables
         COORD_TYPE y;
     };
     QList<BotSpawn> botSpawn;
-    QList<FakeBot *> fakeBotList;
+    QSet<FakeBot *> fakeBotList;
     QSet<QFakeSocket *> botSockets;
     quint32 number_of_bots_logged;
     int botSpawnIndex;

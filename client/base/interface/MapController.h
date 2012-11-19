@@ -17,7 +17,6 @@ public:
 
     void resetAll();
     void setScale(int scaleSize);
-    void setBotNumber(quint16 botNumber);
 public slots:
     //map move
     void insert_player(const Pokecraft::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
@@ -37,25 +36,21 @@ private:
     //the other player
     struct OtherPlayer
     {
-        quint8 x,y;
-        Tiled::MapObject * mapObject;
-        QString map;
-
+        Tiled::MapObject * playerMapObject;
+        Tiled::Tileset * playerTileset;
         int moveStep;
         Pokecraft::Direction direction;
+        quint8 x,y;
         bool inMove;
+        bool stepAlternance;
+        Map_full *current_map;
     };
-    QList<OtherPlayer> botList;
+    QList<OtherPlayer> otherPlayerList;
     struct BotSpawnPoint
     {
         MapVisualiser::Map_full * map;
         quint8 x,y;
     };
-    QList<BotSpawnPoint> botSpawnPointList;
-    quint16 botNumber;
-    Tiled::Tileset * botTileset;
-    QTimer timerBotMove;
-    QTimer timerBotManagement;
     Pokecraft::Api_protocol *client;
 
     //current player
@@ -85,16 +80,12 @@ private:
     QList<DelayedMove> delayedMove;
     QList<quint16> delayedRemove;
 private slots:
-    void botMove();
-    void botManagement();
-    bool botMoveStepSlot(OtherPlayer *bot);
-
-    //call after enter on new map
-    void loadPlayerFromCurrentMap();
-    //call before leave the old map (and before loadPlayerFromCurrentMap())
-    void unloadPlayerFromCurrentMap();
-
     bool loadMap(const QString &fileName,const quint8 &x,const quint8 &y);
+protected slots:
+    //call after enter on new map
+    virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer);
+    //call before leave the old map (and before loadPlayerFromCurrentMap())
+    virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
 };
 
 #endif // MAPCONTROLLER_H
