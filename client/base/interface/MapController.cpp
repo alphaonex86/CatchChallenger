@@ -13,18 +13,8 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     qRegisterMetaType<Pokecraft::Player_public_informations>("Pokecraft::Player_public_informations");
     qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
 
-    botTileset = new Tiled::Tileset("bot",16,24);
-    botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
-    botNumber = 0;
-
     this->client=client;
     player_informations_is_set=false;
-
-    //the bot management
-    connect(&timerBotMove,SIGNAL(timeout()),this,SLOT(botMove()));
-    connect(&timerBotManagement,SIGNAL(timeout()),this,SLOT(botManagement()));
-    timerBotMove.start(66);
-    timerBotManagement.start(3000);
 
     playerMapObject = new Tiled::MapObject();
     playerTileset = new Tiled::Tileset("player",16,24);
@@ -40,7 +30,6 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
 MapController::~MapController()
 {
     delete playerTileset;
-    delete botTileset;
 }
 
 void MapController::resetAll()
@@ -48,331 +37,22 @@ void MapController::resetAll()
     if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
         qDebug() << "Unable the load the default tileset";
 
+    otherPlayerList.clear();
+    delayedInsert.clear();
+    delayedMove.clear();
+    delayedRemove.clear();
+    QSet<QString>::const_iterator i = displayed_map.constBegin();
+    while (i != displayed_map.constEnd()) {
+        mapItem->removeMap(all_map[*i]->tiledMap);
+        displayed_map.remove(*i);
+        i = displayed_map.constBegin();
+    }
     mHaveTheDatapack=false;
 }
 
 void MapController::setScale(int scaleSize)
 {
     scale(scaleSize,scaleSize);
-}
-
-void MapController::setBotNumber(quint16 botNumber)
-{
-    this->botNumber=botNumber;
-    botManagement();
-}
-
-bool MapController::botMoveStepSlot(OtherPlayer *bot)
-{
-    int baseTile=1;
-    //move the player for intermediate step and define the base tile (define the stopped step with direction)
-    switch(bot->direction)
-    {
-        case Pokecraft::Direction_move_at_left:
-        baseTile=10;
-        switch(bot->moveStep)
-        {
-            case 1:
-            case 2:
-            bot->mapObject->setX(bot->mapObject->x()-0.33);
-            break;
-        }
-        break;
-        case Pokecraft::Direction_move_at_right:
-        baseTile=4;
-        switch(bot->moveStep)
-        {
-            case 1:
-            case 2:
-            bot->mapObject->setX(bot->mapObject->x()+0.33);
-            break;
-        }
-        break;
-        case Pokecraft::Direction_move_at_top:
-        baseTile=1;
-        switch(bot->moveStep)
-        {
-            case 1:
-            case 2:
-            bot->mapObject->setY(bot->mapObject->y()-0.33);
-            break;
-        }
-        break;
-        case Pokecraft::Direction_move_at_bottom:
-        baseTile=7;
-        switch(bot->moveStep)
-        {
-            case 1:
-            case 2:
-            bot->mapObject->setY(bot->mapObject->y()+0.33);
-            break;
-        }
-        break;
-        default:
-        qDebug() << QString("botMoveStepSlot(): moveStep: %1, wrong direction").arg(bot->moveStep);
-        return false;
-    }
-
-    //apply the right step of the base step defined previously by the direction
-    switch(bot->moveStep)
-    {
-        //stopped step
-        case 0:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile+0));
-        break;
-        //transition step
-        case 1:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile-1));
-        break;
-        case 2:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile+1));
-        break;
-        //stopped step
-        case 3:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile+0));
-        break;
-    }
-
-    bot->moveStep++;
-
-    //if have finish the step
-    if(bot->moveStep>3)
-    {
-        Pokecraft::Map * old_map=&all_map[bot->map]->logicalMap;
-        Pokecraft::Map * map=&all_map[bot->map]->logicalMap;
-        //set the final value (direction, position, ...)
-        switch(bot->direction)
-        {
-            case Pokecraft::Direction_move_at_left:
-            bot->direction=Pokecraft::Direction_look_at_left;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&bot->x,&bot->y);
-            break;
-            case Pokecraft::Direction_move_at_right:
-            bot->direction=Pokecraft::Direction_look_at_right;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&bot->x,&bot->y);
-            break;
-            case Pokecraft::Direction_move_at_top:
-            bot->direction=Pokecraft::Direction_look_at_top;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&bot->x,&bot->y);
-            break;
-            case Pokecraft::Direction_move_at_bottom:
-            bot->direction=Pokecraft::Direction_look_at_bottom;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&bot->x,&bot->y);
-            break;
-            default:
-            qDebug() << QString("botMoveStepSlot(): bot->moveStep: %1, wrong direction when bot->moveStep>2").arg(bot->moveStep);
-            return false;
-        }
-        //if the map have changed
-        if(old_map!=map)
-        {
-            //remove bot
-            if(ObjectGroupItem::objectGroupLink.contains(all_map[old_map->map_file]->objectGroup))
-                ObjectGroupItem::objectGroupLink[all_map[old_map->map_file]->objectGroup]->removeObject(bot->mapObject);
-            else
-                qDebug() << QString("botMoveStepSlot(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
-            //add bot
-            if(ObjectGroupItem::objectGroupLink.contains(all_map[map->map_file]->objectGroup))
-                ObjectGroupItem::objectGroupLink[all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
-            else
-                return false;
-            bot->map=map->map_file;
-        }
-        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        bot->mapObject->setPosition(QPoint(bot->x,bot->y+1));
-
-        bot->inMove=false;
-    }
-
-    return true;
-}
-
-void MapController::botMove()
-{
-    int index;
-    QSet<int> continuedMove;
-    //continue the move
-    index=0;
-    while(index<botList.size())
-    {
-        if(botList.at(index).inMove)
-        {
-            if(!botMoveStepSlot(&botList[index]))
-            {
-                delete botList.at(index).mapObject;
-                botList.removeAt(index);
-                index--;
-            }
-            continuedMove << index;
-        }
-        index++;
-    }
-    //start move
-    index=0;
-    while(index<botList.size())
-    {
-        if(!botList.at(index).inMove && !continuedMove.contains(index))
-        {
-            QList<Pokecraft::Direction> directions_allowed;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
-                directions_allowed << Pokecraft::Direction_move_at_left;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
-                directions_allowed << Pokecraft::Direction_move_at_right;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
-                directions_allowed << Pokecraft::Direction_move_at_top;
-            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
-                directions_allowed << Pokecraft::Direction_move_at_bottom;
-            if(directions_allowed.size()>0)
-            {
-                int random = rand()%directions_allowed.size();
-                Pokecraft::Direction final_direction=directions_allowed.at(random);
-
-                botList[index].direction=final_direction;
-                botList[index].inMove=true;
-                botList[index].moveStep=1;
-                switch(final_direction)
-                {
-                    case Pokecraft::Direction_move_at_left:
-                        botMoveStepSlot(&botList[index]);
-                    break;
-                    case Pokecraft::Direction_move_at_right:
-                        botMoveStepSlot(&botList[index]);
-                    break;
-                    case Pokecraft::Direction_move_at_top:
-                        botMoveStepSlot(&botList[index]);
-                    break;
-                    case Pokecraft::Direction_move_at_bottom:
-                        botMoveStepSlot(&botList[index]);
-                    break;
-                    default:
-                    qDebug() << QString("transformLookToMove(): wrong direction");
-                    return;
-                }
-            }
-        }
-        index++;
-    }
-}
-
-void MapController::botManagement()
-{
-/*    int index;
-    //remove bot where the map is not displayed
-    index=0;
-    while(index<botList.size())
-    {
-        if(!loadedNearMap.contains(botList.at(index).map))
-        {
-            if(all_map.contains(botList.at(index).map))
-            {
-                ObjectGroupItem::objectGroupLink[all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
-                delete botList.at(index).mapObject;
-            }
-            else
-            {
-                //the map have been removed then the map object too
-            }
-            botList.removeAt(index);
-        }
-        else
-            index++;
-    }
-    //remove random bot
-    index=0;
-    while(index<botList.size())
-    {
-        if(index>=botNumber  rand()%100<20)
-        {
-            if(all_map.contains(botList.at(index).map))
-            {
-                if(ObjectGroupItem::objectGroupLink.contains(all_map[botList.at(index).map]->objectGroup))
-                    ObjectGroupItem::objectGroupLink[all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
-                else
-                    qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains botList.at(index).mapObject at remove random bot");
-                delete botList.at(index).mapObject;
-            }
-            else
-            {
-                //the map have been removed then the map object too
-            }
-            botList.removeAt(index);
-        }
-        else
-            index++;
-    }
-    //add bot
-    if(!botSpawnPointList.isEmpty())
-    {
-        index=botList.size();
-        while(index<botNumber)//do botNumber bot
-        {
-            BotSpawnPoint point=botSpawnPointList[rand()%botSpawnPointList.size()];
-
-            OtherPlayer bot;
-            bot.map=point.map->logicalMap.map_file;
-            bot.mapObject=new Tiled::MapObject();
-            bot.x=point.x;
-            bot.y=point.y;
-            bot.direction=Pokecraft::Direction_look_at_bottom;
-            bot.inMove=false;
-            bot.moveStep=0;
-
-            if(ObjectGroupItem::objectGroupLink.contains(all_map[bot.map]->objectGroup))
-                ObjectGroupItem::objectGroupLink[all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
-            else
-                qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
-
-            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-            bot.mapObject->setPosition(QPoint(bot.x,bot.y+1));
-
-            bot.mapObject->setTile(botTileset->tileAt(7));
-            botList << bot;
-            index++;
-        }
-    }
-    else
-    {
-        qDebug() << "Bot spawn list is empty";
-    }*/
-}
-
-//call after enter on new map
-void MapController::loadPlayerFromCurrentMap()
-{
-    MapVisualiserPlayer::loadPlayerFromCurrentMap();
-
-    //list bot spawn
-    botSpawnPointList.clear();
-    {
-        QSet<QString>::const_iterator i = loadedNearMap.constBegin();
-        while (i != loadedNearMap.constEnd()) {
-            MapVisualiser::Map_full * map=getMap(*i);
-            if(map!=NULL)
-            {
-                int index=0;
-                while(index<map->logicalMap.bot_spawn_points.size())
-                {
-                    BotSpawnPoint point;
-                    point.map=map;
-                    point.x=map->logicalMap.bot_spawn_points.at(index).x;
-                    point.y=map->logicalMap.bot_spawn_points.at(index).y;
-                    botSpawnPointList << point;
-                    index++;
-                }
-            }
-            ++i;
-        }
-    }
-
-    botManagement();
-}
-
-//call before leave the old map (and before loadPlayerFromCurrentMap())
-void MapController::unloadPlayerFromCurrentMap()
-{
-    MapVisualiserPlayer::unloadPlayerFromCurrentMap();
-
-    botSpawnPointList.clear();
 }
 
 bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8 &y)
@@ -456,6 +136,105 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
 
         loadMap(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps[mapId],x,y);
     }
+    else
+    {
+        OtherPlayer tempPlayer;
+        tempPlayer.x=x;
+        tempPlayer.y=y;
+        tempPlayer.direction=direction;
+        tempPlayer.moveStep=0;
+        tempPlayer.inMove=false;
+        tempPlayer.stepAlternance=false;
+
+        QString current_map_fileName=loadOtherMap(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps[mapId]);
+        if(current_map_fileName.isEmpty())
+        {
+            qDebug() << QString("unable to insert player: %1 on map: %2").arg(player.pseudo).arg(DatapackClientLoader::datapackLoader.maps[mapId]);
+            return;
+        }
+        //the player skin
+        if(player.skinId<skinFolderList.size())
+        {
+            QImage image(datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+            if(!image.isNull())
+            {
+                tempPlayer.playerMapObject = new Tiled::MapObject();
+                tempPlayer.playerTileset = new Tiled::Tileset(skinFolderList.at(player.skinId),16,24);
+                tempPlayer.playerTileset->loadFromImage(image,datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+            }
+            else
+            {
+                qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png";
+                return;
+            }
+        }
+        else
+        {
+            qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapController::insert_player()";
+            return;
+        }
+        tempPlayer.current_map=all_map[current_map_fileName];
+        switch(direction)
+        {
+            case Pokecraft::Direction_look_at_top:
+            case Pokecraft::Direction_move_at_top:
+                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(1));
+            break;
+            case Pokecraft::Direction_look_at_right:
+            case Pokecraft::Direction_move_at_right:
+                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(4));
+            break;
+            case Pokecraft::Direction_look_at_bottom:
+            case Pokecraft::Direction_move_at_bottom:
+                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(7));
+            break;
+            case Pokecraft::Direction_look_at_left:
+            case Pokecraft::Direction_move_at_left:
+                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(10));
+            break;
+            default:
+                delete tempPlayer.playerMapObject;
+                delete tempPlayer.playerTileset;
+                qDebug() << "The direction send by the server is wrong";
+            return;
+        }
+
+        loadCurrentMap();
+        loadOtherPlayerFromMap(tempPlayer);
+
+        otherPlayerList << tempPlayer;
+        return;
+    }
+}
+
+//call after enter on new map
+void MapController::loadOtherPlayerFromMap(OtherPlayer otherPlayer)
+{
+    Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
+    if(currentGroup!=NULL)
+    {
+        if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+            ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(otherPlayer.playerMapObject);
+        if(currentGroup!=otherPlayer.current_map->objectGroup)
+            qDebug() << QString("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+    }
+    if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.current_map->objectGroup))
+        ObjectGroupItem::objectGroupLink[otherPlayer.current_map->objectGroup]->addObject(otherPlayer.playerMapObject);
+    else
+        qDebug() << QString("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+
+    //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+    otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.x,otherPlayer.y+1));
+}
+
+//call before leave the old map (and before loadPlayerFromCurrentMap())
+void MapController::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
+{
+    //unload the player sprite
+    if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.playerMapObject->objectGroup()))
+        ObjectGroupItem::objectGroupLink[otherPlayer.playerMapObject->objectGroup()]->removeObject(otherPlayer.playerMapObject);
+    else
+        qDebug() << QString("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 }
 
 void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pokecraft::Direction> > &movement)
@@ -530,16 +309,21 @@ void MapController::datapackParsed()
         insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapId,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
         index++;
     }
+    delayedInsert.clear();
+
     index=0;
     while(index<delayedMove.size())
     {
         move_player(delayedMove.at(index).id,delayedMove.at(index).movement);
         index++;
     }
+    delayedMove.clear();
+
     index=0;
     while(index<delayedRemove.size())
     {
         remove_player(delayedRemove.at(index));
         index++;
     }
+    delayedRemove.clear();
 }
