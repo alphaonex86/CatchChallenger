@@ -1,6 +1,7 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../../general/base/FacilityLib.h"
+#include "DatapackClientLoader.h"
 
 #include <QListWidgetItem>
 
@@ -44,9 +45,9 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()),Qt::QueuedConnection);
 
     //connect the datapack loader
-    connect(&datapackLoader,SIGNAL(datapackParsed()),this,SLOT(datapackParsed()),Qt::QueuedConnection);
-    connect(this,SIGNAL(parseDatapack(QString)),&datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
-    connect(&datapackLoader,SIGNAL(datapackParsed()),mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),this,SLOT(datapackParsed()),Qt::QueuedConnection);
+    connect(this,SIGNAL(parseDatapack(QString)),&DatapackClientLoader::datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -59,8 +60,6 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
 BaseWindow::~BaseWindow()
 {
-    datapackLoader.quit();
-    datapackLoader.wait();
     delete ui;
     delete mapController;
 }
@@ -88,7 +87,7 @@ void BaseWindow::resetAll()
     mapController->resetAll();
     haveDatapack=false;
     havePlayerInformations=false;
-    datapackLoader.resetAll();
+    DatapackClientLoader::datapackLoader.resetAll();
     haveInventory=false;
     datapackIsParsed=false;
     ui->inventory->clear();
@@ -391,15 +390,15 @@ void BaseWindow::load_inventory()
              i.next();
              QListWidgetItem *item=new QListWidgetItem();
              items_graphical[item]=i.key();
-             if(DatapackClientLoader::items.contains(i.key()))
+             if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
              {
-                 item->setIcon(DatapackClientLoader::items[i.key()].image);
+                 item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
                  if(i.value()>1)
                      item->setText(QString::number(i.value()));
              }
              else
              {
-                 item->setIcon(datapackLoader.defaultInventoryImage());
+                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
                  if(i.value()>1)
                      item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
                  else
@@ -494,13 +493,13 @@ void Pokecraft::BaseWindow::on_inventory_itemSelectionChanged()
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
     {
-        ui->inventory_image->setPixmap(datapackLoader.defaultInventoryImage());
+        ui->inventory_image->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->inventory_name->setText("");
         ui->inventory_description->setText(tr("Select an object"));
         return;
     }
     QListWidgetItem *item=items.first();
-    const DatapackClientLoader::item &content=DatapackClientLoader::items[items_graphical[item]];
+    const DatapackClientLoader::item &content=DatapackClientLoader::datapackLoader.items[items_graphical[item]];
     ui->inventory_image->setPixmap(content.image);
     ui->inventory_name->setText(content.name);
     ui->inventory_description->setText(content.description);

@@ -5,12 +5,12 @@
 #include <QPixmap>
 #include <QHash>
 #include <QString>
+#include <QStringList>
 
 class DatapackClientLoader : public QThread
 {
     Q_OBJECT
 public:
-    explicit DatapackClientLoader();
     void resetAll();
 
     //static items
@@ -20,9 +20,10 @@ public:
         QString name;
         QString description;
     };
-    static QHash<quint32,item> items;
-    static QStringList maps;
+    QHash<quint32,item> items;
+    QStringList maps;
     QPixmap defaultInventoryImage();
+    static DatapackClientLoader datapackLoader;
 protected:
     void run();
 public slots:
@@ -31,7 +32,9 @@ signals:
     void datapackParsed();
 private:
     QString datapackPath;
-    QPixmap mDefaultInventoryImage;
+    QPixmap *mDefaultInventoryImage;
+    explicit DatapackClientLoader();
+    ~DatapackClientLoader();
 private slots:
     void parseItems();
     void parseMaps();

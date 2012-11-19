@@ -1,6 +1,7 @@
 #include "MapController.h"
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/FacilityLib.h"
+#include "DatapackClientLoader.h"
 
 #include <QMessageBox>
 
@@ -453,7 +454,7 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
             return;
         }
 
-        loadMap(datapackPath+DATAPACK_BASE_PATH_MAP+datapackLoader.maps[mapId],x,y);
+        loadMap(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps[mapId],x,y);
     }
 }
 

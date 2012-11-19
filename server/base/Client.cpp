@@ -233,7 +233,7 @@ void Client::disconnectNextStep()
         clientNetworkRead->deleteLater();
         clientNetworkWrite->deleteLater();
         localClientHandler->deleteLater();
-        localClientHandler->deleteLater();
+        clientLocalBroadcast->deleteLater();
         //now the object is not usable
         clientBroadCast=NULL;
         clientHeavyLoad=NULL;
