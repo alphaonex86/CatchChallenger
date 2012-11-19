@@ -34,6 +34,8 @@ public slots:
 
     bool singleMove(const Direction &direction);
     virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+protected:
+    virtual void extraStop();
 };
 }
 
