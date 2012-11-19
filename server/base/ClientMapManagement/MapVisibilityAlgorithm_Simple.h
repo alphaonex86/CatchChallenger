@@ -11,7 +11,7 @@ class MapVisibilityAlgorithm_Simple : public ClientMapManagement
 public:
     explicit MapVisibilityAlgorithm_Simple();
     virtual ~MapVisibilityAlgorithm_Simple();
-    void reinsertAllClient(const int &loop_size);
+    void reinsertAllClient();
     //drop all clients
     virtual void dropAllClients();
 protected:

@@ -230,13 +230,16 @@ void NormalServer::stop_benchmark()
     double TX_size=0;
     double RX_size=0;
     double second=0;
+
     if(GlobalData::serverPrivateVariables.fakeBotList.size()>=1)
     {
         second=((double)time_benchmark_first_client.elapsed()/1000);
         if(second>0)
         {
-            TX_size=GlobalData::serverPrivateVariables.fakeBotList.first()->get_TX_size();
-            RX_size=GlobalData::serverPrivateVariables.fakeBotList.first()->get_RX_size();
+            QSetIterator<FakeBot *> i(GlobalData::serverPrivateVariables.fakeBotList);
+            FakeBot *firstBot=i.next();
+            TX_size=firstBot->get_TX_size();
+            RX_size=firstBot->get_RX_size();
             TX_speed=((double)TX_size)/second;
             RX_speed=((double)RX_size)/second;
         }
@@ -300,41 +303,35 @@ void NormalServer::removeOneBot()
         DebugClass::debugConsole("removeOneBot(): NULL client at disconnection");
         return;
     }
-    GlobalData::serverPrivateVariables.fakeBotList.removeOne(client);
+    GlobalData::serverPrivateVariables.fakeBotList.remove(client);
     client->deleteLater();
 }
 
 void NormalServer::removeBots()
 {
-    int list_size=GlobalData::serverPrivateVariables.fakeBotList.size();
-    int index=0;
-    while(index<list_size)
-    {
-        GlobalData::serverPrivateVariables.fakeBotList.at(index)->disconnect();
-        //disconnect(&nextStep,SIGNAL(timeout()),fake_clients.last(),SLOT(doStep()));
-        //connect(fake_clients.last(),SIGNAL(disconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
-        //delete after the signal
-        index++;
-    }
+    QSetIterator<FakeBot *> i(GlobalData::serverPrivateVariables.fakeBotList);
+    while(i.hasNext())
+        i.next()->disconnect();
 }
 
 /////////////////////////////////////// Add object //////////////////////////////////////
 
 void NormalServer::addBot()
 {
-    GlobalData::serverPrivateVariables.fakeBotList << new FakeBot();
-    GlobalData::serverPrivateVariables.botSockets << &GlobalData::serverPrivateVariables.fakeBotList.last()->fakeSocket;
+    FakeBot * newFakeBot=new FakeBot();
+    GlobalData::serverPrivateVariables.fakeBotList << newFakeBot;
+    GlobalData::serverPrivateVariables.botSockets << &newFakeBot->fakeSocket;
 
     if(GlobalData::serverPrivateVariables.fakeBotList.size()==1)
     {
         //GlobalData::serverPrivateVariables.fake_clients.last()->show_details();
         time_benchmark_first_client.start();
     }
-    GlobalData::serverPrivateVariables.fakeBotList.last()->moveToThread(botThread);
-    GlobalData::serverPrivateVariables.fakeBotList.last()->start_step();
-    GlobalData::serverPrivateVariables.fakeBotList.last()->tryLink();
-    connect(&nextStep,SIGNAL(timeout()),GlobalData::serverPrivateVariables.fakeBotList.last(),SLOT(doStep()),Qt::QueuedConnection);
-    connect(GlobalData::serverPrivateVariables.fakeBotList.last(),SIGNAL(isDisconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
+    newFakeBot->moveToThread(botThread);
+    newFakeBot->start_step();
+    newFakeBot->tryLink();
+    connect(&nextStep,SIGNAL(timeout()),newFakeBot,SLOT(doStep()),Qt::QueuedConnection);
+    connect(newFakeBot,SIGNAL(isDisconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
 }
 
 ///////////////////////////////////// Generic command //////////////////////////////////

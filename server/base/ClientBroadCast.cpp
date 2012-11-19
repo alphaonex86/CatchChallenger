@@ -4,10 +4,11 @@
 using namespace Pokecraft;
 
 QHash<QString,ClientBroadCast *> ClientBroadCast::playerByPseudo;
-QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> ClientBroadCast::playerByClan;
-QList<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
+QHash<CLAN_ID_TYPE,QSet<ClientBroadCast *> > ClientBroadCast::playerByClan;
+QSet<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
 QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo;
 QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo_end;
+ClientBroadCast *ClientBroadCast::item;
 
 ClientBroadCast::ClientBroadCast()
 {
@@ -29,25 +30,24 @@ void ClientBroadCast::setVariable(Player_internal_informations *player_informati
 //without verification of rights
 void ClientBroadCast::sendSystemMessage(const QString &text,const bool &important)
 {
-    int list_size=clientBroadCastList.size();
     if(important)
     {
-        int index=0;
-        while(index<list_size)
+        QSetIterator<ClientBroadCast *> i(clientBroadCastList);
+        while (i.hasNext())
         {
-            if(this!=clientBroadCastList.at(index))
-                clientBroadCastList.at(index)->receiveSystemText(text,true);
-            index++;
+            item=i.next();
+            if(item!=this)
+                item->receiveSystemText(text,true);
         }
     }
     else
     {
-        int index=0;
-        while(index<list_size)
+        QSetIterator<ClientBroadCast *> i(clientBroadCastList);
+        while (i.hasNext())
         {
-            if(this!=clientBroadCastList.at(index))
-                clientBroadCastList.at(index)->receiveSystemText(text);
-            index++;
+            item=i.next();
+            if(item!=this)
+                item->receiveSystemText(text);
         }
     }
 }
@@ -73,8 +73,12 @@ void ClientBroadCast::askIfIsReadyToStop()
 {
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
     if(player_informations->public_and_private_informations.public_informations.clan!=0)
-        playerByClan.remove(player_informations->public_and_private_informations.public_informations.clan,this);
-    clientBroadCastList.removeOne(this);
+    {
+        playerByClan[player_informations->public_and_private_informations.public_informations.clan].remove(this);
+        if(playerByClan[player_informations->public_and_private_informations.public_informations.clan].empty())
+            playerByClan.remove(player_informations->public_and_private_informations.public_informations.clan);
+    }
+    clientBroadCastList.remove(this);
     emit isReadyToStop();
 }
 
@@ -111,7 +115,6 @@ void ClientBroadCast::receiveSystemText(const QString &text,const bool &importan
 void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text)
 {
     emit message(QString("sendChatText(), text: %1").arg(text));
-    int list_size=clientBroadCastList.size();
     if(chatType==Chat_type_clan)
     {
         if(player_informations->public_and_private_informations.public_informations.clan==0)
@@ -119,14 +122,13 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
         else
         {
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
-            QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(player_informations->public_and_private_informations.public_informations.clan);
-            list_size=playerWithSameClan.size();
-            int index=0;
-            while(index<list_size)
+            QSet<ClientBroadCast *> playerWithSameClan = playerByClan[player_informations->public_and_private_informations.public_informations.clan];
+            QSetIterator<ClientBroadCast *> i(playerWithSameClan);
+            while (i.hasNext())
             {
-                if(this!=playerWithSameClan.at(index))
-                    playerWithSameClan.at(index)->receiveChatText(chatType,text,player_informations);
-                index++;
+                ClientBroadCast *current_client=i.next();
+                if(current_client!=this)
+                    current_client->receiveChatText(chatType,text,player_informations);
             }
         }
         return;
@@ -136,13 +138,15 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     {
         if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
         {
-            int index=0;
-            while(index<list_size)
+            BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
+            QSetIterator<ClientBroadCast *> i(clientBroadCastList);
+            while (i.hasNext())
             {
-                if(this!=clientBroadCastList.at(index))
-                    clientBroadCastList.at(index)->receiveSystemText(text);
-                index++;
+                item=i.next();
+                if(item!=this)
+                    item->receiveSystemText(text);
             }
+            return;
         }
         else
             emit error("Have not the right to send system message");
@@ -150,12 +154,12 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     else
     {
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
-        int index=0;
-        while(index<list_size)
+        QSetIterator<ClientBroadCast *> i(clientBroadCastList);
+        while (i.hasNext())
         {
-            if(this!=clientBroadCastList.at(index))
-                clientBroadCastList.at(index)->receiveChatText(chatType,text,player_informations);
-            index++;
+            item=i.next();
+            if(item!=this)
+                item->receiveChatText(chatType,text,player_informations);
         }
         return;
     }
@@ -165,7 +169,7 @@ void ClientBroadCast::send_player_informations()
 {
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
     if(player_informations->public_and_private_informations.public_informations.clan!=0)
-        playerByClan.insert(player_informations->public_and_private_informations.public_informations.clan,this);
+        playerByClan[player_informations->public_and_private_informations.public_informations.clan] << this;
     clientBroadCastList << this;
 }
 

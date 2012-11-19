@@ -6,6 +6,7 @@
 #include <QString>
 #include <QByteArray>
 #include <QList>
+#include <QSet>
 #include <QMultiHash>
 
 #include "BroadCastWithoutSender.h"
@@ -24,14 +25,13 @@ public:
     explicit ClientBroadCast();
     ~ClientBroadCast();
     // general info
-    QList<quint32> player_ids_to_watch;
     Player_internal_informations *player_informations;
     // set the variable
     void setVariable(Player_internal_informations *player_informations);
     //player indexed list
     static QHash<QString,ClientBroadCast *> playerByPseudo;
-    static QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> playerByClan;
-    static QList<ClientBroadCast *> clientBroadCastList;
+    static QHash<CLAN_ID_TYPE,QSet<ClientBroadCast *> > playerByClan;
+    static QSet<ClientBroadCast *> clientBroadCastList;
 public slots:
     //global slot
     void sendPM(const QString &text,const QString &pseudo);
@@ -58,10 +58,10 @@ signals:
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
 private:
     //local data
-    QList<Player_private_and_public_informations> players_informations_to_push;
     qint32 connected_players;//it's th last number of connected player send
     static QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo;
     static QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo_end;
+    static ClientBroadCast *item;
 };
 }
 

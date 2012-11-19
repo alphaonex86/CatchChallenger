@@ -3,6 +3,8 @@
 
 #include "../../general/base/Map.h"
 
+#include <QSet>
+
 namespace Pokecraft {
 class MapVisibilityAlgorithm_Simple;
 class ClientLocalBroadcast;
@@ -10,7 +12,7 @@ class ClientLocalBroadcast;
 class Map_server : public Map
 {
 public:
-    QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast()
+    QSet<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast()
 };
 
 class Map_server_MapVisibility_simple : public Map_server
@@ -50,7 +52,7 @@ public:
     Or quadtree usage, cf google: quadtree
      * */
 
-    QList<MapVisibilityAlgorithm_Simple *> clients;//manipulated by thread of ClientMapManagement()
+    QSet<MapVisibilityAlgorithm_Simple *> clients;//manipulated by thread of ClientMapManagement()
 
     bool show;
 };
