@@ -125,7 +125,7 @@ void BaseServer::preload_the_map()
                     break;
                     case MapVisibilityAlgorithm_none:
                     default:
-                        GlobalData::serverPrivateVariables.map_list[fileName]=new Map;
+                        GlobalData::serverPrivateVariables.map_list[fileName]=new Map_server;
                     break;
                 }
 

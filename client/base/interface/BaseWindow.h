@@ -11,7 +11,6 @@
 #include "../base/Api_client_real.h"
 #include "../base/Api_protocol.h"
 #include "MapController.h"
-#include "DatapackClientLoader.h"
 
 #ifndef POKECRAFT_BASEWINDOW_H
 #define POKECRAFT_BASEWINDOW_H
@@ -96,7 +95,6 @@ private:
     QAbstractSocket::SocketState socketState;
     QStringList skinFolderList;
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
-    DatapackClientLoader datapackLoader;
 
     //player items
     QHash<quint32,quint32> items;
