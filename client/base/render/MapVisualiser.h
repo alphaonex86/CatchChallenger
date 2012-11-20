@@ -84,6 +84,8 @@ protected:
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
+protected slots:
+    virtual void resetAll();
 public slots:
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap();
