@@ -42,12 +42,11 @@ void MapController::resetAll()
     delayedRemove.clear();
     skinFolderList.clear();
 
-    int index=0;
-    while(index<otherPlayerList.size())
-    {
-        unloadOtherPlayerFromMap(otherPlayerList.at(index));
-        delete otherPlayerList.at(index).playerTileset;
-        index++;
+    QHashIterator<quint16,OtherPlayer> i(otherPlayerList);
+    while (i.hasNext()) {
+        i.next();
+        unloadOtherPlayerFromMap(i.value());
+        delete i.value().playerTileset;
     }
     otherPlayerList.clear();
 
@@ -61,7 +60,7 @@ void MapController::setScale(int scaleSize)
     scale(scaleSize,scaleSize);
 }
 
-bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8 &y)
+bool MapController::loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y)
 {
     //position
     this->x=x;
@@ -79,12 +78,38 @@ bool MapController::loadMap(const QString &fileName,const quint8 &x,const quint8
 
     render();
 
-    loadCurrentMap();
+    mapUsed=loadMap(current_map,true);
+    removeUnusedMap();
     loadPlayerFromCurrentMap();
 
     show();
 
     return true;
+}
+
+void MapController::removeUnusedMap()
+{
+    ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
+    QHash<QString,Map_full *>::const_iterator i = all_map.constBegin();
+    while (i != all_map.constEnd()) {
+        if(!mapUsed.contains((*i)->logicalMap.map_file) && !mapUsedByOtherPlayer.contains((*i)->logicalMap.map_file))
+        {
+            if((*i)->logicalMap.parsed_layer.walkable!=NULL)
+                delete (*i)->logicalMap.parsed_layer.walkable;
+            if((*i)->logicalMap.parsed_layer.water!=NULL)
+                delete (*i)->logicalMap.parsed_layer.water;
+            if((*i)->logicalMap.parsed_layer.grass!=NULL)
+                delete (*i)->logicalMap.parsed_layer.grass;
+            qDeleteAll((*i)->tiledMap->tilesets());
+            delete (*i)->tiledMap;
+            delete (*i)->tiledRender;
+            delete (*i);
+            all_map.remove((*i)->logicalMap.map_file);
+            i = all_map.constBegin();//needed
+        }
+        else
+            ++i;
+    }
 }
 
 //map move
@@ -140,7 +165,7 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
             return;
         }
 
-        loadMap(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps[mapId],x,y);
+        loadPlayerMap(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps[mapId],x,y);
     }
     else
     {
@@ -205,10 +230,20 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
             return;
         }
 
-        loadCurrentMap();
+        tempPlayer.mapUsed=loadMap(tempPlayer.current_map,false);
+        QSetIterator<QString> i(tempPlayer.mapUsed);
+        while (i.hasNext())
+        {
+            QString map = i.next();
+            if(mapUsedByOtherPlayer.contains(map))
+                mapUsedByOtherPlayer[map]++;
+            else
+                mapUsedByOtherPlayer[map]=1;
+        }
+        removeUnusedMap();
         loadOtherPlayerFromMap(tempPlayer);
 
-        otherPlayerList << tempPlayer;
+        otherPlayerList[player.simplifiedId]=tempPlayer;
         return;
     }
 }
@@ -253,6 +288,11 @@ void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pok
         delayedMove << tempItem;
         return;
     }
+    if(id==player_informations.public_informations.simplifiedId)
+    {
+        qDebug() << "The current player can't be moved (only teleported)";
+        return;
+    }
 }
 
 void MapController::remove_player(const quint16 &id)
@@ -260,6 +300,35 @@ void MapController::remove_player(const quint16 &id)
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         delayedRemove << id;
+        return;
+    }
+    if(id==player_informations.public_informations.simplifiedId)
+    {
+        qDebug() << "The current player can't be removed";
+        return;
+    }
+    else
+    {
+        unloadOtherPlayerFromMap(otherPlayerList[id]);
+        QSetIterator<QString> i(otherPlayerList[id].mapUsed);
+        while (i.hasNext())
+        {
+            QString map = i.next();
+            if(mapUsedByOtherPlayer.contains(map))
+            {
+                mapUsedByOtherPlayer[map]--;
+                if(mapUsedByOtherPlayer[map]==0)
+                    mapUsedByOtherPlayer.remove(map);
+            }
+            else
+                qDebug() << QString("map not found into mapUsedByOtherPlayer for player: %1, map: %2").arg(id).arg(otherPlayerList[id].current_map->logicalMap.map_file);
+        }
+        removeUnusedMap();
+
+        delete otherPlayerList[id].playerMapObject;
+        delete otherPlayerList[id].playerTileset;
+
+        otherPlayerList.remove(id);
         return;
     }
 }
