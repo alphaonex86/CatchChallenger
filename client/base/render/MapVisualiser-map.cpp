@@ -215,7 +215,6 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
                 while (i != tilesets.constEnd()) {
                      Tiled::Tileset* oldTileset=*i;
                      Tiled::MapReader mapReader;
-                     qDebug() << "Try open:" << oldTileset->fileName();
                      QFile tsxFile(oldTileset->fileName());
                      if(tsxFile.open(QIODevice::ReadOnly))
                      {

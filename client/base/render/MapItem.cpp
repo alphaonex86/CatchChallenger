@@ -1,4 +1,5 @@
 #include "MapItem.h"
+#include "../ClientVariable.h"
 
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
@@ -83,8 +84,11 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
             displayed_layer.insert(map,graphicsItem);
         }
     }
+
+    #ifdef DEBUG_RENDER_CACHE
     if(cache)
         qDebug() << "Map: " << layers.size() << " layers (" << mapNameList.join(";") << "), but only " << displayed_layer.count(map) << " displayed";
+    #endif
 }
 
 void MapItem::removeMap(Tiled::Map *map)

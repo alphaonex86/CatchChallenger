@@ -72,7 +72,8 @@ HEADERS  += mainwindow.h \
     ../base/interface/BaseWindow.h \
     ../base/interface/MapController.h \
     ../../general/base/ConnectedSocket.h \
-    ../base/interface/DatapackClientLoader.h
+    ../base/interface/DatapackClientLoader.h \
+    ../base/ClientVariable.h
 
 FORMS    += mainwindow.ui \
     ../base/interface/BaseWindow.ui

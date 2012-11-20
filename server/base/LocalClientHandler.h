@@ -36,9 +36,6 @@ private:
     void getRandomNumberIfNeeded();
 
     //info linked
-    Orientation			at_start_orientation;
-    Map *				at_start_map_name;
-    COORD_TYPE			at_start_x,at_start_y;
     static Direction	temp_direction;
 
     //map move
