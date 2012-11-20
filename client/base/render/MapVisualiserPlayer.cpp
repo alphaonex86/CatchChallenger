@@ -493,6 +493,17 @@ void MapVisualiserPlayer::setAnimationTilset(QString animationTilset)
             qDebug() << "Unable the load the datapack animation tileset: " << animationTilset;
 }
 
+void MapVisualiserPlayer::resetAll()
+{
+    stopGrassAnimation();
+    unloadPlayerFromCurrentMap();
+    timer.stop();
+    moveTimer.stop();
+    lookToMove.stop();
+    keyPressed.clear();
+    MapVisualiser::resetAll();
+}
+
 //call after enter on new map
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {

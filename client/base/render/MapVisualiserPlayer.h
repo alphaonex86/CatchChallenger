@@ -56,13 +56,14 @@ private slots:
     virtual void startGrassAnimation(const Pokecraft::Direction &direction);
     virtual void stopGrassAnimation();
     void loadGrassTile();
-protected:
+protected slots:
     //call after enter on new map
     virtual void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadPlayerFromCurrentMap();
 
     void setAnimationTilset(QString animationTilset);
+    virtual void resetAll();
 signals:
     void send_player_direction(const Pokecraft::Direction &the_direction);
 };

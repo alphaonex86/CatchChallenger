@@ -15,7 +15,7 @@ public:
     explicit MapController(Pokecraft::Api_protocol *client, const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
     ~MapController();
 
-    void resetAll();
+    virtual void resetAll();
     void setScale(int scaleSize);
 public slots:
     //map move

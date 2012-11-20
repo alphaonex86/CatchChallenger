@@ -37,17 +37,23 @@ void MapController::resetAll()
     if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
         qDebug() << "Unable the load the default tileset";
 
-    otherPlayerList.clear();
     delayedInsert.clear();
     delayedMove.clear();
     delayedRemove.clear();
-    QSet<QString>::const_iterator i = displayed_map.constBegin();
-    while (i != displayed_map.constEnd()) {
-        mapItem->removeMap(all_map[*i]->tiledMap);
-        displayed_map.remove(*i);
-        i = displayed_map.constBegin();
+    skinFolderList.clear();
+
+    int index=0;
+    while(index<otherPlayerList.size())
+    {
+        unloadOtherPlayerFromMap(otherPlayerList.at(index));
+        delete otherPlayerList.at(index).playerTileset;
+        index++;
     }
+    otherPlayerList.clear();
+
     mHaveTheDatapack=false;
+
+    MapVisualiserPlayer::resetAll();
 }
 
 void MapController::setScale(int scaleSize)
