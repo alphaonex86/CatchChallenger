@@ -21,9 +21,7 @@ void MapVisualiser::resetAll()
         i = displayed_map.constBegin();
     }
     displayed_map.clear();
-
     all_map.clear();
-    loadedNearMap.clear();
 }
 
 //open the file, and load it into the variables
@@ -271,40 +269,14 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     return resolvedFileName;
 }
 
-void MapVisualiser::loadCurrentMap()
+QSet<QString> MapVisualiser::loadMap(Map_full *map,const bool &display)
 {
-    loadedNearMap.clear();
+    QSet<QString> loadedNearMap=loadNearMap(map->logicalMap.map_file,true);
+    QSet<QString> loadedTeleporter=loadTeleporter(map);
 
-    QSet<QString> mapUsed;
-    Map_full *tempMapObject=current_map;
-
-    loadNearMap(tempMapObject->logicalMap.map_file);
-
-    //load the teleporter
-    int index=0;
-    while(index<tempMapObject->logicalMap.teleport_semi.size())
-    {
-        QString mapIndex=loadOtherMap(tempMapObject->logicalMap.teleport_semi[index].map);
-        //if is correctly loaded
-        if(!mapIndex.isEmpty())
-        {
-            //if the teleporter is in range
-            if(tempMapObject->logicalMap.teleport_semi[index].destination_x<all_map[mapIndex]->logicalMap.width && tempMapObject->logicalMap.teleport_semi[index].destination_y<all_map[mapIndex]->logicalMap.height)
-            {
-                int virtual_position=tempMapObject->logicalMap.teleport_semi[index].source_x+tempMapObject->logicalMap.teleport_semi[index].source_y*tempMapObject->logicalMap.width;
-                tempMapObject->logicalMap.teleporter[virtual_position].map=&all_map[mapIndex]->logicalMap;
-                tempMapObject->logicalMap.teleporter[virtual_position].x=tempMapObject->logicalMap.teleport_semi[index].destination_x;
-                tempMapObject->logicalMap.teleporter[virtual_position].y=tempMapObject->logicalMap.teleport_semi[index].destination_y;
-
-                mapUsed << mapIndex;
-            }
-            else
-                qDebug() << QString("The teleporter is out of range: %1").arg(mapIndex);
-        }
-        index++;
-    }
-
+    //add the new map visible directly done into loadNearMap() to have position in pixel
     //remove the not displayed map
+    if(display)
     {
         QSet<QString>::const_iterator i = displayed_map.constBegin();
         while (i != displayed_map.constEnd()) {
@@ -318,10 +290,15 @@ void MapVisualiser::loadCurrentMap()
                 ++i;
         }
     }
-    //remove the not used map
+    return loadedTeleporter+loadedNearMap;
+}
+
+void MapVisualiser::removeUnusedMap()
+{
+    ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
     QHash<QString,Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
-        if(!mapUsed.contains((*i)->logicalMap.map_file) && !loadedNearMap.contains((*i)->logicalMap.map_file))
+        if(!mapUsed.contains((*i)->logicalMap.map_file))
         {
             if((*i)->logicalMap.parsed_layer.walkable!=NULL)
                 delete (*i)->logicalMap.parsed_layer.walkable;
@@ -341,20 +318,50 @@ void MapVisualiser::loadCurrentMap()
     }
 }
 
-void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel)
+QSet<QString> MapVisualiser::loadTeleporter(Map_full *map)
 {
-    if(loadedNearMap.contains(fileName))
-        return;
+    QSet<QString> mapUsed;
+    //load the teleporter
+    int index=0;
+    while(index<map->logicalMap.teleport_semi.size())
+    {
+        QString mapIndex=loadOtherMap(map->logicalMap.teleport_semi[index].map);
+        //if is correctly loaded
+        if(!mapIndex.isEmpty())
+        {
+            //if the teleporter is in range
+            if(map->logicalMap.teleport_semi[index].destination_x<all_map[mapIndex]->logicalMap.width && map->logicalMap.teleport_semi[index].destination_y<all_map[mapIndex]->logicalMap.height)
+            {
+                int virtual_position=map->logicalMap.teleport_semi[index].source_x+map->logicalMap.teleport_semi[index].source_y*map->logicalMap.width;
+                map->logicalMap.teleporter[virtual_position].map=&all_map[mapIndex]->logicalMap;
+                map->logicalMap.teleporter[virtual_position].x=map->logicalMap.teleport_semi[index].destination_x;
+                map->logicalMap.teleporter[virtual_position].y=map->logicalMap.teleport_semi[index].destination_y;
+
+                mapUsed << mapIndex;
+            }
+            else
+                qDebug() << QString("The teleporter is out of range: %1").arg(mapIndex);
+        }
+        index++;
+    }
+    return mapUsed;
+}
+
+QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &display, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel,const QSet<QString> &previousLoadedNearMap)
+{
+    if(previousLoadedNearMap.contains(fileName))
+        return QSet<QString>();
 
     Map_full *tempMapObject;
     if(!all_map.contains(fileName))
     {
-        qDebug() << QString("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
-        return;
+        qDebug() << QString("loadNearMap(): the current map is unable to load: %1").arg(fileName);
+        return QSet<QString>();
     }
     else
         tempMapObject=all_map[fileName];
 
+    QSet<QString> loadedNearMap;
     loadedNearMap << fileName;
 
     QString mapIndex;
@@ -367,8 +374,8 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
     tempMapObject->logicalMap.border.left.map=NULL;
     tempMapObject->logicalMap.border.right.map=NULL;
 
-    //display the map
-    if(!displayed_map.contains(fileName))
+    //display a new map now visible
+    if(display && !displayed_map.contains(fileName))
     {
         mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         displayed_map << fileName;
@@ -399,7 +406,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.bottom.x_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.top.x_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
+                        loadedNearMap+=loadNearMap(mapIndex,display,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight(),previousLoadedNearMap+loadedNearMap);
                     }
                 }
                 else
@@ -433,7 +440,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.top.x_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.bottom.x_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
+                        loadedNearMap+=loadNearMap(mapIndex,display,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight(),previousLoadedNearMap+loadedNearMap);
                     }
                 }
                 else
@@ -467,7 +474,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.right.y_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.left.y_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
+                        loadedNearMap+=loadNearMap(mapIndex,display,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight(),previousLoadedNearMap+loadedNearMap);
                     }
                 }
                 else
@@ -501,7 +508,7 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                         tempMapObject->logicalMap.border.left.y_offset=-offset;
                         all_map[mapIndex]->logicalMap.border.right.y_offset=offset;
 
-                        loadNearMap(mapIndex,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight());
+                        loadedNearMap+=loadNearMap(mapIndex,display,x_sub,y_sub,x_pixel+(x_sub-x)*tempMapObject->tiledMap->tileWidth(),y_pixel+(y_sub-y)*tempMapObject->tiledMap->tileHeight(),previousLoadedNearMap+loadedNearMap);
                     }
                 }
                 else
@@ -511,4 +518,5 @@ void MapVisualiser::loadNearMap(const QString &fileName, const qint32 &x, const 
                 qDebug() << QString("loadNearMap(): left: not correctly loaded %1").arg(fileName);
         }
     }
+    return loadedNearMap;
 }

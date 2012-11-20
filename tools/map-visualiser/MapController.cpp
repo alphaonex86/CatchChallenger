@@ -253,7 +253,7 @@ void MapController::botManagement()
     index=0;
     while(index<botList.size())
     {
-        if(!loadedNearMap.contains(botList.at(index).map))
+        if(!displayed_map.contains(botList.at(index).map))
         {
             if(all_map.contains(botList.at(index).map))
             {
@@ -333,11 +333,11 @@ void MapController::loadPlayerFromCurrentMap()
 {
     MapVisualiserPlayer::loadPlayerFromCurrentMap();
 
-    //list bot spawn
+    //list bot spawn point
     botSpawnPointList.clear();
     {
-        QSet<QString>::const_iterator i = loadedNearMap.constBegin();
-        while (i != loadedNearMap.constEnd()) {
+        QSet<QString>::const_iterator i = displayed_map.constBegin();
+        while (i != displayed_map.constEnd()) {
             MapVisualiser::Map_full * map=getMap(*i);
             if(map!=NULL)
             {
@@ -398,7 +398,8 @@ bool MapController::viewMap(const QString &fileName)
         y=current_map->logicalMap.height/2;
     }
 
-    loadCurrentMap();
+    mapUsed=loadMap(current_map,true);
+    removeUnusedMap();
     loadPlayerFromCurrentMap();
 
     show();

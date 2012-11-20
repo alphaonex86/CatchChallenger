@@ -30,6 +30,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QWidget>
 #include <QSet>
+#include <QString>
 #include <QMultiMap>
 #include <QHash>
 #include <QGLWidget>
@@ -59,7 +60,6 @@ public:
 
     Map_full *current_map;
     QHash<QString,Map_full *> all_map;
-    QSet<QString> loadedNearMap;//temp variable to have only the near map
 protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
@@ -68,7 +68,12 @@ protected:
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
 
-    QSet<QString> displayed_map;//the map really show
+    /** map loaded (displayed or not), because it's in immediate range
+     * The current map is resolved on it, and the current player can go on it (teleporter or border) */
+    QSet<QString> mapUsed;
+    /** \brief to have only the near/displayed map
+     * Then only for the current player */
+    QSet<QString> displayed_map;
 
     bool debugTags;
     QString mLastError;
@@ -88,10 +93,11 @@ protected slots:
     virtual void resetAll();
 public slots:
     QString loadOtherMap(const QString &fileName);
-    void loadCurrentMap();
+    virtual QSet<QString> loadMap(Map_full *map, const bool &display);
+    virtual void removeUnusedMap();
 private slots:
-    void loadNearMap(const QString &fileName, const qint32 &x=0, const qint32 &y=0, const qint32 &x_pixel=0, const qint32 &y_pixel=0);
-
+    QSet<QString> loadTeleporter(Map_full *map);
+    QSet<QString> loadNearMap(const QString &fileName, const bool &display, const qint32 &x=0, const qint32 &y=0, const qint32 &x_pixel=0, const qint32 &y_pixel=0,const QSet<QString> &previousLoadedNearMap=QSet<QString>());
     void paintEvent(QPaintEvent * event);
     void updateFPS();
 protected slots:
