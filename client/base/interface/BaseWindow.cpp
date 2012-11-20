@@ -1,6 +1,7 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../../general/base/FacilityLib.h"
+#include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 
 #include <QListWidgetItem>
@@ -222,7 +223,9 @@ void BaseWindow::removeNumberForFlood()
 
 void BaseWindow::new_system_text(Chat_type chat_type,QString text)
 {
+    #ifdef DEBUG_BASEWINDOWS
     qDebug() << QString("new_system_text: %1").arg(text);
+    #endif
     chat_list_player_type << Player_type_normal;
     chat_list_player_pseudo << "";
     chat_list_type << chat_type;
@@ -239,7 +242,9 @@ void BaseWindow::new_system_text(Chat_type chat_type,QString text)
 
 void BaseWindow::new_chat_text(Chat_type chat_type,QString text,QString pseudo,Player_type type)
 {
+    #ifdef DEBUG_BASEWINDOWS
     qDebug() << QString("new_chat_text: %1 by %2").arg(text).arg(pseudo);
+    #endif
     chat_list_player_type << type;
     chat_list_player_pseudo << pseudo;
     chat_list_type << chat_type;
@@ -349,7 +354,9 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
 
 void BaseWindow::have_current_player_info()
 {
+    #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_current_player_info()";
+    #endif
     if(havePlayerInformations)
         return;
     havePlayerInformations=true;
@@ -362,7 +369,9 @@ void BaseWindow::have_current_player_info()
 
 void BaseWindow::haveTheDatapack()
 {
+    #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveTheDatapack()";
+    #endif
     if(haveDatapack)
         return;
     haveDatapack=true;
@@ -372,7 +381,9 @@ void BaseWindow::haveTheDatapack()
 
 void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
 {
+    #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
+    #endif
     this->items=items;
     haveInventory=true;
     updateConnectingStatus();
@@ -382,7 +393,9 @@ void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
 
 void BaseWindow::load_inventory()
 {
+    #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::load_inventory()";
+    #endif
     if(haveInventory && datapackIsParsed)
     {
         QHashIterator<quint32,quint32> i(items);
@@ -411,7 +424,9 @@ void BaseWindow::load_inventory()
 
 void BaseWindow::datapackParsed()
 {
+    #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::datapackParsed()";
+    #endif
     datapackIsParsed=true;
     load_inventory();
     updateConnectingStatus();

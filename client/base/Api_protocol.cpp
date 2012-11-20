@@ -831,7 +831,6 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                 //random seeds as input
                 case 0x0001:
                 {
-                    qDebug() << data.toHex();
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
