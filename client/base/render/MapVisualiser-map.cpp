@@ -12,6 +12,20 @@
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/libtiled/tile.h"
 
+void MapVisualiser::resetAll()
+{
+    QSet<QString>::const_iterator i = displayed_map.constBegin();
+    while (i != displayed_map.constEnd()) {
+        mapItem->removeMap(all_map[*i]->tiledMap);
+        displayed_map.remove(*i);
+        i = displayed_map.constBegin();
+    }
+    displayed_map.clear();
+
+    all_map.clear();
+    loadedNearMap.clear();
+}
+
 //open the file, and load it into the variables
 QString MapVisualiser::loadOtherMap(const QString &fileName)
 {
