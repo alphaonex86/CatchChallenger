@@ -116,7 +116,8 @@ HEADERS  += mainwindow.h \
     ../../server/VariableServer.h \
     ../../server/base/BaseServer.h \
     ../base/interface/DatapackClientLoader.h \
-    ../../server/base/ClientLocalBroadcast.h
+    ../../server/base/ClientLocalBroadcast.h \
+    ../base/ClientVariable.h
 
 FORMS    += mainwindow.ui \
     NewGame.ui \

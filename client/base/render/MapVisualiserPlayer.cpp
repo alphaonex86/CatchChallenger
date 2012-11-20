@@ -2,6 +2,11 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
+/* why send the look at because blocked into the wall?
+to be sync if connexion is stop, but use more bandwith
+To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
+*/
+
 MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiser(debugTags,useCache,OpenGL)
 {
@@ -90,6 +95,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setTile(playerTileset->tileAt(10));
             direction=Pokecraft::Direction_look_at_left;
             lookToMove.start();
+            emit send_player_direction(direction);
         }
     }
     else if(keyPressed.contains(Qt::Key_Right))
@@ -113,6 +119,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setTile(playerTileset->tileAt(4));
             direction=Pokecraft::Direction_look_at_right;
             lookToMove.start();
+            emit send_player_direction(direction);
         }
     }
     else if(keyPressed.contains(Qt::Key_Up))
@@ -136,6 +143,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setTile(playerTileset->tileAt(1));
             direction=Pokecraft::Direction_look_at_top;
             lookToMove.start();
+            emit send_player_direction(direction);
         }
     }
     else if(keyPressed.contains(Qt::Key_Down))
@@ -159,6 +167,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setTile(playerTileset->tileAt(7));
             direction=Pokecraft::Direction_look_at_bottom;
             lookToMove.start();
+            emit send_player_direction(direction);
         }
     }
 }
@@ -301,14 +310,15 @@ void MapVisualiserPlayer::moveStepSlot()
         //check if one arrow key is pressed to continue to move into this direction
         if(keyPressed.contains(Qt::Key_Left))
         {
-            //if can go, then do the move
+            //can't go into this direction, then just look into this direction
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_left;
                 playerMapObject->setTile(playerTileset->tileAt(10));
                 inMove=false;
+                emit send_player_direction(direction);//see the top note
             }
-            //can go into this direction, then just look into this direction
+            //if can go, then do the move
             else
             {
                 direction=Pokecraft::Direction_move_at_left;
@@ -320,14 +330,15 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         else if(keyPressed.contains(Qt::Key_Right))
         {
-            //if can go, then do the move
+            //can't go into this direction, then just look into this direction
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_right;
                 playerMapObject->setTile(playerTileset->tileAt(4));
                 inMove=false;
+                emit send_player_direction(direction);//see the top note
             }
-            //can go into this direction, then just look into this direction
+            //if can go, then do the move
             else
             {
                 direction=Pokecraft::Direction_move_at_right;
@@ -339,14 +350,15 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         else if(keyPressed.contains(Qt::Key_Up))
         {
-            //if can go, then do the move
+            //can't go into this direction, then just look into this direction
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_top;
                 playerMapObject->setTile(playerTileset->tileAt(1));
                 inMove=false;
+                emit send_player_direction(direction);//see the top note
             }
-            //can go into this direction, then just look into this direction
+            //if can go, then do the move
             else
             {
                 direction=Pokecraft::Direction_move_at_top;
@@ -358,14 +370,15 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         else if(keyPressed.contains(Qt::Key_Down))
         {
-            //if can go, then do the move
+            //can't go into this direction, then just look into this direction
             if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_bottom;
                 playerMapObject->setTile(playerTileset->tileAt(7));
                 inMove=false;
+                emit send_player_direction(direction);//see the top note
             }
-            //can go into this direction, then just look into this direction
+            //if can go, then do the move
             else
             {
                 direction=Pokecraft::Direction_move_at_bottom;

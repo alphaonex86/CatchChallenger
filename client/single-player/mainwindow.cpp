@@ -557,7 +557,6 @@ void MainWindow::on_SaveGame_Play_clicked()
 
 void MainWindow::is_started(bool started)
 {
-    qDebug() << QString("is_started(%1)").arg(started);
     if(!started)
     {
         if(internalServer!=NULL)
@@ -567,12 +566,7 @@ void MainWindow::is_started(bool started)
         }
         saveTime();
         if(!isVisible())
-        {
-            qDebug() << QString("is_started(%1) and is not visible").arg(started);
             QCoreApplication::quit();
-        }
-        else
-            qDebug() << QString("is_started(%1) and is visible").arg(started);
     }
     else
     {
