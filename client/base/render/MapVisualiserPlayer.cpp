@@ -297,7 +297,8 @@ void MapVisualiserPlayer::moveStepSlot()
                 unloadPlayerFromCurrentMap();
                 all_map[current_map->logicalMap.map_file]=current_map;
                 current_map=all_map[map->map_file];
-                loadCurrentMap();
+                mapUsed=loadMap(current_map,true);
+                removeUnusedMap();
                 loadPlayerFromCurrentMap();
             }
         }
@@ -571,7 +572,7 @@ void MapVisualiserPlayer::startGrassAnimation(const Pokecraft::Direction &direct
         COORD_TYPE x_destination=x;
         COORD_TYPE y_destination=y;
         if(Pokecraft::MoveOnTheMap::move(direction,&map_destination,&x_destination,&y_destination))
-            if(loadedNearMap.contains(map_destination->map_file))
+            if(all_map.contains(map_destination->map_file))
                 haveNextCurrentObject=Pokecraft::MoveOnTheMap::haveGrass(*map_destination,x_destination,y_destination);
         if(haveNextCurrentObject)
         {

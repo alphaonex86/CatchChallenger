@@ -7,6 +7,7 @@
 #include <QString>
 #include <QList>
 #include <QStringList>
+#include <QHash>
 
 class MapController : public MapVisualiserPlayer
 {
@@ -44,13 +45,11 @@ private:
         bool inMove;
         bool stepAlternance;
         Map_full *current_map;
+        QSet<QString> mapUsed;
     };
-    QList<OtherPlayer> otherPlayerList;
-    struct BotSpawnPoint
-    {
-        MapVisualiser::Map_full * map;
-        quint8 x,y;
-    };
+    QHash<quint16,OtherPlayer> otherPlayerList;
+    QHash<QString,quint16> mapUsedByOtherPlayer;
+
     Pokecraft::Api_protocol *client;
 
     //current player
@@ -80,7 +79,8 @@ private:
     QList<DelayedMove> delayedMove;
     QList<quint16> delayedRemove;
 private slots:
-    bool loadMap(const QString &fileName,const quint8 &x,const quint8 &y);
+    bool loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y);
+    virtual void removeUnusedMap();
 protected slots:
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer);
