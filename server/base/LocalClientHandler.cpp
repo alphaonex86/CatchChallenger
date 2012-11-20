@@ -75,46 +75,41 @@ void LocalClientHandler::extraStop()
             orientation=Orientation_bottom;
         break;
     }
-    if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation)
+    /* disable because use memory, but useful only into less than < 0.1% of case
+     * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
+    #ifdef DEBUG_MESSAGE_CLIENT_MOVE
+    DebugClass::debugConsole(
+                QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
+                .arg(map->map_file)
+                .arg(x)
+                .arg(y)
+                .arg(orientationString)
+                );
+    #endif
+    if(!player_informations->is_logged || player_informations->isFake)
+        return;
+    QString updateMapPositionQuery;
+    switch(GlobalData::serverSettings.database.type)
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-        DebugClass::debugConsole(
-                    QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
-                    .arg(map->map_file)
-                    .arg(x)
-                    .arg(y)
-                    .arg(orientationString)
-                    );
-        #endif
-        if(!player_informations->is_logged || player_informations->isFake)
-            return;
-        at_start_map_name=map;
-        at_start_x=x;
-        at_start_y=y;
-        at_start_orientation=orientation;
-        QString updateMapPositionQuery;
-        switch(GlobalData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
-                    .arg(SqlFunction::quoteSqlVariable(map->map_file))
-                    .arg(x)
-                    .arg(y)
-                    .arg(orientationString)
-                    .arg(player_informations->id);
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
-                    .arg(SqlFunction::quoteSqlVariable(map->map_file))
-                    .arg(x)
-                    .arg(y)
-                    .arg(orientationString)
-                    .arg(player_informations->id);
-            break;
-        }
-        emit dbQuery(updateMapPositionQuery);
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
+                .arg(SqlFunction::quoteSqlVariable(map->map_file))
+                .arg(x)
+                .arg(y)
+                .arg(orientationString)
+                .arg(player_informations->id);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
+                .arg(SqlFunction::quoteSqlVariable(map->map_file))
+                .arg(x)
+                .arg(y)
+                .arg(orientationString)
+                .arg(player_informations->id);
+        break;
     }
+    emit dbQuery(updateMapPositionQuery);
 }
 
 /* why do that's here?
@@ -124,10 +119,6 @@ void LocalClientHandler::extraStop()
 void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
-    at_start_orientation=orientation;
-    at_start_map_name=map;
-    at_start_x=x;
-    at_start_y=y;
 
     //send to the client the position of the player
     QByteArray outputData;

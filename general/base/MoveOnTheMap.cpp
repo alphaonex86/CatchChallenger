@@ -17,8 +17,14 @@ void MoveOnTheMap::setLastDirection(const Direction &the_direction)
 
 void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 {
+    #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
+    qDebug() << QString("newDirection(%1)").arg(directionToString(the_new_direction));
+    #endif
     if(last_direction!=the_new_direction)
     {
+        #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
+        qDebug() << QString("send_player_move(%1,%2)").arg(last_step).arg(directionToString(the_new_direction));
+        #endif
         send_player_move(last_step,the_new_direction);
         last_step=0;
         last_direction=the_new_direction;
