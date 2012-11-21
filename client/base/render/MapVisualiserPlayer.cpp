@@ -36,6 +36,11 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     grassCurrentObject=new Tiled::MapObject();
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
+
+    playerMapObject = new Tiled::MapObject();
+    playerTileset = new Tiled::Tileset("player",16,24);
+
+    current_map=NULL;
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -43,6 +48,8 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
     delete animationTileset;
     delete nextCurrentObject;
     delete grassCurrentObject;
+    delete playerMapObject;
+    delete playerTileset;
 }
 
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
@@ -532,6 +539,9 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 //call before leave the old map (and before loadPlayerFromCurrentMap())
 void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
 {
+    Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
+    if(currentGroup==NULL)
+        return;
     //unload the player sprite
     if(ObjectGroupItem::objectGroupLink.contains(playerMapObject->objectGroup()))
         ObjectGroupItem::objectGroupLink[playerMapObject->objectGroup()]->removeObject(playerMapObject);
