@@ -2,6 +2,7 @@
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/FacilityLib.h"
 #include "DatapackClientLoader.h"
+#include "../ClientVariable.h"
 
 #include <QMessageBox>
 
@@ -12,6 +13,7 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
     qRegisterMetaType<Pokecraft::Player_public_informations>("Pokecraft::Player_public_informations");
     qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
+    qRegisterMetaType<QList<QPair<quint8,Pokecraft::Direction> > >("QList<QPair<quint8,Pokecraft::Direction> >");
 
     this->client=client;
     player_informations_is_set=false;
@@ -22,7 +24,7 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
     connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(client,SIGNAL(remove_player(quint16)),this,SLOT(remove_player(quint16)),Qt::QueuedConnection);
-    connect(client,SIGNAL(move_player(quint16,QList<QPair<quint8,Direction> >)),this,SLOT(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),Qt::QueuedConnection);
+    connect(client,SIGNAL(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),this,SLOT(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),Qt::QueuedConnection);
     connect(client,SIGNAL(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(client,SIGNAL(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
@@ -124,6 +126,9 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
         delayedInsert << tempItem;
         return;
     }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    qDebug() << QString("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(Pokecraft::MoveOnTheMap::directionToString(direction));
+    #endif
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
         if(current_map!=NULL)
@@ -252,6 +257,7 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
         loadOtherPlayerFromMap(tempPlayer);
 
         otherPlayerList[player.simplifiedId]=tempPlayer;
+        otherPlayerList[player.simplifiedId].informations=player;
 
         switch(direction)
         {
@@ -320,6 +326,103 @@ void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pok
         qDebug() << "The current player can't be moved (only teleported)";
         return;
     }
+    if(!otherPlayerList.contains(id))
+    {
+        qDebug() << QString("Other player (%1) not loaded on the map").arg(id);
+        return;
+    }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    QStringList moveString;
+    int index_temp=0;
+    while(index_temp<movement.size())
+    {
+        QPair<quint8, Pokecraft::Direction> move=movement.at(index_temp);
+        moveString << QString("{%1,%2}").arg(move.first).arg(Pokecraft::MoveOnTheMap::directionToString(move.second));
+        index_temp++;
+    }
+
+    qDebug() << QString("move_player(%1,%2), previous direction: %3").arg(id).arg(moveString.join(";")).arg(Pokecraft::MoveOnTheMap::directionToString(otherPlayerList[id].direction));
+    #endif
+    //move to have the new position if needed
+    int index=0;
+    while(index<movement.size())
+    {
+        QPair<quint8, Pokecraft::Direction> move=movement.at(index);
+        int index2=0;
+        while(index2<move.first)
+        {
+            Pokecraft::Map * old_map=&otherPlayerList[id].current_map->logicalMap;
+            Pokecraft::Map * map=&otherPlayerList[id].current_map->logicalMap;
+            quint8 x=otherPlayerList[id].x;
+            quint8 y=otherPlayerList[id].y;
+            //set the final value (direction, position, ...)
+            switch(otherPlayerList[id].direction)
+            {
+                case Pokecraft::Direction_move_at_left:
+                case Pokecraft::Direction_move_at_right:
+                case Pokecraft::Direction_move_at_top:
+                case Pokecraft::Direction_move_at_bottom:
+                if(Pokecraft::MoveOnTheMap::canGoTo(otherPlayerList[id].direction,*map,x,y,true))
+                    Pokecraft::MoveOnTheMap::move(otherPlayerList[id].direction,&map,&x,&y);
+                else
+                {
+                    qDebug() << QString("move_player(): at %1(%2,%3) can't go to %4").arg(map->map_file).arg(x).arg(y).arg(Pokecraft::MoveOnTheMap::directionToString(otherPlayerList[id].direction));
+                    return;
+                }
+                break;
+                default:
+                qDebug() << QString("move_player(): moveStep: %1, wrong direction").arg(move.first);
+                return;
+            }
+            //if the map have changed
+            if(old_map!=map)
+            {
+                loadOtherMap(map->map_file);
+                if(!all_map.contains(map->map_file))
+                    qDebug() << QString("map changed not located: %1").arg(map->map_file);
+                else
+                {
+                    unloadOtherPlayerFromMap(otherPlayerList[id]);
+                    //all_map[current_map->logicalMap.map_file]=current_map;
+                    otherPlayerList[id].current_map=all_map[map->map_file];
+                    mapUsed=loadMap(otherPlayerList[id].current_map,true);
+                    removeUnusedMap();
+                    loadOtherPlayerFromMap(otherPlayerList[id]);
+                }
+            }
+            otherPlayerList[id].x=x;
+            otherPlayerList[id].y=y;
+            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+            otherPlayerList[id].playerMapObject->setPosition(QPoint(otherPlayerList[id].x,otherPlayerList[id].y+1));
+            index2++;
+        }
+        otherPlayerList[id].direction=move.second;
+        index++;
+    }
+    //start moving into the right direction
+    switch(otherPlayerList[id].direction)
+    {
+        case Pokecraft::Direction_look_at_top:
+        case Pokecraft::Direction_move_at_top:
+            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(1));
+        break;
+        case Pokecraft::Direction_look_at_right:
+        case Pokecraft::Direction_move_at_right:
+            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(4));
+        break;
+        case Pokecraft::Direction_look_at_bottom:
+        case Pokecraft::Direction_move_at_bottom:
+            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(7));
+        break;
+        case Pokecraft::Direction_look_at_left:
+        case Pokecraft::Direction_move_at_left:
+            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(10));
+        break;
+        default:
+            qDebug() << QString("move_player(): player: %1 (%2), wrong direction: %3").arg(otherPlayerList[id].informations.pseudo).arg(id).arg(otherPlayerList[id].direction);
+            return;
+        return;
+    }
 }
 
 void MapController::remove_player(const quint16 &id)
@@ -334,35 +437,34 @@ void MapController::remove_player(const quint16 &id)
         qDebug() << "The current player can't be removed";
         return;
     }
-    else
+    if(!otherPlayerList.contains(id))
     {
-        if(!otherPlayerList.contains(id))
-        {
-            qDebug() << QString("Other player (%1) not exists").arg(id);
-            return;
-        }
-        unloadOtherPlayerFromMap(otherPlayerList[id]);
-        QSetIterator<QString> i(otherPlayerList[id].mapUsed);
-        while (i.hasNext())
-        {
-            QString map = i.next();
-            if(mapUsedByOtherPlayer.contains(map))
-            {
-                mapUsedByOtherPlayer[map]--;
-                if(mapUsedByOtherPlayer[map]==0)
-                    mapUsedByOtherPlayer.remove(map);
-            }
-            else
-                qDebug() << QString("map not found into mapUsedByOtherPlayer for player: %1, map: %2").arg(id).arg(otherPlayerList[id].current_map->logicalMap.map_file);
-        }
-        removeUnusedMap();
-
-        delete otherPlayerList[id].playerMapObject;
-        delete otherPlayerList[id].playerTileset;
-
-        otherPlayerList.remove(id);
+        qDebug() << QString("Other player (%1) not exists").arg(id);
         return;
     }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    qDebug() << QString("remove_player(%1)").arg(id);
+    #endif
+    unloadOtherPlayerFromMap(otherPlayerList[id]);
+    QSetIterator<QString> i(otherPlayerList[id].mapUsed);
+    while (i.hasNext())
+    {
+        QString map = i.next();
+        if(mapUsedByOtherPlayer.contains(map))
+        {
+            mapUsedByOtherPlayer[map]--;
+            if(mapUsedByOtherPlayer[map]==0)
+                mapUsedByOtherPlayer.remove(map);
+        }
+        else
+            qDebug() << QString("map not found into mapUsedByOtherPlayer for player: %1, map: %2").arg(id).arg(otherPlayerList[id].current_map->logicalMap.map_file);
+    }
+    removeUnusedMap();
+
+    delete otherPlayerList[id].playerMapObject;
+    delete otherPlayerList[id].playerTileset;
+
+    otherPlayerList.remove(id);
 }
 
 void MapController::reinsert_player(const quint16 &,const quint8 &,const quint8 &,const Pokecraft::Direction &)
