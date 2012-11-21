@@ -16,20 +16,20 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     this->client=client;
     player_informations_is_set=false;
 
-    playerMapObject = new Tiled::MapObject();
-    playerTileset = new Tiled::Tileset("player",16,24);
-
     resetAll();
 
     //connect the map controler
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
     connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(client,SIGNAL(remove_player(quint16)),this,SLOT(remove_player(quint16)),Qt::QueuedConnection);
+    connect(client,SIGNAL(move_player(quint16,QList<QPair<quint8,Direction> >)),this,SLOT(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),Qt::QueuedConnection);
+    connect(client,SIGNAL(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(client,SIGNAL(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
 }
 
 MapController::~MapController()
 {
-    delete playerTileset;
 }
 
 void MapController::resetAll()
@@ -65,8 +65,6 @@ bool MapController::loadPlayerMap(const QString &fileName,const quint8 &x,const 
     //position
     this->x=x;
     this->y=y;
-
-    current_map=NULL;
 
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
@@ -128,6 +126,11 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
     }
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
+        if(current_map!=NULL)
+        {
+            qDebug() << "Current player already loaded on the map";
+            return;
+        }
         //the player skin
         if(player.skinId<skinFolderList.size())
         {
@@ -169,6 +172,11 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
     }
     else
     {
+        if(otherPlayerList.contains(player.simplifiedId))
+        {
+            qDebug() << QString("Other player (%1) already loaded on the map").arg(player.simplifiedId);
+            return;
+        }
         OtherPlayer tempPlayer;
         tempPlayer.x=x;
         tempPlayer.y=y;
@@ -275,7 +283,7 @@ void MapController::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
     if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.playerMapObject->objectGroup()))
         ObjectGroupItem::objectGroupLink[otherPlayer.playerMapObject->objectGroup()]->removeObject(otherPlayer.playerMapObject);
     else
-        qDebug() << QString("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
+        qDebug() << QString("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.playerMapObject->objectGroup()");
 }
 
 void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pokecraft::Direction> > &movement)
@@ -309,6 +317,11 @@ void MapController::remove_player(const quint16 &id)
     }
     else
     {
+        if(!otherPlayerList.contains(id))
+        {
+            qDebug() << QString("Other player (%1) not exists").arg(id);
+            return;
+        }
         unloadOtherPlayerFromMap(otherPlayerList[id]);
         QSetIterator<QString> i(otherPlayerList[id].mapUsed);
         while (i.hasNext())

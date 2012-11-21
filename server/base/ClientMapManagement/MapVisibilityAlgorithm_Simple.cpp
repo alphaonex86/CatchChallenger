@@ -522,6 +522,13 @@ bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
 
 void MapVisibilityAlgorithm_Simple::loadOnTheMap()
 {
+    #ifdef POKECRAFT_SERVER_EXTRA_CHECK
+    if(unlikely(static_cast<Map_server_MapVisibility_simple*>(map)->clients.contains(this)))
+    {
+        emit message("loadOnTheMap() try dual insert into the player list");
+        return;
+    }
+    #endif
     static_cast<Map_server_MapVisibility_simple*>(map)->clients << this;
 }
 
