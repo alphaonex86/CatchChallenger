@@ -40,6 +40,7 @@ private slots:
     void disconnected(QString reason);
     void protocol_is_good();
     void needQuit();
+    void have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations);
 private:
     Ui::MainWindow *ui;
     Pokecraft::Api_client_real *client;
