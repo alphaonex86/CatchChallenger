@@ -639,7 +639,18 @@ void BaseServer::loadAndFixSettings()
         player_list_size=sizeof(quint8);
     else
         player_list_size=sizeof(quint16);
-    GlobalData::serverPrivateVariables.sizeofInsertRequest=player_list_size+sizeof(quint8)+sizeof(quint8)+sizeof(quint8);
+    quint8 map_list_size;
+    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        map_list_size=sizeof(quint8);
+    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        map_list_size=sizeof(quint16);
+    else
+        map_list_size=sizeof(quint32);
+    GlobalData::serverPrivateVariables.sizeofInsertRequest=
+            //mutualised
+            sizeof(quint8)+map_list_size+/*player_list_size same with move, delete, ...*/
+            //of the player
+            /*player_list_size same with move, delete, ...*/+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+0/*pseudo size put directy*/+sizeof(quint8);
 
     if(GlobalData::serverSettings.mapVisibility.simple.max>GlobalData::serverSettings.max_players)
         GlobalData::serverSettings.mapVisibility.simple.max=GlobalData::serverSettings.max_players;
