@@ -208,7 +208,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
                 (to_send_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
                 >=
                     //size of on insert
-                    GlobalData::serverPrivateVariables.sizeofInsertRequest
+                    GlobalData::serverPrivateVariables.sizeofInsertRequest+player_informations->rawPseudo.size()
                 ))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
