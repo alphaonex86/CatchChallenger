@@ -46,6 +46,7 @@ private:
         bool stepAlternance;
         Map_full *current_map;
         QSet<QString> mapUsed;
+        Pokecraft::Player_public_informations informations;
     };
     QHash<quint16,OtherPlayer> otherPlayerList;
     QHash<QString,quint16> mapUsedByOtherPlayer;

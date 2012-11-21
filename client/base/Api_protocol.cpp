@@ -412,7 +412,6 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
                 quint8 current_player_connected_8Bits;
                 in >> current_player_connected_8Bits;
-                DebugClass::debugConsole(QString("current_player_connected_8Bits: %1").arg(current_player_connected_8Bits));
                 emit number_of_player(current_player_connected_8Bits,max_player);
             }
             else
@@ -424,7 +423,6 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 }
                 quint16 current_player_connected_16Bits;
                 in >> current_player_connected_16Bits;
-                DebugClass::debugConsole(QString("current_player_connected_16Bits: %1").arg(current_player_connected_16Bits));
                 emit number_of_player(current_player_connected_16Bits,max_player);
             }
         }
@@ -1040,7 +1038,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         in >> number_of_map;
 
                         is_logged=true;
-                        DebugClass::debugConsole(QString("is logged with id: %1, cash: %2").arg(player_informations.public_informations.simplifiedId).arg(player_informations.cash));
                         emit logged();
                     }
                     else
