@@ -275,19 +275,19 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             case Pokecraft::Direction_move_at_left:
             direction=Pokecraft::Direction_look_at_left;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
+            Pokecraft::MoveOnTheMap::move(direction,&map,&x,&y);
             break;
             case Pokecraft::Direction_move_at_right:
             direction=Pokecraft::Direction_look_at_right;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
+            Pokecraft::MoveOnTheMap::move(direction,&map,&x,&y);
             break;
             case Pokecraft::Direction_move_at_top:
             direction=Pokecraft::Direction_look_at_top;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
+            Pokecraft::MoveOnTheMap::move(direction,&map,&x,&y);
             break;
             case Pokecraft::Direction_move_at_bottom:
             direction=Pokecraft::Direction_look_at_bottom;
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
+            Pokecraft::MoveOnTheMap::move(direction,&map,&x,&y);
             break;
             default:
             qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(moveStep);

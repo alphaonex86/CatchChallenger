@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
     connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
     connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
+    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)));
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
 
@@ -76,6 +77,7 @@ void MainWindow::resetAll()
     else
         ui->pushButtonTryLogin->setFocus();
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
+    setWindowTitle("Pokecraft - "+SERVER_NAME);
 }
 
 void MainWindow::disconnected(QString reason)
@@ -199,4 +201,9 @@ void MainWindow::protocol_is_good()
 void MainWindow::needQuit()
 {
     client->tryDisconnect();
+}
+
+void MainWindow::have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations)
+{
+    setWindowTitle(QString("Pokecraft - %1 - %2").arg(SERVER_NAME).arg(informations.public_informations.pseudo));
 }
