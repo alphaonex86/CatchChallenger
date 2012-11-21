@@ -252,6 +252,25 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
         loadOtherPlayerFromMap(tempPlayer);
 
         otherPlayerList[player.simplifiedId]=tempPlayer;
+
+        switch(direction)
+        {
+            case Pokecraft::Direction_move_at_top:
+            case Pokecraft::Direction_move_at_right:
+            case Pokecraft::Direction_move_at_bottom:
+            case Pokecraft::Direction_move_at_left:
+            {
+                QList<QPair<quint8, Pokecraft::Direction> > movement;
+                QPair<quint8, Pokecraft::Direction> move;
+                move.first=0;
+                move.second=direction;
+                movement << move;
+                move_player(player.simplifiedId,movement);
+            }
+            break;
+            default:
+            break;
+        }
         return;
     }
 }
