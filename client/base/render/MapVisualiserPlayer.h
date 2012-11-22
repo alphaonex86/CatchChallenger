@@ -64,6 +64,7 @@ protected slots:
 
     void setAnimationTilset(QString animationTilset);
     virtual void resetAll();
+    void setSpeed(const SPEED_TYPE &speed);
 signals:
     void send_player_direction(const Pokecraft::Direction &the_direction);
 };

@@ -14,7 +14,7 @@
 
 //in ms
 #define POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT 150
-#define POKECRAFT_SERVER_NORMAL_SPEED 4 //then 4*50ms, see the protocol
+#define POKECRAFT_SERVER_NORMAL_SPEED 250 //then 250ms, see the protocol
 
 
 /** map visibility bandwith optimisation
