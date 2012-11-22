@@ -624,7 +624,7 @@ void MapController::moveOtherPlayerStepSlot()
         break;
         case Pokecraft::Direction_move_at_bottom:
         baseTile=7;
-        switch(moveStep)
+        switch(otherPlayerList[otherPlayerListByTimer[timer]].moveStep)
         {
             case 1:
             case 2:
