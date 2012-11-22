@@ -91,34 +91,15 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
     if(unlikely(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-        emit message(QString("map have change %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
+        emit message(QString("map have change, direction: %4: (%1,%2): %3, send at %5 player(s)").arg(x).arg(y).arg(player_informations->public_and_private_informations.public_informations.simplifiedId).arg(MoveOnTheMap::directionToString(direction)).arg(loop_size-1));
         #endif
         if(likely(loop_size<=GlobalData::serverSettings.mapVisibility.simple.max))
         {
-            //insert the new client
-            index=0;
-            while(index<loop_size)
-            {
-                current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
-                if(likely(current_client!=this))
-                {
-                    current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
-                    //register the other client on him self
-                    this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
-                }
-                index++;
-            }
+            //insert the new client, do into insertClient(), call by singleMove()
         }
         else
         {
-            //drop all show client because it have excess the limit
-            //drop on all client
-            index=0;
-            while(index<loop_size)
-            {
-                static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->dropAllClients();
-                index++;
-            }
+            //drop all show client because it have excess the limit, do into removeClient(), call by singleMove()
         }
     }
     else
@@ -204,6 +185,9 @@ void MapVisibilityAlgorithm_Simple::mapVisiblity_unloadFromTheMap()
 
 void MapVisibilityAlgorithm_Simple::reinsertAllClient()
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("reinsertAllClient() %1)").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
+    #endif
     index=0;
     while(index<loop_size)
     {
@@ -543,7 +527,6 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 
 bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
 {
-    mapHaveChanged=false;
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,false))//check of colision disabled because do into LocalClientHandler
         return false;
     old_map=map;
@@ -599,7 +582,7 @@ void MapVisibilityAlgorithm_Simple::put_on_the_map(Map *map,const /*COORD_TYPE*/
 bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
+    emit message(QString("moveThePlayer(): for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
                  .arg(x)
                  .arg(y)
                  .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
@@ -608,7 +591,7 @@ bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUni
                  .arg(MoveOnTheMap::directionToString(direction))
                  );
     #endif
-
+    mapHaveChanged=false;
     //do on server part, because the client send when is blocked to sync the position
     #ifdef POKECRAFT_SERVER_MAP_DROP_BLOCKED_MOVE
     if(previousMovedUnitBlocked>0)
