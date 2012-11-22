@@ -15,7 +15,7 @@ ClientLocalBroadcast::~ClientLocalBroadcast()
 
 void ClientLocalBroadcast::extraStop()
 {
-    static_cast<Map_server *>(map)->clientsForBroadcast.remove(this);
+    static_cast<Map_server *>(map)->clientsForBroadcast.removeOne(this);
 }
 
 void ClientLocalBroadcast::sendLocalChatText(const QString &text)
@@ -24,13 +24,13 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
         return;
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
 
-    ClientLocalBroadcast *item;
-    QSetIterator<ClientLocalBroadcast *> i(static_cast<Map_server *>(map)->clientsForBroadcast);
-    while (i.hasNext())
+    int size=static_cast<Map_server *>(map)->clientsForBroadcast.size();
+    int index=0;
+    while(index<size)
     {
-        item=i.next();
-        if(item!=this)
-            item->receiveChatText(text,player_informations);
+        if(static_cast<Map_server *>(map)->clientsForBroadcast.at(index)!=this)
+            static_cast<Map_server *>(map)->clientsForBroadcast.at(index)->receiveChatText(text,player_informations);
+        index++;
     }
 }
 
@@ -62,7 +62,7 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
     MoveOnTheMap::move(direction,&map,&x,&y);
     if(old_map!=map)
     {
-        static_cast<Map_server *>(old_map)->clientsForBroadcast.remove(this);
+        static_cast<Map_server *>(old_map)->clientsForBroadcast.removeOne(this);
         static_cast<Map_server *>(map)->clientsForBroadcast << this;
     }
     return true;
