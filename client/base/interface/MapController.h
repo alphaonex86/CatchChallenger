@@ -52,6 +52,7 @@ private:
         //presumed map
         Map_full *presumed_map;
         quint8 presumed_x,presumed_y;
+        Pokecraft::Direction presumed_direction;
         QTimer *oneStepMore;
     };
     QHash<quint16,OtherPlayer> otherPlayerList;
