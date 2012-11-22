@@ -39,6 +39,9 @@ void MapController::resetAll()
     if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
         qDebug() << "Unable the load the default tileset";
 
+    unloadPlayerFromCurrentMap();
+    current_map=NULL;
+
     delayedInsert.clear();
     delayedMove.clear();
     delayedRemove.clear();
@@ -51,6 +54,8 @@ void MapController::resetAll()
         delete i.value().playerTileset;
     }
     otherPlayerList.clear();
+    otherPlayerListByTimer.clear();
+    mapUsedByOtherPlayer.clear();
 
     mHaveTheDatapack=false;
 
