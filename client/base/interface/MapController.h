@@ -8,6 +8,7 @@
 #include <QList>
 #include <QStringList>
 #include <QHash>
+#include <QTimer>
 
 class MapController : public MapVisualiserPlayer
 {
@@ -44,11 +45,17 @@ private:
         quint8 x,y;
         bool inMove;
         bool stepAlternance;
-        Map_full *current_map;
+        QString current_map;
         QSet<QString> mapUsed;
         Pokecraft::Player_public_informations informations;
+
+        //presumed map
+        Map_full *presumed_map;
+        quint8 presumed_x,presumed_y;
+        QTimer *oneStepMore;
     };
     QHash<quint16,OtherPlayer> otherPlayerList;
+    QHash<QTimer *,quint16> otherPlayerListByTimer;
     QHash<QString,quint16> mapUsedByOtherPlayer;
 
     Pokecraft::Api_protocol *client;
@@ -82,6 +89,7 @@ private:
 private slots:
     bool loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y);
     virtual void removeUnusedMap();
+    void moveOtherPlayerStepSlot();
 protected slots:
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer);
