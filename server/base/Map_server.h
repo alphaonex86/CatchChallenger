@@ -12,7 +12,7 @@ class ClientLocalBroadcast;
 class Map_server : public Map
 {
 public:
-    QSet<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast()
+    QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast()
 };
 
 class Map_server_MapVisibility_simple : public Map_server
