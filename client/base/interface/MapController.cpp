@@ -479,7 +479,17 @@ void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pok
             qDebug() << QString("move_player(): player: %1 (%2), wrong direction: %3").arg(otherPlayerList[id].informations.pseudo).arg(id).arg(otherPlayerList[id].presumed_direction);
         return;
     }
-    otherPlayerList[id].oneStepMore->start(otherPlayerList[id].informations.speed/5);
+    switch(otherPlayerList[id].presumed_direction)
+    {
+        case Pokecraft::Direction_move_at_top:
+        case Pokecraft::Direction_move_at_right:
+        case Pokecraft::Direction_move_at_bottom:
+        case Pokecraft::Direction_move_at_left:
+            otherPlayerList[id].oneStepMore->start(otherPlayerList[id].informations.speed/5);
+        break;
+        default:
+        break;
+    }
 }
 
 void MapController::remove_player(const quint16 &id)
@@ -650,7 +660,7 @@ void MapController::moveOtherPlayerStepSlot()
         }
         break;
         default:
-        qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
+        qDebug() << QString("moveOtherPlayerStepSlot(): moveStep: %1, wrong direction").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
         timer->stop();
         return;
     }

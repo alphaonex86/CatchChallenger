@@ -274,7 +274,7 @@ void Client::normalOutput(QString message)
     if(!player_informations.is_logged)
         DebugClass::debugConsole(QString("%1:%2 %3").arg(remote_ip).arg(port).arg(message));
     else
-        DebugClass::debugConsole(QString("%1: %2").arg(player_informations.id).arg(message));
+        DebugClass::debugConsole(QString("%1: %2").arg(player_informations.public_and_private_informations.public_informations.simplifiedId).arg(message));
 }
 
 void Client::send_player_informations()

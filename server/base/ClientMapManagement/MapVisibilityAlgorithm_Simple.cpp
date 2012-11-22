@@ -41,27 +41,44 @@ MapVisibilityAlgorithm_Simple::~MapVisibilityAlgorithm_Simple()
 
 void MapVisibilityAlgorithm_Simple::insertClient()
 {
+    loop_size=static_cast<Map_server_MapVisibility_simple*>(map)->clients.size();
     if(likely(loop_size<=GlobalData::serverSettings.mapVisibility.simple.max))
     {
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message(QString("insertClient() insert the client, into: %1").arg(map->map_file));
+        #endif
         //insert the new client
-        QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-        while (i.hasNext())
+        index=0;
+        while(index<loop_size)
         {
-            current_client=i.next();
+            current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
             current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
             this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
+            index++;
         }
     }
     else
     {
         if(unlikely(static_cast<Map_server_MapVisibility_simple*>(map)->show))
         {
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            emit message(QString("insertClient() too many client, hide now, into: %1").arg(map->map_file));
+            #endif
             static_cast<Map_server_MapVisibility_simple*>(map)->show=false;
             //drop all show client because it have excess the limit
             //drop on all client
-            QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-            while (i.hasNext())
-                i.next()->dropAllClients();
+            index=0;
+            while(index<loop_size)
+            {
+                static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->dropAllClients();
+                index++;
+            }
+        }
+        else
+        {
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            emit message(QString("insertClient() already too many client, into: %1").arg(map->map_file));
+            #endif
         }
     }
     //auto insert to know where it have spawn, now in charge of ClientLocalCalcule
@@ -79,25 +96,29 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
         if(likely(loop_size<=GlobalData::serverSettings.mapVisibility.simple.max))
         {
             //insert the new client
-            QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-            while(i.hasNext())
+            index=0;
+            while(index<loop_size)
             {
-                current_client=i.next();
+                current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
                 if(likely(current_client!=this))
                 {
                     current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
                     //register the other client on him self
                     this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
                 }
+                index++;
             }
         }
         else
         {
             //drop all show client because it have excess the limit
             //drop on all client
-            QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-            while(i.hasNext())
-                i.next()->dropAllClients();
+            index=0;
+            while(index<loop_size)
+            {
+                static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->dropAllClients();
+                index++;
+            }
         }
     }
     else
@@ -110,12 +131,13 @@ void MapVisibilityAlgorithm_Simple::moveClient(const quint8 &movedUnit,const Dir
         //normal operation
         if(likely(loop_size<=GlobalData::serverSettings.mapVisibility.simple.max))
         {
-            QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-            while (i.hasNext())
+            index=0;
+            while(index<loop_size)
             {
-                current_client=i.next();
+                current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
                 if(likely(current_client!=this))
-                    current_client->moveAnotherClientWithMap(player_informations->public_and_private_informations.public_informations.simplifiedId,this,movedUnit,direction);
+                     current_client->moveAnotherClientWithMap(player_informations->public_and_private_informations.public_informations.simplifiedId,this,movedUnit,direction);
+                index++;
             }
         }
         else //all client is dropped due to over load on the map
@@ -140,21 +162,38 @@ void MapVisibilityAlgorithm_Simple::removeClient()
     loop_size=static_cast<Map_server_MapVisibility_simple*>(map)->clients.size();
     if(unlikely(loop_size==(GlobalData::serverSettings.mapVisibility.simple.reshow) && static_cast<Map_server_MapVisibility_simple*>(map)->show==false))
     {
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message(QString("removeClient() client of the map is now under the limit, reinsert all into: %1").arg(map->map_file));
+        #endif
         static_cast<Map_server_MapVisibility_simple*>(map)->show=true;
         //insert all the client because it start to be visible
-        QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-        while (i.hasNext())
-            i.next()->reinsertAllClient();
+        index=0;
+        while(index<loop_size)
+        {
+            static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index)->reinsertAllClient();
+            index++;
+        }
     }
     //nothing removed because all clients are already hide
     else if(unlikely(loop_size>(GlobalData::serverSettings.mapVisibility.simple.max+1)))
     {
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message(QString("removeClient() do nothing because client hiden, into: %1").arg(map->map_file));
+        #endif
     }
     else //normal working
     {
-        QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-        while (i.hasNext())
-            i.next()->removeAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId);
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message(QString("removeClient() normal work, just remove from client on: %1").arg(map->map_file));
+        #endif
+        index=0;
+        while(index<loop_size)
+        {
+            current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
+            current_client->removeAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId);
+            this->removeAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId);
+            index++;
+        }
     }
 }
 
@@ -165,15 +204,16 @@ void MapVisibilityAlgorithm_Simple::mapVisiblity_unloadFromTheMap()
 
 void MapVisibilityAlgorithm_Simple::reinsertAllClient()
 {
-    QSetIterator<MapVisibilityAlgorithm_Simple *> i(static_cast<Map_server_MapVisibility_simple*>(map)->clients);
-    while (i.hasNext())
+    index=0;
+    while(index<loop_size)
     {
-        current_client=i.next();
+        current_client=static_cast<Map_server_MapVisibility_simple*>(map)->clients.at(index);
         if(likely(current_client!=this))
         {
             current_client->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
             this->insertAnotherClient(current_client->player_informations->public_and_private_informations.public_informations.simplifiedId,current_client);
         }
+        index++;
     }
 }
 
@@ -511,6 +551,9 @@ bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
     MoveOnTheMap::move(direction,&new_map,&x,&y);
     if(old_map!=new_map)
     {
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message(QString("singleMove() have change from old map: %1, to the new map: %2").arg(old_map->map_file).arg(new_map->map_file));
+        #endif
         mapHaveChanged=true;
         map=old_map;
         unloadFromTheMap();
@@ -522,8 +565,9 @@ bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
 
 void MapVisibilityAlgorithm_Simple::loadOnTheMap()
 {
+    insertClient();
     #ifdef POKECRAFT_SERVER_EXTRA_CHECK
-    if(unlikely(static_cast<Map_server_MapVisibility_simple*>(map)->clients.contains(this)))
+    if(static_cast<Map_server_MapVisibility_simple*>(map)->clients.contains(this))
     {
         emit message("loadOnTheMap() try dual insert into the player list");
         return;
@@ -534,7 +578,14 @@ void MapVisibilityAlgorithm_Simple::loadOnTheMap()
 
 void MapVisibilityAlgorithm_Simple::unloadFromTheMap()
 {
-    static_cast<Map_server_MapVisibility_simple*>(map)->clients.remove(this);
+    #ifdef POKECRAFT_SERVER_EXTRA_CHECK
+    if(!static_cast<Map_server_MapVisibility_simple*>(map)->clients.contains(this))
+    {
+        emit message("unloadFromTheMap() try remove of the player list, but not found");
+        return;
+    }
+    #endif
+    static_cast<Map_server_MapVisibility_simple*>(map)->clients.removeOne(this);
     mapVisiblity_unloadFromTheMap();
 }
 
@@ -542,12 +593,22 @@ void MapVisibilityAlgorithm_Simple::unloadFromTheMap()
 void MapVisibilityAlgorithm_Simple::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
-    insertClient();
     loadOnTheMap();
 }
 
 bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
+                 .arg(x)
+                 .arg(y)
+                 .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
+                 .arg(previousMovedUnit)
+                 .arg(MoveOnTheMap::directionToString(last_direction))
+                 .arg(MoveOnTheMap::directionToString(direction))
+                 );
+    #endif
+
     //do on server part, because the client send when is blocked to sync the position
     #ifdef POKECRAFT_SERVER_MAP_DROP_BLOCKED_MOVE
     if(previousMovedUnitBlocked>0)
