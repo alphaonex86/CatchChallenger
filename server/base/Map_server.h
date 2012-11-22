@@ -52,7 +52,7 @@ public:
     Or quadtree usage, cf google: quadtree
      * */
 
-    QSet<MapVisibilityAlgorithm_Simple *> clients;//manipulated by thread of ClientMapManagement()
+    QList<MapVisibilityAlgorithm_Simple *> clients;//manipulated by thread of ClientMapManagement()
 
     bool show;
 };
