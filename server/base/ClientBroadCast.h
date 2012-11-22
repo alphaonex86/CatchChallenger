@@ -30,8 +30,8 @@ public:
     void setVariable(Player_internal_informations *player_informations);
     //player indexed list
     static QHash<QString,ClientBroadCast *> playerByPseudo;
-    static QHash<CLAN_ID_TYPE,QSet<ClientBroadCast *> > playerByClan;
-    static QSet<ClientBroadCast *> clientBroadCastList;
+    static QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> playerByClan;
+    static QList<ClientBroadCast *> clientBroadCastList;
 public slots:
     //global slot
     void sendPM(const QString &text,const QString &pseudo);
