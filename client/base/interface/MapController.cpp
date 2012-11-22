@@ -217,7 +217,10 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
             qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapController::insert_player()";
             return;
         }
-        tempPlayer.current_map=all_map[current_map_fileName];
+        tempPlayer.current_map=current_map_fileName;
+        tempPlayer.presumed_map=all_map[current_map_fileName];
+        tempPlayer.presumed_x=x;
+        tempPlayer.presumed_y=y;
         switch(direction)
         {
             case Pokecraft::Direction_look_at_top:
@@ -243,21 +246,14 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
             return;
         }
 
-        tempPlayer.mapUsed=loadMap(tempPlayer.current_map,false);
-        QSetIterator<QString> i(tempPlayer.mapUsed);
-        while (i.hasNext())
-        {
-            QString map = i.next();
-            if(mapUsedByOtherPlayer.contains(map))
-                mapUsedByOtherPlayer[map]++;
-            else
-                mapUsedByOtherPlayer[map]=1;
-        }
-        removeUnusedMap();
         loadOtherPlayerFromMap(tempPlayer);
 
+        tempPlayer.informations=player;
+        tempPlayer.oneStepMore=new QTimer();
+        tempPlayer.oneStepMore->setSingleShot(true);
+        otherPlayerListByTimer[tempPlayer.oneStepMore]=player.simplifiedId;
+        connect(tempPlayer.oneStepMore,SIGNAL(timeout()),this,SLOT(moveOtherPlayerStepSlot()));
         otherPlayerList[player.simplifiedId]=tempPlayer;
-        otherPlayerList[player.simplifiedId].informations=player;
 
         switch(direction)
         {
@@ -284,21 +280,35 @@ void MapController::insert_player(const Pokecraft::Player_public_informations &p
 //call after enter on new map
 void MapController::loadOtherPlayerFromMap(OtherPlayer otherPlayer)
 {
+    //remove the player tile if needed
     Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
     if(currentGroup!=NULL)
     {
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(otherPlayer.playerMapObject);
-        if(currentGroup!=otherPlayer.current_map->objectGroup)
+        if(currentGroup!=otherPlayer.presumed_map->objectGroup)
             qDebug() << QString("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
-    if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.current_map->objectGroup))
-        ObjectGroupItem::objectGroupLink[otherPlayer.current_map->objectGroup]->addObject(otherPlayer.playerMapObject);
-    else
-        qDebug() << QString("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.x,otherPlayer.y+1));
+
+    QSet<QString> mapUsed=loadMap(otherPlayer.presumed_map,true);
+    QSetIterator<QString> i(mapUsed);
+    while (i.hasNext())
+    {
+        QString map = i.next();
+        if(mapUsedByOtherPlayer.contains(map))
+            mapUsedByOtherPlayer[map]++;
+        else
+            mapUsedByOtherPlayer[map]=1;
+    }
+    removeUnusedMap();
+
+    if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.presumed_map->objectGroup))
+        ObjectGroupItem::objectGroupLink[otherPlayer.presumed_map->objectGroup]->addObject(otherPlayer.playerMapObject);
+    else
+        qDebug() << QString("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -309,6 +319,20 @@ void MapController::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
         ObjectGroupItem::objectGroupLink[otherPlayer.playerMapObject->objectGroup()]->removeObject(otherPlayer.playerMapObject);
     else
         qDebug() << QString("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.playerMapObject->objectGroup()");
+
+    QSetIterator<QString> i(otherPlayer.mapUsed);
+    while (i.hasNext())
+    {
+        QString map = i.next();
+        if(mapUsedByOtherPlayer.contains(map))
+        {
+            mapUsedByOtherPlayer[map]--;
+            if(mapUsedByOtherPlayer[map]==0)
+                mapUsedByOtherPlayer.remove(map);
+        }
+        else
+            qDebug() << QString("map not found into mapUsedByOtherPlayer for player: %1, map: %2").arg(otherPlayer.informations.simplifiedId).arg(map);
+    }
 }
 
 void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pokecraft::Direction> > &movement)
@@ -343,6 +367,26 @@ void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pok
 
     qDebug() << QString("move_player(%1,%2), previous direction: %3").arg(id).arg(moveString.join(";")).arg(Pokecraft::MoveOnTheMap::directionToString(otherPlayerList[id].direction));
     #endif
+
+
+    //reset to the good position
+    if(otherPlayerList[id].current_map!=otherPlayerList[id].presumed_map->logicalMap.map_file)
+    {
+        unloadOtherPlayerFromMap(otherPlayerList[id]);
+        QString current_map_fileName=loadOtherMap(otherPlayerList[id].current_map);
+        if(current_map_fileName.isEmpty())
+        {
+            qDebug() << QString("move_player(%1), unable to load the map: %2").arg(id).arg(otherPlayerList[id].current_map);
+            return;
+        }
+        otherPlayerList[id].presumed_map=all_map[current_map_fileName];
+        loadOtherPlayerFromMap(otherPlayerList[id]);
+    }
+    quint8 x=otherPlayerList[id].x;
+    quint8 y=otherPlayerList[id].y;
+    Pokecraft::Map * map=&otherPlayerList[id].presumed_map->logicalMap;
+    Pokecraft::Map * old_map;
+
     //move to have the new position if needed
     int index=0;
     while(index<movement.size())
@@ -351,10 +395,7 @@ void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pok
         int index2=0;
         while(index2<move.first)
         {
-            Pokecraft::Map * old_map=&otherPlayerList[id].current_map->logicalMap;
-            Pokecraft::Map * map=&otherPlayerList[id].current_map->logicalMap;
-            quint8 x=otherPlayerList[id].x;
-            quint8 y=otherPlayerList[id].y;
+            old_map=map;
             //set the final value (direction, position, ...)
             switch(otherPlayerList[id].direction)
             {
@@ -383,22 +424,30 @@ void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pok
                 else
                 {
                     unloadOtherPlayerFromMap(otherPlayerList[id]);
-                    //all_map[current_map->logicalMap.map_file]=current_map;
-                    otherPlayerList[id].current_map=all_map[map->map_file];
-                    mapUsed=loadMap(otherPlayerList[id].current_map,true);
-                    removeUnusedMap();
+                    otherPlayerList[id].presumed_map=all_map[map->map_file];
                     loadOtherPlayerFromMap(otherPlayerList[id]);
                 }
             }
-            otherPlayerList[id].x=x;
-            otherPlayerList[id].y=y;
-            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-            otherPlayerList[id].playerMapObject->setPosition(QPoint(otherPlayerList[id].x,otherPlayerList[id].y+1));
             index2++;
         }
         otherPlayerList[id].direction=move.second;
         index++;
     }
+
+
+    //set the new variables
+    //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+    otherPlayerList[id].playerMapObject->setPosition(QPoint(otherPlayerList[id].x,otherPlayerList[id].y+1));
+
+    otherPlayerList[id].current_map=map->map_file;
+    otherPlayerList[id].x=x;
+    otherPlayerList[id].y=y;
+
+    otherPlayerList[id].presumed_map=all_map[otherPlayerList[id].current_map];
+    otherPlayerList[id].presumed_x=otherPlayerList[id].x;
+    otherPlayerList[id].presumed_y=otherPlayerList[id].y;
+
+
     //start moving into the right direction
     switch(otherPlayerList[id].direction)
     {
@@ -420,7 +469,6 @@ void MapController::move_player(const quint16 &id, const QList<QPair<quint8, Pok
         break;
         default:
             qDebug() << QString("move_player(): player: %1 (%2), wrong direction: %3").arg(otherPlayerList[id].informations.pseudo).arg(id).arg(otherPlayerList[id].direction);
-            return;
         return;
     }
 }
@@ -446,23 +494,12 @@ void MapController::remove_player(const quint16 &id)
     qDebug() << QString("remove_player(%1)").arg(id);
     #endif
     unloadOtherPlayerFromMap(otherPlayerList[id]);
-    QSetIterator<QString> i(otherPlayerList[id].mapUsed);
-    while (i.hasNext())
-    {
-        QString map = i.next();
-        if(mapUsedByOtherPlayer.contains(map))
-        {
-            mapUsedByOtherPlayer[map]--;
-            if(mapUsedByOtherPlayer[map]==0)
-                mapUsedByOtherPlayer.remove(map);
-        }
-        else
-            qDebug() << QString("map not found into mapUsedByOtherPlayer for player: %1, map: %2").arg(id).arg(otherPlayerList[id].current_map->logicalMap.map_file);
-    }
-    removeUnusedMap();
+
+    otherPlayerListByTimer.remove(otherPlayerList[id].oneStepMore);
 
     delete otherPlayerList[id].playerMapObject;
     delete otherPlayerList[id].playerTileset;
+    delete otherPlayerList[id].oneStepMore;
 
     otherPlayerList.remove(id);
 }
@@ -535,4 +572,226 @@ void MapController::datapackParsed()
         index++;
     }
     delayedRemove.clear();
+}
+
+void MapController::moveOtherPlayerStepSlot()
+{
+    QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
+    if(timer==NULL)
+    {
+        qDebug() << "moveOtherPlayerStepSlot() timer not located";
+        return;
+    }
+    int baseTile=1;
+    //move the player for intermediate step and define the base tile (define the stopped step with direction)
+    switch(otherPlayerList[otherPlayerListByTimer[timer]].direction)
+    {
+        case Pokecraft::Direction_move_at_left:
+        baseTile=10;
+        switch(otherPlayerList[otherPlayerListByTimer[timer]].moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setX(otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->x()-0.20);
+            break;
+        }
+        break;
+        case Pokecraft::Direction_move_at_right:
+        baseTile=4;
+        switch(otherPlayerList[otherPlayerListByTimer[timer]].moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setX(otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->x()+0.20);
+            break;
+        }
+        break;
+        case Pokecraft::Direction_move_at_top:
+        baseTile=1;
+        switch(otherPlayerList[otherPlayerListByTimer[timer]].moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setY(otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->y()-0.20);
+            break;
+        }
+        break;
+        case Pokecraft::Direction_move_at_bottom:
+        baseTile=7;
+        switch(moveStep)
+        {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setY(otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->y()+0.20);
+            break;
+        }
+        break;
+        default:
+        qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
+        timer->stop();
+        return;
+    }
+
+    //apply the right step of the base step defined previously by the direction
+    switch(otherPlayerList[otherPlayerListByTimer[timer]].moveStep)
+    {
+        //stopped step
+        case 0:
+        otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+0));
+        break;
+        //transition step
+        case 2:
+        if(stepAlternance)
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile-1));
+        else
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+1));
+        otherPlayerList[otherPlayerListByTimer[timer]].stepAlternance=!otherPlayerList[otherPlayerListByTimer[timer]].stepAlternance;
+        break;
+        //stopped step
+        case 4:
+        otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+0));
+        break;
+    }
+
+    otherPlayerList[otherPlayerListByTimer[timer]].moveStep++;
+
+    //if have finish the step
+    if(otherPlayerList[otherPlayerListByTimer[timer]].moveStep>5)
+    {
+        Pokecraft::Map * old_map=&otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap;
+        Pokecraft::Map * map=&otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap;
+        quint8 x=otherPlayerList[otherPlayerListByTimer[timer]].x;
+        quint8 y=otherPlayerList[otherPlayerListByTimer[timer]].y;
+        //set the final value (direction, position, ...)
+        switch(otherPlayerList[otherPlayerListByTimer[timer]].direction)
+        {
+            case Pokecraft::Direction_move_at_left:
+                Pokecraft::MoveOnTheMap::move(otherPlayerList[otherPlayerListByTimer[timer]].direction,&map,&x,&y);
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_left;
+            break;
+            case Pokecraft::Direction_move_at_right:
+                Pokecraft::MoveOnTheMap::move(otherPlayerList[otherPlayerListByTimer[timer]].direction,&map,&x,&y);
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_right;
+            break;
+            case Pokecraft::Direction_move_at_top:
+                Pokecraft::MoveOnTheMap::move(otherPlayerList[otherPlayerListByTimer[timer]].direction,&map,&x,&y);
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_top;
+            break;
+            case Pokecraft::Direction_move_at_bottom:
+                Pokecraft::MoveOnTheMap::move(otherPlayerList[otherPlayerListByTimer[timer]].direction,&map,&x,&y);
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_bottom;
+            break;
+            default:
+            qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
+            return;
+        }
+        otherPlayerList[otherPlayerListByTimer[timer]].x=x;
+        otherPlayerList[otherPlayerListByTimer[timer]].y=y;
+        //if the map have changed
+        if(old_map!=map)
+        {
+            loadOtherMap(map->map_file);
+            if(!all_map.contains(map->map_file))
+                qDebug() << QString("map changed not located: %1").arg(map->map_file);
+            else
+            {
+                unloadOtherPlayerFromMap(otherPlayerList[otherPlayerListByTimer[timer]]);
+                otherPlayerList[otherPlayerListByTimer[timer]].presumed_map=all_map[map->map_file];
+                loadOtherPlayerFromMap(otherPlayerList[otherPlayerListByTimer[timer]]);
+            }
+        }
+        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+        otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setPosition(QPoint(x,y+1));
+
+        //check if one arrow key is pressed to continue to move into this direction
+        if(otherPlayerList[otherPlayerListByTimer[timer]].direction==Pokecraft::Direction_move_at_left)
+        {
+            //can't go into this direction, then just look into this direction
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_left;
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(10));
+                otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
+                timer->stop();
+            }
+            //if can go, then do the move
+            else
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_move_at_left;
+                otherPlayerList[otherPlayerListByTimer[timer]].moveStep=0;
+                moveOtherPlayerStepSlot();
+            }
+        }
+        else if(otherPlayerList[otherPlayerListByTimer[timer]].direction==Pokecraft::Direction_move_at_right)
+        {
+            //can't go into this direction, then just look into this direction
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_right;
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(4));
+                otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
+                timer->stop();
+            }
+            //if can go, then do the move
+            else
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_move_at_right;
+                otherPlayerList[otherPlayerListByTimer[timer]].moveStep=0;
+                moveOtherPlayerStepSlot();
+            }
+        }
+        else if(otherPlayerList[otherPlayerListByTimer[timer]].direction==Pokecraft::Direction_move_at_top)
+        {
+            //can't go into this direction, then just look into this direction
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_top;
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(1));
+                otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
+                timer->stop();
+            }
+            //if can go, then do the move
+            else
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_move_at_top;
+                otherPlayerList[otherPlayerListByTimer[timer]].moveStep=0;
+                moveOtherPlayerStepSlot();
+            }
+        }
+        else if(otherPlayerList[otherPlayerListByTimer[timer]].direction==Pokecraft::Direction_move_at_bottom)
+        {
+            //can't go into this direction, then just look into this direction
+            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_look_at_bottom;
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(7));
+                otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
+                timer->stop();
+            }
+            //if can go, then do the move
+            else
+            {
+                otherPlayerList[otherPlayerListByTimer[timer]].direction=Pokecraft::Direction_move_at_bottom;
+                otherPlayerList[otherPlayerListByTimer[timer]].moveStep=0;
+                moveOtherPlayerStepSlot();
+            }
+        }
+        //now stop walking, no more arrow key is pressed
+        else
+        {
+            otherPlayerList[otherPlayerListByTimer[timer]].moveStep=0;
+            otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
+            timer->stop();
+        }
+    }
+    else
+        timer->start();
 }

@@ -4,8 +4,8 @@
 using namespace Pokecraft;
 
 QHash<QString,ClientBroadCast *> ClientBroadCast::playerByPseudo;
-QHash<CLAN_ID_TYPE,QSet<ClientBroadCast *> > ClientBroadCast::playerByClan;
-QSet<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
+QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> ClientBroadCast::playerByClan;
+QList<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
 QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo;
 QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo_end;
 ClientBroadCast *ClientBroadCast::item;
