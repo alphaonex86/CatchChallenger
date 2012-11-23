@@ -9,5 +9,5 @@ HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui
 
-RESOURCES += ../base/resources/resources-multi.qrc
+RESOURCES += ../base/resources/client-resources-multi.qrc
 

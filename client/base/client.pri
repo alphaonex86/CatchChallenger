@@ -1,68 +1,68 @@
-INCLUDEPATH += ../../general/libtiled/
-DEPENDPATH += ../../general/libtiled/
+INCLUDEPATH += $$PWD/../../general/libtiled/
+DEPENDPATH += $$PWD/../../general/libtiled/
 LIBS *= -ltiled
 
 QT       += core gui network opengl xml
 
 TEMPLATE = app
 
-SOURCES += ../../general/base/DebugClass.cpp \
-    ../../general/base/ChatParsing.cpp \
-    ../../general/base/QFakeSocket.cpp \
-    ../../general/base/QFakeServer.cpp \
-    ../../general/base/ProtocolParsing.cpp \
-    ../../general/base/MoveOnTheMap.cpp \
-    ../../general/base/Map_loader.cpp \
-    ../../general/base/Map.cpp \
-    ../base/Api_protocol.cpp \
-    ../base/Api_client_virtual.cpp \
-    ../base/Api_client_real.cpp \
-    ../../general/base/FacilityLib.cpp \
-    ../base/render/TileLayerItem.cpp \
-    ../base/render/ObjectGroupItem.cpp \
-    ../base/render/MapVisualiserPlayer.cpp \
-    ../base/render/MapVisualiser.cpp \
-    ../base/render/MapVisualiser-map.cpp \
-    ../base/render/MapObjectItem.cpp \
-    ../base/render/MapItem.cpp \
-    ../base/Map_client.cpp \
-    ../base/interface/BaseWindow.cpp \
-    ../base/interface/MapController.cpp \
-    ../../general/base/ConnectedSocket.cpp \
-    ../base/interface/DatapackClientLoader.cpp
+SOURCES += $$PWD/../../general/base/DebugClass.cpp \
+    $$PWD/../../general/base/ChatParsing.cpp \
+    $$PWD/../../general/base/QFakeSocket.cpp \
+    $$PWD/../../general/base/QFakeServer.cpp \
+    $$PWD/../../general/base/ProtocolParsing.cpp \
+    $$PWD/../../general/base/MoveOnTheMap.cpp \
+    $$PWD/../../general/base/Map_loader.cpp \
+    $$PWD/../../general/base/Map.cpp \
+    $$PWD/Api_protocol.cpp \
+    $$PWD/Api_client_virtual.cpp \
+    $$PWD/Api_client_real.cpp \
+    $$PWD/../../general/base/FacilityLib.cpp \
+    $$PWD/render/TileLayerItem.cpp \
+    $$PWD/render/ObjectGroupItem.cpp \
+    $$PWD/render/MapVisualiserPlayer.cpp \
+    $$PWD/render/MapVisualiser.cpp \
+    $$PWD/render/MapVisualiser-map.cpp \
+    $$PWD/render/MapObjectItem.cpp \
+    $$PWD/render/MapItem.cpp \
+    $$PWD/Map_client.cpp \
+    $$PWD/interface/BaseWindow.cpp \
+    $$PWD/interface/MapController.cpp \
+    $$PWD/../../general/base/ConnectedSocket.cpp \
+    $$PWD/interface/DatapackClientLoader.cpp
 
-HEADERS  += ../../general/base/GeneralStructures.h \
-    ../../general/base/DebugClass.h \
-    ../../general/base/ChatParsing.h \
-    ../../general/base/VariableGeneral.h \
-    ../../general/base/QFakeServer.h \
-    ../../general/base/ProtocolParsing.h \
-    ../../general/base/MoveOnTheMap.h \
-    ../../general/base/Map_loader.h \
-    ../../general/base/Map.h \
-    ../../general/base/GeneralVariable.h \
-    ../../general/base/QFakeSocket.h \
-    ../base/MoveOnTheMap_Client.h \
-    ../base/ClientStructures.h \
-    ../base/Api_protocol.h \
-    ../base/Api_client_virtual.h \
-    ../base/Api_client_real.h \
-    ../../general/base/FacilityLib.h \
-    ../base/render/TileLayerItem.h \
-    ../base/render/ObjectGroupItem.h \
-    ../base/render/MapVisualiserPlayer.h \
-    ../base/render/MapVisualiser.h \
-    ../base/render/MapObjectItem.h \
-    ../base/render/MapItem.h \
-    ../base/Map_client.h \
-    ../base/interface/BaseWindow.h \
-    ../base/interface/MapController.h \
-    ../../general/base/ConnectedSocket.h \
-    ../base/interface/DatapackClientLoader.h \
-    ../base/ClientVariable.h
+HEADERS  += $$PWD/../../general/base/GeneralStructures.h \
+    $$PWD/../../general/base/DebugClass.h \
+    $$PWD/../../general/base/ChatParsing.h \
+    $$PWD/../../general/base/VariableGeneral.h \
+    $$PWD/../../general/base/QFakeServer.h \
+    $$PWD/../../general/base/ProtocolParsing.h \
+    $$PWD/../../general/base/MoveOnTheMap.h \
+    $$PWD/../../general/base/Map_loader.h \
+    $$PWD/../../general/base/Map.h \
+    $$PWD/../../general/base/GeneralVariable.h \
+    $$PWD/../../general/base/QFakeSocket.h \
+    $$PWD/MoveOnTheMap_Client.h \
+    $$PWD/ClientStructures.h \
+    $$PWD/Api_protocol.h \
+    $$PWD/Api_client_virtual.h \
+    $$PWD/Api_client_real.h \
+    $$PWD/../../general/base/FacilityLib.h \
+    $$PWD/render/TileLayerItem.h \
+    $$PWD/render/ObjectGroupItem.h \
+    $$PWD/render/MapVisualiserPlayer.h \
+    $$PWD/render/MapVisualiser.h \
+    $$PWD/render/MapObjectItem.h \
+    $$PWD/render/MapItem.h \
+    $$PWD/Map_client.h \
+    $$PWD/interface/BaseWindow.h \
+    $$PWD/interface/MapController.h \
+    $$PWD/../../general/base/ConnectedSocket.h \
+    $$PWD/interface/DatapackClientLoader.h \
+    $$PWD/ClientVariable.h
 
-FORMS    += ../base/interface/BaseWindow.ui
+FORMS    += $$PWD/interface/BaseWindow.ui
 
-win32:RC_FILE += ../base/resources/resources-windows.rc
+win32:RC_FILE += $$PWD/resources/resources-windows.rc
 
-RESOURCES += ../base/resources/resources.qrc
+RESOURCES += $$PWD/resources/client-resources.qrc
