@@ -46,7 +46,7 @@ HEADERS += \
     base/ClientMapManagement/MapVisibilityAlgorithm_None.h
 
 RESOURCES += \
-    resources.qrc \
+    all-server-resources.qrc \
     resources-server.qrc \
 
 win32:RC_FILE += resources-windows.rc

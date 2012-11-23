@@ -18,8 +18,6 @@ HEADERS  += mainwindow.h \
         NewGame.h \
         SaveGameLabel.h
 
-FORMS    += mainwindow.ui
-
 FORMS    += mainwindow.ui \
     NewGame.ui
 
