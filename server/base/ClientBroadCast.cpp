@@ -22,7 +22,6 @@ ClientBroadCast::~ClientBroadCast()
 void ClientBroadCast::setVariable(Player_internal_informations *player_informations)
 {
     this->player_informations=player_informations;
-    emit message(QString("boardcast: GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber: %1").arg(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber));
     if(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber)
         connect(&GlobalData::serverPrivateVariables.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
 }
@@ -66,6 +65,7 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
         emit message(QString("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
         return;
     }
+    emit message(QString("[chat PM]: %1 -> %2: %3").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QString("to %1: %2").arg(pseudo).arg(text));
     playerByPseudo[pseudo]->receiveChatText(Chat_type_pm,text,this->player_informations);
 }
@@ -81,8 +81,6 @@ void ClientBroadCast::askIfIsReadyToStop()
 
 void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &text,const Player_internal_informations *sender_informations)
 {
-    /* Multiple message when multiple player connected
-    emit message(QString("receiveChatText(), text: %1, sender_player_id: %2, to player: %3").arg(text).arg(sender_player_id).arg(player_informations.id)); */
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -111,13 +109,13 @@ void ClientBroadCast::receiveSystemText(const QString &text,const bool &importan
 
 void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text)
 {
-    emit message(QString("sendChatText(), text: %1").arg(text));
     if(chatType==Chat_type_clan)
     {
         if(player_informations->public_and_private_informations.public_informations.clan==0)
             emit error("Unable to chat with clan, you have not clan");
         else
         {
+            emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(player_informations->public_and_private_informations.public_informations.clan).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(player_informations->public_and_private_informations.public_informations.clan);
             int size=playerWithSameClan.size();
@@ -136,6 +134,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     {
         if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
         {
+            emit message(QString("[chat] %1: To the system chat: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             QSetIterator<ClientBroadCast *> i(clientBroadCastList);
             while (i.hasNext())
@@ -151,6 +150,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     }*/
     else
     {
+        emit message(QString("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
         int size=clientBroadCastList.size();
         int index=0;

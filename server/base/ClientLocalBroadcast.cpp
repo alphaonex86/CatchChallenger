@@ -22,6 +22,7 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
 {
     if(map==NULL)
         return;
+    emit message(QString("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
 
     int size=static_cast<Map_server *>(map)->clientsForBroadcast.size();

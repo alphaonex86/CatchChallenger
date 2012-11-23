@@ -383,6 +383,15 @@ void MainWindow::load_settings()
     ui->MapVisibilityAlgorithmSimpleMax->setValue(tempValue);
     ui->MapVisibilityAlgorithmSimpleReshow->setValue(reshow);
 
+    switch(ui->MapVisibilityAlgorithm->currentIndex())
+    {
+        case 0:
+            ui->benchmark_clients->setMaximum(ui->MapVisibilityAlgorithmSimpleMax->value());
+        break;
+        default:
+        break;
+    }
+
     settings->beginGroup("rates");
     double rates_xp_normal=settings->value("xp_normal").toReal();
     double rates_xp_premium=settings->value("xp_premium").toReal();
@@ -660,6 +669,7 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
     settings->setValue("Max",arg1);
     settings->endGroup();
     ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(arg1);
+    ui->benchmark_clients->setMaximum(ui->MapVisibilityAlgorithmSimpleMax->value());
 }
 
 

@@ -414,32 +414,34 @@ void NormalServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
+            //to know if need login or not
             if(GlobalData::serverPrivateVariables.botSockets.contains(socket->getTheOtherSocket()))
             {
                 DebugClass::debugConsole(QString("new client connected by fake socket"));
                 GlobalData::serverPrivateVariables.botSockets.remove(socket->getTheOtherSocket());
-                 connect_the_last_client(new Client(new ConnectedSocket(socket),true,getClientMapManagement()));
+                connect_the_last_client(new Client(new ConnectedSocket(socket),true,getClientMapManagement()));
             }
             else
             {
                 DebugClass::debugConsole(QString("new bot connected by fake socket"));
-                 connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
+                connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
             }
         }
         else
             DebugClass::debugConsole("NULL client with fake socket");
     }
-    while(server->hasPendingConnections())
-    {
-        QTcpSocket *socket = server->nextPendingConnection();
-        if(socket!=NULL)
+    if(server!=NULL)
+        while(server->hasPendingConnections())
         {
-            DebugClass::debugConsole(QString("new client connected by tcp socket"));
-            connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
+            QTcpSocket *socket = server->nextPendingConnection();
+            if(socket!=NULL)
+            {
+                DebugClass::debugConsole(QString("new client connected by tcp socket"));
+                connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
+            }
+            else
+                DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
         }
-        else
-            DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
-    }
 }
 
 bool NormalServer::isListen()
