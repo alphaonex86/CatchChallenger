@@ -26,8 +26,8 @@ public:
     void show_details();
     quint64 get_TX_size();
     quint64 get_RX_size();
-    ConnectedSocket socket;
     QFakeSocket fakeSocket;
+    ConnectedSocket socket;
     void tryLink();
 private:
     Api_client_virtual api;
