@@ -81,6 +81,9 @@ protected:
 
     //datapack
     QString datapack_base_name;
+
+    //plant
+    bool havePlantAction;
 signals:
     void newError(const QString &error,const QString &detailedError);
 
@@ -102,6 +105,12 @@ signals:
     void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 y,const Pokecraft::Direction &direction);
     void dropAllPlayerOnTheMap();
 
+    //plant
+    void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
+    void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y);
+    void seed_planted(const bool &ok);
+    void plant_collected(const plant_collect &stat);
+
     //chat
     void new_chat_text(const Pokecraft::Chat_type &chat_type,const QString &text,const QString &pseudo,const Pokecraft::Player_type &type);
     void new_system_text(const Pokecraft::Chat_type &chat_type,const QString &text);
@@ -119,6 +128,10 @@ public slots:
     void send_player_move(const quint8 &moved_unit,const Pokecraft::Direction &direction);
     void sendChatText(const Pokecraft::Chat_type &chatType,const QString &text);
     void sendPM(const QString &text,const QString &pseudo);
+
+    //plant, can do action only if the previous is finish
+    void useSeed(const quint8 &plant_id);
+    void collectMaturePlant();
 };
 }
 

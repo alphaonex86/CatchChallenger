@@ -520,3 +520,8 @@ void Pokecraft::BaseWindow::on_inventory_itemSelectionChanged()
     ui->inventory_name->setText(content.name);
     ui->inventory_description->setText(content.description);
 }
+
+void Pokecraft::BaseWindow::on_toolButton_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
