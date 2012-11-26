@@ -86,6 +86,11 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientLocalBroadcast,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
     connect(localClientHandler,SIGNAL(askRandomNumber()),clientHeavyLoad,SLOT(askedRandomNumber()),Qt::QueuedConnection);
 
+    //connect for the seed
+    connect(localClientHandler,SIGNAL(seedValidated()),clientLocalBroadcast,SLOT(seedValidated()),Qt::QueuedConnection);
+    connect(clientLocalBroadcast,SIGNAL(useSeed(quint8)),localClientHandler,SLOT(useSeed(quint8)),Qt::QueuedConnection);
+    connect(clientLocalBroadcast,SIGNAL(addObject(quint32,quint32)),localClientHandler,SLOT(addObject(quint32,quint32)),Qt::QueuedConnection);
+
     //connect the player information
     connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	localClientHandler,	SLOT(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
