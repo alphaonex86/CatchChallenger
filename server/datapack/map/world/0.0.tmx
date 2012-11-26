@@ -11,7 +11,12 @@
  </layer>
  <layer name="WalkBottom" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYCAdhAJxGBSHk6GfXDBq76i9o/aO2jtqL+3tdSQDOyPZ60KmGWEjDGeTgSOQ9EeSaQY5YCin51F7R+0dtXfU3lF78QMA3XdLIQ==
+   eJxjYCAdhAJxGBSHk6GfXDBq76i9o/aO2jtqL+3tdSQDOyPZ60KmGWEjDGeTgSOQ9EeSaQY5YCin55FsLxsQsyNhDjrZKw2lDaG0LJ3sNYDaCcNGdLKXWDBq76i9g9VeAADdTKI=
+  </data>
+ </layer>
+ <layer name="Dirt" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztwzENAAAIA7AJwb9O3gng4GiTJgAAcGcq8NsCQo8AVQ==
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="30">

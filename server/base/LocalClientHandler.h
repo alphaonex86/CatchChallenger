@@ -16,7 +16,7 @@
 #include "ServerStructures.h"
 #include "EventThreader.h"
 #include "../VariableServer.h"
-#include "Map_server.h"
+#include "MapServer.h"
 #include "SqlFunction.h"
 
 /** \brief Do here only the calcule local to the client

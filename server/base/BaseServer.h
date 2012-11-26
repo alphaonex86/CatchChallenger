@@ -19,13 +19,14 @@
 #include "ServerStructures.h"
 #include "Client.h"
 #include "Bot/FakeBot.h"
-#include "Map_server.h"
+#include "MapServer.h"
+#include "../crafting/BaseServerCrafting.h"
 
 #ifndef POKECRAFT_BASESERVER_H
 #define POKECRAFT_BASESERVER_H
 
 namespace Pokecraft {
-class BaseServer : public QObject
+class BaseServer : public QObject, public BaseServerCrafting
 {
     Q_OBJECT
 public:
@@ -84,12 +85,14 @@ protected:
     virtual void preload_the_skin();
     virtual void preload_the_items();
     virtual void preload_the_datapack();
+    virtual void preload_the_players();
     virtual void preload_the_visibility_algorithm();
     virtual void unload_the_data();
     virtual void unload_the_map();
     virtual void unload_the_skin();
     virtual void unload_the_items();
     virtual void unload_the_datapack();
+    virtual void unload_the_players();
     virtual void unload_the_visibility_algorithm();
 
     virtual bool initialize_the_database();

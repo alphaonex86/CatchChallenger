@@ -1,5 +1,5 @@
 #include "MapBasicMove.h"
-#include "../Map_server.h"
+#include "../MapServer.h"
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/MoveOnTheMap.h"
 
