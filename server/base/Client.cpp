@@ -80,8 +80,10 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     connect(clientNetworkRead,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
+    connect(clientLocalBroadcast,SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
 
     connect(localClientHandler,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
+    connect(clientLocalBroadcast,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
     connect(localClientHandler,SIGNAL(askRandomNumber()),clientHeavyLoad,SLOT(askedRandomNumber()),Qt::QueuedConnection);
 
     //connect the player information

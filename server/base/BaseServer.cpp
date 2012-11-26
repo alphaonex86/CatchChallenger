@@ -80,14 +80,8 @@ void BaseServer::preload_the_data()
     preload_the_map();
     preload_the_skin();
     preload_the_items();
-
-    ClientHeavyLoad::simplifiedIdList.clear();
-    int index=0;
-    while(index<GlobalData::serverSettings.max_players)
-    {
-        ClientHeavyLoad::simplifiedIdList << index;
-        index++;
-    }
+    preload_the_players();
+    preload_the_plant();
 }
 
 void BaseServer::preload_the_map()
@@ -125,7 +119,7 @@ void BaseServer::preload_the_map()
                     break;
                     case MapVisibilityAlgorithm_none:
                     default:
-                        GlobalData::serverPrivateVariables.map_list[fileName]=new Map_server;
+                        GlobalData::serverPrivateVariables.map_list[fileName]=new MapServer;
                     break;
                 }
 
@@ -134,6 +128,7 @@ void BaseServer::preload_the_map()
                 GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
                 GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
                 GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
+                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.dirt		= map_temp.map_to_send.parsed_layer.dirt;
                 GlobalData::serverPrivateVariables.map_list[fileName]->map_file			= fileName;
 
                 GlobalData::serverPrivateVariables.map_list[fileName];
@@ -484,6 +479,17 @@ void BaseServer::preload_the_datapack()
     DebugClass::debugConsole(QString("%1 file(s) list for datapack cached").arg(GlobalData::serverPrivateVariables.filesList.size()));
 }
 
+void BaseServer::preload_the_players()
+{
+    ClientHeavyLoad::simplifiedIdList.clear();
+    int index=0;
+    while(index<GlobalData::serverSettings.max_players)
+    {
+        ClientHeavyLoad::simplifiedIdList << index;
+        index++;
+    }
+}
+
 void BaseServer::preload_the_visibility_algorithm()
 {
     QHash<QString,Map *>::const_iterator i = GlobalData::serverPrivateVariables.map_list.constBegin();
@@ -561,8 +567,8 @@ void BaseServer::unload_the_data()
     unload_the_skin();
     unload_the_map();
     unload_the_datapack();
-
-    ClientHeavyLoad::simplifiedIdList.clear();
+    unload_the_players();
+    unload_the_plant();
 }
 
 void BaseServer::unload_the_map()
@@ -601,6 +607,11 @@ void BaseServer::unload_the_items()
 void BaseServer::unload_the_datapack()
 {
     GlobalData::serverPrivateVariables.filesList.clear();
+}
+
+void BaseServer::unload_the_players()
+{
+    ClientHeavyLoad::simplifiedIdList.clear();
 }
 
 void BaseServer::check_if_now_stopped()
