@@ -270,6 +270,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
     {
         if(x==static_cast<MapServer *>(map)->plants.at(index).x && y==static_cast<MapServer *>(map)->plants.at(index).y)
         {
+            if(current_time<static_cast<MapServer *>(map)->plants.at(index).mature_at)
+            {
+                QByteArray data;
+                data[0]=0x04;
+                emit postReply(query_id,data);
+                return;
+            }
             if(static_cast<MapServer *>(map)->plants.at(index).player_id==player_informations->id || current_time<static_cast<MapServer *>(map)->plants.at(index).player_owned_expire_at)
             {
                 //remove plant from db

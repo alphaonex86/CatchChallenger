@@ -426,6 +426,33 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
             break;
         }
         break;
+        case 0x10:
+        switch(subCodeType)
+        {
+            //Use seed into dirt
+            case 0x0006:
+            {
+                QDataStream in(data);
+                in.setVersion(QDataStream::Qt_4_4);
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint8 plant_id;
+                in >> plant_id;
+                emit plantSeed(queryNumber,plant_id);
+            }
+            //Collect mature plant
+            case 0x0007:
+                emit collectPlant(queryNumber);
+            break;
+            default:
+                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                return;
+            break;
+        }
+        break;
         default:
             parseError("unknow main ident: "+QString::number(mainCodeType));
             return;
