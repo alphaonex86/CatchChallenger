@@ -1,5 +1,19 @@
+#include "../base/ClientLocalBroadcast.h"
+#include "../base/BroadCastWithoutSender.h"
+#include "../../general/base/ProtocolParsing.h"
+#include "../base/GlobalData.h"
+
+#include <QDateTime>
+
+using namespace Pokecraft;
+
 void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_id)
 {
+    if(!GlobalData::serverPrivateVariables.plants.contains(plant_id))
+    {
+        emit error(QString("plant_id not found: %1").arg(plant_id));
+        return;
+    }
     Map *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
@@ -71,8 +85,9 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
     emit useSeed(plant_id);
 }
 
-void ClientLocalBroadcast::seedValidated(const bool &ok)
+void ClientLocalBroadcast::seedValidated()
 {
+    /* useless, clean the protocol
     if(!ok)
     {
         QByteArray data;
@@ -80,7 +95,7 @@ void ClientLocalBroadcast::seedValidated(const bool &ok)
         emit postReply(plant_list_in_waiting.first().query_id,data);
         plant_list_in_waiting.removeFirst();
         return;
-    }
+    }*/
     //check if is free
     quint16 size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.size();
     quint16 index=0;
@@ -162,6 +177,163 @@ void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plan
     emit sendPacket(0xD1,outputData);
 }
 
+void ClientLocalBroadcast::removeSeed(const MapServerCrafting::PlantOnMap &plantOnMap)
+{
+    //send the plant
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint16)1;
+    out << plantOnMap.x;
+    out << plantOnMap.y;
+    emit sendPacket(0xD2,outputData);
+}
+
+void ClientLocalBroadcast::sendNearPlant()
+{
+    //send the plant
+    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << plant_list_size;
+    int index=0;
+    while(index<plant_list_size)
+    {
+        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+        out << plant.x;
+        out << plant.y;
+        out << plant.plant;
+        quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+        if(current_time<=plant.mature_at)
+            out << (quint16)0;
+        else
+            out << (quint16)current_time-plant.mature_at;
+        index++;
+    }
+    emit sendPacket(0xD1,outputData);
+}
+
 void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
 {
+    Map *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    //resolv the dirt
+    switch(last_direction)
+    {
+        case Direction_look_at_top:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+                MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y);
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_right:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+                MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y);
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_bottom:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+                MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y);
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_left:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+                MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y);
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        default:
+        emit error("Wrong direction to plant a seed");
+        return;
+    }
+    //check if is free
+    quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    quint16 size=static_cast<MapServer *>(map)->plants.size();
+    quint16 index=0;
+    while(index<size)
+    {
+        if(x==static_cast<MapServer *>(map)->plants.at(index).x && y==static_cast<MapServer *>(map)->plants.at(index).y)
+        {
+            if(static_cast<MapServer *>(map)->plants.at(index).player_id==player_informations->id || current_time<static_cast<MapServer *>(map)->plants.at(index).player_owned_expire_at)
+            {
+                //remove plant from db
+                switch(GlobalData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
+                                     .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
+                                     .arg(x)
+                                     .arg(y)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
+                                 .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
+                                 .arg(x)
+                                 .arg(y)
+                                 );
+                    break;
+                }
+
+                //remove plan from all player display
+                index=0;
+                size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
+                while(index<size)
+                {
+                    static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->removeSeed(static_cast<MapServer *>(map)->plants.at(index));
+                    index++;
+                }
+
+                //add into the inventory
+                QByteArray data;
+                data[0]=0x01;
+                emit postReply(query_id,data);
+                float quantity=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].quantity;
+                int integer_part=quantity;
+                float random_part=quantity-integer_part;
+                random_part*=10000;//random_part is 0 to 99
+                if(random_part<=(rand()%10000))
+                    quantity++;
+                emit addObject(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
+                QByteArray outputData;
+                QDataStream out(&outputData, QIODevice::WriteOnly);
+                out.setVersion(QDataStream::Qt_4_4);
+                out << (quint32)1;
+                out << (quint32)GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed;
+                out << (quint32)quantity;
+                emit sendPacket(0xD0,0x0002,outputData);
+
+                static_cast<MapServer *>(map)->plants.removeAt(index);
+                return;
+            }
+            else
+            {
+                QByteArray data;
+                data[0]=0x03;
+                emit postReply(query_id,data);
+                return;
+            }
+        }
+        index++;
+    }
+    QByteArray data;
+    data[0]=0x02;
+    emit postReply(query_id,data);
 }

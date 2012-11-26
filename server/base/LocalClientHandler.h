@@ -45,11 +45,16 @@ public slots:
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     //random linked signals
     void newRandomNumber(const QByteArray &randomData);
+    //seed
+    void useSeed(const quint8 &plant_id);
+    void addObject(const quint32 &item,const quint32 &quantity=1);
 private slots:
     virtual void extraStop();
 signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
+
+    void seedValidated();
 };
 }
 

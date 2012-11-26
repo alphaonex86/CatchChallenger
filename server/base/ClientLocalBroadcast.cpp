@@ -3,8 +3,6 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "GlobalData.h"
 
-#include <QDateTime>
-
 using namespace Pokecraft;
 
 ClientLocalBroadcast::ClientLocalBroadcast()
@@ -75,27 +73,7 @@ void ClientLocalBroadcast::insertClient(Map *map)
 {
     static_cast<MapServer *>(map)->clientsForBroadcast << this;
 
-    //send the plant
-    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << plant_list_size;
-    int index=0;
-    while(index<plant_list_size)
-    {
-        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
-        out << plant.x;
-        out << plant.y;
-        out << plant.plant;
-        quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-        if(current_time<=plant.mature_at)
-            out << (quint16)0;
-        else
-            out << (quint16)current_time-plant.mature_at;
-        index++;
-    }
-    emit sendPacket(0xD1,outputData);
+    sendNearPlant();
 }
 
 void ClientLocalBroadcast::removeClient(Map *map)
