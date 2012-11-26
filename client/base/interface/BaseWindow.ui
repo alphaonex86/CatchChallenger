@@ -26,7 +26,7 @@
    <string>Pokecraft</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
+   <iconset resource="../resources/client-resources.qrc">
     <normaloff>:/images/pokecraft.png</normaloff>:/images/pokecraft.png</iconset>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -532,7 +532,7 @@ background-image: url(:/images/interface/background.png);</string>
 background-image: url(:/images/empty.png);</string>
                  </property>
                  <property name="pixmap">
-                  <pixmap resource="../resources/resources.qrc">:/images/interface/player.png</pixmap>
+                  <pixmap resource="../resources/client-resources.qrc">:/images/interface/player.png</pixmap>
                  </property>
                 </widget>
                </item>
@@ -717,7 +717,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                            </size>
                           </property>
                           <property name="pixmap">
-                           <pixmap resource="../resources/resources.qrc">:/images/interface/player/point.png</pixmap>
+                           <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
                           </property>
                          </widget>
                         </item>
@@ -776,7 +776,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                            </size>
                           </property>
                           <property name="pixmap">
-                           <pixmap resource="../resources/resources.qrc">:/images/interface/player/point.png</pixmap>
+                           <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
                           </property>
                          </widget>
                         </item>
@@ -860,7 +860,7 @@ background-repeat:no-repeat;
 background-position:center; </string>
                      </property>
                      <property name="pixmap">
-                      <pixmap resource="../resources/resources.qrc">:/images/player_default/front.png</pixmap>
+                      <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -1026,7 +1026,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/resources.qrc">:/images/inventory/unknow-object.png</pixmap>
+             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknow-object.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -1066,7 +1066,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/resources.qrc">:/images/inventory/bag1.png</pixmap>
+             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/bag1.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="inventory_description">
@@ -1167,6 +1167,240 @@ border-image: url(:/images/empty.png);
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="page_5">
+        <property name="styleSheet">
+         <string notr="true">background-image: url(:/images/background.png);</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_9">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_13">
+           <item>
+            <widget class="QGroupBox" name="groupBox_Options_Displayer">
+             <property name="styleSheet">
+              <string notr="true">background-image: url(:/images/light-white.png);</string>
+             </property>
+             <property name="title">
+              <string>Display</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_6">
+                <item>
+                 <widget class="QCheckBox" name="checkBox">
+                  <property name="text">
+                   <string>Limit FPS to:</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="spinBox">
+                  <property name="maximumSize">
+                   <size>
+                    <width>50</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="minimum">
+                   <number>16</number>
+                  </property>
+                  <property name="value">
+                   <number>25</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_3">
+                <property name="toolTip">
+                 <string>The other player is displayed in zoom x2 range.
+Without it will be show into the screen, with it it show at the border</string>
+                </property>
+                <property name="text">
+                 <string>Zoom x2 (see tooltip)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>164</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_Options_Multiplayer">
+             <property name="styleSheet">
+              <string notr="true">background-image: url(:/images/light-white.png);</string>
+             </property>
+             <property name="title">
+              <string>Multiplayer</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_10">
+              <item>
+               <widget class="QCheckBox" name="checkBox_4">
+                <property name="text">
+                 <string>Show the pseudo</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_5">
+                <property name="toolTip">
+                 <string>Show if is admin, developer, premium, normal</string>
+                </property>
+                <property name="text">
+                 <string>Show the player type</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>167</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="styleSheet">
+            <string notr="true">background-image: url(:/images/light-white.png);</string>
+           </property>
+           <property name="title">
+            <string>Misc</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_11">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_15">
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Language:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox">
+                <item>
+                 <property name="text">
+                  <string>English</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_7">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>230</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_14">
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="toolButton">
+             <property name="minimumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -1175,7 +1409,7 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../resources/resources.qrc"/>
+  <include location="../resources/client-resources.qrc"/>
  </resources>
  <connections/>
 </ui>
