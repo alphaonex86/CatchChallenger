@@ -647,6 +647,142 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
 
         }
         break;
+        //Insert plant on map
+        case 0xD1:
+        {
+            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+            {
+                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                return;
+            }
+            quint16 plantListSize;
+            in >> plantListSize;
+            int index=0;
+            while(index<plantListSize)
+            {
+                quint32 mapId;
+                if(number_of_map<=255)
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint8 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
+                }
+                else if(number_of_map<=65535)
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint16 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
+                }
+                else
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    in >> mapId;
+                }
+                //x and y
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+                {
+                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                    return;
+                }
+                quint8 x,y;
+                in >> x;
+                in >> y;
+                //plant
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                    return;
+                }
+                quint8 plant;
+                in >> plant;
+                //seconds to mature
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                {
+                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                    return;
+                }
+                quint16 seconds_to_mature;
+                in >> seconds_to_mature;
+
+                emit insert_plant(mapId,x,y,plant,seconds_to_mature);
+                index++;
+            }
+        }
+        break;
+        //Remove plant on map
+        case 0xD2:
+        {
+            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+            {
+                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                return;
+            }
+            quint16 plantListSize;
+            in >> plantListSize;
+            int index=0;
+            while(index<plantListSize)
+            {
+                quint32 mapId;
+                if(number_of_map<=255)
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint8 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
+                }
+                else if(number_of_map<=65535)
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    quint16 mapTempId;
+                    in >> mapTempId;
+                    mapId=mapTempId;
+                }
+                else
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    in >> mapId;
+                }
+                //x and y
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+                {
+                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                    return;
+                }
+                quint8 x,y;
+                in >> x;
+                in >> y;
+
+                emit remove_plant(mapId,x,y);
+                index++;
+            }
+        }
+        break;
         default:
             parseError(tr("Procotol wrong or corrupted"),QString("unknow ident main code: %1").arg(mainCodeType));
             return;
@@ -1053,6 +1189,64 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 break;
             }
         }
+        case 0x10:
+        {
+            //local the query number to get the type
+            switch(subCodeType)
+            {
+                //Use seed into dirt
+                case 0x0006:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                    havePlantAction=false;
+                    quint8 returnCode;
+                    in >> returnCode;
+                    if(returnCode==0x01)
+                        emit seed_planted(true);
+                    else if(returnCode==0x02)
+                        emit seed_planted(false);
+                    else
+                    {
+                        emit newError(tr("Procotol wrong or corrupted"),QString("bad return code: %1").arg(returnCode));
+                        return;
+                    }
+                }
+                break;
+                //Collect mature plant
+                case 0x0007:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                    havePlantAction=false;
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                        case 0x02:
+                        case 0x03:
+                        case 0x04:
+                            emit plant_collected((plant_collect)returnCode);
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2").arg(mainCodeType).arg(queryNumber));
+                        return;
+                    }
+                }
+                break;
+                default:
+                    parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1").arg(subCodeType));
+                    return;
+                break;
+            }
+        }
         break;
         default:
             parseError(tr("Procotol wrong or corrupted"),QString("unknow ident reply code: %1").arg(mainCodeType));
@@ -1188,6 +1382,32 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
     output->packOutcommingData(0x42,0x003,outputData);
 }
 
+void Api_protocol::useSeed(const quint8 &plant_id)
+{
+    if(havePlantAction)
+    {
+        emit newError(tr("Internal problem"),QString("Is already in plant action"));
+        return;
+    }
+    havePlantAction=true;
+    QByteArray outputData;
+    outputData[0]=plant_id;
+    output->packOutcommingQuery(0x10,0x0006,queryNumber(),outputData);
+    return;
+}
+
+void Api_protocol::collectMaturePlant()
+{
+    if(havePlantAction)
+    {
+        emit newError(tr("Internal problem"),QString("Is already in plant action"));
+        return;
+    }
+    havePlantAction=true;
+    output->packOutcommingQuery(0x10,0x0007,queryNumber(),QByteArray());
+    return;
+}
+
 //to reset all
 void Api_protocol::resetAll()
 {
@@ -1196,6 +1416,7 @@ void Api_protocol::resetAll()
     have_send_protocol=false;
     max_player=65535;
     number_of_map=0;
+    havePlantAction=false;
 
     //to send trame
     lastQueryNumber=1;

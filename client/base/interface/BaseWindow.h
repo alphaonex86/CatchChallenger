@@ -57,6 +57,7 @@ private slots:
     void on_toolButton_quit_interface_clicked();
     void on_pushButton_interface_trainer_clicked();
     void on_lineEdit_chat_text_lostFocus();
+    void on_toolButton_clicked();
 
     //player UI
     void on_pushButton_interface_bag_clicked();
