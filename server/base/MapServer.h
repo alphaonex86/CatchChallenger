@@ -2,6 +2,7 @@
 #define POKECRAFT_MAP_VISIBILITY_SIMPLE_SERVER_H
 
 #include "../../general/base/Map.h"
+#include "../crafting/MapServerCrafting.h"
 
 #include <QSet>
 
@@ -9,13 +10,13 @@ namespace Pokecraft {
 class MapVisibilityAlgorithm_Simple;
 class ClientLocalBroadcast;
 
-class Map_server : public Map
+class MapServer : public Map, public MapServerCrafting
 {
 public:
-    QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast()
+    QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
 };
 
-class Map_server_MapVisibility_simple : public Map_server
+class Map_server_MapVisibility_simple : public MapServer
 {
 public:
     /** \todo

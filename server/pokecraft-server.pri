@@ -16,12 +16,13 @@ SOURCES += \
     base/ClientBroadCast.cpp \
     base/PlayerUpdater.cpp \
     base/BroadCastWithoutSender.cpp \
-    base/Map_server.cpp \
     base/Bot/FakeBot.cpp \
     base/ClientMapManagement/ClientMapManagement.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.cpp \
     base/ClientMapManagement/MapBasicMove.cpp \
-    base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp
+    base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
+    crafting/BaseServerCrafting.cpp \
+    crafting/ClientLocalBroadcastCrafting.cpp
 HEADERS += \
     base/GlobalData.h \
     base/SqlFunction.h \
@@ -38,12 +39,14 @@ HEADERS += \
     base/ClientBroadCast.h \
     base/BroadCastWithoutSender.h \
     base/PlayerUpdater.h \
-    base/Map_server.h \
+    base/MapServer.h \
     base/Bot/FakeBot.h \
     base/ClientMapManagement/ClientMapManagement.h \
     base/ClientMapManagement/MapVisibilityAlgorithm_Simple.h \
     base/ClientMapManagement/MapBasicMove.h \
-    base/ClientMapManagement/MapVisibilityAlgorithm_None.h
+    base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
+    crafting/BaseServerCrafting.h \
+    crafting/MapServerCrafting.h
 
 RESOURCES += \
     all-server-resources.qrc \

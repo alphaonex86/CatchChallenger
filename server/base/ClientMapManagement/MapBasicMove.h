@@ -44,6 +44,10 @@ signals:
     void isReadyToStop();
     void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
+    //send reply
+    virtual void postReply(const quint8 &queryNumber,const QByteArray &data);
+    //db
+    virtual void dbQuery(const QString &sqlQuery);
 public slots:
     //map slots, transmited by the current ClientNetworkRead
     virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);

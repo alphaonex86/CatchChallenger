@@ -18,8 +18,16 @@ CREATE TABLE player (
     "type" TEXT NOT NULL,
     "clan" INTEGER
 , "cash" INTEGER);
+CREATE TABLE plant (
+    "map" TEXT,
+    "x" INTEGER,
+    "y" INTEGER,
+    "plant" INTEGER,
+    "player_id" INTEGER
+, "plant_timestamps" INTEGER);
 CREATE INDEX "player_item_index" on item (player_id ASC);
 CREATE UNIQUE INDEX "player_item_unique_index" on item (item_id ASC, player_id ASC);
 CREATE UNIQUE INDEX "id" on player (id ASC);
 CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
+CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 COMMIT;
