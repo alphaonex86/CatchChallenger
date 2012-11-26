@@ -162,11 +162,17 @@ void ClientLocalBroadcast::seedValidated()
 
 void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time)
 {
-    //send the plant
+    //Insert plant on map
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint16)1;
+    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        out << (quint8)map->id;
+    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        out << (quint16)map->id;
+    else
+        out << (quint32)map->id;
     out << plantOnMap.x;
     out << plantOnMap.y;
     out << plantOnMap.plant;
@@ -179,11 +185,17 @@ void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plan
 
 void ClientLocalBroadcast::removeSeed(const MapServerCrafting::PlantOnMap &plantOnMap)
 {
-    //send the plant
+    //Remove plant on map
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint16)1;
+    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        out << (quint8)map->id;
+    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        out << (quint16)map->id;
+    else
+        out << (quint32)map->id;
     out << plantOnMap.x;
     out << plantOnMap.y;
     emit sendPacket(0xD2,outputData);
@@ -191,7 +203,7 @@ void ClientLocalBroadcast::removeSeed(const MapServerCrafting::PlantOnMap &plant
 
 void ClientLocalBroadcast::sendNearPlant()
 {
-    //send the plant
+    //Insert plant on map
     quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -201,6 +213,12 @@ void ClientLocalBroadcast::sendNearPlant()
     while(index<plant_list_size)
     {
         const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+        if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+            out << (quint8)map->id;
+        else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+            out << (quint16)map->id;
+        else
+            out << (quint32)map->id;
         out << plant.x;
         out << plant.y;
         out << plant.plant;
