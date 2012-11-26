@@ -90,6 +90,12 @@ void ClientLocalBroadcast::removeClient(Map *map)
     while(index<plant_list_size)
     {
         const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+        if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+            out << (quint8)map->id;
+        else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+            out << (quint16)map->id;
+        else
+            out << (quint32)map->id;
         out << plant.x;
         out << plant.y;
         index++;
