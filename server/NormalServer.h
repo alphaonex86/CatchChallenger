@@ -18,7 +18,8 @@
 #include "../general/base/ProtocolParsing.h"
 #include "../general/base/QFakeServer.h"
 #include "../general/base/QFakeSocket.h"
-#include "base/Map_server.h"
+#include "base/MapServer.h"
+#include "crafting/BaseServerCrafting.h"
 #include "base/BaseServer.h"
 
 #ifndef POKECRAFT_EVENTDISPATCHER_H

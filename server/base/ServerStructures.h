@@ -109,6 +109,13 @@ struct ServerSettings
     MapVisibility mapVisibility;
 };
 
+struct Plant
+{
+    quint32 itemUsed;
+    quint8 mature_mins;
+    float quantity;
+};
+
 struct ServerPrivateVariables
 {
     //bd
@@ -121,6 +128,7 @@ struct ServerPrivateVariables
     QRegExp datapack_rightFileName;
     QSet<quint32> itemsId;
     QHash<QString,quint64> filesList;
+    QHash<quint8,Plant> plants;
 
     //general data
     QList<EventThreader *> eventThreaderList;

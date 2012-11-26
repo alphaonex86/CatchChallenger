@@ -3,6 +3,8 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "GlobalData.h"
 
+#include <QDateTime>
+
 using namespace Pokecraft;
 
 ClientLocalBroadcast::ClientLocalBroadcast()
@@ -15,7 +17,7 @@ ClientLocalBroadcast::~ClientLocalBroadcast()
 
 void ClientLocalBroadcast::extraStop()
 {
-    static_cast<Map_server *>(map)->clientsForBroadcast.removeOne(this);
+    removeClient(map);
 }
 
 void ClientLocalBroadcast::sendLocalChatText(const QString &text)
@@ -25,12 +27,12 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
     emit message(QString("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
 
-    int size=static_cast<Map_server *>(map)->clientsForBroadcast.size();
+    int size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
     int index=0;
     while(index<size)
     {
-        if(static_cast<Map_server *>(map)->clientsForBroadcast.at(index)!=this)
-            static_cast<Map_server *>(map)->clientsForBroadcast.at(index)->receiveChatText(text,player_informations);
+        if(static_cast<MapServer *>(map)->clientsForBroadcast.at(index)!=this)
+            static_cast<MapServer *>(map)->clientsForBroadcast.at(index)->receiveChatText(text,player_informations);
         index++;
     }
 }
@@ -63,15 +65,63 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
     MoveOnTheMap::move(direction,&map,&x,&y);
     if(old_map!=map)
     {
-        static_cast<Map_server *>(old_map)->clientsForBroadcast.removeOne(this);
-        static_cast<Map_server *>(map)->clientsForBroadcast << this;
+        removeClient(old_map);
+        insertClient(map);
     }
     return true;
+}
+
+void ClientLocalBroadcast::insertClient(Map *map)
+{
+    static_cast<MapServer *>(map)->clientsForBroadcast << this;
+
+    //send the plant
+    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << plant_list_size;
+    int index=0;
+    while(index<plant_list_size)
+    {
+        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+        out << plant.x;
+        out << plant.y;
+        out << plant.plant;
+        quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+        if(current_time<=plant.mature_at)
+            out << (quint16)0;
+        else
+            out << (quint16)current_time-plant.mature_at;
+        index++;
+    }
+    emit sendPacket(0xD1,outputData);
+}
+
+void ClientLocalBroadcast::removeClient(Map *map)
+{
+    static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
+
+    //send the remove plant
+    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << plant_list_size;
+    int index=0;
+    while(index<plant_list_size)
+    {
+        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+        out << plant.x;
+        out << plant.y;
+        index++;
+    }
+    emit sendPacket(0xD2,outputData);
 }
 
 //map slots, transmited by the current ClientNetworkRead
 void ClientLocalBroadcast::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
-    static_cast<Map_server *>(map)->clientsForBroadcast << this;
+    insertClient(map);
 }

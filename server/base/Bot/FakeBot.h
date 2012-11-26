@@ -9,7 +9,7 @@
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../../../general/base/QFakeSocket.h"
 #include "../../../general/base/ConnectedSocket.h"
-#include "../Map_server.h"
+#include "../MapServer.h"
 #include "../../../client/base/Api_client_virtual.h"
 
 #ifndef POKECRAFT_FakeBot_H
