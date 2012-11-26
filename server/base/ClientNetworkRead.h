@@ -57,6 +57,9 @@ signals:
     void sendChatText(const Chat_type &chatType,const QString &text);
     void sendLocalChatText(const QString &text);
     void sendBroadCastCommand(const QString &command,const QString &extraText);
+    //plant
+    void plantSeed(const quint8 &query_id,const quint8 &plant_id);
+    void collectPlant(const quint8 &query_id);
 private:
     // for status
     bool have_send_protocol;
