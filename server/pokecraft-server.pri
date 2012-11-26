@@ -22,7 +22,8 @@ SOURCES += \
     base/ClientMapManagement/MapBasicMove.cpp \
     base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
     crafting/BaseServerCrafting.cpp \
-    crafting/ClientLocalBroadcastCrafting.cpp
+    crafting/ClientLocalBroadcastCrafting.cpp \
+    crafting/LocalClientHandlerCrafting.cpp
 HEADERS += \
     base/GlobalData.h \
     base/SqlFunction.h \
