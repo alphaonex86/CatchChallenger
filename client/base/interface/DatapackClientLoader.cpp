@@ -39,6 +39,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     this->datapackPath=datapackPath;
     parseItems();
     parseMaps();
+    parsePlants();
 
     emit datapackParsed();
 }
@@ -179,4 +180,11 @@ void DatapackClientLoader::resetAll()
     datapackPath.clear();
     items.clear();
     maps.clear();
+
+    QHashIterator<quint8,Plant> i(plants);
+     while (i.hasNext()) {
+         i.next();
+         delete i.value().tileset;
+     }
+     plants.clear();
 }

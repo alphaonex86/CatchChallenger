@@ -39,7 +39,7 @@ ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
 void ProtocolParsing::initialiseTheVariable()
 {
     //def query without the sub code
-    ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8;
+    ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xD1 << 0xD2;
     ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41;
 
     //define the size of direct query
@@ -52,6 +52,8 @@ void ProtocolParsing::initialiseTheVariable()
 
     //define the size of the reply
     replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
+    replySizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
+    replySizeMultipleCodePacketClientToServer[0x10][0x0007]=1;
 
     //main code for query with reply
     ProtocolParsing::mainCode_IsQueryClientToServer << 0x02;

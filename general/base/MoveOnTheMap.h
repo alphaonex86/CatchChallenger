@@ -27,6 +27,10 @@ public:
     static bool haveGrass(const Map &map,const COORD_TYPE &x,const COORD_TYPE &y);
     static bool move(Direction direction, Map ** map, quint8 *x, quint8 *y);
     static bool teleport(Map ** map, quint8 *x, quint8 *y);
+
+    static bool isWalkable(const Map &map, const quint8 &x, const quint8 &y);
+    static bool isWater(const Map &map, const quint8 &x, const quint8 &y);
+    static bool isDirt(const Map &map, const quint8 &x, const quint8 &y);
 protected:
     virtual void send_player_move(const quint8 &moved_unit,const Direction &the_new_direction) = 0;
     Direction last_direction;
