@@ -131,7 +131,7 @@ void MapControllerMP::insert_player(const Pokecraft::Player_public_informations 
         delayedInsert << tempItem;
         return;
     }
-    if(mapId>=DatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
     {
         qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
