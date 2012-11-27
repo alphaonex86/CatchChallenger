@@ -39,6 +39,7 @@ Map_loader::~Map_loader()
     map_to_send.parsed_layer.walkable=NULL;
     map_to_send.parsed_layer.water=NULL;
     map_to_send.parsed_layer.grass=NULL;
+    map_to_send.parsed_layer.dirt=NULL;
 }
 
 bool Map_loader::tryLoadMap(const QString &fileName)
@@ -46,7 +47,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     Map_to_send map_to_send;
 
     QFile mapFile(fileName);
-    QByteArray xmlContent,Walkable,Collisions,Water,Grass;
+    QByteArray xmlContent,Walkable,Collisions,Water,Grass,Dirt;
     if(!mapFile.open(QIODevice::ReadOnly))
     {
         error=mapFile.fileName()+": "+mapFile.errorString();
@@ -418,6 +419,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     Water=data;
                 else if(name=="Grass")
                     Grass=data;
+                else if(name=="Dirt")
+                    Dirt=data;
             }
         }
         child = child.nextSiblingElement("layer");
@@ -442,10 +445,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         map_to_send.parsed_layer.grass		= new bool[map_to_send.width*map_to_send.height];
     else
         map_to_send.parsed_layer.grass		= NULL;
+    if(Dirt.size()>0)
+        map_to_send.parsed_layer.dirt		= new bool[map_to_send.width*map_to_send.height];
+    else
+        map_to_send.parsed_layer.dirt		= NULL;
 
     quint32 x=0;
     quint32 y=0;
-    bool walkable=false,water=false,collisions=false,grass=false;
+    bool walkable=false,water=false,collisions=false,grass=false,dirt=false;
     while(x<map_to_send.width)
     {
         y=0;
@@ -471,12 +478,19 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             else//if layer not found
                 grass=true;
 
+            if(x*4+y*map_to_send.width*4<(quint32)Dirt.size())
+                dirt=Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data;
+            else//if layer not found
+                dirt=true;
+
             if(Walkable.size()>0)
-                map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=walkable && !water && !collisions;
+                map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=walkable && !water && !collisions && !dirt;
             if(Water.size()>0)
                 map_to_send.parsed_layer.water[x+y*map_to_send.width]=water && !collisions;
             if(Grass.size()>0)
                 map_to_send.parsed_layer.grass[x+y*map_to_send.width]=walkable && grass && !water && !collisions;
+            if(Dirt.size()>0)
+                map_to_send.parsed_layer.dirt[x+y*map_to_send.width]=dirt && !water;
             y++;
         }
         x++;
@@ -505,7 +519,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     {}
 
 #ifdef DEBUG_MESSAGE_MAP_RAW
-    if(Walkable.size()>0 || Water.size()>0 || Collisions.size()>0 || Grass.size()>0)
+    if(Walkable.size()>0 || Water.size()>0 || Collisions.size()>0 || Grass.size()>0 || Dirt.size()>0)
     {
         x=0;
         y=0;
@@ -518,6 +532,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             layers_name << "Collisions";
         if(Grass.size()>0)
             layers_name << "Grass";
+        if(Dirt.size()>0)
+            layers_name << "Dirt";
         DebugClass::debugConsole(layers_name.join(" + ")+" = walkable");
         while(y<map_to_send.height)
         {
@@ -558,6 +574,16 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 while(x<map_to_send.width)
                 {
                     line += QString::number(Grass.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    x++;
+                }
+                line+=" ";
+            }
+            if(Dirt.size()>0)
+            {
+                x=0;
+                while(x<map_to_send.width)
+                {
+                    line += QString::number(Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data);
                     x++;
                 }
                 line+=" ";

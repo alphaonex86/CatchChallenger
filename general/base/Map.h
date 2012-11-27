@@ -17,6 +17,7 @@ public:
         bool *walkable;
         bool *water;
         bool *grass;
+        bool *dirt;
     };
     Map_ParsedLayer parsed_layer;
 

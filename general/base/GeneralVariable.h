@@ -26,5 +26,6 @@
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
 #define DATAPACK_BASE_PATH_ANIMATION "animation/"
 #define DATAPACK_BASE_PATH_ITEM "items/"
+#define DATAPACK_BASE_PATH_PLANTS "plants/"
 
 #endif // GENERALVARIABLE_H

@@ -1233,7 +1233,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         case 0x02:
                         case 0x03:
                         case 0x04:
-                            emit plant_collected((plant_collect)returnCode);
+                            emit plant_collected((Plant_collect)returnCode);
                         break;
                         default:
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2").arg(mainCodeType).arg(queryNumber));
