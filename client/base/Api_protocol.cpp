@@ -1184,11 +1184,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 }
                 break;
                 default:
-                    parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1").arg(subCodeType));
+                    parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1, with mainCodeType: %2").arg(subCodeType).arg(mainCodeType));
                     return;
                 break;
             }
         }
+        break;
         case 0x10:
         {
             //local the query number to get the type
@@ -1242,7 +1243,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 }
                 break;
                 default:
-                    parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1").arg(subCodeType));
+                    parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1, with mainCodeType: %2").arg(subCodeType).arg(mainCodeType));
                     return;
                 break;
             }

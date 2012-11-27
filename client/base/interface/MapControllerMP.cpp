@@ -58,6 +58,7 @@ void MapControllerMP::resetAll()
     mapUsedByOtherPlayer.clear();
 
     mHaveTheDatapack=false;
+    player_informations_is_set=false;
 
     MapVisualiserPlayer::resetAll();
 }
@@ -555,6 +556,8 @@ void MapControllerMP::have_current_player_info(const Pokecraft::Player_private_a
     }
     this->player_informations=informations;
     player_informations_is_set=true;
+
+    reinject_signals();
 }
 
 //the datapack
@@ -578,29 +581,39 @@ void MapControllerMP::datapackParsed()
 
     setAnimationTilset(datapackPath+DATAPACK_BASE_PATH_ANIMATION+"animation.png");
 
-    index=0;
-    while(index<delayedInsert.size())
-    {
-        insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapId,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
-        index++;
-    }
-    delayedInsert.clear();
+    reinject_signals();
+}
 
-    index=0;
-    while(index<delayedMove.size())
-    {
-        move_player(delayedMove.at(index).id,delayedMove.at(index).movement);
-        index++;
-    }
-    delayedMove.clear();
+void MapControllerMP::reinject_signals()
+{
+    int index;
 
-    index=0;
-    while(index<delayedRemove.size())
+    if(mHaveTheDatapack && player_informations_is_set)
     {
-        remove_player(delayedRemove.at(index));
-        index++;
+        index=0;
+        while(index<delayedInsert.size())
+        {
+            insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapId,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
+            index++;
+        }
+        delayedInsert.clear();
+
+        index=0;
+        while(index<delayedMove.size())
+        {
+            move_player(delayedMove.at(index).id,delayedMove.at(index).movement);
+            index++;
+        }
+        delayedMove.clear();
+
+        index=0;
+        while(index<delayedRemove.size())
+        {
+            remove_player(delayedRemove.at(index));
+            index++;
+        }
+        delayedRemove.clear();
     }
-    delayedRemove.clear();
 }
 
 void MapControllerMP::moveOtherPlayerStepSlot()
