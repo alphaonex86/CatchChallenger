@@ -67,7 +67,7 @@ void BaseServerCrafting::preload_the_plant()
                                 if(!fruits.isNull())
                                     if(fruits.isElement())
                                     {
-                                        plant.mature_mins=fruits.text().toULongLong(&ok2);
+                                        plant.mature_seconds=fruits.text().toULongLong(&ok2)*60;
                                         if(ok2)
                                             ok=true;
                                     }
@@ -178,8 +178,8 @@ void BaseServerCrafting::preload_the_plant_on_map()
         plantOnMap.y=y;
         plantOnMap.plant=plant;
         plantOnMap.player_id=player_id;
-        plantOnMap.mature_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_mins*60;
-        plantOnMap.player_owned_expire_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_mins*60+60*60*24;
+        plantOnMap.mature_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_seconds;
+        plantOnMap.player_owned_expire_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_seconds+60*60*24;
         static_cast<MapServer *>(GlobalData::serverPrivateVariables.map_list[map])->plants[x+(y-1)*(GlobalData::serverPrivateVariables.map_list[map]->width)]=plantOnMap;
     }
 }

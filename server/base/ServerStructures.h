@@ -112,7 +112,7 @@ struct ServerSettings
 struct Plant
 {
     quint32 itemUsed;
-    quint8 mature_mins;
+    quint32 mature_seconds;
     float quantity;
 };
 

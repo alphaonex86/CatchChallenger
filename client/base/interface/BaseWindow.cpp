@@ -515,7 +515,7 @@ void Pokecraft::BaseWindow::on_inventory_itemSelectionChanged()
         return;
     }
     QListWidgetItem *item=items.first();
-    const DatapackClientLoader::item &content=DatapackClientLoader::datapackLoader.items[items_graphical[item]];
+    const DatapackClientLoader::Item &content=DatapackClientLoader::datapackLoader.items[items_graphical[item]];
     ui->inventory_image->setPixmap(content.image);
     ui->inventory_name->setText(content.name);
     ui->inventory_description->setText(content.description);

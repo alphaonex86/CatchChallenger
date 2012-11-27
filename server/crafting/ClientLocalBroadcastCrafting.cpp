@@ -122,8 +122,8 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
     plantOnMap.player_id=player_informations->id;
-    plantOnMap.mature_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_mins*60;
-    plantOnMap.player_owned_expire_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_mins*60+60*60*24;
+    plantOnMap.mature_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds;
+    plantOnMap.player_owned_expire_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds+60*60*24;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
     switch(GlobalData::serverSettings.database.type)
     {

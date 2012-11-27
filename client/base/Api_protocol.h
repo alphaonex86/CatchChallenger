@@ -109,7 +109,7 @@ signals:
     void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
     void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y);
     void seed_planted(const bool &ok);
-    void plant_collected(const plant_collect &stat);
+    void plant_collected(const Pokecraft::Plant_collect &stat);
 
     //chat
     void new_chat_text(const Pokecraft::Chat_type &chat_type,const QString &text,const QString &pseudo,const Pokecraft::Player_type &type);
