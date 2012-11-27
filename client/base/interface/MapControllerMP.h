@@ -34,6 +34,7 @@ public slots:
     //the datapack
     void setDatapackPath(const QString &path);
     virtual void datapackParsed();
+    virtual void reinject_signals();
 private:
     //the other player
     struct OtherPlayer
