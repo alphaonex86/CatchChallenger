@@ -7,6 +7,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "tileset.h"
+
 class DatapackClientLoader : public QThread
 {
     Q_OBJECT
@@ -14,13 +16,24 @@ public:
     void resetAll();
 
     //static items
-    struct item
+    struct Item
     {
         QPixmap image;
         QString name;
         QString description;
     };
-    QHash<quint32,item> items;
+    QHash<quint32,Item> items;
+    struct Plant
+    {
+        quint32 itemUsed;
+        quint16 sprouted_seconds;
+        quint16 taller_seconds;
+        quint16 flowering_seconds;
+        quint16 fruits_seconds;
+        Tiled::Tileset * tileset;
+    };
+    QHash<quint8,Plant> plants;
+
     QStringList maps;
     QPixmap defaultInventoryImage();
     static DatapackClientLoader datapackLoader;
@@ -38,6 +51,7 @@ private:
 private slots:
     void parseItems();
     void parseMaps();
+    void parsePlants();
 };
 
 #endif // DATAPACKCLIENTLOADER_H
