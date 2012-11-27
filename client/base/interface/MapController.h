@@ -42,9 +42,9 @@ private:
         Tiled::MapObject * mapObject;
         quint8 x,y;
         quint8 plant_id;
-        QString current_map;
+        quint32 mapId;
     };
-    QHash<quint16,Plant> plantList;
+    QList<Plant> plantList;
 protected slots:
     //plant
     void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
