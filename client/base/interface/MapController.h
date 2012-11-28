@@ -53,6 +53,7 @@ protected slots:
     void plant_collected(const Pokecraft::Plant_collect &stat);
 public slots:
     virtual void datapackParsed();
+    virtual void reinject_signals();
 signals:
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);

@@ -4,7 +4,7 @@
 //plant
 void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature)
 {
-    if(!mHaveTheDatapack)
+    if(!mHaveTheDatapack || !player_informations_is_set)
     {
         DelayedPlantInsert tempItem;
         tempItem.mapId=mapId;
@@ -17,7 +17,7 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
     }
     if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
     {
-        qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
     qDebug() << QString("insert_plant(%1,%2,%3,%4,%5)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(plant_id).arg(seconds_to_mature);
@@ -26,9 +26,13 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "plant_id don't exists";
         return;
     }
-    if(!displayed_map.contains(DatapackClientLoader::datapackLoader.maps[mapId]))
+    if(!displayed_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
-        qDebug() << "map not show, ignore it";
+        QStringList map_list;
+        QSetIterator<QString> i(displayed_map);
+         while (i.hasNext())
+             map_list << i.next();
+        qDebug() << QString("map (%1) not show (into map list: %2), ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
         return;
     }
     int index=0;
@@ -54,15 +58,18 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(1));
     else
         plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(0));
+    //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+    plant.mapObject->setPosition(QPoint(x,y+1));
     plant.x=x;
     plant.y=y;
     plant.plant_id=plant_id;
     plant.mapId=mapId;
     plantList << plant;
-    if(ObjectGroupItem::objectGroupLink.contains(all_map[DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup))
-        ObjectGroupItem::objectGroupLink[all_map[DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant.mapObject);
+    qDebug() << QString("insert_plant(), map: %1 at: %2,%3").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
+    if(ObjectGroupItem::objectGroupLink.contains(all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup))
+        ObjectGroupItem::objectGroupLink[all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant.mapObject);
     else
-        qDebug() << QString("insert_plant(), all_map[DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup not contains current_map->objectGroup");
+        qDebug() << QString("insert_plant(), all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup not contains current_map->objectGroup");
 }
 
 void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y)
@@ -78,11 +85,11 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
     }
     if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
     {
-        qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        qDebug() << "MapController::remove_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
     qDebug() << QString("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
-    if(!displayed_map.contains(DatapackClientLoader::datapackLoader.maps[mapId]))
+    if(!displayed_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
         int index=0;
         while(index<plantList.size())
@@ -134,4 +141,30 @@ void MapController::plant_collected(const Pokecraft::Plant_collect &stat)
         return;
     }
     Q_UNUSED(stat);
+}
+
+void MapController::reinject_signals()
+{
+    MapControllerMP::reinject_signals();
+
+    int index;
+
+    if(mHaveTheDatapack && player_informations_is_set)
+    {
+        index=0;
+        while(index<delayedPlantInsert.size())
+        {
+            insert_plant(delayedPlantInsert.at(index).mapId,delayedPlantInsert.at(index).x,delayedPlantInsert.at(index).y,delayedPlantInsert.at(index).plant_id,delayedPlantInsert.at(index).seconds_to_mature);
+            index++;
+        }
+        delayedPlantInsert.clear();
+
+        index=0;
+        while(index<delayedPlantRemove.size())
+        {
+            remove_plant(delayedPlantInsert.at(index).mapId,delayedPlantInsert.at(index).x,delayedPlantInsert.at(index).y);
+            index++;
+        }
+        delayedPlantRemove.clear();
+    }
 }
