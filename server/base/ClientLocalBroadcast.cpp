@@ -80,27 +80,7 @@ void ClientLocalBroadcast::removeClient(Map *map)
 {
     static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
 
-    //send the remove plant
-    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << plant_list_size;
-    int index=0;
-    while(index<plant_list_size)
-    {
-        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
-        if(GlobalData::serverPrivateVariables.map_list.size()<=255)
-            out << (quint8)map->id;
-        else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
-            out << (quint16)map->id;
-        else
-            out << (quint32)map->id;
-        out << plant.x;
-        out << plant.y;
-        index++;
-    }
-    emit sendPacket(0xD2,outputData);
+    removeNearPlant();
 }
 
 //map slots, transmited by the current ClientNetworkRead

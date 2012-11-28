@@ -205,6 +205,8 @@ void ClientLocalBroadcast::sendNearPlant()
 {
     //Insert plant on map
     quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    if(plant_list_size==0)
+        return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -230,6 +232,33 @@ void ClientLocalBroadcast::sendNearPlant()
         index++;
     }
     emit sendPacket(0xD1,outputData);
+}
+
+void ClientLocalBroadcast::removeNearPlant()
+{
+    //send the remove plant
+    quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
+    if(plant_list_size==0)
+        return;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << plant_list_size;
+    int index=0;
+    while(index<plant_list_size)
+    {
+        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+        if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+            out << (quint8)map->id;
+        else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+            out << (quint16)map->id;
+        else
+            out << (quint32)map->id;
+        out << plant.x;
+        out << plant.y;
+        index++;
+    }
+    emit sendPacket(0xD2,outputData);
 }
 
 void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
