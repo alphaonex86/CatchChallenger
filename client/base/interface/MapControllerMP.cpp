@@ -88,6 +88,12 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
     removeUnusedMap();
     loadPlayerFromCurrentMap();
 
+    QStringList map_list;
+    QSetIterator<QString> i(displayed_map);
+     while (i.hasNext())
+         map_list << i.next();
+    qDebug() << QString("MapControllerMP::loadPlayerMap(): displayed_map: %1").arg(map_list.join(";"));
+
     show();
 
     return true;
@@ -130,6 +136,9 @@ void MapControllerMP::insert_player(const Pokecraft::Player_public_informations 
         tempItem.y=y;
         tempItem.direction=direction;
         delayedInsert << tempItem;
+        #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+        qDebug() << QString("delayed: insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(mapId).arg(x).arg(y).arg(Pokecraft::MoveOnTheMap::directionToString(direction));
+        #endif
         return;
     }
     if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
@@ -184,7 +193,7 @@ void MapControllerMP::insert_player(const Pokecraft::Player_public_informations 
             return;
         }
 
-        loadPlayerMap(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps[mapId],x,y);
+        loadPlayerMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId],x,y);
         setSpeed(player.speed);
     }
     else
@@ -202,7 +211,7 @@ void MapControllerMP::insert_player(const Pokecraft::Player_public_informations 
         tempPlayer.inMove=false;
         tempPlayer.stepAlternance=false;
 
-        QString current_map_fileName=loadOtherMap(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps[mapId]);
+        QString current_map_fileName=loadOtherMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
         if(current_map_fileName.isEmpty())
         {
             qDebug() << QString("unable to insert player: %1 on map: %2").arg(player.pseudo).arg(DatapackClientLoader::datapackLoader.maps[mapId]);
@@ -507,6 +516,9 @@ void MapControllerMP::remove_player(const quint16 &id)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
+        #ifdef DEBUG_CLIENT_LOAD_ORDER
+        qDebug() << QString("delayed: MapControllerMP::remove_player(%1)").arg(id);
+        #endif
         delayedRemove << id;
         return;
     }
@@ -549,6 +561,10 @@ void MapControllerMP::dropAllPlayerOnTheMap()
 //player info
 void MapControllerMP::have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations)
 {
+    #ifdef DEBUG_CLIENT_LOAD_ORDER
+    qDebug() << QString("MapControllerMP::have_current_player_info()");
+    #endif
+
     if(player_informations_is_set)
     {
         qDebug() << "player information already set";
@@ -563,15 +579,26 @@ void MapControllerMP::have_current_player_info(const Pokecraft::Player_private_a
 //the datapack
 void MapControllerMP::setDatapackPath(const QString &path)
 {
+    #ifdef DEBUG_CLIENT_LOAD_ORDER
+    qDebug() << QString("MapControllerMP::setDatapackPath()");
+    #endif
+
     if(path.endsWith("/") || path.endsWith("\\"))
         datapackPath=path;
     else
         datapackPath=path+"/";
+    datapackMapPath=QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP).absoluteFilePath();
+    if(!datapackMapPath.endsWith("/") && !datapackMapPath.endsWith("\\"))
+        datapackMapPath+="/";
     mLastLocation.clear();
 }
 
 void MapControllerMP::datapackParsed()
 {
+    #ifdef DEBUG_CLIENT_LOAD_ORDER
+    qDebug() << QString("MapControllerMP::datapackParsed()");
+    #endif
+
     if(mHaveTheDatapack)
         return;
     mHaveTheDatapack=true;
@@ -585,10 +612,16 @@ void MapControllerMP::datapackParsed()
 
 void MapControllerMP::reinject_signals()
 {
+    #ifdef DEBUG_CLIENT_LOAD_ORDER
+    qDebug() << QString("MapControllerMP::reinject_signals()");
+    #endif
     int index;
 
     if(mHaveTheDatapack && player_informations_is_set)
     {
+        #ifdef DEBUG_CLIENT_LOAD_ORDER
+        qDebug() << QString("MapControllerMP::reinject_signals(): mHaveTheDatapack && player_informations_is_set");
+        #endif
         index=0;
         while(index<delayedInsert.size())
         {
