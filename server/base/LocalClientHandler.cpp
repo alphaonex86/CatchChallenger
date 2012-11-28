@@ -175,9 +175,10 @@ bool LocalClientHandler::singleMove(const Direction &direction)
 {
     temp_direction=direction;
     Map* map=this->map;
+    emit message(QString("LocalClientHandler::singleMove(), go in this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
     {
-        emit error(QString("LocalClientHandler::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        emit error(QString("LocalClientHandler::singleMove(), can't' go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
     MoveOnTheMap::move(direction,&map,&x,&y);
