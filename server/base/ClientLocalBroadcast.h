@@ -42,6 +42,7 @@ protected:
     virtual void insertClient(Map *map);
     virtual void removeClient(Map *map);
     virtual void sendNearPlant();
+    virtual void removeNearPlant();
     virtual void receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time);
     virtual void removeSeed(const MapServerCrafting::PlantOnMap &plantOnMap);
 

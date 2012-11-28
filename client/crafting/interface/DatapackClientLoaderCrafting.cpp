@@ -55,6 +55,7 @@ void DatapackClientLoader::parsePlants()
                         plant.itemUsed=itemUsed;
                         QDomElement grow = plantItem.firstChildElement("grow");
                         if(!grow.isNull())
+                        {
                             if(grow.isElement())
                             {
                                 QDomElement sprouted = grow.firstChildElement("sprouted");
@@ -63,33 +64,67 @@ void DatapackClientLoader::parsePlants()
                                     {
                                         plant.sprouted_seconds=sprouted.text().toULongLong(&ok2)*60;
                                         if(!ok2)
+                                        {
+                                            qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(sprouted.tagName()).arg(sprouted.lineNumber()).arg(sprouted.text());
                                             ok=false;
+                                        }
                                     }
+                                    else
+                                        qDebug() << QString("Unable to parse the plants file: %1, sprouted is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(sprouted.tagName()).arg(sprouted.lineNumber());
+                                else
+                                    qDebug() << QString("Unable to parse the plants file: %1, sprouted is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(sprouted.tagName()).arg(sprouted.lineNumber());
                                 QDomElement taller = grow.firstChildElement("taller");
                                 if(!taller.isNull())
                                     if(taller.isElement())
                                     {
                                         plant.taller_seconds=taller.text().toULongLong(&ok2)*60;
-                                        if(ok2)
+                                        if(!ok2)
+                                        {
+                                            qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(taller.tagName()).arg(taller.lineNumber()).arg(taller.text());
                                             ok=false;
+                                        }
                                     }
+                                    else
+                                        qDebug() << QString("Unable to parse the plants file: %1, taller is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(taller.tagName()).arg(taller.lineNumber());
+                                else
+                                    qDebug() << QString("Unable to parse the plants file: %1, taller is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(taller.tagName()).arg(taller.lineNumber());
                                 QDomElement flowering = grow.firstChildElement("flowering");
                                 if(!flowering.isNull())
                                     if(flowering.isElement())
                                     {
                                         plant.flowering_seconds=flowering.text().toULongLong(&ok2)*60;
-                                        if(ok2)
+                                        if(!ok2)
+                                        {
                                             ok=false;
+                                            qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(flowering.tagName()).arg(flowering.lineNumber()).arg(flowering.text());
+                                        }
                                     }
+                                    else
+                                        qDebug() << QString("Unable to parse the plants file: %1, flowering is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(flowering.tagName()).arg(flowering.lineNumber());
+                                else
+                                    qDebug() << QString("Unable to parse the plants file: %1, flowering is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(flowering.tagName()).arg(flowering.lineNumber());
                                 QDomElement fruits = grow.firstChildElement("fruits");
                                 if(!fruits.isNull())
                                     if(fruits.isElement())
                                     {
                                         plant.fruits_seconds=fruits.text().toULongLong(&ok2)*60;
-                                        if(ok2)
+                                        if(!ok2)
+                                        {
+                                            qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber()).arg(fruits.text());
                                             ok=false;
+                                        }
                                     }
+                                    else
+                                        qDebug() << QString("Unable to parse the plants file: %1, fruits is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber());
+                                else
+                                    qDebug() << QString("Unable to parse the plants file: %1, fruits is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber());
+
                             }
+                            else
+                                qDebug() << QString("Unable to parse the plants file: %1, grow is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
+                        }
+                        else
+                            qDebug() << QString("Unable to parse the plants file: %1, grow is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
                         if(ok)
                         {
                             //try load the tileset

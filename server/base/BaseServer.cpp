@@ -82,6 +82,7 @@ void BaseServer::preload_the_data()
     preload_the_items();
     preload_the_players();
     preload_the_plant();
+    preload_the_plant_on_map();
 }
 
 void BaseServer::preload_the_map()
@@ -563,12 +564,13 @@ void BaseServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
+    unload_the_plant_on_map();
+    unload_the_plant();
     unload_the_items();
     unload_the_skin();
     unload_the_map();
     unload_the_datapack();
     unload_the_players();
-    unload_the_plant();
 }
 
 void BaseServer::unload_the_map()
