@@ -15,11 +15,12 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     this->socket			= socket;
     player_informations.isFake=isFake;
     player_informations.is_logged=false;
+    player_informations.isConnected=true;
 
     clientBroadCast=new ClientBroadCast();
     clientHeavyLoad=new ClientHeavyLoad();
     clientNetworkRead=new ClientNetworkRead(&player_informations,socket);
-    clientNetworkWrite=new ClientNetworkWrite(socket);
+    clientNetworkWrite=new ClientNetworkWrite(&player_informations,socket);
     localClientHandler=new LocalClientHandler();
     clientLocalBroadcast=new ClientLocalBroadcast();
     this->clientMapManagement=clientMapManagement;
@@ -181,6 +182,7 @@ Client::~Client()
 /// \brief new error at connexion
 void Client::connectionError(QAbstractSocket::SocketError error)
 {
+    player_informations.isConnected=false;
     ConnectedSocket *socket=qobject_cast<ConnectedSocket *>(QObject::sender());
     if(socket==NULL)
     {
@@ -197,6 +199,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
 /// \warning called in one other thread!!!
 void Client::disconnectClient()
 {
+    player_informations.isConnected=false;
     if(ask_is_ready_to_stop)
         return;
     ask_is_ready_to_stop=true;
