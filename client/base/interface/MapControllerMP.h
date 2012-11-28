@@ -62,13 +62,8 @@ private:
 
     Pokecraft::Api_protocol *client;
 
-    //current player
-    Pokecraft::Player_private_and_public_informations player_informations;
-    bool player_informations_is_set;
-
     //datapack
     QStringList skinFolderList;
-    QString datapackPath;
 
     //the delayed action
     struct DelayedInsert
@@ -89,6 +84,14 @@ private:
     QList<quint16> delayedRemove;
 protected:
     bool mHaveTheDatapack;
+
+    //current player
+    Pokecraft::Player_private_and_public_informations player_informations;
+    bool player_informations_is_set;
+
+    //datapack
+    QString datapackPath;
+    QString datapackMapPath;
 private slots:
     bool loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y);
     virtual void removeUnusedMap();
