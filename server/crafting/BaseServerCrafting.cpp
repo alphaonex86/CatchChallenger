@@ -105,6 +105,7 @@ void BaseServerCrafting::preload_the_plant()
 
 void BaseServerCrafting::preload_the_plant_on_map()
 {
+    int plant_on_the_map=0;
     QString queryText;
     switch(GlobalData::serverSettings.database.type)
     {
@@ -117,7 +118,9 @@ void BaseServerCrafting::preload_the_plant_on_map()
         break;
     }
     QSqlQuery plantOnMapQuery(queryText);
-    while(!plantOnMapQuery.next())
+    if(plantOnMapQuery.isValid())
+        DebugClass::debugConsole(QString("SQL query is not valid: %1").arg(queryText));
+    while(plantOnMapQuery.next())
     {
         bool ok;
         QString map=plantOnMapQuery.value(0).toString();
@@ -180,8 +183,14 @@ void BaseServerCrafting::preload_the_plant_on_map()
         plantOnMap.player_id=player_id;
         plantOnMap.mature_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_seconds;
         plantOnMap.player_owned_expire_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_seconds+60*60*24;
-        static_cast<MapServer *>(GlobalData::serverPrivateVariables.map_list[map])->plants[x+(y-1)*(GlobalData::serverPrivateVariables.map_list[map]->width)]=plantOnMap;
+        static_cast<MapServer *>(GlobalData::serverPrivateVariables.map_list[map])->plants << plantOnMap;
+        #ifdef DEBUG_MESSAGE_MAP_PLANTS
+        DebugClass::debugConsole(QString("put on the map: %1 (%2,%3) the plant: %4, owned by played id: %5").arg(map).arg(x).arg(y).arg(plant).arg(player_id));
+        #endif
+        plant_on_the_map++;
     }
+
+    DebugClass::debugConsole(QString("%1 plant(s) on the map loaded").arg(plant_on_the_map));
 }
 
 void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,const quint8 &y)
