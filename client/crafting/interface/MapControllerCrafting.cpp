@@ -20,6 +20,7 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
+    qDebug() << QString("insert_plant(%1,%2,%3,%4,%5)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(plant_id).arg(seconds_to_mature);
     if(!DatapackClientLoader::datapackLoader.plants.contains(plant_id))
     {
         qDebug() << "plant_id don't exists";
@@ -80,6 +81,7 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
+    qDebug() << QString("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
     if(!displayed_map.contains(DatapackClientLoader::datapackLoader.maps[mapId]))
     {
         int index=0;

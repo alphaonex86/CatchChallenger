@@ -576,7 +576,6 @@ void MapControllerMP::datapackParsed()
         return;
     mHaveTheDatapack=true;
 
-    int index;
     skinFolderList=Pokecraft::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
     setAnimationTilset(datapackPath+DATAPACK_BASE_PATH_ANIMATION+"animation.png");
