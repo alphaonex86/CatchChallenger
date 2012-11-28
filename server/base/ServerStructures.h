@@ -48,6 +48,7 @@ struct Player_internal_informations
     bool is_logged;
     quint32 id;
     QByteArray rawPseudo;
+    volatile bool isConnected;
 };
 
 struct ServerSettings

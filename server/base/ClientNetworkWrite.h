@@ -16,7 +16,7 @@ class ClientNetworkWrite : public ProtocolParsingOutput
 {
     Q_OBJECT
 public:
-    explicit ClientNetworkWrite(ConnectedSocket * socket);
+    explicit ClientNetworkWrite(Player_internal_informations *player_informations,ConnectedSocket * socket);
     ~ClientNetworkWrite();
 public slots:
     void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
@@ -27,6 +27,7 @@ public slots:
     void askIfIsReadyToStop();
 private:
     ConnectedSocket * socket;
+    Player_internal_informations *player_informations;
 signals:
     void isReadyToStop();
 };
