@@ -128,7 +128,7 @@ void DatapackClientLoader::parsePlants()
                         if(ok)
                         {
                             //try load the tileset
-                            plant.tileset = new Tiled::Tileset("plant",22,32);
+                            plant.tileset = new Tiled::Tileset("plant",16,32);
                             if(!plant.tileset->loadFromImage(QImage(datapackPath+DATAPACK_BASE_PATH_PLANTS+QString::number(id)+".png"),datapackPath+DATAPACK_BASE_PATH_PLANTS+QString::number(id)+".png"))
                                 if(!plant.tileset->loadFromImage(QImage(":/images/plant/unknow_plant.png"),":/images/plant/unknow_plant.png"))
                                     qDebug() << "Unable the load the default plant tileset";
