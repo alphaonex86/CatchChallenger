@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>4</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -148,138 +148,17 @@ color: rgb(255, 255, 255);</string>
           </widget>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_mainDisplay">
-           <property name="spacing">
-            <number>0</number>
+          <spacer name="verticalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
-           <item>
-            <widget class="QFrame" name="frame_main_display_right">
-             <property name="minimumSize">
-              <size>
-               <width>200</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>200</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/interface/baroption.png);</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_5">
-              <property name="spacing">
-               <number>2</number>
-              </property>
-              <property name="leftMargin">
-               <number>2</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>2</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QTextBrowser" name="textBrowser_chat">
-                <property name="minimumSize">
-                 <size>
-                  <width>196</width>
-                  <height>275</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>196</width>
-                  <height>275</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">border-image: url(:/images/empty.png);
-background-image: url(:/images/light-white.png);</string>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_main_display_9">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
-                <item>
-                 <widget class="QLineEdit" name="lineEdit_chat_text">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>25</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>25</height>
-                   </size>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">background-image: url(:/images/chat/background-input.png);
-border-image: url(:/images/empty.png);</string>
-                  </property>
-                  <property name="maxLength">
-                   <number>256</number>
-                  </property>
-                  <property name="placeholderText">
-                   <string>Your message</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="comboBox_chat_type">
-                  <property name="currentIndex">
-                   <number>1</number>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>All</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Local</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Clan</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QFrame" name="frame_main_display_player_info">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
          <item>
           <widget class="QFrame" name="frame_main_display_bottom">
