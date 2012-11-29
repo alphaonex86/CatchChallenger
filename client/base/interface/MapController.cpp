@@ -18,6 +18,9 @@ MapController::~MapController()
 
 void MapController::resetAll()
 {
+    plantList.clear();
+    delayedPlantInsert.clear();
+    delayedPlantRemove.clear();
     MapControllerMP::resetAll();
 }
 
