@@ -61,12 +61,16 @@ protected slots:
     virtual void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadPlayerFromCurrentMap();
+    virtual void parseStop();
+    virtual void parseAction();
 
     void setAnimationTilset(QString animationTilset);
     virtual void resetAll();
     void setSpeed(const SPEED_TYPE &speed);
 signals:
     void send_player_direction(const Pokecraft::Direction &the_direction);
+    void stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
+    void actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
 };
 
 #endif
