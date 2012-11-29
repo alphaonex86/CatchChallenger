@@ -56,6 +56,13 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     stopFlood.start(1500);
     numberForFlood=0;
 
+    tip_timeout.setInterval(8000);
+    gain_timeout.setInterval(8000);
+    tip_timeout.setSingleShot(true);
+    gain_timeout.setSingleShot(true);
+    connect(&tip_timeout,SIGNAL(timeout()),this,SLOT(tipTimeout()));
+    connect(&gain_timeout,SIGNAL(timeout()),this,SLOT(gainTimeout()));
+
     mapController->setFocus();
     mapController->setDatapackPath(client->get_datapack_base_name());
 
@@ -110,6 +117,9 @@ void BaseWindow::resetAll()
     datapackIsParsed=false;
     ui->inventory->clear();
     items_graphical.clear();
+    ui->tip->setVisible(false);
+    ui->gain->setVisible(false);
+    ui->IG_dialog->setVisible(false);
 }
 
 void BaseWindow::serverIsLoading()
@@ -514,6 +524,7 @@ void BaseWindow::updateConnectingStatus()
     {
         this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
         ui->stackedWidget->setCurrentIndex(1);
+        showTip(tr("Welcome <b><i>%1</i></b> on pokecraft").arg(client->getPseudo()));
         return;
     }
     ui->label_connecting_status->setText(tr("Waiting: %1").arg(waitedData.join(", ")));
@@ -560,17 +571,17 @@ void BaseWindow::updatePlayerImage()
     }
 }
 
-void Pokecraft::BaseWindow::on_pushButton_interface_bag_clicked()
+void BaseWindow::on_pushButton_interface_bag_clicked()
 {
     ui->stackedWidget->setCurrentIndex(3);
 }
 
-void Pokecraft::BaseWindow::on_toolButton_quit_interface_2_clicked()
+void BaseWindow::on_toolButton_quit_interface_2_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
 }
 
-void Pokecraft::BaseWindow::on_inventory_itemSelectionChanged()
+void BaseWindow::on_inventory_itemSelectionChanged()
 {
     qDebug() << "on_inventory_itemSelectionChanged()";
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
@@ -588,7 +599,31 @@ void Pokecraft::BaseWindow::on_inventory_itemSelectionChanged()
     ui->inventory_description->setText(content.description);
 }
 
-void Pokecraft::BaseWindow::on_toolButton_clicked()
+void BaseWindow::tipTimeout()
+{
+    ui->tip->setVisible(false);
+}
+
+void BaseWindow::gainTimeout()
+{
+    ui->gain->setVisible(false);
+}
+
+void BaseWindow::showTip(const QString &tip)
+{
+    ui->tip->setVisible(true);
+    ui->tip->setText(tip);
+    tip_timeout.start();
+}
+
+void BaseWindow::showGain(const QString &gain)
+{
+    ui->gain->setVisible(true);
+    ui->gain->setText(gain);
+    gain_timeout.start();
+}
+
+void BaseWindow::on_toolButton_quit_options_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
 }

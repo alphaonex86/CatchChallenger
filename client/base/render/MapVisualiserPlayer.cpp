@@ -58,7 +58,7 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
         return;
 
     //ignore the no arrow key
-    if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down)
+    if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down && event->key()!=Qt::Key_Enter)
     {
         event->ignore();
         return;
@@ -80,6 +80,12 @@ void MapVisualiserPlayer::keyPressParse()
     //ignore is already in move
     if(inMove)
         return;
+
+    if(keyPressed.size()==1 && keyPressed.contains(Qt::Key_Enter))
+    {
+        parseAction();
+        return;
+    }
 
     if(keyPressed.contains(Qt::Key_Left))
     {
@@ -325,6 +331,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 playerMapObject->setTile(playerTileset->tileAt(10));
                 inMove=false;
                 emit send_player_direction(direction);//see the top note
+                parseStop();
             }
             //if can go, then do the move
             else
@@ -345,6 +352,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 playerMapObject->setTile(playerTileset->tileAt(4));
                 inMove=false;
                 emit send_player_direction(direction);//see the top note
+                parseStop();
             }
             //if can go, then do the move
             else
@@ -365,6 +373,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 playerMapObject->setTile(playerTileset->tileAt(1));
                 inMove=false;
                 emit send_player_direction(direction);//see the top note
+                parseStop();
             }
             //if can go, then do the move
             else
@@ -385,6 +394,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 playerMapObject->setTile(playerTileset->tileAt(7));
                 inMove=false;
                 emit send_player_direction(direction);//see the top note
+                parseStop();
             }
             //if can go, then do the move
             else
@@ -399,12 +409,93 @@ void MapVisualiserPlayer::moveStepSlot()
         //now stop walking, no more arrow key is pressed
         else
         {
-            emit send_player_direction(direction);
             inMove=false;
+            emit send_player_direction(direction);
+            parseStop();
         }
     }
     else
         moveTimer.start();
+}
+
+void MapVisualiserPlayer::parseStop()
+{
+    Pokecraft::Map * map=&current_map->logicalMap;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    switch(direction)
+    {
+        case Pokecraft::Direction_look_at_left:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
+            emit stopped_in_front_of(map,x,y);
+        }
+        break;
+        case Pokecraft::Direction_look_at_right:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
+            emit stopped_in_front_of(map,x,y);
+        }
+        break;
+        case Pokecraft::Direction_look_at_top:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
+            emit stopped_in_front_of(map,x,y);
+        }
+        break;
+        case Pokecraft::Direction_look_at_bottom:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
+            emit stopped_in_front_of(map,x,y);
+        }
+        break;
+        default:
+        break;
+    }
+}
+
+void MapVisualiserPlayer::parseAction()
+{
+    Pokecraft::Map * map=&current_map->logicalMap;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    switch(direction)
+    {
+        case Pokecraft::Direction_look_at_left:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
+            emit actionOn(map,x,y);
+        }
+        break;
+        case Pokecraft::Direction_look_at_right:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
+            emit actionOn(map,x,y);
+        }
+        break;
+        case Pokecraft::Direction_look_at_top:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
+            emit actionOn(map,x,y);
+        }
+        break;
+        case Pokecraft::Direction_look_at_bottom:
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,map,x,y,false))
+        {
+            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
+            emit actionOn(map,x,y);
+        }
+        break;
+        default:
+        break;
+    }
 }
 
 //have look into another direction, if the key remain pressed, apply like move

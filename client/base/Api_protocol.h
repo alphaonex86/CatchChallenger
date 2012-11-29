@@ -73,7 +73,6 @@ protected:
     quint16 max_player;
     quint32 number_of_map;
     Player_private_and_public_informations player_informations;
-    QString pseudo;
 
     //to send trame
     ProtocolParsingOutput *output;

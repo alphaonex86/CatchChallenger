@@ -1276,7 +1276,7 @@ Player_private_and_public_informations Api_protocol::get_player_informations()
 
 QString Api_protocol::getPseudo()
 {
-    return pseudo;
+    return player_informations.public_informations.pseudo;
 }
 
 quint16 Api_protocol::getId()
@@ -1372,7 +1372,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
 void Api_protocol::sendPM(const QString &text,const QString &pseudo)
 {
     emit new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
-    if(this->pseudo==pseudo)
+    if(this->player_informations.public_informations.pseudo==pseudo)
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);

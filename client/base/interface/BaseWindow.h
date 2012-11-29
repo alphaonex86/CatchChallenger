@@ -64,12 +64,16 @@ private slots:
     void on_toolButton_interface_quit_clicked();
     void on_toolButton_quit_interface_clicked();
     void on_pushButton_interface_trainer_clicked();
-    void on_toolButton_clicked();
+    void on_toolButton_quit_options_clicked();
 
     //player UI
     void on_pushButton_interface_bag_clicked();
     void on_toolButton_quit_interface_2_clicked();
     void on_inventory_itemSelectionChanged();
+    void tipTimeout();
+    void gainTimeout();
+    void showTip(const QString &tip);
+    void showGain(const QString &gain);
     //player
     void logged();
     void updatePlayerImage();
@@ -91,6 +95,8 @@ private:
     QLineEdit *lineEdit_chat_text;
     QComboBox *comboBox_chat_type;
     QFrame *frame_main_display_right;
+    QTimer tip_timeout;
+    QTimer gain_timeout;
 
     Pokecraft::Api_protocol *client;
     QStringList chat_list_player_pseudo;
