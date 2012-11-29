@@ -214,6 +214,7 @@ void ClientLocalBroadcast::sendNearPlant()
     int index=0;
     while(index<plant_list_size)
     {
+        emit message(QString("sendNearPlant(): before all: %1").arg(QString(outputData.toHex())));
         const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
         if(GlobalData::serverPrivateVariables.map_list.size()<=255)
             out << (quint8)map->id;
@@ -225,10 +226,23 @@ void ClientLocalBroadcast::sendNearPlant()
         out << plant.y;
         out << plant.plant;
         quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-        if(current_time<=plant.mature_at)
+        if(current_time>=plant.mature_at)
             out << (quint16)0;
+        else if((plant.mature_at-current_time)>65535)
+        {
+            emit message(QString("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plant.plant));
+            out << (quint16)(65535);
+        }
         else
-            out << (quint16)current_time-plant.mature_at;
+            out << (quint16)(plant.mature_at-current_time);
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        int remaining_seconds_to_mature;
+        if(current_time>=plant.mature_at)
+            remaining_seconds_to_mature=0;
+        else
+            remaining_seconds_to_mature=(plant.mature_at-current_time);
+        emit message(QString("insert with near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
+        #endif
         index++;
     }
     emit sendPacket(0xD1,outputData);
