@@ -450,6 +450,7 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
     QSqlQuery sqlQuery(queryText);
     if(!sqlQuery.exec())
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
+    GlobalData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
 }
 
 void ClientHeavyLoad::askedRandomNumber()

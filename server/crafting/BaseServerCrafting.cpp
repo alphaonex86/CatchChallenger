@@ -185,7 +185,12 @@ void BaseServerCrafting::preload_the_plant_on_map()
         plantOnMap.player_owned_expire_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_seconds+60*60*24;
         static_cast<MapServer *>(GlobalData::serverPrivateVariables.map_list[map])->plants << plantOnMap;
         #ifdef DEBUG_MESSAGE_MAP_PLANTS
-        DebugClass::debugConsole(QString("put on the map: %1 (%2,%3) the plant: %4, owned by played id: %5").arg(map).arg(x).arg(y).arg(plant).arg(player_id));
+        DebugClass::debugConsole(QString("put on the map: %1 (%2,%3) the plant: %4, owned by played id: %5, mature at: %6 (%7+%8)")
+                                 .arg(map).arg(x).arg(y)
+                                 .arg(plant)
+                                 .arg(player_id)
+                                 .arg(plantOnMap.mature_at).arg(plant_timestamps).arg(GlobalData::serverPrivateVariables.plants[plant].mature_seconds)
+                                 );
         #endif
         plant_on_the_map++;
     }
