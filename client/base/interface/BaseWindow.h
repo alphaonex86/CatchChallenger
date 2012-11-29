@@ -5,6 +5,12 @@
 #include <QSettings>
 #include <QTimer>
 #include <QListWidgetItem>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QTextBrowser>
+#include <QHBoxLayout>
+#include <QLineEdit>
+#include <QComboBox>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -39,7 +45,6 @@ private slots:
     void message(QString message);
     void disconnected(QString reason);
     void notLogged(QString reason);
-    void on_lineEdit_chat_text_returnPressed();
     void protocol_is_good();
     void newError(QString error,QString detailedError);
     void error(QString error);
@@ -47,16 +52,18 @@ private slots:
     //chat
     void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
     void new_system_text(Pokecraft::Chat_type chat_type,QString text);
+    void setupChatUI();
+    void comboBox_chat_type_currentIndexChanged(int index);
+    void lineEdit_chat_text_returnPressed();
+    void lineEdit_chat_text_lostFocus();
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
-    void on_comboBox_chat_type_currentIndexChanged(int index);
     void update_chat();
     void removeNumberForFlood();
     void on_toolButton_interface_quit_clicked();
     void on_toolButton_quit_interface_clicked();
     void on_pushButton_interface_trainer_clicked();
-    void on_lineEdit_chat_text_lostFocus();
     void on_toolButton_clicked();
 
     //player UI
@@ -79,6 +86,12 @@ protected slots:
     void updateConnectingStatus();
 private:
     Ui::BaseWindowUI *ui;
+    QFrame *renderFrame;
+    QTextBrowser *textBrowser_chat;
+    QLineEdit *lineEdit_chat_text;
+    QComboBox *comboBox_chat_type;
+    QFrame *frame_main_display_right;
+
     Pokecraft::Api_protocol *client;
     QStringList chat_list_player_pseudo;
     QList<Pokecraft::Player_type> chat_list_player_type;
@@ -103,6 +116,7 @@ private:
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
+    void sendsetMultiPlayer(const bool & multiplayer);
 };
 }
 

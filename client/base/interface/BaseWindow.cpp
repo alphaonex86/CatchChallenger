@@ -19,10 +19,12 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
 
+    frame_main_display_right=NULL;
     mapController=new MapController(client,true,false,true,false);
     mapController->setScale(2);
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
+    setupChatUI();
 
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
@@ -53,9 +55,23 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
-    ui->horizontalLayout_mainDisplay->addWidget(mapController);
+
     mapController->setFocus();
     mapController->setDatapackPath(client->get_datapack_base_name());
+
+    renderFrame = new QFrame(ui->page_3);
+    renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
+    renderFrame->setMinimumSize(QSize(600, 520));
+    QVBoxLayout *renderLayout = new QVBoxLayout(renderFrame);
+    renderLayout->setSpacing(0);
+    renderLayout->setContentsMargins(0, 0, 0, 0);
+    renderLayout->setObjectName(QString::fromUtf8("renderLayout"));
+    renderLayout->addWidget(mapController);
+    renderFrame->setGeometry(QRect(0, 52, 800, 516));
+    renderFrame->lower();
+    renderFrame->lower();
+    renderFrame->lower();
+
     resetAll();
 }
 
@@ -67,7 +83,8 @@ BaseWindow::~BaseWindow()
 
 void BaseWindow::setMultiPlayer(bool multiplayer)
 {
-    ui->frame_main_display_right->setVisible(multiplayer);
+    emit sendsetMultiPlayer(multiplayer);
+    //frame_main_display_right->setVisible(multiplayer);
     ui->frame_main_display_interface_player->setVisible(multiplayer);
 }
 
@@ -80,9 +97,9 @@ void BaseWindow::resetAll()
     chat_list_player_type.clear();
     chat_list_type.clear();
     chat_list_text.clear();
-    ui->textBrowser_chat->clear();
-    ui->comboBox_chat_type->setCurrentIndex(1);
-        ui->lineEdit_chat_text->setText("");
+    textBrowser_chat->clear();
+    comboBox_chat_type->setCurrentIndex(1);
+        lineEdit_chat_text->setText("");
     update_chat();
     lastMessageSend="";
     mapController->resetAll();
@@ -152,20 +169,20 @@ void BaseWindow::protocol_is_good()
     ui->label_connecting_status->setText(tr("Try login..."));
 }
 
-void BaseWindow::on_lineEdit_chat_text_returnPressed()
+void BaseWindow::lineEdit_chat_text_returnPressed()
 {
-    QString text=ui->lineEdit_chat_text->text();
+    QString text=lineEdit_chat_text->text();
     if(text.isEmpty())
         return;
     if(text.contains(QRegExp("^ +$")))
     {
-        ui->lineEdit_chat_text->clear();
+        lineEdit_chat_text->clear();
         new_system_text(Chat_type_system,"Space text not allowed");
         return;
     }
     if(text.size()>256)
     {
-        ui->lineEdit_chat_text->clear();
+        lineEdit_chat_text->clear();
         new_system_text(Chat_type_system,"Message too long");
         return;
     }
@@ -173,24 +190,24 @@ void BaseWindow::on_lineEdit_chat_text_returnPressed()
     {
         if(text==lastMessageSend)
         {
-            ui->lineEdit_chat_text->clear();
+            lineEdit_chat_text->clear();
             new_system_text(Chat_type_system,"Send message like as previous");
             return;
         }
         if(numberForFlood>2)
         {
-            ui->lineEdit_chat_text->clear();
+            lineEdit_chat_text->clear();
             new_system_text(Chat_type_system,"Stop flood");
             return;
         }
     }
     numberForFlood++;
     lastMessageSend=text;
-    ui->lineEdit_chat_text->setText("");
+    lineEdit_chat_text->setText("");
     if(!text.startsWith("/pm "))
     {
         Chat_type chat_type;
-        switch(ui->comboBox_chat_type->currentIndex())
+        switch(comboBox_chat_type->currentIndex())
         {
         default:
         case 0:
@@ -274,8 +291,58 @@ void BaseWindow::update_chat()
             nameHtml+=ChatParsing::new_chat_message(chat_list_player_pseudo.at(index),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index));
         index++;
     }
-    ui->textBrowser_chat->setHtml(nameHtml);
-    //ui->textBrowser_chat->scrollToAnchor(QString::number(index-1));
+    textBrowser_chat->setHtml(nameHtml);
+    //textBrowser_chat->scrollToAnchor(QString::number(index-1));
+}
+
+void BaseWindow::setupChatUI()
+{
+    QFrame *frame_main_display_right = new QFrame(ui->page_3);
+    frame_main_display_right->setMinimumSize(QSize(200, 0));
+    frame_main_display_right->setMaximumSize(QSize(200, 16777215));
+    frame_main_display_right->setStyleSheet(QString::fromUtf8("background-image: url(:/images/interface/baroption.png);"));
+    QVBoxLayout *verticalLayout_5 = new QVBoxLayout(frame_main_display_right);
+    verticalLayout_5->setSpacing(2);
+    verticalLayout_5->setContentsMargins(2, 0, 2, 0);
+    textBrowser_chat = new QTextBrowser(frame_main_display_right);
+    textBrowser_chat->setMinimumSize(QSize(196, 275));
+    textBrowser_chat->setMaximumSize(QSize(196, 275));
+    textBrowser_chat->setStyleSheet(QString::fromUtf8("border-image: url(:/images/empty.png);\n"
+"background-image: url(:/images/light-white.png);"));
+    textBrowser_chat->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    textBrowser_chat->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    verticalLayout_5->addWidget(textBrowser_chat);
+
+    QHBoxLayout *horizontalLayout_main_display_9 = new QHBoxLayout();
+    horizontalLayout_main_display_9->setSpacing(0);
+    lineEdit_chat_text = new QLineEdit(frame_main_display_right);
+    lineEdit_chat_text->setObjectName(QString::fromUtf8("lineEdit_chat_text"));
+    lineEdit_chat_text->setMinimumSize(QSize(0, 25));
+    lineEdit_chat_text->setMaximumSize(QSize(16777215, 25));
+    lineEdit_chat_text->setStyleSheet(QString::fromUtf8("background-image: url(:/images/chat/background-input.png);\n"
+"border-image: url(:/images/empty.png);"));
+    lineEdit_chat_text->setMaxLength(256);
+    horizontalLayout_main_display_9->addWidget(lineEdit_chat_text);
+    comboBox_chat_type = new QComboBox(frame_main_display_right);
+    comboBox_chat_type->setObjectName(QString::fromUtf8("comboBox_chat_type"));
+    horizontalLayout_main_display_9->addWidget(comboBox_chat_type);
+
+    verticalLayout_5->addLayout(horizontalLayout_main_display_9);
+    QSpacerItem *verticalSpacer_5 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    verticalLayout_5->addItem(verticalSpacer_5);
+
+    comboBox_chat_type->insertItems(0, QStringList()
+     << QApplication::translate("BaseWindowUI", "All", 0, QApplication::UnicodeUTF8)
+     << QApplication::translate("BaseWindowUI", "Local", 0, QApplication::UnicodeUTF8)
+     << QApplication::translate("BaseWindowUI", "Clan", 0, QApplication::UnicodeUTF8)
+    );
+
+    frame_main_display_right->setGeometry(QRect(0, 150, 200, 250));
+
+    connect(comboBox_chat_type,SIGNAL(currentIndexChanged(int)),this,SLOT(comboBox_chat_type_currentIndexChanged(int)));
+    connect(lineEdit_chat_text,SIGNAL(returnPressed()),this,SLOT(lineEdit_chat_text_returnPressed()));
+    connect(lineEdit_chat_text,SIGNAL(lostFocus()),this,SLOT(lineEdit_chat_text_lostFocus()));
+    connect(this,SIGNAL(sendsetMultiPlayer(bool)),frame_main_display_right,SLOT(setVisible(bool)),Qt::QueuedConnection);
 }
 
 QString BaseWindow::toHtmlEntities(QString text)
@@ -307,7 +374,7 @@ void BaseWindow::number_of_player(quint16 number,quint16 max)
     ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
 }
 
-void BaseWindow::on_comboBox_chat_type_currentIndexChanged(int index)
+void BaseWindow::comboBox_chat_type_currentIndexChanged(int index)
 {
     Q_UNUSED(index)
     update_chat();
@@ -328,7 +395,7 @@ void BaseWindow::on_pushButton_interface_trainer_clicked()
     ui->stackedWidget->setCurrentIndex(2);
 }
 
-void BaseWindow::on_lineEdit_chat_text_lostFocus()
+void BaseWindow::lineEdit_chat_text_lostFocus()
 {
     mapController->setFocus();
 }
