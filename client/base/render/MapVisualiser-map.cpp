@@ -65,6 +65,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     tempMapObject->logicalMap.parsed_layer.walkable                 = map_loader.map_to_send.parsed_layer.walkable;
     tempMapObject->logicalMap.parsed_layer.water                    = map_loader.map_to_send.parsed_layer.water;
     tempMapObject->logicalMap.parsed_layer.grass                    = map_loader.map_to_send.parsed_layer.grass;
+    tempMapObject->logicalMap.parsed_layer.dirt                     = map_loader.map_to_send.parsed_layer.dirt;
     tempMapObject->logicalMap.map_file                              = resolvedFileName;
     tempMapObject->logicalMap.border.bottom.map                     = NULL;
     tempMapObject->logicalMap.border.top.map                        = NULL;
@@ -306,6 +307,8 @@ void MapVisualiser::removeUnusedMap()
                 delete (*i)->logicalMap.parsed_layer.water;
             if((*i)->logicalMap.parsed_layer.grass!=NULL)
                 delete (*i)->logicalMap.parsed_layer.grass;
+            if((*i)->logicalMap.parsed_layer.dirt!=NULL)
+                delete (*i)->logicalMap.parsed_layer.dirt;
             qDeleteAll((*i)->tiledMap->tilesets());
             delete (*i)->tiledMap;
             delete (*i)->tiledRender;
