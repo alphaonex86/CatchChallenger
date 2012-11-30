@@ -109,6 +109,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=Pokecraft::Direction_look_at_left;
             lookToMove.start();
             emit send_player_direction(direction);
+            parseStop();
         }
     }
     else if(keyPressed.contains(Qt::Key_Right))
@@ -133,6 +134,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=Pokecraft::Direction_look_at_right;
             lookToMove.start();
             emit send_player_direction(direction);
+            parseStop();
         }
     }
     else if(keyPressed.contains(Qt::Key_Up))
@@ -157,6 +159,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=Pokecraft::Direction_look_at_top;
             lookToMove.start();
             emit send_player_direction(direction);
+            parseStop();
         }
     }
     else if(keyPressed.contains(Qt::Key_Down))
@@ -181,6 +184,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=Pokecraft::Direction_look_at_bottom;
             lookToMove.start();
             emit send_player_direction(direction);
+            parseStop();
         }
     }
 }
@@ -428,29 +432,37 @@ void MapVisualiserPlayer::parseStop()
         case Pokecraft::Direction_look_at_left:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
-            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y,false))
+                qDebug() << QString("can go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_right:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
-            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y,false))
+                qDebug() << QString("can go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_top:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
-            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y,false))
+                qDebug() << QString("can go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
-            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y,false))
+                qDebug() << QString("can go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         default:
@@ -468,29 +480,37 @@ void MapVisualiserPlayer::parseAction()
         case Pokecraft::Direction_look_at_left:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
-            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y,false))
+                qDebug() << QString("can go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_right:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
-            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y,false))
+                qDebug() << QString("can go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_top:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
-            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y,false))
+                qDebug() << QString("can go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
         if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,*map,x,y,false))
         {
-            Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
-            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
+            if(!Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y,false))
+                qDebug() << QString("can go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+            else
+                emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         default:
