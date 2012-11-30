@@ -38,6 +38,7 @@ protected:
 
     //control
     QSet<int> keyPressed;
+    QSet<int> keyAccepted;
 
     //grass
     bool haveGrassCurrentObject;

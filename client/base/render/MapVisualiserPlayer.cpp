@@ -14,6 +14,8 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     x=0;
     y=0;
 
+    keyAccepted << Qt::Key_Left << Qt::Key_Right << Qt::Key_Up << Qt::Key_Down << Qt::Key_Return;
+
     lookToMove.setInterval(200);
     lookToMove.setSingleShot(true);
     connect(&lookToMove,SIGNAL(timeout()),this,SLOT(transformLookToMove()));
@@ -58,7 +60,7 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
         return;
 
     //ignore the no arrow key
-    if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down && event->key()!=Qt::Key_Enter)
+    if(!keyAccepted.contains(event->key()))
     {
         event->ignore();
         return;
@@ -81,7 +83,7 @@ void MapVisualiserPlayer::keyPressParse()
     if(inMove)
         return;
 
-    if(keyPressed.size()==1 && keyPressed.contains(Qt::Key_Enter))
+    if(keyPressed.size()==1 && keyPressed.contains(Qt::Key_Return))
     {
         parseAction();
         return;
@@ -582,7 +584,7 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
         return;
 
     //ignore the no arrow key
-    if(event->key()!=Qt::Key_Left && event->key()!=Qt::Key_Right && event->key()!=Qt::Key_Up && event->key()!=Qt::Key_Down)
+    if(!keyAccepted.contains(event->key()))
     {
         event->ignore();
         return;
