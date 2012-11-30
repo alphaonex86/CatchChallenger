@@ -8,8 +8,6 @@ MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerO
     connect(client,SIGNAL(remove_plant(quint32,quint16,quint16)),this,SLOT(remove_plant(quint32,quint16,quint16)));
     connect(client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
     connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
-    connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));
-    connect(this,SIGNAL(collectMaturePlant()),client,SLOT(collectMaturePlant()));
 }
 
 MapController::~MapController()
@@ -18,7 +16,6 @@ MapController::~MapController()
 
 void MapController::resetAll()
 {
-    plantList.clear();
     delayedPlantInsert.clear();
     delayedPlantRemove.clear();
     MapControllerMP::resetAll();

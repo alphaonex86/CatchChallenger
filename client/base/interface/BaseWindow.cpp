@@ -52,6 +52,13 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(this,SIGNAL(parseDatapack(QString)),&DatapackClientLoader::datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
     connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
 
+    //render
+    connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)));
+    connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client,quint8,quint8)));
+
+    connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));
+    connect(this,SIGNAL(collectMaturePlant()),client,SLOT(collectMaturePlant()));
+
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
@@ -120,6 +127,8 @@ void BaseWindow::resetAll()
     ui->tip->setVisible(false);
     ui->gain->setVisible(false);
     ui->IG_dialog->setVisible(false);
+    seedWait=false;
+    inSelection=false;
 }
 
 void BaseWindow::serverIsLoading()
@@ -429,6 +438,38 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
     }
 }
 
+//return ok, itemId
+void BaseWindow::selectObject(const ObjectType &objectType)
+{
+    inSelection=true;
+    ui->stackedWidget->setCurrentIndex(3);
+}
+
+void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
+{
+    switch(waitedObjectType)
+    {
+        case ObjectType_Seed:
+            if(!ok)
+                return;
+            if(!items.contains(itemId))
+            {
+                qDebug() << "item id is not into the inventory";
+                return;
+            }
+            items[itemId]--;
+            if(items[itemId]==0)
+                items.remove(itemId);
+            seed_in_waiting=itemId;
+            showTip(tr("Seed in planting..."));
+            seedWait=true;
+        break;
+        default:
+        qDebug() << "waitedObjectType is unknow";
+        return;
+    }
+}
+
 void BaseWindow::have_current_player_info()
 {
     #ifdef DEBUG_BASEWINDOWS
@@ -573,12 +614,15 @@ void BaseWindow::updatePlayerImage()
 
 void BaseWindow::on_pushButton_interface_bag_clicked()
 {
+    inSelection=false;
     ui->stackedWidget->setCurrentIndex(3);
 }
 
-void BaseWindow::on_toolButton_quit_interface_2_clicked()
+void BaseWindow::on_toolButton_quit_inventory_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
+    if(inSelection)
+        objectSelection(false,0);
 }
 
 void BaseWindow::on_inventory_itemSelectionChanged()
@@ -626,4 +670,114 @@ void BaseWindow::showGain(const QString &gain)
 void BaseWindow::on_toolButton_quit_options_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
+}
+
+void BaseWindow::stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y)
+{
+    if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
+    {
+        int index=0;
+        while(index<map.plantList.size())
+        {
+            if(map.plantList.at(index).x==x && map.plantList.at(index).y==y)
+            {
+                quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+                if(map.plantList.at(index).mature_at<current_time)
+                    showTip(tr("To recolt the plant press <i>Enter</i>"));
+                else
+                    showTip(tr("This plant is growing and can't be collected"));
+                return;
+            }
+            else
+                index++;
+        }
+        showTip(tr("To plant a seed press <i>Enter</i>"));
+        return;
+    }
+}
+
+void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y)
+{
+    if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
+    {
+        int index=0;
+        while(index<map.plantList.size())
+        {
+            if(map.plantList.at(index).x==x && map.plantList.at(index).y==y)
+            {
+                quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+                if(map.plantList.at(index).mature_at<current_time)
+                {
+                    showTip(tr("Plant collecting..."));
+                    emit collectMaturePlant();
+                }
+                else
+                    showTip(tr("This plant is growing and can't be collected"));
+                return;
+            }
+            else
+                index++;
+        }
+        if(seedWait)
+        {
+            showTip(tr("Wait to finish to plant the previous seed"));
+            return;
+        }
+        waitedObjectType=ObjectType_Seed;
+        selectObject(ObjectType_Seed);
+        return;
+    }
+}
+
+void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
+{
+    if(!items_graphical.contains(item))
+    {
+        qDebug() << "BaseWindow::on_inventory_itemActivated(): activated item not found";
+        return;
+    }
+    if(!inSelection)
+    {
+        qDebug() << "BaseWindow::on_inventory_itemActivated(): not in selection, use is not done actually";
+        return;
+    }
+    objectSelection(true,items_graphical[item]);
+}
+
+void BaseWindow::seed_planted(const bool &ok)
+{
+    seedWait=false;
+    if(ok)
+        /// \todo add to the map here, and don't send on the server
+        showTip(tr("Seed correctly planted"));
+    else
+    {
+        if(items.contains(seed_in_waiting))
+            items[seed_in_waiting]++;
+        else
+            items[seed_in_waiting]=1;
+        showTip(tr("Seed cannot be planted"));
+    }
+}
+
+void BaseWindow::plant_collected(const Pokecraft::Plant_collect &stat)
+{
+    switch(stat)
+    {
+        case Plant_collect_correctly_collected:
+            showTip(tr("Plant collected"));
+        break;
+        case Plant_collect_empty_dirt:
+            showTip(tr("Try collected empty dirt"));
+        break;
+        case Plant_collect_owned_by_another_player:
+            showTip(tr("This plant had been planted recently by another player"));
+        break;
+        case Plant_collect_impossible:
+            showTip(tr("This plant can't be collected"));
+        break;
+        default:
+        qDebug() << "BaseWindow::plant_collected(): unkonw return";
+        return;
+    }
 }
