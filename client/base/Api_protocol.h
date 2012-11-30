@@ -117,6 +117,7 @@ signals:
     //player info
     void have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations);
     void have_inventory(const QHash<quint32,quint32> &items);
+    void add_to_inventory(const QHash<quint32,quint32> &items);
 
     //datapack
     void haveTheDatapack();
