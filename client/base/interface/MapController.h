@@ -36,15 +36,6 @@ private:
         quint16 y;
     };
     QList<DelayedPlantRemove> delayedPlantRemove;
-
-    struct Plant
-    {
-        Tiled::MapObject * mapObject;
-        quint8 x,y;
-        quint8 plant_id;
-        quint32 mapId;
-    };
-    QList<Plant> plantList;
 protected slots:
     //plant
     void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
@@ -54,10 +45,6 @@ protected slots:
 public slots:
     virtual void datapackParsed();
     virtual void reinject_signals();
-signals:
-    //plant, can do action only if the previous is finish
-    void useSeed(const quint8 &plant_id);
-    void collectMaturePlant();
 };
 
 #endif // MAPCONTROLLER_H

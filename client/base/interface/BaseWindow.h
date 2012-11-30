@@ -37,10 +37,18 @@ public:
     void serverIsLoading();
     void serverIsReady();
     QString lastLocation() const;
+    enum ObjectType
+    {
+        ObjectType_All,
+        ObjectType_Seed
+    };
+    ObjectType waitedObjectType;
 protected:
     void changeEvent(QEvent *e);
 public slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
+    void selectObject(const ObjectType &objectType);
+    void objectSelection(const bool &ok,const quint32 &itemId);
 private slots:
     void message(QString message);
     void disconnected(QString reason);
@@ -68,7 +76,7 @@ private slots:
 
     //player UI
     void on_pushButton_interface_bag_clicked();
-    void on_toolButton_quit_interface_2_clicked();
+    void on_toolButton_quit_inventory_clicked();
     void on_inventory_itemSelectionChanged();
     void tipTimeout();
     void gainTimeout();
@@ -80,9 +88,19 @@ private slots:
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items);
     void load_inventory();
+    //render
+    void stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
+    void actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
 
     //datapack
     void haveTheDatapack();
+
+    //inventory
+    void on_inventory_itemActivated(QListWidgetItem *item);
+
+    //plant
+    void seed_planted(const bool &ok);
+    void plant_collected(const Pokecraft::Plant_collect &stat);
 protected slots:
     //datapack
     void datapackParsed();
@@ -97,6 +115,10 @@ private:
     QFrame *frame_main_display_right;
     QTimer tip_timeout;
     QTimer gain_timeout;
+
+    //plant seed in waiting
+    quint32 seed_in_waiting;
+    bool seedWait;
 
     Pokecraft::Api_protocol *client;
     QStringList chat_list_player_pseudo;
@@ -119,10 +141,14 @@ private:
     //player items
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
+    bool inSelection;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
     void sendsetMultiPlayer(const bool & multiplayer);
+    //plant, can do action only if the previous is finish
+    void useSeed(const quint8 &plant_id);
+    void collectMaturePlant();
 };
 }
 
