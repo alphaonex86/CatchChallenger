@@ -33,6 +33,7 @@ public:
         Tiled::Tileset * tileset;
     };
     QHash<quint8,Plant> plants;
+    QHash<quint32,quint8> itemToplants;
 
     QStringList maps;
     QPixmap defaultInventoryImage();
