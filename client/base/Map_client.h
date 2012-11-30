@@ -3,6 +3,7 @@
 
 #include "../../general/base/Map.h"
 #include "../../general/base/GeneralStructures.h"
+#include "../../general/libtiled/mapobject.h"
 
 #include <QString>
 #include <QList>
@@ -17,7 +18,16 @@ public:
 	
     Map_semi_border border_semi;
 	
-	Map_client();
+    Map_client();
+
+    struct Plant
+    {
+        Tiled::MapObject * mapObject;
+        quint8 x,y;
+        quint8 plant_id;
+        quint64 mature_at;
+    };
+    QList<Plant> plantList;
 };
 }
 

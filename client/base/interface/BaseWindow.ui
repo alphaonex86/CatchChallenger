@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>4</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -1219,7 +1219,7 @@ border-image: url(:/images/empty.png);
              <enum>QListView::IconMode</enum>
             </property>
            </widget>
-           <widget class="QToolButton" name="toolButton_quit_interface_2">
+           <widget class="QToolButton" name="toolButton_quit_inventory">
             <property name="geometry">
              <rect>
               <x>770</x>
