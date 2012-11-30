@@ -112,6 +112,8 @@ void MapControllerMP::removeUnusedMap()
                 delete (*i)->logicalMap.parsed_layer.water;
             if((*i)->logicalMap.parsed_layer.grass!=NULL)
                 delete (*i)->logicalMap.parsed_layer.grass;
+            if((*i)->logicalMap.parsed_layer.grass!=NULL)
+                delete (*i)->logicalMap.parsed_layer.dirt;
             qDeleteAll((*i)->tiledMap->tilesets());
             delete (*i)->tiledMap;
             delete (*i)->tiledRender;
