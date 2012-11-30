@@ -35,10 +35,22 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << QString("map (%1) not show (into map list: %2), ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
         return;
     }
-    int index=0;
-    while(index<plantList.size())
+    if(!all_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
-        if(plantList.at(index).x==x && plantList.at(index).y==y && plantList.at(index).mapId==mapId)
+        QStringList map_list;
+        QHashIterator<QString, Map_full *> i(all_map);
+        while (i.hasNext()) {
+            i.next();
+            map_list << i.key();
+        }
+        qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
+        return;
+    }
+    Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
+    int index=0;
+    while(index<map_full->logicalMap.plantList.size())
+    {
+        if(map_full->logicalMap.plantList.at(index).x==x && map_full->logicalMap.plantList.at(index).y==y)
         {
             qDebug() << "map have already an item at this point, remove it";
             remove_plant(mapId,x,y);
@@ -46,7 +58,8 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         else
             index++;
     }
-    Plant plant;
+    quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+    Pokecraft::Map_client::Plant plant;
     plant.mapObject=new Tiled::MapObject();
     if(seconds_to_mature==0)
         plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(4));
@@ -63,8 +76,9 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
     plant.x=x;
     plant.y=y;
     plant.plant_id=plant_id;
-    plant.mapId=mapId;
-    plantList << plant;
+    plant.mature_at=current_time+seconds_to_mature;
+
+    map_full->logicalMap.plantList << plant;
     qDebug() << QString("insert_plant(), map: %1 at: %2,%3").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
     if(ObjectGroupItem::objectGroupLink.contains(all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup))
         ObjectGroupItem::objectGroupLink[all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant.mapObject);
@@ -89,34 +103,47 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
         return;
     }
     qDebug() << QString("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
+    if(!all_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
+    {
+        QStringList map_list;
+        QHashIterator<QString, Map_full *> i(all_map);
+        while (i.hasNext()) {
+            i.next();
+            map_list << i.key();
+        }
+        qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
+        return;
+    }
     if(!displayed_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
+        Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
         int index=0;
-        while(index<plantList.size())
+        while(index<all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->logicalMap.plantList.size())
         {
-            if(plantList.at(index).x==x && plantList.at(index).y==y && plantList.at(index).mapId==mapId)
+            if(map_full->logicalMap.plantList.at(index).x==x && map_full->logicalMap.plantList.at(index).y==y)
             {
-                delete plantList.at(index).mapObject;
-                plantList.removeAt(index);
+                delete map_full->logicalMap.plantList.at(index).mapObject;
+                map_full->logicalMap.plantList.removeAt(index);
             }
             else
                 index++;
         }
-        qDebug() << "map not show, don't remove fromt the display";
+        qDebug() << "map not show, don't remove from the display";
         return;
     }
+    Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
     int index=0;
-    while(index<plantList.size())
+    while(index<map_full->logicalMap.plantList.size())
     {
-        if(plantList.at(index).x==x && plantList.at(index).y==y && plantList.at(index).mapId==mapId)
+        if(map_full->logicalMap.plantList.at(index).x==x && map_full->logicalMap.plantList.at(index).y==y)
         {
             //unload the player sprite
-            if(ObjectGroupItem::objectGroupLink.contains(plantList.at(index).mapObject->objectGroup()))
-                ObjectGroupItem::objectGroupLink[plantList.at(index).mapObject->objectGroup()]->removeObject(plantList.at(index).mapObject);
+            if(ObjectGroupItem::objectGroupLink.contains(map_full->logicalMap.plantList.at(index).mapObject->objectGroup()))
+                ObjectGroupItem::objectGroupLink[map_full->logicalMap.plantList.at(index).mapObject->objectGroup()]->removeObject(map_full->logicalMap.plantList.at(index).mapObject);
             else
-                qDebug() << QString("remove_plant(), ObjectGroupItem::objectGroupLink not contains plantList.at(index).mapObject->objectGroup()");
-            delete plantList.at(index).mapObject;
-            plantList.removeAt(index);
+                qDebug() << QString("remove_plant(), ObjectGroupItem::objectGroupLink not contains map_full->logicalMap.plantList.at(index).mapObject->objectGroup()");
+            delete map_full->logicalMap.plantList.at(index).mapObject;
+            map_full->logicalMap.plantList.removeAt(index);
         }
         else
             index++;

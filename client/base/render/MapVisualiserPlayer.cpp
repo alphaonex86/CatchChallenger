@@ -426,31 +426,31 @@ void MapVisualiserPlayer::parseStop()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
-            emit stopped_in_front_of(map,x,y);
+            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
-            emit stopped_in_front_of(map,x,y);
+            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
-            emit stopped_in_front_of(map,x,y);
+            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
-            emit stopped_in_front_of(map,x,y);
+            emit stopped_in_front_of(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         default:
@@ -466,31 +466,31 @@ void MapVisualiserPlayer::parseAction()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y);
-            emit actionOn(map,x,y);
+            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&map,&x,&y);
-            emit actionOn(map,x,y);
+            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&map,&x,&y);
-            emit actionOn(map,x,y);
+            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,map,x,y,false))
+        if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,*map,x,y,false))
         {
             Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&map,&x,&y);
-            emit actionOn(map,x,y);
+            emit actionOn(*static_cast<Pokecraft::Map_client *>(map),x,y);
         }
         break;
         default:
