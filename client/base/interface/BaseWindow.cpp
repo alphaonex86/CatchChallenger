@@ -447,7 +447,9 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
 void BaseWindow::selectObject(const ObjectType &objectType)
 {
     inSelection=true;
+    waitedObjectType=objectType;
     ui->stackedWidget->setCurrentIndex(3);
+    load_inventory();
 }
 
 void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
@@ -468,6 +470,7 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
             seed_in_waiting=itemId;
             showTip(tr("Seed in planting..."));
             seedWait=true;
+            load_inventory();
         break;
         default:
         qDebug() << "waitedObjectType is unknow";
@@ -542,34 +545,6 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
             name=QString("id: %1").arg(i.key());
         }
 
-        if(!inSelection)
-        {
-            QListWidgetItem *item;
-            if(!items_to_graphical.contains(i.key()))
-            {
-                item=new QListWidgetItem();
-                items_to_graphical[i.key()]=item;
-                items_graphical[item]=i.key();
-            }
-            else
-                item=items_to_graphical[i.key()];
-            if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
-            {
-                item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
-                if(this->items[i.key()]>1)
-                    item->setText(QString::number(this->items[i.key()]));
-            }
-            else
-            {
-                item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-                if(i.value()>1)
-                    item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(this->items[i.key()]));
-                else
-                    item->setText(QString("id: %1").arg(i.key()));
-            }
-            ui->inventory->addItem(item);
-        }
-
         image=image.scaled(24,24);
         QByteArray byteArray;
         QBuffer buffer(&byteArray);
@@ -586,6 +561,8 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
         objects << "...";
     html+=objects.join(", ");
     showGain(html);
+
+    load_inventory();
 }
 
 void BaseWindow::load_inventory()
@@ -593,11 +570,31 @@ void BaseWindow::load_inventory()
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::load_inventory()";
     #endif
-    if(haveInventory && datapackIsParsed)
-    {
-        QHashIterator<quint32,quint32> i(items);
-        while (i.hasNext()) {
-            i.next();
+    if(!haveInventory || !datapackIsParsed)
+        return;
+    ui->inventory->clear();
+    items_graphical.clear();
+    items_to_graphical.clear();
+    QHashIterator<quint32,quint32> i(items);
+    while (i.hasNext()) {
+        i.next();
+
+        bool show=!inSelection;
+        if(inSelection)
+        {
+            switch(waitedObjectType)
+            {
+                case ObjectType_Seed:
+                    if(DatapackClientLoader::datapackLoader.itemToplants.contains(i.key()))
+                        show=true;
+                break;
+                default:
+                qDebug() << "waitedObjectType is unknow into load_inventory()";
+                break;
+            }
+        }
+        if(show)
+        {
             QListWidgetItem *item;
             if(!items_to_graphical.contains(i.key()))
             {
@@ -700,7 +697,11 @@ void BaseWindow::updatePlayerImage()
 
 void BaseWindow::on_pushButton_interface_bag_clicked()
 {
-    inSelection=false;
+    if(inSelection)
+    {
+        qDebug() << "BaseWindow::on_pushButton_interface_bag_clicked() in selection, can't click here";
+        return;
+    }
     ui->stackedWidget->setCurrentIndex(3);
 }
 
@@ -809,7 +810,6 @@ void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const
             showTip(tr("Wait to finish to plant the previous seed"));
             return;
         }
-        waitedObjectType=ObjectType_Seed;
         selectObject(ObjectType_Seed);
         return;
     }
@@ -843,6 +843,7 @@ void BaseWindow::seed_planted(const bool &ok)
         else
             items[seed_in_waiting]=1;
         showTip(tr("Seed cannot be planted"));
+        load_inventory();
     }
 }
 

@@ -134,7 +134,10 @@ void DatapackClientLoader::parsePlants()
                                     qDebug() << "Unable the load the default plant tileset";
                         }
                         if(ok)
+                        {
                             plants[id]=plant;
+                            itemToplants[plant.itemUsed]=id;
+                        }
                     }
                     else
                         qDebug() << QString("Unable to open the plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber());
