@@ -454,6 +454,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
 
 void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
 {
+    ui->stackedWidget->setCurrentIndex(1);
     switch(waitedObjectType)
     {
         case ObjectType_Seed:
@@ -468,7 +469,7 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
             if(items[itemId]==0)
                 items.remove(itemId);
             seed_in_waiting=itemId;
-            showTip(tr("Seed in planting..."));
+            showTip(tr("Seed in planting..."));//put fix tip with waiting cursor, drop only when is finished
             seedWait=true;
             load_inventory();
         break;
@@ -775,8 +776,7 @@ void BaseWindow::stopped_in_front_of(const Pokecraft::Map_client &map,const quin
                     showTip(tr("This plant is growing and can't be collected"));
                 return;
             }
-            else
-                index++;
+            index++;
         }
         showTip(tr("To plant a seed press <i>Enter</i>"));
         return;
@@ -802,8 +802,7 @@ void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const
                     showTip(tr("This plant is growing and can't be collected"));
                 return;
             }
-            else
-                index++;
+            index++;
         }
         if(seedWait)
         {
