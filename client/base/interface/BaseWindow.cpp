@@ -552,9 +552,9 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
         if(objects.size()<16)
         {
             if(i.value()>1)
-                objects << QString("<img src=\"data:image/png;base64,%1\" /> <b>%2x</b> %3").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
+                objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
             else
-                objects << QString("<img src=\"data:image/png;base64,%1\" /> %2").arg(QString(byteArray.toBase64())).arg(name);
+                objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
         }
     }
     if(objects.size()==16)
