@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -169,6 +169,7 @@ color: rgb(255, 255, 255);</string>
 background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 150), stop:1 rgba(221, 221, 221, 150));
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
+padding:5px;
 }</string>
              </property>
             </widget>
@@ -371,6 +372,7 @@ border-image: url(:/images/empty.png);
               <string notr="true">#tip { background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 150), stop:1 rgba(221, 221, 221, 150));
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
+padding:5px;
 }</string>
              </property>
             </widget>

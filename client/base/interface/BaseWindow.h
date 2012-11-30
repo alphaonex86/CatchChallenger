@@ -87,6 +87,7 @@ private slots:
     void updatePlayerImage();
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items);
+    void add_to_inventory(const QHash<quint32,quint32> &items);
     void load_inventory();
     //render
     void stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
@@ -141,6 +142,7 @@ private:
     //player items
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
+    QHash<quint32,QListWidgetItem *> items_to_graphical;
     bool inSelection;
 signals:
     //datapack

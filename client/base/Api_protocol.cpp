@@ -962,7 +962,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
         {
             switch(subCodeType)
             {
-                //random seeds as input
+                //Send the inventory
                 case 0x0001:
                 {
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
@@ -988,10 +988,48 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                             return;
                         }
                         in >> quantity;
-                        items[id]=quantity;
+                        if(items.contains(id))
+                            items[id]+=quantity;
+                        else
+                            items[id]=quantity;
                         index++;
                     }
                     emit have_inventory(items);
+                }
+                break;
+                //Send object
+                case 0x0002:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                        return;
+                    }
+                    QHash<quint32,quint32> items;
+                    quint32 inventorySize,id,quantity;
+                    in >> inventorySize;
+                    quint32 index=0;
+                    while(index<inventorySize)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2; for the id").arg(mainCodeType).arg(subCodeType));
+                            return;
+                        }
+                        in >> id;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, for the quantity").arg(mainCodeType).arg(subCodeType));
+                            return;
+                        }
+                        in >> quantity;
+                        if(items.contains(id))
+                            items[id]+=quantity;
+                        else
+                            items[id]=quantity;
+                        index++;
+                    }
+                    emit add_to_inventory(items);
                 }
                 break;
                 //random seeds as input

@@ -5,6 +5,7 @@
 #include "DatapackClientLoader.h"
 
 #include <QListWidgetItem>
+#include <QBuffer>
 
 using namespace Pokecraft;
 
@@ -37,7 +38,10 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
     //connect the map controler
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
+
+    //inventory
     connect(client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)),Qt::QueuedConnection);
+    connect(client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)),Qt::QueuedConnection);
 
     //chat
     connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),Qt::QueuedConnection);
@@ -63,8 +67,8 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     stopFlood.start(1500);
     numberForFlood=0;
 
-    tip_timeout.setInterval(8000);
-    gain_timeout.setInterval(8000);
+    tip_timeout.setInterval(TIMETODISPLAY_TIP);
+    gain_timeout.setInterval(TIMETODISPLAY_GAIN);
     tip_timeout.setSingleShot(true);
     gain_timeout.setSingleShot(true);
     connect(&tip_timeout,SIGNAL(timeout()),this,SLOT(tipTimeout()));
@@ -124,6 +128,7 @@ void BaseWindow::resetAll()
     datapackIsParsed=false;
     ui->inventory->clear();
     items_graphical.clear();
+    items_to_graphical.clear();
     ui->tip->setVisible(false);
     ui->gain->setVisible(false);
     ui->IG_dialog->setVisible(false);
@@ -510,6 +515,79 @@ void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
     updateConnectingStatus();
 }
 
+void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
+{
+    QString html=tr("You have obtained: ");
+    QStringList objects;
+    QHashIterator<quint32,quint32> i(items);
+    while (i.hasNext()) {
+        i.next();
+
+        //add really to the list
+        if(this->items.contains(i.key()))
+            this->items[i.key()]+=i.value();
+        else
+            this->items[i.key()]=i.value();
+
+        QPixmap image;
+        QString name;
+        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        {
+            image=DatapackClientLoader::datapackLoader.items[i.key()].image;
+            name=DatapackClientLoader::datapackLoader.items[i.key()].name;
+        }
+        else
+        {
+            image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
+            name=QString("id: %1").arg(i.key());
+        }
+
+        if(!inSelection)
+        {
+            QListWidgetItem *item;
+            if(!items_to_graphical.contains(i.key()))
+            {
+                item=new QListWidgetItem();
+                items_to_graphical[i.key()]=item;
+                items_graphical[item]=i.key();
+            }
+            else
+                item=items_to_graphical[i.key()];
+            if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+                if(this->items[i.key()]>1)
+                    item->setText(QString::number(this->items[i.key()]));
+            }
+            else
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+                if(i.value()>1)
+                    item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(this->items[i.key()]));
+                else
+                    item->setText(QString("id: %1").arg(i.key()));
+            }
+            ui->inventory->addItem(item);
+        }
+
+        image=image.scaled(24,24);
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        image.save(&buffer, "PNG");
+        if(objects.size()<16)
+        {
+            if(i.value()>1)
+                objects << QString("<img src=\"data:image/png;base64,%1\" /> <b>%2x</b> %3").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
+            else
+                objects << QString("<img src=\"data:image/png;base64,%1\" /> %2").arg(QString(byteArray.toBase64())).arg(name);
+        }
+    }
+    if(objects.size()==16)
+        objects << "...";
+    html+=objects.join(", ");
+    showGain(html);
+}
+
 void BaseWindow::load_inventory()
 {
     #ifdef DEBUG_BASEWINDOWS
@@ -518,26 +596,34 @@ void BaseWindow::load_inventory()
     if(haveInventory && datapackIsParsed)
     {
         QHashIterator<quint32,quint32> i(items);
-         while (i.hasNext()) {
-             i.next();
-             QListWidgetItem *item=new QListWidgetItem();
-             items_graphical[item]=i.key();
-             if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
-             {
-                 item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
-                 if(i.value()>1)
-                     item->setText(QString::number(i.value()));
-             }
-             else
-             {
-                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-                 if(i.value()>1)
-                     item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
-                 else
-                     item->setText(QString("id: %1").arg(i.key()));
-             }
-             ui->inventory->addItem(item);
-         }
+        while (i.hasNext()) {
+            i.next();
+            QListWidgetItem *item;
+            if(!items_to_graphical.contains(i.key()))
+            {
+                item=new QListWidgetItem();
+                items_to_graphical[i.key()]=item;
+                items_graphical[item]=i.key();
+            }
+            else
+                item=items_to_graphical[i.key()];
+            items_graphical[item]=i.key();
+            if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+                if(i.value()>1)
+                    item->setText(QString::number(i.value()));
+            }
+            else
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+                if(i.value()>1)
+                    item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
+                else
+                    item->setText(QString("id: %1").arg(i.key()));
+            }
+            ui->inventory->addItem(item);
+        }
     }
 }
 
