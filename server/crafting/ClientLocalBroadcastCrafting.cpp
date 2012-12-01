@@ -333,7 +333,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
     {
         case Direction_look_at_top:
             if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -342,7 +348,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
         break;
         case Direction_look_at_right:
             if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -351,7 +363,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
         break;
         case Direction_look_at_bottom:
             if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -360,7 +378,13 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
         break;
         case Direction_look_at_left:
             if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -369,6 +393,12 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
         break;
         default:
         emit error("Wrong direction to plant a seed");
+        return;
+    }
+    //check if is dirt
+    if(!MoveOnTheMap::isDirt(*map,x,y))
+    {
+        emit error("Try pu seed out of the dirt");
         return;
     }
     //check if is free
@@ -394,14 +424,14 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QString("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
-                                     .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
+                                     .arg(SqlFunction::quoteSqlVariable(map->map_file))
                                      .arg(x)
                                      .arg(y)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QString("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
-                                 .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
+                                 .arg(SqlFunction::quoteSqlVariable(map->map_file))
                                  .arg(x)
                                  .arg(y)
                                  );
@@ -409,12 +439,12 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 }
 
                 //remove plan from all player display
-                index=0;
-                size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
-                while(index<size)
+                int sub_index=0;
+                size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
+                while(sub_index<size)
                 {
-                    static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->removeSeed(static_cast<MapServer *>(map)->plants.at(index));
-                    index++;
+                    static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->removeSeed(static_cast<MapServer *>(map)->plants.at(index));
+                    sub_index++;
                 }
 
                 //add into the inventory
