@@ -9,6 +9,9 @@ using namespace Pokecraft;
 
 void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_id)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
+    #endif
     if(!GlobalData::serverPrivateVariables.plants.contains(plant_id))
     {
         emit error(QString("plant_id not found: %1").arg(plant_id));
@@ -22,7 +25,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
     {
         case Direction_look_at_top:
             if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -31,7 +40,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
         break;
         case Direction_look_at_right:
             if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -40,7 +55,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
         break;
         case Direction_look_at_bottom:
             if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -49,7 +70,13 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
         break;
         case Direction_look_at_left:
             if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
-                MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y);
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
             else
             {
                 emit error("No valid map in this direction");
@@ -58,6 +85,12 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
         break;
         default:
         emit error("Wrong direction to plant a seed");
+        return;
+    }
+    //check if is dirt
+    if(!MoveOnTheMap::isDirt(*map,x,y))
+    {
+        emit error("Try pu seed out of the dirt");
         return;
     }
     //check if is free
@@ -81,12 +114,16 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
     plantInWaiting.map=map;
     plantInWaiting.x=x;
     plantInWaiting.y=y;
+
     plant_list_in_waiting << plantInWaiting;
     emit useSeed(plant_id);
 }
 
 void ClientLocalBroadcast::seedValidated()
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("seedValidated()"));
+    #endif
     /* useless, clean the protocol
     if(!ok)
     {
@@ -149,7 +186,7 @@ void ClientLocalBroadcast::seedValidated()
                      );
         break;
     }
-    plant_list_in_waiting.removeFirst();
+
     //send to all player
     index=0;
     size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
@@ -158,6 +195,8 @@ void ClientLocalBroadcast::seedValidated()
         static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.at(index)->receiveSeed(plantOnMap,current_time);
         index++;
     }
+
+    //plant_list_in_waiting.removeFirst();
 }
 
 void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time)
@@ -277,6 +316,9 @@ void ClientLocalBroadcast::removeNearPlant()
 
 void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("collectPlant(%1)").arg(query_id));
+    #endif
     Map *map=this->map;
     quint8 x=this->x;
     quint8 y=this->y;
