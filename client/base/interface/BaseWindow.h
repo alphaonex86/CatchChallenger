@@ -43,6 +43,11 @@ public:
         ObjectType_Seed
     };
     ObjectType waitedObjectType;
+    enum QueryType
+    {
+        QueryType_Seed,
+        QueryType_CollectPlant
+    };
 protected:
     void changeEvent(QEvent *e);
 public slots:
@@ -82,6 +87,9 @@ private slots:
     void gainTimeout();
     void showTip(const QString &tip);
     void showGain(const QString &gain);
+    void addQuery(const QueryType &queryType);
+    void removeQuery(const QueryType &queryType);
+    void updateQueryList();
     //player
     void logged();
     void updatePlayerImage();
@@ -116,10 +124,11 @@ private:
     QFrame *frame_main_display_right;
     QTimer tip_timeout;
     QTimer gain_timeout;
+    QList<QueryType> queryList;
 
     //plant seed in waiting
     quint32 seed_in_waiting;
-    bool seedWait;
+    bool seedWait,collectWait;
 
     Pokecraft::Api_protocol *client;
     QStringList chat_list_player_pseudo;

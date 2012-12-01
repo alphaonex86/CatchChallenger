@@ -56,7 +56,8 @@ void ProtocolParsing::initialiseTheVariable()
     replySizeMultipleCodePacketClientToServer[0x10][0x0007]=1;
 
     //main code for query with reply
-    ProtocolParsing::mainCode_IsQueryClientToServer << 0x02;
+    ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x10 << 0x20 << 0x30;
+    ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x90 << 0xA0;
 
     //reply code
     ProtocolParsing::replyCodeServerToClient=0xC1;

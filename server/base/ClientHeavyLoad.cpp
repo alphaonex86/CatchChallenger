@@ -447,8 +447,8 @@ QString ClientHeavyLoad::SQL_text_quote(QString text)
 
 void ClientHeavyLoad::dbQuery(const QString &queryText)
 {
-    QSqlQuery sqlQuery(queryText);
-    if(!sqlQuery.exec())
+    QSqlQuery sqlQuery;
+    if(!sqlQuery.exec(queryText))
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
     GlobalData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
 }

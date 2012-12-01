@@ -223,11 +223,11 @@ bool MoveOnTheMap::isDirt(const Map &map, const quint8 &x, const quint8 &y)
     return map.parsed_layer.dirt[x+y*(map.width)];
 }
 
-bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE *x,COORD_TYPE *y)
+bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE *x,COORD_TYPE *y, const bool &checkCollision)
 {
     if(*map==NULL)
         return false;
-    if(!canGoTo(direction,**map,*x,*y,true))
+    if(!canGoTo(direction,**map,*x,*y,checkCollision))
         return false;
     switch(direction)
     {
