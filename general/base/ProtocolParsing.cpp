@@ -39,16 +39,18 @@ ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
 void ProtocolParsing::initialiseTheVariable()
 {
     //def query without the sub code
-    ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xD1 << 0xD2;
-    ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41;
+    mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xD1 << 0xD2;
+    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41;
 
     //define the size of direct query
     {
         //default like is was more than 255 players
-        ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC3]=2;
+        sizeOnlyMainCodePacketServerToClient[0xC3]=2;
     }
-    ProtocolParsing::sizeOnlyMainCodePacketServerToClient[0xC4]=0;
-    ProtocolParsing::sizeOnlyMainCodePacketClientToServer[0x40]=2;
+    sizeOnlyMainCodePacketServerToClient[0xC4]=0;
+    sizeOnlyMainCodePacketClientToServer[0x40]=2;
+    sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
+    sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
 
     //define the size of the reply
     replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
@@ -613,9 +615,27 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteA
     out << queryNumber;
 
     if(!replySize.contains(queryNumber))
+    {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(data.size()==0)
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+            return false;
+        }
+        #endif
         block+=encodeSize(data.size());
+    }
     else
+    {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(data.size()!=replySize[queryNumber])
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
+            return false;
+        }
+        #endif
         replySize.remove(queryNumber);
+    }
 
     return internalPackOutcommingData(block+data);
 }
@@ -674,16 +694,72 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
     if(isClient)
     {
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
         else if(!sizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeMultipleCodePacketClientToServer[mainCodeType][subCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
+        }
     }
     else
     {
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
         else if(!sizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeMultipleCodePacketServerToClient[mainCodeType][subCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
+        }
     }
 
     return internalPackOutcommingData(block+data);
@@ -698,12 +774,50 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
     if(isClient)
     {
         if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketClientToServer[mainCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
+        }
     }
     else
     {
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketServerToClient[mainCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
+        }
     }
 
     return internalPackOutcommingData(block+data);
@@ -721,12 +835,50 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     if(isClient)
     {
         if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketClientToServer[mainCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
+        }
     }
     else
     {
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeOnlyMainCodePacketServerToClient[mainCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                return false;
+            }
+            #endif
+        }
     }
 
     return internalPackOutcommingData(block+data);
@@ -745,16 +897,72 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     if(isClient)
     {
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
         else if(!sizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeMultipleCodePacketClientToServer[mainCodeType][subCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
+        }
     }
     else
     {
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
         else if(!sizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()==0)
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
             block+=encodeSize(data.size());
+        }
+        else
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(data.size()!=sizeMultipleCodePacketServerToClient[mainCodeType][subCodeType])
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                return false;
+            }
+            #endif
+        }
     }
 
     return internalPackOutcommingData(block+data);
