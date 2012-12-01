@@ -188,6 +188,7 @@ void ClientLocalBroadcast::seedValidated()
     }
 
     //send to all player
+
     index=0;
     size=static_cast<MapServer *>(plant_list_in_waiting.first().map)->clientsForBroadcast.size();
     while(index<size)
@@ -196,7 +197,7 @@ void ClientLocalBroadcast::seedValidated()
         index++;
     }
 
-    //plant_list_in_waiting.removeFirst();
+    plant_list_in_waiting.removeFirst();
 }
 
 void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time)
@@ -215,10 +216,15 @@ void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plan
     out << plantOnMap.x;
     out << plantOnMap.y;
     out << plantOnMap.plant;
-    if(current_time<=plantOnMap.mature_at)
+    if(current_time>=plantOnMap.mature_at)
         out << (quint16)0;
+    else if((plantOnMap.mature_at-current_time)>65535)
+    {
+        emit message(QString("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
+        out << (quint16)(65535);
+    }
     else
-        out << (quint16)current_time-plantOnMap.mature_at;
+        out << (quint16)(plantOnMap.mature_at-current_time);
     emit sendPacket(0xD1,outputData);
 }
 
