@@ -130,10 +130,13 @@ void BaseWindow::resetAll()
     items_graphical.clear();
     items_to_graphical.clear();
     ui->tip->setVisible(false);
+    ui->persistant_tip->setVisible(false);
     ui->gain->setVisible(false);
     ui->IG_dialog->setVisible(false);
     seedWait=false;
+    collectWait=false;
     inSelection=false;
+    queryList.clear();
 }
 
 void BaseWindow::serverIsLoading()
@@ -469,9 +472,10 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
             if(items[itemId]==0)
                 items.remove(itemId);
             seed_in_waiting=itemId;
-            showTip(tr("Seed in planting..."));//put fix tip with waiting cursor, drop only when is finished
+            addQuery(QueryType_Seed);
             seedWait=true;
             load_inventory();
+            emit useSeed(DatapackClientLoader::datapackLoader.itemToplants[itemId]);
         break;
         default:
         qDebug() << "waitedObjectType is unknow";
@@ -755,6 +759,46 @@ void BaseWindow::showGain(const QString &gain)
     gain_timeout.start();
 }
 
+void BaseWindow::addQuery(const QueryType &queryType)
+{
+    if(queryList.size()==0)
+        ui->persistant_tip->setVisible(true);
+    queryList << queryType;
+    updateQueryList();
+}
+
+void BaseWindow::removeQuery(const QueryType &queryType)
+{
+    queryList.removeOne(queryType);
+    if(queryList.size()==0)
+        ui->persistant_tip->setVisible(false);
+    else
+        updateQueryList();
+}
+
+void BaseWindow::updateQueryList()
+{
+    QStringList queryStringList;
+    int index=0;
+    while(index<queryList.size() && index<5)
+    {
+        switch(queryList.at(index))
+        {
+            case QueryType_Seed:
+                queryStringList << tr("Planting seed...");
+            break;
+            case QueryType_CollectPlant:
+                queryStringList << tr("Collecting plant...");
+            break;
+            default:
+                queryStringList << tr("Unknow action...");
+            break;
+        }
+        index++;
+    }
+    ui->persistant_tip->setText(queryStringList.join("<br />"));
+}
+
 void BaseWindow::on_toolButton_quit_options_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
@@ -792,10 +836,16 @@ void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const
         {
             if(map.plantList.at(index).x==x && map.plantList.at(index).y==y)
             {
+                if(collectWait)
+                {
+                    showTip(tr("Wait to finish to collect the previous plant"));
+                    return;
+                }
                 quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
                 if(map.plantList.at(index).mature_at<current_time)
                 {
-                    showTip(tr("Plant collecting..."));
+                    collectWait=true;
+                    addQuery(QueryType_CollectPlant);
                     emit collectMaturePlant();
                 }
                 else
@@ -831,6 +881,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::seed_planted(const bool &ok)
 {
+    removeQuery(QueryType_Seed);
     seedWait=false;
     if(ok)
         /// \todo add to the map here, and don't send on the server
@@ -848,6 +899,8 @@ void BaseWindow::seed_planted(const bool &ok)
 
 void BaseWindow::plant_collected(const Pokecraft::Plant_collect &stat)
 {
+    collectWait=false;
+    removeQuery(QueryType_CollectPlant);
     switch(stat)
     {
         case Plant_collect_correctly_collected:

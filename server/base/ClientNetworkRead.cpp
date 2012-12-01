@@ -443,6 +443,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                 in >> plant_id;
                 emit plantSeed(queryNumber,plant_id);
             }
+            break;
             //Collect mature plant
             case 0x0007:
                 emit collectPlant(queryNumber);

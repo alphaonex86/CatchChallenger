@@ -7,7 +7,7 @@
 #define DEBUG_MESSAGE_CLIENT_MOVE
 //*/
 
-/*
+//*
 #define DEBUG_MESSAGE_CLIENT_RAW_NETWORK
 #define DEBUG_MESSAGE_MAP_LOAD
 //*/

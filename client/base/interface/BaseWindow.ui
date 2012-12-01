@@ -352,9 +352,9 @@ border-image: url(:/images/empty.png);
           </spacer>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_17">
+          <layout class="QHBoxLayout" name="horizontalLayout_persistant_tip">
            <item>
-            <spacer name="horizontalSpacer_15">
+            <spacer name="horizontalSpacer_18">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
@@ -370,6 +370,47 @@ border-image: url(:/images/empty.png);
             <widget class="QLabel" name="tip">
              <property name="styleSheet">
               <string notr="true">#tip { background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 150), stop:1 rgba(221, 221, 221, 150));
+border-color: rgb(204, 204, 204);
+border-radius: 5px;
+padding:5px;
+}</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_19">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_17">
+           <item>
+            <spacer name="horizontalSpacer_15">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="persistant_tip">
+             <property name="styleSheet">
+              <string notr="true">#persistant_tip { background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 150), stop:1 rgba(221, 221, 221, 150));
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
 padding:5px;
@@ -486,7 +527,7 @@ padding-bottom:3px;
 }</string>
               </property>
               <property name="text">
-               <string>Monstropedia</string>
+               <string>Bioscan</string>
               </property>
              </widget>
             </item>
