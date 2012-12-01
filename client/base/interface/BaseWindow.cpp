@@ -16,6 +16,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
     qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
     qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
+    qRegisterMetaType<QHash<quint32,quint32> >("Pokecraft::Plant_collect");
 
     this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
@@ -62,6 +63,9 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
     connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));
     connect(this,SIGNAL(collectMaturePlant()),client,SLOT(collectMaturePlant()));
+    connect(client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
+    connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
+
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -457,16 +461,17 @@ void BaseWindow::selectObject(const ObjectType &objectType)
 
 void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
 {
+    inSelection=false;
     ui->stackedWidget->setCurrentIndex(1);
     switch(waitedObjectType)
     {
         case ObjectType_Seed:
             if(!ok)
-                return;
+                break;
             if(!items.contains(itemId))
             {
                 qDebug() << "item id is not into the inventory";
-                return;
+                break;
             }
             items[itemId]--;
             if(items[itemId]==0)
@@ -474,13 +479,19 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
             seed_in_waiting=itemId;
             addQuery(QueryType_Seed);
             seedWait=true;
-            load_inventory();
-            emit useSeed(DatapackClientLoader::datapackLoader.itemToplants[itemId]);
+            if(DatapackClientLoader::datapackLoader.itemToplants.contains(itemId))
+            {
+                qDebug() << QString("send seed for: %1").arg(DatapackClientLoader::datapackLoader.itemToplants[itemId]);
+                emit useSeed(DatapackClientLoader::datapackLoader.itemToplants[itemId]);
+            }
+            else
+                qDebug() << QString("seed not found for item: %1").arg(itemId);
         break;
         default:
         qDebug() << "waitedObjectType is unknow";
         return;
     }
+    load_inventory();
 }
 
 void BaseWindow::have_current_player_info()

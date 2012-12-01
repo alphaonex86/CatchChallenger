@@ -85,6 +85,7 @@ void MapVisualiserPlayer::keyPressParse()
 
     if(keyPressed.size()==1 && keyPressed.contains(Qt::Key_Return))
     {
+        keyPressed.remove(Qt::Key_Return);
         parseAction();
         return;
     }
