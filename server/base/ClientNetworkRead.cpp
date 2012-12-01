@@ -173,7 +173,13 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("remaining data: parseMessage(%1,%2,%3): %4 %5")
+                   .arg(mainCodeType)
+                   .arg(subCodeType)
+                   .arg(queryNumber)
+                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                   );
         return;
     }
 }
@@ -330,7 +336,13 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QString("remaining data: parseMessage(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("remaining data: parseMessage(%1,%2,%3): %4 %5")
+                   .arg(mainCodeType)
+                   .arg(subCodeType)
+                   .arg(queryNumber)
+                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                   );
         return;
     }
 }
@@ -432,8 +444,6 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
             //Use seed into dirt
             case 0x0006:
             {
-                QDataStream in(data);
-                in.setVersion(QDataStream::Qt_4_4);
                 if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                 {
                     parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
@@ -461,7 +471,13 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QString("remaining data: parseQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        parseError(QString("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                   .arg(mainCodeType)
+                   .arg(subCodeType)
+                   .arg(queryNumber)
+                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                   );
         return;
     }
 }
