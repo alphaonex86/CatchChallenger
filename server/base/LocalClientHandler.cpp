@@ -12,6 +12,7 @@
 using namespace Pokecraft;
 
 Direction LocalClientHandler::temp_direction;
+QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
 
 LocalClientHandler::LocalClientHandler()
 {
@@ -42,6 +43,7 @@ void LocalClientHandler::getRandomNumberIfNeeded()
 
 void LocalClientHandler::extraStop()
 {
+    playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
     //virtual stop the player
     Orientation orientation;
     QString orientationString;
@@ -159,6 +161,8 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 
     //load the first time the random number list
     getRandomNumberIfNeeded();
+
+    playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
 }
 
 bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
@@ -184,4 +188,108 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     MoveOnTheMap::move(direction,&map,&x,&y);
     this->map=static_cast<Map_server_MapVisibility_simple*>(map);
     return true;
+}
+
+
+void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
+{
+    if(player_informations->public_and_private_informations.items.contains(item))
+    {
+        player_informations->public_and_private_informations.items[item]+=quantity;
+        switch(GlobalData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                             .arg(player_informations->public_and_private_informations.items[item])
+                             .arg(item)
+                             .arg(player_informations->id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                         .arg(player_informations->public_and_private_informations.items[item])
+                         .arg(item)
+                         .arg(player_informations->id)
+                         );
+            break;
+        }
+    }
+    else
+    {
+        switch(GlobalData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);")
+                             .arg(item)
+                             .arg(player_informations->id)
+                             .arg(quantity)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);")
+                         .arg(item)
+                         .arg(player_informations->id)
+                         .arg(quantity)
+                         );
+            break;
+        }
+        player_informations->public_and_private_informations.items[item]=quantity;
+    }
+    //add into the inventory
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)1;
+    out << (quint32)item;
+    out << (quint32)quantity;
+    emit sendPacket(0xD0,0x0002,outputData);
+}
+
+void LocalClientHandler::sendHandlerCommand(const QString &command,const QString &extraText)
+{
+    if(command=="give")
+    {
+        bool ok;
+        QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+        if(arguments.size()==2)
+            arguments << "1";
+        if(arguments.size()!=3)
+        {
+            emit receiveSystemText("Wrong arguments number for the command, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        quint32 objectId=arguments.first().toUInt(&ok);
+        if(!ok)
+        {
+            emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        if(!GlobalData::serverPrivateVariables.itemsId.contains(objectId))
+        {
+            emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        quint32 quantity=arguments.last().toUInt(&ok);
+        if(!ok)
+        {
+            emit receiveSystemText("quantity is not a number, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        if(!playerByPseudo.contains(arguments.at(1)))
+        {
+            emit receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        playerByPseudo[arguments.at(1)]->addObject(objectId,quantity);
+    }
+    else if(command=="take")
+    {
+        QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+    }
+    else if(command=="tp")
+    {
+        QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+    }
 }
