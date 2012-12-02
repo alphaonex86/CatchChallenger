@@ -37,6 +37,7 @@ private:
 
     //info linked
     static Direction	temp_direction;
+    static QHash<QString,LocalClientHandler *> playerByPseudo;
 
     //map move
     bool singleMove(const Direction &direction);
@@ -48,11 +49,14 @@ public slots:
     //seed
     void useSeed(const quint8 &plant_id);
     void addObject(const quint32 &item,const quint32 &quantity=1);
+
+    void sendHandlerCommand(const QString &command,const QString &extraText);
 private slots:
     virtual void extraStop();
 signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
+    void receiveSystemText(const QString &text,const bool &important=false);
 
     void seedValidated();
 };

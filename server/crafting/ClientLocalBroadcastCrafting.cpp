@@ -448,23 +448,17 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 }
 
                 //add into the inventory
-                QByteArray data;
-                data[0]=0x01;
-                emit postReply(query_id,data);
                 float quantity=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].quantity;
                 int integer_part=quantity;
                 float random_part=quantity-integer_part;
                 random_part*=10000;//random_part is 0 to 99
                 if(random_part<=(rand()%10000))
                     quantity++;
+
+                QByteArray data;
+                data[0]=0x01;
+                emit postReply(query_id,data);
                 emit addObject(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
-                QByteArray outputData;
-                QDataStream out(&outputData, QIODevice::WriteOnly);
-                out.setVersion(QDataStream::Qt_4_4);
-                out << (quint32)1;
-                out << (quint32)GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed;
-                out << (quint32)quantity;
-                emit sendPacket(0xD0,0x0002,outputData);
 
                 static_cast<MapServer *>(map)->plants.removeAt(index);
                 return;

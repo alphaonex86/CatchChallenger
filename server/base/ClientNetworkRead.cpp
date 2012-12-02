@@ -282,7 +282,22 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                             //the admin command
                             if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
                             {
-                                if(command=="kick")
+                                if(command=="give")
+                                {
+                                    emit sendHandlerCommand(command,text);
+                                    emit message("send command: /"+command+" "+text);
+                                }
+                                /*else if(command=="take")
+                                {
+                                    emit sendHandlerCommand(command,text);
+                                    emit message("send command: /"+command+" "+text);
+                                }
+                                else if(command=="tp")
+                                {
+                                    emit sendHandlerCommand(command,text);
+                                    emit message("send command: /"+command+" "+text);
+                                }*/
+                                else if(command=="kick")
                                 {
                                     emit sendBroadCastCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
