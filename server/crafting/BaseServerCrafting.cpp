@@ -56,32 +56,59 @@ void BaseServerCrafting::preload_the_plant()
                 {
                     if(!GlobalData::serverPrivateVariables.plants.contains(id))
                     {
-                        ok=false;
+                        ok=true;
                         Plant plant;
                         plant.itemUsed=itemUsed;
                         QDomElement grow = plantItem.firstChildElement("grow");
                         if(!grow.isNull())
+                        {
                             if(grow.isElement())
                             {
                                 QDomElement fruits = grow.firstChildElement("fruits");
                                 if(!fruits.isNull())
+                                {
                                     if(fruits.isElement())
                                     {
                                         plant.mature_seconds=fruits.text().toULongLong(&ok2)*60;
-                                        if(ok2)
-                                            ok=true;
+                                        if(!ok2)
+                                            ok=false;
+                                        else
+                                            DebugClass::debugConsole(QString("preload_the_plant() fruits in not an number for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                     }
+                                    else
+                                        DebugClass::debugConsole(QString("preload_the_plant() fruit is not element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                }
+                                else
+                                    DebugClass::debugConsole(QString("preload_the_plant() fruit is null for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                             }
+                            else
+                                DebugClass::debugConsole(QString("preload_the_plant() grow is not an element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                        }
+                        else
+                            DebugClass::debugConsole(QString("preload_the_plant() grow is null for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                         if(ok)
                         {
                             QDomElement quantity = plantItem.firstChildElement("quantity");
                             if(!quantity.isNull())
+                            {
                                 if(quantity.isElement())
                                 {
                                     plant.quantity=quantity.text().toFloat(&ok2);
-                                    if(ok2)
-                                        ok=true;
+                                    if(!ok2)
+                                        ok=false;
+                                    else
+                                        DebugClass::debugConsole(QString("preload_the_plant() quantity is not a number for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                 }
+                                else
+                                    DebugClass::debugConsole(QString("preload_the_plant() quantity is not element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                            }
+                            else
+                                DebugClass::debugConsole(QString("preload_the_plant() quantity is null for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                        }
+                        if(ok)
+                        {
+                            if(!GlobalData::serverPrivateVariables.itemsId.contains(plant.itemUsed))
+                                ok=false;
                         }
                         if(ok)
                             GlobalData::serverPrivateVariables.plants[id]=plant;
