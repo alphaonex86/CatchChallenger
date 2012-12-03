@@ -37,13 +37,32 @@ void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const QByteArray 
 {
     if(!player_informations->isConnected)
     {
-        emit message(QString("sendPacket(%1,%3) when is not connected").arg(mainCodeType).arg(QString(data.toHex())));
+        emit message(QString("sendPacket(%1,%2) when is not connected").arg(mainCodeType).arg(QString(data.toHex())));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QString("sendPacket(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
     #endif
     if(!ProtocolParsingOutput::packOutcommingData(mainCodeType,data))
+        return;
+    if(!socket->isValid())
+    {
+        emit error("device is not valid at sendPacket(mainCodeType)");
+        return;
+    }
+}
+
+void ClientNetworkWrite::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data)
+{
+    if(!player_informations->isConnected)
+    {
+        emit message(QString("sendQuery(%1,%2,%3) when is not connected").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
+        return;
+    }
+    #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+    emit message(QString("sendQuery(%1,%2,%3)").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
+    #endif
+    if(!ProtocolParsingOutput::packOutcommingQuery(mainIdent,subIdent,data))
         return;
     if(!socket->isValid())
     {

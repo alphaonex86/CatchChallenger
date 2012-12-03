@@ -56,6 +56,9 @@ public slots:
     void sendHandlerCommand(const QString &command,const QString &extraText);
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);
+    //teleportation
+    void receiveTeleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    virtual void teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 private slots:
     virtual void extraStop();
 signals:
@@ -64,6 +67,7 @@ signals:
     void receiveSystemText(const QString &text,const bool &important=false);
 
     void seedValidated();
+    void teleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 };
 }
 
