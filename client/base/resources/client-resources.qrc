@@ -33,5 +33,6 @@
         <file>images/inventory/left.png</file>
         <file>images/inventory/right.png</file>
         <file>images/inventory/unknow-object.png</file>
+        <file>images/interface/button-generic.png</file>
     </qresource>
 </RCC>

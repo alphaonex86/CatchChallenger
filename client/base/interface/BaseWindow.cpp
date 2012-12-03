@@ -6,6 +6,8 @@
 
 #include <QListWidgetItem>
 #include <QBuffer>
+#include <QInputDialog>
+#include <QMessageBox>
 
 using namespace Pokecraft;
 
@@ -41,14 +43,15 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
 
     //inventory
-    connect(client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)),Qt::QueuedConnection);
-    connect(client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)),Qt::QueuedConnection);
+    connect(client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)));
+    connect(client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
+    connect(client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
 
     //chat
-    connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),Qt::QueuedConnection);
-    connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)),Qt::QueuedConnection);
+    connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
+    connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
 
-    connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)),Qt::QueuedConnection);
+    connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
     //connect(client,SIGNAL(new_player_info()),this,SLOT(update_chat()),Qt::QueuedConnection);
     connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()),Qt::QueuedConnection);
 
@@ -141,6 +144,8 @@ void BaseWindow::resetAll()
     collectWait=false;
     inSelection=false;
     queryList.clear();
+    ui->inventoryInformation->setVisible(false);
+    ui->inventoryDestroy->setVisible(false);
 }
 
 void BaseWindow::serverIsLoading()
@@ -581,6 +586,24 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
     load_inventory();
 }
 
+void BaseWindow::remove_to_inventory(const QHash<quint32,quint32> &items)
+{
+    QHashIterator<quint32,quint32> i(items);
+    while (i.hasNext()) {
+        i.next();
+
+        //add really to the list
+        if(this->items.contains(i.key()))
+        {
+            if(this->items[i.key()]<=i.value())
+                this->items.remove(i.key());
+            else
+                this->items[i.key()]-=i.value();
+        }
+    }
+    load_inventory();
+}
+
 void BaseWindow::load_inventory()
 {
     #ifdef DEBUG_BASEWINDOWS
@@ -588,6 +611,8 @@ void BaseWindow::load_inventory()
     #endif
     if(!haveInventory || !datapackIsParsed)
         return;
+    ui->inventoryInformation->setVisible(false);
+    ui->inventoryDestroy->setVisible(false);
     ui->inventory->clear();
     items_graphical.clear();
     items_to_graphical.clear();
@@ -737,7 +762,14 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         ui->inventory_image->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->inventory_name->setText("");
         ui->inventory_description->setText(tr("Select an object"));
+        ui->inventoryInformation->setVisible(false);
+        ui->inventoryDestroy->setVisible(false);
         return;
+    }
+    if(!inSelection)
+    {
+        //ui->inventoryInformation->setVisible(true);-> if berry, but missing details screen
+        ui->inventoryDestroy->setVisible(true);
     }
     QListWidgetItem *item=items.first();
     const DatapackClientLoader::Item &content=DatapackClientLoader::datapackLoader.items[items_graphical[item]];
@@ -930,4 +962,41 @@ void BaseWindow::plant_collected(const Pokecraft::Plant_collect &stat)
         qDebug() << "BaseWindow::plant_collected(): unkonw return";
         return;
     }
+}
+
+void Pokecraft::BaseWindow::on_inventoryDestroy_clicked()
+{
+    qDebug() << "on_inventoryDestroy_clicked()";
+    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    if(items.size()!=1)
+        return;
+    quint32 itemId=items_graphical[items.first()];
+    if(!this->items.contains(itemId))
+        return;
+    quint32 quantity=this->items[itemId];
+    if(quantity>1)
+    {
+        bool ok;
+        quint32 quantity_temp=QInputDialog::getInt(this,tr("Destroy"),tr("Quantity to destroy"),quantity,1,quantity,1,&ok);
+        if(!ok)
+            return;
+        quantity=quantity_temp;
+    }
+    QMessageBox::StandardButton button;
+    if(DatapackClientLoader::datapackLoader.items.contains(itemId))
+        button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 %2?").arg(quantity).arg(DatapackClientLoader::datapackLoader.items[itemId].name),QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
+    else
+        button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 unknow item (id: %2)?").arg(quantity).arg(itemId),QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
+    if(button!=QMessageBox::Yes)
+        return;
+    if(!this->items.contains(itemId))
+        return;
+    if(this->items[itemId]<quantity)
+        quantity=this->items[itemId];
+    emit destroyObject(itemId,quantity);
+    if(this->items[itemId]<=quantity)
+        this->items.remove(itemId);
+    else
+        this->items[itemId]-=quantity;
+    load_inventory();
 }
