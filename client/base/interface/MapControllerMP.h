@@ -27,6 +27,7 @@ public slots:
     void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction);
     void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction);
     void dropAllPlayerOnTheMap();
+    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
 
     //player info
     void have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations);
@@ -82,6 +83,14 @@ private:
     };
     QList<DelayedMove> delayedMove;
     QList<quint16> delayedRemove;
+    struct DelayedTeleportTo
+    {
+        quint32 mapId;
+        quint16 x;
+        quint16 y;
+        Pokecraft::Direction direction;
+    };
+    QList<DelayedTeleportTo> delayedTeleportTo;
 protected:
     bool mHaveTheDatapack;
 
