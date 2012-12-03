@@ -2,6 +2,8 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
+#include <qmath.h>
+
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
@@ -258,6 +260,9 @@ void MapVisualiserPlayer::moveStepSlot()
         case 0:
         playerMapObject->setTile(playerTileset->tileAt(baseTile+0));
         break;
+        case 1:
+        MapObjectItem::objectLink[playerMapObject]->setZValue(qCeil(playerMapObject->y()));
+        break;
         //transition step
         case 2:
         if(stepAlternance)
@@ -324,8 +329,12 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         playerMapObject->setPosition(QPoint(x,y+1));
+        MapObjectItem::objectLink[playerMapObject]->setZValue(y);
         if(centerOnPlayer)
+        {
+            //playerMapObject->set
             centerOn(MapObjectItem::objectLink[playerMapObject]);
+        }
         stopGrassAnimation();
 
         //check if one arrow key is pressed to continue to move into this direction
@@ -651,6 +660,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
+    MapObjectItem::objectLink[playerMapObject]->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink[playerMapObject]);
 }
@@ -688,6 +698,7 @@ void MapVisualiserPlayer::startGrassAnimation(const Pokecraft::Direction &direct
         {
             ObjectGroupItem::objectGroupLink[current_map->objectGroup]->addObject(grassCurrentObject);
             grassCurrentObject->setPosition(QPoint(x,y+1));
+            MapObjectItem::objectLink[playerMapObject]->setZValue(y);
             grassCurrentObject->setTile(animationTileset->tileAt(2));
         }
     }
@@ -707,6 +718,7 @@ void MapVisualiserPlayer::startGrassAnimation(const Pokecraft::Direction &direct
         {
             ObjectGroupItem::objectGroupLink[all_map[map_destination->map_file]->objectGroup]->addObject(nextCurrentObject);
             nextCurrentObject->setPosition(QPoint(x_destination,y_destination+1));
+            MapObjectItem::objectLink[playerMapObject]->setZValue(y_destination);
             nextCurrentObject->setTile(animationTileset->tileAt(1));
         }
     }
