@@ -91,6 +91,40 @@ QString MoveOnTheMap::directionToString(const Direction &direction)
     return "???";
 }
 
+Orientation MoveOnTheMap::directionToOrientation(const Direction &direction)
+{
+    switch(direction)
+    {
+        case Direction_look_at_top:
+            return Orientation_top;
+        break;
+        case Direction_look_at_right:
+            return Orientation_right;
+        break;
+        case Direction_look_at_bottom:
+            return Orientation_bottom;
+        break;
+        case Direction_look_at_left:
+            return Orientation_left;
+        break;
+        case Direction_move_at_top:
+            return Orientation_top;
+        break;
+        case Direction_move_at_right:
+            return Orientation_right;
+        break;
+        case Direction_move_at_bottom:
+            return Orientation_bottom;
+        break;
+        case Direction_move_at_left:
+            return Orientation_left;
+        break;
+        default:
+        break;
+    }
+    return Orientation_bottom;
+}
+
 bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision)
 {
     switch(direction)

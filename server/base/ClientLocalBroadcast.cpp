@@ -89,3 +89,14 @@ void ClientLocalBroadcast::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x
     MapBasicMove::put_on_the_map(map,x,y,orientation);
     insertClient(map);
 }
+
+void ClientLocalBroadcast::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+{
+    bool mapChange=this->map!=map;
+    if(mapChange)
+        removeNearPlant();
+    emit message(QString("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
+    MapBasicMove::teleportValidatedTo(map,x,y,orientation);
+    if(mapChange)
+        sendNearPlant();
+}

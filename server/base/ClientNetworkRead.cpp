@@ -1,5 +1,6 @@
 #include "ClientNetworkRead.h"
 #include "GlobalData.h"
+#include "MapServer.h"
 
 using namespace Pokecraft;
 
@@ -30,11 +31,38 @@ void ClientNetworkRead::fake_send_protocol()
 
 void ClientNetworkRead::askIfIsReadyToStop()
 {
+    stopIt=true;
     emit isReadyToStop();
+}
+
+void ClientNetworkRead::teleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+{
+    TeleportationPoint teleportationPoint;
+    teleportationPoint.map=map;
+    teleportationPoint.x=x;
+    teleportationPoint.y=y;
+    teleportationPoint.orientation=orientation;
+    lastTeleportation << teleportationPoint;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        out << (quint8)map->id;
+    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        out << (quint16)map->id;
+    else
+        out << (quint32)map->id;
+    out << (COORD_TYPE)x;
+    out << (COORD_TYPE)y;
+    out << (quint8)orientation;
+    emit sendQuery(0x79,0x0001,outputData);
 }
 
 void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(stopIt)
+        return;
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QString("parseInputBeforeLogin(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
     #endif
@@ -138,6 +166,8 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray &data)
 {
+    if(stopIt)
+        return;
     if(!player_informations->is_logged)
     {
         parseError(QString("is not logged, parseMessage(%1)").arg(mainCodeType));
@@ -186,6 +216,8 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
 
 void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
+    if(stopIt)
+        return;
     if(!player_informations->is_logged)
     {
         parseError(QString("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
@@ -394,6 +426,8 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
 //have query with reply
 void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(stopIt)
+        return;
     Q_UNUSED(data);
     if(!player_informations->is_logged)
     {
@@ -407,6 +441,8 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &quer
 
 void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(stopIt)
+        return;
     if(!player_informations->is_logged)
     {
         parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
@@ -529,6 +565,8 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 //send reply
 void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(stopIt)
+        return;
     Q_UNUSED(data);
     if(!player_informations->is_logged)
     {
@@ -541,14 +579,59 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &
 
 void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    if(stopIt)
+        return;
     Q_UNUSED(data);
     if(!player_informations->is_logged)
     {
         parseError(QString("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
-    parseError(QString("The server for now not ask anything: %1, %2, %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
-    return;
+    if(stopIt)
+        return;
+    if(!player_informations->is_logged)
+    {
+        parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
+        return;
+    }
+    //do the work here
+    #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
+    emit message(QString("parseQuery(%1,%2,%3,%4)").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data.toHex())));
+    #endif
+    QDataStream in(data);
+    in.setVersion(QDataStream::Qt_4_4);
+    switch(mainCodeType)
+    {
+        case 0x79:
+        switch(subCodeType)
+        {
+            //Send datapack file list
+            case 0x0001:
+                emit teleportValidatedTo(lastTeleportation.first().map,lastTeleportation.first().x,lastTeleportation.first().y,lastTeleportation.first().orientation);
+                lastTeleportation.removeFirst();
+            break;
+            default:
+                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                return;
+            break;
+        }
+        break;
+        default:
+            parseError("unknow main ident: "+QString::number(mainCodeType));
+            return;
+        break;
+    }
+    if((in.device()->size()-in.device()->pos())!=0)
+    {
+        parseError(QString("remaining data: parseQuery(%1,%2,%3): %4 %5")
+                   .arg(mainCodeType)
+                   .arg(subCodeType)
+                   .arg(queryNumber)
+                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                   );
+        return;
+    }
 }
 
 void ClientNetworkRead::parseError(const QString &errorString)

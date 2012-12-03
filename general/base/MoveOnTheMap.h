@@ -22,6 +22,7 @@ public:
     virtual void setLastDirection(const Direction &the_direction);
     //debug function
     static QString directionToString(const Direction &direction);
+    static Orientation directionToOrientation(const Direction &direction);
 
     static bool canGoTo(const Direction &direction, const Map &map, const quint8 &x, const quint8 &y, const bool &checkCollision);
     static bool haveGrass(const Map &map,const COORD_TYPE &x,const COORD_TYPE &y);

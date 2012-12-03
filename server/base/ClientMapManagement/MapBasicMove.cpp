@@ -68,6 +68,11 @@ void MapBasicMove::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /
     #endif
 }
 
+void MapBasicMove::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+{
+    MapBasicMove::put_on_the_map(map,x,y,orientation);
+}
+
 bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
     /** \warning Don't put emit here, because call by LocalClientHandler, visiblity algo, LocalBroadcast */

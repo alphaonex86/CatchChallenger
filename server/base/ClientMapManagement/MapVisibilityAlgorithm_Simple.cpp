@@ -581,16 +581,6 @@ void MapVisibilityAlgorithm_Simple::put_on_the_map(Map *map,const /*COORD_TYPE*/
 
 bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("moveThePlayer(): for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
-                 .arg(x)
-                 .arg(y)
-                 .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
-                 .arg(previousMovedUnit)
-                 .arg(MoveOnTheMap::directionToString(last_direction))
-                 .arg(MoveOnTheMap::directionToString(direction))
-                 );
-    #endif
     mapHaveChanged=false;
     //do on server part, because the client send when is blocked to sync the position
     #ifdef POKECRAFT_SERVER_MAP_DROP_BLOCKED_MOVE
@@ -682,4 +672,19 @@ bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUni
     //send the move to the other client
     moveClient(previousMovedUnit,direction);
     return true;
+}
+
+void MapVisibilityAlgorithm_Simple::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+{
+    bool mapChange=(this->map!=map);
+    MapBasicMove::teleportValidatedTo(map,x,y,orientation);
+    if(mapChange)
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message(QString("teleportValidatedTo() have changed of map, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
+        #endif
+        unloadFromTheMap();
+        this->map=static_cast<Map_server_MapVisibility_simple*>(map);
+        loadOnTheMap();
+    }
 }
