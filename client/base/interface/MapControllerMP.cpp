@@ -90,8 +90,8 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
 
     QStringList map_list;
     QSetIterator<QString> i(displayed_map);
-     while (i.hasNext())
-         map_list << i.next();
+    while (i.hasNext())
+        map_list << i.next();
     qDebug() << QString("MapControllerMP::loadPlayerMap(): displayed_map: %1").arg(map_list.join(";"));
 
     show();
@@ -560,6 +560,84 @@ void MapControllerMP::dropAllPlayerOnTheMap()
 {
 }
 
+void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction)
+{
+    if(!mHaveTheDatapack || !player_informations_is_set)
+    {
+        DelayedTeleportTo tempItem;
+        tempItem.mapId=mapId;
+        tempItem.x=x;
+        tempItem.y=y;
+        tempItem.direction=direction;
+        delayedTeleportTo << tempItem;
+        #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+        qDebug() << QString("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(Pokecraft::MoveOnTheMap::directionToString(direction));
+        #endif
+        return;
+    }
+    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    {
+        qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        return;
+    }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    qDebug() << QString("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(Pokecraft::MoveOnTheMap::directionToString(direction));
+    #endif
+    if(current_map==NULL)
+    {
+        qDebug() << "Current player not loaded on the map";
+        return;
+    }
+
+    //the direction
+    this->direction=direction;
+    switch(direction)
+    {
+        case Pokecraft::Direction_look_at_top:
+        case Pokecraft::Direction_move_at_top:
+            playerMapObject->setTile(playerTileset->tileAt(1));
+        break;
+        case Pokecraft::Direction_look_at_right:
+        case Pokecraft::Direction_move_at_right:
+            playerMapObject->setTile(playerTileset->tileAt(4));
+        break;
+        case Pokecraft::Direction_look_at_bottom:
+        case Pokecraft::Direction_move_at_bottom:
+            playerMapObject->setTile(playerTileset->tileAt(7));
+        break;
+        case Pokecraft::Direction_look_at_left:
+        case Pokecraft::Direction_move_at_left:
+            playerMapObject->setTile(playerTileset->tileAt(10));
+        break;
+        default:
+        QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
+        return;
+    }
+
+    //position
+    this->x=x;
+    this->y=y;
+
+    unloadPlayerFromCurrentMap();
+    QString current_map_fileName=loadOtherMap(DatapackClientLoader::datapackLoader.maps[mapId]);
+    if(current_map_fileName.isEmpty())
+    {
+        QMessageBox::critical(NULL,"Error",mLastError);
+        return;
+    }
+    current_map=all_map[current_map_fileName];
+
+    mapUsed=loadMap(current_map,true);
+    removeUnusedMap();
+    loadPlayerFromCurrentMap();
+
+    QStringList map_list;
+    QSetIterator<QString> i(displayed_map);
+    while (i.hasNext())
+        map_list << i.next();
+    qDebug() << QString("MapControllerMP::teleportTo(): displayed_map: %1").arg(map_list.join(";"));
+}
+
 //player info
 void MapControllerMP::have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations)
 {
@@ -647,6 +725,14 @@ void MapControllerMP::reinject_signals()
             index++;
         }
         delayedRemove.clear();
+
+        index=0;
+        while(index<delayedTeleportTo.size())
+        {
+            teleportTo(delayedTeleportTo.at(index).mapId,delayedTeleportTo.at(index).x,delayedTeleportTo.at(index).y,delayedTeleportTo.at(index).direction);
+            index++;
+        }
+        delayedTeleportTo.clear();
     }
 }
 
