@@ -208,7 +208,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
             //Chat
             case 0x0003:
             {
-                if((data.size()-in.device()->pos())<=((int)sizeof(quint8)))
+                if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
                 {
                     parseError("wrong remaining size for chat");
                     return;
@@ -287,12 +287,12 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                                     emit sendHandlerCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
                                 }
-                                /*else if(command=="take")
+                                else if(command=="take")
                                 {
                                     emit sendHandlerCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
                                 }
-                                else if(command=="tp")
+                                /*else if(command=="tp")
                                 {
                                     emit sendHandlerCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
@@ -343,6 +343,35 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                 return;
             break;
         }
+        break;
+        case 0x50:
+            switch(subCodeType)
+            {
+                //Destroy an object
+                case 0x0002:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for destroy item id");
+                        return;
+                    }
+                    quint32 itemId;
+                    in >> itemId;
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for destroy quantity");
+                        return;
+                    }
+                    quint32 quantity;
+                    in >> quantity;
+                    emit destroyObject(itemId,quantity);
+                }
+                break;
+                default:
+                    parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    return;
+                break;
+            }
         break;
         default:
             parseError("unknow main ident: "+QString::number(mainCodeType));
