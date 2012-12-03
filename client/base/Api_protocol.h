@@ -83,6 +83,9 @@ protected:
 
     //plant
     bool havePlantAction;
+
+    //teleport list query id
+    QList<quint8> teleportList;
 signals:
     void newError(const QString &error,const QString &detailedError);
 
@@ -103,6 +106,7 @@ signals:
     void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction);
     void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 y,const Pokecraft::Direction &direction);
     void dropAllPlayerOnTheMap();
+    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
 
     //plant
     void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
@@ -129,6 +133,7 @@ public slots:
     void send_player_move(const quint8 &moved_unit,const Pokecraft::Direction &direction);
     void sendChatText(const Pokecraft::Chat_type &chatType,const QString &text);
     void sendPM(const QString &text,const QString &pseudo);
+    void teleportDone();
 
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);
