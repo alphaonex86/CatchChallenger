@@ -110,6 +110,8 @@ protected slots:
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
+signals:
+    void teleportDone();
 };
 
 #endif // POKECRAFT_MAPCONTROLLERMP_H
