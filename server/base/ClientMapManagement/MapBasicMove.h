@@ -48,6 +48,7 @@ public slots:
     //map slots, transmited by the current ClientNetworkRead
     virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    virtual void teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     //normal slots
     virtual void askIfIsReadyToStop();
 private:

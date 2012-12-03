@@ -8,6 +8,7 @@
   each Xs update the local player list
 */
 /** Never reserve the list, because it have square memory usage, and use more cpu */
+/// \todo have teleportation list to save the last teleportation at close
 
 using namespace Pokecraft;
 
@@ -167,6 +168,16 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 
 bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("moveThePlayer(): for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
+                 .arg(x)
+                 .arg(y)
+                 .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
+                 .arg(previousMovedUnit)
+                 .arg(MoveOnTheMap::directionToString(last_direction))
+                 .arg(MoveOnTheMap::directionToString(direction))
+                 );
+    #endif
     return MapBasicMove::moveThePlayer(previousMovedUnit,direction);
 }
 
@@ -367,29 +378,29 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             arguments << "1";
         if(arguments.size()!=3)
         {
-            emit receiveSystemText("Wrong arguments number for the command, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText("Wrong arguments number for the command, usage: /take objectId player [quantity=1]");
             return;
         }
         quint32 objectId=arguments.first().toUInt(&ok);
         if(!ok)
         {
-            emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
         if(!GlobalData::serverPrivateVariables.itemsId.contains(objectId))
         {
-            emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;
         }
         quint32 quantity=arguments.last().toUInt(&ok);
         if(!ok)
         {
-            emit receiveSystemText("quantity is not a number, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText("quantity is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
         if(!playerByPseudo.contains(arguments.at(1)))
         {
-            emit receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
+            emit receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
             return;
         }
         emit message(QString("%1 have take to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
@@ -398,6 +409,30 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
     else if(command=="tp")
     {
         QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+        if(arguments.size()==2)
+        {
+            if(arguments.at(1)!="to")
+            {
+                emit receiveSystemText(QString("wrong second arguement: %1, usage: /tp player1 to player2").arg(arguments.at(1)));
+                return;
+            }
+            if(!playerByPseudo.contains(arguments.first()))
+            {
+                emit receiveSystemText(QString("%1 is not connected, usage: /tp player1 to player2").arg(arguments.first()));
+                return;
+            }
+            if(!playerByPseudo.contains(arguments.last()))
+            {
+                emit receiveSystemText(QString("%1 is not connected, usage: /tp player1 to player2").arg(arguments.last()));
+                return;
+            }
+            playerByPseudo[arguments.first()]->receiveTeleportTo(playerByPseudo[arguments.last()]->map,playerByPseudo[arguments.last()]->x,playerByPseudo[arguments.last()]->y,MoveOnTheMap::directionToOrientation(playerByPseudo[arguments.last()]->last_direction));
+        }
+        else
+        {
+            emit receiveSystemText("Wrong arguments number for the command, usage: /tp player1 to player2");
+            return;
+        }
     }
 }
 
@@ -405,4 +440,15 @@ void LocalClientHandler::destroyObject(const quint32 &itemId,const quint32 &quan
 {
     emit message(QString("The player have destroy them self %1 item(s) with id: %2").arg(quantity).arg(itemId));
     removeObject(itemId,quantity);
+}
+
+void LocalClientHandler::receiveTeleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+{
+    emit teleportTo(map,x,y,orientation);
+}
+
+void LocalClientHandler::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+{
+    emit message(QString("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
+    MapBasicMove::teleportValidatedTo(map,x,y,orientation);
 }
