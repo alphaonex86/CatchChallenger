@@ -118,6 +118,7 @@ signals:
     void have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations);
     void have_inventory(const QHash<quint32,quint32> &items);
     void add_to_inventory(const QHash<quint32,quint32> &items);
+    void remove_to_inventory(const QHash<quint32,quint32> &items);
 
     //datapack
     void haveTheDatapack();
@@ -132,6 +133,9 @@ public slots:
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);
     void collectMaturePlant();
+
+    //inventory
+    void destroyObject(quint32 object,quint32 quantity=1);
 };
 }
 

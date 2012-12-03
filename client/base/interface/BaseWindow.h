@@ -70,15 +70,6 @@ private slots:
     void lineEdit_chat_text_returnPressed();
     void lineEdit_chat_text_lostFocus();
 
-    //autoconnect
-    void number_of_player(quint16 number,quint16 max);
-    void update_chat();
-    void removeNumberForFlood();
-    void on_toolButton_interface_quit_clicked();
-    void on_toolButton_quit_interface_clicked();
-    void on_pushButton_interface_trainer_clicked();
-    void on_toolButton_quit_options_clicked();
-
     //player UI
     void on_pushButton_interface_bag_clicked();
     void on_toolButton_quit_inventory_clicked();
@@ -96,6 +87,7 @@ private slots:
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items);
     void add_to_inventory(const QHash<quint32,quint32> &items);
+    void remove_to_inventory(const QHash<quint32,quint32> &items);
     void load_inventory();
     //render
     void stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
@@ -110,6 +102,16 @@ private slots:
     //plant
     void seed_planted(const bool &ok);
     void plant_collected(const Pokecraft::Plant_collect &stat);
+
+    //autoconnect
+    void number_of_player(quint16 number,quint16 max);
+    void update_chat();
+    void removeNumberForFlood();
+    void on_toolButton_interface_quit_clicked();
+    void on_toolButton_quit_interface_clicked();
+    void on_pushButton_interface_trainer_clicked();
+    void on_toolButton_quit_options_clicked();
+    void on_inventoryDestroy_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -160,6 +162,8 @@ signals:
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);
     void collectMaturePlant();
+    //inventory
+    void destroyObject(quint32 object,quint32 quantity=1);
 };
 }
 
