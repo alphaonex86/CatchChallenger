@@ -45,7 +45,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     //inventory
     connect(client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)));
     connect(client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
-    connect(client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
+    connect(client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(remove_to_inventory(QHash<quint32,quint32>)));
 
     //chat
     connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
@@ -68,6 +68,8 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(this,SIGNAL(collectMaturePlant()),client,SLOT(collectMaturePlant()));
     connect(client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
     connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
+
+    connect(this,SIGNAL(destroyObject(quint32,quint32)),client,SLOT(destroyObject(quint32,quint32)));
 
 
     stopFlood.setSingleShot(false);

@@ -54,6 +54,8 @@ public slots:
     quint32 objectQuantity(const quint32 &item);
 
     void sendHandlerCommand(const QString &command,const QString &extraText);
+    //inventory
+    void destroyObject(const quint32 &itemId,const quint32 &quantity);
 private slots:
     virtual void extraStop();
 signals:

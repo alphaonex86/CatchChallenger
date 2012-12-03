@@ -301,7 +301,7 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
         return 0;
 }
 
-void LocalClientHandler::sendRemoveObject(const quint32 &item,const quint32 &quantity=1)
+void LocalClientHandler::sendRemoveObject(const quint32 &item,const quint32 &quantity)
 {
     //add into the inventory
     QByteArray outputData;
@@ -356,6 +356,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
             return;
         }
+        emit message(QString("%1 have give to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo[arguments.at(1)]->addObject(objectId,quantity);
     }
     else if(command=="take")
@@ -391,10 +392,17 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
             return;
         }
+        emit message(QString("%1 have take to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
         playerByPseudo[arguments.at(1)]->sendRemoveObject(objectId,playerByPseudo[arguments.at(1)]->removeObject(objectId,quantity));
     }
     else if(command=="tp")
     {
         QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
     }
+}
+
+void LocalClientHandler::destroyObject(const quint32 &itemId,const quint32 &quantity)
+{
+    emit message(QString("The player have destroy them self %1 item(s) with id: %2").arg(quantity).arg(itemId));
+    removeObject(itemId,quantity);
 }
