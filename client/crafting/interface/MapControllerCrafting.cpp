@@ -84,6 +84,7 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         ObjectGroupItem::objectGroupLink[all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant.mapObject);
     else
         qDebug() << QString("insert_plant(), all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup not contains current_map->objectGroup");
+    MapObjectItem::objectLink[plant.mapObject]->setZValue(y);
 }
 
 void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y)
