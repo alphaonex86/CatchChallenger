@@ -1108,11 +1108,101 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumb
 
 void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
-    Q_UNUSED(mainCodeType);
-    Q_UNUSED(subCodeType);
-    Q_UNUSED(queryNumber);
-    Q_UNUSED(data);
-    parseError(tr("Procotol wrong or corrupted"),QString("have not query of this type, mainCodeType: %1, subCodeType: %2, queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    if(!is_logged)
+    {
+        parseError(tr("Procotol wrong or corrupted"),QString("is not logged with main ident: %1").arg(mainCodeType));
+        return;
+    }
+    QDataStream in(data);
+    in.setVersion(QDataStream::Qt_4_4);
+    switch(mainCodeType)
+    {
+        case 0x79:
+        {
+            switch(subCodeType)
+            {
+                //Teleport the player
+                case 0x0001:
+                {
+                    quint32 mapId;
+                    if(number_of_map<=255)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                            return;
+                        }
+                        quint8 mapTempId;
+                        in >> mapTempId;
+                        mapId=mapTempId;
+                    }
+                    else if(number_of_map<=65535)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                            return;
+                        }
+                        quint16 mapTempId;
+                        in >> mapTempId;
+                        mapId=mapTempId;
+                    }
+                    else
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                            return;
+                        }
+                        in >> mapId;
+                    }
+                    quint8 x,y;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    in >> x;
+                    in >> y;
+                    quint8 directionInt;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1").arg(mainCodeType));
+                        return;
+                    }
+                    in >> directionInt;
+                    if(directionInt<1 || directionInt>8)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("direction have wrong value: %1, at main ident: %2").arg(directionInt).arg(mainCodeType));
+                        return;
+                    }
+                    Direction direction=(Direction)directionInt;
+
+                    teleportList << queryNumber;
+                    emit teleportTo(mapId,x,y,direction);
+                }
+                break;
+                default:
+                parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                return;
+            }
+        }
+        break;
+        default:
+            parseError(tr("Procotol wrong or corrupted"),QString("unknow ident main code: %1").arg(mainCodeType));
+            return;
+        break;
+    }
+    if((in.device()->size()-in.device()->pos())!=0)
+    {
+        parseError(tr("Procotol wrong or corrupted"),QString("remaining data: parseMessage(%1,%2,%3 %4)")
+                      .arg(mainCodeType)
+                      .arg(subCodeType)
+                      .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                      .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                      );
+        return;
+    }
 }
 
 //send reply
@@ -1454,6 +1544,12 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
     out << text;
     out << pseudo;
     output->packOutcommingData(0x42,0x003,outputData);
+}
+
+void Api_protocol::teleportDone()
+{
+    output->postReplyData(teleportList.first(),QByteArray());
+    teleportList.removeFirst();
 }
 
 void Api_protocol::useSeed(const quint8 &plant_id)

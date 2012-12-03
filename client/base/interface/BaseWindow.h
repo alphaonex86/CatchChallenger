@@ -159,6 +159,7 @@ signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
     void sendsetMultiPlayer(const bool & multiplayer);
+    void teleportDone();
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);
     void collectMaturePlant();
