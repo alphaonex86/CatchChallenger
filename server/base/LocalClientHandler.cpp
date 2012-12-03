@@ -247,6 +247,80 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
     emit sendPacket(0xD0,0x0002,outputData);
 }
 
+quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quantity)
+{
+    if(player_informations->public_and_private_informations.items.contains(item))
+    {
+        if(player_informations->public_and_private_informations.items[item]>quantity)
+        {
+            player_informations->public_and_private_informations.items[item]-=quantity;
+            switch(GlobalData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                                 .arg(player_informations->public_and_private_informations.items[item])
+                                 .arg(item)
+                                 .arg(player_informations->id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                                 .arg(player_informations->public_and_private_informations.items[item])
+                                 .arg(item)
+                                 .arg(player_informations->id)
+                             );
+                break;
+            }
+            return quantity;
+        }
+        else
+        {
+            quint32 removed_quantity=player_informations->public_and_private_informations.items[item];
+            player_informations->public_and_private_informations.items.remove(item);
+            switch(GlobalData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                                 .arg(item)
+                                 .arg(player_informations->id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                             .arg(item)
+                             .arg(player_informations->id)
+                             );
+                break;
+            }
+            return removed_quantity;
+        }
+    }
+    else
+        return 0;
+}
+
+void LocalClientHandler::sendRemoveObject(const quint32 &item,const quint32 &quantity=1)
+{
+    //add into the inventory
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)1;
+    out << (quint32)item;
+    out << (quint32)quantity;
+    emit sendPacket(0xD0,0x0003,outputData);
+}
+
+quint32 LocalClientHandler::objectQuantity(const quint32 &item)
+{
+    if(player_informations->public_and_private_informations.items.contains(item))
+        return player_informations->public_and_private_informations.items[item];
+    else
+        return 0;
+}
+
 void LocalClientHandler::sendHandlerCommand(const QString &command,const QString &extraText)
 {
     if(command=="give")
@@ -286,7 +360,38 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
     }
     else if(command=="take")
     {
+        bool ok;
         QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
+        if(arguments.size()==2)
+            arguments << "1";
+        if(arguments.size()!=3)
+        {
+            emit receiveSystemText("Wrong arguments number for the command, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        quint32 objectId=arguments.first().toUInt(&ok);
+        if(!ok)
+        {
+            emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        if(!GlobalData::serverPrivateVariables.itemsId.contains(objectId))
+        {
+            emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        quint32 quantity=arguments.last().toUInt(&ok);
+        if(!ok)
+        {
+            emit receiveSystemText("quantity is not a number, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        if(!playerByPseudo.contains(arguments.at(1)))
+        {
+            emit receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
+            return;
+        }
+        playerByPseudo[arguments.at(1)]->sendRemoveObject(objectId,playerByPseudo[arguments.at(1)]->removeObject(objectId,quantity));
     }
     else if(command=="tp")
     {

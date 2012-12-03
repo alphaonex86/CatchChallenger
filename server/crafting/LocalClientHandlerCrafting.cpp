@@ -6,55 +6,14 @@ using namespace Pokecraft;
 
 void LocalClientHandler::useSeed(const quint8 &plant_id)
 {
-    if(!player_informations->public_and_private_informations.items.contains(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed))
+    if(objectQuantity(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed)==0)
     {
-        emit error(QString("The player have not the id: %1").arg(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed));
+        emit error(QString("The player have not the item id: %1 to plant as seed").arg(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed));
         return;
     }
     else
     {
-        player_informations->public_and_private_informations.items[GlobalData::serverPrivateVariables.plants[plant_id].itemUsed]--;
-        if(player_informations->public_and_private_informations.items[GlobalData::serverPrivateVariables.plants[plant_id].itemUsed]==0)
-        {
-            player_informations->public_and_private_informations.items.remove(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed);
-            switch(GlobalData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
-                                 .arg(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed)
-                                 .arg(player_informations->id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
-                             .arg(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed)
-                             .arg(player_informations->id)
-                             );
-                break;
-            }
-        }
-        else
-        {
-            switch(GlobalData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
-                                 .arg(player_informations->public_and_private_informations.items[GlobalData::serverPrivateVariables.plants[plant_id].itemUsed])
-                                 .arg(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed)
-                                 .arg(player_informations->id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
-                             .arg(player_informations->public_and_private_informations.items[GlobalData::serverPrivateVariables.plants[plant_id].itemUsed])
-                             .arg(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed)
-                             .arg(player_informations->id)
-                             );
-                break;
-            }
-        }
+        removeObject(GlobalData::serverPrivateVariables.plants[plant_id].itemUsed);
         emit seedValidated();
     }
 }

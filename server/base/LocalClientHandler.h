@@ -49,6 +49,9 @@ public slots:
     //seed
     void useSeed(const quint8 &plant_id);
     void addObject(const quint32 &item,const quint32 &quantity=1);
+    quint32 removeObject(const quint32 &item,const quint32 &quantity=1);
+    void sendRemoveObject(const quint32 &item,const quint32 &quantity=1);
+    quint32 objectQuantity(const quint32 &item);
 
     void sendHandlerCommand(const QString &command,const QString &extraText);
 private slots:

@@ -997,7 +997,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     emit have_inventory(items);
                 }
                 break;
-                //Send object
+                //Add object
                 case 0x0002:
                 {
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
@@ -1030,6 +1030,41 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         index++;
                     }
                     emit add_to_inventory(items);
+                }
+                break;
+                //Remove object
+                case 0x0003:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                        return;
+                    }
+                    QHash<quint32,quint32> items;
+                    quint32 inventorySize,id,quantity;
+                    in >> inventorySize;
+                    quint32 index=0;
+                    while(index<inventorySize)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2; for the id").arg(mainCodeType).arg(subCodeType));
+                            return;
+                        }
+                        in >> id;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, for the quantity").arg(mainCodeType).arg(subCodeType));
+                            return;
+                        }
+                        in >> quantity;
+                        if(items.contains(id))
+                            items[id]+=quantity;
+                        else
+                            items[id]=quantity;
+                        index++;
+                    }
+                    emit remove_to_inventory(items);
                 }
                 break;
                 //random seeds as input
@@ -1432,6 +1467,18 @@ void Api_protocol::useSeed(const quint8 &plant_id)
     QByteArray outputData;
     outputData[0]=plant_id;
     output->packOutcommingQuery(0x10,0x0006,queryNumber(),outputData);
+    return;
+}
+
+//inventory
+void Api_protocol::destroyObject(quint32 object,quint32 quantity)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << object;
+    out << quantity;
+    output->packOutcommingData(0x50,0x0002,outputData);
     return;
 }
 

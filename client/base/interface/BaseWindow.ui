@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_2">
         <property name="styleSheet">
@@ -1226,7 +1226,7 @@ border-image: url(:/images/empty.png);
              <rect>
               <x>150</x>
               <y>530</y>
-              <width>611</width>
+              <width>521</width>
               <height>51</height>
              </rect>
             </property>
@@ -1304,7 +1304,7 @@ border-image: url(:/images/empty.png);
              <rect>
               <x>150</x>
               <y>510</y>
-              <width>641</width>
+              <width>521</width>
               <height>16</height>
              </rect>
             </property>
@@ -1313,6 +1313,66 @@ border-image: url(:/images/empty.png);
               <weight>75</weight>
               <bold>true</bold>
              </font>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="inventoryDestroy">
+            <property name="geometry">
+             <rect>
+              <x>680</x>
+              <y>530</y>
+              <width>110</width>
+              <height>25</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton::hover {
+background-position:left center;
+}
+QPushButton::pressed {
+background-position:left bottom;
+}
+QPushButton { 
+background-image: url(:/images/interface/button-generic.png);
+border-image: url(:/images/empty.png);
+color: rgb(255, 255, 255);
+padding-left:4px;
+padding-right:4px;
+padding-top:8px;
+padding-bottom:3px;
+}</string>
+            </property>
+            <property name="text">
+             <string>Destroy</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="inventoryInformation">
+            <property name="geometry">
+             <rect>
+              <x>680</x>
+              <y>505</y>
+              <width>110</width>
+              <height>25</height>
+             </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton::hover {
+background-position:left center;
+}
+QPushButton::pressed {
+background-position:left bottom;
+}
+QPushButton { 
+background-image: url(:/images/interface/button-generic.png);
+border-image: url(:/images/empty.png);
+color: rgb(255, 255, 255);
+padding-left:4px;
+padding-right:4px;
+padding-top:8px;
+padding-bottom:3px;
+}</string>
+            </property>
+            <property name="text">
+             <string>Information</string>
             </property>
            </widget>
           </widget>

@@ -71,9 +71,10 @@ void BaseServerCrafting::preload_the_plant()
                                     {
                                         plant.mature_seconds=fruits.text().toULongLong(&ok2)*60;
                                         if(!ok2)
+                                        {
                                             ok=false;
-                                        else
                                             DebugClass::debugConsole(QString("preload_the_plant() fruits in not an number for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                        }
                                     }
                                     else
                                         DebugClass::debugConsole(QString("preload_the_plant() fruit is not element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
@@ -95,9 +96,10 @@ void BaseServerCrafting::preload_the_plant()
                                 {
                                     plant.quantity=quantity.text().toFloat(&ok2);
                                     if(!ok2)
+                                    {
                                         ok=false;
-                                    else
                                         DebugClass::debugConsole(QString("preload_the_plant() quantity is not a number for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                    }
                                 }
                                 else
                                     DebugClass::debugConsole(QString("preload_the_plant() quantity is not element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
