@@ -28,6 +28,8 @@ MapControllerMP::MapControllerMP(Pokecraft::Api_protocol *client,const bool &cen
     connect(client,SIGNAL(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(client,SIGNAL(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(client,SIGNAL(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(this,SIGNAL(teleportDone()),client,SLOT(teleportDone()),Qt::QueuedConnection);
 }
 
 MapControllerMP::~MapControllerMP()
@@ -636,6 +638,8 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     while (i.hasNext())
         map_list << i.next();
     qDebug() << QString("MapControllerMP::teleportTo(): displayed_map: %1").arg(map_list.join(";"));
+
+    emit teleportDone();
 }
 
 //player info
