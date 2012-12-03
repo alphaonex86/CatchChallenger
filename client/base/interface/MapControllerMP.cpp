@@ -5,6 +5,8 @@
 #include "../ClientVariable.h"
 
 #include <QMessageBox>
+#include <QMessageBox>
+#include <qmath.h>
 
 MapControllerMP::MapControllerMP(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
@@ -334,6 +336,7 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer)
         ObjectGroupItem::objectGroupLink[otherPlayer.presumed_map->objectGroup]->addObject(otherPlayer.playerMapObject);
     else
         qDebug() << QString("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+    MapObjectItem::objectLink[otherPlayer.playerMapObject]->setZValue(otherPlayer.y);
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -478,7 +481,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, P
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     otherPlayerList[id].playerMapObject->setPosition(QPoint(otherPlayerList[id].presumed_x,otherPlayerList[id].presumed_y+1));
-
+    MapObjectItem::objectLink[otherPlayerList[id].playerMapObject]->setZValue(otherPlayerList[id].presumed_y);
 
     //start moving into the right direction
     switch(otherPlayerList[id].presumed_direction)
@@ -819,6 +822,9 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         case 0:
         otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+0));
         break;
+        case 1:
+        MapObjectItem::objectLink[otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject]->setZValue(qCeil(otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->y()));
+        break;
         //transition step
         case 2:
         if(stepAlternance)
@@ -872,6 +878,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setPosition(QPoint(x,y+1));
+        MapObjectItem::objectLink[otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject]->setZValue(y);
 
         //check if one arrow key is pressed to continue to move into this direction
         if(otherPlayerList[otherPlayerListByTimer[timer]].presumed_direction==Pokecraft::Direction_move_at_left)
