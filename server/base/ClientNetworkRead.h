@@ -22,10 +22,20 @@ public:
     explicit ClientNetworkRead(Player_internal_informations *player_informations,ConnectedSocket * socket);
     void stopRead();
     void fake_send_protocol();
+
+    struct TeleportationPoint
+    {
+        Map *map;
+        COORD_TYPE x;
+        COORD_TYPE y;
+        Orientation orientation;
+    };
 public slots:
     void fake_receive_data(const QByteArray &data);
     //normal slots
     void askIfIsReadyToStop();
+
+    void teleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
 private:
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
     //have message without reply
@@ -43,6 +53,7 @@ signals:
     //normal signals
     void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray());
     void sendPacket(const quint8 &mainCodeType,const QByteArray &data=QByteArray());
+    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
     //send reply
     void postReply(const quint8 &queryNumber,const QByteArray &data);
     //normal signals
@@ -52,6 +63,7 @@ signals:
     void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps);
     //packet parsed (map management)
     void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    void teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     //packet parsed (broadcast)
     void sendPM(const QString &text,const QString &pseudo);
     void sendChatText(const Chat_type &chatType,const QString &text);
@@ -74,6 +86,7 @@ private:
     //to prevent memory presure
     quint8 previousMovedUnit;
     quint8 direction;
+    QList<TeleportationPoint> lastTeleportation;
     //to parse the netwrok stream
     quint8 mainCodeType;
     quint16 subCodeType;
