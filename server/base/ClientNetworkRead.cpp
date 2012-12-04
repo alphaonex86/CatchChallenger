@@ -15,6 +15,15 @@ ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_inform
     stopIt=false;
     this->player_informations=player_informations;
     this->socket=socket;
+
+    queryNumberList.reserve(256);
+    qDebug() << queryNumberList.size();
+    int index=0;
+    while(index<256)
+    {
+        queryNumberList << index;
+        index++;
+    }
 }
 
 void ClientNetworkRead::stopRead()
@@ -35,8 +44,13 @@ void ClientNetworkRead::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
-void ClientNetworkRead::teleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void ClientNetworkRead::teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
+    if(queryNumberList.empty())
+    {
+        emit error(QString("Sorry, no free query number to send this query of teleportation"));
+        return;
+    }
     TeleportationPoint teleportationPoint;
     teleportationPoint.map=map;
     teleportationPoint.x=x;
@@ -46,7 +60,6 @@ void ClientNetworkRead::teleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint8)0x01;
     if(GlobalData::serverPrivateVariables.map_list.size()<=255)
         out << (quint8)map->id;
     else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
@@ -56,7 +69,8 @@ void ClientNetworkRead::teleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE
     out << (COORD_TYPE)x;
     out << (COORD_TYPE)y;
     out << (quint8)orientation;
-    emit sendQuery(0x79,0x0001,outputData);
+    emit sendQuery(0x79,0x0001,queryNumberList.first(),outputData);
+    queryNumberList.removeFirst();
 }
 
 void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
@@ -324,11 +338,11 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                                     emit sendHandlerCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
                                 }
-                                /*else if(command=="tp")
+                                else if(command=="tp")
                                 {
                                     emit sendHandlerCommand(command,text);
                                     emit message("send command: /"+command+" "+text);
-                                }*/
+                                }
                                 else if(command=="kick")
                                 {
                                     emit sendBroadCastCommand(command,text);
@@ -357,11 +371,12 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                                 else
                                 {
                                     emit message("unknow send command: /"+command+" and \""+text+"\"");
-                                    emit sendChatText((Chat_type)chatType,text);
+                                    //emit sendChatText((Chat_type)chatType,text);
                                 }
                             }
                             else
-                                emit sendChatText((Chat_type)chatType,text);
+                                emit message("unknow send command: /"+command+" and \""+text+"\"");
+                                //emit sendChatText((Chat_type)chatType,text);
                         }
                         else
                             emit message("commands seem not right: \""+text+"\"");
@@ -565,6 +580,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
 //send reply
 void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    queryNumberList << queryNumber;
     if(stopIt)
         return;
     Q_UNUSED(data);
@@ -579,6 +595,7 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &
 
 void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
+    queryNumberList << queryNumber;
     if(stopIt)
         return;
     Q_UNUSED(data);
@@ -605,7 +622,7 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 
         case 0x79:
         switch(subCodeType)
         {
-            //Send datapack file list
+            //teleportation
             case 0x0001:
                 emit teleportValidatedTo(lastTeleportation.first().map,lastTeleportation.first().x,lastTeleportation.first().y,lastTeleportation.first().orientation);
                 lastTeleportation.removeFirst();
