@@ -90,7 +90,7 @@ void ClientLocalBroadcast::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x
     insertClient(map);
 }
 
-void ClientLocalBroadcast::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void ClientLocalBroadcast::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     bool mapChange=this->map!=map;
     if(mapChange)
