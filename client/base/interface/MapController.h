@@ -29,13 +29,6 @@ private:
         quint16 seconds_to_mature;
     };
     QList<DelayedPlantInsert> delayedPlantInsert;
-    struct DelayedPlantRemove
-    {
-        quint32 mapId;
-        quint16 x;
-        quint16 y;
-    };
-    QList<DelayedPlantRemove> delayedPlantRemove;
 protected slots:
     //plant
     void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);

@@ -91,11 +91,17 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
 {
     if(!mHaveTheDatapack)
     {
-        DelayedPlantRemove tempItem;
-        tempItem.mapId=mapId;
-        tempItem.x=x;
-        tempItem.y=y;
-        delayedPlantRemove << tempItem;
+        int index=0;
+        while(index<delayedPlantInsert.size())
+        {
+            if(delayedPlantInsert.at(index).mapId==mapId && delayedPlantInsert.at(index).x==x && delayedPlantInsert.at(index).y==y)
+            {
+                delayedPlantInsert.removeAt(index);
+                return;
+            }
+            index++;
+        }
+        qDebug() << "MapController::remove_plant() remove item not found into the insert";
         return;
     }
     if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
@@ -186,13 +192,5 @@ void MapController::reinject_signals()
             index++;
         }
         delayedPlantInsert.clear();
-
-        index=0;
-        while(index<delayedPlantRemove.size())
-        {
-            remove_plant(delayedPlantInsert.at(index).mapId,delayedPlantInsert.at(index).x,delayedPlantInsert.at(index).y);
-            index++;
-        }
-        delayedPlantRemove.clear();
     }
 }

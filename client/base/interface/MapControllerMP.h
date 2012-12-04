@@ -75,14 +75,46 @@ private:
         quint16 y;
         Pokecraft::Direction direction;
     };
-    QList<DelayedInsert> delayedInsert;
     struct DelayedMove
     {
         quint16 id;
         QList<QPair<quint8,Pokecraft::Direction> > movement;
     };
-    QList<DelayedMove> delayedMove;
-    QList<quint16> delayedRemove;
+    struct DelayedReinsertSingle
+    {
+        quint16 id;
+        quint8 x;
+        quint8 y;
+        Pokecraft::Direction direction;
+    };
+    struct DelayedReinsertFull
+    {
+        quint16 id;
+        quint32 mapId;
+        quint8 x;
+        quint8 y;
+        Pokecraft::Direction direction;
+    };
+    enum DelayedType
+    {
+        DelayedType_Insert,
+        DelayedType_Move,
+        DelayedType_Remove,
+        DelayedType_Reinsert_single,
+        DelayedType_Reinsert_full,
+        DelayedType_Drop_all
+    };
+    struct DelayedMultiplex
+    {
+        DelayedType type;
+        DelayedInsert insert;
+        DelayedMove move;
+        quint16 remove;
+        DelayedReinsertSingle reinsert_single;
+        DelayedReinsertFull reinsert_full;
+    };
+    QList<DelayedMultiplex> delayedActions;
+
     struct DelayedTeleportTo
     {
         quint32 mapId;
