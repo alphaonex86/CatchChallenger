@@ -95,7 +95,6 @@ void ClientLocalBroadcast::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quin
     bool mapChange=this->map!=map;
     if(mapChange)
         removeNearPlant();
-    emit message(QString("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
     if(mapChange)
         sendNearPlant();

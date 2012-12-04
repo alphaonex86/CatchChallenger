@@ -681,7 +681,7 @@ void MapVisibilityAlgorithm_Simple::teleportValidatedTo(Map *map,const COORD_TYP
     if(mapChange)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message(QString("teleportValidatedTo() have changed of map, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
+        emit message(QString("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
         #endif
         unloadFromTheMap();
         this->map=static_cast<Map_server_MapVisibility_simple*>(map);
