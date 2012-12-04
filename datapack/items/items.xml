@@ -44,4 +44,22 @@
 		<description>Bay inedible. She goes into the manufacture of certain object</description>
 		<description lang="fr">Baie non comestible. Elle entre dans la fabrication de certain objet</description>
 	</item>
+	<item id="7" image="other/jam.png"><!-- Jam -->
+		<name>Jam</name>
+		<name lang="fr">Confiture</name>
+		<description>Delicious handmade jam</description>
+		<description lang="fr">Délicieuse confiture faite main</description>
+	</item>
+	<item id="8" image="other/bottle-empty.png"><!-- Bottle empty -->
+		<name>Bottle empty</name>
+		<name lang="fr">Bouteille vide</name>
+		<description>Empty bottle that can be used for food preservation</description>
+		<description lang="fr">Bouteille vide qui peut servir à la conservation des aliments</description>
+	</item>
+	<item id="9" image="other/sugar.png"><!-- Sugar -->
+		<name>Sugar</name>
+		<name lang="fr">Sucre</name>
+		<description>Element used to make many dishes</description>
+		<description lang="fr">Élément utilisé pour la confection de nombreux plats</description>
+	</item>
 </items>
