@@ -52,17 +52,17 @@ void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const QByteArray 
     }
 }
 
-void ClientNetworkWrite::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data)
+void ClientNetworkWrite::sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data)
 {
     if(!player_informations->isConnected)
     {
-        emit message(QString("sendQuery(%1,%2,%3) when is not connected").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
+        emit message(QString("sendQuery(%1,%2,%3,%4) when is not connected").arg(mainIdent).arg(subIdent).arg(queryNumber).arg(QString(data.toHex())));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QString("sendQuery(%1,%2,%3)").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
     #endif
-    if(!ProtocolParsingOutput::packOutcommingQuery(mainIdent,subIdent,data))
+    if(!ProtocolParsingOutput::packOutcommingQuery(mainIdent,subIdent,queryNumber,data))
         return;
     if(!socket->isValid())
     {

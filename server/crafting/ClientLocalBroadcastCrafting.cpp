@@ -259,7 +259,6 @@ void ClientLocalBroadcast::sendNearPlant()
     int index=0;
     while(index<plant_list_size)
     {
-        emit message(QString("sendNearPlant(): before all: %1").arg(QString(outputData.toHex())));
         const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
         if(GlobalData::serverPrivateVariables.map_list.size()<=255)
             out << (quint8)map->id;
@@ -280,7 +279,7 @@ void ClientLocalBroadcast::sendNearPlant()
         }
         else
             out << (quint16)(plant.mature_at-current_time);
-        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        #if defined(DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE) && defined(DEBUG_MESSAGE_MAP_PLANTS)
         int remaining_seconds_to_mature;
         if(current_time>=plant.mature_at)
             remaining_seconds_to_mature=0;

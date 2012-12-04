@@ -1171,7 +1171,7 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeT
                         return;
                     }
                     in >> directionInt;
-                    if(directionInt<1 || directionInt>8)
+                    if(directionInt<1 || directionInt>4)
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("direction have wrong value: %1, at main ident: %2").arg(directionInt).arg(mainCodeType));
                         return;
