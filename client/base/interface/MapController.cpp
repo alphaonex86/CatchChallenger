@@ -17,7 +17,6 @@ MapController::~MapController()
 void MapController::resetAll()
 {
     delayedPlantInsert.clear();
-    delayedPlantRemove.clear();
     MapControllerMP::resetAll();
 }
 
@@ -35,12 +34,4 @@ void MapController::datapackParsed()
         index++;
     }
     delayedPlantInsert.clear();
-
-    index=0;
-    while(index<delayedPlantRemove.size())
-    {
-        remove_plant(delayedPlantRemove.at(index).mapId,delayedPlantRemove.at(index).x,delayedPlantRemove.at(index).y);
-        index++;
-    }
-    delayedPlantRemove.clear();
 }

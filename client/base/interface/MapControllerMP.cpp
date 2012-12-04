@@ -46,9 +46,7 @@ void MapControllerMP::resetAll()
     unloadPlayerFromCurrentMap();
     current_map=NULL;
 
-    delayedInsert.clear();
-    delayedMove.clear();
-    delayedRemove.clear();
+    delayedActions.clear();
     skinFolderList.clear();
 
     QHashIterator<quint16,OtherPlayer> i(otherPlayerList);
@@ -141,7 +139,10 @@ void MapControllerMP::insert_player(const Pokecraft::Player_public_informations 
         tempItem.x=x;
         tempItem.y=y;
         tempItem.direction=direction;
-        delayedInsert << tempItem;
+        DelayedMultiplex multiplex;
+        multiplex.insert=tempItem;
+        multiplex.type=DelayedType_Insert;
+        delayedActions << multiplex;
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
         qDebug() << QString("delayed: insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(mapId).arg(x).arg(y).arg(Pokecraft::MoveOnTheMap::directionToString(direction));
         #endif
@@ -370,7 +371,10 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, P
         DelayedMove tempItem;
         tempItem.id=id;
         tempItem.movement=movement;
-        delayedMove << tempItem;
+        DelayedMultiplex multiplex;
+        multiplex.move=tempItem;
+        multiplex.type=DelayedType_Move;
+        delayedActions << multiplex;
         return;
     }
     if(id==player_informations.public_informations.simplifiedId)
@@ -526,7 +530,10 @@ void MapControllerMP::remove_player(const quint16 &id)
         #ifdef DEBUG_CLIENT_LOAD_ORDER
         qDebug() << QString("delayed: MapControllerMP::remove_player(%1)").arg(id);
         #endif
-        delayedRemove << id;
+        DelayedMultiplex multiplex;
+        multiplex.remove=id;
+        multiplex.type=DelayedType_Remove;
+        delayedActions << multiplex;
         return;
     }
     if(id==player_informations.public_informations.simplifiedId)
@@ -553,16 +560,115 @@ void MapControllerMP::remove_player(const quint16 &id)
     otherPlayerList.remove(id);
 }
 
-void MapControllerMP::reinsert_player(const quint16 &,const quint8 &,const quint8 &,const Pokecraft::Direction &)
+void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction)
 {
+    if(!mHaveTheDatapack || !player_informations_is_set)
+    {
+        #ifdef DEBUG_CLIENT_LOAD_ORDER
+        qDebug() << QString("delayed: MapControllerMP::reinsert_player(%1)").arg(id);
+        #endif
+        DelayedReinsertSingle tempItem;
+        tempItem.id=id;
+        tempItem.x=x;
+        tempItem.y=y;
+        tempItem.direction=direction;
+        DelayedMultiplex multiplex;
+        multiplex.reinsert_single=tempItem;
+        multiplex.type=DelayedType_Reinsert_single;
+        delayedActions << multiplex;
+        return;
+    }
+    if(id==player_informations.public_informations.simplifiedId)
+    {
+        qDebug() << "The current player can't be removed";
+        return;
+    }
+    if(!otherPlayerList.contains(id))
+    {
+        qDebug() << QString("Other player (%1) not exists").arg(id);
+        return;
+    }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    qDebug() << QString("reinsert_player(%1)").arg(id);
+    #endif
+
+    Pokecraft::Player_public_informations informations=otherPlayerList[id].informations;
+    qint32 mapIndex=DatapackClientLoader::datapackLoader.maps.indexOf(otherPlayerList[id].current_map);
+    if(mapIndex==-1)
+    {
+        qDebug() << "internal problem, revert map index is wrong";
+        return;
+    }
+    quint32 mapId=(quint32)mapIndex;
+    remove_player(id);
+    insert_player(informations,mapId,x,y,direction);
 }
 
-void MapControllerMP::reinsert_player(const quint16 &, const quint32 &, const quint8 &, const quint8 &, const Pokecraft::Direction &)
+void MapControllerMP::reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const Pokecraft::Direction &direction)
 {
+    if(!mHaveTheDatapack || !player_informations_is_set)
+    {
+        #ifdef DEBUG_CLIENT_LOAD_ORDER
+        qDebug() << QString("delayed: MapControllerMP::reinsert_player(%1)").arg(id);
+        #endif
+        DelayedReinsertFull tempItem;
+        tempItem.id=id;
+        tempItem.mapId=mapId;
+        tempItem.x=x;
+        tempItem.y=y;
+        tempItem.direction=direction;
+        DelayedMultiplex multiplex;
+        multiplex.reinsert_full=tempItem;
+        multiplex.type=DelayedType_Reinsert_full;
+        delayedActions << multiplex;
+        return;
+    }
+    if(id==player_informations.public_informations.simplifiedId)
+    {
+        qDebug() << "The current player can't be removed";
+        return;
+    }
+    if(!otherPlayerList.contains(id))
+    {
+        qDebug() << QString("Other player (%1) not exists").arg(id);
+        return;
+    }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    qDebug() << QString("reinsert_player(%1)").arg(id);
+    #endif
+
+    Pokecraft::Player_public_informations informations=otherPlayerList[id].informations;
+    remove_player(id);
+    insert_player(informations,mapId,x,y,direction);
 }
 
 void MapControllerMP::dropAllPlayerOnTheMap()
 {
+    if(!mHaveTheDatapack || !player_informations_is_set)
+    {
+        #ifdef DEBUG_CLIENT_LOAD_ORDER
+        qDebug() << QString("delayed: MapControllerMP::dropAllPlayerOnTheMap()");
+        #endif
+        DelayedMultiplex multiplex;
+        multiplex.type=DelayedType_Drop_all;
+        delayedActions << multiplex;
+        return;
+    }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    qDebug() << QString("dropAllPlayerOnTheMap()");
+    #endif
+    QList<quint16> temIdList;
+    QHashIterator<quint16,OtherPlayer> i(otherPlayerList);
+    while (i.hasNext()) {
+        i.next();
+        temIdList << i.key();
+    }
+    int index=0;
+    while(index<temIdList.size())
+    {
+        remove_player(temIdList.at(index));
+        index++;
+    }
 }
 
 void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction)
@@ -710,28 +816,34 @@ void MapControllerMP::reinject_signals()
         qDebug() << QString("MapControllerMP::reinject_signals(): mHaveTheDatapack && player_informations_is_set");
         #endif
         index=0;
-        while(index<delayedInsert.size())
+        while(index<delayedActions.size())
         {
-            insert_player(delayedInsert.at(index).player,delayedInsert.at(index).mapId,delayedInsert.at(index).x,delayedInsert.at(index).y,delayedInsert.at(index).direction);
+            switch(delayedActions.at(index).type)
+            {
+                case DelayedType_Insert:
+                    insert_player(delayedActions.at(index).insert.player,delayedActions.at(index).insert.mapId,delayedActions.at(index).insert.x,delayedActions.at(index).insert.y,delayedActions.at(index).insert.direction);
+                break;
+                case DelayedType_Move:
+                    move_player(delayedActions.at(index).move.id,delayedActions.at(index).move.movement);
+                break;
+                case DelayedType_Remove:
+                    remove_player(delayedActions.at(index).remove);
+                break;
+                case DelayedType_Reinsert_single:
+                    reinsert_player(delayedActions.at(index).reinsert_single.id,delayedActions.at(index).reinsert_single.x,delayedActions.at(index).reinsert_single.y,delayedActions.at(index).reinsert_single.direction);
+                break;
+                case DelayedType_Reinsert_full:
+                    reinsert_player(delayedActions.at(index).reinsert_full.id,delayedActions.at(index).reinsert_full.mapId,delayedActions.at(index).reinsert_full.x,delayedActions.at(index).reinsert_full.y,delayedActions.at(index).reinsert_full.direction);
+                break;
+                case DelayedType_Drop_all:
+                    dropAllPlayerOnTheMap();
+                break;
+                default:
+                break;
+            }
             index++;
         }
-        delayedInsert.clear();
-
-        index=0;
-        while(index<delayedMove.size())
-        {
-            move_player(delayedMove.at(index).id,delayedMove.at(index).movement);
-            index++;
-        }
-        delayedMove.clear();
-
-        index=0;
-        while(index<delayedRemove.size())
-        {
-            remove_player(delayedRemove.at(index));
-            index++;
-        }
-        delayedRemove.clear();
+        delayedActions.clear();
 
         index=0;
         while(index<delayedTeleportTo.size())
