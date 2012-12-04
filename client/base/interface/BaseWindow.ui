@@ -1171,10 +1171,10 @@ border-image: url(:/images/empty.png);
            <widget class="QLabel" name="inventory_image">
             <property name="geometry">
              <rect>
-              <x>50</x>
-              <y>480</y>
-              <width>64</width>
-              <height>64</height>
+              <x>47</x>
+              <y>477</y>
+              <width>72</width>
+              <height>72</height>
              </rect>
             </property>
             <property name="pixmap">
@@ -1254,8 +1254,8 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="iconSize">
              <size>
-              <width>64</width>
-              <height>64</height>
+              <width>72</width>
+              <height>72</height>
              </size>
             </property>
             <property name="viewMode">
