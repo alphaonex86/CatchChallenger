@@ -750,9 +750,11 @@ void BaseWindow::on_pushButton_interface_bag_clicked()
 
 void BaseWindow::on_toolButton_quit_inventory_clicked()
 {
+    ui->inventory->reset();
     ui->stackedWidget->setCurrentIndex(1);
     if(inSelection)
         objectSelection(false,0);
+    on_inventory_itemSelectionChanged();
 }
 
 void BaseWindow::on_inventory_itemSelectionChanged()
