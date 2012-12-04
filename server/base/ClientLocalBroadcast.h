@@ -34,7 +34,7 @@ public slots:
 
     bool singleMove(const Direction &direction);
     virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    virtual void teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    virtual void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     void seedValidated();
     virtual void plantSeed(const quint8 &query_id,const quint8 &plant_id);
     virtual void collectPlant(const quint8 &query_id);

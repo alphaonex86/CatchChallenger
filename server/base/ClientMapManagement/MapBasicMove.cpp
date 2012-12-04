@@ -68,7 +68,7 @@ void MapBasicMove::put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /
     #endif
 }
 
-void MapBasicMove::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void MapBasicMove::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
 }

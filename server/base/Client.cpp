@@ -80,7 +80,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(localClientHandler,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
     connect(clientLocalBroadcast,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
 
-    connect(clientNetworkRead,	SIGNAL(sendQuery(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendQuery(quint8,quint16,QByteArray)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(sendQuery(quint8,quint16,quint8,QByteArray)),clientNetworkWrite,SLOT(sendQuery(quint8,quint16,quint8,QByteArray)),Qt::QueuedConnection);
 
     connect(clientNetworkRead,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
@@ -115,6 +115,8 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientLocalBroadcast,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(teleportValidatedTo(Map*,quint8,quint8,Orientation)),			localClientHandler,	SLOT(teleportValidatedTo(Map*,quint8,quint8,Orientation)),				Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(teleportValidatedTo(Map*,quint8,quint8,Orientation)),			clientLocalBroadcast,	SLOT(teleportValidatedTo(Map*,quint8,quint8,Orientation)),				Qt::QueuedConnection);
+    connect(localClientHandler,	SIGNAL(teleportTo(Map*,quint8,quint8,Orientation)),	clientNetworkRead,	SLOT(teleportTo(Map*,quint8,quint8,Orientation)),				Qt::QueuedConnection);
+
     //packet parsed (broadcast)
     connect(localClientHandler,	SIGNAL(receiveSystemText(QString)),			clientBroadCast,	SLOT(receiveSystemText(QString)),				Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(sendChatText(Chat_type,QString)),			clientBroadCast,	SLOT(sendChatText(Chat_type,QString)),				Qt::QueuedConnection);

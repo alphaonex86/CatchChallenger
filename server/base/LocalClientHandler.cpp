@@ -409,7 +409,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
     else if(command=="tp")
     {
         QStringList arguments=extraText.split(" ",QString::SkipEmptyParts);
-        if(arguments.size()==2)
+        if(arguments.size()==3)
         {
             if(arguments.at(1)!="to")
             {
@@ -442,12 +442,12 @@ void LocalClientHandler::destroyObject(const quint32 &itemId,const quint32 &quan
     removeObject(itemId,quantity);
 }
 
-void LocalClientHandler::receiveTeleportTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void LocalClientHandler::receiveTeleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     emit teleportTo(map,x,y,orientation);
 }
 
-void LocalClientHandler::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void LocalClientHandler::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     emit message(QString("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
