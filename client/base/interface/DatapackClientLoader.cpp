@@ -102,7 +102,8 @@ void DatapackClientLoader::parseItems()
                             qDebug() << QString("No image, load the default, id number already set: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
                             DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
                         }
-                        DatapackClientLoader::items[id].image=DatapackClientLoader::items[id].image.scaled(64,64);
+                        // base size: 24x24
+                        DatapackClientLoader::items[id].image=DatapackClientLoader::items[id].image.scaled(72,72);//then zoom: 3x
 
                         //load the name
                         DatapackClientLoader::items[id].name=tr("Unknow object");
