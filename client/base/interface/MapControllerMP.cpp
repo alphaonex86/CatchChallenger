@@ -730,9 +730,10 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     this->y=y;
 
     unloadPlayerFromCurrentMap();
-    QString current_map_fileName=loadOtherMap(DatapackClientLoader::datapackLoader.maps[mapId]);
+    QString current_map_fileName=loadOtherMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
     if(current_map_fileName.isEmpty())
     {
+        qDebug() << QString("Unable to open: %1").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
         QMessageBox::critical(NULL,"Error",mLastError);
         return;
     }
