@@ -499,9 +499,15 @@ void ProtocolParsingInput::parseIncommingData()
                 DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && !is_reply"));
                 #endif
                 if(!need_subCodeType)
+                {
+                    emit newInputQuery(mainCodeType,queryNumber);
                     parseQuery(mainCodeType,queryNumber,data);
+                }
                 else
+                {
+                    emit newInputQuery(mainCodeType,subCodeType,queryNumber);
                     parseQuery(mainCodeType,subCodeType,queryNumber,data);
+                }
             }
             else
             {
