@@ -62,4 +62,10 @@
 		<description>Element used to make many dishes</description>
 		<description lang="fr">Élément utilisé pour la confection de nombreux plats</description>
 	</item>
+	<item id="10" image="other/recipe-level-1.png"><!-- Recipe: Jam -->
+		<name>Recipe: Jam</name>
+		<name lang="fr">Recette: Confiture</name>
+		<description>Recipe to learn how do <b>Jam</b>, disappears after use</description>
+		<description lang="fr">Recette pour apprendre comment faire de la <b>Confiture</b>, disparait après utilisation</description>
+	</item>
 </items>
