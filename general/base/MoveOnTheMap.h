@@ -26,7 +26,7 @@ public:
 
     static bool canGoTo(const Direction &direction, const Map &map, const quint8 &x, const quint8 &y, const bool &checkCollision);
     static bool haveGrass(const Map &map,const COORD_TYPE &x,const COORD_TYPE &y);
-    static bool move(Direction direction, Map ** map, quint8 *x, quint8 *y, const bool &checkCollision=true);
+    static bool move(Direction direction, Map ** map, quint8 *x, quint8 *y, const bool &checkCollision=false);
     static bool teleport(Map ** map, quint8 *x, quint8 *y);
 
     static bool isWalkable(const Map &map, const quint8 &x, const quint8 &y);

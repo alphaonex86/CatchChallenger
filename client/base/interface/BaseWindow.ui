@@ -1254,8 +1254,8 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="iconSize">
              <size>
-              <width>72</width>
-              <height>72</height>
+              <width>48</width>
+              <height>48</height>
              </size>
             </property>
             <property name="viewMode">

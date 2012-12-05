@@ -471,17 +471,17 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             if(x*4+y*map_to_send.width*4<(quint32)Collisions.size())
                 collisions=Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
-                collisions=true;
+                collisions=false;
 
             if(x*4+y*map_to_send.width*4<(quint32)Grass.size())
                 grass=Grass.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
-                grass=true;
+                grass=false;
 
             if(x*4+y*map_to_send.width*4<(quint32)Dirt.size())
                 dirt=Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
-                dirt=true;
+                dirt=false;
 
             if(Walkable.size()>0)
                 map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=walkable && !water && !collisions && !dirt;
