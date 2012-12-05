@@ -20,7 +20,6 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    qDebug() << QString("insert_plant(%1,%2,%3,%4,%5)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(plant_id).arg(seconds_to_mature);
     if(!DatapackClientLoader::datapackLoader.plants.contains(plant_id))
     {
         qDebug() << "plant_id don't exists";
@@ -79,7 +78,9 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
     plant.mature_at=current_time+seconds_to_mature;
 
     map_full->logicalMap.plantList << plant;
+    #ifdef DEBUG_CLIENT_PLANTS
     qDebug() << QString("insert_plant(), map: %1 at: %2,%3").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
+    #endif
     if(ObjectGroupItem::objectGroupLink.contains(all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup))
         ObjectGroupItem::objectGroupLink[all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant.mapObject);
     else
@@ -109,7 +110,9 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "MapController::remove_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
+    #ifdef DEBUG_CLIENT_PLANTS
     qDebug() << QString("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
+    #endif
     if(!all_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
         QStringList map_list;
