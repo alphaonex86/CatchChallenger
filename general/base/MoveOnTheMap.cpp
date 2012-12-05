@@ -146,7 +146,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                     return true;
                 if(map.border.left.map->parsed_layer.walkable==NULL)
                     return false;
-                return map.border.left.map->parsed_layer.walkable[map.border.left.map->width-1+(y+map.border.left.y_offset)*(map.border.left.map->width)];
+                return isWalkable(*map.border.left.map,map.border.left.map->width-1,y+map.border.left.y_offset);
             }
         break;
         case Direction_move_at_right:
@@ -166,7 +166,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                     return true;
                 if(map.border.right.map->parsed_layer.walkable==NULL)
                     return false;
-                return map.border.right.map->parsed_layer.walkable[0+(y+map.border.right.y_offset)*(map.border.right.map->width)];
+                return isWalkable(*map.border.right.map,0,y+map.border.right.y_offset);
             }
         break;
         case Direction_move_at_top:
@@ -186,7 +186,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                     return true;
                 if(map.border.top.map->parsed_layer.walkable==NULL)
                     return false;
-                return map.border.top.map->parsed_layer.walkable[x+map.border.top.x_offset+(map.border.top.map->height-1)*(map.border.top.map->width)];
+                return isWalkable(*map.border.top.map,x+map.border.top.x_offset,map.border.top.map->height-1);
             }
         break;
         case Direction_move_at_bottom:
@@ -206,7 +206,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                     return true;
                 if(map.border.bottom.map->parsed_layer.walkable==NULL)
                     return false;
-                return map.border.bottom.map->parsed_layer.walkable[x+map.border.bottom.x_offset+0];
+                return isWalkable(*map.border.bottom.map,x+map.border.bottom.x_offset,0);
             }
         break;
         default:
