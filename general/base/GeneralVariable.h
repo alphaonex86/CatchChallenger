@@ -19,6 +19,7 @@
 #define DEBUG_MESSAGE_MAP_BORDER
 #define DEBUG_MESSAGE_MAP_OBJECT
 #define DEBUG_MESSAGE_MAP_RAW
+#define DEBUG_CLIENT_PLANTS
 //*/
 
 #define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]*[0-9a-zA-Z]\\.[a-z]{3,4}$"
