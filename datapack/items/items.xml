@@ -68,4 +68,10 @@
 		<description>Recipe to learn how do <b>Jam</b>, disappears after use</description>
 		<description lang="fr">Recette pour apprendre comment faire de la <b>Confiture</b>, disparait après utilisation</description>
 	</item>
+	<item id="11" image="berries/tuber.png"><!-- Tuber -->
+		<name>Tuber</name>
+		<name lang="fr">Tubercule</name>
+		<description>Tuber used for soup</description>
+		<description lang="fr">Tubercule utilisé pour la soupe</description>
+	</item>
 </items>
