@@ -112,6 +112,7 @@ private slots:
     void on_pushButton_interface_trainer_clicked();
     void on_toolButton_quit_options_clicked();
     void on_inventoryDestroy_clicked();
+    void on_inventoryUse_clicked();
 protected slots:
     //datapack
     void datapackParsed();
