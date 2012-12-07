@@ -15,6 +15,7 @@
 #define SPEED_TYPE quint8
 
 namespace Pokecraft {
+
 enum Chat_type
 {
     Chat_type_local = 0x01,
@@ -179,6 +180,20 @@ struct Map_to_send
     QList<Map_Point> rescue_points;
     QList<Map_Point> bot_spawn_points;
 };
-}
 
+struct CrafingRecipe
+{
+    quint32 itemToLearn;
+    quint32 doItemId;
+    quint16 quantity;
+    quint8 success;//0-100
+    struct Material
+    {
+        quint32 itemId;
+        quint32 quantity;
+    };
+    QList<Material> materials;
+};
+
+}
 #endif // STRUCTURES_GENERAL_H
