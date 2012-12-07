@@ -447,11 +447,8 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 }
 
                 //add into the inventory
-                float quantity=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].quantity;
-                int integer_part=quantity;
-                float random_part=quantity-integer_part;
-                random_part*=10000;//random_part is 0 to 99
-                if(random_part<=(rand()%10000))
+                float quantity=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].fix_quantity;
+                if(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity<=(rand()%RANDOM_FLOAT_PART_DIVIDER))
                     quantity++;
 
                 QByteArray data;
