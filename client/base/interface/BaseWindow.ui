@@ -50,11 +50,11 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>5</number>
        </property>
-       <widget class="QWidget" name="page_2">
+       <widget class="QWidget" name="page_init">
         <property name="styleSheet">
-         <string notr="true">background-image: url(:/images/background.png);</string>
+         <string notr="true">#page_init{background-image: url(:/images/background.png);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="bottomMargin">
@@ -120,7 +120,7 @@ color: rgb(255, 255, 255);</string>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_3">
+       <widget class="QWidget" name="page_map">
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <property name="spacing">
           <number>0</number>
@@ -707,9 +707,9 @@ background-image: url(:/images/empty.png);</string>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_4">
+       <widget class="QWidget" name="page_player">
         <property name="styleSheet">
-         <string notr="true">background-image: url(:/images/interface/player/background.png);</string>
+         <string notr="true">#page_player{background-image: url(:/images/interface/player/background.png);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
          <property name="spacing">
@@ -1151,9 +1151,9 @@ border-image: url(:/images/empty.png);
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page">
+       <widget class="QWidget" name="page_inventory">
         <property name="styleSheet">
-         <string notr="true">#page{background-image: url(:/images/inventory/background.png);}
+         <string notr="true">#page_inventory{background-image: url(:/images/inventory/background.png);}
 </string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -1464,9 +1464,9 @@ padding-bottom:3px;
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_5">
+       <widget class="QWidget" name="page_options">
         <property name="styleSheet">
-         <string notr="true">background-image: url(:/images/background.png);</string>
+         <string notr="true">#page_options{background-image: url(:/images/background.png);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_9">
          <item>
@@ -1697,6 +1697,501 @@ border-image: url(:/images/empty.png);
           </layout>
          </item>
         </layout>
+       </widget>
+       <widget class="QWidget" name="page_plants">
+        <property name="styleSheet">
+         <string notr="true">#page_plants{background-image: url(:/images/interface/player/background.png);}</string>
+        </property>
+        <widget class="QFrame" name="framePlantsLeft">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>355</width>
+           <height>590</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>355</width>
+           <height>590</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>355</width>
+           <height>590</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#framePlantsLeft{background-image: url(:/images/interface/plants-left.png);}</string>
+         </property>
+         <widget class="QLabel" name="labelPlantImage">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>20</y>
+            <width>72</width>
+            <height>72</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>72</width>
+            <height>72</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>72</width>
+            <height>72</height>
+           </size>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelPlantName">
+          <property name="geometry">
+           <rect>
+            <x>140</x>
+            <y>40</y>
+            <width>181</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelPlantDescription">
+          <property name="geometry">
+           <rect>
+            <x>26</x>
+            <y>413</y>
+            <width>300</width>
+            <height>150</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>150</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>150</height>
+           </size>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QWidget" name="formLayoutWidget">
+          <property name="geometry">
+           <rect>
+            <x>180</x>
+            <y>150</y>
+            <width>160</width>
+            <height>186</height>
+           </rect>
+          </property>
+          <layout class="QFormLayout" name="formLayout">
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelPlantFruitImage">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>48</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="labelPlantFruitText"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelFruitsImage">
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLabel" name="labelFruitsText"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelFloweringImage">
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="labelFloweringText"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="formLayoutWidget_2">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>140</y>
+            <width>160</width>
+            <height>202</height>
+           </rect>
+          </property>
+          <layout class="QFormLayout" name="formLayout_2">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelPlantedImage">
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="labelPlantedText"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelSproutedImage">
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLabel" name="labelSproutedText"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelTallerImage">
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>32</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="labelTallerText"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QPushButton" name="plantUse">
+          <property name="geometry">
+           <rect>
+            <x>130</x>
+            <y>370</y>
+            <width>110</width>
+            <height>25</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>110</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>110</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton::hover {
+background-position:left center;
+}
+QPushButton::pressed {
+background-position:left bottom;
+}
+QPushButton { 
+background-image: url(:/images/interface/button-generic.png);
+border-image: url(:/images/empty.png);
+color: rgb(255, 255, 255);
+padding-left:4px;
+padding-right:4px;
+padding-top:8px;
+padding-bottom:3px;
+}</string>
+          </property>
+          <property name="text">
+           <string>Use</string>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QFrame" name="framePlantsRight">
+         <property name="geometry">
+          <rect>
+           <x>360</x>
+           <y>0</y>
+           <width>434</width>
+           <height>568</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>434</width>
+           <height>568</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>434</width>
+           <height>568</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#framePlantsRight{background-image: url(:/images/interface/plants-right.png);}</string>
+         </property>
+         <widget class="QLabel" name="labelPlantInventoryTitle">
+          <property name="geometry">
+           <rect>
+            <x>142</x>
+            <y>15</y>
+            <width>171</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Plants</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+         <widget class="QListWidget" name="listPlantList">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>70</y>
+            <width>371</width>
+            <height>481</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-image: url(:/images/empty.png);</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>48</width>
+            <height>48</height>
+           </size>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QToolButton" name="toolButton_quit_plants">
+         <property name="geometry">
+          <rect>
+           <x>770</x>
+           <y>570</y>
+           <width>22</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>22</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>22</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="page_crafting">
+        <property name="styleSheet">
+         <string notr="true">#page_crafting{background-image: url(:/images/interface/player/background.png);}</string>
+        </property>
+        <widget class="QFrame" name="frameCraftingLeft">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>355</width>
+           <height>598</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>355</width>
+           <height>598</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>355</width>
+           <height>598</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#frameCraftingLeft{background-image: url(:/images/interface/crafting-left.png);}</string>
+         </property>
+        </widget>
+        <widget class="QFrame" name="frameCraftingRight">
+         <property name="geometry">
+          <rect>
+           <x>360</x>
+           <y>0</y>
+           <width>434</width>
+           <height>568</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>434</width>
+           <height>568</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>434</width>
+           <height>568</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#frameCraftingRight{background-image: url(:/images/interface/crafting-right.png);}</string>
+         </property>
+        </widget>
+        <widget class="QToolButton" name="toolButton_quit_crafting">
+         <property name="geometry">
+          <rect>
+           <x>770</x>
+           <y>570</y>
+           <width>22</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>22</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>22</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
        </widget>
       </widget>
      </item>

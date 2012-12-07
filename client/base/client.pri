@@ -32,7 +32,8 @@ SOURCES += $$PWD/../../general/base/DebugClass.cpp \
     $$PWD/interface/MapController.cpp \
     $$PWD/../../general/base/ConnectedSocket.cpp \
     $$PWD/interface/DatapackClientLoader.cpp \
-    $$PWD/../crafting/interface/DatapackClientLoaderCrafting.cpp
+    $$PWD/../crafting/interface/DatapackClientLoaderCrafting.cpp \
+    ../crafting/interface/BaseWindowCrafting.cpp
 
 HEADERS  += $$PWD/../../general/base/GeneralStructures.h \
     $$PWD/../../general/base/DebugClass.h \
