@@ -160,7 +160,7 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
     plantOnMap.player_id=player_informations->id;
     plantOnMap.mature_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds;
-    plantOnMap.player_owned_expire_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds+60*60*24;
+    plantOnMap.player_owned_expire_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds+POKECRAFT_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
     switch(GlobalData::serverSettings.database.type)
     {
@@ -415,7 +415,9 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 emit postReply(query_id,data);
                 return;
             }
-            if(static_cast<MapServer *>(map)->plants.at(index).player_id==player_informations->id || current_time<static_cast<MapServer *>(map)->plants.at(index).player_owned_expire_at)
+            //check if owned
+            if(static_cast<MapServer *>(map)->plants.at(index).player_id==player_informations->id || current_time<static_cast<MapServer *>(map)->plants.at(index).player_owned_expire_at
+                    || player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
             {
                 //remove plant from db
                 switch(GlobalData::serverSettings.database.type)

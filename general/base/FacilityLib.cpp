@@ -68,3 +68,15 @@ QStringList FacilityLib::skinIdList(const QString& skinPath)
         skinFolderList.removeLast();
     return skinFolderList;
 }
+
+QString FacilityLib::secondsToString(const quint64 &seconds)
+{
+    if(seconds<60)
+        return QObject::tr("%n second(s)","",seconds);
+    else if(seconds<60*60)
+        return QObject::tr("%n minute(s)","",seconds/60);
+    else if(seconds<60*60*24)
+        return QObject::tr("%n hour(s)","",seconds/(60*60));
+    else
+        return QObject::tr("%n day(s)","",seconds/(60*60*24));
+}

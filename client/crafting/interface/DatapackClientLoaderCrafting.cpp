@@ -50,9 +50,19 @@ void DatapackClientLoader::parsePlants()
                 {
                     if(!plants.contains(id))
                     {
-                        ok=true;
                         Plant plant;
                         plant.itemUsed=itemUsed;
+                        ok=false;
+                        QDomElement quantity = plantItem.firstChildElement("quantity");
+                        if(!quantity.isNull())
+                        {
+                            if(quantity.isElement())
+                            {
+                                plant.quantity=quantity.text().toFloat(&ok2);
+                                if(ok2)
+                                    ok=true;
+                            }
+                        }
                         QDomElement grow = plantItem.firstChildElement("grow");
                         if(!grow.isNull())
                         {
