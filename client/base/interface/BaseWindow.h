@@ -74,6 +74,7 @@ private slots:
     void on_pushButton_interface_bag_clicked();
     void on_toolButton_quit_inventory_clicked();
     void on_inventory_itemSelectionChanged();
+    void on_listPlantList_itemSelectionChanged();
     void tipTimeout();
     void gainTimeout();
     void showTip(const QString &tip);
@@ -89,6 +90,8 @@ private slots:
     void add_to_inventory(const QHash<quint32,quint32> &items);
     void remove_to_inventory(const QHash<quint32,quint32> &items);
     void load_inventory();
+    void load_plant_inventory();
+    void load_crafting_inventory();
     //render
     void stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
     void actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
@@ -113,6 +116,13 @@ private slots:
     void on_toolButton_quit_options_clicked();
     void on_inventoryDestroy_clicked();
     void on_inventoryUse_clicked();
+    void on_toolButton_quit_plants_clicked();
+    void on_inventoryInformation_clicked();
+
+    void on_plantUse_clicked();
+
+    void on_listPlantList_itemActivated(QListWidgetItem *item);
+
 protected slots:
     //datapack
     void datapackParsed();
@@ -155,6 +165,10 @@ private:
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
     QHash<quint32,QListWidgetItem *> items_to_graphical;
+    QHash<QListWidgetItem *,quint32> plants_items_graphical;
+    QHash<quint32,QListWidgetItem *> plants_items_to_graphical;
+    QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;
+    QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
     bool inSelection;
 signals:
     //datapack

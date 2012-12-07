@@ -32,6 +32,7 @@ public:
         quint16 taller_seconds;
         quint16 flowering_seconds;
         quint16 fruits_seconds;
+        float quantity;
         Tiled::Tileset * tileset;
     };
     QHash<quint8,Plant> plants;
