@@ -147,6 +147,7 @@ void BaseWindow::resetAll()
     inSelection=false;
     queryList.clear();
     ui->inventoryInformation->setVisible(false);
+    ui->inventoryUse->setVisible(false);
     ui->inventoryDestroy->setVisible(false);
 }
 
@@ -486,10 +487,10 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
             seed_in_waiting=itemId;
             addQuery(QueryType_Seed);
             seedWait=true;
-            if(DatapackClientLoader::datapackLoader.itemToplants.contains(itemId))
+            if(DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
-                qDebug() << QString("send seed for: %1").arg(DatapackClientLoader::datapackLoader.itemToplants[itemId]);
-                emit useSeed(DatapackClientLoader::datapackLoader.itemToplants[itemId]);
+                qDebug() << QString("send seed for: %1").arg(DatapackClientLoader::datapackLoader.itemToPlants[itemId]);
+                emit useSeed(DatapackClientLoader::datapackLoader.itemToPlants[itemId]);
             }
             else
                 qDebug() << QString("seed not found for item: %1").arg(itemId);
@@ -614,6 +615,7 @@ void BaseWindow::load_inventory()
     if(!haveInventory || !datapackIsParsed)
         return;
     ui->inventoryInformation->setVisible(false);
+    ui->inventoryUse->setVisible(false);
     ui->inventoryDestroy->setVisible(false);
     ui->inventory->clear();
     items_graphical.clear();
@@ -628,7 +630,7 @@ void BaseWindow::load_inventory()
             switch(waitedObjectType)
             {
                 case ObjectType_Seed:
-                    if(DatapackClientLoader::datapackLoader.itemToplants.contains(i.key()))
+                    if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
                         show=true;
                 break;
                 default:
@@ -653,6 +655,7 @@ void BaseWindow::load_inventory()
                 item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
                 if(i.value()>1)
                     item->setText(QString::number(i.value()));
+                item->setToolTip(DatapackClientLoader::datapackLoader.items[i.key()].name);
             }
             else
             {
@@ -767,6 +770,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         ui->inventory_name->setText("");
         ui->inventory_description->setText(tr("Select an object"));
         ui->inventoryInformation->setVisible(false);
+        ui->inventoryUse->setVisible(false);
         ui->inventoryDestroy->setVisible(false);
         return;
     }
@@ -1003,4 +1007,13 @@ void Pokecraft::BaseWindow::on_inventoryDestroy_clicked()
     else
         this->items[itemId]-=quantity;
     load_inventory();
+}
+
+void Pokecraft::BaseWindow::on_inventoryUse_clicked()
+{
+    qDebug() << "on_inventoryUse_clicked()";
+    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    if(items.size()!=1)
+        return;
+    on_inventory_itemActivated(items.first());
 }
