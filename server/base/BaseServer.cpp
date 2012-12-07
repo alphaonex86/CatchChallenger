@@ -83,6 +83,7 @@ void BaseServer::preload_the_data()
     preload_the_players();
     preload_the_plant();
     preload_the_plant_on_map();
+    preload_crafting_recipes();
 }
 
 void BaseServer::preload_the_map()
@@ -564,6 +565,7 @@ void BaseServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
+    unload_crafting_recipes();
     unload_the_plant_on_map();
     unload_the_plant();
     unload_the_items();
