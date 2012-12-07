@@ -17,6 +17,7 @@
 #define POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT 150
 #define POKECRAFT_SERVER_NORMAL_SPEED 250 //then 250ms, see the protocol
 
+#define RANDOM_FLOAT_PART_DIVIDER 10000
 
 /** map visibility bandwith optimisation
  Do in define to not drop cpu performance, due to heavy call **/

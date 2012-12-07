@@ -114,7 +114,23 @@ struct Plant
 {
     quint32 itemUsed;
     quint32 mature_seconds;
-    float quantity;
+    //float quantity;//splited into 2 integer
+    quint16 fix_quantity;
+    quint16 random_quantity;
+};
+
+struct CrafingRecipe
+{
+    quint32 itemToLearn;
+    quint32 doItemId;
+    quint16 quantity;
+    quint8 success;//0-100
+    struct Material
+    {
+        quint32 itemId;
+        quint32 quantity;
+    };
+    QList<Material> materials;
 };
 
 struct ServerPrivateVariables
@@ -130,6 +146,7 @@ struct ServerPrivateVariables
     QSet<quint32> itemsId;
     QHash<QString,quint64> filesList;
     QHash<quint8,Plant> plants;
+    QHash<quint32,CrafingRecipe> crafingRecipes;
 
     //general data
     QList<EventThreader *> eventThreaderList;
