@@ -7,6 +7,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "../../general/base/GeneralStructures.h"
+
 #include "tileset.h"
 
 class DatapackClientLoader : public QThread
@@ -33,7 +35,9 @@ public:
         Tiled::Tileset * tileset;
     };
     QHash<quint8,Plant> plants;
-    QHash<quint32,quint8> itemToplants;
+    QHash<quint32,quint8> itemToPlants;
+    QHash<quint32,Pokecraft::CrafingRecipe> crafingRecipes;
+    QHash<quint32,quint32> itemToCrafingRecipes;
 
     QStringList maps;
     QPixmap defaultInventoryImage();
@@ -53,6 +57,7 @@ private slots:
     void parseItems();
     void parseMaps();
     void parsePlants();
+    void parseCraftingRecipes();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

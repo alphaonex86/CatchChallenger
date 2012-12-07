@@ -437,4 +437,5 @@ void BaseServerCrafting::unload_the_plant_on_map()
 
 void BaseServerCrafting::unload_crafting_recipes()
 {
+    GlobalData::serverPrivateVariables.crafingRecipes.clear();
 }

@@ -188,5 +188,5 @@ void DatapackClientLoader::resetAll()
          delete i.value().tileset;
      }
      plants.clear();
-     itemToplants.clear();
+     itemToPlants.clear();
 }

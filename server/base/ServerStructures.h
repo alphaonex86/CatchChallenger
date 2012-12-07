@@ -119,20 +119,6 @@ struct Plant
     quint16 random_quantity;
 };
 
-struct CrafingRecipe
-{
-    quint32 itemToLearn;
-    quint32 doItemId;
-    quint16 quantity;
-    quint8 success;//0-100
-    struct Material
-    {
-        quint32 itemId;
-        quint32 quantity;
-    };
-    QList<Material> materials;
-};
-
 struct ServerPrivateVariables
 {
     //bd
