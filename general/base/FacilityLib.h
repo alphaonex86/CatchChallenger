@@ -13,6 +13,7 @@ public:
     static QStringList listFolder(const QString& folder,const QString& suffix="");
     static QString randomPassword(const QString& string,const quint8& length);
     static QStringList skinIdList(const QString& skinPath);
+    static QString secondsToString(const quint64 &seconds);
 private:
     static QByteArray UTF8EmptyData;
 };

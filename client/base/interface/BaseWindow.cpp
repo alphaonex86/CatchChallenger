@@ -86,7 +86,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     mapController->setFocus();
     mapController->setDatapackPath(client->get_datapack_base_name());
 
-    renderFrame = new QFrame(ui->page_3);
+    renderFrame = new QFrame(ui->page_map);
     renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
     renderFrame->setMinimumSize(QSize(600, 520));
     QVBoxLayout *renderLayout = new QVBoxLayout(renderFrame);
@@ -336,7 +336,7 @@ void BaseWindow::update_chat()
 
 void BaseWindow::setupChatUI()
 {
-    QFrame *frame_main_display_right = new QFrame(ui->page_3);
+    QFrame *frame_main_display_right = new QFrame(ui->page_map);
     frame_main_display_right->setMinimumSize(QSize(200, 0));
     frame_main_display_right->setMaximumSize(QSize(200, 16777215));
     frame_main_display_right->setStyleSheet(QString::fromUtf8("background-image: url(:/images/interface/baroption.png);"));
@@ -463,8 +463,16 @@ void BaseWindow::selectObject(const ObjectType &objectType)
 {
     inSelection=true;
     waitedObjectType=objectType;
-    ui->stackedWidget->setCurrentIndex(3);
-    load_inventory();
+    switch(objectType)
+    {
+        case ObjectType_Seed:
+            ui->stackedWidget->setCurrentIndex(5);
+        break;
+        case ObjectType_All:
+        default:
+            ui->stackedWidget->setCurrentIndex(3);
+        break;
+    }
 }
 
 void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
@@ -474,6 +482,7 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
     switch(waitedObjectType)
     {
         case ObjectType_Seed:
+            ui->plantUse->setVisible(false);
             if(!ok)
                 break;
             if(!items.contains(itemId))
@@ -489,6 +498,8 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
             seedWait=true;
             if(DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
+                load_plant_inventory();
+                load_inventory();
                 qDebug() << QString("send seed for: %1").arg(DatapackClientLoader::datapackLoader.itemToPlants[itemId]);
                 emit useSeed(DatapackClientLoader::datapackLoader.itemToPlants[itemId]);
             }
@@ -499,7 +510,6 @@ void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
         qDebug() << "waitedObjectType is unknow";
         return;
     }
-    load_inventory();
 }
 
 void BaseWindow::have_current_player_info()
@@ -537,8 +547,6 @@ void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
     #endif
     this->items=items;
     haveInventory=true;
-    updateConnectingStatus();
-    load_inventory();
     updateConnectingStatus();
 }
 
@@ -587,6 +595,7 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
     showGain(html);
 
     load_inventory();
+    load_plant_inventory();
 }
 
 void BaseWindow::remove_to_inventory(const QHash<quint32,quint32> &items)
@@ -605,6 +614,7 @@ void BaseWindow::remove_to_inventory(const QHash<quint32,quint32> &items)
         }
     }
     load_inventory();
+    load_plant_inventory();
 }
 
 void BaseWindow::load_inventory()
@@ -641,14 +651,8 @@ void BaseWindow::load_inventory()
         if(show)
         {
             QListWidgetItem *item;
-            if(!items_to_graphical.contains(i.key()))
-            {
-                item=new QListWidgetItem();
-                items_to_graphical[i.key()]=item;
-                items_graphical[item]=i.key();
-            }
-            else
-                item=items_to_graphical[i.key()];
+            item=new QListWidgetItem();
+            items_to_graphical[i.key()]=item;
             items_graphical[item]=i.key();
             if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
             {
@@ -676,7 +680,6 @@ void BaseWindow::datapackParsed()
     qDebug() << "BaseWindow::datapackParsed()";
     #endif
     datapackIsParsed=true;
-    load_inventory();
     updateConnectingStatus();
     updatePlayerImage();
 }
@@ -692,6 +695,8 @@ void BaseWindow::updateConnectingStatus()
         waitedData << tr("opening the datapack");
     if(waitedData.isEmpty())
     {
+        load_inventory();
+        load_plant_inventory();
         this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
         ui->stackedWidget->setCurrentIndex(1);
         showTip(tr("Welcome <b><i>%1</i></b> on pokecraft").arg(client->getPseudo()));
@@ -774,13 +779,13 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         ui->inventoryDestroy->setVisible(false);
         return;
     }
-    if(!inSelection)
-    {
-        //ui->inventoryInformation->setVisible(true);-> if berry, but missing details screen
-        ui->inventoryDestroy->setVisible(true);
-    }
     QListWidgetItem *item=items.first();
     const DatapackClientLoader::Item &content=DatapackClientLoader::datapackLoader.items[items_graphical[item]];
+    ui->inventoryInformation->setVisible(!inSelection &&
+                                         /* is a plant */
+                                         DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical[item])
+                                         );
+    ui->inventoryDestroy->setVisible(!inSelection);
     ui->inventory_image->setPixmap(content.image);
     ui->inventory_name->setText(content.name);
     ui->inventory_description->setText(content.description);
@@ -930,48 +935,6 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     objectSelection(true,items_graphical[item]);
 }
 
-void BaseWindow::seed_planted(const bool &ok)
-{
-    removeQuery(QueryType_Seed);
-    seedWait=false;
-    if(ok)
-        /// \todo add to the map here, and don't send on the server
-        showTip(tr("Seed correctly planted"));
-    else
-    {
-        if(items.contains(seed_in_waiting))
-            items[seed_in_waiting]++;
-        else
-            items[seed_in_waiting]=1;
-        showTip(tr("Seed cannot be planted"));
-        load_inventory();
-    }
-}
-
-void BaseWindow::plant_collected(const Pokecraft::Plant_collect &stat)
-{
-    collectWait=false;
-    removeQuery(QueryType_CollectPlant);
-    switch(stat)
-    {
-        case Plant_collect_correctly_collected:
-            showTip(tr("Plant collected"));
-        break;
-        case Plant_collect_empty_dirt:
-            showTip(tr("Try collected empty dirt"));
-        break;
-        case Plant_collect_owned_by_another_player:
-            showTip(tr("This plant had been planted recently by another player"));
-        break;
-        case Plant_collect_impossible:
-            showTip(tr("This plant can't be collected"));
-        break;
-        default:
-        qDebug() << "BaseWindow::plant_collected(): unkonw return";
-        return;
-    }
-}
-
 void Pokecraft::BaseWindow::on_inventoryDestroy_clicked()
 {
     qDebug() << "on_inventoryDestroy_clicked()";
@@ -1007,6 +970,7 @@ void Pokecraft::BaseWindow::on_inventoryDestroy_clicked()
     else
         this->items[itemId]-=quantity;
     load_inventory();
+    load_plant_inventory();
 }
 
 void Pokecraft::BaseWindow::on_inventoryUse_clicked()
@@ -1016,4 +980,37 @@ void Pokecraft::BaseWindow::on_inventoryUse_clicked()
     if(items.size()!=1)
         return;
     on_inventory_itemActivated(items.first());
+}
+
+void Pokecraft::BaseWindow::on_inventoryInformation_clicked()
+{
+    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    if(items.size()!=1)
+    {
+        qDebug() << "on_inventoryInformation_clicked() should not be accessible here";
+        return;
+    }
+    QListWidgetItem *item=items.first();
+    if(!items_graphical.contains(item))
+    {
+        qDebug() << "on_inventoryInformation_clicked() item not found here";
+        return;
+    }
+    if(DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical[item]))
+    {
+        if(!plants_items_to_graphical.contains(DatapackClientLoader::datapackLoader.itemToPlants[items_graphical[item]]))
+        {
+            qDebug() << QString("on_inventoryInformation_clicked() is not into plant list: item: %1, plant: %2").arg(items_graphical[item]).arg(DatapackClientLoader::datapackLoader.itemToPlants[items_graphical[item]]);
+            return;
+        }
+        ui->listPlantList->reset();
+        ui->stackedWidget->setCurrentIndex(5);
+        plants_items_to_graphical[DatapackClientLoader::datapackLoader.itemToPlants[items_graphical[item]]]->setSelected(true);
+        on_listPlantList_itemSelectionChanged();
+    }
+    else
+    {
+        qDebug() << "on_inventoryInformation_clicked() information on unknow object type";
+        return;
+    }
 }
