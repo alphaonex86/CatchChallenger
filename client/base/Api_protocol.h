@@ -37,6 +37,7 @@ public:
     Player_private_and_public_informations get_player_informations();
     QString getPseudo();
     quint16 getId();
+    quint64 getTXSize();
 
     virtual void sendDatapackContent() = 0;
     virtual void tryDisconnect() = 0;
