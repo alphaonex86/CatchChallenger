@@ -41,7 +41,7 @@ public slots:
 protected:
     virtual void extraStop();
     virtual void insertClient(Map *map);
-    virtual void removeClient(Map *map);
+    virtual void removeClient(Map *map,const bool &withDestroy=false);
     virtual void sendNearPlant();
     virtual void removeNearPlant();
     virtual void receiveSeed(const MapServerCrafting::PlantOnMap &plantOnMap,const quint64 &current_time);
