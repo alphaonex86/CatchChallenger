@@ -82,6 +82,7 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
     ProtocolParsing(socket)
 {
+    RXSize=0;
     connect(socket,SIGNAL(readyRead()),this,SLOT(parseIncommingData()));
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
     dataClear();
@@ -111,9 +112,15 @@ bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data)
     return true;
 }
 
+quint64 ProtocolParsingInput::getRXSize()
+{
+    return RXSize;
+}
+
 ProtocolParsingOutput::ProtocolParsingOutput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
     ProtocolParsing(socket)
 {
+    TXSize=0;
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
 }
 
@@ -214,7 +221,10 @@ void ProtocolParsingInput::parseIncommingData()
                 DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_subCodeType"));
                 #endif
                 if(socket->bytesAvailable()<(int)sizeof(quint16))//ignore because first int is cuted!
+                {
+                    RXSize+=in.device()->pos();
                     return;
+                }
                 in >> subCodeType;
 
                 if(isClient)
@@ -282,7 +292,10 @@ void ProtocolParsingInput::parseIncommingData()
             DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number"));
             #endif
             if(socket->bytesAvailable()<(int)sizeof(quint8))
+            {
+                RXSize+=in.device()->pos();
                 return;
+            }
             in >> queryNumber;
 
             // it's reply
@@ -321,7 +334,10 @@ void ProtocolParsingInput::parseIncommingData()
                     case 0:
                     {
                         if(socket->bytesAvailable()<(int)sizeof(quint8))
+                        {
+                            RXSize+=in.device()->pos();
                             return;
+                        }
                         data_size+=socket->read(sizeof(quint8));
                         QDataStream in_size(data_size);
                         in_size.setVersion(QDataStream::Qt_4_4);
@@ -341,6 +357,7 @@ void ProtocolParsingInput::parseIncommingData()
                             #endif
                             if(data_size.size()==0)
                             {
+                                RXSize+=in.device()->pos();
                                 DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): internal infinity packet read prevent"));
                                 return;
                             }
@@ -350,7 +367,10 @@ void ProtocolParsingInput::parseIncommingData()
                     case sizeof(quint8):
                     {
                         if(socket->bytesAvailable()<(int)sizeof(quint16))
+                        {
+                            RXSize+=in.device()->pos();
                             return;
+                        }
                         data_size+=socket->read(sizeof(quint8));
                         {
                             QDataStream in_size(data_size);
@@ -378,6 +398,7 @@ void ProtocolParsingInput::parseIncommingData()
                             #endif
                             if(data_size.size()==sizeof(quint8))
                             {
+                                RXSize+=in.device()->pos();
                                 DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): internal infinity packet read prevent"));
                                 return;
                             }
@@ -387,7 +408,10 @@ void ProtocolParsingInput::parseIncommingData()
                     case sizeof(quint16):
                     {
                         if(socket->bytesAvailable()<(int)sizeof(quint32))
+                        {
+                            RXSize+=in.device()->pos();
                             return;
+                        }
                         data_size+=socket->read(sizeof(quint32));
                         QDataStream in_size(data_size);
                         in_size.setVersion(QDataStream::Qt_4_4);
@@ -430,15 +454,22 @@ void ProtocolParsingInput::parseIncommingData()
             emit error("packet size too big");
             return;
         }
+        RXSize+=in.device()->pos();
         if(dataSize>0)
         {
             do
             {
                 //if have too many data, or just the size
                 if((dataSize-data.size())<=socket->bytesAvailable())
+                {
+                    RXSize+=dataSize-data.size();
                     data.append(socket->read(dataSize-data.size()));
+                }
                 else //if need more data
+                {
+                    RXSize+=socket->bytesAvailable();
                     data.append(socket->readAll());
+                }
             } while(
                 //need more data
                 (dataSize-data.size())>0 &&
@@ -545,6 +576,7 @@ void ProtocolParsingInput::parseIncommingData()
 
 void ProtocolParsingInput::reset()
 {
+    RXSize=0;
     replySize.clear();
     reply_mainCodeType.clear();
     reply_subCodeType.clear();
@@ -645,6 +677,11 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteA
     }
 
     return internalPackOutcommingData(block+data);
+}
+
+quint64 ProtocolParsingOutput::getTXSize()
+{
+    return TXSize;
 }
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
@@ -983,6 +1020,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(const QByteArray &data)
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
     emit message(QString("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
+    TXSize+=data.size();
     byteWriten = socket->write(data);
     if(data.size()!=byteWriten)
     {
@@ -1008,5 +1046,6 @@ QByteArray ProtocolParsingOutput::encodeSize(quint32 size)
 
 void ProtocolParsingOutput::reset()
 {
+    TXSize=0;
     replySize.clear();
 }

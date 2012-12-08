@@ -106,6 +106,9 @@ private slots:
     void seed_planted(const bool &ok);
     void plant_collected(const Pokecraft::Plant_collect &stat);
 
+    //network
+    void updateRXTX();
+
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
     void update_chat();
@@ -118,11 +121,8 @@ private slots:
     void on_inventoryUse_clicked();
     void on_toolButton_quit_plants_clicked();
     void on_inventoryInformation_clicked();
-
     void on_plantUse_clicked();
-
     void on_listPlantList_itemActivated(QListWidgetItem *item);
-
 protected slots:
     //datapack
     void datapackParsed();
@@ -143,6 +143,9 @@ private:
     quint32 seed_in_waiting;
     bool seedWait,collectWait;
 
+    QTime updateRXTXTime;
+    QTimer updateRXTXTimer;
+    quint64 previousRXSize,previousTXSize;
     Pokecraft::Api_protocol *client;
     QStringList chat_list_player_pseudo;
     QList<Pokecraft::Player_type> chat_list_player_type;

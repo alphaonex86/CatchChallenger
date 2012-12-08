@@ -39,4 +39,13 @@ The decimal part for the quantity is random luck to get another plant, if it's 0
 		</grow>
 		<quantity>1.4</quantity>
 	</plant>
+	<plant id="5" itemUsed="11"><!-- Tuber -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>240</sprouted>
+			<taller>480</taller>
+			<flowering>720</flowering>
+			<fruits>1080</fruits>
+		</grow>
+		<quantity>2.1</quantity>
+	</plant>
 </plants>

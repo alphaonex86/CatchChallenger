@@ -70,8 +70,10 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),client,SLOT(destroyObject(quint32,quint32)));
+    connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
 
-
+    updateRXTXTimer.start(1000);
+    updateRXTXTime.restart();
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
@@ -149,6 +151,8 @@ void BaseWindow::resetAll()
     ui->inventoryInformation->setVisible(false);
     ui->inventoryUse->setVisible(false);
     ui->inventoryDestroy->setVisible(false);
+    previousRXSize=0;
+    previousTXSize=0;
 }
 
 void BaseWindow::serverIsLoading()
@@ -918,6 +922,24 @@ void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const
         selectObject(ObjectType_Seed);
         return;
     }
+}
+
+//network
+void BaseWindow::updateRXTX()
+{
+    quint64 RXSize=client->getRXSize();
+    quint64 TXSize=client->getTXSize();
+    if(previousRXSize>RXSize)
+        previousRXSize=RXSize;
+    if(previousTXSize>TXSize)
+        previousTXSize=TXSize;
+    if(RXSize!=previousRXSize)
+        qDebug() << QString("received: %1/s").arg((RXSize-previousRXSize)*1000/updateRXTXTime.elapsed());
+    if(TXSize!=previousTXSize)
+        qDebug() << QString("transmited: %1/s").arg((TXSize-previousTXSize)*1000/updateRXTXTime.elapsed());
+    updateRXTXTime.restart();
+    previousRXSize=RXSize;
+    previousTXSize=TXSize;
 }
 
 void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
