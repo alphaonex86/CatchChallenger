@@ -1447,6 +1447,11 @@ quint16 Api_protocol::getId()
     return player_informations.public_informations.simplifiedId;
 }
 
+quint64 Api_protocol::getTXSize()
+{
+    return output->getTXSize();
+}
+
 quint8 Api_protocol::queryNumber()
 {
     if(lastQueryNumber>=254)

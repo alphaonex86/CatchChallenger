@@ -101,6 +101,8 @@ void Api_client_real::defineMaxPlayers(const quint16 &maxPlayers)
 
 void Api_client_real::resetAll()
 {
+    RXSize=0;
+    TXSize=0;
     query_files_list.clear();
     wait_datapack_content=false;
 

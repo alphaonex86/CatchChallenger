@@ -48,6 +48,7 @@ protected:
 private:
     QString host;
     quint16 port;
+    quint64 RXSize,TXSize;
 
     //file list
     struct query_files
