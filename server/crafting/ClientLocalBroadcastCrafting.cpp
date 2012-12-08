@@ -285,7 +285,7 @@ void ClientLocalBroadcast::sendNearPlant()
             remaining_seconds_to_mature=0;
         else
             remaining_seconds_to_mature=(plant.mature_at-current_time);
-        emit message(QString("insert with near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
+        emit message(QString("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
         #endif
         index++;
     }
@@ -294,6 +294,7 @@ void ClientLocalBroadcast::sendNearPlant()
 
 void ClientLocalBroadcast::removeNearPlant()
 {
+    emit message("removeNearPlant()");
     //send the remove plant
     quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
     if(plant_list_size==0)
@@ -314,6 +315,9 @@ void ClientLocalBroadcast::removeNearPlant()
             out << (quint32)map->id;
         out << plant.x;
         out << plant.y;
+        #if defined(DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE) && defined(DEBUG_MESSAGE_MAP_PLANTS)
+        emit message(QString("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+        #endif
         index++;
     }
     emit sendPacket(0xD2,outputData);

@@ -15,7 +15,7 @@ ClientLocalBroadcast::~ClientLocalBroadcast()
 
 void ClientLocalBroadcast::extraStop()
 {
-    removeClient(map);
+    removeClient(map,true);
 }
 
 void ClientLocalBroadcast::sendLocalChatText(const QString &text)
@@ -60,10 +60,13 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
         return false;
     }
     Map *old_map=map;
-    MoveOnTheMap::move(direction,&map,&x,&y);
-    if(old_map!=map)
+    Map *new_map=map;
+    MoveOnTheMap::move(direction,&new_map,&x,&y);
+    if(old_map!=new_map)
     {
+        map=old_map;
         removeClient(old_map);
+        map=new_map;
         insertClient(map);
     }
     return true;
@@ -76,11 +79,12 @@ void ClientLocalBroadcast::insertClient(Map *map)
     sendNearPlant();
 }
 
-void ClientLocalBroadcast::removeClient(Map *map)
+void ClientLocalBroadcast::removeClient(Map *map, const bool &withDestroy)
 {
     static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
 
-    removeNearPlant();
+    if(!withDestroy)
+        removeNearPlant();
 }
 
 //map slots, transmited by the current ClientNetworkRead
