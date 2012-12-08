@@ -52,6 +52,7 @@ public:
     ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission);
     friend class ProtocolParsing;
     bool checkStringIntegrity(const QByteArray & data);
+    quint64 getRXSize();
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data) = 0;
@@ -71,6 +72,7 @@ protected:
     QByteArray data;
     bool isClient;
     //to parse the netwrok stream
+    quint64 RXSize;
     quint8 mainCodeType;
     quint16 subCodeType;
     quint8 queryNumber;
@@ -111,10 +113,12 @@ public:
     bool packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
     //send reply
     bool postReplyData(const quint8 &queryNumber,const QByteArray &data);
+    quint64 getTXSize();
 private:
     bool internalPackOutcommingData(const QByteArray &data);
     QByteArray encodeSize(quint32 size);
 
+    quint64 TXSize;
     bool isClient;
     //temp data
     static qint64 byteWriten;
