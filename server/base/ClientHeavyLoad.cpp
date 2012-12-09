@@ -408,7 +408,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         i.next();
         sendFile(i.key(),i.value());
     }
-    emit postReply(query_id,qCompress(outputData,9));
+    emit postReply(query_id,outputData);
 }
 
 bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
