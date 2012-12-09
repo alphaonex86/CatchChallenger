@@ -43,35 +43,31 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
             {
                 //Send datapack file list
                 case 0x000C:
-                {
-                    QByteArray rawData=qUncompress(data);
-                    QDataStream in(rawData);
-                    in.setVersion(QDataStream::Qt_4_4);
                     if((in.device()->size()-in.device()->pos())!=((int)sizeof(quint8))*datapackFilesList.size())
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size to return file list"));
                         return;
                     }
                     quint8 reply_code;
-                    int index=0;
-                    while(index<datapackFilesList.size())
                     {
-                        in >> reply_code;
-                        if(reply_code==0x02)
+                        int index=0;
+                        while(index<datapackFilesList.size())
                         {
-                            DebugClass::debugConsole(QString("remove the file: %1").arg(datapack_base_name+"/"+datapackFilesList.at(index)));
-                            QFile file(datapack_base_name+"/"+datapackFilesList.at(index));
-                            if(!file.remove())
-                                DebugClass::debugConsole(QString("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
-                            //emit removeFile(datapackFilesList.at(index));
+                            in >> reply_code;
+                            if(reply_code==0x02)
+                            {
+                                DebugClass::debugConsole(QString("remove the file: %1").arg(datapack_base_name+"/"+datapackFilesList.at(index)));
+                                QFile file(datapack_base_name+"/"+datapackFilesList.at(index));
+                                if(!file.remove())
+                                    DebugClass::debugConsole(QString("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
+                                //emit removeFile(datapackFilesList.at(index));
+                            }
+                            index++;
                         }
-                        index++;
+                        datapackFilesList.clear();
+                        cleanDatapack("");
+                        emit haveTheDatapack();
                     }
-                    datapackFilesList.clear();
-                    cleanDatapack("");
-                    emit haveTheDatapack();
-                    return;//cut because the compressed data is used
-                }
                 break;
                 default:
                     Api_protocol::parseReplyData(mainCodeType,subCodeType,queryNumber,data);
@@ -224,7 +220,7 @@ void Api_client_real::sendDatapackContent()
         out << (quint64)info.st_mtime;
         index++;
     }
-    output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,qCompress(outputData,9));
+    output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
 }
 
 const QStringList Api_client_real::listDatapack(QString suffix)
