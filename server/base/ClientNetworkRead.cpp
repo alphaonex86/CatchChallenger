@@ -477,54 +477,42 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
             //Send datapack file list
             case 0x000C:
             {
-                QByteArray rawData=qUncompress(data);
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                 {
-                    QByteArray data=rawData;
-                    QDataStream in(data);
-                    in.setVersion(QDataStream::Qt_4_4);
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
-                    {
-                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
-                        return;
-                    }
-                    quint32 number_of_file;
-                    in >> number_of_file;
-                    QStringList files;
-                    QList<quint64> timestamps;
-                    QString tempFileName;
-                    quint64 tempTimestamps;
-                    quint32 index=0;
-                    while(index<number_of_file)
-                    {
-                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                        {
-                            parseError(QString("error at datapack file list query"));
-                            return;
-                        }
-                        in >> tempFileName;
-                        files << tempFileName;
-                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
-                        {
-                            parseError(QString("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
-                                .arg(mainCodeType)
-                                .arg(subCodeType)
-                                .arg(in.device()->size()-in.device()->pos())
-                                .arg((int)sizeof(quint32))
-                                );
-                            return;
-                        }
-                        in >> tempTimestamps;
-                        timestamps << tempTimestamps;
-                        index++;
-                    }
-                    if(in.device()->size()!=in.device()->pos())
-                    {
-                        parseError(QString("remaining data: %1, subIdent: %2").arg(mainCodeType).arg(subCodeType));
-                        return;
-                    }
-                    emit datapackList(queryNumber,files,timestamps);
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
                     return;
                 }
+                quint32 number_of_file;
+                in >> number_of_file;
+                QStringList files;
+                QList<quint64> timestamps;
+                QString tempFileName;
+                quint64 tempTimestamps;
+                quint32 index=0;
+                while(index<number_of_file)
+                {
+                    if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                    {
+                        parseError(QString("error at datapack file list query"));
+                        return;
+                    }
+                    in >> tempFileName;
+                    files << tempFileName;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
+                    {
+                        parseError(QString("wrong size for id with main ident: %1, subIdent: %2, remaining: %3, lower than: %4")
+                            .arg(mainCodeType)
+                            .arg(subCodeType)
+                            .arg(in.device()->size()-in.device()->pos())
+                            .arg((int)sizeof(quint32))
+                            );
+                        return;
+                    }
+                    in >> tempTimestamps;
+                    timestamps << tempTimestamps;
+                    index++;
+                }
+                emit datapackList(queryNumber,files,timestamps);
             }
             break;
             default:
