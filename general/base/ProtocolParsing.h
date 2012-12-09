@@ -38,6 +38,14 @@ protected:
     static QHash<quint8,QHash<quint16,quint16> > sizeMultipleCodePacketServerToClient;
     static QHash<quint8,quint16> replySizeOnlyMainCodePacketServerToClient;
     static QHash<quint8,QHash<quint16,quint16> > replySizeMultipleCodePacketServerToClient;
+
+    //compression not found single main code because is reserved to fast/small message
+    static QHash<quint8,QSet<quint16> > compressionMultipleCodePacketClientToServer;
+    static QHash<quint8,QSet<quint16> > compressionMultipleCodePacketServerToClient;
+    static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketClientToServer;
+    static QHash<quint8,QSet<quint16> > replyComressionMultipleCodePacketServerToClient;
+    static QSet<quint8> replyComressionOnlyMainCodePacketClientToServer;
+    static QSet<quint8> replyComressionOnlyMainCodePacketServerToClient;
 signals:
     void error(const QString &error);
     void message(const QString &message);
@@ -107,12 +115,12 @@ public:
 
     //send message without reply
     bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
-    bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+    bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data);
     //send query with reply
     bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    bool packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    bool packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data);
     //send reply
-    bool postReplyData(const quint8 &queryNumber,const QByteArray &data);
+    bool postReplyData(const quint8 &queryNumber, QByteArray data);
     quint64 getTXSize();
 private:
     bool internalPackOutcommingData(const QByteArray &data);
@@ -124,6 +132,7 @@ private:
     static qint64 byteWriten;
     //reply to the query
     QHash<quint8,quint16> replySize;
+    QSet<quint8> replyCompression;
 signals:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);

@@ -24,6 +24,13 @@ QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketSer
 QHash<quint8,quint16>			ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
 
+QHash<quint8,QSet<quint16> > ProtocolParsing::compressionMultipleCodePacketClientToServer;
+QHash<quint8,QSet<quint16> > ProtocolParsing::compressionMultipleCodePacketServerToClient;
+QHash<quint8,QSet<quint16> > ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
+QHash<quint8,QSet<quint16> > ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
+QSet<quint8> ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
+QSet<quint8> ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
+
 //temp data
 qint64 ProtocolParsingOutput::byteWriten;
 quint8 ProtocolParsingInput::temp_size_8Bits;
@@ -52,11 +59,14 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
     sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
     sizeMultipleCodePacketClientToServer[0x50][0x0002]=8;
-
     //define the size of the reply
-    replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
-    replySizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
-    replySizeMultipleCodePacketClientToServer[0x10][0x0007]=1;
+    replySizeMultipleCodePacketServerToClient[0x79][0x0001]=0;
+    replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;
+    replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
+
+    compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
+    //define the compression of the reply
+    replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
 
     //main code for query with reply
     ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x10 << 0x20 << 0x30;
@@ -505,6 +515,7 @@ void ProtocolParsingInput::parseIncommingData()
         #ifdef PROTOCOLPARSINGINPUTDEBUG
         DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data: %1").arg(QString(data.toHex())));
         #endif
+        //message
         if(!need_query_number)
         {
             if(!need_subCodeType)
@@ -519,29 +530,58 @@ void ProtocolParsingInput::parseIncommingData()
                 #ifdef PROTOCOLPARSINGINPUTDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                 #endif
+                if(isClient)
+                {
+                    if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                        if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                            data=qUncompress(data);
+                }
+                else
+                {
+                    if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                        if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                            data=qUncompress(data);
+                }
                 parseMessage(mainCodeType,subCodeType,data);
             }
         }
         else
         {
+            //query
             if(!is_reply)
             {
-                #ifdef PROTOCOLPARSINGINPUTDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && !is_reply"));
-                #endif
                 if(!need_subCodeType)
                 {
+                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
+                    #endif
                     emit newInputQuery(mainCodeType,queryNumber);
                     parseQuery(mainCodeType,queryNumber,data);
                 }
                 else
                 {
+                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    if(isClient)
+                    {
+                        if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                            if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                                data=qUncompress(data);
+                    }
+                    else
+                    {
+                        if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                            if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                                data=qUncompress(data);
+                    }
                     emit newInputQuery(mainCodeType,subCodeType,queryNumber);
                     parseQuery(mainCodeType,subCodeType,queryNumber,data);
                 }
             }
             else
             {
+                //reply
                 if(!reply_subCodeType.contains(queryNumber))
                 {
                     if(!reply_mainCodeType.contains(queryNumber))
@@ -549,22 +589,44 @@ void ProtocolParsingInput::parseIncommingData()
                         emit error("reply to a query not send");
                         return;
                     }
-                    #ifdef PROTOCOLPARSINGINPUTDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && !reply_subCodeType.contains(queryNumber)"));
-                    #endif
                     mainCodeType=reply_mainCodeType[queryNumber];
                     reply_mainCodeType.remove(queryNumber);
+                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+                    #endif
+                    if(isClient)
+                    {
+                        if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
+                                data=qUncompress(data);
+                    }
+                    else
+                    {
+                        if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
+                                data=qUncompress(data);
+                    }
                     parseReplyData(mainCodeType,queryNumber,data);
                 }
                 else
                 {
-                    #ifdef PROTOCOLPARSINGINPUTDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber)"));
-                    #endif
                     mainCodeType=reply_mainCodeType[queryNumber];
                     subCodeType=reply_subCodeType[queryNumber];
                     reply_mainCodeType.remove(queryNumber);
                     reply_subCodeType.remove(queryNumber);
+                    #ifdef PROTOCOLPARSINGINPUTDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    if(isClient)
+                    {
+                        if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                            if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                                data=qUncompress(data);
+                    }
+                    else
+                    {
+                        if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                            if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                                data=qUncompress(data);
+                    }
                     parseReplyData(mainCodeType,subCodeType,queryNumber,data);
                 }
             }
@@ -600,12 +662,24 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     if(isClient)
     {
         if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+        {
             replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
+                DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+            #endif
+        }
     }
     else
     {
         if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+        {
             replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
+                DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+            #endif
+        }
     }
     #ifdef PROTOCOLPARSINGINPUTDEBUG
     DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
@@ -626,6 +700,11 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
         {
             if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                 replySize[queryNumber]=replySizeMultipleCodePacketServerToClient[mainCodeType][subCodeType];
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            #endif
         }
     }
     else
@@ -634,6 +713,11 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
         {
             if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                 replySize[queryNumber]=replySizeMultipleCodePacketClientToServer[mainCodeType][subCodeType];
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            #endif
         }
     }
     #ifdef PROTOCOLPARSINGINPUTDEBUG
@@ -643,7 +727,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     reply_subCodeType[queryNumber]=subCodeType;
 }
 
-bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -655,6 +739,11 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteA
 
     if(!replySize.contains(queryNumber))
     {
+        if(replyCompression.contains(queryNumber))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1) is now compressed").arg(queryNumber));
+            data=qCompress(data,9);
+        }
         #ifdef POKECRAFT_EXTRA_CHECK
         if(data.size()==0)
         {
@@ -667,6 +756,10 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,const QByteA
     else
     {
         #ifdef POKECRAFT_EXTRA_CHECK
+        if(replyCompression.contains(queryNumber))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+        }
         if(data.size()!=replySize[queryNumber])
         {
             DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
@@ -694,12 +787,44 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     if(isClient)
     {
         if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
+            #endif
             replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
+        }
+        else
+        {
+            if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
+            {
+                #ifdef PROTOCOLPARSINGDEBUG
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
+                #endif
+                replyCompression << queryNumber;
+            }
+        }
     }
     else
     {
         if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
+        {
+            #ifdef POKECRAFT_EXTRA_CHECK
+            if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
+            #endif
             replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
+        }
+        else
+        {
+            if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
+            {
+                #ifdef PROTOCOLPARSINGDEBUG
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
+                #endif
+                replyCompression << queryNumber;
+            }
+        }
     }
 }
 
@@ -710,12 +835,45 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         emit error("Query with this query number already found");
         return;
     }
+    DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
     if(isClient)
     {
         if(replySizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
             if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #ifdef POKECRAFT_EXTRA_CHECK
+                if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                    if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 replySize[queryNumber]=replySizeMultipleCodePacketClientToServer[mainCodeType][subCodeType];
+            }
+            else
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                    if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                    {
+                        #ifdef PROTOCOLPARSINGDEBUG
+                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        #endif
+                        replyCompression << queryNumber;
+                    }
+            }
+        }
+        else
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    replyCompression << queryNumber;
+                }
         }
     }
     else
@@ -723,12 +881,44 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         if(replySizeMultipleCodePacketServerToClient.contains(mainCodeType))
         {
             if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #ifdef POKECRAFT_EXTRA_CHECK
+                if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                    if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 replySize[queryNumber]=replySizeMultipleCodePacketServerToClient[mainCodeType][subCodeType];
+            }
+            else
+            {
+                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                    if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                    {
+                        #ifdef PROTOCOLPARSINGDEBUG
+                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        #endif
+                        replyCompression << queryNumber;
+                    }
+            }
+        }
+        else
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    replyCompression << queryNumber;
+               }
         }
     }
 }
 
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -739,6 +929,14 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
     {
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -750,6 +948,14 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
         }
         else if(!sizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
         {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -762,6 +968,9 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
         else
         {
             #ifdef POKECRAFT_EXTRA_CHECK
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
             if(data.size()!=sizeMultipleCodePacketClientToServer[mainCodeType][subCodeType])
             {
                 DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
@@ -774,6 +983,14 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
     {
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
         {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -785,6 +1002,14 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
         }
         else if(!sizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
         {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -797,6 +1022,9 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
         else
         {
             #ifdef POKECRAFT_EXTRA_CHECK
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
             if(data.size()!=sizeMultipleCodePacketServerToClient[mainCodeType][subCodeType])
             {
                 DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
@@ -928,7 +1156,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     return internalPackOutcommingData(block+data);
 }
 
-bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data)
 {
     emit newOutputQuery(mainCodeType,subCodeType,queryNumber);
 
@@ -942,6 +1170,14 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     {
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -953,6 +1189,14 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         }
         else if(!sizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
         {
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -965,6 +1209,9 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         else
         {
             #ifdef POKECRAFT_EXTRA_CHECK
+            if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
+                if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             if(data.size()!=sizeMultipleCodePacketClientToServer[mainCodeType][subCodeType])
             {
                 DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
@@ -977,6 +1224,14 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     {
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
         {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -988,6 +1243,14 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         }
         else if(!sizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
         {
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                {
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    #endif
+                    data=qCompress(data,9);
+                }
             #ifdef POKECRAFT_EXTRA_CHECK
             if(data.size()==0)
             {
@@ -1000,6 +1263,9 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         else
         {
             #ifdef POKECRAFT_EXTRA_CHECK
+            if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
+                if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             if(data.size()!=sizeMultipleCodePacketServerToClient[mainCodeType][subCodeType])
             {
                 DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
