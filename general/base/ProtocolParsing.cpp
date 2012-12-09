@@ -67,6 +67,7 @@ void ProtocolParsing::initialiseTheVariable()
     compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
     //define the compression of the reply
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
+    replyComressionMultipleCodePacketServerToClient[0x02] << 0x0002;
 
     //main code for query with reply
     ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x10 << 0x20 << 0x30;
@@ -741,7 +742,9 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray d
     {
         if(replyCompression.contains(queryNumber))
         {
+            #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1) is now compressed").arg(queryNumber));
+            #endif
             data=qCompress(data,9);
         }
         #ifdef POKECRAFT_EXTRA_CHECK
@@ -835,14 +838,15 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         emit error("Query with this query number already found");
         return;
     }
-    DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
     if(isClient)
     {
         if(replySizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
             if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
             {
+                #ifdef PROTOCOLPARSINGDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 #ifdef POKECRAFT_EXTRA_CHECK
                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
@@ -852,7 +856,9 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
             }
             else
             {
+                #ifdef PROTOCOLPARSINGDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                     {
@@ -865,7 +871,9 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         }
         else
         {
+            #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            #endif
             if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                 {
@@ -882,7 +890,9 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         {
             if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
             {
+                #ifdef PROTOCOLPARSINGDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 #ifdef POKECRAFT_EXTRA_CHECK
                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
@@ -892,7 +902,9 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
             }
             else
             {
+                #ifdef PROTOCOLPARSINGDEBUG
                 DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                #endif
                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                     {
@@ -905,7 +917,9 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         }
         else
         {
+            #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            #endif
             if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                 {
