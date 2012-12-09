@@ -11,7 +11,7 @@
 		<description>The super craftball is perfect to capture a low level monsters.</description>
 		<description lang="fr">La craft ball est parfaite pour capturer les monstres de bas niveaux.</description>
 	</item>
-	<item id="3" image="berries/1.png"><!-- Mocochinchi -->
+	<item id="3" image="plants/1.png"><!-- Mocochinchi -->
 		<name>Moco Berry</name>
 		<name lang="fr">Baie Moco</name>
 		<description>This bay stimulate nerve impulses, which is used to treat paralisies</description>
@@ -20,7 +20,7 @@
 			<curse status="Paralysis" /><!-- apply on monster -->
 		</effect>
 	</item>
-	<item id="4" image="berries/2.png"><!-- Maracuya -->
+	<item id="4" image="plants/2.png"><!-- Maracuya -->
 		<name>Maracu Berry</name>
 		<name lang="fr">Baie Passio</name>
 		<description>Bay restorative grows in low light</description>
@@ -29,7 +29,7 @@
 			<regeneration hp="10" /><!-- apply on monster -->
 		</effect>
 	</item>
-	<item id="5" image="berries/3.png"><!-- Lima -->
+	<item id="5" image="plants/3.png"><!-- Lima -->
 		<name>Lima Berry</name>
 		<name lang="fr">Baie Lima</name>
 		<description>Sweet bay that can restore 10 points of attack</description>
@@ -38,7 +38,7 @@
 			<regeneration attack="10" /><!-- apply on attack -->
 		</effect>
 	</item>
-	<item id="6" image="berries/4.png"><!-- Raspberry -->
+	<item id="6" image="plants/4.png"><!-- Raspberry -->
 		<name>Rasp Berry</name>
 		<name lang="fr">Baie Rasp</name>
 		<description>Bay inedible. She goes into the manufacture of certain object</description>
@@ -68,10 +68,17 @@
 		<description>Recipe to learn how do <b>Jam</b>, disappears after use</description>
 		<description lang="fr">Recette pour apprendre comment faire de la <b>Confiture</b>, disparait après utilisation</description>
 	</item>
-	<item id="11" image="berries/tuber.png"><!-- Tuber -->
+	<item id="11" image="plants/tuber.png"><!-- Tuber -->
 		<name>Tuber</name>
 		<name lang="fr">Tubercule</name>
 		<description>Tuber used for soup</description>
 		<description lang="fr">Tubercule utilisé pour la soupe</description>
 	</item>
+	<item id="12" image="plants/red-mushroom.png"><!-- Red mushroom -->
+		<name>Red mushroom</name>
+		<name lang="fr">Champignon rouge</name>
+		<description>Red mushroom, the utility is unknow</description>
+		<description lang="fr">Champignon rouge, l'utilité est inconnu</description>
+	</item>
+	
 </items>

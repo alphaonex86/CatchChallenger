@@ -48,4 +48,13 @@ The decimal part for the quantity is random luck to get another plant, if it's 0
 		</grow>
 		<quantity>2.1</quantity>
 	</plant>
+	<plant id="6" itemUsed="12"><!-- Red mushroom -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>5</sprouted>
+			<taller>10</taller>
+			<flowering>15</flowering>
+			<fruits>20</fruits>
+		</grow>
+		<quantity>1.001</quantity>
+	</plant>
 </plants>
