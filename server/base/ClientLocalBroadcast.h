@@ -29,12 +29,14 @@ public:
     explicit ClientLocalBroadcast();
     virtual ~ClientLocalBroadcast();
 public slots:
+    //chat
     void sendLocalChatText(const QString &text);
     void receiveChatText(const QString &text, const Player_internal_informations *sender_informations);
-
+    //map move
     bool singleMove(const Direction &direction);
     virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    //seed
     void seedValidated();
     virtual void plantSeed(const quint8 &query_id,const quint8 &plant_id);
     virtual void collectPlant(const quint8 &query_id);

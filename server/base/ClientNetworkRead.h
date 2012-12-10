@@ -73,6 +73,8 @@ signals:
     //plant
     void plantSeed(const quint8 &query_id,const quint8 &plant_id);
     void collectPlant(const quint8 &query_id);
+    //crafting
+    void useRecipe(const quint8 &query_id,const quint32 &recipe_id);
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);
 private:

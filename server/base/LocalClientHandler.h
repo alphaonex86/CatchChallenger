@@ -48,6 +48,10 @@ public slots:
     void newRandomNumber(const QByteArray &randomData);
     //seed
     void useSeed(const quint8 &plant_id);
+    //crafting
+    void useRecipe(const quint8 &query_id,const quint32 &recipe_id);
+    //inventory
+    void addObjectAndSend(const quint32 &item,const quint32 &quantity=1);
     void addObject(const quint32 &item,const quint32 &quantity=1);
     quint32 removeObject(const quint32 &item,const quint32 &quantity=1);
     void sendRemoveObject(const quint32 &item,const quint32 &quantity=1);
@@ -65,6 +69,7 @@ signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
     void receiveSystemText(const QString &text,const bool &important=false);
+    void postReply(const quint8 &queryNumber,const QByteArray &data);
 
     void seedValidated();
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
