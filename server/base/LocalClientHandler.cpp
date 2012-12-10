@@ -201,6 +201,18 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     return true;
 }
 
+void LocalClientHandler::addObjectAndSend(const quint32 &item,const quint32 &quantity)
+{
+    addObject(item,quantity);
+    //add into the inventory
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)1;
+    out << (quint32)item;
+    out << (quint32)quantity;
+    emit sendPacket(0xD0,0x0002,outputData);
+}
 
 void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
 {
@@ -248,14 +260,6 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
         }
         player_informations->public_and_private_informations.items[item]=quantity;
     }
-    //add into the inventory
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)1;
-    out << (quint32)item;
-    out << (quint32)quantity;
-    emit sendPacket(0xD0,0x0002,outputData);
 }
 
 quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quantity)
@@ -368,7 +372,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             return;
         }
         emit message(QString("%1 have give to %2 the item with id: %3 in quantity: %4").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(arguments.at(1)).arg(objectId).arg(quantity));
-        playerByPseudo[arguments.at(1)]->addObject(objectId,quantity);
+        playerByPseudo[arguments.at(1)]->addObjectAndSend(objectId,quantity);
     }
     else if(command=="take")
     {
