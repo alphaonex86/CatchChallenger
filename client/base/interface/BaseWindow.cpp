@@ -156,6 +156,8 @@ void BaseWindow::resetAll()
     ui->inventoryDestroy->setVisible(false);
     previousRXSize=0;
     previousTXSize=0;
+    ui->plantUse->setVisible(false);
+    ui->craftingUse->setVisible(false);
 }
 
 void BaseWindow::serverIsLoading()
@@ -474,10 +476,12 @@ void BaseWindow::selectObject(const ObjectType &objectType)
     {
         case ObjectType_Seed:
             ui->stackedWidget->setCurrentIndex(5);
+            on_listPlantList_itemSelectionChanged();
         break;
         case ObjectType_All:
         default:
             ui->stackedWidget->setCurrentIndex(3);
+            on_listCraftingList_itemSelectionChanged();
         break;
     }
 }
