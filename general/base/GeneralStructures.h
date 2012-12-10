@@ -55,6 +55,13 @@ enum Direction
     Direction_move_at_left = 8
 };
 
+enum RecipeUsage
+{
+    RecipeUsage_ok=0x01,
+    RecipeUsage_impossible=0x02,//crafting materials not used
+    RecipeUsage_failed=0x03//crafting materials used
+};
+
 struct map_management_insert
 {
     QString fileName;
