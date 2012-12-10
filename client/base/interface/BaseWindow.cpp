@@ -1002,7 +1002,6 @@ void BaseWindow::on_inventoryDestroy_clicked()
 
 void BaseWindow::on_inventoryUse_clicked()
 {
-    qDebug() << "on_inventoryUse_clicked()";
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
