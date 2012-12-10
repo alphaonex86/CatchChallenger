@@ -129,7 +129,7 @@ private slots:
     void on_toolButton_quit_crafting_clicked();
     void on_listCraftingList_itemSelectionChanged();
     void on_craftingUse_clicked();
-    void on_listCraftingList_itemActivated(QListWidgetItem *item);
+    void on_listCraftingList_itemActivated(QListWidgetItem *);
 
 protected slots:
     //datapack
