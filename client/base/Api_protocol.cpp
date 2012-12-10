@@ -1335,6 +1335,31 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             return;
                         }
                         in >> number_of_map;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+                            return;
+                        }
+                        quint32 recipe_list_size;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+                            return;
+                        }
+                        in >> recipe_list_size;
+                        quint32 recipeId;
+                        quint32 index=0;
+                        while(index<recipe_list_size)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id"));
+                                return;
+                            }
+                            in >> recipeId;
+                            player_informations.recipes << recipeId;
+                            index++;
+                        }
 
                         is_logged=true;
                         emit logged();

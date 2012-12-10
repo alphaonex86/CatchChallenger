@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>5</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -564,6 +564,42 @@ padding-bottom:3px;
               </property>
               <property name="text">
                <string>Player</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_interface_crafting">
+              <property name="minimumSize">
+               <size>
+                <width>110</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>110</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton::hover {
+background-position:left center;
+}
+QPushButton::pressed {
+background-position:left bottom;
+}
+QPushButton { 
+background-image: url(:/images/interface/option-craft.png);
+border-image: url(:/images/empty.png);
+color: rgb(255, 255, 255);
+padding-left:25px;
+padding-right:4px;
+padding-top:8px;
+padding-bottom:3px;
+}</string>
+              </property>
+              <property name="text">
+               <string>Crafting</string>
               </property>
              </widget>
             </item>
@@ -2129,6 +2165,124 @@ border-image: url(:/images/empty.png);
          <property name="styleSheet">
           <string notr="true">#frameCraftingLeft{background-image: url(:/images/interface/crafting-left.png);}</string>
          </property>
+         <widget class="QLabel" name="labelCraftingImage">
+          <property name="geometry">
+           <rect>
+            <x>34</x>
+            <y>28</y>
+            <width>72</width>
+            <height>72</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>72</width>
+            <height>72</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>72</width>
+            <height>72</height>
+           </size>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelCraftingDetails">
+          <property name="geometry">
+           <rect>
+            <x>130</x>
+            <y>20</y>
+            <width>181</width>
+            <height>91</height>
+           </rect>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::RichText</enum>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_13">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>150</y>
+            <width>91</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Material(s):</string>
+          </property>
+         </widget>
+         <widget class="QListWidget" name="listCraftingMaterials">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>190</y>
+            <width>301</width>
+            <height>341</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-image: url(:/images/empty.png);</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::NoSelection</enum>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="craftingUse">
+          <property name="geometry">
+           <rect>
+            <x>120</x>
+            <y>550</y>
+            <width>110</width>
+            <height>25</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>110</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>110</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton::hover {
+background-position:left center;
+}
+QPushButton::pressed {
+background-position:left bottom;
+}
+QPushButton { 
+background-image: url(:/images/interface/button-generic.png);
+border-image: url(:/images/empty.png);
+color: rgb(255, 255, 255);
+padding-left:4px;
+padding-right:4px;
+padding-top:8px;
+padding-bottom:3px;
+}</string>
+          </property>
+          <property name="text">
+           <string>Create</string>
+          </property>
+         </widget>
         </widget>
         <widget class="QFrame" name="frameCraftingRight">
          <property name="geometry">
@@ -2154,6 +2308,52 @@ border-image: url(:/images/empty.png);
          <property name="styleSheet">
           <string notr="true">#frameCraftingRight{background-image: url(:/images/interface/crafting-right.png);}</string>
          </property>
+         <widget class="QListWidget" name="listCraftingList">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>70</y>
+            <width>371</width>
+            <height>481</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-image: url(:/images/empty.png);</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>48</width>
+            <height>48</height>
+           </size>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_10">
+          <property name="geometry">
+           <rect>
+            <x>100</x>
+            <y>20</y>
+            <width>251</width>
+            <height>21</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Crafting</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
         </widget>
         <widget class="QToolButton" name="toolButton_quit_crafting">
          <property name="geometry">

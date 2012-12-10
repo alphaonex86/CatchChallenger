@@ -92,6 +92,8 @@ struct Player_private_and_public_informations
     QByteArray randomNumber;//for the battle
     quint64 cash;
     QHash<quint32,quint32> items;
+    //crafting
+    QList<quint32> recipes;
 };
 
 /// \brief Define the mode of transmission: client or server
