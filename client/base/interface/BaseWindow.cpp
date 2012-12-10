@@ -701,6 +701,7 @@ void BaseWindow::updateConnectingStatus()
     {
         load_inventory();
         load_plant_inventory();
+        load_crafting_inventory();
         this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
         ui->stackedWidget->setCurrentIndex(1);
         showTip(tr("Welcome <b><i>%1</i></b> on pokecraft").arg(client->getPseudo()));
@@ -957,7 +958,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     objectSelection(true,items_graphical[item]);
 }
 
-void Pokecraft::BaseWindow::on_inventoryDestroy_clicked()
+void BaseWindow::on_inventoryDestroy_clicked()
 {
     qDebug() << "on_inventoryDestroy_clicked()";
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
@@ -995,7 +996,7 @@ void Pokecraft::BaseWindow::on_inventoryDestroy_clicked()
     load_plant_inventory();
 }
 
-void Pokecraft::BaseWindow::on_inventoryUse_clicked()
+void BaseWindow::on_inventoryUse_clicked()
 {
     qDebug() << "on_inventoryUse_clicked()";
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
@@ -1004,7 +1005,7 @@ void Pokecraft::BaseWindow::on_inventoryUse_clicked()
     on_inventory_itemActivated(items.first());
 }
 
-void Pokecraft::BaseWindow::on_inventoryInformation_clicked()
+void BaseWindow::on_inventoryInformation_clicked()
 {
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)

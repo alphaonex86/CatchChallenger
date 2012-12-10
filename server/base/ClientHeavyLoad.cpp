@@ -129,7 +129,27 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             {
                 orentation=Orientation_bottom;
                 emit message(QString("Wrong orientation corrected with bottom"));
-            }//id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
+            }
+            switch(GlobalData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    queryText=QString("SELECT recipe FROM recipes WHERE player=%1").arg(player_informations->id);
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    queryText=QString("SELECT recipe FROM recipes WHERE player=%1").arg(player_informations->id);
+                break;
+            }
+            quint32 recipeId;
+            QSqlQuery recipesQuery(queryText);
+            while(recipesQuery.next())
+            {
+                recipeId=recipesQuery.value(0).toUInt(&ok);
+                if(ok)
+                    if(GlobalData::serverPrivateVariables.crafingRecipes.contains(recipeId))
+                        player_informations->public_and_private_informations.recipes << recipeId;
+            }
+            //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
             //all is rights
             if(GlobalData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
             {
@@ -146,11 +166,11 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                     return;
                 }
                 loginIsRight(query_id,
-                             player_informations->id,
-                             GlobalData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
-                             x,
-                             y,
-                             (Orientation)orentation);
+                     player_informations->id,
+                     GlobalData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
+                     x,
+                     y,
+                     (Orientation)orentation);
             }
             else
                 loginIsWrong(query_id,"Map not found","Map not found: "+loginQuery.value(6).toString());
@@ -185,11 +205,11 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
             //all is rights
             {
                 loginIsRight(query_id,
-                             player_informations->id,
-                             GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
-                             GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
-                             GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
-                             Orientation_bottom);
+                     player_informations->id,
+                     GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
+                     GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
+                     GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
+                     Orientation_bottom);
 
                 GlobalData::serverPrivateVariables.botSpawnIndex++;
                 if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
@@ -220,6 +240,14 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
     out << (quint64)player_informations->public_and_private_informations.cash;
     out << (quint32)GlobalData::serverPrivateVariables.map_list.size();
+    quint32 index=0;
+    quint32 size=player_informations->public_and_private_informations.recipes.size();
+    out << (quint32)size;
+    while(index<size)
+    {
+        out << (quint32)player_informations->public_and_private_informations.recipes.at(index);
+        index++;
+    }
     emit postReply(query_id,outputData);
 
     //send signals into the server
