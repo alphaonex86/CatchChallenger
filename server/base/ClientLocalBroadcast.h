@@ -62,7 +62,7 @@ signals:
     void postReply(const quint8 &queryNumber,const QByteArray &data);
     //seed
     void useSeed(const quint8 &plant_id);
-    void addObject(const quint32 &item,const quint32 &quantity=1);
+    void addObjectAndSend(const quint32 &item,const quint32 &quantity=1);
     //db
     void dbQuery(const QString &sqlQuery);
 };
