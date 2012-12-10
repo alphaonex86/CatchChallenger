@@ -1658,6 +1658,8 @@ void Api_protocol::resetAll()
     max_player=65535;
     number_of_map=0;
     havePlantAction=false;
+    player_informations.recipes.clear();
+    player_informations.items.clear();
 
     //to send trame
     lastQueryNumber=1;

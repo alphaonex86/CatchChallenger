@@ -201,7 +201,6 @@ void BaseWindow::on_toolButton_quit_plants_clicked()
 
 void BaseWindow::on_plantUse_clicked()
 {
-    qDebug() << "on_plantUse_clicked()";
     QList<QListWidgetItem *> items=ui->listPlantList->selectedItems();
     if(items.size()!=1)
         return;
@@ -305,7 +304,6 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
 void BaseWindow::on_craftingUse_clicked()
 {
     //recipeInUsing
-    qDebug() << "on_craftingUse_clicked()";
     QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
     if(displayedItems.size()!=1)
         return;
@@ -393,3 +391,10 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
         return;
     }
 }
+
+void BaseWindow::on_listCraftingList_itemActivated(QListWidgetItem *item)
+{
+    if(ui->craftingUse->isVisible())
+        on_craftingUse_clicked();
+}
+
