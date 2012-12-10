@@ -392,7 +392,7 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
     }
 }
 
-void BaseWindow::on_listCraftingList_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_listCraftingList_itemActivated(QListWidgetItem *)
 {
     if(ui->craftingUse->isVisible())
         on_craftingUse_clicked();

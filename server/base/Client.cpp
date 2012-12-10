@@ -95,7 +95,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     //connect for the seed
     connect(localClientHandler,SIGNAL(seedValidated()),clientLocalBroadcast,SLOT(seedValidated()),Qt::QueuedConnection);
     connect(clientLocalBroadcast,SIGNAL(useSeed(quint8)),localClientHandler,SLOT(useSeed(quint8)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(addObject(quint32,quint32)),localClientHandler,SLOT(addObject(quint32,quint32)),Qt::QueuedConnection);
+    connect(clientLocalBroadcast,SIGNAL(addObjectAndSend(quint32,quint32)),localClientHandler,SLOT(addObjectAndSend(quint32,quint32)),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(plantSeed(quint8,quint8)),	clientLocalBroadcast,SLOT(plantSeed(quint8,quint8)),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(collectPlant(quint8)),		clientLocalBroadcast,SLOT(collectPlant(quint8)),Qt::QueuedConnection);
 

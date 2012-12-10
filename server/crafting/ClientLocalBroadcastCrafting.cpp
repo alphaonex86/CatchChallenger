@@ -140,7 +140,7 @@ void ClientLocalBroadcast::seedValidated()
     {
         if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
         {
-            emit addObject(GlobalData::serverPrivateVariables.plants[plant_list_in_waiting.first().plant_id].itemUsed);
+            emit addObjectAndSend(GlobalData::serverPrivateVariables.plants[plant_list_in_waiting.first().plant_id].itemUsed);
             QByteArray data;
             data[0]=0x02;
             emit postReply(plant_list_in_waiting.first().query_id,data);
@@ -460,7 +460,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 QByteArray data;
                 data[0]=0x01;
                 emit postReply(query_id,data);
-                emit addObject(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
+                emit addObjectAndSend(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
 
                 static_cast<MapServer *>(map)->plants.removeAt(index);
                 return;
