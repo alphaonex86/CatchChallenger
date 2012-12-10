@@ -1429,6 +1429,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         return;
                     }
                 }
+                break;
                 //Usage of recipe
                 case 0x0008:
                 {
