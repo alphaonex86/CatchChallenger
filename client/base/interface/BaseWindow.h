@@ -123,6 +123,12 @@ private slots:
     void on_inventoryInformation_clicked();
     void on_plantUse_clicked();
     void on_listPlantList_itemActivated(QListWidgetItem *item);
+    void on_pushButton_interface_crafting_clicked();
+
+    void on_toolButton_quit_crafting_clicked();
+
+    void on_listCraftingList_itemSelectionChanged();
+
 protected slots:
     //datapack
     void datapackParsed();

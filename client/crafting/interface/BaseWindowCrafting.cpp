@@ -1,6 +1,7 @@
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/DatapackClientLoader.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/GeneralStructures.h"
 #include "ui_BaseWindow.h"
 
 #include <QListWidgetItem>
@@ -93,6 +94,33 @@ void BaseWindow::load_crafting_inventory()
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::load_crafting_inventory()";
     #endif
+    Player_private_and_public_informations informations=client->get_player_informations();
+    int index=0;
+    while(index<informations.recipes.size())
+    {
+        //load the material item
+        if(DatapackClientLoader::datapackLoader.crafingRecipes.contains(informations.recipes.at(index)))
+        {
+            QListWidgetItem *item=new QListWidgetItem();
+            if(DatapackClientLoader::datapackLoader.items.contains(DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId))
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId].image);
+                item->setText(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId].name);
+            }
+            else
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+                item->setText(tr("Unknow item: %1").arg(informations.recipes.at(DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId)));
+            }
+            crafting_recipes_items_to_graphical[informations.recipes.at(index)]=item;
+            crafting_recipes_items_graphical[item]=informations.recipes.at(index);
+            ui->listCraftingList->addItem(item);
+        }
+        else
+            qDebug() << QString("BaseWindow::load_crafting_inventory(), crafting id not found into crafting recipe").arg(informations.recipes.at(index));
+        index++;
+    }
+    on_listCraftingList_itemSelectionChanged();
 }
 
 void BaseWindow::on_listPlantList_itemSelectionChanged()
@@ -156,7 +184,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     ui->plantUse->setVisible(inSelection);
 }
 
-void Pokecraft::BaseWindow::on_toolButton_quit_plants_clicked()
+void BaseWindow::on_toolButton_quit_plants_clicked()
 {
     ui->listPlantList->reset();
     if(inSelection)
@@ -169,7 +197,7 @@ void Pokecraft::BaseWindow::on_toolButton_quit_plants_clicked()
     on_listPlantList_itemSelectionChanged();
 }
 
-void Pokecraft::BaseWindow::on_plantUse_clicked()
+void BaseWindow::on_plantUse_clicked()
 {
     qDebug() << "on_plantUse_clicked()";
     QList<QListWidgetItem *> items=ui->listPlantList->selectedItems();
@@ -178,7 +206,7 @@ void Pokecraft::BaseWindow::on_plantUse_clicked()
     on_listPlantList_itemActivated(items.first());
 }
 
-void Pokecraft::BaseWindow::on_listPlantList_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_listPlantList_itemActivated(QListWidgetItem *item)
 {
     if(!plants_items_graphical.contains(item))
     {
@@ -191,4 +219,86 @@ void Pokecraft::BaseWindow::on_listPlantList_itemActivated(QListWidgetItem *item
         return;
     }
     objectSelection(true,DatapackClientLoader::datapackLoader.plants[plants_items_graphical[item]].itemUsed);
+}
+
+void BaseWindow::on_pushButton_interface_crafting_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(6);
+}
+
+void BaseWindow::on_toolButton_quit_crafting_clicked()
+{
+    ui->listCraftingList->reset();
+    ui->stackedWidget->setCurrentIndex(1);
+    on_listCraftingList_itemSelectionChanged();
+}
+
+void BaseWindow::on_listCraftingList_itemSelectionChanged()
+{
+    qDebug() << "on_listCraftingList_itemSelectionChanged()";
+    ui->listCraftingMaterials->clear();
+    QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
+    if(displayedItems.size()!=1)
+    {
+        ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->labelCraftingDetails->setText(tr("Select a recipe"));
+        ui->craftingUse->setVisible(false);
+        return;
+    }
+    QListWidgetItem *itemMaterials=displayedItems.first();
+    const Pokecraft::CrafingRecipe &content=DatapackClientLoader::datapackLoader.crafingRecipes[crafting_recipes_items_graphical[itemMaterials]];
+
+    qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
+    //load the name
+    QString name;
+    if(DatapackClientLoader::datapackLoader.items.contains(content.doItemId))
+    {
+        name=DatapackClientLoader::datapackLoader.items[content.doItemId].name;
+        ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.items[content.doItemId].image);
+    }
+    else
+    {
+        name=tr("Unknow item (%1)").arg(content.doItemId);
+        ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+    }
+    ui->labelCraftingDetails->setText(QString("Name: %1<br /><br />Success: %2%<br /><br />Result: %3").arg(name).arg(content.success).arg(content.quantity));
+
+    qDebug() << "on_listCraftingList_itemSelectionChanged() load the materials";
+    //load the materials
+    bool haveMaterials=true;
+    int index=0;
+    QString nameMaterials;
+    QListWidgetItem *item;
+    quint32 quantity;
+    while(index<content.materials.size())
+    {
+        //load the material item
+        item=new QListWidgetItem();
+        if(DatapackClientLoader::datapackLoader.items.contains(content.materials.at(index).itemId))
+        {
+            nameMaterials=DatapackClientLoader::datapackLoader.items[content.materials.at(index).itemId].name;
+            item->setIcon(DatapackClientLoader::datapackLoader.items[content.materials.at(index).itemId].image);
+        }
+        else
+        {
+            nameMaterials=tr("Unknow item (%1)").arg(content.materials.at(index).itemId);
+            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        }
+
+        //load the quantity into the inventory
+        quantity=0;
+        if(items.contains(content.materials.at(index).itemId))
+            quantity=items[content.materials.at(index).itemId];
+
+        //load the display
+        item->setText(tr("Needed: %1 %2\nIn the inventory: %3 %4").arg(content.materials.at(index).quantity).arg(nameMaterials).arg(quantity).arg(nameMaterials));
+
+        if(quantity<content.materials.at(index).quantity)
+            haveMaterials=false;
+
+        ui->listCraftingMaterials->addItem(item);
+        ui->craftingUse->setVisible(haveMaterials);
+        index++;
+        qDebug() << "on_listCraftingList_itemSelectionChanged() load the materials interal";
+    }
 }
