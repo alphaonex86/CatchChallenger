@@ -59,8 +59,8 @@ void LocalClientHandler::useRecipe(const quint8 &query_id,const quint32 &recipe_
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     if(success)
-        out << (quint32)0x01;
+        out << (quint8)RecipeUsage_ok;
     else
-        out << (quint32)0x03;
+        out << (quint8)RecipeUsage_failed;
     emit postReply(query_id,outputData);
 }
