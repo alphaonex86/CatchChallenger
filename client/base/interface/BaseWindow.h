@@ -105,6 +105,8 @@ private slots:
     //plant
     void seed_planted(const bool &ok);
     void plant_collected(const Pokecraft::Plant_collect &stat);
+    //crafting
+    void recipeUsed(const RecipeUsage &recipeUsage);
 
     //network
     void updateRXTX();
@@ -124,11 +126,9 @@ private slots:
     void on_plantUse_clicked();
     void on_listPlantList_itemActivated(QListWidgetItem *item);
     void on_pushButton_interface_crafting_clicked();
-
     void on_toolButton_quit_crafting_clicked();
-
     void on_listCraftingList_itemSelectionChanged();
-
+    void on_craftingUse_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -179,6 +179,10 @@ private:
     QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;
     QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
     bool inSelection;
+
+    //crafting
+    QList<QList<QPair<quint32,quint32> > > materialOfRecipeInUsing;
+    QList<QPair<quint32,quint32> > productOfRecipeInUsing;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

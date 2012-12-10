@@ -94,6 +94,9 @@ void BaseWindow::load_crafting_inventory()
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::load_crafting_inventory()";
     #endif
+    ui->listCraftingList->clear();
+    crafting_recipes_items_to_graphical.clear();
+    crafting_recipes_items_graphical.clear();
     Player_private_and_public_informations informations=client->get_player_informations();
     int index=0;
     while(index<informations.recipes.size())
@@ -125,7 +128,6 @@ void BaseWindow::load_crafting_inventory()
 
 void BaseWindow::on_listPlantList_itemSelectionChanged()
 {
-    qDebug() << "on_listPlantList_itemSelectionChanged()";
     QList<QListWidgetItem *> items=ui->listPlantList->selectedItems();
     if(items.size()!=1)
     {
@@ -235,7 +237,6 @@ void BaseWindow::on_toolButton_quit_crafting_clicked()
 
 void BaseWindow::on_listCraftingList_itemSelectionChanged()
 {
-    qDebug() << "on_listCraftingList_itemSelectionChanged()";
     ui->listCraftingMaterials->clear();
     QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
     if(displayedItems.size()!=1)
@@ -261,9 +262,8 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         name=tr("Unknow item (%1)").arg(content.doItemId);
         ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
     }
-    ui->labelCraftingDetails->setText(QString("Name: %1<br /><br />Success: %2%<br /><br />Result: %3").arg(name).arg(content.success).arg(content.quantity));
+    ui->labelCraftingDetails->setText(QString("Name: <b>%1</b><br /><br />Success: <b>%2%</b><br /><br />Result: <b>%3</b>").arg(name).arg(content.success).arg(content.quantity));
 
-    qDebug() << "on_listCraftingList_itemSelectionChanged() load the materials";
     //load the materials
     bool haveMaterials=true;
     int index=0;
@@ -299,6 +299,97 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         ui->listCraftingMaterials->addItem(item);
         ui->craftingUse->setVisible(haveMaterials);
         index++;
-        qDebug() << "on_listCraftingList_itemSelectionChanged() load the materials interal";
+    }
+}
+
+void BaseWindow::on_craftingUse_clicked()
+{
+    //recipeInUsing
+    qDebug() << "on_craftingUse_clicked()";
+    QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
+    if(displayedItems.size()!=1)
+        return;
+    QListWidgetItem *selectedItem=displayedItems.first();
+    const Pokecraft::CrafingRecipe &content=DatapackClientLoader::datapackLoader.crafingRecipes[crafting_recipes_items_graphical[selectedItem]];
+
+    //load the materials
+    int index=0;
+    while(index<content.materials.size())
+    {
+        if(!items.contains(content.materials.at(index).itemId))
+            return;
+        if(items[content.materials.at(index).itemId]<content.materials.at(index).quantity)
+            return;
+        index++;
+    }
+    index=0;
+    QList<QPair<quint32,quint32> > recipeUsage;
+    while(index<content.materials.size())
+    {
+        QPair<quint32,quint32> pair;
+        pair.first=content.materials.at(index).itemId;
+        pair.second=content.materials.at(index).quantity;
+        items[pair.first]-=pair.second;
+        if(items[pair.first]==0)
+            items.remove(pair.first);
+        recipeUsage << pair;
+        index++;
+    }
+    materialOfRecipeInUsing << recipeUsage;
+    //the product do
+    QPair<quint32,quint32> pair;
+    pair.first=content.doItemId;
+    pair.second=content.quantity;
+    productOfRecipeInUsing << pair;
+    //update the UI
+    load_inventory();
+    load_plant_inventory();
+    on_listCraftingList_itemSelectionChanged();
+    //send to the network
+    client->useRecipe(crafting_recipes_items_graphical[selectedItem]);
+}
+
+void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
+{
+    switch(recipeUsage)
+    {
+        case RecipeUsage_ok:
+            materialOfRecipeInUsing.removeFirst();
+            if(items.contains(productOfRecipeInUsing.first().first))
+                items[productOfRecipeInUsing.first().first]+=productOfRecipeInUsing.first().second;
+            else
+                items[productOfRecipeInUsing.first().first]=productOfRecipeInUsing.first().second;
+            productOfRecipeInUsing.removeFirst();
+            //update the UI
+            load_inventory();
+            load_plant_inventory();
+            on_listCraftingList_itemSelectionChanged();
+        break;
+        case RecipeUsage_impossible:
+        {
+            int index=0;
+            while(index<materialOfRecipeInUsing.first().size())
+            {
+                if(items.contains(materialOfRecipeInUsing.first().at(index).first))
+                    items[materialOfRecipeInUsing.first().at(index).first]+=materialOfRecipeInUsing.first().at(index).first;
+                else
+                    items[materialOfRecipeInUsing.first().at(index).first]=materialOfRecipeInUsing.first().at(index).first;
+                index++;
+            }
+            materialOfRecipeInUsing.removeFirst();
+            productOfRecipeInUsing.removeFirst();
+            //update the UI
+            load_inventory();
+            load_plant_inventory();
+            on_listCraftingList_itemSelectionChanged();
+        }
+        break;
+        case RecipeUsage_failed:
+            materialOfRecipeInUsing.removeFirst();
+            productOfRecipeInUsing.removeFirst();
+        break;
+        default:
+        qDebug() << "recipeUsed() unknow code";
+        return;
     }
 }
