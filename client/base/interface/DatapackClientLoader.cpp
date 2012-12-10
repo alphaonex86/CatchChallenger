@@ -40,6 +40,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseItems();
     parseMaps();
     parsePlants();
+    parseCraftingRecipes();
 
     emit datapackParsed();
 }

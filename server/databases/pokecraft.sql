@@ -3,9 +3,9 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Nov 15, 2012 at 07:02 AM
--- Server version: 5.1.62
--- PHP Version: 5.4.8--pl0-gentoo
+-- Generation Time: Dec 10, 2012 at 10:49 AM
+-- Server version: 5.1.66
+-- PHP Version: 5.4.9--pl0-gentoo
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -34,36 +34,22 @@ CREATE TABLE IF NOT EXISTS `item` (
   KEY `player_id` (`player_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
---
--- Dumping data for table `item`
---
-
-INSERT INTO `item` (`item_id`, `player_id`, `quantity`) VALUES
-(1, 5, 1),
-(2, 5, 5);
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `monster`
+-- Table structure for table `plant`
 --
 
-CREATE TABLE IF NOT EXISTS `monster` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `monster_id` int(11) NOT NULL,
+CREATE TABLE IF NOT EXISTS `plant` (
+  `map` varchar(255) NOT NULL,
+  `x` int(11) NOT NULL,
+  `y` int(11) NOT NULL,
+  `plant` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
-  `xp` int(11) NOT NULL,
-  `position` int(11) NOT NULL,
-  `hp_boost` int(11) NOT NULL,
-  `sp_attack_boost` int(11) NOT NULL,
-  `sp_defence_boost` int(11) NOT NULL,
-  `attack_boost` int(11) NOT NULL,
-  `defence_boost` int(11) NOT NULL,
-  `hp` int(11) NOT NULL,
-  `ball_used` int(11) NOT NULL,
-  `skills` varbinary(72) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+  `plant_timestamps` int(11) NOT NULL,
+  PRIMARY KEY (`map`,`x`,`y`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
 
 -- --------------------------------------------------------
 
@@ -87,4 +73,21 @@ CREATE TABLE IF NOT EXISTS `player` (
   `cash` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=6 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `recipes`
+--
+
+CREATE TABLE IF NOT EXISTS `recipes` (
+  `player` int(11) NOT NULL,
+  `recipe` int(11) NOT NULL,
+  PRIMARY KEY (`player`,`recipe`),
+  KEY `player` (`player`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
