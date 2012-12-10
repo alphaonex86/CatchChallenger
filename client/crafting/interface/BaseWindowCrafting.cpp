@@ -269,6 +269,8 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     QString nameMaterials;
     QListWidgetItem *item;
     quint32 quantity;
+    QFont MissingQuantity;
+    MissingQuantity.setItalic(true);
     while(index<content.materials.size())
     {
         //load the material item
@@ -291,6 +293,11 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
 
         //load the display
         item->setText(tr("Needed: %1 %2\nIn the inventory: %3 %4").arg(content.materials.at(index).quantity).arg(nameMaterials).arg(quantity).arg(nameMaterials));
+        if(quantity<content.materials.at(index).quantity)
+        {
+            item->setFont(MissingQuantity);
+            item->setForeground(QBrush(QColor(200,20,20)));
+        }
 
         if(quantity<content.materials.at(index).quantity)
             haveMaterials=false;
