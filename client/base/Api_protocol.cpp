@@ -1230,7 +1230,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 {
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         return;
                     }
                     quint8 returnCode;
@@ -1271,7 +1271,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 {
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2").arg(mainCodeType).arg(queryNumber));
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         return;
                     }
                     quint8 returnCode;
@@ -1280,7 +1280,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                     {
                         if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                         {
-                            parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1").arg(mainCodeType));
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
                         QString string;
@@ -1388,7 +1388,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 {
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2, type: query_type_protocol").arg(mainCodeType).arg(queryNumber));
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         return;
                     }
                     havePlantAction=false;
@@ -1400,7 +1400,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         emit seed_planted(false);
                     else
                     {
-                        emit newError(tr("Procotol wrong or corrupted"),QString("bad return code: %1").arg(returnCode));
+                        parseError(tr("Procotol wrong or corrupted"),QString("bad return code: %1").arg(returnCode));
                         return;
                     }
                 }
@@ -1410,7 +1410,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 {
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2").arg(mainCodeType).arg(queryNumber));
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         return;
                     }
                     havePlantAction=false;
@@ -1425,7 +1425,29 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             emit plant_collected((Plant_collect)returnCode);
                         break;
                         default:
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, and queryNumber: %2").arg(mainCodeType).arg(queryNumber));
+                        parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        return;
+                    }
+                }
+                //Usage of recipe
+                case 0x0008:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                        case 0x02:
+                        case 0x03:
+                            emit recipeUsed((RecipeUsage)returnCode);
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         return;
                     }
                 }
@@ -1593,7 +1615,6 @@ void Api_protocol::useSeed(const quint8 &plant_id)
     QByteArray outputData;
     outputData[0]=plant_id;
     output->packOutcommingQuery(0x10,0x0006,queryNumber(),outputData);
-    return;
 }
 
 //inventory
@@ -1605,7 +1626,6 @@ void Api_protocol::destroyObject(quint32 object,quint32 quantity)
     out << object;
     out << quantity;
     output->packOutcommingData(0x50,0x0002,outputData);
-    return;
 }
 
 void Api_protocol::collectMaturePlant()
@@ -1617,7 +1637,16 @@ void Api_protocol::collectMaturePlant()
     }
     havePlantAction=true;
     output->packOutcommingQuery(0x10,0x0007,queryNumber(),QByteArray());
-    return;
+}
+
+//crafting
+void Api_protocol::useRecipe(const quint32 &recipeId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)recipeId;
+    output->packOutcommingQuery(0x10,0x0008,queryNumber(),outputData);
 }
 
 //to reset all

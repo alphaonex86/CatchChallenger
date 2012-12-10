@@ -114,6 +114,8 @@ signals:
     void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y);
     void seed_planted(const bool &ok);
     void plant_collected(const Pokecraft::Plant_collect &stat);
+    //crafting
+    void recipeUsed(const RecipeUsage &recipeUsage);
 
     //chat
     void new_chat_text(const Pokecraft::Chat_type &chat_type,const QString &text,const QString &pseudo,const Pokecraft::Player_type &type);
@@ -139,6 +141,8 @@ public slots:
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);
     void collectMaturePlant();
+    //crafting
+    void useRecipe(const quint32 &recipeId);
 
     //inventory
     void destroyObject(quint32 object,quint32 quantity=1);

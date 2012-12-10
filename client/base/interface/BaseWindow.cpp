@@ -64,10 +64,13 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)));
     connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client,quint8,quint8)));
 
+    //plants
     connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));
     connect(this,SIGNAL(collectMaturePlant()),client,SLOT(collectMaturePlant()));
     connect(client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
     connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
+    //crafting
+    connect(client,SIGNAL(recipeUsed(RecipeUsage)),this,SLOT(recipeUsed(RecipeUsage)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
@@ -600,6 +603,7 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
 
     load_inventory();
     load_plant_inventory();
+    on_listCraftingList_itemSelectionChanged();
 }
 
 void BaseWindow::remove_to_inventory(const QHash<quint32,quint32> &items)
