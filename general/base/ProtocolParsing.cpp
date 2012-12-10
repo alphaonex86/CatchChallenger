@@ -475,11 +475,17 @@ void ProtocolParsingInput::parseIncommingData()
                 {
                     RXSize+=dataSize-data.size();
                     data.append(socket->read(dataSize-data.size()));
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): remaining data: %1").arg(socket->bytesAvailable()));
+                    #endif
                 }
                 else //if need more data
                 {
                     RXSize+=socket->bytesAvailable();
                     data.append(socket->readAll());
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need more to recompose: %1").arg(dataSize-data.size()));
+                    #endif
                 }
             } while(
                 //need more data
@@ -500,6 +506,15 @@ void ProtocolParsingInput::parseIncommingData()
                 return;
             }
         }
+        else
+        {
+            #ifdef PROTOCOLPARSINGDEBUG
+            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): no need data"));
+            #endif
+        }
+        #ifdef PROTOCOLPARSINGDEBUG
+        DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data.size(): %1").arg(data.size()));
+        #endif
         #ifdef POKECRAFT_EXTRA_CHECK
         if(dataSize!=(quint32)data.size())
         {
