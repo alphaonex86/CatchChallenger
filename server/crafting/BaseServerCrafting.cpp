@@ -384,7 +384,10 @@ void BaseServerCrafting::preload_crafting_recipes()
                             }
                         }
                         if(ok)
+                        {
                             GlobalData::serverPrivateVariables.crafingRecipes[id]=recipe;
+                            GlobalData::serverPrivateVariables.itemToCrafingRecipes[recipe.itemToLearn]=id;
+                        }
                     }
                     else
                         DebugClass::debugConsole(QString("Unable to open the crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));

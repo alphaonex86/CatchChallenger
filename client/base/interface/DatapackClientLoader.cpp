@@ -190,4 +190,6 @@ void DatapackClientLoader::resetAll()
      }
      plants.clear();
      itemToPlants.clear();
+     itemToCrafingRecipes.clear();
+     crafingRecipes.clear();
 }
