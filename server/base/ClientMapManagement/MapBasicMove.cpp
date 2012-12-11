@@ -86,7 +86,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
     switch(last_direction)
     {
         case Direction_move_at_top:
-            if(unlikely(previousMovedUnit==0))
+            if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
                 return false;
@@ -106,7 +106,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }
         break;
         case Direction_move_at_right:
-            if(unlikely(previousMovedUnit==0))
+            if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_right: Previous action is moving: %1").arg(last_direction));
                 return false;
@@ -126,7 +126,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }
         break;
         case Direction_move_at_bottom:
-            if(unlikely(previousMovedUnit==0))
+            if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_bottom: Previous action is moving: %1").arg(last_direction));
                 return false;
@@ -146,7 +146,7 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }
         break;
         case Direction_move_at_left:
-            if(unlikely(previousMovedUnit==0))
+            if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
                 return false;
