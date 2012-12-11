@@ -71,6 +71,8 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
     //crafting
     connect(client,SIGNAL(recipeUsed(RecipeUsage)),this,SLOT(recipeUsed(RecipeUsage)));
+    //inventory
+    connect(client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
@@ -798,6 +800,10 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                          /* is a plant */
                                          DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical[item])
                                          );
+    ui->inventoryUse->setVisible(!inSelection &&
+                                         /* is a recipe */
+                                         DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(items_graphical[item])
+                                         );
     ui->inventoryDestroy->setVisible(!inSelection);
     ui->inventory_image->setPixmap(content.image);
     ui->inventory_name->setText(content.name);
@@ -958,12 +964,59 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         qDebug() << "BaseWindow::on_inventory_itemActivated(): activated item not found";
         return;
     }
-    if(!inSelection)
+    if(inSelection)
     {
-        qDebug() << "BaseWindow::on_inventory_itemActivated(): not in selection, use is not done actually";
+        objectSelection(true,items_graphical[item]);
         return;
     }
-    objectSelection(true,items_graphical[item]);
+
+    //is crafting recipe
+    if(DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(items_graphical[item]))
+    {
+        Player_private_and_public_informations informations=client->get_player_informations();
+        if(informations.recipes.contains(DatapackClientLoader::datapackLoader.itemToCrafingRecipes[items_graphical[item]]))
+        {
+            QMessageBox::information(this,tr("Information"),tr("You already know this recipe"));
+            return;
+        }
+        objectInUsing << items_graphical[item];
+        items[items_graphical[item]]--;
+        if(items[items_graphical[item]]==0)
+            items.remove(items_graphical[item]);
+        client->useObject(items_graphical[item]);
+        load_inventory();
+    }
+    else
+        qDebug() << "BaseWindow::on_inventory_itemActivated(): unknow object type";
+}
+
+void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
+{
+    switch(objectUsage)
+    {
+        case ObjectUsage_correctlyUsed:
+        //is crafting recipe
+        if(DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(objectInUsing.first()))
+        {
+            client->addRecipe(DatapackClientLoader::datapackLoader.itemToCrafingRecipes[objectInUsing.first()]);
+            load_crafting_inventory();
+        }
+        else
+            qDebug() << "BaseWindow::objectUsed(): unknow object type";
+        break;
+        case ObjectUsage_failed:
+        break;
+        case ObjectUsage_impossible:
+            if(items.contains(objectInUsing.first()))
+                items[objectInUsing.first()]++;
+            else
+                items[objectInUsing.first()]=1;
+            load_inventory();
+        break;
+        default:
+        break;
+    }
+    objectInUsing.removeFirst();
 }
 
 void BaseWindow::on_inventoryDestroy_clicked()

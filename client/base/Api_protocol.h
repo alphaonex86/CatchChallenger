@@ -116,6 +116,8 @@ signals:
     void plant_collected(const Pokecraft::Plant_collect &stat);
     //crafting
     void recipeUsed(const RecipeUsage &recipeUsage);
+    //inventory
+    void objectUsed(const ObjectUsage &objectUsage);
 
     //chat
     void new_chat_text(const Pokecraft::Chat_type &chat_type,const QString &text,const QString &pseudo,const Pokecraft::Player_type &type);
@@ -143,9 +145,11 @@ public slots:
     void collectMaturePlant();
     //crafting
     void useRecipe(const quint32 &recipeId);
+    void addRecipe(const quint32 &recipeId);
 
     //inventory
-    void destroyObject(quint32 object,quint32 quantity=1);
+    void destroyObject(const quint32 &object,const quint32 &quantity=1);
+    void useObject(const quint32 &object);
 };
 }
 
