@@ -166,6 +166,11 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QString("Plant ignored because the map not exists: %1").arg(map));
             continue;
         }
+        if(static_cast<MapServer *>(GlobalData::serverPrivateVariables.map_list[map])->plants.size()>=255)
+        {
+            DebugClass::debugConsole(QString("Plant ignored because the map have 255 or more plant: %1").arg(map));
+            continue;
+        }
         quint8 x=plantOnMapQuery.value(1).toUInt(&ok);
         if(!ok)
         {
