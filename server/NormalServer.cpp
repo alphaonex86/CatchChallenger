@@ -293,6 +293,7 @@ void NormalServer::removeOneClient()
     }
     client_list.remove(client);
     client->deleteLater();
+    check_if_now_stopped();
 }
 
 void NormalServer::removeOneBot()
@@ -305,6 +306,7 @@ void NormalServer::removeOneBot()
     }
     GlobalData::serverPrivateVariables.fakeBotList.remove(client);
     client->deleteLater();
+    check_if_now_stopped();
 }
 
 void NormalServer::removeBots()
