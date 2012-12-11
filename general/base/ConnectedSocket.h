@@ -47,6 +47,8 @@ signals:
     void	disconnected();
     void	error(QAbstractSocket::SocketError socketError);
     void	stateChanged(QAbstractSocket::SocketState socketState);
+private slots:
+    void destroyedSocket();
 };
 }
 
