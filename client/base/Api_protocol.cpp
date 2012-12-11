@@ -1453,6 +1453,29 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                     }
                 }
                 break;
+                //Use object
+                case 0x0009:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                        case 0x02:
+                        case 0x03:
+                            emit objectUsed((ObjectUsage)returnCode);
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        return;
+                    }
+                }
+                break;
                 default:
                     parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1, with mainCodeType: %2").arg(subCodeType).arg(mainCodeType));
                     return;
@@ -1619,7 +1642,7 @@ void Api_protocol::useSeed(const quint8 &plant_id)
 }
 
 //inventory
-void Api_protocol::destroyObject(quint32 object,quint32 quantity)
+void Api_protocol::destroyObject(const quint32 &object, const quint32 &quantity)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1627,6 +1650,15 @@ void Api_protocol::destroyObject(quint32 object,quint32 quantity)
     out << object;
     out << quantity;
     output->packOutcommingData(0x50,0x0002,outputData);
+}
+
+void Api_protocol::useObject(const quint32 &object)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << object;
+    output->packOutcommingData(0x10,0x0009,outputData);
 }
 
 void Api_protocol::collectMaturePlant()
@@ -1648,6 +1680,11 @@ void Api_protocol::useRecipe(const quint32 &recipeId)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)recipeId;
     output->packOutcommingQuery(0x10,0x0008,queryNumber(),outputData);
+}
+
+void Api_protocol::addRecipe(const quint32 &recipeId)
+{
+    player_informations.recipes << recipeId;
 }
 
 //to reset all

@@ -101,6 +101,7 @@ private slots:
 
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
+    void objectUsed(const ObjectUsage &objectUsage);
 
     //plant
     void seed_planted(const bool &ok);
@@ -181,6 +182,7 @@ private:
     QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;
     QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
     bool inSelection;
+    QList<quint32> objectInUsing;
 
     //crafting
     QList<QList<QPair<quint32,quint32> > > materialOfRecipeInUsing;
