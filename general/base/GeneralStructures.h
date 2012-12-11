@@ -62,6 +62,21 @@ enum RecipeUsage
     RecipeUsage_failed=0x03//crafting materials used
 };
 
+enum Plant_collect
+{
+    Plant_collect_correctly_collected=0x01,
+    Plant_collect_empty_dirt=0x02,
+    Plant_collect_owned_by_another_player=0x03,
+    Plant_collect_impossible=0x04
+};
+
+enum ObjectUsage
+{
+    ObjectUsage_correctlyUsed=0x01,//is correctly used
+    ObjectUsage_failed=0x02,//failed to use with consumption of the object
+    ObjectUsage_impossible=0x03//failed to use without consumption of the object
+};
+
 struct map_management_insert
 {
     QString fileName;
