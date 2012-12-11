@@ -32,11 +32,6 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket,QObject *parent) :
 
 ConnectedSocket::~ConnectedSocket()
 {
-    destroyedSocket();
-}
-
-void ConnectedSocket::destroyedSocket()
-{
     if(tcpSocket!=NULL)
     {
         delete tcpSocket;
@@ -47,6 +42,12 @@ void ConnectedSocket::destroyedSocket()
         delete fakeSocket;
         fakeSocket=NULL;
     }
+}
+
+void ConnectedSocket::destroyedSocket()
+{
+    tcpSocket=NULL;
+    fakeSocket=NULL;
 }
 
 void ConnectedSocket::abort()
