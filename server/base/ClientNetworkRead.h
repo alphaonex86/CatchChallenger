@@ -77,6 +77,7 @@ signals:
     void useRecipe(const quint8 &query_id,const quint32 &recipe_id);
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);
+    void useObject(const quint8 &query_id,const quint32 &itemId);
 private:
     // for status
     bool have_send_protocol;

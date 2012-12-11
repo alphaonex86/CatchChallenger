@@ -60,6 +60,7 @@ public slots:
     void sendHandlerCommand(const QString &command,const QString &extraText);
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);
+    void useObject(const quint8 &query_id,const quint32 &itemId);
     //teleportation
     void receiveTeleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
