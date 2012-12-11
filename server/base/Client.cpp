@@ -130,6 +130,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	SIGNAL(sendBroadCastCommand(QString,QString)),			clientBroadCast,	SLOT(sendBroadCastCommand(QString,QString)),			Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(sendHandlerCommand(QString,QString)),			localClientHandler,	SLOT(sendHandlerCommand(QString,QString)),			Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(destroyObject(quint32,quint32)),			localClientHandler,	SLOT(destroyObject(quint32,quint32)),			Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(useObject(quint8,quint32)),			localClientHandler,	SLOT(useObject(quint8,quint32)),			Qt::QueuedConnection);
     connect(clientBroadCast,	SIGNAL(kicked()),						this,			SLOT(kicked()),							Qt::QueuedConnection);
 
     //connect the message

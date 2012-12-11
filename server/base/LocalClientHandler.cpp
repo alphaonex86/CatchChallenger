@@ -446,6 +446,60 @@ void LocalClientHandler::destroyObject(const quint32 &itemId,const quint32 &quan
     removeObject(itemId,quantity);
 }
 
+void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("use the object: %1").arg(itemId));
+    #endif
+    if(player_informations->public_and_private_informations.items.contains(itemId))
+    {
+        //if is crafting recipe
+        if(GlobalData::serverPrivateVariables.itemToCrafingRecipes.contains(itemId))
+        {
+            quint32 recipeId=GlobalData::serverPrivateVariables.itemToCrafingRecipes[itemId];
+            if(player_informations->public_and_private_informations.recipes.contains(recipeId))
+            {
+                emit error(QString("can't use the object: %1 because recipe already registred").arg(itemId));
+                return;
+            }
+            player_informations->public_and_private_informations.recipes << recipeId;
+            //send the network reply
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)ObjectUsage_correctlyUsed;
+            emit postReply(query_id,outputData);
+            //add into db
+            switch(GlobalData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("INSERT INTO recipes(player,recipe) VALUES(%1,%2);")
+                             .arg(player_informations->id)
+                             .arg(recipeId)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("INSERT INTO recipes(player,recipe) VALUES(%1,%2);")
+                             .arg(player_informations->id)
+                             .arg(recipeId)
+                             );
+                break;
+            }
+        }
+        else
+        {
+            emit error(QString("can't use the object: %1 because don't have an usage").arg(itemId));
+            return;
+        }
+    }
+    else
+    {
+        emit error(QString("can't use the object: %1 because don't have into the inventory").arg(itemId));
+        return;
+    }
+}
+
 void LocalClientHandler::receiveTeleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation)
 {
     emit teleportTo(map,x,y,orientation);
