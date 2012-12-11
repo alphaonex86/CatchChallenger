@@ -415,7 +415,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             if(current_time<static_cast<MapServer *>(map)->plants.at(index).mature_at)
             {
                 QByteArray data;
-                data[0]=0x04;
+                data[0]=Plant_collect_impossible;
                 emit postReply(query_id,data);
                 return;
             }
@@ -454,11 +454,11 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
 
                 //add into the inventory
                 float quantity=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].fix_quantity;
-                if(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity<=(rand()%RANDOM_FLOAT_PART_DIVIDER))
+                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity)
                     quantity++;
 
                 QByteArray data;
-                data[0]=0x01;
+                data[0]=Plant_collect_correctly_collected;
                 emit postReply(query_id,data);
                 emit addObjectAndSend(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
 
@@ -468,7 +468,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             else
             {
                 QByteArray data;
-                data[0]=0x03;
+                data[0]=Plant_collect_owned_by_another_player;
                 emit postReply(query_id,data);
                 return;
             }
@@ -476,6 +476,6 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
         index++;
     }
     QByteArray data;
-    data[0]=0x02;
+    data[0]=Plant_collect_empty_dirt;
     emit postReply(query_id,data);
 }
