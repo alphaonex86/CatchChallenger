@@ -1658,7 +1658,7 @@ void Api_protocol::useObject(const quint32 &object)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << object;
-    output->packOutcommingData(0x10,0x0009,outputData);
+    output->packOutcommingQuery(0x10,0x0009,queryNumber(),outputData);
 }
 
 void Api_protocol::collectMaturePlant()

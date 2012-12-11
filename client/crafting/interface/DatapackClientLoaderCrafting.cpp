@@ -255,7 +255,7 @@ void DatapackClientLoader::parseCraftingRecipes()
                                     if(!ok2)
                                     {
                                         ok=false;
-                                        qDebug() << QString("preload_crafting_recipes() material attribute itemId is not a number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                        qDebug() << QString("preload_crafting_recipes() material attribute itemId is not a number for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                                         break;
                                     }
                                     quint16 quantity=1;
@@ -267,7 +267,7 @@ void DatapackClientLoader::parseCraftingRecipes()
                                             if(tempShort>65535)
                                             {
                                                 ok=false;
-                                                qDebug() << QString("preload_crafting_recipes() material quantity can't be greater than 65535 for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                                qDebug() << QString("preload_crafting_recipes() material quantity can't be greater than 65535 for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                                                 break;
                                             }
                                             else
@@ -276,14 +276,14 @@ void DatapackClientLoader::parseCraftingRecipes()
                                         else
                                         {
                                             ok=false;
-                                            qDebug() << QString("preload_crafting_recipes() material quantity in not an number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                            qDebug() << QString("preload_crafting_recipes() material quantity in not an number for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                                             break;
                                         }
                                     }
                                     if(!items.contains(itemId))
                                     {
                                         ok=false;
-                                        qDebug() << QString("preload_crafting_recipes() material itemId in not into items list for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                        qDebug() << QString("preload_crafting_recipes() material itemId in not into items list for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                                         break;
                                     }
                                     Pokecraft::CrafingRecipe::Material newMaterial;
@@ -292,10 +292,10 @@ void DatapackClientLoader::parseCraftingRecipes()
                                     recipe.materials << newMaterial;
                                 }
                                 else
-                                    qDebug() << QString("preload_crafting_recipes() material have not attribute itemId for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                    qDebug() << QString("preload_crafting_recipes() material have not attribute itemId for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                             }
                             else
-                                qDebug() << QString("preload_crafting_recipes() material is not an element for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                qDebug() << QString("preload_crafting_recipes() material is not an element for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                             material = material.nextSiblingElement("material");
                         }
                         if(ok)
@@ -303,7 +303,7 @@ void DatapackClientLoader::parseCraftingRecipes()
                             if(!items.contains(recipe.itemToLearn))
                             {
                                 ok=false;
-                                qDebug() << QString("preload_crafting_recipes() itemToLearn is not into items list for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                qDebug() << QString("preload_crafting_recipes() itemToLearn is not into items list for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                             }
                         }
                         if(ok)
@@ -311,13 +311,14 @@ void DatapackClientLoader::parseCraftingRecipes()
                             if(!items.contains(recipe.doItemId))
                             {
                                 ok=false;
-                                qDebug() << QString("preload_crafting_recipes() doItemId is not into items list for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                qDebug() << QString("preload_crafting_recipes() doItemId is not into items list for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                             }
                         }
                         if(ok)
                         {
                             crafingRecipes[id]=recipe;
-                            //itemToCrafingRecipes[recipe.];
+                            qDebug() << "itemToCrafingRecipes[recipe.itemToLearn]: " << recipe.itemToLearn;
+                            itemToCrafingRecipes[recipe.itemToLearn]=id;
                         }
                     }
                     else

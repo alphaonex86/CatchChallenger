@@ -552,6 +552,17 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                 in >> recipe_id;
                 emit useRecipe(queryNumber,recipe_id);
             break;
+            //Use object
+            case 0x0009:
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 objectId;
+                in >> objectId;
+                emit useObject(queryNumber,objectId);
+            break;
             default:
                 parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;

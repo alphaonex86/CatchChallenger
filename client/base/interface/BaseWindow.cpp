@@ -782,7 +782,6 @@ void BaseWindow::on_toolButton_quit_inventory_clicked()
 
 void BaseWindow::on_inventory_itemSelectionChanged()
 {
-    qDebug() << "on_inventory_itemSelectionChanged()";
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
     {
@@ -800,6 +799,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                          /* is a plant */
                                          DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical[item])
                                          );
+    qDebug() << "on_inventory_itemSelectionChanged(), items_graphical[item]: " << items_graphical[item] << "DatapackClientLoader::datapackLoader.itemToCrafingRecipes.size(): " << DatapackClientLoader::datapackLoader.itemToCrafingRecipes.size();
     ui->inventoryUse->setVisible(!inSelection &&
                                          /* is a recipe */
                                          DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(items_graphical[item])
