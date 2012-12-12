@@ -48,6 +48,7 @@ public:
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
 
+    QHash<QString/*name*/,QHash<quint8/*bot id*/,Pokecraft::Bot> > botFiles;
     struct Map_full
     {
         Pokecraft::Map_client logicalMap;
@@ -93,6 +94,8 @@ protected slots:
     virtual void resetAll();
 public slots:
     QString loadOtherMap(const QString &fileName);
+    void loadOtherMapClientPart(Map_full *parsedMap);
+    void loadBotFile(const QString &fileName);
     virtual QSet<QString> loadMap(Map_full *map, const bool &display);
     virtual void removeUnusedMap();
 private slots:
