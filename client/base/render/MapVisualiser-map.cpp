@@ -10,6 +10,7 @@
 #include <QPointer>
 
 #include "../../general/base/MoveOnTheMap.h"
+#include "../../general/base/DebugClass.h"
 #include "../../general/libtiled/tile.h"
 
 void MapVisualiser::resetAll()
@@ -130,9 +131,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
             if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
             {
                 //remove the unknow layer
-                if(objectGroup->name()!="Moving")
-                    delete tempMapObject->tiledMap->takeLayerAt(index);
-                else
+                if(objectGroup->name()=="Moving")
                 {
                     QList<Tiled::MapObject*> objects=objectGroup->objects();
                     int index2=0;
@@ -148,6 +147,30 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
                     }
                     index++;
                 }
+                else if(objectGroup->name()=="Object")
+                {
+                    QList<Tiled::MapObject*> objects=objectGroup->objects();
+                    int index2=0;
+                    while(index2<objects.size())
+                    {
+                        //remove the bot
+                        if(objects.at(index2)->type()!="bot")
+                        {
+                            objectGroup->removeObject(objects.at(index2));
+                            delete objects.at(index2);
+                        }
+                        //remove the unknow object
+                        else
+                        {
+                            objectGroup->removeObject(objects.at(index2));
+                            delete objects.at(index2);
+                        }
+                        index2++;
+                    }
+                    index++;
+                }
+                else
+                    delete tempMapObject->tiledMap->takeLayerAt(index);
             }
             else
                 index++;
@@ -265,9 +288,185 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
         index++;
     }
 
+    loadOtherMapClientPart(tempMapObject);
     all_map[resolvedFileName]=tempMapObject;
 
     return resolvedFileName;
+}
+
+void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
+{
+    QString fileName=parsedMap->logicalMap.map_file;
+    QFile mapFile(fileName);
+    if(!mapFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+        return;
+    }
+    QByteArray xmlContent=mapFile.readAll();
+    mapFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="map")
+    {
+        qDebug() << QString("\"map\" root balise not found for the xml file");
+        return;
+    }
+    bool ok,ok2;
+    //load the bots
+    QDomElement child = root.firstChildElement("objectgroup");
+    while(!child.isNull())
+    {
+        if(!child.hasAttribute("name"))
+            Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"name\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+        else if(!child.isElement())
+            Pokecraft::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
+        else
+        {
+            if(child.attribute("name")=="Object")
+            {
+                QDomElement bot = child.firstChildElement("object");
+                while(!bot.isNull())
+                {
+                    if(!bot.hasAttribute("type"))
+                        Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
+                    else if(!bot.hasAttribute("x"))
+                        Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"x\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
+                    else if(!bot.hasAttribute("y"))
+                        Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"y\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
+                    else if(!bot.isElement())
+                        Pokecraft::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(bot.tagName().arg(bot.attribute("type")).arg(bot.lineNumber())));
+                    else
+                    {
+                        quint32 x=bot.attribute("x").toUInt(&ok)/16;
+                        quint32 y=(bot.attribute("y").toUInt(&ok2)/16)-1;
+                        if(ok && ok2 && bot.attribute("type")=="bot")
+                        {
+                            QDomElement properties = bot.firstChildElement("properties");
+                            while(!properties.isNull())
+                            {
+                                if(!properties.isElement())
+                                    Pokecraft::DebugClass::debugConsole(QString("Is not an element: properties.tagName(): %1, (at line: %2)").arg(properties.tagName().arg(properties.lineNumber())));
+                                else
+                                {
+                                    QHash<QString,QString> property_parsed;
+                                    QDomElement property = properties.firstChildElement("property");
+                                    while(!property.isNull())
+                                    {
+                                        if(!property.hasAttribute("name"))
+                                            Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"name\": property.tagName(): %1 (at line: %2)").arg(property.tagName()).arg(property.lineNumber()));
+                                        else if(!property.hasAttribute("value"))
+                                            Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"value\": property.tagName(): %1 (at line: %2)").arg(property.tagName()).arg(property.lineNumber()));
+                                        else if(!property.isElement())
+                                            Pokecraft::DebugClass::debugConsole(QString("Is not an element: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
+                                        else
+                                            property_parsed[property.attribute("name")]=property.attribute("value");
+                                        property = property.nextSiblingElement("property");
+                                    }
+                                    if(property_parsed.contains("file") && property_parsed.contains("id"))
+                                    {
+                                        quint8 botId=property_parsed["id"].toUShort(&ok);
+                                        if(ok)
+                                        {
+                                            QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+"/"+property_parsed["file"]).absoluteFilePath();
+                                            if(!botFile.endsWith(".xml"))
+                                                botFile+=".xml";
+                                            loadBotFile(botFile);
+                                            if(botFiles.contains(botFile))
+                                                if(botFiles[botFile].contains(botId))
+                                                {
+                                                    Pokecraft::DebugClass::debugConsole(QString("Put bot at %1 (%2,%3)").arg(botFile).arg(x).arg(y));
+                                                    parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
+                                                }
+                                        }
+                                        else
+                                            Pokecraft::DebugClass::debugConsole(QString("Is not a number: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
+                                    }
+                                }
+                                properties = properties.nextSiblingElement("properties");
+                            }
+                        }
+                    }
+                    bot = bot.nextSiblingElement("object");
+                }
+            }
+        }
+        child = child.nextSiblingElement("objectgroup");
+    }
+}
+
+void MapVisualiser::loadBotFile(const QString &fileName)
+{
+    if(botFiles.contains(fileName))
+        return;
+    botFiles[fileName];//create the entry
+    QFile mapFile(fileName);
+    if(!mapFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+        return;
+    }
+    QByteArray xmlContent=mapFile.readAll();
+    mapFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return;
+    }
+    bool ok;
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="bots")
+    {
+        qDebug() << QString("\"bots\" root balise not found for the xml file");
+        return;
+    }
+    //load the bots
+    QDomElement child = root.firstChildElement("bot");
+    while(!child.isNull())
+    {
+        if(!child.hasAttribute("id"))
+            Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+        else if(!child.isElement())
+            Pokecraft::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
+        else
+        {
+            quint32 id=child.attribute("id").toUInt(&ok);
+            if(ok)
+            {
+                botFiles[fileName][id];
+                QDomElement step = child.firstChildElement("step");
+                while(!step.isNull())
+                {
+                    if(!step.hasAttribute("id"))
+                        Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                    else if(!step.hasAttribute("type"))
+                        Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                    else if(!step.isElement())
+                        Pokecraft::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber())));
+                    else
+                    {
+                        quint32 stepId=step.attribute("id").toUInt(&ok);
+                        if(ok)
+                            botFiles[fileName][id].step[stepId]=step;
+                    }
+                    step = step.nextSiblingElement("step");
+                }
+            }
+            else
+                Pokecraft::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+        }
+        child = child.nextSiblingElement("bot");
+    }
 }
 
 QSet<QString> MapVisualiser::loadMap(Map_full *map,const bool &display)
