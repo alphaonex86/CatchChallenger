@@ -8,6 +8,7 @@
 #include <QString>
 #include <QHash>
 #include <QVariant>
+#include <QDomElement>
 
 #define COORD_TYPE quint8
 #define SIMPLIFIED_PLAYER_ID_TYPE quint16
@@ -217,6 +218,11 @@ struct CrafingRecipe
         quint32 quantity;
     };
     QList<Material> materials;
+};
+
+struct Bot
+{
+    QHash<quint8,QDomElement> step;
 };
 
 }

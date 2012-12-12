@@ -93,7 +93,7 @@ private slots:
     void load_plant_inventory();
     void load_crafting_inventory();
     //render
-    void stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
+    void stopped_in_front_of(const Pokecraft::Map_client &map, const quint8 &x, const quint8 &y);
     void actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
 
     //datapack

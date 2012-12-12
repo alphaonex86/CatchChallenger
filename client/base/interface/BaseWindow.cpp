@@ -60,7 +60,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(this,SIGNAL(parseDatapack(QString)),&DatapackClientLoader::datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
     connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
 
-    //render
+    //render, logical part into Map_Client
     connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)));
     connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client,quint8,quint8)));
 
@@ -880,7 +880,12 @@ void BaseWindow::on_toolButton_quit_options_clicked()
 
 void BaseWindow::stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y)
 {
-    if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
+    if(map.bots.contains(QPair<quint8,quint8>(x,y)))
+    {
+        showTip(tr("To interact with the bot press <i>Enter</i>"));
+        return;
+    }
+    else if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
     {
         int index=0;
         while(index<map.plantList.size())
@@ -903,7 +908,12 @@ void BaseWindow::stopped_in_front_of(const Pokecraft::Map_client &map,const quin
 
 void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y)
 {
-    if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
+    /*if(map.bots.contains(QPair<quint8,quint8>(x,y)))
+    {
+        showTip(tr("To interact with the bot press <i>Enter</i>"));
+        return;
+    }
+    else */if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
     {
         int index=0;
         while(index<map.plantList.size())

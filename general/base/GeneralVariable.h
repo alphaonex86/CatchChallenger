@@ -29,5 +29,6 @@
 #define DATAPACK_BASE_PATH_ITEM "items/"
 #define DATAPACK_BASE_PATH_PLANTS "plants/"
 #define DATAPACK_BASE_PATH_CRAFTING "crafting/"
+#define DATAPACK_BASE_PATH_SHOP "shop/"
 
 #endif // GENERALVARIABLE_H
