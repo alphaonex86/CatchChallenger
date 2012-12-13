@@ -25,7 +25,6 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
     frame_main_display_right=NULL;
     mapController=new MapController(client,true,false,true,false);
-    mapController->setScale(2);
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
     setupChatUI();
@@ -90,7 +89,6 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(&tip_timeout,SIGNAL(timeout()),this,SLOT(tipTimeout()));
     connect(&gain_timeout,SIGNAL(timeout()),this,SLOT(gainTimeout()));
 
-    mapController->setFocus();
     mapController->setDatapackPath(client->get_datapack_base_name());
 
     renderFrame = new QFrame(ui->page_map);
@@ -107,6 +105,9 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     renderFrame->lower();
 
     resetAll();
+    loadSettings();
+
+    mapController->setFocus();
 }
 
 BaseWindow::~BaseWindow()
@@ -908,12 +909,13 @@ void BaseWindow::stopped_in_front_of(const Pokecraft::Map_client &map,const quin
 
 void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y)
 {
-    /*if(map.bots.contains(QPair<quint8,quint8>(x,y)))
+    if(map.bots.contains(QPair<quint8,quint8>(x,y)))
     {
-        showTip(tr("To interact with the bot press <i>Enter</i>"));
+        actualBot=map.bots[QPair<quint8,quint8>(x,y)];
+        goToBotStep(1);
         return;
     }
-    else */if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
+    else if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
     {
         int index=0;
         while(index<map.plantList.size())
@@ -964,6 +966,41 @@ void BaseWindow::updateRXTX()
     updateRXTXTime.restart();
     previousRXSize=RXSize;
     previousTXSize=TXSize;
+}
+
+//bot
+void BaseWindow::goToBotStep(const quint8 &step)
+{
+    if(!actualBot.step.contains(step))
+    {
+        showTip(tr("Error into the bot, repport this error please"));
+        return;
+    }
+    if(actualBot.step[step].attribute("type")=="text")
+    {
+        QDomElement text = actualBot.step[step].firstChildElement("text");
+        while(!text.isNull())
+        {
+            if(text.hasAttribute("lang") && text.attribute("lang")!="en")
+            {
+                //not enlish, skip for now
+            }
+            else
+            {
+                ui->IG_dialog_text->setText(text.text());
+                ui->IG_dialog->setVisible(true);
+                return;
+            }
+            text = actualBot.step[step].nextSiblingElement("text");
+        }
+        showTip(tr("Bot text not found, repport this error please"));
+        return;
+    }
+    else
+    {
+        showTip(tr("Bot step type error, repport this error please"));
+        return;
+    }
 }
 
 void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
@@ -1105,4 +1142,9 @@ void BaseWindow::on_inventoryInformation_clicked()
         qDebug() << "on_inventoryInformation_clicked() information on unknow object type";
         return;
     }
+}
+
+void Pokecraft::BaseWindow::on_toolButtonOptions_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(4);
 }

@@ -27,13 +27,15 @@ SOURCES += $$PWD/../../general/base/DebugClass.cpp \
     $$PWD/render/MapItem.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/interface/BaseWindow.cpp \
+    $$PWD/interface/BaseWindowOptions.cpp \
     $$PWD/interface/MapControllerMP.cpp \
     $$PWD/../crafting/interface/MapControllerCrafting.cpp \
     $$PWD/interface/MapController.cpp \
     $$PWD/../../general/base/ConnectedSocket.cpp \
     $$PWD/interface/DatapackClientLoader.cpp \
     $$PWD/../crafting/interface/DatapackClientLoaderCrafting.cpp \
-    ../crafting/interface/BaseWindowCrafting.cpp
+    ../crafting/interface/BaseWindowCrafting.cpp \
+    ../base/Options.cpp
 
 HEADERS  += $$PWD/../../general/base/GeneralStructures.h \
     $$PWD/../../general/base/DebugClass.h \
@@ -64,7 +66,8 @@ HEADERS  += $$PWD/../../general/base/GeneralStructures.h \
     $$PWD/interface/MapController.h \
     $$PWD/../../general/base/ConnectedSocket.h \
     $$PWD/interface/DatapackClientLoader.h \
-    $$PWD/ClientVariable.h
+    $$PWD/ClientVariable.h \
+    ../base/Options.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui
 
