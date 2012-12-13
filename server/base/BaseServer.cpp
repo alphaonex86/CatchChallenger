@@ -618,12 +618,12 @@ void BaseServer::unload_the_players()
     ClientHeavyLoad::simplifiedIdList.clear();
 }
 
-void BaseServer::check_if_now_stopped()
+bool BaseServer::check_if_now_stopped()
 {
     if(client_list.size()!=0)
-        return;
+        return false;
     if(stat!=InDown)
-        return;
+        return false;
 
     DebugClass::debugConsole("Fully stopped");
     if(GlobalData::serverPrivateVariables.db!=NULL)
@@ -632,6 +632,7 @@ void BaseServer::check_if_now_stopped()
     emit is_started(false);
 
     unload_the_data();
+    return true;
 }
 
 void BaseServer::setSettings(ServerSettings settings)

@@ -252,11 +252,12 @@ void NormalServer::stop_benchmark()
     emit benchmark_result(benchmark_latency,TX_speed,RX_speed,TX_size,RX_size,second);
 }
 
-void NormalServer::check_if_now_stopped()
+bool NormalServer::check_if_now_stopped()
 {
     if(GlobalData::serverPrivateVariables.fakeBotList.size()!=0)
-        return;
-    BaseServer::check_if_now_stopped();
+        return false;
+    if(!BaseServer::check_if_now_stopped())
+        return false;
     oneInstanceRunning=false;
     if(server!=NULL)
     {
@@ -264,7 +265,7 @@ void NormalServer::check_if_now_stopped()
         delete server;
         server=NULL;
     }
-    emit is_started(false);
+    return true;
 }
 
 //call by normal stop

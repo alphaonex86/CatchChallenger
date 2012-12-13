@@ -461,6 +461,8 @@ void MapVisualiser::loadBotFile(const QString &fileName)
                     }
                     step = step.nextSiblingElement("step");
                 }
+                if(!botFiles[fileName][id].step.contains(1))
+                    botFiles[fileName].remove(id);
             }
             else
                 Pokecraft::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));

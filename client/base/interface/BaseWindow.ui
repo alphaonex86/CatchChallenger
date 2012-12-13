@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -517,7 +517,7 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/option-monstropedia.png);
+background-image: url(:/images/interface/option-bioscan.png);
 border-image: url(:/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:19px;
@@ -600,6 +600,37 @@ padding-bottom:3px;
               </property>
               <property name="text">
                <string>Crafting</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="toolButtonOptions">
+              <property name="minimumSize">
+               <size>
+                <width>22</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>22</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/option-options.png);
+border-image: url(:/images/empty.png);
+}</string>
+              </property>
+              <property name="text">
+               <string>...</string>
               </property>
              </widget>
             </item>
@@ -1519,7 +1550,7 @@ padding-bottom:3px;
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_6">
                 <item>
-                 <widget class="QCheckBox" name="checkBox">
+                 <widget class="QCheckBox" name="checkBoxLimitFPS">
                   <property name="text">
                    <string>Limit FPS to:</string>
                   </property>
@@ -1529,7 +1560,7 @@ padding-bottom:3px;
                  </widget>
                 </item>
                 <item>
-                 <widget class="QSpinBox" name="spinBox">
+                 <widget class="QSpinBox" name="spinBoxMaxFPS">
                   <property name="maximumSize">
                    <size>
                     <width>50</width>
@@ -1547,7 +1578,7 @@ padding-bottom:3px;
                </layout>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_3">
+               <widget class="QCheckBox" name="checkBoxZoom">
                 <property name="toolTip">
                  <string>The other player is displayed in zoom x2 range.
 Without it will be show into the screen, with it it show at the border</string>
@@ -1586,17 +1617,23 @@ Without it will be show into the screen, with it it show at the border</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_10">
               <item>
-               <widget class="QCheckBox" name="checkBox_4">
+               <widget class="QCheckBox" name="checkBoxShowPseudo">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>Show the pseudo</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_5">
+               <widget class="QCheckBox" name="checkBoxShowPlayerType">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="toolTip">
                  <string>Show if is admin, developer, premium, normal</string>
                 </property>
@@ -1604,7 +1641,7 @@ Without it will be show into the screen, with it it show at the border</string>
                  <string>Show the player type</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -1658,7 +1695,7 @@ Without it will be show into the screen, with it it show at the border</string>
                </spacer>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox">
+               <widget class="QComboBox" name="comboBoxLanguage">
                 <item>
                  <property name="text">
                   <string>English</string>

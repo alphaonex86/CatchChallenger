@@ -84,7 +84,7 @@ private slots:
     //starting function
     void stop_internal_server();
     void stop_benchmark();
-    void check_if_now_stopped();
+    bool check_if_now_stopped();
     void start_internal_benchmark(quint16 second,quint16 number_of_client,const bool &benchmark_map);
     void start_internal_server();
 signals:
