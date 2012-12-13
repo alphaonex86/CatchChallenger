@@ -18,7 +18,7 @@ public:
     ~MapControllerMP();
 
     virtual void resetAll();
-    void setScale(int scaleSize);
+    void setScale(const float &scaleSize);
 public slots:
     //map move
     void insert_player(const Pokecraft::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
@@ -123,6 +123,7 @@ private:
         Pokecraft::Direction direction;
     };
     QList<DelayedTeleportTo> delayedTeleportTo;
+    float scaleSize;
 protected:
     bool mHaveTheDatapack;
 

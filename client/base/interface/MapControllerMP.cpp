@@ -32,6 +32,8 @@ MapControllerMP::MapControllerMP(Pokecraft::Api_protocol *client,const bool &cen
     connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
     connect(client,SIGNAL(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
     connect(this,SIGNAL(teleportDone()),client,SLOT(teleportDone()),Qt::QueuedConnection);
+
+    scaleSize=1;
 }
 
 MapControllerMP::~MapControllerMP()
@@ -65,9 +67,10 @@ void MapControllerMP::resetAll()
     MapVisualiserPlayer::resetAll();
 }
 
-void MapControllerMP::setScale(int scaleSize)
+void MapControllerMP::setScale(const float &scaleSize)
 {
-    scale(scaleSize,scaleSize);
+    scale(scaleSize/this->scaleSize,scaleSize/this->scaleSize);
+    this->scaleSize=scaleSize;
 }
 
 bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y)
