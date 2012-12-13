@@ -82,6 +82,7 @@ private slots:
     void addQuery(const QueryType &queryType);
     void removeQuery(const QueryType &queryType);
     void updateQueryList();
+    void loadSettings();
     //player
     void logged();
     void updatePlayerImage();
@@ -112,6 +113,9 @@ private slots:
     //network
     void updateRXTX();
 
+    //bot
+    void goToBotStep(const quint8 &step);
+
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
     void update_chat();
@@ -131,6 +135,12 @@ private slots:
     void on_listCraftingList_itemSelectionChanged();
     void on_craftingUse_clicked();
     void on_listCraftingList_itemActivated(QListWidgetItem *);
+    void on_toolButtonOptions_clicked();
+    void on_checkBoxZoom_toggled(bool checked);
+
+    void on_checkBoxLimitFPS_toggled(bool checked);
+
+    void on_spinBoxMaxFPS_editingFinished();
 
 protected slots:
     //datapack
@@ -187,6 +197,9 @@ private:
     //crafting
     QList<QList<QPair<quint32,quint32> > > materialOfRecipeInUsing;
     QList<QPair<quint32,quint32> > productOfRecipeInUsing;
+
+    //bot
+    Bot actualBot;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
