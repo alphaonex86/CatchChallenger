@@ -14,6 +14,7 @@ class MapServer : public Map, public MapServerCrafting
 {
 public:
     QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
+    QMultiHash<QPair<quint8,quint8>,quint32> shops;
 };
 
 class Map_server_MapVisibility_simple : public MapServer

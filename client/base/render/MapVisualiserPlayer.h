@@ -17,6 +17,7 @@ public:
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
     QString lastLocation() const;
+    Pokecraft::Direction getDirection();
 protected:
     //player
     Tiled::MapObject * playerMapObject;
@@ -70,8 +71,8 @@ protected slots:
     void setSpeed(const SPEED_TYPE &speed);
 signals:
     void send_player_direction(const Pokecraft::Direction &the_direction);
-    void stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
-    void actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
+    void stopped_in_front_of(Pokecraft::Map_client *map, quint8 x, quint8 y);
+    void actionOn(Pokecraft::Map_client *map, quint8 x, quint8 y);
 };
 
 #endif

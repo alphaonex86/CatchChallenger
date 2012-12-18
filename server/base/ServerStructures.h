@@ -119,6 +119,11 @@ struct Plant
     quint16 random_quantity;
 };
 
+struct Item
+{
+    quint32 price;
+};
+
 struct ServerPrivateVariables
 {
     //bd
@@ -129,10 +134,11 @@ struct ServerPrivateVariables
     QString datapack_basePath;
     QString datapack_mapPath;
     QRegExp datapack_rightFileName;
-    QSet<quint32> itemsId;
+    QHash<quint32,Item> items;
     QHash<QString,quint64> filesList;
     QHash<quint8,Plant> plants;
     QHash<quint32,CrafingRecipe> crafingRecipes;
+    QHash<quint32,Shop> shops;
     QHash<quint32,quint32> itemToCrafingRecipes;
 
     //general data

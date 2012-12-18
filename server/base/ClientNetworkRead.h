@@ -78,6 +78,10 @@ signals:
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);
     void useObject(const quint8 &query_id,const quint32 &itemId);
+    //shop
+    void getShopList(const quint32 &query_id,const quint32 &shopId);
+    void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
 private:
     // for status
     bool have_send_protocol;
