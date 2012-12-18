@@ -1,0 +1,25 @@
+<!-- defaults skin is invisible -->
+<bots>
+	<bot id="1">
+		<step id="1" type="text">
+			<text lang="en">Hello world!</text>
+		</step>
+	</bot>
+	<bot id="2">
+		<step id="1" type="text">
+			<text lang="en"><![CDATA[Welcome in my shop!<br />
+			<br />
+			<center>
+				<a href="2">Buy</a><br />
+				<a href="3">Sell</a><br />
+				<a href="4">More about this bot</a><br />
+				<a href="http://pokecraft.first-world.info/shop/">Buy with real money</a><br />
+			</center>]]></text>
+		</step>
+		<step id="2" type="shop" shop="1" />
+		<step id="3" type="sell" />
+		<step id="4" type="text">
+			<text lang="en"><![CDATA[Is test bot, with external link, buy/sell features.]]></text>
+		</step>
+	</bot>
+</bots>

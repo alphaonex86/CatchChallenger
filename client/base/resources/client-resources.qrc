@@ -34,5 +34,7 @@
         <file>images/inventory/right.png</file>
         <file>images/inventory/unknow-object.png</file>
         <file>images/interface/button-generic.png</file>
+        <file>images/link.png</file>
+        <file>images/inventory/shop.png</file>
     </qresource>
 </RCC>

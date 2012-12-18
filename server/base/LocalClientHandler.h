@@ -56,6 +56,8 @@ public slots:
     quint32 removeObject(const quint32 &item,const quint32 &quantity=1);
     void sendRemoveObject(const quint32 &item,const quint32 &quantity=1);
     quint32 objectQuantity(const quint32 &item);
+    void addCash(const quint64 &cash);
+    void removeCash(const quint64 &cash);
 
     void sendHandlerCommand(const QString &command,const QString &extraText);
     //inventory
@@ -64,6 +66,10 @@ public slots:
     //teleportation
     void receiveTeleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    //shop
+    void getShopList(const quint32 &query_id,const quint32 &shopId);
+    void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
 private slots:
     virtual void extraStop();
 signals:

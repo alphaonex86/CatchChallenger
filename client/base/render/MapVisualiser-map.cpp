@@ -294,6 +294,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     return resolvedFileName;
 }
 
+//drop and remplace by Map_loader info
 void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
 {
     QString fileName=parsedMap->logicalMap.map_file;
@@ -382,7 +383,7 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
                                             if(botFiles.contains(botFile))
                                                 if(botFiles[botFile].contains(botId))
                                                 {
-                                                    Pokecraft::DebugClass::debugConsole(QString("Put bot at %1 (%2,%3)").arg(botFile).arg(x).arg(y));
+                                                    Pokecraft::DebugClass::debugConsole(QString("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
                                                     parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
                                                 }
                                         }

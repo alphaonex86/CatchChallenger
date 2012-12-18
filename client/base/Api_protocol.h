@@ -43,6 +43,10 @@ public:
     virtual void tryDisconnect() = 0;
     QString get_datapack_base_name();
 
+    //plant
+    bool getHavePlantAction();
+    bool getHaveShopAction();
+
     //to reset all
     void resetAll();
 private:
@@ -84,6 +88,7 @@ protected:
 
     //plant
     bool havePlantAction;
+    bool haveShopAction;
 
     //teleport list query id
     QList<quint8> teleportList;
@@ -133,6 +138,11 @@ signals:
     void haveTheDatapack();
     void newFile(const QString &fileName,const QByteArray &data,const quint64 &mtime);
     void removeFile(const QString &fileName);
+
+    //shop
+    void haveShopList(const QList<ItemToSell> &items);
+    void haveBuyObject(const BuyStat &stat,const quint32 &newPrice);
+    void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
 public slots:
     void send_player_direction(const Pokecraft::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const Pokecraft::Direction &direction);
@@ -150,6 +160,11 @@ public slots:
     //inventory
     void destroyObject(const quint32 &object,const quint32 &quantity=1);
     void useObject(const quint32 &object);
+
+    //shop
+    void getShopList(const quint32 &shopId);
+    void buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
 };
 }
 

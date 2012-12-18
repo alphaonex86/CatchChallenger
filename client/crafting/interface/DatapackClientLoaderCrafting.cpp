@@ -317,7 +317,6 @@ void DatapackClientLoader::parseCraftingRecipes()
                         if(ok)
                         {
                             crafingRecipes[id]=recipe;
-                            qDebug() << "itemToCrafingRecipes[recipe.itemToLearn]: " << recipe.itemToLearn;
                             itemToCrafingRecipes[recipe.itemToLearn]=id;
                         }
                     }

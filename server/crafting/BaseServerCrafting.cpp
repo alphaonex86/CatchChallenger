@@ -73,20 +73,20 @@ void BaseServerCrafting::preload_the_plant()
                                         if(!ok2)
                                         {
                                             ok=false;
-                                            DebugClass::debugConsole(QString("preload_the_plant() fruits in not an number for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                            DebugClass::debugConsole(QString("preload_the_plant() fruits in not an number for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                         }
                                     }
                                     else
-                                        DebugClass::debugConsole(QString("preload_the_plant() fruit is not element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                        DebugClass::debugConsole(QString("preload_the_plant() fruit is not element for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("preload_the_plant() fruit is null for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                    DebugClass::debugConsole(QString("preload_the_plant() fruit is null for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                             }
                             else
-                                DebugClass::debugConsole(QString("preload_the_plant() grow is not an element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_the_plant() grow is not an element for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                         }
                         else
-                            DebugClass::debugConsole(QString("preload_the_plant() grow is null for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                            DebugClass::debugConsole(QString("preload_the_plant() grow is null for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                         if(ok)
                         {
                             QDomElement quantity = plantItem.firstChildElement("quantity");
@@ -103,28 +103,28 @@ void BaseServerCrafting::preload_the_plant()
                                     if(!ok2)
                                     {
                                         ok=false;
-                                        DebugClass::debugConsole(QString("preload_the_plant() quantity is not a number for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                        DebugClass::debugConsole(QString("preload_the_plant() quantity is not a number for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                     }
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("preload_the_plant() quantity is not element for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                    DebugClass::debugConsole(QString("preload_the_plant() quantity is not element for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                             }
                             else
-                                DebugClass::debugConsole(QString("preload_the_plant() quantity is null for plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_the_plant() quantity is null for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                         }
                         if(ok)
                         {
-                            if(!GlobalData::serverPrivateVariables.itemsId.contains(plant.itemUsed))
+                            if(!GlobalData::serverPrivateVariables.items.contains(plant.itemUsed))
                             {
                                 ok=false;
-                                DebugClass::debugConsole(QString("preload_crafting_recipes() itemUsed is not into items list for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_crafting_recipes() itemUsed is not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                             }
                         }
                         if(ok)
                             GlobalData::serverPrivateVariables.plants[id]=plant;
                     }
                     else
-                        DebugClass::debugConsole(QString("Unable to open the plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                 }
                 else
                     DebugClass::debugConsole(QString("Unable to open the plants file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
@@ -283,12 +283,12 @@ void BaseServerCrafting::preload_crafting_recipes()
                     if(ok)
                     {
                         if(tempShort>100)
-                            DebugClass::debugConsole(QString("preload_crafting_recipes() success can't be greater than 100 for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                            DebugClass::debugConsole(QString("preload_crafting_recipes() success can't be greater than 100 for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                         else
                             success=tempShort;
                     }
                     else
-                        DebugClass::debugConsole(QString("preload_crafting_recipes() success in not an number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                        DebugClass::debugConsole(QString("preload_crafting_recipes() success in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                 }
                 quint16 quantity=1;
                 if(recipeItem.hasAttribute("quantity"))
@@ -297,12 +297,12 @@ void BaseServerCrafting::preload_crafting_recipes()
                     if(ok)
                     {
                         if(tempShort>65535)
-                            DebugClass::debugConsole(QString("preload_crafting_recipes() quantity can't be greater than 65535 for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                            DebugClass::debugConsole(QString("preload_crafting_recipes() quantity can't be greater than 65535 for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                         else
                             quantity=tempShort;
                     }
                     else
-                        DebugClass::debugConsole(QString("preload_crafting_recipes() quantity in not an number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                        DebugClass::debugConsole(QString("preload_crafting_recipes() quantity in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                 }
 
                 quint32 id=recipeItem.attribute("id").toUInt(&ok);
@@ -329,7 +329,7 @@ void BaseServerCrafting::preload_crafting_recipes()
                                     if(!ok2)
                                     {
                                         ok=false;
-                                        DebugClass::debugConsole(QString("preload_crafting_recipes() material attribute itemId is not a number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                        DebugClass::debugConsole(QString("preload_crafting_recipes() material attribute itemId is not a number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                                         break;
                                     }
                                     quint16 quantity=1;
@@ -341,7 +341,7 @@ void BaseServerCrafting::preload_crafting_recipes()
                                             if(tempShort>65535)
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QString("preload_crafting_recipes() material quantity can't be greater than 65535 for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                                DebugClass::debugConsole(QString("preload_crafting_recipes() material quantity can't be greater than 65535 for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                                                 break;
                                             }
                                             else
@@ -350,14 +350,14 @@ void BaseServerCrafting::preload_crafting_recipes()
                                         else
                                         {
                                             ok=false;
-                                            DebugClass::debugConsole(QString("preload_crafting_recipes() material quantity in not an number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                            DebugClass::debugConsole(QString("preload_crafting_recipes() material quantity in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                                             break;
                                         }
                                     }
-                                    if(!GlobalData::serverPrivateVariables.itemsId.contains(itemId))
+                                    if(!GlobalData::serverPrivateVariables.items.contains(itemId))
                                     {
                                         ok=false;
-                                        DebugClass::debugConsole(QString("preload_crafting_recipes() material itemId in not into items list for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                        DebugClass::debugConsole(QString("preload_crafting_recipes() material itemId in not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                                         break;
                                     }
                                     CrafingRecipe::Material newMaterial;
@@ -366,26 +366,26 @@ void BaseServerCrafting::preload_crafting_recipes()
                                     recipe.materials << newMaterial;
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("preload_crafting_recipes() material have not attribute itemId for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                    DebugClass::debugConsole(QString("preload_crafting_recipes() material have not attribute itemId for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                             }
                             else
-                                DebugClass::debugConsole(QString("preload_crafting_recipes() material is not an element for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_crafting_recipes() material is not an element for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                             material = material.nextSiblingElement("material");
                         }
                         if(ok)
                         {
-                            if(!GlobalData::serverPrivateVariables.itemsId.contains(recipe.itemToLearn))
+                            if(!GlobalData::serverPrivateVariables.items.contains(recipe.itemToLearn))
                             {
                                 ok=false;
-                                DebugClass::debugConsole(QString("preload_crafting_recipes() itemToLearn is not into items list for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_crafting_recipes() itemToLearn is not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                             }
                         }
                         if(ok)
                         {
-                            if(!GlobalData::serverPrivateVariables.itemsId.contains(recipe.doItemId))
+                            if(!GlobalData::serverPrivateVariables.items.contains(recipe.doItemId))
                             {
                                 ok=false;
-                                DebugClass::debugConsole(QString("preload_crafting_recipes() doItemId is not into items list for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_crafting_recipes() doItemId is not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                             }
                         }
                         if(ok)
@@ -395,7 +395,7 @@ void BaseServerCrafting::preload_crafting_recipes()
                         }
                     }
                     else
-                        DebugClass::debugConsole(QString("Unable to open the crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
                 }
                 else
                     DebugClass::debugConsole(QString("Unable to open the crafting recipe file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
@@ -409,6 +409,92 @@ void BaseServerCrafting::preload_crafting_recipes()
     }
 
     DebugClass::debugConsole(QString("%1 crafting recipe(s) loaded").arg(GlobalData::serverPrivateVariables.crafingRecipes.size()));
+}
+
+void BaseServerCrafting::preload_shop()
+{
+    //open and quick check the file
+    QFile shopFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SHOP+"shop.xml");
+    QByteArray xmlContent;
+    if(!shopFile.open(QIODevice::ReadOnly))
+    {
+        DebugClass::debugConsole(QString("Unable to open the shops file: %1, error: %2").arg(shopFile.fileName()).arg(shopFile.errorString()));
+        return;
+    }
+    xmlContent=shopFile.readAll();
+    shopFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        DebugClass::debugConsole(QString("Unable to open the shops file: %1, Parse error at line %2, column %3: %4").arg(shopFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="shops")
+    {
+        DebugClass::debugConsole(QString("Unable to open the shops file: %1, \"shops\" root balise not found for the xml file").arg(shopFile.fileName()));
+        return;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement shopItem = root.firstChildElement("shop");
+    while(!shopItem.isNull())
+    {
+        if(shopItem.isElement())
+        {
+            if(shopItem.hasAttribute("id"))
+            {
+                quint32 id=shopItem.attribute("id").toUInt(&ok);
+                if(ok)
+                {
+                    if(!GlobalData::serverPrivateVariables.shops.contains(id))
+                    {
+                        Shop shop;
+                        QDomElement product = shopItem.firstChildElement("product");
+                        while(!product.isNull())
+                        {
+                            if(product.isElement())
+                            {
+                                if(product.hasAttribute("itemId"))
+                                {
+                                    quint32 itemId=product.attribute("itemId").toUInt(&ok);
+                                    if(!ok)
+                                        DebugClass::debugConsole(QString("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                    else
+                                    {
+                                        if(!GlobalData::serverPrivateVariables.items.contains(itemId))
+                                            DebugClass::debugConsole(QString("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                                        else
+                                            shop.items << itemId;
+                                    }
+                                }
+                                else
+                                    DebugClass::debugConsole(QString("preload_shop() material have not attribute itemId for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                            }
+                            else
+                                DebugClass::debugConsole(QString("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                            product = product.nextSiblingElement("product");
+                        }
+                        GlobalData::serverPrivateVariables.shops[id]=shop;
+                    }
+                    else
+                        DebugClass::debugConsole(QString("Unable to open the shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+                }
+                else
+                    DebugClass::debugConsole(QString("Unable to open the shops file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+            }
+            else
+                DebugClass::debugConsole(QString("Unable to open the shops file: %1, have not the shops id: child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+        }
+        else
+            DebugClass::debugConsole(QString("Unable to open the shops file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
+        shopItem = shopItem.nextSiblingElement("shop");
+    }
+
+    DebugClass::debugConsole(QString("%1 shops(s) loaded").arg(GlobalData::serverPrivateVariables.shops.size()));
 }
 
 void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,const quint8 &y)
@@ -447,4 +533,9 @@ void BaseServerCrafting::unload_crafting_recipes()
 {
     GlobalData::serverPrivateVariables.crafingRecipes.clear();
     GlobalData::serverPrivateVariables.itemToCrafingRecipes.clear();
+}
+
+void BaseServerCrafting::unload_shop()
+{
+    GlobalData::serverPrivateVariables.shops.clear();
 }

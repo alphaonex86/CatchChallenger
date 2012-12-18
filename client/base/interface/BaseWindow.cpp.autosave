@@ -1353,6 +1353,59 @@ void BaseWindow::on_shopBuy_clicked()
 
 void BaseWindow::haveShopList(const QList<ItemToSell> &items)
 {
+#ifdef DEBUG_BASEWINDOWS
+qDebug() << "BaseWindow::load_inventory()";
+#endif
+if(!haveInventory || !datapackIsParsed)
+    return;
+ui->inventoryInformation->setVisible(false);
+ui->inventoryUse->setVisible(false);
+ui->inventoryDestroy->setVisible(false);
+ui->inventory->clear();
+items_graphical.clear();
+items_to_graphical.clear();
+QHashIterator<quint32,quint32> i(items);
+while (i.hasNext()) {
+    i.next();
+
+    bool show=!inSelection;
+    if(inSelection)
+    {
+        switch(waitedObjectType)
+        {
+            case ObjectType_Seed:
+                if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
+                    show=true;
+            break;
+            default:
+            qDebug() << "waitedObjectType is unknow into load_inventory()";
+            break;
+        }
+    }
+    if(show)
+    {
+        QListWidgetItem *item;
+        item=new QListWidgetItem();
+        items_to_graphical[i.key()]=item;
+        items_graphical[item]=i.key();
+        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+            if(i.value()>1)
+                item->setText(QString::number(i.value()));
+            item->setToolTip(DatapackClientLoader::datapackLoader.items[i.key()].name);
+        }
+        else
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+            if(i.value()>1)
+                item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
+            else
+                item->setText(QString("id: %1").arg(i.key()));
+        }
+        ui->inventory->addItem(item);
+    }
+}
     on_shopItemList_itemSelectionChanged();
 }
 

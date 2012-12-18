@@ -336,6 +336,48 @@ quint32 LocalClientHandler::objectQuantity(const quint32 &item)
         return 0;
 }
 
+void LocalClientHandler::addCash(const quint64 &cash)
+{
+    player_informations->public_and_private_informations.cash+=cash;
+    switch(GlobalData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE player SET cash=%1 WHERE id=%2;")
+                         .arg(player_informations->public_and_private_informations.cash)
+                         .arg(player_informations->id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE player SET cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.cash)
+                     .arg(player_informations->id)
+                     );
+        break;
+    }
+}
+
+void LocalClientHandler::removeCash(const quint64 &cash)
+{
+    player_informations->public_and_private_informations.cash-=cash;
+    switch(GlobalData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE player SET cash=%1 WHERE id=%2;")
+                         .arg(player_informations->public_and_private_informations.cash)
+                         .arg(player_informations->id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE player SET cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.cash)
+                     .arg(player_informations->id)
+                     );
+        break;
+    }
+}
+
 void LocalClientHandler::sendHandlerCommand(const QString &command,const QString &extraText)
 {
     if(command=="give")
@@ -355,7 +397,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
             return;
         }
-        if(!GlobalData::serverPrivateVariables.itemsId.contains(objectId))
+        if(!GlobalData::serverPrivateVariables.items.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
             return;
@@ -391,7 +433,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(!GlobalData::serverPrivateVariables.itemsId.contains(objectId))
+        if(!GlobalData::serverPrivateVariables.items.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;
@@ -509,4 +551,588 @@ void LocalClientHandler::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8
 {
     emit message(QString("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
+}
+
+void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shopId)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    #endif
+    if(!GlobalData::serverPrivateVariables.shops.contains(shopId))
+    {
+        emit error(QString("shopId not found: %1").arg(shopId));
+        return;
+    }
+    Map *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    //resolv the object
+    switch(last_direction)
+    {
+        case Direction_look_at_top:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_right:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_bottom:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_left:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        default:
+        emit error("Wrong direction to plant a seed");
+        return;
+    }
+    //check if is shop
+    if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+    {
+        QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+        if(!shops.contains(shopId))
+        {
+            switch(last_direction)
+            {
+                case Direction_look_at_top:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_right:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_bottom:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_left:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                default:
+                emit error("Wrong direction to plant a seed");
+                return;
+            }
+            if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+            {
+                QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+                if(!shops.contains(shopId))
+                {
+                    emit error("not shop into this direction");
+                    return;
+                }
+            }
+        }
+    }
+    //send the shop items (no taxes from now)
+    QList<quint32> items=GlobalData::serverPrivateVariables.shops[shopId].items;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)items.size();
+    int index=0;
+    while(index<items.size())
+    {
+        out << (quint32)items.at(index);
+        out << (quint32)GlobalData::serverPrivateVariables.items[items.at(index)].price;
+        out << (quint32)0;
+        index++;
+    }
+    emit postReply(query_id,outputData);
+}
+
+void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    #endif
+    if(!GlobalData::serverPrivateVariables.shops.contains(shopId))
+    {
+        emit error(QString("shopId not found: %1").arg(shopId));
+        return;
+    }
+    if(quantity<=0)
+    {
+        emit error(QString("quantity wrong: %1").arg(quantity));
+        return;
+    }
+    Map *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    //resolv the object
+    switch(last_direction)
+    {
+        case Direction_look_at_top:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_right:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_bottom:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_left:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        default:
+        emit error("Wrong direction to plant a seed");
+        return;
+    }
+    //check if is shop
+    if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+    {
+        QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+        if(!shops.contains(shopId))
+        {
+            switch(last_direction)
+            {
+                case Direction_look_at_top:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_right:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_bottom:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_left:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                default:
+                emit error("Wrong direction to plant a seed");
+                return;
+            }
+            if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+            {
+                QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+                if(!shops.contains(shopId))
+                {
+                    emit error("not shop into this direction");
+                    return;
+                }
+            }
+        }
+    }
+    //send the shop items (no taxes from now)
+    QList<quint32> items=GlobalData::serverPrivateVariables.shops[shopId].items;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    if(!items.contains(objectId))
+    {
+        out << (quint8)0x03;
+        emit postReply(query_id,outputData);
+        return;
+    }
+    if(GlobalData::serverPrivateVariables.items[objectId].price>price)
+    {
+        out << (quint8)0x04;
+        emit postReply(query_id,outputData);
+        return;
+    }
+    if(GlobalData::serverPrivateVariables.items[objectId].price<price)
+    {
+        out << (quint8)0x02;
+        out << (quint32)GlobalData::serverPrivateVariables.items[objectId].price;
+    }
+    else
+        out << (quint8)0x01;
+    if(player_informations->public_and_private_informations.cash>=(GlobalData::serverPrivateVariables.items[objectId].price*quantity))
+        removeCash(GlobalData::serverPrivateVariables.items[objectId].price*quantity);
+    else
+    {
+        emit error(QString("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));
+        return;
+    }
+    addObject(objectId,quantity);
+    emit postReply(query_id,outputData);
+}
+
+void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("getShopList(%1,%2)").arg(query_id).arg(shopId));
+    #endif
+    if(!GlobalData::serverPrivateVariables.shops.contains(shopId))
+    {
+        emit error(QString("shopId not found: %1").arg(shopId));
+        return;
+    }
+    if(quantity<=0)
+    {
+        emit error(QString("quantity wrong: %1").arg(quantity));
+        return;
+    }
+    Map *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    //resolv the object
+    switch(last_direction)
+    {
+        case Direction_look_at_top:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_right:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_bottom:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        case Direction_look_at_left:
+            if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        default:
+        emit error("Wrong direction to plant a seed");
+        return;
+    }
+    //check if is shop
+    if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+    {
+        QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+        if(!shops.contains(shopId))
+        {
+            switch(last_direction)
+            {
+                case Direction_look_at_top:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_right:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_bottom:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                case Direction_look_at_left:
+                    if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                default:
+                emit error("Wrong direction to plant a seed");
+                return;
+            }
+            if(static_cast<MapServer*>(this->map)->shops.contains(QPair<quint8,quint8>(x,y)))
+            {
+                QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
+                if(!shops.contains(shopId))
+                {
+                    emit error("not shop into this direction");
+                    return;
+                }
+            }
+        }
+    }
+    //send the shop items (no taxes from now)
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    if(!GlobalData::serverPrivateVariables.items.contains(objectId))
+    {
+        emit error("this item don't exists");
+        return;
+    }
+    if(objectQuantity(objectId)<quantity)
+    {
+        emit error("you have not this quantity to sell");
+        return;
+    }
+    quint32 realPrice=GlobalData::serverPrivateVariables.items[objectId].price/2;
+    if(realPrice<price)
+    {
+        out << (quint8)0x04;
+        emit postReply(query_id,outputData);
+        return;
+    }
+    if(realPrice>price)
+    {
+        out << (quint8)0x02;
+        out << (quint32)realPrice;
+    }
+    else
+        out << (quint8)0x01;
+    removeObject(objectId,quantity);
+    addCash(realPrice*quantity);
+    emit postReply(query_id,outputData);
 }

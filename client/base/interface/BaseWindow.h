@@ -94,8 +94,10 @@ private slots:
     void load_plant_inventory();
     void load_crafting_inventory();
     //render
-    void stopped_in_front_of(const Pokecraft::Map_client &map, const quint8 &x, const quint8 &y);
-    void actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y);
+    void stopped_in_front_of(Pokecraft::Map_client *map, quint8 x, quint8 y);
+    bool stopped_in_front_of_check_bot(Pokecraft::Map_client *map, quint8 x, quint8 y);
+    void actionOn(Pokecraft::Map_client *map, quint8 x, quint8 y);
+    bool actionOnCheckBot(Pokecraft::Map_client *map, quint8 x, quint8 y);
 
     //datapack
     void haveTheDatapack();
@@ -103,6 +105,11 @@ private slots:
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const ObjectUsage &objectUsage);
+
+    //shop
+    void haveShopList(const QList<ItemToSell> &items);
+    void haveBuyObject(const BuyStat &stat,const quint32 &newPrice);
+    void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
 
     //plant
     void seed_planted(const bool &ok);
@@ -137,11 +144,13 @@ private slots:
     void on_listCraftingList_itemActivated(QListWidgetItem *);
     void on_toolButtonOptions_clicked();
     void on_checkBoxZoom_toggled(bool checked);
-
     void on_checkBoxLimitFPS_toggled(bool checked);
-
     void on_spinBoxMaxFPS_editingFinished();
-
+    void on_IG_dialog_text_linkActivated(const QString &link);
+    void on_toolButton_quit_shop_clicked();
+    void on_shopItemList_itemActivated(QListWidgetItem *item);
+    void on_shopItemList_itemSelectionChanged();
+    void on_shopBuy_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -187,6 +196,8 @@ private:
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
     QHash<quint32,QListWidgetItem *> items_to_graphical;
+    QHash<QListWidgetItem *,quint32> shop_items_graphical;
+    QHash<quint32,QListWidgetItem *> shop_items_to_graphical;
     QHash<QListWidgetItem *,quint32> plants_items_graphical;
     QHash<quint32,QListWidgetItem *> plants_items_to_graphical;
     QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;

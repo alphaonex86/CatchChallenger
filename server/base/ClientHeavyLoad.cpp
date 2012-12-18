@@ -347,7 +347,7 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }
-        if(!GlobalData::serverPrivateVariables.itemsId.contains(id))
+        if(!GlobalData::serverPrivateVariables.items.contains(id))
         {
             emit message(QString("The item %1 is ignored because it's not into the items list").arg(id));
             continue;
