@@ -8,6 +8,7 @@
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QDesktopServices>
 
 using namespace Pokecraft;
 
@@ -19,6 +20,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
     qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
     qRegisterMetaType<QHash<quint32,quint32> >("Pokecraft::Plant_collect");
+    qRegisterMetaType<QList<ItemToSell> >("QList<ItemToSell>");
 
     this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
@@ -60,8 +62,8 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
 
     //render, logical part into Map_Client
-    connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client,quint8,quint8)));
-    connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client,quint8,quint8)));
+    connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)));
+    connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client*,quint8,quint8)));
 
     //plants
     connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));
@@ -72,6 +74,10 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(client,SIGNAL(recipeUsed(RecipeUsage)),this,SLOT(recipeUsed(RecipeUsage)));
     //inventory
     connect(client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
+    //shop
+    connect(client,SIGNAL(haveShopList(QList<ItemToSell>)),this,SLOT(haveShopList(QList<ItemToSell>)));
+    connect(client,SIGNAL(haveSellObject(SoldStat,quint32)),this,SLOT(haveSellObject(SoldStat,quint32)));
+    connect(client,SIGNAL(haveBuyObject(BuyStat,quint32)),this,SLOT(haveBuyObject(BuyStat,quint32)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
@@ -795,6 +801,17 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         return;
     }
     QListWidgetItem *item=items.first();
+    if(!DatapackClientLoader::datapackLoader.items.contains(items_graphical[item]))
+    {
+        ui->inventoryInformation->setVisible(false);
+        ui->inventoryUse->setVisible(false);
+        ui->inventoryDestroy->setVisible(!inSelection);
+        ui->inventory_image->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->inventory_name->setText(tr("Unknow name"));
+        ui->inventory_description->setText(tr("Unknow description"));
+        return;
+    }
+
     const DatapackClientLoader::Item &content=DatapackClientLoader::datapackLoader.items[items_graphical[item]];
     ui->inventoryInformation->setVisible(!inSelection &&
                                          /* is a plant */
@@ -879,22 +896,19 @@ void BaseWindow::on_toolButton_quit_options_clicked()
     ui->stackedWidget->setCurrentIndex(1);
 }
 
-void BaseWindow::stopped_in_front_of(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y)
+void BaseWindow::stopped_in_front_of(Pokecraft::Map_client *map, quint8 x, quint8 y)
 {
-    if(map.bots.contains(QPair<quint8,quint8>(x,y)))
-    {
-        showTip(tr("To interact with the bot press <i>Enter</i>"));
+    if(stopped_in_front_of_check_bot(map,x,y))
         return;
-    }
-    else if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
+    else if(Pokecraft::MoveOnTheMap::isDirt(*map,x,y))
     {
         int index=0;
-        while(index<map.plantList.size())
+        while(index<map->plantList.size())
         {
-            if(map.plantList.at(index).x==x && map.plantList.at(index).y==y)
+            if(map->plantList.at(index).x==x && map->plantList.at(index).y==y)
             {
                 quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                if(map.plantList.at(index).mature_at<current_time)
+                if(map->plantList.at(index).mature_at<current_time)
                     showTip(tr("To recolt the plant press <i>Enter</i>"));
                 else
                     showTip(tr("This plant is growing and can't be collected"));
@@ -905,22 +919,56 @@ void BaseWindow::stopped_in_front_of(const Pokecraft::Map_client &map,const quin
         showTip(tr("To plant a seed press <i>Enter</i>"));
         return;
     }
+    else
+    {
+        //check bot with border
+        Pokecraft::Map * current_map=map;
+        switch(mapController->getDirection())
+        {
+            case Pokecraft::Direction_look_at_left:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&current_map,&x,&y,false))
+                    stopped_in_front_of_check_bot(map,x,y);
+            break;
+            case Pokecraft::Direction_look_at_right:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&current_map,&x,&y,false))
+                    stopped_in_front_of_check_bot(map,x,y);
+            break;
+            case Pokecraft::Direction_look_at_top:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&current_map,&x,&y,false))
+                    stopped_in_front_of_check_bot(map,x,y);
+            break;
+            case Pokecraft::Direction_look_at_bottom:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&current_map,&x,&y,false))
+                    stopped_in_front_of_check_bot(map,x,y);
+            break;
+            default:
+            break;
+        }
+    }
 }
 
-void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const quint8 &y)
+bool BaseWindow::stopped_in_front_of_check_bot(Pokecraft::Map_client *map, quint8 x, quint8 y)
 {
-    if(map.bots.contains(QPair<quint8,quint8>(x,y)))
-    {
-        actualBot=map.bots[QPair<quint8,quint8>(x,y)];
-        goToBotStep(1);
+    if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
+        return false;
+    showTip(tr("To interact with the bot press <i>Enter</i>"));
+    return true;
+}
+
+void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
+{
+    if(actionOnCheckBot(map,x,y))
         return;
-    }
-    else if(Pokecraft::MoveOnTheMap::isDirt(map,x,y))
+    else if(Pokecraft::MoveOnTheMap::isDirt(*map,x,y))
     {
         int index=0;
-        while(index<map.plantList.size())
+        while(index<map->plantList.size())
         {
-            if(map.plantList.at(index).x==x && map.plantList.at(index).y==y)
+            if(map->plantList.at(index).x==x && map->plantList.at(index).y==y)
             {
                 if(collectWait)
                 {
@@ -928,7 +976,7 @@ void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const
                     return;
                 }
                 quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                if(map.plantList.at(index).mature_at<current_time)
+                if(map->plantList.at(index).mature_at<current_time)
                 {
                     collectWait=true;
                     addQuery(QueryType_CollectPlant);
@@ -948,6 +996,45 @@ void BaseWindow::actionOn(const Pokecraft::Map_client &map,const quint8 &x,const
         selectObject(ObjectType_Seed);
         return;
     }
+    else
+    {
+        //check bot with border
+        Pokecraft::Map * current_map=map;
+        switch(mapController->getDirection())
+        {
+            case Pokecraft::Direction_look_at_left:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&current_map,&x,&y,false))
+                    actionOnCheckBot(map,x,y);
+            break;
+            case Pokecraft::Direction_look_at_right:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_right,&current_map,&x,&y,false))
+                    actionOnCheckBot(map,x,y);
+            break;
+            case Pokecraft::Direction_look_at_top:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_top,&current_map,&x,&y,false))
+                    actionOnCheckBot(map,x,y);
+            break;
+            case Pokecraft::Direction_look_at_bottom:
+            if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,*map,x,y,false))
+                if(Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_bottom,&current_map,&x,&y,false))
+                    actionOnCheckBot(map,x,y);
+            break;
+            default:
+            break;
+        }
+    }
+}
+
+bool BaseWindow::actionOnCheckBot(Pokecraft::Map_client *map, quint8 x, quint8 y)
+{
+    if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
+        return false;
+    actualBot=map->bots[QPair<quint8,quint8>(x,y)];
+    goToBotStep(1);
+    return true;
 }
 
 //network
@@ -959,10 +1046,29 @@ void BaseWindow::updateRXTX()
         previousRXSize=RXSize;
     if(previousTXSize>TXSize)
         previousTXSize=TXSize;
-    if(RXSize!=previousRXSize)
-        qDebug() << QString("received: %1/s").arg((RXSize-previousRXSize)*1000/updateRXTXTime.elapsed());
-    if(TXSize!=previousTXSize)
-        qDebug() << QString("transmited: %1/s").arg((TXSize-previousTXSize)*1000/updateRXTXTime.elapsed());
+    double RXSpeed=(RXSize-previousRXSize)*1000/updateRXTXTime.elapsed();
+    double TXSpeed=(TXSize-previousTXSize)*1000/updateRXTXTime.elapsed();
+    if(RXSpeed<1024)
+        ui->labelInput->setText(QString("%1B/s").arg(RXSpeed,0,'g',0));
+    else if(RXSpeed<10240)
+        ui->labelInput->setText(QString("%1KB/s").arg(RXSpeed/1024,0,'g',1));
+    else
+        ui->labelInput->setText(QString("%1KB/s").arg(RXSpeed/1024,0,'g',0));
+    if(TXSpeed<1024)
+        ui->labelOutput->setText(QString("%1B/s").arg(TXSpeed,0,'g',0));
+    else if(TXSpeed<10240)
+        ui->labelOutput->setText(QString("%1KB/s").arg(TXSpeed/1024,0,'g',1));
+    else
+        ui->labelOutput->setText(QString("%1KB/s").arg(TXSpeed/1024,0,'g',0));
+    if(RXSpeed>0 && TXSpeed>0)
+        qDebug() << QString("received: %1B/s, transmited: %2B/s").arg(RXSpeed).arg(TXSpeed);
+    else
+    {
+        if(RXSpeed>0)
+            qDebug() << QString("received: %1B/s").arg(RXSpeed);
+        if(TXSpeed>0)
+            qDebug() << QString("transmited: %1B/s").arg(TXSpeed);
+    }
     updateRXTXTime.restart();
     previousRXSize=RXSize;
     previousTXSize=TXSize;
@@ -987,13 +1093,43 @@ void BaseWindow::goToBotStep(const quint8 &step)
             }
             else
             {
-                ui->IG_dialog_text->setText(text.text());
+                QString textToShow=text.text();
+                textToShow.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
+                textToShow.replace(QRegExp("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/images/link.png\" alt=\"\" /></a>");
+                ui->IG_dialog_text->setText(textToShow);
                 ui->IG_dialog->setVisible(true);
                 return;
             }
             text = actualBot.step[step].nextSiblingElement("text");
         }
         showTip(tr("Bot text not found, repport this error please"));
+        return;
+    }
+    else if(actualBot.step[step].attribute("type")=="shop")
+    {
+        if(client->getHaveShopAction())
+        {
+            showTip(tr("Already in shop action"));
+            return;
+        }
+        if(!actualBot.step[step].hasAttribute("shop"))
+        {
+            showTip(tr("The shop call, but missing informations"));
+            return;
+        }
+        bool ok;
+        quint32 shopId=actualBot.step[step].attribute("shop").toUInt(&ok);
+        if(!ok)
+        {
+            showTip(tr("The shop call, but wrong shop id"));
+            return;
+        }
+        ui->stackedWidget->setCurrentIndex(7);
+        ui->shopItemList->clear();
+        on_shopItemList_itemSelectionChanged();
+        ui->shopDescription->setText(tr("Waiting the shop content"));
+        ui->shopBuy->setVisible(false);
+        client->getShopList(shopId);
         return;
     }
     else
@@ -1144,7 +1280,86 @@ void BaseWindow::on_inventoryInformation_clicked()
     }
 }
 
-void Pokecraft::BaseWindow::on_toolButtonOptions_clicked()
+void BaseWindow::on_toolButtonOptions_clicked()
 {
     ui->stackedWidget->setCurrentIndex(4);
+}
+
+void BaseWindow::on_IG_dialog_text_linkActivated(const QString &link)
+{
+    ui->IG_dialog->setVisible(false);
+    if(link.startsWith("http://") || link.startsWith("https://"))
+    {
+        if(!QDesktopServices::openUrl(QUrl(link)))
+            showTip(QString("Unable to open the url: %1").arg(link));
+        return;
+    }
+    bool ok;
+    quint8 step=link.toUShort(&ok);
+    if(!ok)
+    {
+        showTip(QString("Unable to open interpret the link: %1").arg(link));
+        return;
+    }
+    goToBotStep(step);
+}
+
+void BaseWindow::on_toolButton_quit_shop_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
+{
+}
+
+void BaseWindow::on_shopItemList_itemSelectionChanged()
+{
+    QList<QListWidgetItem *> items=ui->shopItemList->selectedItems();
+    if(items.size()!=1)
+    {
+        ui->shopName->setText("");
+        ui->shopDescription->setText(tr("Select an object"));
+        ui->shopBuy->setVisible(false);
+        ui->shopImage->setPixmap(QPixmap(":/images/inventory/unknow-object.png"));
+        return;
+    }
+    ui->shopBuy->setVisible(true);
+    QListWidgetItem *item=items.first();
+    if(!DatapackClientLoader::datapackLoader.items.contains(shop_items_graphical[item]))
+    {
+        ui->shopImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->shopName->setText(tr("Unknow name"));
+        ui->shopDescription->setText(tr("Unknow description"));
+        return;
+    }
+    const DatapackClientLoader::Item &content=DatapackClientLoader::datapackLoader.items[shop_items_graphical[item]];
+
+    ui->shopImage->setPixmap(content.image);
+    ui->shopName->setText(content.name);
+    ui->shopDescription->setText(content.description);
+}
+
+void BaseWindow::on_shopBuy_clicked()
+{
+    QList<QListWidgetItem *> items=ui->shopItemList->selectedItems();
+    if(items.size()!=1)
+    {
+        qDebug() << "on_shopBuy_clicked() no correct selection";
+        return;
+    }
+    on_shopItemList_itemActivated(items.first());
+}
+
+void BaseWindow::haveShopList(const QList<ItemToSell> &items)
+{
+    on_shopItemList_itemSelectionChanged();
+}
+
+void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
+{
+}
+
+void BaseWindow::haveSellObject(const SoldStat &stat,const quint32 &newPrice)
+{
 }

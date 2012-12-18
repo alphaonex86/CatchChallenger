@@ -204,6 +204,14 @@ struct Map_to_send
     };
     QList<Map_Point> rescue_points;
     QList<Map_Point> bot_spawn_points;
+
+    struct Bot_Semi
+    {
+        Map_Point point;
+        QString file;
+        quint32 id;
+    };
+    QList<Bot_Semi> bots;
 };
 
 struct CrafingRecipe
@@ -218,6 +226,11 @@ struct CrafingRecipe
         quint32 quantity;
     };
     QList<Material> materials;
+};
+
+struct Shop
+{
+    QList<quint32> items;
 };
 
 struct Bot

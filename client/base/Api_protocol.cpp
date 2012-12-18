@@ -1472,6 +1472,105 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                     }
                 }
                 break;
+                //Get shop list
+                case 0x000A:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint32 shopListSize;
+                    in >> shopListSize;
+                    quint32 index=0;
+                    QList<ItemToSell> items;
+                    while(index<shopListSize)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*3))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        ItemToSell item;
+                        in >> item.object;
+                        in >> item.price;
+                        in >> item.quantity;
+                        items << item;
+                        index++;
+                    }
+                    haveShopList(items);
+                }
+                break;
+                //Buy object
+                case 0x000B:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                        case 0x02:
+                        case 0x04:
+                            emit haveBuyObject((BuyStat)returnCode,0);
+                        break;
+                        case 0x03:
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                                return;
+                            }
+                            quint32 newPrice;
+                            in >> newPrice;
+                            emit haveBuyObject((BuyStat)returnCode,newPrice);
+                        }
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                }
+                break;
+                //Sell object
+                case 0x000C:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                        case 0x02:
+                        case 0x04:
+                            emit haveSellObject((SoldStat)returnCode,0);
+                        break;
+                        case 0x03:
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                                return;
+                            }
+                            quint32 newPrice;
+                            in >> newPrice;
+                            emit haveSellObject((SoldStat)returnCode,newPrice);
+                        }
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                }
+                break;
                 default:
                     parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1, with mainCodeType: %2, line: %3").arg(subCodeType).arg(mainCodeType).arg(__LINE__));
                     return;
@@ -1489,6 +1588,16 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
         parseError(tr("Procotol wrong or corrupted"),QString("error: remaining data: parseReplyData(%1,%2,%3), line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
         return;
     }
+}
+
+bool Api_protocol::getHavePlantAction()
+{
+    return havePlantAction;
+}
+
+bool Api_protocol::getHaveShopAction()
+{
+    return haveShopAction;
 }
 
 void Api_protocol::parseError(const QString &userMessage,const QString &errorString)
@@ -1657,6 +1766,45 @@ void Api_protocol::useObject(const quint32 &object)
     output->packOutcommingQuery(0x10,0x0009,queryNumber(),outputData);
 }
 
+void Api_protocol::getShopList(const quint32 &shopId)
+{
+    if(haveShopAction)
+    {
+        DebugClass::debugConsole("already have shop action");
+        return;
+    }
+    haveShopAction=true;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)shopId;
+    output->packOutcommingQuery(0x10,0x000A,queryNumber(),outputData);
+}
+
+void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)shopId;
+    out << (quint32)objectId;
+    out << (quint32)quantity;
+    out << (quint32)price;
+    output->packOutcommingQuery(0x10,0x000B,queryNumber(),outputData);
+}
+
+void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)shopId;
+    out << (quint32)objectId;
+    out << (quint32)quantity;
+    out << (quint32)price;
+    output->packOutcommingQuery(0x10,0x000C,queryNumber(),outputData);
+}
+
 void Api_protocol::collectMaturePlant()
 {
     if(havePlantAction)
@@ -1694,6 +1842,7 @@ void Api_protocol::resetAll()
     havePlantAction=false;
     player_informations.recipes.clear();
     player_informations.items.clear();
+    haveShopAction=false;
 
     //to send trame
     lastQueryNumber=1;
