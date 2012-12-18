@@ -342,6 +342,92 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     SubChild = SubChild.nextSiblingElement("object");
                 }
             }
+            if(child.attribute("name")=="Object")
+            {
+                QDomElement SubChild=child.firstChildElement("object");
+                while(!SubChild.isNull())
+                {
+                    if(SubChild.isElement() && SubChild.hasAttribute("x") && SubChild.hasAttribute("x"))
+                    {
+                        quint32 object_x=SubChild.attribute("x").toUInt(&ok)/16;
+                        if(!ok)
+                            DebugClass::debugConsole(QString("Wrong conversion with x: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                        else
+                        {
+                            /** the -1 is important to fix object layer bug into tiled!!!
+                             * Don't remove! */
+                            quint32 object_y=(SubChild.attribute("y").toUInt(&ok)/16)-1;
+
+                            if(!ok)
+                                DebugClass::debugConsole(QString("Wrong conversion with y: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                            else if(object_x>map_to_send.width || object_y>map_to_send.height)
+                                DebugClass::debugConsole(QString("Object out of the map: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                            else if(SubChild.hasAttribute("type"))
+                            {
+                                QString type=SubChild.attribute("type");
+
+                                QHash<QString,QVariant> property_text;
+                                QDomElement prop=SubChild.firstChildElement("properties");
+                                if(!prop.isNull())
+                                {
+                                    #ifdef DEBUG_MESSAGE_MAP
+                                    DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3, prop.isNull()")
+                                                 .arg(type)
+                                                 .arg(object_x)
+                                                 .arg(object_y)
+                                                 );
+                                    #endif
+                                    QDomElement property=prop.firstChildElement("property");
+                                    while(!property.isNull())
+                                    {
+                                        if(property.hasAttribute("name") && property.hasAttribute("value"))
+                                            property_text[property.attribute("name")]=property.attribute("value");
+                                        property = property.nextSiblingElement("property");
+                                    }
+                                }
+                                if(type=="bot")
+                                {
+                                    #ifdef DEBUG_MESSAGE_MAP
+                                    DebugClass::debugConsole(QString("type: %1, object_x: %2, object_y: %3")
+                                         .arg(type)
+                                         .arg(object_x)
+                                         .arg(object_y)
+                                         );
+                                    #endif
+                                    if(property_text.contains("file") && property_text.contains("id"))
+                                    {
+                                        Map_to_send::Bot_Semi bot_semi;
+                                        bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+"/"+property_text["file"].toString()).absoluteFilePath();
+                                        bot_semi.id=property_text["id"].toUInt(&ok);
+                                        if(ok)
+                                        {
+                                            bot_semi.point.x=object_x;
+                                            bot_semi.point.y=object_y;
+                                            map_to_send.bots << bot_semi;
+                                        }
+                                    }
+                                    else
+                                        DebugClass::debugConsole(QString("Missing \"bot\" properties for the bot: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                                }
+                                else
+                                {
+                                    DebugClass::debugConsole(QString("unknow type: %1, object_x: %2, object_y: %3")
+                                         .arg(type)
+                                         .arg(object_x)
+                                         .arg(object_y)
+                                         );
+                                }
+
+                            }
+                            else
+                                DebugClass::debugConsole(QString("Missing attribute type missing: SubChild.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                        }
+                    }
+                    else
+                        DebugClass::debugConsole(QString("Is not Element: SubChild.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                    SubChild = SubChild.nextSiblingElement("object");
+                }
+            }
         }
         child = child.nextSiblingElement("objectgroup");
     }

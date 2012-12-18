@@ -77,13 +77,14 @@ void BaseServer::preload_the_data()
     GlobalData::serverPrivateVariables.stopIt=false;
 
     preload_the_datapack();
-    preload_the_map();
     preload_the_skin();
     preload_the_items();
+    preload_shop();
     preload_the_players();
     preload_the_plant();
-    preload_the_plant_on_map();
     preload_crafting_recipes();
+    preload_the_map();
+    preload_the_plant_on_map();
 }
 
 void BaseServer::preload_the_map()
@@ -92,6 +93,7 @@ void BaseServer::preload_the_map()
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalData::serverPrivateVariables.datapack_mapPath));
     #endif
+    int shops_number=0;
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
@@ -262,6 +264,61 @@ void BaseServer::preload_the_map()
         index++;
     }
 
+    //resolv the shops
+    size=semi_loaded_map.size();
+    index=0;
+    while(index<size)
+    {
+        int sub_index=0;
+        while(sub_index<semi_loaded_map[index].old_map.bots.size())
+        {
+            Map_to_send::Bot_Semi bot_Semi=semi_loaded_map[index].old_map.bots.at(sub_index);
+            loadBotFile(bot_Semi.file);
+            if(botFiles.contains(bot_Semi.file))
+                if(botFiles[bot_Semi.file].contains(bot_Semi.id))
+                {
+                    #ifdef DEBUG_MESSAGE_MAP_LOAD
+                    Pokecraft::DebugClass::debugConsole(QString("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                    #endif
+                    QHashIterator<quint8,QDomElement> i(botFiles[bot_Semi.file][bot_Semi.id].step);
+                    while (i.hasNext()) {
+                        i.next();
+                        QDomElement step = i.value();
+                        if(step.attribute("type")=="shop")
+                        {
+                            if(!step.hasAttribute("shop"))
+                                Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                bool ok;
+                                quint32 shop=step.attribute("shop").toUInt(&ok);
+                                if(!ok)
+                                    Pokecraft::DebugClass::debugConsole(QString("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                else if(!GlobalData::serverPrivateVariables.shops.contains(shop))
+                                    Pokecraft::DebugClass::debugConsole(QString("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                else
+                                {
+                                    #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                    Pokecraft::DebugClass::debugConsole(QString("shop put at: %1 (%2,%3)")
+                                        .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    #endif
+                                    static_cast<MapServer *>(semi_loaded_map[index].map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
+                                    shops_number++;
+                                }
+                            }
+                        }
+                        step = step.nextSiblingElement("step");
+                    }
+                }
+            sub_index++;
+        }
+        index++;
+    }
+
+
     //clean border balise without another oposite border
     size=semi_loaded_map.size();
     index=0;
@@ -382,6 +439,9 @@ void BaseServer::preload_the_map()
     }
 
     DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalData::serverPrivateVariables.map_list.size()));
+    DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
+
+    botFiles.clear();
 }
 
 void BaseServer::preload_the_skin()
@@ -436,8 +496,19 @@ void BaseServer::preload_the_items()
                 quint32 id=item.attribute("id").toULongLong(&ok);
                 if(ok)
                 {
-                    if(!GlobalData::serverPrivateVariables.itemsId.contains(id))
-                        GlobalData::serverPrivateVariables.itemsId << id;
+                    if(!GlobalData::serverPrivateVariables.items.contains(id))
+                    {
+                        quint32 price=0;
+                        if(item.hasAttribute("price"))
+                        {
+                            price=item.attribute("price").toUInt(&ok);
+                            if(!ok)
+                                price=0;
+                        }
+                        Item item;
+                        item.price=price;
+                        GlobalData::serverPrivateVariables.items[id]=item;
+                    }
                     else
                         DebugClass::debugConsole(QString("Unable to open the items file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                 }
@@ -452,7 +523,7 @@ void BaseServer::preload_the_items()
         item = item.nextSiblingElement("item");
     }
 
-    DebugClass::debugConsole(QString("%1 item(s) loaded").arg(GlobalData::serverPrivateVariables.itemsId.size()));
+    DebugClass::debugConsole(QString("%1 item(s) loaded").arg(GlobalData::serverPrivateVariables.items.size()));
 }
 
 void BaseServer::preload_the_datapack()
@@ -559,18 +630,88 @@ bool BaseServer::initialize_the_database()
     return true;
 }
 
+void BaseServer::loadBotFile(const QString &fileName)
+{
+    if(botFiles.contains(fileName))
+        return;
+    botFiles[fileName];//create the entry
+    QFile mapFile(fileName);
+    if(!mapFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+        return;
+    }
+    QByteArray xmlContent=mapFile.readAll();
+    mapFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return;
+    }
+    bool ok;
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="bots")
+    {
+        qDebug() << QString("\"bots\" root balise not found for the xml file");
+        return;
+    }
+    //load the bots
+    QDomElement child = root.firstChildElement("bot");
+    while(!child.isNull())
+    {
+        if(!child.hasAttribute("id"))
+            Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+        else if(!child.isElement())
+            Pokecraft::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
+        else
+        {
+            quint32 id=child.attribute("id").toUInt(&ok);
+            if(ok)
+            {
+                botFiles[fileName][id];
+                QDomElement step = child.firstChildElement("step");
+                while(!step.isNull())
+                {
+                    if(!step.hasAttribute("id"))
+                        Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                    else if(!step.hasAttribute("type"))
+                        Pokecraft::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                    else if(!step.isElement())
+                        Pokecraft::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber())));
+                    else
+                    {
+                        quint32 stepId=step.attribute("id").toUInt(&ok);
+                        if(ok)
+                            botFiles[fileName][id].step[stepId]=step;
+                    }
+                    step = step.nextSiblingElement("step");
+                }
+                if(!botFiles[fileName][id].step.contains(1))
+                    botFiles[fileName].remove(id);
+            }
+            else
+                Pokecraft::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+        }
+        child = child.nextSiblingElement("bot");
+    }
+}
+
 ////////////////////////////////////////////////// server stopping ////////////////////////////////////////////
 
 void BaseServer::unload_the_data()
 {
     GlobalData::serverPrivateVariables.stopIt=true;
 
-    unload_crafting_recipes();
     unload_the_plant_on_map();
+    unload_the_map();
+    unload_crafting_recipes();
     unload_the_plant();
+    unload_shop();
     unload_the_items();
     unload_the_skin();
-    unload_the_map();
     unload_the_datapack();
     unload_the_players();
 }
@@ -605,7 +746,7 @@ void BaseServer::unload_the_visibility_algorithm()
 
 void BaseServer::unload_the_items()
 {
-    GlobalData::serverPrivateVariables.itemsId.clear();
+    GlobalData::serverPrivateVariables.items.clear();
 }
 
 void BaseServer::unload_the_datapack()

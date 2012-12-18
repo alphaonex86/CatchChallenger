@@ -96,10 +96,13 @@ protected:
     virtual void unload_the_visibility_algorithm();
 
     virtual bool initialize_the_database();
+    virtual void loadBotFile(const QString &fileName);
     //FakeServer server;//wrong, create another object, here need use the global static object
 
     //to keep client list, QSet because it will have lot of more disconnecion than server closing
     QSet<Client *> client_list;
+
+    QHash<QString/*name*/,QHash<quint8/*bot id*/,Pokecraft::Bot> > botFiles;
 };
 }
 
