@@ -1157,6 +1157,20 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("The shop call, but wrong shop id"));
             return;
         }
+        QPixmap pixmap;
+        if(actualBot.properties.contains("skin"))
+        {
+            pixmap=QPixmap(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+            if(pixmap.isNull())
+            {
+                qDebug() << QString("Unable to load seller skin: %1").arg(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+                pixmap=QPixmap(":/images/player_default/front.png");
+            }
+        }
+        else
+            pixmap=QPixmap(":/images/player_default/front.png");
+        pixmap=pixmap.scaled(160,160);
+        ui->shopSellerImage->setPixmap(pixmap);
         ui->stackedWidget->setCurrentIndex(7);
         ui->shopItemList->clear();
         on_shopItemList_itemSelectionChanged();
@@ -1168,6 +1182,20 @@ void BaseWindow::goToBotStep(const quint8 &step)
     }
     else if(actualBot.step[step].attribute("type")=="sell")
     {
+        QPixmap pixmap;
+        if(actualBot.properties.contains("skin"))
+        {
+            pixmap=QPixmap(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+            if(pixmap.isNull())
+            {
+                qDebug() << QString("Unable to load seller skin: %1").arg(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+                pixmap=QPixmap(":/images/player_default/front.png");
+            }
+        }
+        else
+            pixmap=QPixmap(":/images/player_default/front.png");
+        pixmap=pixmap.scaled(160,160);
+        ui->shopSellerImage->setPixmap(pixmap);
         if(client->getHaveShopAction())
         {
             showTip(tr("Already in shop action"));
