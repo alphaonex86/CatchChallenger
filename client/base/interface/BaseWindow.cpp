@@ -20,7 +20,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
     qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
     qRegisterMetaType<QHash<quint32,quint32> >("Pokecraft::Plant_collect");
-    qRegisterMetaType<QList<ItemToSell> >("QList<ItemToSell>");
+    qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
 
     this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
@@ -75,7 +75,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     //inventory
     connect(client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
     //shop
-    connect(client,SIGNAL(haveShopList(QList<ItemToSell>)),this,SLOT(haveShopList(QList<ItemToSell>)));
+    connect(client,SIGNAL(haveShopList(QList<ItemToSellOrBuy>)),this,SLOT(haveShopList(QList<ItemToSellOrBuy>)));
     connect(client,SIGNAL(haveSellObject(SoldStat,quint32)),this,SLOT(haveSellObject(SoldStat,quint32)));
     connect(client,SIGNAL(haveBuyObject(BuyStat,quint32)),this,SLOT(haveBuyObject(BuyStat,quint32)));
 
@@ -167,6 +167,7 @@ void BaseWindow::resetAll()
     previousTXSize=0;
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);
+    waitToSell=false;
 }
 
 void BaseWindow::serverIsLoading()
@@ -487,6 +488,10 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             ui->stackedWidget->setCurrentIndex(5);
             on_listPlantList_itemSelectionChanged();
         break;
+        case ObjectType_Sell:
+            ui->stackedWidget->setCurrentIndex(7);
+            displaySellList();
+        break;
         case ObjectType_All:
         default:
             ui->stackedWidget->setCurrentIndex(3);
@@ -495,12 +500,39 @@ void BaseWindow::selectObject(const ObjectType &objectType)
     }
 }
 
-void BaseWindow::objectSelection(const bool &ok,const quint32 &itemId)
+void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const quint32 &quantity)
 {
     inSelection=false;
     ui->stackedWidget->setCurrentIndex(1);
+    ui->inventoryUse->setText(tr("Select"));
     switch(waitedObjectType)
     {
+        case ObjectType_Sell:
+            ui->plantUse->setVisible(false);
+            if(!ok)
+                break;
+            if(!items.contains(itemId))
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(items[itemId]<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            items[itemId]-=quantity;
+            if(items[itemId]==0)
+                items.remove(itemId);
+            ItemToSellOrBuy tempItem;
+            tempItem.object=itemId;
+            tempItem.quantity=quantity;
+            tempItem.price=DatapackClientLoader::datapackLoader.items[itemId].price/2;
+            itemsToSell << tempItem;
+            client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
+            load_inventory();
+            load_plant_inventory();
+        break;
         case ObjectType_Seed:
             ui->plantUse->setVisible(false);
             if(!ok)
@@ -1134,6 +1166,17 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->shopCash->setText(tr("Cash: %1").arg(cash));
         return;
     }
+    else if(actualBot.step[step].attribute("type")=="sell")
+    {
+        if(client->getHaveShopAction())
+        {
+            showTip(tr("Already in shop action"));
+            return;
+        }
+        waitToSell=true;
+        selectObject(ObjectType_Sell);
+        return;
+    }
     else
     {
         showTip(tr("Bot step type error, repport this error please"));
@@ -1315,18 +1358,35 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 {
     if(client->getHaveShopAction())
         return;
-    if(cash<itemsIntoTheShop[shop_items_graphical[item]].price)
-        return;
-    bool ok;
-    tempQuantityForBuy=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
-    if(!ok)
-        return;
-    tempItemForBuy=shop_items_graphical[item];
-    client->buyObject(shopId,tempItemForBuy,tempQuantityForBuy,itemsIntoTheShop[tempItemForBuy].price);
-    ui->stackedWidget->setCurrentIndex(1);
-    tempCashForBuy=itemsIntoTheShop[tempItemForBuy].price*tempQuantityForBuy;
-    cash-=tempCashForBuy;
-    showTip(tr("Buying the object..."));
+    if(waitToSell)
+    {
+        if(cash<itemsIntoTheShop[shop_items_graphical[item]].price)
+            return;
+        bool ok;
+        tempQuantityForBuy=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
+        if(!ok)
+            return;
+        tempItemForBuy=shop_items_graphical[item];
+        client->buyObject(shopId,tempItemForBuy,tempQuantityForBuy,itemsIntoTheShop[tempItemForBuy].price);
+        ui->stackedWidget->setCurrentIndex(1);
+        tempCashForBuy=itemsIntoTheShop[tempItemForBuy].price*tempQuantityForBuy;
+        removeCash(tempCashForBuy);
+        showTip(tr("Buying the object..."));
+    }
+    else
+    {
+        if(!items.contains(shop_items_graphical[item]))
+            return;
+        bool ok;
+        tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items[shop_items_graphical[item]],1,&ok);
+        if(!ok)
+            return;
+        if(!items.contains(shop_items_graphical[item]))
+            return;
+        if(items[shop_items_graphical[item]]<tempQuantityForSell)
+            return;
+        objectSelection(true,shop_items_graphical[item],tempQuantityForSell);
+    }
 }
 
 void BaseWindow::on_shopItemList_itemSelectionChanged()
@@ -1367,7 +1427,7 @@ void BaseWindow::on_shopBuy_clicked()
     on_shopItemList_itemActivated(items.first());
 }
 
-void BaseWindow::haveShopList(const QList<ItemToSell> &items)
+void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveShopList()";
@@ -1405,6 +1465,31 @@ void BaseWindow::haveShopList(const QList<ItemToSell> &items)
     on_shopItemList_itemSelectionChanged();
 }
 
+void BaseWindow::displaySellList()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::displaySellList()";
+    #endif
+    ui->shopItemList->clear();
+    itemsIntoTheShop.clear();
+    shop_items_graphical.clear();
+    shop_items_to_graphical.clear();
+    QHashIterator<quint32,quint32> i(items);
+    while (i.hasNext()) {
+        i.next();
+        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        {
+            QListWidgetItem *item=new QListWidgetItem();
+            shop_items_to_graphical[i.key()]=item;
+            shop_items_graphical[item]=i.key();
+            item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+            item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.items[i.key()].name).arg(DatapackClientLoader::datapackLoader.items[i.key()].price/2));
+            ui->inventory->addItem(item);
+        }
+    }
+    on_shopItemList_itemSelectionChanged();
+}
+
 void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
 {
     QHash<quint32,quint32> items;
@@ -1415,17 +1500,17 @@ void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
             add_to_inventory(items);
         break;
         case BuyStat_BetterPrice:
-            cash+=tempCashForBuy;
-            cash-=newPrice*tempQuantityForBuy;
+            addCash(tempCashForBuy);
+            removeCash(newPrice*tempQuantityForBuy);
             items[tempItemForBuy]=tempQuantityForBuy;
             add_to_inventory(items);
         break;
         case BuyStat_HaveNotQuantity:
-            cash+=tempCashForBuy;
+            addCash(tempCashForBuy);
             showTip(tr("Sorry but have not the quantity of this item"));
         break;
         case BuyStat_PriceHaveChanged:
-            cash+=tempCashForBuy;
+            addCash(tempCashForBuy);
             showTip(tr("Sorry but now the price is worse"));
         break;
         default:
@@ -1436,4 +1521,50 @@ void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
 
 void BaseWindow::haveSellObject(const SoldStat &stat,const quint32 &newPrice)
 {
+    waitToSell=false;
+    switch(stat)
+    {
+        case SoldStat_Done:
+            addCash(itemsToSell.first().price*itemsToSell.first().quantity);
+            showTip(tr("Item sold"));
+        break;
+        case SoldStat_BetterPrice:
+            addCash(newPrice*itemsToSell.first().quantity);
+            showTip(tr("Item sold at better price"));
+        break;
+        case SoldStat_WrongQuantity:
+            if(items.contains(itemsToSell.first().object))
+                items[itemsToSell.first().object]+=itemsToSell.first().quantity;
+            else
+                items[itemsToSell.first().object]=itemsToSell.first().quantity;
+            load_inventory();
+            load_plant_inventory();
+            showTip(tr("Sorry but have not the quantity of this item"));
+        break;
+        case SoldStat_PriceHaveChanged:
+            if(items.contains(itemsToSell.first().object))
+                items[itemsToSell.first().object]+=itemsToSell.first().quantity;
+            else
+                items[itemsToSell.first().object]=itemsToSell.first().quantity;
+            load_inventory();
+            load_plant_inventory();
+            showTip(tr("Sorry but now the price is worse"));
+        break;
+        default:
+            qDebug() << "haveBuyObject(stat) have unknow value";
+        break;
+    }
+    itemsToSell.removeFirst();
+}
+
+void BaseWindow::addCash(const quint32 &cash)
+{
+    this->cash+=cash;
+    ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+}
+
+void BaseWindow::removeCash(const quint32 &cash)
+{
+    this->cash-=cash;
+    ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
 }
