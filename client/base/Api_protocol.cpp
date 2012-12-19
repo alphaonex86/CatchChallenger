@@ -1498,6 +1498,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         items << item;
                         index++;
                     }
+                    haveShopAction=false;
                     haveShopList(items);
                 }
                 break;
@@ -1534,6 +1535,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
+                    haveShopAction=false;
                 }
                 break;
                 //Sell object
@@ -1569,6 +1571,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
+                    haveShopAction=false;
                 }
                 break;
                 default:
@@ -1783,6 +1786,12 @@ void Api_protocol::getShopList(const quint32 &shopId)
 
 void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
+    if(haveShopAction)
+    {
+        DebugClass::debugConsole("already have shop action");
+        return;
+    }
+    haveShopAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -1795,6 +1804,12 @@ void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const
 
 void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
+    if(haveShopAction)
+    {
+        DebugClass::debugConsole("already have shop action");
+        return;
+    }
+    haveShopAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
