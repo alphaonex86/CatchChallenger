@@ -1,9 +1,10 @@
-#ifndef POKECRAFT_STRUCTURES_CLIENT_H
-#define POKECRAFT_STRUCTURES_CLIENT_H
+#ifndef POKECRAFT_CLIENT_STRUCTURES_H
+#define POKECRAFT_CLIENT_STRUCTURES_H
 
 #include <QObject>
 #include <QString>
 #include <QPixmap>
+#include <QDomElement>
 
 namespace Pokecraft {
 
@@ -27,7 +28,12 @@ enum SoldStat
     SoldStat_WrongQuantity,
     SoldStat_PriceHaveChanged
 };
+struct Bot
+{
+    QHash<quint8,QDomElement> step;
+    QHash<QString,QString> properties;
+};
 
 }
 
-#endif // STRUCTURES_CLIENT_H
+#endif // POKECRAFT_CLIENT_STRUCTURES_H

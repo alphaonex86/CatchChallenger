@@ -111,19 +111,7 @@ void MapControllerMP::removeUnusedMap()
     while (i != all_map.constEnd()) {
         if(!mapUsed.contains((*i)->logicalMap.map_file) && !mapUsedByOtherPlayer.contains((*i)->logicalMap.map_file))
         {
-            if((*i)->logicalMap.parsed_layer.walkable!=NULL)
-                delete (*i)->logicalMap.parsed_layer.walkable;
-            if((*i)->logicalMap.parsed_layer.water!=NULL)
-                delete (*i)->logicalMap.parsed_layer.water;
-            if((*i)->logicalMap.parsed_layer.grass!=NULL)
-                delete (*i)->logicalMap.parsed_layer.grass;
-            if((*i)->logicalMap.parsed_layer.grass!=NULL)
-                delete (*i)->logicalMap.parsed_layer.dirt;
-            qDeleteAll((*i)->tiledMap->tilesets());
-            delete (*i)->tiledMap;
-            delete (*i)->tiledRender;
-            delete (*i);
-            all_map.remove((*i)->logicalMap.map_file);
+            destroyMap(*i);
             i = all_map.constBegin();//needed
         }
         else
