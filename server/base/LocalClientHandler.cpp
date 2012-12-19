@@ -721,16 +721,24 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << (quint32)items.size();
+    QByteArray outputData2;
+    QDataStream out2(&outputData2, QIODevice::WriteOnly);
+    out2.setVersion(QDataStream::Qt_4_4);
     int index=0;
+    int objectCount=0;
     while(index<items.size())
     {
-        out << (quint32)items.at(index);
-        out << (quint32)GlobalData::serverPrivateVariables.items[items.at(index)].price;
-        out << (quint32)0;
+        if(GlobalData::serverPrivateVariables.items[items.at(index)].price>0)
+        {
+            out2 << (quint32)items.at(index);
+            out2 << (quint32)GlobalData::serverPrivateVariables.items[items.at(index)].price;
+            out2 << (quint32)0;
+            objectCount++;
+        }
         index++;
     }
-    emit postReply(query_id,outputData);
+    out << objectCount;
+    emit postReply(query_id,outputData+outputData2);
 }
 
 void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
@@ -907,6 +915,12 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     if(!items.contains(objectId))
+    {
+        out << (quint8)0x03;
+        emit postReply(query_id,outputData);
+        return;
+    }
+    if(GlobalData::serverPrivateVariables.items[objectId].price==0)
     {
         out << (quint8)0x03;
         emit postReply(query_id,outputData);

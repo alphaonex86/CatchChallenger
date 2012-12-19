@@ -1483,7 +1483,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                     quint32 shopListSize;
                     in >> shopListSize;
                     quint32 index=0;
-                    QList<ItemToSell> items;
+                    QList<ItemToSellOrBuy> items;
                     while(index<shopListSize)
                     {
                         if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)*3))
@@ -1491,7 +1491,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                             return;
                         }
-                        ItemToSell item;
+                        ItemToSellOrBuy item;
                         in >> item.object;
                         in >> item.price;
                         in >> item.quantity;

@@ -503,7 +503,10 @@ void BaseServer::preload_the_items()
                         {
                             price=item.attribute("price").toUInt(&ok);
                             if(!ok)
+                            {
+                                DebugClass::debugConsole(QString("Unable to open the items file: %1, price is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 price=0;
+                            }
                         }
                         Item item;
                         item.price=price;

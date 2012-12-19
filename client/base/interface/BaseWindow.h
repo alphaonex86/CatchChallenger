@@ -40,7 +40,8 @@ public:
     enum ObjectType
     {
         ObjectType_All,
-        ObjectType_Seed
+        ObjectType_Seed,
+        ObjectType_Sell
     };
     ObjectType waitedObjectType;
     enum QueryType
@@ -53,7 +54,7 @@ protected:
 public slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void selectObject(const ObjectType &objectType);
-    void objectSelection(const bool &ok,const quint32 &itemId);
+    void objectSelection(const bool &ok,const quint32 &itemId,const quint32 &quantity=1);
 private slots:
     void message(QString message);
     void disconnected(QString reason);
@@ -93,6 +94,8 @@ private slots:
     void load_inventory();
     void load_plant_inventory();
     void load_crafting_inventory();
+    void addCash(const quint32 &cash);
+    void removeCash(const quint32 &cash);
     //render
     void stopped_in_front_of(Pokecraft::Map_client *map, quint8 x, quint8 y);
     bool stopped_in_front_of_check_bot(Pokecraft::Map_client *map, quint8 x, quint8 y);
@@ -107,9 +110,10 @@ private slots:
     void objectUsed(const ObjectUsage &objectUsage);
 
     //shop
-    void haveShopList(const QList<ItemToSell> &items);
+    void haveShopList(const QList<ItemToSellOrBuy> &items);
     void haveBuyObject(const BuyStat &stat,const quint32 &newPrice);
     void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
+    void displaySellList();
 
     //plant
     void seed_planted(const bool &ok);
@@ -167,9 +171,13 @@ private:
     QTimer gain_timeout;
     QList<QueryType> queryList;
     quint32 shopId;
-    QHash<quint32,ItemToSell> itemsIntoTheShop;
+    QHash<quint32,ItemToSellOrBuy> itemsIntoTheShop;
     quint64 tempCashForBuy,cash;
     quint32 tempQuantityForBuy,tempItemForBuy;
+    //selection of quantity
+    quint32 tempQuantityForSell;
+    bool waitToSell;
+    QList<ItemToSellOrBuy> itemsToSell;
 
     //plant seed in waiting
     quint32 seed_in_waiting;

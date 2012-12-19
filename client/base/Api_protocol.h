@@ -140,7 +140,7 @@ signals:
     void removeFile(const QString &fileName);
 
     //shop
-    void haveShopList(const QList<ItemToSell> &items);
+    void haveShopList(const QList<ItemToSellOrBuy> &items);
     void haveBuyObject(const BuyStat &stat,const quint32 &newPrice);
     void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
 public slots:
