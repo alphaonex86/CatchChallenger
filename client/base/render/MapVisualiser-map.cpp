@@ -13,6 +13,64 @@
 #include "../../general/base/DebugClass.h"
 #include "../../general/libtiled/tile.h"
 
+void MapVisualiser::destroyMap(Map_full *map)
+{
+    //delete common variables
+    if(map->logicalMap.parsed_layer.walkable!=NULL)
+        delete map->logicalMap.parsed_layer.walkable;
+    if(map->logicalMap.parsed_layer.water!=NULL)
+        delete map->logicalMap.parsed_layer.water;
+    if(map->logicalMap.parsed_layer.grass!=NULL)
+        delete map->logicalMap.parsed_layer.grass;
+    if(map->logicalMap.parsed_layer.grass!=NULL)
+        delete map->logicalMap.parsed_layer.dirt;
+    qDeleteAll(map->tiledMap->tilesets());
+    delete map->tiledMap;
+    delete map->tiledRender;
+    delete map;
+    //delete client variables
+    int index=0;
+    while(index<map->logicalMap.plantList.size())
+    {
+        if(map->logicalMap.plantList.at(index).mapObject!=NULL)
+        {
+            //remove the object if needed
+            Tiled::ObjectGroup *currentGroup=map->logicalMap.plantList.at(index).mapObject->objectGroup();
+            if(currentGroup!=NULL)
+            {
+                if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+                    ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(map->logicalMap.plantList.at(index).mapObject);
+                else
+                    qDebug() << QString("destroyMap(), !ObjectGroupItem::objectGroupLink.contains(currentGroup) for plant");
+            }
+            delete map->logicalMap.plantList.at(index).mapObject;
+        }
+        index++;
+    }
+    index=0;
+    QHashIterator<QPair<quint8,quint8>,Pokecraft::BotDisplay> i(map->logicalMap.botsDisplay);
+    while (i.hasNext()) {
+        i.next();
+        if(i.value().mapObject!=NULL)
+        {
+            //remove the object if needed
+            Tiled::ObjectGroup *currentGroup=i.value().mapObject->objectGroup();
+            if(currentGroup!=NULL)
+            {
+                if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+                    ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(i.value().mapObject);
+                else
+                    qDebug() << QString("destroyMap(), !ObjectGroupItem::objectGroupLink.contains(currentGroup) for bot");
+            }
+            delete i.value().mapObject;
+        }
+        if(i.value().tileset!=NULL)
+            delete i.value().tileset;
+    }
+    //remove from the list
+    all_map.remove(map->logicalMap.map_file);
+}
+
 void MapVisualiser::resetAll()
 {
     QSet<QString>::const_iterator i = displayed_map.constBegin();
@@ -385,6 +443,9 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
                                                 {
                                                     Pokecraft::DebugClass::debugConsole(QString("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
                                                     parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
+                                                    property_parsed.remove("file");
+                                                    property_parsed.remove("id");
+                                                    parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].properties=property_parsed;
                                                 }
                                         }
                                         else
@@ -401,6 +462,15 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
         }
         child = child.nextSiblingElement("objectgroup");
     }
+}
+
+void MapVisualiser::loadBotOnTheMap(Map_full *parsedMap,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
+{
+    Q_UNUSED(parsedMap);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(lookAt);
+    Q_UNUSED(skin);
 }
 
 void MapVisualiser::loadBotFile(const QString &fileName)
@@ -503,19 +573,7 @@ void MapVisualiser::removeUnusedMap()
     while (i != all_map.constEnd()) {
         if(!mapUsed.contains((*i)->logicalMap.map_file))
         {
-            if((*i)->logicalMap.parsed_layer.walkable!=NULL)
-                delete (*i)->logicalMap.parsed_layer.walkable;
-            if((*i)->logicalMap.parsed_layer.water!=NULL)
-                delete (*i)->logicalMap.parsed_layer.water;
-            if((*i)->logicalMap.parsed_layer.grass!=NULL)
-                delete (*i)->logicalMap.parsed_layer.grass;
-            if((*i)->logicalMap.parsed_layer.dirt!=NULL)
-                delete (*i)->logicalMap.parsed_layer.dirt;
-            qDeleteAll((*i)->tiledMap->tilesets());
-            delete (*i)->tiledMap;
-            delete (*i)->tiledRender;
-            delete (*i);
-            all_map.remove((*i)->logicalMap.map_file);
+            destroyMap(*i);
             i = all_map.constBegin();//needed
         }
         else
@@ -727,5 +785,14 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
                 qDebug() << QString("loadNearMap(): left: not correctly loaded %1").arg(fileName);
         }
     }
+
+    //display the bot
+    QHashIterator<QPair<quint8,quint8>,Pokecraft::Bot> i(tempMapObject->logicalMap.bots);
+    while (i.hasNext()) {
+        i.next();
+        if(i.value().properties.contains("lookAt") && i.value().properties.contains("skin"))
+            loadBotOnTheMap(tempMapObject,i.key().first,i.key().second,i.value().properties["lookAt"],i.value().properties["skin"]);
+    }
+
     return loadedNearMap;
 }

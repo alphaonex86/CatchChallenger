@@ -541,6 +541,7 @@ void BaseWindow::have_current_player_info()
         return;
     havePlayerInformations=true;
     Player_private_and_public_informations informations=client->get_player_informations();
+    cash=informations.cash;
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
     DebugClass::debugConsole(QString("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
@@ -1118,7 +1119,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             return;
         }
         bool ok;
-        quint32 shopId=actualBot.step[step].attribute("shop").toUInt(&ok);
+        shopId=actualBot.step[step].attribute("shop").toUInt(&ok);
         if(!ok)
         {
             showTip(tr("The shop call, but wrong shop id"));
@@ -1130,6 +1131,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->shopDescription->setText(tr("Waiting the shop content"));
         ui->shopBuy->setVisible(false);
         client->getShopList(shopId);
+        ui->shopCash->setText(tr("Cash: %1").arg(cash));
         return;
     }
     else
@@ -1311,6 +1313,20 @@ void BaseWindow::on_toolButton_quit_shop_clicked()
 
 void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 {
+    if(client->getHaveShopAction())
+        return;
+    if(cash<itemsIntoTheShop[shop_items_graphical[item]].price)
+        return;
+    bool ok;
+    tempQuantityForBuy=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
+    if(!ok)
+        return;
+    tempItemForBuy=shop_items_graphical[item];
+    client->buyObject(shopId,tempItemForBuy,tempQuantityForBuy,itemsIntoTheShop[tempItemForBuy].price);
+    ui->stackedWidget->setCurrentIndex(1);
+    tempCashForBuy=itemsIntoTheShop[tempItemForBuy].price*tempQuantityForBuy;
+    cash-=tempCashForBuy;
+    showTip(tr("Buying the object..."));
 }
 
 void BaseWindow::on_shopItemList_itemSelectionChanged()
@@ -1353,11 +1369,69 @@ void BaseWindow::on_shopBuy_clicked()
 
 void BaseWindow::haveShopList(const QList<ItemToSell> &items)
 {
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::haveShopList()";
+    #endif
+    ui->shopItemList->clear();
+    itemsIntoTheShop.clear();
+    shop_items_graphical.clear();
+    shop_items_to_graphical.clear();
+    int index=0;
+    while(index<items.size())
+    {
+        itemsIntoTheShop[items.at(index).object]=items.at(index);
+        QListWidgetItem *item=new QListWidgetItem();
+        shop_items_to_graphical[items.at(index).object]=item;
+        shop_items_graphical[item]=items.at(index).object;
+        if(DatapackClientLoader::datapackLoader.items.contains(items.at(index).object))
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.items[items.at(index).object].image);
+            if(items.at(index).quantity==0)
+                item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.items[items.at(index).object].name).arg(items.at(index).price));
+            else
+                item->setText(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.items[items.at(index).object].name).arg(items.at(index).price).arg(items.at(index).quantity));
+        }
+        else
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+            if(items.at(index).quantity==0)
+                item->setText(tr("Item %1\nPrice: %2$").arg(items.at(index).object).arg(items.at(index).price));
+            else
+                item->setText(tr("Item %1 at %2$\nQuantity: %3").arg(items.at(index).object).arg(items.at(index).price).arg(items.at(index).quantity));
+        }
+        ui->inventory->addItem(item);
+        index++;
+    }
     on_shopItemList_itemSelectionChanged();
 }
 
 void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
 {
+    QHash<quint32,quint32> items;
+    switch(stat)
+    {
+        case BuyStat_Done:
+            items[tempItemForBuy]=tempQuantityForBuy;
+            add_to_inventory(items);
+        break;
+        case BuyStat_BetterPrice:
+            cash+=tempCashForBuy;
+            cash-=newPrice*tempQuantityForBuy;
+            items[tempItemForBuy]=tempQuantityForBuy;
+            add_to_inventory(items);
+        break;
+        case BuyStat_HaveNotQuantity:
+            cash+=tempCashForBuy;
+            showTip(tr("Sorry but have not the quantity of this item"));
+        break;
+        case BuyStat_PriceHaveChanged:
+            cash+=tempCashForBuy;
+            showTip(tr("Sorry but now the price is worse"));
+        break;
+        default:
+            qDebug() << "haveBuyObject(stat) have unknow value";
+        break;
+    }
 }
 
 void BaseWindow::haveSellObject(const SoldStat &stat,const quint32 &newPrice)
