@@ -233,10 +233,5 @@ struct Shop
     QList<quint32> items;
 };
 
-struct Bot
-{
-    QHash<quint8,QDomElement> step;
-};
-
 }
 #endif // STRUCTURES_GENERAL_H

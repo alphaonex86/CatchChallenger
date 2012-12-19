@@ -166,6 +166,10 @@ private:
     QTimer tip_timeout;
     QTimer gain_timeout;
     QList<QueryType> queryList;
+    quint32 shopId;
+    QHash<quint32,ItemToSell> itemsIntoTheShop;
+    quint64 tempCashForBuy,cash;
+    quint32 tempQuantityForBuy,tempItemForBuy;
 
     //plant seed in waiting
     quint32 seed_in_waiting;

@@ -4,6 +4,8 @@
 #include "../../general/base/Map.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/libtiled/mapobject.h"
+#include "ClientStructures.h"
+#include "DisplayStructures.h"
 
 #include <QString>
 #include <QList>
@@ -31,6 +33,7 @@ public:
     };
     QList<Plant> plantList;
     QHash<QPair<quint8,quint8>,Bot> bots;
+    QHash<QPair<quint8,quint8>,BotDisplay> botsDisplay;
 };
 }
 

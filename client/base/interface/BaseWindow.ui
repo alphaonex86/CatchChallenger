@@ -2721,6 +2721,19 @@ padding-bottom:3px;
              <string>Buy</string>
             </property>
            </widget>
+           <widget class="QLabel" name="shopCash">
+            <property name="geometry">
+             <rect>
+              <x>6</x>
+              <y>10</y>
+              <width>201</width>
+              <height>20</height>
+             </rect>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
           </widget>
          </item>
         </layout>

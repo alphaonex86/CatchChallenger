@@ -5,6 +5,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/Map.h"
 #include "../../client/base/Map_client.h"
+#include "../../client/base/DisplayStructures.h"
 #include "../../general/base/Map_loader.h"
 
 #include "../../general/libtiled/isometricrenderer.h"
@@ -61,6 +62,7 @@ public:
 
     Map_full *current_map;
     QHash<QString,Map_full *> all_map;
+
 protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
@@ -90,11 +92,14 @@ protected:
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
+
+    void destroyMap(Map_full *map);
 protected slots:
     virtual void resetAll();
 public slots:
     QString loadOtherMap(const QString &fileName);
     void loadOtherMapClientPart(Map_full *parsedMap);
+    virtual void loadBotOnTheMap(Map_full *parsedMap,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin);
     void loadBotFile(const QString &fileName);
     virtual QSet<QString> loadMap(Map_full *map, const bool &display);
     virtual void removeUnusedMap();
