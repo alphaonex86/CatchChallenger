@@ -8,7 +8,7 @@
 
 namespace Pokecraft {
 
-struct ItemToSell
+struct ItemToSellOrBuy
 {
     quint32 object;
     quint32 price;
