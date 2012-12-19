@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2617,9 +2617,6 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="pixmap">
              <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
-            </property>
-            <property name="scaledContents">
-             <bool>true</bool>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
