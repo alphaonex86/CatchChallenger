@@ -103,6 +103,22 @@ void DatapackClientLoader::parseItems()
                             qDebug() << QString("No image, load the default, id number already set: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
                             DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
                         }
+                        //load the price
+                        if(item.hasAttribute("price"))
+                        {
+                            bool ok;
+                            DatapackClientLoader::items[id].price=item.attribute("price").toUInt(&ok);
+                            if(!ok)
+                            {
+                                qDebug() << QString("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
+                                DatapackClientLoader::items[id].price=0;
+                            }
+                        }
+                        else
+                        {
+                            qDebug() << QString("No image, load the default, id number already set: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
+                            DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
+                        }
                         // base size: 24x24
                         DatapackClientLoader::items[id].image=DatapackClientLoader::items[id].image.scaled(72,72);//then zoom: 3x
 

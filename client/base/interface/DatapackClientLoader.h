@@ -23,6 +23,7 @@ public:
         QPixmap image;
         QString name;
         QString description;
+        quint32 price;
     };
     QHash<quint32,Item> items;
     struct Plant
