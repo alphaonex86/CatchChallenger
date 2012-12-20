@@ -69,12 +69,16 @@ void ObjectGroupItem::addObject(Tiled::MapObject *object)
 void ObjectGroupItem::removeObject(Tiled::MapObject *object)
 {
     if(!MapObjectItem::objectLink.contains(object))
+    {
         qDebug() << "The tiled object not exist on this layer";
+        #ifndef POKECRAFT_EXTRA_CHECK
+        return;
+        #endif
+    }
     else
     {
         delete MapObjectItem::objectLink[object];
         MapObjectItem::objectLink.remove(object);
     }
-
     mObjectGroup->removeObject(object);
 }
