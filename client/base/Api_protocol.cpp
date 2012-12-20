@@ -1817,9 +1817,7 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
     out << (quint32)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
-    quint8 query=queryNumber();
-    DebugClass::debugConsole(QString("packOutcommingQuery(0x10,0x000C,%1,%2);").arg(query).arg(QString(outputData.toHex())));
-    output->packOutcommingQuery(0x10,0x000C,query,outputData);
+    output->packOutcommingQuery(0x10,0x000C,queryNumber(),outputData);
 }
 
 void Api_protocol::collectMaturePlant()

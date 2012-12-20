@@ -10,6 +10,9 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 
+//do buy queue
+//do sell queue
+
 using namespace Pokecraft;
 
 BaseWindow::BaseWindow(Api_protocol *client) :
