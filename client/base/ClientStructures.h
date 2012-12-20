@@ -14,20 +14,6 @@ struct ItemToSellOrBuy
     quint32 price;
     quint32 quantity;
 };
-enum BuyStat
-{
-    BuyStat_Done,
-    BuyStat_BetterPrice,
-    BuyStat_HaveNotQuantity,
-    BuyStat_PriceHaveChanged
-};
-enum SoldStat
-{
-    SoldStat_Done,
-    SoldStat_BetterPrice,
-    SoldStat_WrongQuantity,
-    SoldStat_PriceHaveChanged
-};
 struct Bot
 {
     QHash<quint8,QDomElement> step;

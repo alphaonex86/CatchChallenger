@@ -78,6 +78,21 @@ enum ObjectUsage
     ObjectUsage_impossible=0x03//failed to use without consumption of the object
 };
 
+enum BuyStat
+{
+    BuyStat_Done=0x01,
+    BuyStat_BetterPrice=0x02,
+    BuyStat_HaveNotQuantity=0x03,
+    BuyStat_PriceHaveChanged=0x04
+};
+enum SoldStat
+{
+    SoldStat_Done=0x01,
+    SoldStat_BetterPrice=0x02,
+    SoldStat_WrongQuantity=0x03,
+    SoldStat_PriceHaveChanged=0x04
+};
+
 struct map_management_insert
 {
     QString fileName;
