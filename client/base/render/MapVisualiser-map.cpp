@@ -13,8 +13,13 @@
 #include "../../general/base/DebugClass.h"
 #include "../../general/libtiled/tile.h"
 
+/// \warning all ObjectGroupItem destroyed into removeMap()
 void MapVisualiser::destroyMap(Map_full *map)
 {
+    //logicalMap.plantList, delete plants useless, destroyed into removeMap()
+    //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
+    //remove from the list
+    all_map.remove(map->logicalMap.map_file);
     //delete common variables
     if(map->logicalMap.parsed_layer.walkable!=NULL)
         delete map->logicalMap.parsed_layer.walkable;
@@ -28,47 +33,6 @@ void MapVisualiser::destroyMap(Map_full *map)
     delete map->tiledMap;
     delete map->tiledRender;
     delete map;
-    //delete client variables
-    int index=0;
-    while(index<map->logicalMap.plantList.size())
-    {
-        if(map->logicalMap.plantList.at(index).mapObject!=NULL)
-        {
-            //remove the object if needed
-            Tiled::ObjectGroup *currentGroup=map->logicalMap.plantList.at(index).mapObject->objectGroup();
-            if(currentGroup!=NULL)
-            {
-                if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
-                    ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(map->logicalMap.plantList.at(index).mapObject);
-                else
-                    qDebug() << QString("destroyMap(), !ObjectGroupItem::objectGroupLink.contains(currentGroup) for plant");
-            }
-            delete map->logicalMap.plantList.at(index).mapObject;
-        }
-        index++;
-    }
-    index=0;
-    QHashIterator<QPair<quint8,quint8>,Pokecraft::BotDisplay> i(map->logicalMap.botsDisplay);
-    while (i.hasNext()) {
-        i.next();
-        if(i.value().mapObject!=NULL)
-        {
-            //remove the object if needed
-            Tiled::ObjectGroup *currentGroup=i.value().mapObject->objectGroup();
-            if(currentGroup!=NULL)
-            {
-                if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
-                    ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(i.value().mapObject);
-                else
-                    qDebug() << QString("destroyMap(), !ObjectGroupItem::objectGroupLink.contains(currentGroup) for bot");
-            }
-            delete i.value().mapObject;
-        }
-        if(i.value().tileset!=NULL)
-            delete i.value().tileset;
-    }
-    //remove from the list
-    all_map.remove(map->logicalMap.map_file);
 }
 
 void MapVisualiser::resetAll()
@@ -78,6 +42,12 @@ void MapVisualiser::resetAll()
         mapItem->removeMap(all_map[*i]->tiledMap);
         displayed_map.remove(*i);
         i = displayed_map.constBegin();
+    }
+    ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
+    QHash<QString,Map_full *>::const_iterator j = all_map.constBegin();
+    while (j != all_map.constEnd()) {
+        destroyMap(*j);
+        j = all_map.constBegin();//needed
     }
     displayed_map.clear();
     all_map.clear();
