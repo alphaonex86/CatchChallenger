@@ -150,8 +150,15 @@ void BaseWindow::resetAll()
     haveInventory=false;
     datapackIsParsed=false;
     ui->inventory->clear();
+    ui->shopItemList->clear();
     items_graphical.clear();
     items_to_graphical.clear();
+    shop_items_graphical.clear();
+    shop_items_to_graphical.clear();
+    plants_items_graphical.clear();
+    plants_items_to_graphical.clear();
+    crafting_recipes_items_graphical.clear();
+    crafting_recipes_items_to_graphical.clear();
     ui->tip->setVisible(false);
     ui->persistant_tip->setVisible(false);
     ui->gain->setVisible(false);
@@ -1176,12 +1183,25 @@ void BaseWindow::goToBotStep(const quint8 &step)
         on_shopItemList_itemSelectionChanged();
         ui->shopDescription->setText(tr("Waiting the shop content"));
         ui->shopBuy->setVisible(false);
+        qDebug() << "goToBotStep(), client->getShopList(shopId): " << shopId;
         client->getShopList(shopId);
         ui->shopCash->setText(tr("Cash: %1").arg(cash));
         return;
     }
     else if(actualBot.step[step].attribute("type")=="sell")
     {
+        if(!actualBot.step[step].hasAttribute("shop"))
+        {
+            showTip(tr("The shop call, but missing informations"));
+            return;
+        }
+        bool ok;
+        shopId=actualBot.step[step].attribute("shop").toUInt(&ok);
+        if(!ok)
+        {
+            showTip(tr("The shop call, but wrong shop id"));
+            return;
+        }
         QPixmap pixmap;
         if(actualBot.properties.contains("skin"))
         {
@@ -1379,6 +1399,8 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &link)
 
 void BaseWindow::on_toolButton_quit_shop_clicked()
 {
+    waitToSell=false;
+    inSelection=false;
     ui->stackedWidget->setCurrentIndex(1);
 }
 
@@ -1386,12 +1408,18 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 {
     if(client->getHaveShopAction())
         return;
-    if(waitToSell)
+    if(!waitToSell)
     {
         if(cash<itemsIntoTheShop[shop_items_graphical[item]].price)
+        {
+            QMessageBox::information(this,tr("Buy"),tr("You have not the cash to buy this item"));
             return;
-        bool ok;
-        tempQuantityForBuy=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
+        }
+        bool ok=true;
+        if(cash/itemsIntoTheShop[shop_items_graphical[item]].price>1)
+            tempQuantityForBuy=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
+        else
+            tempQuantityForBuy=1;
         if(!ok)
             return;
         tempItemForBuy=shop_items_graphical[item];
@@ -1405,8 +1433,11 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
     {
         if(!items.contains(shop_items_graphical[item]))
             return;
-        bool ok;
-        tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items[shop_items_graphical[item]],1,&ok);
+        bool ok=true;
+        if(items[shop_items_graphical[item]]>1)
+            tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items[shop_items_graphical[item]],1,&ok);
+        else
+            tempQuantityForSell=1;
         if(!ok)
             return;
         if(!items.contains(shop_items_graphical[item]))
@@ -1414,6 +1445,8 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
         if(items[shop_items_graphical[item]]<tempQuantityForSell)
             return;
         objectSelection(true,shop_items_graphical[item],tempQuantityForSell);
+        ui->stackedWidget->setCurrentIndex(1);
+        showTip(tr("Selling the object..."));
     }
 }
 
@@ -1487,9 +1520,10 @@ void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
             else
                 item->setText(tr("Item %1 at %2$\nQuantity: %3").arg(items.at(index).object).arg(items.at(index).price).arg(items.at(index).quantity));
         }
-        ui->inventory->addItem(item);
+        ui->shopItemList->addItem(item);
         index++;
     }
+    ui->shopBuy->setText(tr("Buy"));
     on_shopItemList_itemSelectionChanged();
 }
 
@@ -1511,10 +1545,14 @@ void BaseWindow::displaySellList()
             shop_items_to_graphical[i.key()]=item;
             shop_items_graphical[item]=i.key();
             item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
-            item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.items[i.key()].name).arg(DatapackClientLoader::datapackLoader.items[i.key()].price/2));
-            ui->inventory->addItem(item);
+            if(i.value()>1)
+                item->setText(tr("%1\nPrice: %2$, quantity: %3").arg(DatapackClientLoader::datapackLoader.items[i.key()].name).arg(DatapackClientLoader::datapackLoader.items[i.key()].price/2).arg(i.value()));
+            else
+                item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.items[i.key()].name).arg(DatapackClientLoader::datapackLoader.items[i.key()].price/2));
+            ui->shopItemList->addItem(item);
         }
     }
+    ui->shopBuy->setText(tr("Sell"));
     on_shopItemList_itemSelectionChanged();
 }
 
@@ -1528,6 +1566,11 @@ void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
             add_to_inventory(items);
         break;
         case BuyStat_BetterPrice:
+            if(newPrice==0)
+            {
+                qDebug() << "haveSellObject() Can't buy at 0$!";
+                return;
+            }
             addCash(tempCashForBuy);
             removeCash(newPrice*tempQuantityForBuy);
             items[tempItemForBuy]=tempQuantityForBuy;
@@ -1557,6 +1600,11 @@ void BaseWindow::haveSellObject(const SoldStat &stat,const quint32 &newPrice)
             showTip(tr("Item sold"));
         break;
         case SoldStat_BetterPrice:
+            if(newPrice==0)
+            {
+                qDebug() << "haveSellObject() the price 0$ can't be better price!";
+                return;
+            }
             addCash(newPrice*itemsToSell.first().quantity);
             showTip(tr("Item sold at better price"));
         break;
