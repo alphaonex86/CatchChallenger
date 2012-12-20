@@ -916,29 +916,29 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
     out.setVersion(QDataStream::Qt_4_4);
     if(!items.contains(objectId))
     {
-        out << (quint8)0x03;
+        out << (quint8)BuyStat_HaveNotQuantity;
         emit postReply(query_id,outputData);
         return;
     }
     if(GlobalData::serverPrivateVariables.items[objectId].price==0)
     {
-        out << (quint8)0x03;
+        out << (quint8)BuyStat_HaveNotQuantity;
         emit postReply(query_id,outputData);
         return;
     }
     if(GlobalData::serverPrivateVariables.items[objectId].price>price)
     {
-        out << (quint8)0x04;
+        out << (quint8)BuyStat_PriceHaveChanged;
         emit postReply(query_id,outputData);
         return;
     }
     if(GlobalData::serverPrivateVariables.items[objectId].price<price)
     {
-        out << (quint8)0x02;
+        out << (quint8)BuyStat_BetterPrice;
         out << (quint32)GlobalData::serverPrivateVariables.items[objectId].price;
     }
     else
-        out << (quint8)0x01;
+        out << (quint8)BuyStat_Done;
     if(player_informations->public_and_private_informations.cash>=(GlobalData::serverPrivateVariables.items[objectId].price*quantity))
         removeCash(GlobalData::serverPrivateVariables.items[objectId].price*quantity);
     else
@@ -1135,17 +1135,17 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     quint32 realPrice=GlobalData::serverPrivateVariables.items[objectId].price/2;
     if(realPrice<price)
     {
-        out << (quint8)0x04;
+        out << (quint8)SoldStat_PriceHaveChanged;
         emit postReply(query_id,outputData);
         return;
     }
     if(realPrice>price)
     {
-        out << (quint8)0x02;
+        out << (quint8)SoldStat_BetterPrice;
         out << (quint32)realPrice;
     }
     else
-        out << (quint8)0x01;
+        out << (quint8)SoldStat_Done;
     removeObject(objectId,quantity);
     addCash(realPrice*quantity);
     emit postReply(query_id,outputData);
