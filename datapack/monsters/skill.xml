@@ -1,0 +1,62 @@
+﻿<!-- Default:
+success="100%"
+-->
+
+
+<list>
+	<skill id="1" success="90%">
+		<name lang="en">Fire punch</name>
+		<name lang="fr">Point feu</name>
+		<description lang="en">Powerful punch on fire</name>
+		<description lang="fr">Puissant coup de poing en feu</name>
+		<effect>
+			<level number="1">
+				<hp quantity="-100" applyOn="aloneEnemy" />
+				<buff id="1" applyOn="aloneEnemy" />
+			</level>
+			<level number="2">
+				<hp quantity="-105" applyOn="aloneEnemy" />
+				<buff id="1" level="2" applyOn="aloneEnemy" />
+			</level>
+		</effect>
+	</skill>
+	<skill id="2">
+		<name lang="en">Heal</name>
+		<name lang="fr">Soin</name>
+		<description lang="en">Heals itself</name>
+		<description lang="fr">Se soigne lui même</name>
+		<effect>
+			<level number="1">
+				<hp quantity="+100%" applyOn="themself" />
+			</level>
+		</effect>
+	</skill>
+	<skill id="3">
+		<name lang="en">Tackle</name>
+		<name lang="fr">Charge</name>
+		<description lang="en">Tackle the enemy</name>
+		<description lang="fr">Charge l'ennemie</name>
+		<effect>
+			<level number="1">
+				<life damage="40" applyOn="aloneEnemy" />
+				<buff id="3" success="5%" applyOn="allEnemy" />
+			</level>
+			<level number="2">
+				<life damage="45" applyOn="aloneEnemy" />
+				<buff id="3" success="10%" applyOn="allEnemy" />
+			</level>
+		</effect>
+	</skill>
+	<skill id="4">
+		<name lang="en">Armor</name>
+		<name lang="fr">Armure</name>
+		<description lang="en">Up armor</name>
+		<description lang="fr">Augmente l'armure</name>
+		<effect>
+			<level number="1">
+				<buff id="2" applyOn="allAlly" />
+			</level>
+		</effect>
+	</skill>
+
+</list>

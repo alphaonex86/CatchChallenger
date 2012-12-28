@@ -1,0 +1,36 @@
+<list>
+	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender -->
+	<monster id="1" type="fire" type2="" height="0.76m" weight="45kg" ratio_gender="50%" ability="static" catch_rate="100" egg_cycle="11" xp_max="16515165">
+		<carry itemId="0" rate="0" />
+		<final_stats hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" />
+		<extra_learn> 
+			<attack id="1" /><!-- can learn attack 1 by other way -->
+		</extra_learn>
+		<attack_list>
+			<!-- if level is 0, it's base attack, default: attack_level="1" -->
+			<attack level="0" id="3" />
+			<attack level="20" id="1" />
+		</attack_list>		
+		<name lang="en">Liondefeu</name>
+		<name lang="fr">Firelion</name>
+		<description lang="en">Firelion use fire for protect himsell.</description>
+		<description lang="fr">Lion de feu utilise le feu afin de ce protége.</description>
+	</monster>
+	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender -->
+	<monster id="2" type="fly" type2="" height="0.76m" weight="45kg" ratio_gender="50%" ability="static" catch_rate="100" egg_cycle="11" xp_max="16515165">
+		<carry itemId="0" rate="0" />
+		<final_stats hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" />
+		<extra_learn> 
+			<attack id="1" /><!-- can learn attack 1 by other way -->
+		</extra_learn>
+		<attack_list>
+			<!-- if level is 0, it's base attack, default: attack_level="1" -->
+			<attack level="0" id="3" />
+			<attack level="10" id="3" attack_level="2" />
+		</attack_list>		
+		<name lang="en">F</name>
+		<name lang="fr">F</name>
+		<description lang="en">F</description>
+		<description lang="fr">F</description>
+	</monster>
+</list>
