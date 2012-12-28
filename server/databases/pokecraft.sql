@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Dec 10, 2012 at 10:49 AM
+-- Generation Time: Dec 28, 2012 at 04:53 PM
 -- Server version: 5.1.66
 -- PHP Version: 5.4.9--pl0-gentoo
 
@@ -37,6 +37,53 @@ CREATE TABLE IF NOT EXISTS `item` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `monster`
+--
+
+CREATE TABLE IF NOT EXISTS `monster` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `hp` int(11) NOT NULL,
+  `player` int(11) NOT NULL,
+  `monster` int(11) NOT NULL,
+  `level` int(11) NOT NULL,
+  `remaining_xp` int(11) NOT NULL,
+  `sp` int(11) NOT NULL,
+  `captured_with` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `player` (`player`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `monster_buff`
+--
+
+CREATE TABLE IF NOT EXISTS `monster_buff` (
+  `monster` int(11) NOT NULL,
+  `buff` int(11) NOT NULL,
+  `level` int(11) NOT NULL,
+  PRIMARY KEY (`monster`,`buff`),
+  UNIQUE KEY `monster` (`monster`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `monster_skill`
+--
+
+CREATE TABLE IF NOT EXISTS `monster_skill` (
+  `monster` int(11) NOT NULL,
+  `skill` int(11) NOT NULL,
+  `level` int(11) NOT NULL,
+  PRIMARY KEY (`monster`,`skill`),
+  KEY `monster` (`monster`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `plant`
 --
 
@@ -49,7 +96,6 @@ CREATE TABLE IF NOT EXISTS `plant` (
   `plant_timestamps` int(11) NOT NULL,
   PRIMARY KEY (`map`,`x`,`y`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 
 -- --------------------------------------------------------
 
@@ -74,6 +120,20 @@ CREATE TABLE IF NOT EXISTS `player` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `player_skill`
+--
+
+CREATE TABLE IF NOT EXISTS `player_skill` (
+  `player` int(11) NOT NULL,
+  `skill` int(11) NOT NULL,
+  `level` int(11) NOT NULL,
+  PRIMARY KEY (`player`,`skill`),
+  KEY `player` (`player`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
