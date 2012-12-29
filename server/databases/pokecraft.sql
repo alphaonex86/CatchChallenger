@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Dec 28, 2012 at 04:53 PM
+-- Generation Time: Dec 29, 2012 at 02:15 PM
 -- Server version: 5.1.66
 -- PHP Version: 5.4.9--pl0-gentoo
 
@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `remaining_xp` int(11) NOT NULL,
   `sp` int(11) NOT NULL,
   `captured_with` int(11) NOT NULL,
+  `gender` enum('unknown','male','female') NOT NULL,
+  `egg_step` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `player` (`player`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
