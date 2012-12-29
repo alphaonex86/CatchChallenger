@@ -1,11 +1,21 @@
 <list>
 	<reputation type="crafting">
-		<level point="150">Apprentice</level>
-		<level point="1500">Crafter</level>
-		<level point="10000">Warsmith</level>
+		<level point="150">
+			<text lang="en">Apprentice</text>
+		</level>
+		<level point="1500">
+			<text lang="en">Crafter</text>
+		</level>
+		<level point="10000">
+			<text lang="en">Warsmith</text>
+		</level>
 	</reputation>
 	<reputation type="empire">
-		<level point="-150">Ennemy of the empire</level>
-		<level point="150">Ally of the empire</level>
+		<level point="-150">
+			<text lang="en">Ennemy of the empire</text>
+		</level>
+		<level point="150">
+			<text lang="en">Ally of the empire</text>
+		</level>
 	</reputation>
 </list>
