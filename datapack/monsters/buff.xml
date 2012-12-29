@@ -16,8 +16,8 @@
 	<buff id="2">
 		<name lang="en">Amor</name>
 		<name lang="fr">Amure</name>
-		<description lang="en">Grow the deffense</name>
-		<description lang="fr">Augemente la déffense</name>
+		<description lang="en">Grow the defense</name>
+		<description lang="fr">Augmente la défense</name>
 		<effect>
 			<level number="1">
 				<inFight defense="+100" />
@@ -26,9 +26,9 @@
 	</buff>
 	<buff id="3">
 		<name lang="en">Poisoned</name>
-		<name lang="fr">Empoisonner</name>
+		<name lang="fr">Empoisonné</name>
 		<description lang="en">The monster is poisoned</name>
-		<description lang="fr">Le monster est empoisonner</name>
+		<description lang="fr">Le monster est empoisonné</name>
 		<effect>
 			<level number="1">
 				<inFight hp="-5" />

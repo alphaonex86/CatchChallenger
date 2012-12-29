@@ -1,7 +1,6 @@
 <list>
 	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender -->
-	<monster id="1" type="fire" type2="" height="0.76m" weight="45kg" ratio_gender="50%" ability="static" catch_rate="100" egg_cycle="11" xp_max="16515165">
-		<carry itemId="0" rate="0" />
+	<monster id="1" type="fire" type2="" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_max="16515165">
 		<final_stats hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" />
 		<extra_learn> 
 			<attack id="1" /><!-- can learn attack 1 by other way -->
@@ -17,8 +16,7 @@
 		<description lang="fr">Lion de feu utilise le feu afin de ce protége.</description>
 	</monster>
 	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender -->
-	<monster id="2" type="fly" type2="" height="0.76m" weight="45kg" ratio_gender="50%" ability="static" catch_rate="100" egg_cycle="11" xp_max="16515165">
-		<carry itemId="0" rate="0" />
+	<monster id="2" type="fly" type2="" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_max="16515165">
 		<final_stats hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" />
 		<extra_learn> 
 			<attack id="1" /><!-- can learn attack 1 by other way -->
