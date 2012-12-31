@@ -132,15 +132,15 @@ void BaseServerFight::preload_monsters()
         else
             DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement("monster");
-    }
+    }*/
 
-    DebugClass::debugConsole(QString("%1 monster(s) loaded").arg(GlobalData::serverPrivateVariables.plants.size()));*/
+    DebugClass::debugConsole(QString("%1 monster(s) loaded").arg(GlobalData::serverPrivateVariables.monsters.size()));
 }
 
 void BaseServerFight::preload_skills()
 {
     //open and quick check the file
-    QFile xmlFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"skills.xml");
+    QFile xmlFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"skill.xml");
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
@@ -183,7 +183,7 @@ void BaseServerFight::preload_skills()
                         if(effect.isElement())
                         {
                             QDomElement level = effect.firstChildElement("level");
-                            if(!level.isNull())
+                            while(!level.isNull())
                             {
                                 if(level.isElement())
                                 {
@@ -226,6 +226,7 @@ void BaseServerFight::preload_skills()
                                                         else
                                                             effect.type=QuantityType_Quantity;
                                                         text.remove("%");
+                                                        text.remove("+");
                                                         effect.quantity=text.toInt(&ok);
                                                         effect.success=100;
                                                         if(life.hasAttribute("success"))
@@ -241,7 +242,10 @@ void BaseServerFight::preload_skills()
                                                         }
                                                         if(ok)
                                                             levelDef[number].life << effect;
+                                                        else
+                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(text));
                                                     }
+                                                    life = life.nextSiblingElement("life");
                                                 }
                                                 QDomElement buff = level.firstChildElement("buff");
                                                 while(!buff.isNull())
@@ -308,8 +312,7 @@ void BaseServerFight::preload_skills()
                                                                                     effect.success=100;
                                                                                 }
                                                                             }
-                                                                            if(ok)
-                                                                                levelDef[number].buff << effect;
+                                                                            levelDef[number].buff << effect;
                                                                         }
                                                                     }
                                                                 }
@@ -320,22 +323,8 @@ void BaseServerFight::preload_skills()
                                                         else
                                                             DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                     }
+                                                    buff = buff.nextSiblingElement("buff");
                                                 }
-                                                quint8 index=1;
-                                                while(levelDef.contains(index))
-                                                {
-                                                    if(levelDef[index].buff.empty() && levelDef[index].life.empty())
-                                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, no effect loaded for skill %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));
-                                                    GlobalData::serverPrivateVariables.monsterSkills[id].level << levelDef[index];
-                                                    levelDef.remove(index);
-                                                    index++;
-                                                }
-                                                if(levelDef.size()>0)
-                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, level up to %4 loaded, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(index));
-                                                #ifdef DEBUG_MESSAGE_BUFF_LOAD
-                                                else
-                                                    DebugClass::debugConsole(QString("%1 level(s) loaded for buff %2").arg(index).arg(id));
-                                                #endif
                                             }
                                             else
                                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -346,9 +335,26 @@ void BaseServerFight::preload_skills()
                                 }
                                 else
                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                level = level.nextSiblingElement("level");
                             }
+                            quint8 index=1;
+                            while(levelDef.contains(index))
+                            {
+                                if(levelDef[index].buff.empty() && levelDef[index].life.empty())
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, no effect loaded for skill %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));
+                                GlobalData::serverPrivateVariables.monsterSkills[id].level << levelDef[index];
+                                levelDef.remove(index);
+                                #ifdef DEBUG_MESSAGE_SKILL_LOAD
+                                DebugClass::debugConsole(QString("for the level %1 of skill %2 have %3 effect(s) in buff and %4 effect(s) in life").arg(index).arg(id).arg(GlobalData::serverPrivateVariables.monsterSkills[id].level.at(index-1).buff.size()).arg(GlobalData::serverPrivateVariables.monsterSkills[id].level.at(index-1).life.size()));
+                                #endif
+                                index++;
+                            }
+                            if(levelDef.size()>0)
+                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, level up to %4 loaded, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(index));
+                            #ifdef DEBUG_MESSAGE_SKILL_LOAD
                             else
-                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                DebugClass::debugConsole(QString("%1 level(s) loaded for skill %2").arg(index-1).arg(id));
+                            #endif
                         }
                         else
                             DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -367,7 +373,7 @@ void BaseServerFight::preload_skills()
         item = item.nextSiblingElement("skill");
     }
 
-    DebugClass::debugConsole(QString("%1 skill(s) loaded").arg(GlobalData::serverPrivateVariables.monsterBuffs.size()));
+    DebugClass::debugConsole(QString("%1 skill(s) loaded").arg(GlobalData::serverPrivateVariables.monsterSkills.size()));
 }
 
 void BaseServerFight::preload_buff()
@@ -416,7 +422,7 @@ void BaseServerFight::preload_buff()
                         if(effect.isElement())
                         {
                             QDomElement level = effect.firstChildElement("level");
-                            if(!level.isNull())
+                            while(!level.isNull())
                             {
                                 if(level.isElement())
                                 {
@@ -449,23 +455,27 @@ void BaseServerFight::preload_buff()
                                                         else
                                                             effect.type=QuantityType_Quantity;
                                                         text.remove("%");
+                                                        text.remove("+");
                                                         effect.quantity=text.toInt(&ok);
                                                         if(ok)
                                                             levelDef[number].fight << effect;
+                                                        else
+                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(text));
                                                     }
+                                                    inFight = inFight.nextSiblingElement("inFight");
                                                 }
                                                 QDomElement inWalk = level.firstChildElement("inWalk");
                                                 while(!inWalk.isNull())
                                                 {
                                                     if(inWalk.isElement())
                                                     {
-                                                        if(inWalk.hasAttribute("afterStep"))
+                                                        if(inWalk.hasAttribute("steps"))
                                                         {
-                                                            quint32 afterStep=inWalk.attribute("afterStep").toUInt(&ok);
+                                                            quint32 steps=inWalk.attribute("steps").toUInt(&ok);
                                                             if(ok)
                                                             {
                                                                 MonsterBuff::EffectInWalk effect;
-                                                                effect.afterStep=afterStep;
+                                                                effect.steps=steps;
                                                                 QString text;
                                                                 if(inWalk.hasAttribute("hp"))
                                                                 {
@@ -477,37 +487,28 @@ void BaseServerFight::preload_buff()
                                                                     text=inWalk.attribute("defense");
                                                                     effect.effect.on=MonsterBuff::Effect::EffectOn_Defense;
                                                                 }
+                                                                else
+                                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, not action found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                                 if(text.endsWith("%"))
                                                                     effect.effect.type=QuantityType_Percent;
                                                                 else
                                                                     effect.effect.type=QuantityType_Quantity;
                                                                 text.remove("%");
-                                                                effect.effect.quantity=text.toUShort(&ok);
+                                                                text.remove("+");
+                                                                effect.effect.quantity=text.toInt(&ok);
                                                                 if(ok)
                                                                     levelDef[number].walk << effect;
+                                                                else
+                                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(text));
                                                             }
                                                             else
-                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag afterStep: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag steps: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                         }
                                                         else
-                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag afterStep: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag steps: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                     }
+                                                    inWalk = inWalk.nextSiblingElement("inWalk");
                                                 }
-                                                quint8 index=1;
-                                                while(levelDef.contains(index))
-                                                {
-                                                    if(levelDef[index].fight.empty() && levelDef[index].walk.empty())
-                                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, no effect loaded for buff %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));
-                                                    GlobalData::serverPrivateVariables.monsterBuffs[id].level << levelDef[index];
-                                                    levelDef.remove(index);
-                                                    index++;
-                                                }
-                                                if(levelDef.size()>0)
-                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, level up to %4 loaded, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(index));
-                                                #ifdef DEBUG_MESSAGE_BUFF_LOAD
-                                                else
-                                                    DebugClass::debugConsole(QString("%1 level(s) loaded for buff %2").arg(index).arg(id));
-                                                #endif
                                             }
                                             else
                                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -518,9 +519,26 @@ void BaseServerFight::preload_buff()
                                 }
                                 else
                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                level = level.nextSiblingElement("level");
                             }
+                            quint8 index=1;
+                            while(levelDef.contains(index))
+                            {
+                                if(levelDef[index].fight.empty() && levelDef[index].walk.empty())
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, no effect loaded for buff %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));
+                                GlobalData::serverPrivateVariables.monsterBuffs[id].level << levelDef[index];
+                                levelDef.remove(index);
+                                #ifdef DEBUG_MESSAGE_BUFF_LOAD
+                                DebugClass::debugConsole(QString("for the level %1 of buff %2 have %3 effect(s) in fight and %4 effect(s) in walk").arg(index).arg(id).arg(GlobalData::serverPrivateVariables.monsterBuffs[id].level.at(index-1).fight.size()).arg(GlobalData::serverPrivateVariables.monsterBuffs[id].level.at(index-1).walk.size()));
+                                #endif
+                                index++;
+                            }
+                            if(levelDef.size()>0)
+                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, level up to %4 loaded, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(index));
+                            #ifdef DEBUG_MESSAGE_BUFF_LOAD
                             else
-                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                DebugClass::debugConsole(QString("%1 level(s) loaded for buff %2").arg(index-1).arg(id));
+                            #endif
                         }
                         else
                             DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -544,12 +562,15 @@ void BaseServerFight::preload_buff()
 
 void BaseServerFight::unload_buff()
 {
+    GlobalData::serverPrivateVariables.monsterBuffs.clear();
 }
 
 void BaseServerFight::unload_skills()
 {
+    GlobalData::serverPrivateVariables.monsterSkills.clear();
 }
 
 void BaseServerFight::unload_monsters()
 {
+    GlobalData::serverPrivateVariables.monsters.clear();
 }
