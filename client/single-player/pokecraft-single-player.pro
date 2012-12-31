@@ -1,5 +1,6 @@
 include(../base/client.pri)
 include(../../server/pokecraft-server.pri)
+include(../../general/general.pri)
 
 QT       += sql
 

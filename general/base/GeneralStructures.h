@@ -127,7 +127,6 @@ struct Player_public_informations
 struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
-    QByteArray randomNumber;//for the battle
     quint64 cash;
     QHash<quint32,quint32> items;
     //crafting
@@ -246,6 +245,93 @@ struct CrafingRecipe
 struct Shop
 {
     QList<quint32> items;
+};
+
+enum QuantityType
+{
+    QuantityType_Quantity,
+    QuantityType_Percent
+};
+
+struct MonsterBuff
+{
+    struct Effect
+    {
+        enum EffectOn
+        {
+            EffectOn_HP,
+            EffectOn_Defense
+        };
+        EffectOn on;
+        qint32 quantity;
+        QuantityType type;
+    };
+    struct EffectInWalk
+    {
+        Effect effect;
+        quint32 afterStep;
+    };
+    struct GeneralEffect
+    {
+        QList<EffectInWalk> walk;
+        QList<Effect> fight;
+    };
+    QList<GeneralEffect> level;//first entry is buff level 1
+};
+struct MonsterSkill
+{
+    enum ApplyOn
+    {
+        ApplyOn_AloneEnemy,
+        ApplyOn_AllEnemy,
+        ApplyOn_Themself,
+        ApplyOn_AllAlly
+    };
+    struct MonsterSkillBuff
+    {
+        quint8 success;
+        quint32 id;
+        ApplyOn on;
+        quint8 level;
+    };
+    struct MonsterSkillLife
+    {
+        quint8 success;
+        qint32 quantity;
+        QuantityType type;
+        ApplyOn on;
+    };
+    struct MonsterSkillList
+    {
+        QList<MonsterSkillBuff> buff;
+        QList<MonsterSkillLife> life;
+    };
+    QList<MonsterSkillList> level;//first entry is buff level 1
+};
+struct Monster
+{
+    QString type,type2;
+    quint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
+    quint8 catch_rate;///< 0 to 100
+    quint32 egg_step;///< step to hatch, 0 to no egg and never hatch
+    quint32 xp_max;///< xp to be level 100
+    struct MonsterStat
+    {
+        quint32 hp;
+        quint32 attack;
+        quint32 defense;
+        quint32 special_attack;
+        quint32 special_defense;
+        quint32 speed;
+    };
+    MonsterStat monster_stat;
+    struct MonsterAttack
+    {
+        quint8 level;
+        quint32 attack;
+        quint32 attack_level;
+    };
+    QList<MonsterAttack> monster_attack;
 };
 
 }

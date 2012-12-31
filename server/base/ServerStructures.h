@@ -141,6 +141,11 @@ struct ServerPrivateVariables
     QHash<quint32,Shop> shops;
     QHash<quint32,quint32> itemToCrafingRecipes;
 
+    //fight
+    QHash<quint32,Monster> monsters;
+    QHash<quint32,MonsterSkill> monsterSkills;
+    QHash<quint32,MonsterBuff> monsterBuffs;
+
     //general data
     QList<EventThreader *> eventThreaderList;
     QTimer *timer_player_map;
@@ -175,6 +180,8 @@ struct ServerPrivateVariables
     quint32 number_of_bots_logged;
     int botSpawnIndex;
 };
+
+
 
 }
 

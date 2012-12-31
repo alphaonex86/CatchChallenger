@@ -1,4 +1,5 @@
 include(../base/client.pri)
+include(../../general/general.pri)
 
 TARGET = pokecraft-multi-server
 

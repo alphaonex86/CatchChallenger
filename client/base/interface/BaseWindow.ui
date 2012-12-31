@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>7</number>
+        <number>8</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2687,6 +2687,12 @@ border-image: url(:/images/empty.png);
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
             </property>
+            <property name="iconSize">
+             <size>
+              <width>48</width>
+              <height>48</height>
+             </size>
+            </property>
            </widget>
            <widget class="QPushButton" name="shopBuy">
             <property name="geometry">
@@ -2735,6 +2741,203 @@ padding-bottom:3px;
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="page_battle">
+        <widget class="QFrame" name="frameFightBottomBar">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>440</y>
+           <width>800</width>
+           <height>160</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>800</width>
+           <height>160</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>800</width>
+           <height>160</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#frameFightBottomBar{background-image: url(:/images/interface/fight-bottom-bar.png);}</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="0" column="0" rowspan="2">
+           <widget class="QLabel" name="labelFightFull">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QPushButton" name="pushButtonFight1">
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QPushButton" name="pushButtonFight2">
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLabel" name="labelFightDetails">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="pushButtonFight3">
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QPushButton" name="pushButtonFight4">
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QPushButton" name="pushButtonFightReturn">
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QFrame" name="frameFightBackground">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>800</width>
+           <height>440</height>
+          </rect>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#frameFightBackground{background-image: url(:/images/interface/background.png);}</string>
+         </property>
+         <widget class="QLabel" name="labelFightPlateformBottom">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>350</y>
+            <width>230</width>
+            <height>90</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>230</width>
+            <height>90</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>230</width>
+            <height>90</height>
+           </size>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/plateform-background.png</pixmap>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelFightPlateformTop">
+          <property name="geometry">
+           <rect>
+            <x>460</x>
+            <y>170</y>
+            <width>260</width>
+            <height>90</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>260</width>
+            <height>90</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>260</width>
+            <height>90</height>
+           </size>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/plateform-front.png</pixmap>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelFightMonsterBottom">
+          <property name="geometry">
+           <rect>
+            <x>60</x>
+            <y>280</y>
+            <width>160</width>
+            <height>160</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="../resources/client-resources.qrc">:/images/player_default/back.png</pixmap>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelFightMonsterTop">
+          <property name="geometry">
+           <rect>
+            <x>500</x>
+            <y>60</y>
+            <width>160</width>
+            <height>160</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </widget>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -2743,6 +2946,7 @@ padding-bottom:3px;
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
+  <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources.qrc"/>
  </resources>
  <connections>
