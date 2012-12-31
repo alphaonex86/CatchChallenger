@@ -68,6 +68,9 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)));
     connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client*,quint8,quint8)));
 
+    //fight
+    connect(client,SIGNAL(random_seeds(QByteArray)),&DatapackClientLoader::datapackLoader.fightEngine,SLOT(appendRandomSeeds(QByteArray)));
+
     //plants
     connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));
     connect(this,SIGNAL(collectMaturePlant()),client,SLOT(collectMaturePlant()));

@@ -19,7 +19,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/QFakeServer.h"
 #include "../../general/base/QFakeSocket.h"
-#include "../../server/base/Map_server.h"
+#include "../../server/base/MapServer.h"
 #include "../../server/base/BaseServer.h"
 
 #ifndef POKECRAFT_INTERNALSERVER_H
