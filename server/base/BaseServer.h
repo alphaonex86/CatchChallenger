@@ -21,12 +21,13 @@
 #include "Bot/FakeBot.h"
 #include "MapServer.h"
 #include "../crafting/BaseServerCrafting.h"
+#include "../fight/BaseServerFight.h"
 
 #ifndef POKECRAFT_BASESERVER_H
 #define POKECRAFT_BASESERVER_H
 
 namespace Pokecraft {
-class BaseServer : public QObject, public BaseServerCrafting
+class BaseServer : public QObject, public BaseServerCrafting, public BaseServerFight
 {
     Q_OBJECT
 public:
