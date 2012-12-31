@@ -269,7 +269,7 @@ struct MonsterBuff
     struct EffectInWalk
     {
         Effect effect;
-        quint32 afterStep;
+        quint32 steps;
     };
     struct GeneralEffect
     {
