@@ -38,7 +38,7 @@ bool LocalClientHandler::checkCollision()
 
 void LocalClientHandler::getRandomNumberIfNeeded()
 {
-    if(player_informations->public_and_private_informations.randomNumber.size()<=POKECRAFT_SERVER_MIN_RANDOM_LIST_SIZE)
+    if(fightEngine.randomSeeds().size()<=POKECRAFT_SERVER_MIN_RANDOM_LIST_SIZE)
         emit askRandomNumber();
 }
 
@@ -183,7 +183,7 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
 
 void LocalClientHandler::newRandomNumber(const QByteArray &randomData)
 {
-    player_informations->public_and_private_informations.randomNumber+=randomData;
+    fightEngine.appendRandomSeeds(randomData);
 }
 
 bool LocalClientHandler::singleMove(const Direction &direction)

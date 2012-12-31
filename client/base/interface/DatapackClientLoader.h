@@ -8,6 +8,7 @@
 #include <QStringList>
 
 #include "../../general/base/GeneralStructures.h"
+#include "../../general/fight/FightEngine.h"
 
 #include "tileset.h"
 
@@ -40,6 +41,7 @@ public:
     QHash<quint32,quint8> itemToPlants;
     QHash<quint32,Pokecraft::CrafingRecipe> crafingRecipes;
     QHash<quint32,quint32> itemToCrafingRecipes;
+    FightEngine fightEngine;
 
     QStringList maps;
     QPixmap defaultInventoryImage();
