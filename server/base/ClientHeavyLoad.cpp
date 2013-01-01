@@ -130,6 +130,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 orentation=Orientation_bottom;
                 emit message(QString("Wrong orientation corrected with bottom"));
             }
+            //recipes
             switch(GlobalData::serverSettings.database.type)
             {
                 default:
@@ -148,6 +149,26 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 if(ok)
                     if(GlobalData::serverPrivateVariables.crafingRecipes.contains(recipeId))
                         player_informations->public_and_private_informations.recipes << recipeId;
+            }
+            //monsters
+            switch(GlobalData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    queryText=QString("SELECT id,hp,monster,level,remaining_xp,sp,captured_with,gender,egg_step FROM monster WHERE player=%1").arg(player_informations->id);
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    queryText=QString("SELECT id,hp,monster,level,remaining_xp,sp,captured_with,gender,egg_step FROM monster WHERE player=%1").arg(player_informations->id);
+                break;
+            }
+            quint32 monsterId;
+            QSqlQuery monstersQuery(queryText);
+            while(monstersQuery.next())
+            {
+                monsterId=monstersQuery.value(0).toUInt(&ok);
+                if(ok)
+                    if(GlobalData::serverPrivateVariables.crafingRecipes.contains(recipeId))
+                        player_informations->public_and_private_informations.recipes2 << recipeId;
             }
             //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
             //all is rights
