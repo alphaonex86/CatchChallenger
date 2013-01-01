@@ -12,7 +12,7 @@ using namespace Pokecraft;
 
 void BaseServerFight::preload_monsters()
 {
-/*    //open and quick check the file
+    //open and quick check the file
     QFile xmlFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml");
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
@@ -44,87 +44,162 @@ void BaseServerFight::preload_monsters()
     {
         if(item.isElement())
         {
-            if(item.hasAttribute("id") && item.hasAttribute("ratio_gender") && item.hasAttribute("catch_rate") && item.hasAttribute("xp_max")
-                     && item.hasAttribute("hp") && item.hasAttribute("attack") && item.hasAttribute("defense") && item.hasAttribute("special_attack") && item.hasAttribute("special_defense") && item.hasAttribute("speed"))
+            if(item.hasAttribute("id") && item.hasAttribute("egg_step") && item.hasAttribute("xp_max") && item.hasAttribute("hp") && item.hasAttribute("attack") && item.hasAttribute("defense")
+                    && item.hasAttribute("special_attack") && item.hasAttribute("special_defense") && item.hasAttribute("speed") && item.hasAttribute("give_sp") && item.hasAttribute("give_xp"))
             {
-                quint8 id=item.attribute("id").toUShort(&ok);
-                quint32 itemUsed=item.attribute("itemUsed").toULongLong(&ok2);
-                if(ok && ok2)
+                Monster monster;
+                quint8 id=item.attribute("id").toUInt(&ok);
+                if(ok)
                 {
-                    if(!GlobalData::serverPrivateVariables.plants.contains(id))
+                    monster.egg_step=item.attribute("egg_step").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, egg_step is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.xp_max=item.attribute("xp_max").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, xp_max is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.stat.hp=item.attribute("hp").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, hp is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.stat.attack=item.attribute("attack").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.stat.defense=item.attribute("defense").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, defense is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.stat.special_attack=item.attribute("special_attack").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, special_attack is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.stat.special_defense=item.attribute("special_defense").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, special_defense is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.stat.speed=item.attribute("speed").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, speed is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.give_xp=item.attribute("give_xp").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, give_xp is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    monster.give_sp=item.attribute("give_sp").toUInt(&ok);
+                    if(!ok)
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, give_sp is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                }
+                if(ok)
+                {
+                    if(item.hasAttribute("ratio_gender"))
                     {
-                        ok=true;
-                        Plant plant;
-                        plant.itemUsed=itemUsed;
-                        QDomElement grow = item.firstChildElement("grow");
-                        if(!grow.isNull())
+                        QString ratio_gender=item.attribute("ratio_gender");
+                        ratio_gender.remove("%");
+                        monster.ratio_gender=ratio_gender.toUInt(&ok2);
+                        if(!ok2)
                         {
-                            if(grow.isElement())
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, ratio_gender is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                            monster.ratio_gender=50;
+                        }
+                        if(monster.ratio_gender<-1 || monster.ratio_gender>100)
+                        {
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, ratio_gender is not in range of -1, 100: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                            monster.ratio_gender=50;
+                        }
+                    }
+                    monster.ratio_gender=50;
+                }
+                if(ok)
+                {
+                    QDomElement attack_list = item.firstChildElement("attack_list");
+                    if(!attack_list.isNull())
+                    {
+                        if(attack_list.isElement())
+                        {
+                            QDomElement attack = attack_list.firstChildElement("attack");
+                            while(!attack.isNull())
                             {
-                                QDomElement fruits = grow.firstChildElement("fruits");
-                                if(!fruits.isNull())
+                                if(attack.isElement())
                                 {
-                                    if(fruits.isElement())
+                                    if(attack.hasAttribute("level") && attack.hasAttribute("id"))
                                     {
-                                        plant.mature_seconds=fruits.text().toULongLong(&ok2)*60;
-                                        if(!ok2)
+                                        Monster::MonsterAttack attackVar;
+                                        if(attack.hasAttribute("attack_level"))
                                         {
-                                            ok=false;
-                                            DebugClass::debugConsole(QString("preload_the_plant() fruits in not an number for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            attackVar.attack_level=attack.attribute("attack_level").toUShort(&ok);
+                                            if(!ok)
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack_level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                         }
+                                        else
+                                            attackVar.attack_level=1;
+                                        if(ok)
+                                        {
+                                            attackVar.level=attack.attribute("level").toUShort(&ok);
+                                            if(!ok)
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                        }
+                                        if(ok)
+                                        {
+                                            attackVar.attack=attack.attribute("id").toUShort(&ok);
+                                            if(!ok)
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                        }
+                                        if(ok)
+                                        {
+                                            if(!GlobalData::serverPrivateVariables.monsterSkills.contains(attackVar.attack))
+                                            {
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack is not into attack loaded: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                ok=false;
+                                            }
+                                        }
+                                        if(ok)
+                                        {
+                                            if(attackVar.attack_level<=0 || attackVar.attack_level>(quint32)GlobalData::serverPrivateVariables.monsterSkills[attackVar.attack].level.size())
+                                            {
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack level is not in range 1-%5: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(GlobalData::serverPrivateVariables.monsterSkills[attackVar.attack].level.size()));
+                                                ok=false;
+                                            }
+                                        }
+                                        if(ok)
+                                            monster.attack<<attackVar;
+                                        else
+                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, one of information is wrong: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                     }
-                                    else
-                                        DebugClass::debugConsole(QString("preload_the_plant() fruit is not element for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("preload_the_plant() fruit is null for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                attack = attack.nextSiblingElement("attack");
                             }
-                            else
-                                DebugClass::debugConsole(QString("preload_the_plant() grow is not an element for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         }
                         else
-                            DebugClass::debugConsole(QString("preload_the_plant() grow is null for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                        if(ok)
-                        {
-                            QDomElement quantity = item.firstChildElement("quantity");
-                            if(!quantity.isNull())
-                            {
-                                if(quantity.isElement())
-                                {
-                                    float float_quantity=quantity.text().toFloat(&ok2);
-                                    int integer_part=float_quantity;
-                                    float random_part=float_quantity-integer_part;
-                                    random_part*=RANDOM_FLOAT_PART_DIVIDER;
-                                    plant.fix_quantity=integer_part;
-                                    plant.random_quantity=random_part;
-                                    if(!ok2)
-                                    {
-                                        ok=false;
-                                        DebugClass::debugConsole(QString("preload_the_plant() quantity is not a number for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                    }
-                                }
-                                else
-                                    DebugClass::debugConsole(QString("preload_the_plant() quantity is not element for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            }
-                            else
-                                DebugClass::debugConsole(QString("preload_the_plant() quantity is null for xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                        }
-                        if(ok)
-                        {
-                            if(!GlobalData::serverPrivateVariables.items.contains(plant.itemUsed))
-                            {
-                                ok=false;
-                                DebugClass::debugConsole(QString("preload_crafting_recipes() itemUsed is not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            }
-                        }
-                        if(ok)
-                            GlobalData::serverPrivateVariables.plants[id]=plant;
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     else
-                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    GlobalData::serverPrivateVariables.monsters[id]=monster;
                 }
                 else
-                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, one of the attribute is wrong or is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
             }
             else
                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the plant id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -132,7 +207,7 @@ void BaseServerFight::preload_monsters()
         else
             DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement("monster");
-    }*/
+    }
 
     DebugClass::debugConsole(QString("%1 monster(s) loaded").arg(GlobalData::serverPrivateVariables.monsters.size()));
 }
@@ -173,7 +248,7 @@ void BaseServerFight::preload_skills()
         {
             if(item.hasAttribute("id"))
             {
-                quint8 id=item.attribute("id").toUShort(&ok);
+                quint8 id=item.attribute("id").toUInt(&ok);
                 if(ok)
                 {
                     QHash<quint8,MonsterSkill::MonsterSkillList> levelDef;
@@ -189,9 +264,19 @@ void BaseServerFight::preload_skills()
                                 {
                                     if(level.hasAttribute("number"))
                                     {
-                                        quint8 number=level.attribute("number").toUShort(&ok);
+                                        quint32 sp=0;
+                                        if(level.hasAttribute("sp"))
+                                        {
+                                            sp=level.attribute("sp").toUShort(&ok);
+                                            if(!ok)
+                                                sp=0;
+                                        }
+                                        quint8 number;
+                                        if(ok)
+                                            number=level.attribute("number").toUShort(&ok);
                                         if(ok)
                                         {
+                                            levelDef[number].sp=sp;
                                             if(number>0)
                                             {
                                                 QDomElement life = level.firstChildElement("life");
@@ -412,7 +497,7 @@ void BaseServerFight::preload_buff()
         {
             if(item.hasAttribute("id"))
             {
-                quint8 id=item.attribute("id").toUShort(&ok);
+                quint8 id=item.attribute("id").toUInt(&ok);
                 if(ok)
                 {
                     QHash<quint8,MonsterBuff::GeneralEffect> levelDef;
