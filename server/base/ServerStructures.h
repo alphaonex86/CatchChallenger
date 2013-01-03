@@ -179,6 +179,17 @@ struct ServerPrivateVariables
     QSet<QFakeSocket *> botSockets;
     quint32 number_of_bots_logged;
     int botSpawnIndex;
+
+    //xp rate at form for level to xp: a*exp(x*b+c)+d
+    struct Xp
+    {
+        quint32 a,b,c,d;
+    };
+    //xp rate at form for level to xp: a*exp(x*b+c)+d
+    struct Sp
+    {
+        quint32 a,b,c,d;
+    };
 };
 
 

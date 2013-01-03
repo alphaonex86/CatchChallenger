@@ -1,8 +1,14 @@
+<!-- default:
+ratio_gender="50%"
+catch_rate="100"
+pow="3", valid range: >1 and <5
+xp_for_max_level need be < 2000000000
+-->
 <list>
 	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender
 	second line is stat at level 100-->
-	<monster id="1" type="fire" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_max="16515165"
-		hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192">
+	<monster id="1" type="fire" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_for_max_level="10000" pow="2.35"
+		hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" give_sp="100" give_xp="750">
 		<attack_list>
 			<!-- if level is 0, it's base attack, default: attack_level="1" -->
 			<attack level="0" id="3" />
@@ -15,8 +21,8 @@
 	</monster>
 	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender
 	second line is stat at level 100-->
-	<monster id="2" type="fly" type2="earth" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_max="16515165"
-	hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192">
+	<monster id="2" type="fly" type2="earth" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_for_max_level="1000000"
+	hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" give_sp="100" give_xp="1000">
 		<attack_list>
 			<!-- if level is 0, it's base attack, default: attack_level="1" -->
 			<attack level="0" id="3" />
