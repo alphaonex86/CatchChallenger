@@ -7,6 +7,7 @@
 #include <QByteArray>
 #include <QDomDocument>
 #include <QDomElement>
+#include <QtCore/qmath.h>
 
 using namespace Pokecraft;
 
@@ -44,11 +45,34 @@ void BaseServerFight::preload_monsters()
     {
         if(item.isElement())
         {
-            if(item.hasAttribute("id") && item.hasAttribute("egg_step") && item.hasAttribute("xp_max") && item.hasAttribute("hp") && item.hasAttribute("attack") && item.hasAttribute("defense")
+            if(item.hasAttribute("id") && item.hasAttribute("egg_step") && item.hasAttribute("xp_for_max_level") && item.hasAttribute("hp") && item.hasAttribute("attack") && item.hasAttribute("defense")
                     && item.hasAttribute("special_attack") && item.hasAttribute("special_defense") && item.hasAttribute("speed") && item.hasAttribute("give_sp") && item.hasAttribute("give_xp"))
             {
                 Monster monster;
                 quint8 id=item.attribute("id").toUInt(&ok);
+                #ifdef DEBUG_MESSAGE_MONSTER_LOAD
+                DebugClass::debugConsole(QString("monster loading: %1").arg(id));
+                #endif
+                qreal pow=3;
+                if(item.hasAttribute("pow"))
+                {
+                    pow=item.attribute("pow").toDouble(&ok);
+                    if(!ok)
+                    {
+                        pow=3;
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, pow is not a double: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    }
+                    if(pow<=1)
+                    {
+                        pow=3;
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, pow is too low: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    }
+                    if(pow>=5)
+                    {
+                        pow=3;
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, pow is too hight: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    }
+                }
                 if(ok)
                 {
                     monster.egg_step=item.attribute("egg_step").toUInt(&ok);
@@ -57,9 +81,9 @@ void BaseServerFight::preload_monsters()
                 }
                 if(ok)
                 {
-                    monster.xp_max=item.attribute("xp_max").toUInt(&ok);
+                    monster.xp_for_max_level=item.attribute("xp_for_max_level").toUInt(&ok);
                     if(!ok)
-                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, xp_max is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, xp_for_max_level is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                 }
                 if(ok)
                 {
@@ -196,6 +220,25 @@ void BaseServerFight::preload_monsters()
                     }
                     else
                         DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    int index=0;
+                    while(index<POKECRAFT_SERVER_LEVEL_MAX)
+                    {
+                        quint64 xp_for_this_level=qPow(index+1,pow);
+                        quint64 xp_for_max_level=monster.xp_for_max_level;
+                        quint64 max_xp=qPow(POKECRAFT_SERVER_LEVEL_MAX,pow);
+                        monster.level_to_xp << xp_for_this_level*xp_for_max_level/max_xp;
+                        index++;
+                    }
+                    #ifdef DEBUG_MESSAGE_MONSTER_XP_LOAD
+                    index=0;
+                    while(index<POKECRAFT_SERVER_LEVEL_MAX)
+                    {
+                        int give_xp=(monster.give_xp*(index+1))/POKECRAFT_SERVER_LEVEL_MAX;
+                        DebugClass::debugConsole(QString("monster: %1, xp %2 for the level: %3, monster for this level: %4").arg(id).arg(index+1).arg(monster.level_to_xp.at(index)).arg(monster.level_to_xp.at(index)/give_xp));
+                        index++;
+                    }
+                    DebugClass::debugConsole(QString("monster.level_to_xp.size(): %1").arg(monster.level_to_xp.size()));
+                    #endif
                     GlobalData::serverPrivateVariables.monsters[id]=monster;
                 }
                 else
