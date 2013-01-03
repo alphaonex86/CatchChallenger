@@ -51,6 +51,10 @@ private:
     //load linked data (like item, quests, ...)
     void loadLinkedData();
     void loadItems();
+    void loadRecipes();
+    void loadMonsters();
+    QList<PlayerMonster::Buff> loadMonsterBuffs(const quint32 &monsterId);
+    QList<PlayerMonster::Skill> loadMonsterSkills(const quint32 &monsterId);
 signals:
     //normal signals
     void error(const QString &error);
