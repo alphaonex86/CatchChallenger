@@ -235,10 +235,10 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.level=monstersQuery.value(3).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.level>POKECRAFT_SERVER_LEVEL_MAX)
+                if(playerMonster.level>POKECRAFT_MONSTER_LEVEL_MAX)
                 {
-                    emit message(QString("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(POKECRAFT_SERVER_LEVEL_MAX));
-                    playerMonster.level=POKECRAFT_SERVER_LEVEL_MAX;
+                    emit message(QString("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(POKECRAFT_MONSTER_LEVEL_MAX));
+                    playerMonster.level=POKECRAFT_MONSTER_LEVEL_MAX;
                 }
             }
             else
