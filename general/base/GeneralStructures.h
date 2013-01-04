@@ -124,6 +124,36 @@ struct Player_public_informations
     SPEED_TYPE speed;
 };
 
+struct PlayerMonster
+{
+    enum Gender
+    {
+        Male,
+        Female,
+        Unknown
+    };
+    struct Buff
+    {
+        quint32 buff;
+        quint8 level;
+    };
+    struct Skill
+    {
+        quint32 skill;
+        quint8 level;
+    };
+    quint32 hp;
+    quint32 monster;
+    quint8 level;
+    quint32 remaining_xp;
+    quint32 sp;
+    quint32 captured_with;
+    Gender gender;
+    quint32 egg_step;
+    QList<Buff> buffs;
+    QList<Skill> skills;
+};
+
 struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
@@ -131,6 +161,8 @@ struct Player_private_and_public_informations
     QHash<quint32,quint32> items;
     //crafting
     QList<quint32> recipes;
+    //fight
+    QList<PlayerMonster> playerMonster;
 };
 
 /// \brief Define the mode of transmission: client or server
@@ -305,16 +337,19 @@ struct MonsterSkill
     {
         QList<MonsterSkillBuff> buff;
         QList<MonsterSkillLife> life;
+        quint32 sp;
     };
     QList<MonsterSkillList> level;//first entry is buff level 1
 };
 struct Monster
 {
     QString type,type2;
-    quint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
+    qint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
     quint8 catch_rate;///< 0 to 100
     quint32 egg_step;///< step to hatch, 0 to no egg and never hatch
-    quint32 xp_max;///< xp to be level 100
+    quint32 xp_for_max_level;///< xp to be level 100
+    quint32 give_sp;
+    quint32 give_xp;
     struct MonsterStat
     {
         quint32 hp;
@@ -324,14 +359,15 @@ struct Monster
         quint32 special_defense;
         quint32 speed;
     };
-    MonsterStat monster_stat;
+    MonsterStat stat;
     struct MonsterAttack
     {
         quint8 level;
         quint32 attack;
         quint32 attack_level;
     };
-    QList<MonsterAttack> monster_attack;
+    QList<MonsterAttack> attack;
+    QList<quint32> level_to_xp;//first is xp to level 1
 };
 
 }

@@ -15,7 +15,8 @@ SOURCES += $$PWD/base/DebugClass.cpp \
     $$PWD/base/Map.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/ConnectedSocket.cpp \
-    $$PWD/fight/FightEngine.cpp
+    $$PWD/fight/FightEngine.cpp \
+    ../general/fight/FightLoader.cpp
 
 HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/DebugClass.h \
@@ -30,4 +31,5 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/QFakeSocket.h \
     $$PWD/base/FacilityLib.h \
     $$PWD/base/ConnectedSocket.h \
-    $$PWD/fight/FightEngine.h
+    $$PWD/fight/FightEngine.h \
+    ../general/fight/FightLoader.h
