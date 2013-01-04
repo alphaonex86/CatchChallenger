@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Dec 29, 2012 at 02:15 PM
+-- Generation Time: Jan 04, 2013 at 12:54 PM
 -- Server version: 5.1.66
 -- PHP Version: 5.4.9--pl0-gentoo
 
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `player` int(11) NOT NULL,
   `monster` int(11) NOT NULL,
   `level` int(11) NOT NULL,
-  `remaining_xp` int(11) NOT NULL,
+  `xp` int(11) NOT NULL,
   `sp` int(11) NOT NULL,
   `captured_with` int(11) NOT NULL,
   `gender` enum('unknown','male','female') NOT NULL,
