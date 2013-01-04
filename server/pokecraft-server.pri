@@ -25,7 +25,9 @@ SOURCES += \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \
     $$PWD/crafting/LocalClientHandlerCrafting.cpp \
     fight/LocalClientHandlerFight.cpp \
-    fight/BaseServerFight.cpp
+    fight/BaseServerFight.cpp \
+    crafting/ClientHeavyLoadCrafting.cpp \
+    fight/ClientHeavyLoadFight.cpp
 HEADERS += \
     $$PWD/base/GlobalData.h \
     $$PWD/base/SqlFunction.h \
