@@ -128,9 +128,9 @@ struct PlayerMonster
 {
     enum Gender
     {
-        Male,
-        Female,
-        Unknown
+        Male=0x01,
+        Female=0x02,
+        Unknown=0x03
     };
     struct Buff
     {
@@ -142,10 +142,10 @@ struct PlayerMonster
         quint32 skill;
         quint8 level;
     };
-    quint32 hp;
     quint32 monster;
     quint8 level;
     quint32 remaining_xp;
+    quint32 hp;
     quint32 sp;
     quint32 captured_with;
     Gender gender;

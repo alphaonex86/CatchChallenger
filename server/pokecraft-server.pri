@@ -24,10 +24,10 @@ SOURCES += \
     $$PWD/crafting/BaseServerCrafting.cpp \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \
     $$PWD/crafting/LocalClientHandlerCrafting.cpp \
-    fight/LocalClientHandlerFight.cpp \
-    fight/BaseServerFight.cpp \
-    crafting/ClientHeavyLoadCrafting.cpp \
-    fight/ClientHeavyLoadFight.cpp
+    $$PWD/fight/LocalClientHandlerFight.cpp \
+    $$PWD/fight/BaseServerFight.cpp \
+    $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
+    $$PWD/fight/ClientHeavyLoadFight.cpp
 HEADERS += \
     $$PWD/base/GlobalData.h \
     $$PWD/base/SqlFunction.h \
@@ -52,8 +52,8 @@ HEADERS += \
     $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.h \
     $$PWD/crafting/BaseServerCrafting.h \
     $$PWD/crafting/MapServerCrafting.h \
-    fight/ServerStructuresFight.h \
-    fight/BaseServerFight.h
+    $$PWD/fight/ServerStructuresFight.h \
+    $$PWD/fight/BaseServerFight.h
 
 RESOURCES += \
     $$PWD/all-server-resources.qrc \

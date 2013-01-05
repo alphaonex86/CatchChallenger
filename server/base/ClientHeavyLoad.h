@@ -53,6 +53,7 @@ private:
     void loadItems();
     void loadRecipes();
     void loadMonsters();
+    void sendInventory();
     QList<PlayerMonster::Buff> loadMonsterBuffs(const quint32 &monsterId);
     QList<PlayerMonster::Skill> loadMonsterSkills(const quint32 &monsterId);
 signals:

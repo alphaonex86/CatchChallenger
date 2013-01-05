@@ -20,8 +20,12 @@ SOURCES += $$PWD/Api_protocol.cpp \
     $$PWD/interface/MapController.cpp \
     $$PWD/interface/DatapackClientLoader.cpp \
     $$PWD/../crafting/interface/DatapackClientLoaderCrafting.cpp \
-    ../crafting/interface/BaseWindowCrafting.cpp \
-    ../base/Options.cpp
+    $$PWD/../fight/interface/DatapackClientLoaderFight.cpp \
+    $$PWD/../crafting/interface/BaseWindowCrafting.cpp \
+    $$PWD/../base/Options.cpp \
+    $$PWD/interface/BaseWindowLoad.cpp \
+    $$PWD/interface/BaseWindowChat.cpp \
+    $$PWD/../fight/interface/BaseWindowFight.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/ClientStructures.h \
@@ -40,7 +44,7 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/interface/MapController.h \
     $$PWD/interface/DatapackClientLoader.h \
     $$PWD/ClientVariable.h \
-    ../base/Options.h
+    $$PWD/../base/Options.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui
 
@@ -48,4 +52,4 @@ win32:RC_FILE += $$PWD/resources/resources-windows.rc
 
 RESOURCES += $$PWD/resources/client-resources.qrc \
     $$PWD/../crafting/resources/client-resources-plant.qrc \
-    ../fight/resources/client-resources-fight.qrc
+    $$PWD/../fight/resources/client-resources-fight.qrc
