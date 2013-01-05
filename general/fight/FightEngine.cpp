@@ -1,5 +1,7 @@
 #include "FightEngine.h"
 
+using namespace Pokecraft;
+
 FightEngine::FightEngine()
 {
 }

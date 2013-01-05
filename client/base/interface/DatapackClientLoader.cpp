@@ -1,12 +1,12 @@
-#include "DatapackClientLoader.h"
+#include "../interface/DatapackClientLoader.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
 
+#include <QDebug>
+#include <QFile>
 #include <QDomElement>
 #include <QDomDocument>
-#include <QFile>
 #include <QByteArray>
-#include <QDebug>
 
 DatapackClientLoader DatapackClientLoader::datapackLoader;
 
@@ -41,6 +41,9 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseMaps();
     parsePlants();
     parseCraftingRecipes();
+    parseBuff();
+    parseSkills();
+    parseMonsters();
 
     emit datapackParsed();
 }
@@ -208,4 +211,8 @@ void DatapackClientLoader::resetAll()
      itemToPlants.clear();
      itemToCrafingRecipes.clear();
      crafingRecipes.clear();
+
+     fightEngine.monsterBuffs.clear();
+     fightEngine.monsterSkills.clear();
+     fightEngine.monsters.clear();
 }
