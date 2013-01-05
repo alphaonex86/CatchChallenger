@@ -49,6 +49,9 @@ public:
 
     //to reset all
     void resetAll();
+
+    //to manipulate the monsters
+    Player_private_and_public_informations player_informations;
 private:
     //status for the query
     bool is_logged;
@@ -77,7 +80,6 @@ protected:
     //stored local player info
     quint16 max_player;
     quint32 number_of_map;
-    Player_private_and_public_informations player_informations;
 
     //to send trame
     ProtocolParsingOutput *output;

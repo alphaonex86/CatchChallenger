@@ -203,6 +203,8 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
 
 void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
 {
+    loadLinkedData();
+
     //load the variables
     GlobalData::serverPrivateVariables.connected_players_id_list << id;
     player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
@@ -221,18 +223,59 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
     out << (quint64)player_informations->public_and_private_informations.cash;
     out << (quint32)GlobalData::serverPrivateVariables.map_list.size();
-    quint32 index=0;
-    quint32 size=player_informations->public_and_private_informations.recipes.size();
+
+    //temporary variable
+    quint32 index,sub_index;
+    quint32 size,sub_size;
+
+    //send recipes
+    index=0;
+    size=player_informations->public_and_private_informations.recipes.size();
     out << (quint32)size;
-
-    loadLinkedData();
-
     while(index<size)
     {
         out << (quint32)player_informations->public_and_private_informations.recipes.at(index);
         index++;
     }
+
+    //send monster
+    index=0;
+    size=player_informations->public_and_private_informations.playerMonster.size();
+    out << (quint32)size;
+    while(index<size)
+    {
+        const PlayerMonster &monster=player_informations->public_and_private_informations.playerMonster.at(index);
+        out << (quint32)monster.monster;
+        out << (quint8)monster.level;
+        out << (quint32)monster.remaining_xp;
+        out << (quint32)monster.hp;
+        out << (quint32)monster.sp;
+        out << (quint32)monster.captured_with;
+        out << (quint8)monster.gender;
+        out << (quint32)monster.egg_step;
+        sub_index=0;
+        sub_size=monster.buffs.size();
+        out << (quint32)sub_size;
+        while(sub_index<sub_size)
+        {
+            out << (quint32)monster.buffs.at(sub_index).buff;
+            out << (quint8)monster.buffs.at(sub_index).level;
+            sub_index++;
+        }
+        sub_index=0;
+        sub_size=monster.skills.size();
+        out << (quint32)sub_size;
+        while(sub_index<sub_size)
+        {
+            out << (quint32)monster.skills.at(sub_index).skill;
+            out << (quint8)monster.skills.at(sub_index).level;
+            sub_index++;
+        }
+        index++;
+    }
+
     emit postReply(query_id,outputData);
+    sendInventory();
 
     //send signals into the server
     emit message(QString("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
@@ -263,6 +306,8 @@ void ClientHeavyLoad::loginIsWrong(const quint8 &query_id,const QString &message
 //load linked data (like item, quests, ...)
 void ClientHeavyLoad::loadLinkedData()
 {
+    if(player_informations->isFake)
+        return;
     loadItems();
     loadRecipes();
     loadMonsters();

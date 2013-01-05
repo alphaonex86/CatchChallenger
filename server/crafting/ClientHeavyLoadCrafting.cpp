@@ -40,14 +40,6 @@ void ClientHeavyLoad::loadRecipes()
 
 void ClientHeavyLoad::loadItems()
 {
-    //network send
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    QByteArray outputData2;
-    QDataStream out2(&outputData2, QIODevice::WriteOnly);
-    out2.setVersion(QDataStream::Qt_4_4);
-
     //do the query
     QString queryText;
     switch(GlobalData::serverSettings.database.type)
@@ -107,12 +99,24 @@ void ClientHeavyLoad::loadItems()
             continue;
         }
         player_informations->public_and_private_informations.items[id]=quantity;
-
-        out2 << (quint32)id;
-        out2 << (quint32)quantity;
     }
+}
+
+void ClientHeavyLoad::sendInventory()
+{
+    //network send
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
 
     out << (quint32)player_informations->public_and_private_informations.items.size();
+    QHashIterator<quint32,quint32> i(player_informations->public_and_private_informations.items);
+    while (i.hasNext()) {
+        i.next();
+        out << (quint32)i.key();
+        out << (quint32)i.value();
+    }
+
     //send the items
-    emit sendPacket(0xD0,0x0001,outputData+outputData2);
+    emit sendPacket(0xD0,0x0001,outputData);
 }
