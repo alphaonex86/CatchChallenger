@@ -1336,6 +1336,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             return;
                         }
                         in >> number_of_map;
+
+                        //recipes
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the recipe list size, line: %1").arg(__LINE__));
@@ -1354,6 +1356,136 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             }
                             in >> recipeId;
                             player_informations.recipes << recipeId;
+                            index++;
+                        }
+
+                        //monsters
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster list size, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        quint8 gender;
+                        quint32 monster_list_size;
+                        in >> monster_list_size;
+                        PlayerMonster monster;
+                        PlayerMonster::Buff buff;
+                        PlayerMonster::Skill skill;
+                        index=0;
+                        quint32 sub_size,sub_index;
+                        while(index<monster_list_size)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.monster;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster level, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.level;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster remaining_xp, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.remaining_xp;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster hp, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.hp;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster sp, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.sp;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.captured_with;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> gender;
+                            switch(gender)
+                            {
+                                case 0x01:
+                                case 0x02:
+                                case 0x03:
+                                    monster.gender=(PlayerMonster::Gender)gender;
+                                break;
+                                default:
+                                    parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(gender));
+                                    return;
+                                break;
+                            }
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster egg_step, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.egg_step;
+
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster size of list of the buff monsters, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> sub_size;
+                            sub_index=0;
+                            while(sub_index<sub_size)
+                            {
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster buff, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> buff.buff;
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster buff level, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> buff.level;
+                                monster.buffs << buff;
+                                sub_index++;
+                            }
+
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster size of list of the skill monsters, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> sub_size;
+                            sub_index=0;
+                            while(sub_index<sub_size)
+                            {
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> skill.skill;
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill level, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> skill.level;
+                                monster.skills << skill;
+                                sub_index++;
+                            }
+
                             index++;
                         }
 

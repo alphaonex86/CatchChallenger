@@ -41,8 +41,7 @@ public:
     QHash<quint32,quint8> itemToPlants;
     QHash<quint32,Pokecraft::CrafingRecipe> crafingRecipes;
     QHash<quint32,quint32> itemToCrafingRecipes;
-    FightEngine fightEngine;
-
+    Pokecraft::FightEngine fightEngine;
     QStringList maps;
     QPixmap defaultInventoryImage();
     static DatapackClientLoader datapackLoader;
@@ -62,6 +61,9 @@ private slots:
     void parseMaps();
     void parsePlants();
     void parseCraftingRecipes();
+    void parseBuff();
+    void parseSkills();
+    void parseMonsters();
 };
 
 #endif // DATAPACKCLIENTLOADER_H
