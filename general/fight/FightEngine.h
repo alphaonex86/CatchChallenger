@@ -33,6 +33,7 @@ private:
 public slots:
     //fight
     void appendRandomSeeds(const QByteArray &data);
+    static Monster::Stat getStat(const Monster &monster,const quint8 &level);
 };
 }
 

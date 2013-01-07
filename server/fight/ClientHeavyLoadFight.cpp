@@ -113,15 +113,15 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.hp>((GlobalData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/100))
+                if(playerMonster.hp>((GlobalData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX))
                 {
                     emit message(QString("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
                                  .arg(playerMonster.hp)
-                                 .arg(((GlobalData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/100))
+                                 .arg(((GlobalData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX))
                                  .arg(playerMonster.level)
                                  .arg(playerMonster.monster)
                                  );
-                    playerMonster.hp=((GlobalData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/100);
+                    playerMonster.hp=((GlobalData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX);
                 }
             }
             else
