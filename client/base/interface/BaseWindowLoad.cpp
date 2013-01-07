@@ -241,6 +241,9 @@ void BaseWindow::updateConnectingStatus()
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();
+        if(!check_monsters())
+            return;
+        load_monsters();
         this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
         ui->stackedWidget->setCurrentIndex(1);
         showTip(tr("Welcome <b><i>%1</i></b> on pokecraft").arg(client->getPseudo()));

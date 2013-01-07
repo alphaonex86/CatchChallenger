@@ -95,6 +95,7 @@ private slots:
     void load_plant_inventory();
     void load_crafting_inventory();
     void load_monsters();
+    bool check_monsters();
     void addCash(const quint32 &cash);
     void removeCash(const quint32 &cash);
     //render
