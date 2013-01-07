@@ -350,7 +350,7 @@ struct Monster
     quint32 xp_for_max_level;///< xp to be level 100
     quint32 give_sp;
     quint32 give_xp;
-    struct MonsterStat
+    struct Stat
     {
         quint32 hp;
         quint32 attack;
@@ -359,7 +359,7 @@ struct Monster
         quint32 special_defense;
         quint32 speed;
     };
-    MonsterStat stat;
+    Stat stat;
     struct MonsterAttack
     {
         quint8 level;
