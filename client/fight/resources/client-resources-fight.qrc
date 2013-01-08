@@ -4,5 +4,6 @@
         <file>images/interface/background.png</file>
         <file>images/interface/plateform-front.png</file>
         <file>images/interface/plateform-background.png</file>
+        <file>images/monsters/egg.png</file>
     </qresource>
 </RCC>

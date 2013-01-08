@@ -40,6 +40,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     grassCurrentObject=new Tiled::MapObject();
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
+    canGoToGrass=true;
 
     playerMapObject = new Tiled::MapObject();
     playerTileset = new Tiled::Tileset("player",16,24);
@@ -97,7 +98,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_left)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
                 return;//Can't do at the left!
             //the first step
             direction=Pokecraft::Direction_move_at_left;
@@ -122,7 +123,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_right)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
                 return;//Can't do at the right!
             //the first step
             direction=Pokecraft::Direction_move_at_right;
@@ -147,7 +148,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_top)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
                 return;//Can't do at the top!
             //the first step
             direction=Pokecraft::Direction_move_at_top;
@@ -172,7 +173,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==Pokecraft::Direction_look_at_bottom)
         {
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=Pokecraft::Direction_move_at_bottom;
@@ -341,7 +342,7 @@ void MapVisualiserPlayer::moveStepSlot()
         if(keyPressed.contains(Qt::Key_Left))
         {
             //can't go into this direction, then just look into this direction
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_left;
                 playerMapObject->setTile(playerTileset->tileAt(10));
@@ -362,7 +363,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(Qt::Key_Right))
         {
             //can't go into this direction, then just look into this direction
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_right;
                 playerMapObject->setTile(playerTileset->tileAt(4));
@@ -383,7 +384,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(Qt::Key_Up))
         {
             //can't go into this direction, then just look into this direction
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_top;
                 playerMapObject->setTile(playerTileset->tileAt(1));
@@ -404,7 +405,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(Qt::Key_Down))
         {
             //can't go into this direction, then just look into this direction
-            if(!Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
+            if(!canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
             {
                 direction=Pokecraft::Direction_look_at_bottom;
                 playerMapObject->setTile(playerTileset->tileAt(7));
@@ -539,7 +540,7 @@ void MapVisualiserPlayer::transformLookToMove()
     switch(direction)
     {
         case Pokecraft::Direction_look_at_left:
-        if(keyPressed.contains(Qt::Key_Left) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Left) && canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_left;
             inMove=true;
@@ -550,7 +551,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_right:
-        if(keyPressed.contains(Qt::Key_Right) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Right) && canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_right;
             inMove=true;
@@ -561,7 +562,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_top:
-        if(keyPressed.contains(Qt::Key_Up) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Up) && canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_top;
             inMove=true;
@@ -572,7 +573,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case Pokecraft::Direction_look_at_bottom:
-        if(keyPressed.contains(Qt::Key_Down) && Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Down) && canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
         {
             direction=Pokecraft::Direction_move_at_bottom;
             inMove=true;
@@ -621,6 +622,11 @@ Pokecraft::Direction MapVisualiserPlayer::getDirection()
     return direction;
 }
 
+void MapVisualiserPlayer::setCanGoToGrass(const bool &canGoToGrass)
+{
+    this->canGoToGrass=canGoToGrass;
+}
+
 void MapVisualiserPlayer::setAnimationTilset(QString animationTilset)
 {
     animationTileset->loadFromImage(QImage(":/images/player_default/animation.png"),":/images/player_default/animation.png");
@@ -631,6 +637,7 @@ void MapVisualiserPlayer::setAnimationTilset(QString animationTilset)
 
 void MapVisualiserPlayer::resetAll()
 {
+    canGoToGrass=true;
     stopGrassAnimation();
     unloadPlayerFromCurrentMap();
     timer.stop();
@@ -643,6 +650,25 @@ void MapVisualiserPlayer::resetAll()
 void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
 {
     moveTimer.setInterval(speed/5);
+}
+
+bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction,const Pokecraft::Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision)
+{
+    if(!Pokecraft::MoveOnTheMap::canGoTo(direction,map,x,y,checkCollision))
+        return false;
+    if(!canGoToGrass)
+    {
+        Pokecraft::Map * map=&current_map->logicalMap;
+        quint8 x=this->x;
+        quint8 y=this->y;
+        Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y,false);
+        if(Pokecraft::MoveOnTheMap::isGrass(*map,x,y))
+        {
+            emit blockedOn(static_cast<Pokecraft::Map_client *>(map),x,y);
+            return false;
+        }
+    }
+    return true;
 }
 
 //call after enter on new map
