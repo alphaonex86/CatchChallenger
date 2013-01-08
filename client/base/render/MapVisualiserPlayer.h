@@ -18,6 +18,7 @@ public:
     void keyReleaseEvent(QKeyEvent *event);
     QString lastLocation() const;
     Pokecraft::Direction getDirection();
+    void setCanGoToGrass(const bool &canGoToGrass);
 protected:
     //player
     Tiled::MapObject * playerMapObject;
@@ -47,6 +48,7 @@ protected:
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
     Tiled::Tileset * animationTileset;
+    bool canGoToGrass;
 private slots:
     void keyPressParse();
 
@@ -69,10 +71,12 @@ protected slots:
     void setAnimationTilset(QString animationTilset);
     virtual void resetAll();
     void setSpeed(const SPEED_TYPE &speed);
+    virtual bool canGoTo(const Pokecraft::Direction &direction,const Pokecraft::Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision);
 signals:
     void send_player_direction(const Pokecraft::Direction &the_direction);
-    void stopped_in_front_of(Pokecraft::Map_client *map, quint8 x, quint8 y);
-    void actionOn(Pokecraft::Map_client *map, quint8 x, quint8 y);
+    void stopped_in_front_of(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
+    void actionOn(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
+    void blockedOn(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
 };
 
 #endif

@@ -257,6 +257,13 @@ bool MoveOnTheMap::isDirt(const Map &map, const quint8 &x, const quint8 &y)
     return map.parsed_layer.dirt[x+y*(map.width)];
 }
 
+bool MoveOnTheMap::isGrass(const Map &map, const quint8 &x, const quint8 &y)
+{
+    if(map.parsed_layer.grass==NULL)
+        return false;
+    return map.parsed_layer.grass[x+y*(map.width)];
+}
+
 bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE *x,COORD_TYPE *y, const bool &checkCollision)
 {
     if(*map==NULL)

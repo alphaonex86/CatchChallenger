@@ -49,6 +49,7 @@ struct Player_internal_informations
     quint32 id;
     QByteArray rawPseudo;
     volatile bool isConnected;
+    bool ableToFight;
 };
 
 struct ServerSettings

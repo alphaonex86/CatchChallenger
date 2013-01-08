@@ -103,6 +103,7 @@ private slots:
     bool stopped_in_front_of_check_bot(Pokecraft::Map_client *map, quint8 x, quint8 y);
     void actionOn(Pokecraft::Map_client *map, quint8 x, quint8 y);
     bool actionOnCheckBot(Pokecraft::Map_client *map, quint8 x, quint8 y);
+    void blockedOn(Pokecraft::Map_client *map, quint8 x, quint8 y);
 
     //datapack
     void haveTheDatapack();
@@ -162,6 +163,7 @@ protected slots:
     void datapackParsed();
     //UI
     void updateConnectingStatus();
+    void check_fight();
 private:
     Ui::BaseWindowUI *ui;
     QFrame *renderFrame;
@@ -225,6 +227,9 @@ private:
 
     //bot
     Bot actualBot;
+
+    //fight
+    bool canFight;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

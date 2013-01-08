@@ -32,6 +32,7 @@ public:
     static bool isWalkable(const Map &map, const quint8 &x, const quint8 &y);
     static bool isWater(const Map &map, const quint8 &x, const quint8 &y);
     static bool isDirt(const Map &map, const quint8 &x, const quint8 &y);
+    static bool isGrass(const Map &map, const quint8 &x, const quint8 &y);
 protected:
     virtual void send_player_move(const quint8 &moved_unit,const Direction &the_new_direction) = 0;
     Direction last_direction;
