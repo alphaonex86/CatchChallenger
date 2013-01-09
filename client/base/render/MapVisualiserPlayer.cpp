@@ -661,7 +661,7 @@ bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction,const Po
         Pokecraft::Map * map=&current_map->logicalMap;
         quint8 x=this->x;
         quint8 y=this->y;
-        Pokecraft::MoveOnTheMap::move(Pokecraft::Direction_move_at_left,&map,&x,&y,false);
+        Pokecraft::MoveOnTheMap::move(direction,&map,&x,&y,false);
         if(Pokecraft::MoveOnTheMap::isGrass(*map,x,y))
         {
             emit blockedOn(static_cast<Pokecraft::Map_client *>(map),x,y);

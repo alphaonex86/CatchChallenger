@@ -17,15 +17,7 @@ void BaseWindow::resetAll()
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
     ui->stackedWidget->setCurrentIndex(0);
-    chat_list_player_pseudo.clear();
-    chat_list_player_type.clear();
-    chat_list_type.clear();
-    chat_list_text.clear();
-    textBrowser_chat->clear();
-    comboBox_chat_type->setCurrentIndex(1);
-        lineEdit_chat_text->setText("");
-    update_chat();
-    lastMessageSend="";
+    chat->resetAll();
     mapController->resetAll();
     haveDatapack=false;
     havePlayerInformations=false;

@@ -17,6 +17,7 @@
 #include "../base/Api_client_real.h"
 #include "../base/Api_protocol.h"
 #include "MapController.h"
+#include "Chat.h"
 
 #ifndef POKECRAFT_BASEWINDOW_H
 #define POKECRAFT_BASEWINDOW_H
@@ -62,14 +63,6 @@ private slots:
     void protocol_is_good();
     void newError(QString error,QString detailedError);
     void error(QString error);
-
-    //chat
-    void new_chat_text(Pokecraft::Chat_type chat_type,QString text,QString pseudo,Pokecraft::Player_type type);
-    void new_system_text(Pokecraft::Chat_type chat_type,QString text);
-    void setupChatUI();
-    void comboBox_chat_type_currentIndexChanged(int index);
-    void lineEdit_chat_text_returnPressed();
-    void lineEdit_chat_text_lostFocus();
 
     //player UI
     void on_pushButton_interface_bag_clicked();
@@ -132,8 +125,6 @@ private slots:
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
-    void update_chat();
-    void removeNumberForFlood();
     void on_toolButton_interface_quit_clicked();
     void on_toolButton_quit_interface_clicked();
     void on_pushButton_interface_trainer_clicked();
@@ -167,10 +158,6 @@ protected slots:
 private:
     Ui::BaseWindowUI *ui;
     QFrame *renderFrame;
-    QTextBrowser *textBrowser_chat;
-    QLineEdit *lineEdit_chat_text;
-    QComboBox *comboBox_chat_type;
-    QFrame *frame_main_display_right;
     QTimer tip_timeout;
     QTimer gain_timeout;
     QList<QueryType> queryList;
@@ -191,19 +178,13 @@ private:
     QTimer updateRXTXTimer;
     quint64 previousRXSize,previousTXSize;
     Pokecraft::Api_protocol *client;
-    QStringList chat_list_player_pseudo;
-    QList<Pokecraft::Player_type> chat_list_player_type;
-    QList<Pokecraft::Chat_type> chat_list_type;
-    QList<QString> chat_list_text;
     QString toHtmlEntities(QString text);
     QSettings settings;
-    QString lastMessageSend;
-    QTimer stopFlood;
-    int numberForFlood;
     bool haveShowDisconnectionReason;
     QString toSmilies(QString text);
     QStringList server_list;
     MapController *mapController;
+    Chat *chat;
     QAbstractSocket::SocketState socketState;
     QStringList skinFolderList;
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
