@@ -28,11 +28,10 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
 
-    frame_main_display_right=NULL;
     mapController=new MapController(client,true,false,true,false);
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
-    setupChatUI();
+    chat=new Chat(ui->page_map,client);
 
     connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
@@ -52,12 +51,12 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(remove_to_inventory(QHash<quint32,quint32>)));
 
     //chat
-    connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),this,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
-    connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),this,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
+    connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),chat,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
+    connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),chat,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
+    connect(this,SIGNAL(sendsetMultiPlayer(bool)),chat,SLOT(setVisible(bool)),Qt::QueuedConnection);
 
     connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
     //connect(client,SIGNAL(new_player_info()),this,SLOT(update_chat()),Qt::QueuedConnection);
-    connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()),Qt::QueuedConnection);
 
     //connect the datapack loader
     connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),this,SLOT(datapackParsed()),Qt::QueuedConnection);
@@ -91,9 +90,6 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
-    stopFlood.setSingleShot(false);
-    stopFlood.start(1500);
-    numberForFlood=0;
 
     tip_timeout.setInterval(TIMETODISPLAY_TIP);
     gain_timeout.setInterval(TIMETODISPLAY_GAIN);
@@ -106,16 +102,18 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
     renderFrame = new QFrame(ui->page_map);
     renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
-    renderFrame->setMinimumSize(QSize(600, 520));
+    renderFrame->setMinimumSize(QSize(600, 572));
     QVBoxLayout *renderLayout = new QVBoxLayout(renderFrame);
     renderLayout->setSpacing(0);
     renderLayout->setContentsMargins(0, 0, 0, 0);
     renderLayout->setObjectName(QString::fromUtf8("renderLayout"));
     renderLayout->addWidget(mapController);
-    renderFrame->setGeometry(QRect(0, 52, 800, 516));
+    renderFrame->setGeometry(QRect(0, 0, 800, 516));
     renderFrame->lower();
     renderFrame->lower();
     renderFrame->lower();
+
+    chat->setGeometry(QRect(0, 0, 300, 400));
 
     resetAll();
     loadSettings();
@@ -127,6 +125,7 @@ BaseWindow::~BaseWindow()
 {
     delete ui;
     delete mapController;
+    delete chat;
 }
 
 QString BaseWindow::lastLocation() const
@@ -157,12 +156,6 @@ void BaseWindow::number_of_player(quint16 number,quint16 max)
     ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
 }
 
-void BaseWindow::comboBox_chat_type_currentIndexChanged(int index)
-{
-    Q_UNUSED(index)
-    update_chat();
-}
-
 void BaseWindow::on_toolButton_interface_quit_clicked()
 {
     client->tryDisconnect();
@@ -176,11 +169,6 @@ void BaseWindow::on_toolButton_quit_interface_clicked()
 void BaseWindow::on_pushButton_interface_trainer_clicked()
 {
     ui->stackedWidget->setCurrentIndex(2);
-}
-
-void BaseWindow::lineEdit_chat_text_lostFocus()
-{
-    mapController->setFocus();
 }
 
 //return ok, itemId
@@ -627,6 +615,7 @@ void BaseWindow::blockedOn(Pokecraft::Map_client *map, quint8 x, quint8 y)
     if(!canFight)
         if(Pokecraft::MoveOnTheMap::isGrass(*map,x,y))
         {
+            qDebug() << "block on:" << map->map_file << x << y;
             showTip(tr("You can't enter to the grass if you are not able to fight"));
             return;
         }
