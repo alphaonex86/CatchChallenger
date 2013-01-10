@@ -163,12 +163,12 @@ void BaseWindow::on_toolButton_interface_quit_clicked()
 
 void BaseWindow::on_toolButton_quit_interface_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 void BaseWindow::on_pushButton_interface_trainer_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(2);
+    ui->stackedWidget->setCurrentWidget(ui->page_player);
 }
 
 //return ok, itemId
@@ -179,16 +179,16 @@ void BaseWindow::selectObject(const ObjectType &objectType)
     switch(objectType)
     {
         case ObjectType_Seed:
-            ui->stackedWidget->setCurrentIndex(5);
+            ui->stackedWidget->setCurrentWidget(ui->page_plants);
             on_listPlantList_itemSelectionChanged();
         break;
         case ObjectType_Sell:
-            ui->stackedWidget->setCurrentIndex(7);
+            ui->stackedWidget->setCurrentWidget(ui->page_shop);
             displaySellList();
         break;
         case ObjectType_All:
         default:
-            ui->stackedWidget->setCurrentIndex(3);
+            ui->stackedWidget->setCurrentWidget(ui->page_inventory);
             on_listCraftingList_itemSelectionChanged();
         break;
     }
@@ -197,7 +197,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
 void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const quint32 &quantity)
 {
     inSelection=false;
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
     ui->inventoryUse->setText(tr("Select"));
     switch(waitedObjectType)
     {
@@ -348,13 +348,13 @@ void BaseWindow::on_pushButton_interface_bag_clicked()
         qDebug() << "BaseWindow::on_pushButton_interface_bag_clicked() in selection, can't click here";
         return;
     }
-    ui->stackedWidget->setCurrentIndex(3);
+    ui->stackedWidget->setCurrentWidget(ui->page_inventory);
 }
 
 void BaseWindow::on_toolButton_quit_inventory_clicked()
 {
     ui->inventory->reset();
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
     if(inSelection)
         objectSelection(false,0);
     on_inventory_itemSelectionChanged();
@@ -466,7 +466,7 @@ void BaseWindow::updateQueryList()
 
 void BaseWindow::on_toolButton_quit_options_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 void BaseWindow::stopped_in_front_of(Pokecraft::Map_client *map, quint8 x, quint8 y)
@@ -722,7 +722,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             pixmap=QPixmap(":/images/player_default/front.png");
         pixmap=pixmap.scaled(160,160);
         ui->shopSellerImage->setPixmap(pixmap);
-        ui->stackedWidget->setCurrentIndex(7);
+        ui->stackedWidget->setCurrentWidget(ui->page_shop);
         ui->shopItemList->clear();
         on_shopItemList_itemSelectionChanged();
         ui->shopDescription->setText(tr("Waiting the shop content"));
@@ -906,7 +906,7 @@ void BaseWindow::on_inventoryInformation_clicked()
             return;
         }
         ui->listPlantList->reset();
-        ui->stackedWidget->setCurrentIndex(5);
+        ui->stackedWidget->setCurrentWidget(ui->page_plants);
         plants_items_to_graphical[DatapackClientLoader::datapackLoader.itemToPlants[items_graphical[item]]]->setSelected(true);
         on_listPlantList_itemSelectionChanged();
     }
@@ -919,7 +919,7 @@ void BaseWindow::on_inventoryInformation_clicked()
 
 void BaseWindow::on_toolButtonOptions_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(4);
+    ui->stackedWidget->setCurrentWidget(ui->page_options);
 }
 
 void BaseWindow::on_IG_dialog_text_linkActivated(const QString &link)
@@ -945,7 +945,7 @@ void BaseWindow::on_toolButton_quit_shop_clicked()
 {
     waitToSell=false;
     inSelection=false;
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
@@ -968,7 +968,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
             return;
         tempItemForBuy=shop_items_graphical[item];
         client->buyObject(shopId,tempItemForBuy,tempQuantityForBuy,itemsIntoTheShop[tempItemForBuy].price);
-        ui->stackedWidget->setCurrentIndex(1);
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
         tempCashForBuy=itemsIntoTheShop[tempItemForBuy].price*tempQuantityForBuy;
         removeCash(tempCashForBuy);
         showTip(tr("Buying the object..."));
@@ -989,7 +989,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
         if(items[shop_items_graphical[item]]<tempQuantityForSell)
             return;
         objectSelection(true,shop_items_graphical[item],tempQuantityForSell);
-        ui->stackedWidget->setCurrentIndex(1);
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Selling the object..."));
     }
 }
@@ -1187,4 +1187,14 @@ void BaseWindow::removeCash(const quint32 &cash)
 {
     this->cash-=cash;
     ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+}
+
+void Pokecraft::BaseWindow::on_pushButton_interface_monsters_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_monster);
+}
+
+void Pokecraft::BaseWindow::on_toolButton_monster_list_quit_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }

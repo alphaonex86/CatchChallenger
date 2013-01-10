@@ -79,9 +79,35 @@ bool BaseWindow::check_monsters()
         }
         index++;
     }
+    DatapackClientLoader::datapackLoader.fightEngine.setPlayerMonster(client->player_informations.playerMonster);
     return true;
 }
 
 void BaseWindow::load_monsters()
 {
+    const QList<PlayerMonster> &playerMonster=DatapackClientLoader::datapackLoader.fightEngine.getPlayerMonster();
+    ui->monsterList->clear();
+    int index=0;
+    int size=playerMonster.size();
+    while(index<size)
+    {
+        const PlayerMonster &monster=playerMonster.at(index);
+        if(DatapackClientLoader::datapackLoader.fightEngine.monsters.contains(monster.monster))
+        {
+            Monster::Stat stat=Pokecraft::FightEngine::getStat(DatapackClientLoader::datapackLoader.fightEngine.monsters[monster.monster],monster.level);
+            QListWidgetItem *item=new QListWidgetItem();
+            item->setText(QString("%1\nHP: %2/%3")
+                    .arg("name")
+                    .arg(monster.monster)
+                    .arg(stat.hp)
+                    );
+            ui->monsterList->addItem(item);
+        }
+        else
+        {
+            error(QString("Unknown monster: %1").arg(monster.monster));
+            return;
+        }
+        index++;
+    }
 }
