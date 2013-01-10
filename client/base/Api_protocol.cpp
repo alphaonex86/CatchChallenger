@@ -1485,7 +1485,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                                 monster.skills << skill;
                                 sub_index++;
                             }
-
+                            player_informations.playerMonster << monster;
                             index++;
                         }
 
