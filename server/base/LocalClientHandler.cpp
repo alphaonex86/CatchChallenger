@@ -36,12 +36,6 @@ bool LocalClientHandler::checkCollision()
         return true;
 }
 
-void LocalClientHandler::getRandomNumberIfNeeded()
-{
-    if(fightEngine.randomSeeds().size()<=POKECRAFT_SERVER_MIN_RANDOM_LIST_SIZE)
-        emit askRandomNumber();
-}
-
 void LocalClientHandler::extraStop()
 {
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
@@ -179,11 +173,6 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
                  );
     #endif
     return MapBasicMove::moveThePlayer(previousMovedUnit,direction);
-}
-
-void LocalClientHandler::newRandomNumber(const QByteArray &randomData)
-{
-    fightEngine.appendRandomSeeds(randomData);
 }
 
 bool LocalClientHandler::singleMove(const Direction &direction)

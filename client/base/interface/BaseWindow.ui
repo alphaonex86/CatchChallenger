@@ -47,10 +47,10 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="styleSheet">
-        <string notr="true"/>
+        <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -581,6 +581,42 @@ padding-bottom:3px;
               </property>
               <property name="text">
                <string>Crafting</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_interface_monsters">
+              <property name="minimumSize">
+               <size>
+                <width>110</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>110</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton::hover {
+background-position:left center;
+}
+QPushButton::pressed {
+background-position:left bottom;
+}
+QPushButton { 
+	background-image: url(:/images/interface/button-generic.png);
+border-image: url(:/images/empty.png);
+color: rgb(255, 255, 255);
+padding-left:25px;
+padding-right:4px;
+padding-top:8px;
+padding-bottom:3px;
+}</string>
+              </property>
+              <property name="text">
+               <string>Monsters</string>
               </property>
              </widget>
             </item>
@@ -2920,6 +2956,110 @@ padding-bottom:3px;
            <set>Qt::AlignCenter</set>
           </property>
          </widget>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="page_monster">
+        <property name="styleSheet">
+         <string notr="true">#page_monster{background-image: url(:/images/interface/player/background.png);}</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_15">
+         <item>
+          <widget class="QListWidget" name="monsterList">
+           <property name="iconSize">
+            <size>
+             <width>80</width>
+             <height>80</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_21">
+           <item>
+            <spacer name="horizontalSpacer_22">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="toolButton_monster_list_quit">
+             <property name="minimumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_bioscan">
+        <widget class="QToolButton" name="toolButton_bioscan_quit">
+         <property name="geometry">
+          <rect>
+           <x>760</x>
+           <y>560</y>
+           <width>22</width>
+           <height>25</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>22</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>22</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
         </widget>
        </widget>
       </widget>

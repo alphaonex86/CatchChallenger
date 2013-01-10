@@ -22,10 +22,11 @@ SOURCES += $$PWD/Api_protocol.cpp \
     $$PWD/../crafting/interface/DatapackClientLoaderCrafting.cpp \
     $$PWD/../fight/interface/DatapackClientLoaderFight.cpp \
     $$PWD/../crafting/interface/BaseWindowCrafting.cpp \
-    $$PWD/../base/Options.cpp \
+    $$PWD/Options.cpp \
     $$PWD/interface/BaseWindowLoad.cpp \
     $$PWD/../fight/interface/BaseWindowFight.cpp \
-    $$PWD/interface/Chat.cpp
+    $$PWD/interface/Chat.cpp \
+    $$PWD/../fight/interface/FightEngine.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/ClientStructures.h \
@@ -44,8 +45,9 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/interface/MapController.h \
     $$PWD/interface/DatapackClientLoader.h \
     $$PWD/ClientVariable.h \
-    $$PWD/../base/Options.h \
-    $$PWD/interface/Chat.h
+    $$PWD/Options.h \
+    $$PWD/interface/Chat.h \
+    $$PWD/../fight/interface/FightEngine.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui

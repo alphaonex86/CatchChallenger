@@ -13,7 +13,6 @@
 #include <QSqlError>
 
 #include "../../general/base/DebugClass.h"
-#include "../../general/fight/FightEngine.h"
 #include "ServerStructures.h"
 #include "EventThreader.h"
 #include "../VariableServer.h"
@@ -39,7 +38,7 @@ private:
     //info linked
     static Direction	temp_direction;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
-    FightEngine fightEngine;
+    QByteArray randomSeeds;
 
     //map move
     bool singleMove(const Direction &direction);

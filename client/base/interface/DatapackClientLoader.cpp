@@ -215,4 +215,5 @@ void DatapackClientLoader::resetAll()
      fightEngine.monsterBuffs.clear();
      fightEngine.monsterSkills.clear();
      fightEngine.monsters.clear();
+     fightEngine.resetAll();
 }
