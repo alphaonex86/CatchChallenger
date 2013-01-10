@@ -5,25 +5,64 @@ using namespace Pokecraft;
 
 FightEngine::FightEngine()
 {
+    resetAll();
 }
 
 FightEngine::~FightEngine()
 {
 }
 
-bool FightEngine::canDoRandomStep()
+//return is have random seed to do random step
+bool FightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y)
 {
     return false;
 }
 
-bool FightEngine::canDoRandomFight()
+bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y)
 {
     return false;
+}
+
+bool FightEngine::canDoFight()
+{
+    return m_canDoFight;
+}
+
+void FightEngine::setPlayerMonster(const QList<PlayerMonster> &playerMonster)
+{
+    this->playerMonster=playerMonster;
+    updateCanDoFight();
+}
+
+void FightEngine::updateCanDoFight()
+{
+    m_canDoFight=false;
+    int index=0;
+    while(index<playerMonster.size())
+    {
+        const PlayerMonster &playerMonsterEntry=playerMonster.at(index);
+        if(playerMonsterEntry.hp>0 && playerMonsterEntry.egg_step==0)
+        {
+            m_canDoFight=true;
+            return;
+        }
+        index++;
+    }
+}
+
+QList<PlayerMonster> FightEngine::getPlayerMonster()
+{
+    return playerMonster;
 }
 
 void FightEngine::resetAll()
 {
+    monsters.clear();
+    monsterSkills.clear();
+    monsterBuffs.clear();
     m_randomSeeds.clear();
+    playerMonster.clear();
+    m_canDoFight=false;
 }
 
 void FightEngine::appendRandomSeeds(const QByteArray &data)

@@ -149,6 +149,9 @@ private slots:
     void on_shopItemList_itemActivated(QListWidgetItem *item);
     void on_shopItemList_itemSelectionChanged();
     void on_shopBuy_clicked();
+    void on_pushButton_interface_monsters_clicked();
+    void on_toolButton_monster_list_quit_clicked();
+
 protected slots:
     //datapack
     void datapackParsed();
