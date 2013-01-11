@@ -50,7 +50,9 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint
             {
                 Monster monster;
                 quint32 id=item.attribute("id").toUInt(&ok);
-                if(ok && monsters.contains(id))
+                if(!ok)
+                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                else if(monsters.contains(id))
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
@@ -254,7 +256,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint
                 }
             }
             else
-                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the plant id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
             DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -287,7 +289,7 @@ QHash<quint32,MonsterSkill> FightLoader::loadMonsterSkill(const QString &file, Q
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return monsterSkills;
     }
 
@@ -505,7 +507,7 @@ QHash<quint32,MonsterSkill> FightLoader::loadMonsterSkill(const QString &file, Q
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
             }
             else
-                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the plant id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the skill id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
             DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -538,7 +540,7 @@ QHash<quint32,MonsterBuff> FightLoader::loadMonsterBuff(const QString &file)
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return monsterBuffs;
     }
 
@@ -691,7 +693,7 @@ QHash<quint32,MonsterBuff> FightLoader::loadMonsterBuff(const QString &file)
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
             }
             else
-                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the plant id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the buff id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
             DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));

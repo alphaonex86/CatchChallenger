@@ -44,6 +44,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseBuff();
     parseSkills();
     parseMonsters();
+    parseMonstersExtra();
 
     emit datapackParsed();
 }
@@ -212,6 +213,7 @@ void DatapackClientLoader::resetAll()
      itemToCrafingRecipes.clear();
      crafingRecipes.clear();
 
+     fightEngine.monsterExtra.clear();
      fightEngine.monsterBuffs.clear();
      fightEngine.monsterSkills.clear();
      fightEngine.monsters.clear();

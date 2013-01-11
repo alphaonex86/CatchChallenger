@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QByteArray>
 #include <QHash>
+#include <QString>
+#include <QPixmap>
 
 #include "../base/GeneralStructures.h"
 #include "../../general/base/Map.h"
@@ -21,16 +23,25 @@ public:
     bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool haveRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool canDoFight();
-    enum landFight
+    enum LandFight
     {
-        landFight_Water,
-        landFight_Grass,
-        landFight_Cave
+        LandFight_Water,
+        LandFight_Grass,
+        LandFight_Cave
+    };
+    struct MonsterExtra
+    {
+        QString name;
+        QString description;
+        QPixmap front;
+        QPixmap back;
+        QPixmap small;
     };
     //fight
     QHash<quint32,Monster> monsters;
     QHash<quint32,MonsterSkill> monsterSkills;
     QHash<quint32,MonsterBuff> monsterBuffs;
+    QHash<quint32,MonsterExtra> monsterExtra;
     void setPlayerMonster(const QList<PlayerMonster> &playerMonster);
     QList<PlayerMonster> getPlayerMonster();
 private:
