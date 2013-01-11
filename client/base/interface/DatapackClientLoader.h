@@ -39,8 +39,8 @@ public:
     };
     QHash<quint8,Plant> plants;
     QHash<quint32,quint8> itemToPlants;
-    QHash<quint32,Pokecraft::CrafingRecipe> crafingRecipes;
     QHash<quint32,quint32> itemToCrafingRecipes;
+    QHash<quint32,Pokecraft::CrafingRecipe> crafingRecipes;
     Pokecraft::FightEngine fightEngine;
     QStringList maps;
     QPixmap defaultInventoryImage();
@@ -64,6 +64,7 @@ private slots:
     void parseBuff();
     void parseSkills();
     void parseMonsters();
+    void parseMonstersExtra();
 };
 
 #endif // DATAPACKCLIENTLOADER_H
