@@ -42,12 +42,17 @@ public:
     QHash<quint32,MonsterSkill> monsterSkills;
     QHash<quint32,MonsterBuff> monsterBuffs;
     QHash<quint32,MonsterExtra> monsterExtra;
-    void setPlayerMonster(const QList<PlayerMonster> &playerMonster);
+    void setPlayerMonster(const QList<PlayerMonster> &playerMonsterList);
     QList<PlayerMonster> getPlayerMonster();
+    //last step
+    QList<quint8> stepFight_Water,stepFight_Grass,stepFight_Cave;
+    //current fight
+    QList<PlayerMonster> wildMonsters;
 private:
     QByteArray m_randomSeeds;
-    QList<PlayerMonster> playerMonster;
+    QList<PlayerMonster> playerMonsterList;
     bool m_canDoFight;
+    PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList, bool *ok);
 private:
     void updateCanDoFight();
 public slots:

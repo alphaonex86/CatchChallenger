@@ -88,6 +88,7 @@ void BaseServer::preload_the_data()
     preload_buff();
     preload_skills();
     preload_monsters();
+    check_monsters_map();
 }
 
 void BaseServer::preload_the_map()
@@ -137,6 +138,9 @@ void BaseServer::preload_the_map()
                 GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
                 GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.dirt		= map_temp.map_to_send.parsed_layer.dirt;
                 GlobalData::serverPrivateVariables.map_list[fileName]->map_file			= fileName;
+                GlobalData::serverPrivateVariables.map_list[fileName]->grassMonster     = map_temp.map_to_send.grassMonster;
+                GlobalData::serverPrivateVariables.map_list[fileName]->waterMonster     = map_temp.map_to_send.waterMonster;
+                GlobalData::serverPrivateVariables.map_list[fileName]->caveMonster     = map_temp.map_to_send.caveMonster;
 
                 GlobalData::serverPrivateVariables.map_list[fileName];
                 map_name << fileName;

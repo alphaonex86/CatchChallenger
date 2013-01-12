@@ -124,7 +124,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         map_to_send.property[SubChild.attribute("name")]=SubChild.attribute("value");
                     else
                     {
-                        error=QString("Missing attribute name or value: child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(SubChild.lineNumber());
+                        error=QString("Missing attribute name or value: child.tagName(): %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber());
                         return false;
                     }
                 }
@@ -692,6 +692,351 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     //don't put code here !!!!!! put before the last block
 
     this->map_to_send=map_to_send;
+
+    QString xmlExtra=fileName;
+    xmlExtra.replace(".tmx",".xml");
+    if(QFile::exists(xmlExtra))
+        loadMonsterMap(xmlExtra);
+
+    return true;
+}
+
+bool Map_loader::loadMonsterMap(const QString &fileName)
+{
+    QFile mapFile(fileName);
+    QByteArray xmlContent;
+    if(!mapFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+        return false;
+    }
+    xmlContent=mapFile.readAll();
+    mapFile.close();
+    bool ok;
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return false;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="map")
+    {
+        qDebug() << QString("\"map\" root balise not found for the xml file");
+        return false;
+    }
+
+    //grass
+    quint32 tempGrassLuckTotal=0;
+    QDomElement grass = root.firstChildElement("grass");
+    if(!grass.isNull())
+    {
+        if(grass.isElement())
+        {
+            QDomElement monsters=grass.firstChildElement("monster");
+            while(!monsters.isNull())
+            {
+                if(monsters.isElement())
+                {
+                    if(monsters.hasAttribute("id") && monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel") && monsters.hasAttribute("luck"))
+                    {
+                        MapMonster mapMonster;
+                        mapMonster.id=monsters.attribute("id").toUInt(&ok);
+                        if(!ok)
+                            qDebug() << QString("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        if(ok)
+                        {
+                            mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                        {
+                            mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                        {
+                            QString textLuck=monsters.attribute("luck");
+                            textLuck.remove("%");
+                            mapMonster.luck=textLuck.toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                            if(mapMonster.minLevel>mapMonster.maxLevel)
+                            {
+                                qDebug() << QString("min > max for the level: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.luck<=0)
+                            {
+                                qDebug() << QString("luck is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.minLevel<=0)
+                            {
+                                qDebug() << QString("min level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.maxLevel<=0)
+                            {
+                                qDebug() << QString("max level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.luck>100)
+                            {
+                                qDebug() << QString("luck is greater than 100: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.minLevel>POKECRAFT_MONSTER_LEVEL_MAX)
+                            {
+                                qDebug() << QString("min level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(POKECRAFT_MONSTER_LEVEL_MAX);
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.maxLevel>POKECRAFT_MONSTER_LEVEL_MAX)
+                            {
+                                qDebug() << QString("max level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(POKECRAFT_MONSTER_LEVEL_MAX);
+                                ok=false;
+                            }
+                        if(ok)
+                        {
+                            tempGrassLuckTotal+=mapMonster.luck;
+                            map_to_send.grassMonster << mapMonster;
+                        }
+                    }
+                    else
+                        qDebug() << QString("Missing attribute: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                }
+                else
+                    qDebug() << QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                monsters = monsters.nextSiblingElement("monster");
+            }
+        }
+        else
+            qDebug() << QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(grass.tagName()).arg(grass.lineNumber());
+    }
+    if(tempGrassLuckTotal!=100 && !map_to_send.grassMonster.isEmpty())
+    {
+        qDebug() << QString("total luck is not egal to 100, monsters dropped: child.tagName(): %1 (at line: %2)").arg(grass.tagName()).arg(grass.lineNumber());
+        map_to_send.grassMonster.clear();
+    }
+
+    //water
+    quint32 tempWaterLuckTotal=0;
+    QDomElement water = root.firstChildElement("water");
+    if(!water.isNull())
+    {
+        if(water.isElement())
+        {
+            QDomElement monsters=water.firstChildElement("monster");
+            while(!monsters.isNull())
+            {
+                if(monsters.isElement())
+                {
+                    if(monsters.hasAttribute("id") && monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel") && monsters.hasAttribute("luck"))
+                    {
+                        MapMonster mapMonster;
+                        mapMonster.id=monsters.attribute("id").toUInt(&ok);
+                        if(!ok)
+                            qDebug() << QString("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        if(ok)
+                        {
+                            mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                        {
+                            mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                        {
+                            QString textLuck=monsters.attribute("luck");
+                            textLuck.remove("%");
+                            mapMonster.luck=textLuck.toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                            if(mapMonster.minLevel>mapMonster.maxLevel)
+                            {
+                                qDebug() << QString("min > max for the level: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.luck<=0)
+                            {
+                                qDebug() << QString("luck is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.minLevel<=0)
+                            {
+                                qDebug() << QString("min level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.maxLevel<=0)
+                            {
+                                qDebug() << QString("max level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.luck>100)
+                            {
+                                qDebug() << QString("luck is greater than 100: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.minLevel>POKECRAFT_MONSTER_LEVEL_MAX)
+                            {
+                                qDebug() << QString("min level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(POKECRAFT_MONSTER_LEVEL_MAX);
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.maxLevel>POKECRAFT_MONSTER_LEVEL_MAX)
+                            {
+                                qDebug() << QString("max level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(POKECRAFT_MONSTER_LEVEL_MAX);
+                                ok=false;
+                            }
+                        if(ok)
+                        {
+                            tempWaterLuckTotal+=mapMonster.luck;
+                            map_to_send.waterMonster << mapMonster;
+                        }
+                    }
+                    else
+                        qDebug() << QString("Missing attribute: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                }
+                else
+                    qDebug() << QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                monsters = monsters.nextSiblingElement("monster");
+            }
+        }
+        else
+            qDebug() << QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(water.tagName()).arg(water.lineNumber());
+    }
+    if(tempWaterLuckTotal!=100 && !map_to_send.waterMonster.isEmpty())
+    {
+        qDebug() << QString("total luck is not egal to 100, monsters dropped: child.tagName(): %1 (at line: %2)").arg(water.tagName()).arg(water.lineNumber());
+        map_to_send.waterMonster.clear();
+    }
+
+    //cave
+    quint32 tempCaveLuckTotal=0;
+    QDomElement cave = root.firstChildElement("cave");
+    if(!cave.isNull())
+    {
+        if(cave.isElement())
+        {
+            QDomElement monsters=cave.firstChildElement("monster");
+            while(!monsters.isNull())
+            {
+                if(monsters.isElement())
+                {
+                    if(monsters.hasAttribute("id") && monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel") && monsters.hasAttribute("luck"))
+                    {
+                        MapMonster mapMonster;
+                        mapMonster.id=monsters.attribute("id").toUInt(&ok);
+                        if(!ok)
+                            qDebug() << QString("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        if(ok)
+                        {
+                            mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                        {
+                            mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                        {
+                            QString textLuck=monsters.attribute("luck");
+                            textLuck.remove("%");
+                            mapMonster.luck=textLuck.toUShort(&ok);
+                            if(!ok)
+                                qDebug() << QString("luck is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                        }
+                        if(ok)
+                            if(mapMonster.minLevel>mapMonster.maxLevel)
+                            {
+                                qDebug() << QString("min > max for the level: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.luck<=0)
+                            {
+                                qDebug() << QString("luck is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.minLevel<=0)
+                            {
+                                qDebug() << QString("min level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.maxLevel<=0)
+                            {
+                                qDebug() << QString("max level is too low: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.luck>100)
+                            {
+                                qDebug() << QString("luck is greater than 100: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.minLevel>POKECRAFT_MONSTER_LEVEL_MAX)
+                            {
+                                qDebug() << QString("min level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(POKECRAFT_MONSTER_LEVEL_MAX);
+                                ok=false;
+                            }
+                        if(ok)
+                            if(mapMonster.maxLevel>POKECRAFT_MONSTER_LEVEL_MAX)
+                            {
+                                qDebug() << QString("max level is greater than %3: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber()).arg(POKECRAFT_MONSTER_LEVEL_MAX);
+                                ok=false;
+                            }
+                        if(ok)
+                        {
+                            tempCaveLuckTotal+=mapMonster.luck;
+                            map_to_send.caveMonster << mapMonster;
+                        }
+                    }
+                    else
+                        qDebug() << QString("Missing attribute: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                }
+                else
+                    qDebug() << QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                monsters = monsters.nextSiblingElement("monster");
+            }
+        }
+        else
+            qDebug() << QString("Is not an element: child.tagName(): %1 (at line: %2)").arg(cave.tagName()).arg(cave.lineNumber());
+    }
+    if(tempCaveLuckTotal!=100 && !map_to_send.caveMonster.isEmpty())
+    {
+        qDebug() << QString("total luck is not egal to 100, monsters dropped: child.tagName(): %1 (at line: %2)").arg(cave.tagName()).arg(cave.lineNumber());
+        map_to_send.caveMonster.clear();
+    }
+
     return true;
 }
 
