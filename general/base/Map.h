@@ -6,6 +6,8 @@
 #include <QList>
 #include <QByteArray>
 
+#include "GeneralStructures.h"
+
 namespace Pokecraft {
 class Map
 {
@@ -53,6 +55,10 @@ public:
     quint16 height;
     quint32 group;
     quint32 id;
+
+    QList<MapMonster> grassMonster;
+    QList<MapMonster> waterMonster;
+    QList<MapMonster> caveMonster;
 };
 }
 
