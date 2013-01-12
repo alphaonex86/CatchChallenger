@@ -114,3 +114,8 @@ void BaseWindow::load_monsters()
         index++;
     }
 }
+
+void BaseWindow::fightCollision()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_battle);
+}

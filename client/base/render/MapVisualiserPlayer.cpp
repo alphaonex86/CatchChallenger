@@ -1,7 +1,8 @@
 #include "MapVisualiserPlayer.h"
 
-#include "../../general/base/MoveOnTheMap.h"
-#include "../base/interface/DatapackClientLoader.h"
+#include "../../../general/base/MoveOnTheMap.h"
+#include "../interface/DatapackClientLoader.h"
+#include "../../fight/interface/FightEngine.h"
 
 #include <qmath.h>
 
@@ -338,6 +339,16 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         stopGrassAnimation();
 
+        //check if is in fight collision
+        if(DatapackClientLoader::datapackLoader.fightEngine.haveRandomFight(*map,x,y))
+        {
+            inMove=false;
+            emit send_player_direction(direction);
+            parseStop();
+            emit fightCollision();
+            return;
+        }
+
         //check if one arrow key is pressed to continue to move into this direction
         if(keyPressed.contains(Qt::Key_Left))
         {
@@ -646,42 +657,55 @@ void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
     moveTimer.setInterval(speed/5);
 }
 
-bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction,const Pokecraft::Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision)
+bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction, Pokecraft::Map map, quint8 x, quint8 y, const bool &checkCollision)
 {
     if(!Pokecraft::MoveOnTheMap::canGoTo(direction,map,x,y,checkCollision))
         return false;
+    if(DatapackClientLoader::datapackLoader.fightEngine.isInFight())
     {
-        Pokecraft::Map * map=&current_map->logicalMap;
-        quint8 x=this->x;
-        quint8 y=this->y;
-        Pokecraft::MoveOnTheMap::move(direction,&map,&x,&y,false);
-        if(Pokecraft::MoveOnTheMap::isGrass(*map,x,y))
+        qDebug() << "Strange, try move when is in fight";
+        return false;
+    }
+    Pokecraft::Map *new_map=&map;
+    Pokecraft::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
+    if(Pokecraft::MoveOnTheMap::isGrass(*new_map,x,y) && !new_map->grassMonster.empty())
+    {
+        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
         {
-            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
-            {
-                emit blockedOn(MapVisualiserPlayer::BlockedOn_Grass);
-                return false;
-            }
-            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*map,x,y))
-            {
-                emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-                return false;
-            }
+            emit blockedOn(MapVisualiserPlayer::BlockedOn_Grass);
+            return false;
         }
-        if(Pokecraft::MoveOnTheMap::isWater(*map,x,y))
+        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*new_map,x,y))
         {
-            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
-            {
-                emit blockedOn(MapVisualiserPlayer::BlockedOn_Wather);
-                return false;
-            }
-            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*map,x,y))
-            {
-                emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-                return false;
-            }
+            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+            return false;
         }
-        /// \todo put cave here
+    }
+    if(Pokecraft::MoveOnTheMap::isWater(*new_map,x,y) && !new_map->waterMonster.empty())
+    {
+        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
+        {
+            emit blockedOn(MapVisualiserPlayer::BlockedOn_Wather);
+            return false;
+        }
+        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*new_map,x,y))
+        {
+            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+            return false;
+        }
+    }
+    if(!new_map->caveMonster.empty())
+    {
+        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
+        {
+            emit blockedOn(MapVisualiserPlayer::BlockedOn_Cave);
+            return false;
+        }
+        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*new_map,x,y))
+        {
+            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+            return false;
+        }
     }
     return true;
 }

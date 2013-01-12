@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>8</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">

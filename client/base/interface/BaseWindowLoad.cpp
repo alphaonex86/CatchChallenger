@@ -16,7 +16,7 @@ void BaseWindow::resetAll()
 {
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->stackedWidget->setCurrentWidget(ui->page_init);
     chat->resetAll();
     mapController->resetAll();
     haveDatapack=false;
@@ -237,7 +237,7 @@ void BaseWindow::updateConnectingStatus()
             return;
         load_monsters();
         this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
-        ui->stackedWidget->setCurrentIndex(1);
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Welcome <b><i>%1</i></b> on pokecraft").arg(client->getPseudo()));
         return;
     }

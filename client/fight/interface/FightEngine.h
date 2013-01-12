@@ -23,6 +23,7 @@ public:
     bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool haveRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool canDoFight();
+    bool isInFight();
     enum LandFight
     {
         LandFight_Water,

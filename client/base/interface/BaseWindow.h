@@ -152,6 +152,8 @@ private slots:
     void on_pushButton_interface_monsters_clicked();
     void on_toolButton_monster_list_quit_clicked();
 
+    //fight
+    void fightCollision();
 protected slots:
     //datapack
     void datapackParsed();
