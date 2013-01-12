@@ -70,6 +70,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
 
     //fight
     connect(client,SIGNAL(random_seeds(QByteArray)),&DatapackClientLoader::datapackLoader.fightEngine,SLOT(appendRandomSeeds(QByteArray)));
+    connect(mapController,SIGNAL(fightCollision()),this,SLOT(fightCollision()));
 
     //plants
     connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));

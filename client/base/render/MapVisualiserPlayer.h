@@ -76,12 +76,13 @@ protected slots:
     void setAnimationTilset(QString animationTilset);
     virtual void resetAll();
     void setSpeed(const SPEED_TYPE &speed);
-    virtual bool canGoTo(const Pokecraft::Direction &direction,const Pokecraft::Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision);
+    virtual bool canGoTo(const Pokecraft::Direction &direction,Pokecraft::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
 signals:
     void send_player_direction(const Pokecraft::Direction &the_direction);
     void stopped_in_front_of(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
     void actionOn(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
+    void fightCollision();
 };
 
 #endif
