@@ -222,6 +222,14 @@ struct Map_semi_teleport
     QString map;
 };
 
+struct MapMonster
+{
+    quint32 id;
+    quint8 minLevel;
+    quint8 maxLevel;
+    quint8 luck;
+};
+
 struct Map_to_send
 {
     Map_semi_border border;
@@ -258,6 +266,10 @@ struct Map_to_send
         quint32 id;
     };
     QList<Bot_Semi> bots;
+
+    QList<MapMonster> grassMonster;
+    QList<MapMonster> waterMonster;
+    QList<MapMonster> caveMonster;
 };
 
 struct CrafingRecipe
@@ -360,13 +372,12 @@ struct Monster
         quint32 speed;
     };
     Stat stat;
-    struct MonsterAttack
+    struct Attack
     {
         quint8 level;
-        quint32 attack;
-        quint32 attack_level;
+        PlayerMonster::Skill skill;
     };
-    QList<MonsterAttack> attack;
+    QList<Attack> attack;
     QList<quint32> level_to_xp;//first is xp to level 1
 };
 

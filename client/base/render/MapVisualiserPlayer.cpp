@@ -1,6 +1,7 @@
 #include "MapVisualiserPlayer.h"
 
 #include "../../general/base/MoveOnTheMap.h"
+#include "../base/interface/DatapackClientLoader.h"
 
 #include <qmath.h>
 
@@ -40,7 +41,6 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     grassCurrentObject=new Tiled::MapObject();
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
-    canGoToGrass=true;
 
     playerMapObject = new Tiled::MapObject();
     playerTileset = new Tiled::Tileset("player",16,24);
@@ -622,11 +622,6 @@ Pokecraft::Direction MapVisualiserPlayer::getDirection()
     return direction;
 }
 
-void MapVisualiserPlayer::setCanGoToGrass(const bool &canGoToGrass)
-{
-    this->canGoToGrass=canGoToGrass;
-}
-
 void MapVisualiserPlayer::setAnimationTilset(QString animationTilset)
 {
     animationTileset->loadFromImage(QImage(":/images/player_default/animation.png"),":/images/player_default/animation.png");
@@ -637,7 +632,6 @@ void MapVisualiserPlayer::setAnimationTilset(QString animationTilset)
 
 void MapVisualiserPlayer::resetAll()
 {
-    canGoToGrass=true;
     stopGrassAnimation();
     unloadPlayerFromCurrentMap();
     timer.stop();
@@ -656,7 +650,6 @@ bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction,const Po
 {
     if(!Pokecraft::MoveOnTheMap::canGoTo(direction,map,x,y,checkCollision))
         return false;
-    if(!canGoToGrass)
     {
         Pokecraft::Map * map=&current_map->logicalMap;
         quint8 x=this->x;
@@ -664,9 +657,31 @@ bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction,const Po
         Pokecraft::MoveOnTheMap::move(direction,&map,&x,&y,false);
         if(Pokecraft::MoveOnTheMap::isGrass(*map,x,y))
         {
-            emit blockedOn(static_cast<Pokecraft::Map_client *>(map),x,y);
-            return false;
+            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
+            {
+                emit blockedOn(MapVisualiserPlayer::BlockedOn_Grass);
+                return false;
+            }
+            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*map,x,y))
+            {
+                emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+                return false;
+            }
         }
+        if(Pokecraft::MoveOnTheMap::isWater(*map,x,y))
+        {
+            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
+            {
+                emit blockedOn(MapVisualiserPlayer::BlockedOn_Wather);
+                return false;
+            }
+            if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*map,x,y))
+            {
+                emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+                return false;
+            }
+        }
+        /// \todo put cave here
     }
     return true;
 }

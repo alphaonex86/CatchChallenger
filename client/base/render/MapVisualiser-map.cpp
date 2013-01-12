@@ -100,6 +100,9 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     tempMapObject->logicalMap.border.top.map                        = NULL;
     tempMapObject->logicalMap.border.right.map                      = NULL;
     tempMapObject->logicalMap.border.left.map                       = NULL;
+    tempMapObject->logicalMap.grassMonster                          = map_loader.map_to_send.grassMonster;
+    tempMapObject->logicalMap.waterMonster                          = map_loader.map_to_send.waterMonster;
+    tempMapObject->logicalMap.caveMonster                           = map_loader.map_to_send.caveMonster;
 
     //load the string
     tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;

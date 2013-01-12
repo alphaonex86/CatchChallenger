@@ -96,7 +96,7 @@ void BaseWindow::load_monsters()
         {
             Monster::Stat stat=Pokecraft::FightEngine::getStat(DatapackClientLoader::datapackLoader.fightEngine.monsters[monster.monster],monster.level);
             QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString("%1, level :%2\nHP: %3/%4")
+            item->setText(QString("%1, level: %2\nHP: %3/%4")
                     .arg(DatapackClientLoader::datapackLoader.fightEngine.monsterExtra[monster.monster].name)
                     .arg(monster.level)
                     .arg(monster.hp)
