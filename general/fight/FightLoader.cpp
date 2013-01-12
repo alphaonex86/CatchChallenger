@@ -10,6 +10,14 @@
 
 using namespace Pokecraft;
 
+bool operator<(const Monster::Attack &entry1, const Monster::Attack &entry2)
+{
+    if(entry1.level!=entry2.level)
+        return entry1.level < entry2.level;
+    else
+        return entry1.skill.skill < entry2.skill.skill;
+}
+
 QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint32, MonsterSkill> monsterSkills)
 {
     QHash<quint32,Monster> monsters;
@@ -177,15 +185,15 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint
                                     {
                                         if(attack.hasAttribute("level") && attack.hasAttribute("id"))
                                         {
-                                            Monster::MonsterAttack attackVar;
+                                            Monster::Attack attackVar;
                                             if(attack.hasAttribute("attack_level"))
                                             {
-                                                attackVar.attack_level=attack.attribute("attack_level").toUShort(&ok);
+                                                attackVar.skill.level=attack.attribute("attack_level").toUShort(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack_level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, skill.level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                             }
                                             else
-                                                attackVar.attack_level=1;
+                                                attackVar.skill.level=1;
                                             if(ok)
                                             {
                                                 attackVar.level=attack.attribute("level").toUShort(&ok);
@@ -194,13 +202,13 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint
                                             }
                                             if(ok)
                                             {
-                                                attackVar.attack=attack.attribute("id").toUShort(&ok);
+                                                attackVar.skill.skill=attack.attribute("id").toUShort(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                             }
                                             if(ok)
                                             {
-                                                if(!monsterSkills.contains(attackVar.attack))
+                                                if(!monsterSkills.contains(attackVar.skill.skill))
                                                 {
                                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack is not into attack loaded: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                     ok=false;
@@ -208,10 +216,34 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint
                                             }
                                             if(ok)
                                             {
-                                                if(attackVar.attack_level<=0 || attackVar.attack_level>(quint32)monsterSkills[attackVar.attack].level.size())
+                                                if(attackVar.skill.level<=0 || attackVar.skill.level>(quint32)monsterSkills[attackVar.skill.skill].level.size())
                                                 {
-                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack level is not in range 1-%5: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(monsterSkills[attackVar.attack].level.size()));
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack level is not in range 1-%5: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(monsterSkills[attackVar.skill.skill].level.size()));
                                                     ok=false;
+                                                }
+                                            }
+                                            if(ok)
+                                            {
+                                                int index=0;
+                                                while(index<monster.attack.size())
+                                                {
+                                                    if(monster.attack.at(index).level==attackVar.level && monster.attack.at(index).skill.skill==attackVar.skill.skill)
+                                                    {
+                                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack already do for this level: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                        ok=false;
+                                                        break;
+                                                    }
+                                                    if(monster.attack.at(index).skill.skill==attackVar.skill.skill && monster.attack.at(index).skill.level==attackVar.skill.level)
+                                                    {
+                                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, this attack level is already found %4, level: %5 for attack: %6: child.tagName(): %2 (at line: %3)")
+                                                                                 .arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber())
+                                                                                 .arg(attackVar.skill.skill).arg(attackVar.skill.level)
+                                                                                 .arg(index)
+                                                                                 );
+                                                        ok=false;
+                                                        break;
+                                                    }
+                                                    index++;
                                                 }
                                             }
                                             if(ok)
@@ -224,6 +256,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint
                                         DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                     attack = attack.nextSiblingElement("attack");
                                 }
+                                qSort(monster.attack);
                             }
                             else
                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));

@@ -66,7 +66,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     //render, logical part into Map_Client
     connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)));
     connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client*,quint8,quint8)));
-    connect(mapController,SIGNAL(blockedOn(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(blockedOn(Pokecraft::Map_client*,quint8,quint8)));
+    connect(mapController,SIGNAL(blockedOn(MapVisualiserPlayer::BlockedOn)),this,SLOT(blockedOn(MapVisualiserPlayer::BlockedOn)));
 
     //fight
     connect(client,SIGNAL(random_seeds(QByteArray)),&DatapackClientLoader::datapackLoader.fightEngine,SLOT(appendRandomSeeds(QByteArray)));
@@ -610,15 +610,21 @@ bool BaseWindow::actionOnCheckBot(Pokecraft::Map_client *map, quint8 x, quint8 y
     return true;
 }
 
-void BaseWindow::blockedOn(Pokecraft::Map_client *map, quint8 x, quint8 y)
+void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
 {
-    if(!canFight)
-        if(Pokecraft::MoveOnTheMap::isGrass(*map,x,y))
-        {
-            qDebug() << "block on:" << map->map_file << x << y;
-            showTip(tr("You can't enter to the grass if you are not able to fight"));
-            return;
-        }
+    switch(blockOnVar)
+    {
+        case MapVisualiserPlayer::BlockedOn_Grass:
+        case MapVisualiserPlayer::BlockedOn_Wather:
+        case MapVisualiserPlayer::BlockedOn_Cave:
+            qDebug() << "You can't enter to the fight zone if you are not able to fight";
+            showTip(tr("You can't enter to the fight zone if you are not able to fight"));
+        break;
+        case MapVisualiserPlayer::BlockedOn_RandomNumber:
+            qDebug() << "You can't enter to the fight zone, because have not random number";
+            showTip(tr("You can't enter to the fight zone, because have not random number"));
+        break;
+    }
 }
 
 //network

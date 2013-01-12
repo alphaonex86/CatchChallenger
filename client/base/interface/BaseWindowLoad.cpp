@@ -50,7 +50,6 @@ void BaseWindow::resetAll()
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);
     waitToSell=false;
-    canFight=false;
 }
 
 void BaseWindow::serverIsLoading()
@@ -236,7 +235,6 @@ void BaseWindow::updateConnectingStatus()
         load_crafting_inventory();
         if(!check_monsters())
             return;
-        check_fight();
         load_monsters();
         this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
         ui->stackedWidget->setCurrentIndex(1);
@@ -270,21 +268,4 @@ void BaseWindow::updatePlayerImage()
             qDebug() << "The skin id: "+QString::number(informations.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
         }
     }
-}
-
-void BaseWindow::check_fight()
-{
-    canFight=false;
-    int index=0;
-    int size=client->player_informations.playerMonster.size();
-    while(index<size)
-    {
-        if(client->player_informations.playerMonster.at(index).hp>0 && client->player_informations.playerMonster.at(index).egg_step==0)
-        {
-            canFight=true;
-            break;
-        }
-        index++;
-    }
-    mapController->setCanGoToGrass(canFight);
 }
