@@ -24,50 +24,11 @@ bool FightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &
         return false;
     }
     if(Pokecraft::MoveOnTheMap::isGrass(map,x,y) && !map.grassMonster.empty())
-    {
-        //generate step
-        if(stepFight_Grass.empty())
-        {
-            if(m_randomSeeds.size()==0)
-                return false;
-            else
-            {
-                stepFight_Grass << (m_randomSeeds[0]%16);
-                m_randomSeeds.remove(0,1);
-            }
-        }
         return m_randomSeeds.size()>=POKECRAFT_MIN_RANDOM_TO_FIGHT;
-    }
     if(Pokecraft::MoveOnTheMap::isWater(map,x,y) && !map.waterMonster.empty())
-    {
-        //generate step
-        if(stepFight_Grass.empty())
-        {
-            if(m_randomSeeds.size()==0)
-                return false;
-            else
-            {
-                stepFight_Grass << (m_randomSeeds[0]%16);
-                m_randomSeeds.remove(0,1);
-            }
-        }
         return m_randomSeeds.size()>=POKECRAFT_MIN_RANDOM_TO_FIGHT;
-    }
     if(!map.caveMonster.empty())
-    {
-        //generate step
-        if(stepFight_Cave.empty())
-        {
-            if(m_randomSeeds.size()==0)
-                return false;
-            else
-            {
-                stepFight_Cave << (m_randomSeeds[0]%16);
-                m_randomSeeds.remove(0,1);
-            }
-        }
         return m_randomSeeds.size()>=POKECRAFT_MIN_RANDOM_TO_FIGHT;
-    }
 
     /// no fight in this zone
     qDebug() << QString("map: %1 (%2,%3), no fight in this zone").arg(map.map_file).arg(x).arg(y);
@@ -84,6 +45,19 @@ bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y
     }
     if(Pokecraft::MoveOnTheMap::isGrass(map,x,y) && !map.grassMonster.empty())
     {
+        if(stepFight_Grass.empty())
+        {
+            if(m_randomSeeds.size()==0)
+            {
+                qDebug() << QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y);
+                return false;
+            }
+            else
+            {
+                stepFight_Grass << (m_randomSeeds[0]%16);
+                m_randomSeeds.remove(0,1);
+            }
+        }
         stepFight_Grass.first()--;
         if(stepFight_Grass.first()==0)
         {
@@ -97,10 +71,64 @@ bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y
         else
             return false;
     }
-    /// \todo water/cave management
+    if(Pokecraft::MoveOnTheMap::isWater(map,x,y) && !map.waterMonster.empty())
+    {
+        if(stepFight_Water.empty())
+        {
+            if(m_randomSeeds.size()==0)
+            {
+                qDebug() << QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y);
+                return false;
+            }
+            else
+            {
+                stepFight_Water << (m_randomSeeds[0]%16);
+                m_randomSeeds.remove(0,1);
+            }
+        }
+        stepFight_Water.first()--;
+        if(stepFight_Water.first()==0)
+        {
+            stepFight_Water.removeFirst();
+
+            PlayerMonster monster=getRandomMonster(map.waterMonster,&ok);
+            if(ok)
+                wildMonsters << monster;
+            return ok;
+        }
+        else
+            return false;
+    }
+    if(!map.caveMonster.empty())
+    {
+        if(stepFight_Cave.empty())
+        {
+            if(m_randomSeeds.size()==0)
+            {
+                qDebug() << QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y);
+                return false;
+            }
+            else
+            {
+                stepFight_Cave << (m_randomSeeds[0]%16);
+                m_randomSeeds.remove(0,1);
+            }
+        }
+        stepFight_Cave.first()--;
+        if(stepFight_Cave.first()==0)
+        {
+            stepFight_Cave.removeFirst();
+
+            PlayerMonster monster=getRandomMonster(map.caveMonster,&ok);
+            if(ok)
+                wildMonsters << monster;
+            return ok;
+        }
+        else
+            return false;
+    }
 
     /// no fight in this zone
-    qDebug() << QString("map: %1 (%2,%3), no fight in this zone").arg(map.map_file).arg(x).arg(y);
     return false;
 }
 
@@ -180,6 +208,14 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
 bool FightEngine::canDoFight()
 {
     return m_canDoFight;
+}
+
+bool FightEngine::isInFight()
+{
+    if(!wildMonsters.empty())
+        return true;
+    else
+        return false;
 }
 
 void FightEngine::setPlayerMonster(const QList<PlayerMonster> &playerMonster)
