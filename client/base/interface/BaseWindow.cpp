@@ -3,6 +3,8 @@
 #include "../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
+#include "MapController.h"
+#include "Chat.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -15,7 +17,9 @@
 
 using namespace Pokecraft;
 
-BaseWindow::BaseWindow(Api_protocol *client) :
+BaseWindow* BaseWindow::baseWindow=new Pokecraft::BaseWindow();
+
+BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)
 {
     qRegisterMetaType<Pokecraft::Chat_type>("Pokecraft::Chat_type");
@@ -25,68 +29,68 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     qRegisterMetaType<QHash<quint32,quint32> >("Pokecraft::Plant_collect");
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
 
-    this->client=client;
     socketState=QAbstractSocket::UnconnectedState;
 
-    mapController=new MapController(client,true,false,true,false);
+    MapController::mapController=new MapController(true,false,true,false);
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
-    chat=new Chat(ui->page_map,client);
+    Chat::chat=new Chat(ui->page_map);
 
-    connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
-    connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
-    connect(client,SIGNAL(error(QString)),this,SLOT(error(QString)),Qt::QueuedConnection);
-    connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)),Qt::QueuedConnection);
-    connect(client,SIGNAL(notLogged(QString)),this,SLOT(notLogged(QString)),Qt::QueuedConnection);
-    connect(client,SIGNAL(logged()),this,SLOT(logged()),Qt::QueuedConnection);
-    connect(client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()),Qt::QueuedConnection);
-    connect(client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(error(QString)),this,SLOT(error(QString)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(message(QString)),this,SLOT(message(QString)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(notLogged(QString)),this,SLOT(notLogged(QString)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(logged()),this,SLOT(logged()),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)),Qt::QueuedConnection);
 
     //connect the map controler
-    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
 
     //inventory
-    connect(client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)));
-    connect(client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
-    connect(client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(remove_to_inventory(QHash<quint32,quint32>)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(remove_to_inventory(QHash<quint32,quint32>)));
 
     //chat
-    connect(client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),chat,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
-    connect(client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),chat,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
-    connect(this,SIGNAL(sendsetMultiPlayer(bool)),chat,SLOT(setVisible(bool)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)),Chat::chat,SLOT(new_chat_text(Pokecraft::Chat_type,QString,QString,Pokecraft::Player_type)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(new_system_text(Pokecraft::Chat_type,QString)),Chat::chat,SLOT(new_system_text(Pokecraft::Chat_type,QString)));
+    connect(this,SIGNAL(sendsetMultiPlayer(bool)),Chat::chat,SLOT(setVisible(bool)),Qt::QueuedConnection);
 
-    connect(client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
-    //connect(client,SIGNAL(new_player_info()),this,SLOT(update_chat()),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(number_of_player(quint16,quint16)),this,SLOT(number_of_player(quint16,quint16)));
+    //connect(Pokecraft::Api_client_real::client,SIGNAL(new_player_info()),this,SLOT(update_chat()),Qt::QueuedConnection);
 
     //connect the datapack loader
     connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),this,SLOT(datapackParsed()),Qt::QueuedConnection);
     connect(this,SIGNAL(parseDatapack(QString)),&DatapackClientLoader::datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),MapController::mapController,SLOT(datapackParsed()),Qt::QueuedConnection);
 
     //render, logical part into Map_Client
-    connect(mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)));
-    connect(mapController,SIGNAL(actionOn(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client*,quint8,quint8)));
-    connect(mapController,SIGNAL(blockedOn(MapVisualiserPlayer::BlockedOn)),this,SLOT(blockedOn(MapVisualiserPlayer::BlockedOn)));
+    connect(MapController::mapController,SIGNAL(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(stopped_in_front_of(Pokecraft::Map_client*,quint8,quint8)));
+    connect(MapController::mapController,SIGNAL(actionOn(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(actionOn(Pokecraft::Map_client*,quint8,quint8)));
+    connect(MapController::mapController,SIGNAL(blockedOn(MapVisualiserPlayer::BlockedOn)),this,SLOT(blockedOn(MapVisualiserPlayer::BlockedOn)));
 
     //fight
-    connect(client,SIGNAL(random_seeds(QByteArray)),&DatapackClientLoader::datapackLoader.fightEngine,SLOT(appendRandomSeeds(QByteArray)));
-    connect(mapController,SIGNAL(fightCollision()),this,SLOT(fightCollision()));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&FightEngine::fightEngine,SLOT(appendRandomSeeds(QByteArray)));
+    connect(MapController::mapController,SIGNAL(fightCollision(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(fightCollision(Pokecraft::Map_client*,quint8,quint8)));
+    connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
 
     //plants
-    connect(this,SIGNAL(useSeed(quint8)),client,SLOT(useSeed(quint8)));
-    connect(this,SIGNAL(collectMaturePlant()),client,SLOT(collectMaturePlant()));
-    connect(client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
-    connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
+    connect(this,SIGNAL(useSeed(quint8)),Pokecraft::Api_client_real::client,SLOT(useSeed(quint8)));
+    connect(this,SIGNAL(collectMaturePlant()),Pokecraft::Api_client_real::client,SLOT(collectMaturePlant()));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
     //crafting
-    connect(client,SIGNAL(recipeUsed(RecipeUsage)),this,SLOT(recipeUsed(RecipeUsage)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(recipeUsed(RecipeUsage)),this,SLOT(recipeUsed(RecipeUsage)));
     //inventory
-    connect(client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
     //shop
-    connect(client,SIGNAL(haveShopList(QList<ItemToSellOrBuy>)),this,SLOT(haveShopList(QList<ItemToSellOrBuy>)));
-    connect(client,SIGNAL(haveSellObject(SoldStat,quint32)),this,SLOT(haveSellObject(SoldStat,quint32)));
-    connect(client,SIGNAL(haveBuyObject(BuyStat,quint32)),this,SLOT(haveBuyObject(BuyStat,quint32)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(haveShopList(QList<ItemToSellOrBuy>)),this,SLOT(haveShopList(QList<ItemToSellOrBuy>)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(haveSellObject(SoldStat,quint32)),this,SLOT(haveSellObject(SoldStat,quint32)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(haveBuyObject(BuyStat,quint32)),this,SLOT(haveBuyObject(BuyStat,quint32)));
 
-    connect(this,SIGNAL(destroyObject(quint32,quint32)),client,SLOT(destroyObject(quint32,quint32)));
+    connect(this,SIGNAL(destroyObject(quint32,quint32)),Pokecraft::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
 
     updateRXTXTimer.start(1000);
@@ -99,7 +103,7 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     connect(&tip_timeout,SIGNAL(timeout()),this,SLOT(tipTimeout()));
     connect(&gain_timeout,SIGNAL(timeout()),this,SLOT(gainTimeout()));
 
-    mapController->setDatapackPath(client->get_datapack_base_name());
+    MapController::mapController->setDatapackPath(Pokecraft::Api_client_real::client->get_datapack_base_name());
 
     renderFrame = new QFrame(ui->page_map);
     renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
@@ -108,30 +112,33 @@ BaseWindow::BaseWindow(Api_protocol *client) :
     renderLayout->setSpacing(0);
     renderLayout->setContentsMargins(0, 0, 0, 0);
     renderLayout->setObjectName(QString::fromUtf8("renderLayout"));
-    renderLayout->addWidget(mapController);
+    renderLayout->addWidget(MapController::mapController);
     renderFrame->setGeometry(QRect(0, 0, 800, 516));
     renderFrame->lower();
     renderFrame->lower();
     renderFrame->lower();
 
-    chat->setGeometry(QRect(0, 0, 300, 400));
+    moveFightMonsterBottomTimer.setSingleShot(true);
+    moveFightMonsterBottomTimer.setInterval(20);
+
+    Chat::chat->setGeometry(QRect(0, 0, 300, 400));
 
     resetAll();
     loadSettings();
 
-    mapController->setFocus();
+    MapController::mapController->setFocus();
 }
 
 BaseWindow::~BaseWindow()
 {
     delete ui;
-    delete mapController;
-    delete chat;
+    delete MapController::mapController;
+    delete Chat::chat;
 }
 
 QString BaseWindow::lastLocation() const
 {
-    return mapController->lastLocation();
+    return MapController::mapController->lastLocation();
 }
 
 void BaseWindow::changeEvent(QEvent *e)
@@ -159,7 +166,7 @@ void BaseWindow::number_of_player(quint16 number,quint16 max)
 
 void BaseWindow::on_toolButton_interface_quit_clicked()
 {
-    client->tryDisconnect();
+    Pokecraft::Api_client_real::client->tryDisconnect();
 }
 
 void BaseWindow::on_toolButton_quit_interface_clicked()
@@ -224,7 +231,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             tempItem.quantity=quantity;
             tempItem.price=DatapackClientLoader::datapackLoader.items[itemId].price/2;
             itemsToSell << tempItem;
-            client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
+            Pokecraft::Api_client_real::client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
             load_plant_inventory();
         break;
@@ -332,7 +339,7 @@ void BaseWindow::newError(QString error,QString detailedError)
     qDebug() << detailedError.toLocal8Bit();
     if(socketState!=QAbstractSocket::ConnectedState)
         return;
-    client->tryDisconnect();
+    Pokecraft::Api_client_real::client->tryDisconnect();
     resetAll();
     QMessageBox::critical(this,tr("Error"),error);
 }
@@ -497,7 +504,7 @@ void BaseWindow::stopped_in_front_of(Pokecraft::Map_client *map, quint8 x, quint
     {
         //check bot with border
         Pokecraft::Map * current_map=map;
-        switch(mapController->getDirection())
+        switch(MapController::mapController->getDirection())
         {
             case Pokecraft::Direction_look_at_left:
             if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
@@ -574,7 +581,7 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
     {
         //check bot with border
         Pokecraft::Map * current_map=map;
-        switch(mapController->getDirection())
+        switch(MapController::mapController->getDirection())
         {
             case Pokecraft::Direction_look_at_left:
             if(Pokecraft::MoveOnTheMap::canGoTo(Pokecraft::Direction_move_at_left,*map,x,y,false))
@@ -631,8 +638,8 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
 //network
 void BaseWindow::updateRXTX()
 {
-    quint64 RXSize=client->getRXSize();
-    quint64 TXSize=client->getTXSize();
+    quint64 RXSize=Pokecraft::Api_client_real::client->getRXSize();
+    quint64 TXSize=Pokecraft::Api_client_real::client->getTXSize();
     if(previousRXSize>RXSize)
         previousRXSize=RXSize;
     if(previousTXSize>TXSize)
@@ -698,7 +705,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
     }
     else if(actualBot.step[step].attribute("type")=="shop")
     {
-        if(client->getHaveShopAction())
+        if(Pokecraft::Api_client_real::client->getHaveShopAction())
         {
             showTip(tr("Already in shop action"));
             return;
@@ -718,10 +725,10 @@ void BaseWindow::goToBotStep(const quint8 &step)
         QPixmap pixmap;
         if(actualBot.properties.contains("skin"))
         {
-            pixmap=QPixmap(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+            pixmap=QPixmap(Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
             if(pixmap.isNull())
             {
-                qDebug() << QString("Unable to load seller skin: %1").arg(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+                qDebug() << QString("Unable to load seller skin: %1").arg(Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
                 pixmap=QPixmap(":/images/player_default/front.png");
             }
         }
@@ -735,7 +742,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->shopDescription->setText(tr("Waiting the shop content"));
         ui->shopBuy->setVisible(false);
         qDebug() << "goToBotStep(), client->getShopList(shopId): " << shopId;
-        client->getShopList(shopId);
+        Pokecraft::Api_client_real::client->getShopList(shopId);
         ui->shopCash->setText(tr("Cash: %1").arg(cash));
         return;
     }
@@ -756,10 +763,10 @@ void BaseWindow::goToBotStep(const quint8 &step)
         QPixmap pixmap;
         if(actualBot.properties.contains("skin"))
         {
-            pixmap=QPixmap(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+            pixmap=QPixmap(Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
             if(pixmap.isNull())
             {
-                qDebug() << QString("Unable to load seller skin: %1").arg(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
+                qDebug() << QString("Unable to load seller skin: %1").arg(Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+"/"+actualBot.properties["skin"]+"/front.png");
                 pixmap=QPixmap(":/images/player_default/front.png");
             }
         }
@@ -767,7 +774,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             pixmap=QPixmap(":/images/player_default/front.png");
         pixmap=pixmap.scaled(160,160);
         ui->shopSellerImage->setPixmap(pixmap);
-        if(client->getHaveShopAction())
+        if(Pokecraft::Api_client_real::client->getHaveShopAction())
         {
             showTip(tr("Already in shop action"));
             return;
@@ -799,7 +806,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     //is crafting recipe
     if(DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(items_graphical[item]))
     {
-        Player_private_and_public_informations informations=client->get_player_informations();
+        Player_private_and_public_informations informations=Pokecraft::Api_client_real::client->get_player_informations();
         if(informations.recipes.contains(DatapackClientLoader::datapackLoader.itemToCrafingRecipes[items_graphical[item]]))
         {
             QMessageBox::information(this,tr("Information"),tr("You already know this recipe"));
@@ -809,7 +816,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         items[items_graphical[item]]--;
         if(items[items_graphical[item]]==0)
             items.remove(items_graphical[item]);
-        client->useObject(items_graphical[item]);
+        Pokecraft::Api_client_real::client->useObject(items_graphical[item]);
         load_inventory();
     }
     else
@@ -824,7 +831,7 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
         //is crafting recipe
         if(DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(objectInUsing.first()))
         {
-            client->addRecipe(DatapackClientLoader::datapackLoader.itemToCrafingRecipes[objectInUsing.first()]);
+            Pokecraft::Api_client_real::client->addRecipe(DatapackClientLoader::datapackLoader.itemToCrafingRecipes[objectInUsing.first()]);
             load_crafting_inventory();
         }
         else
@@ -957,7 +964,7 @@ void BaseWindow::on_toolButton_quit_shop_clicked()
 
 void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 {
-    if(client->getHaveShopAction())
+    if(Pokecraft::Api_client_real::client->getHaveShopAction())
         return;
     if(!waitToSell)
     {
@@ -974,7 +981,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
         if(!ok)
             return;
         tempItemForBuy=shop_items_graphical[item];
-        client->buyObject(shopId,tempItemForBuy,tempQuantityForBuy,itemsIntoTheShop[tempItemForBuy].price);
+        Pokecraft::Api_client_real::client->buyObject(shopId,tempItemForBuy,tempQuantityForBuy,itemsIntoTheShop[tempItemForBuy].price);
         ui->stackedWidget->setCurrentWidget(ui->page_map);
         tempCashForBuy=itemsIntoTheShop[tempItemForBuy].price*tempQuantityForBuy;
         removeCash(tempCashForBuy);
@@ -1196,12 +1203,12 @@ void BaseWindow::removeCash(const quint32 &cash)
     ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
 }
 
-void Pokecraft::BaseWindow::on_pushButton_interface_monsters_clicked()
+void BaseWindow::on_pushButton_interface_monsters_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_monster);
 }
 
-void Pokecraft::BaseWindow::on_toolButton_monster_list_quit_clicked()
+void BaseWindow::on_toolButton_monster_list_quit_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }

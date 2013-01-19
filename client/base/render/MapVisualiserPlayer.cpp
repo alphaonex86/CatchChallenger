@@ -340,12 +340,12 @@ void MapVisualiserPlayer::moveStepSlot()
         stopGrassAnimation();
 
         //check if is in fight collision
-        if(DatapackClientLoader::datapackLoader.fightEngine.haveRandomFight(*map,x,y))
+        if(Pokecraft::FightEngine::fightEngine.haveRandomFight(*map,x,y))
         {
             inMove=false;
             emit send_player_direction(direction);
             parseStop();
-            emit fightCollision();
+            emit fightCollision(static_cast<Pokecraft::Map_client *>(map),x,y);
             return;
         }
 
@@ -661,7 +661,7 @@ bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction, Pokecra
 {
     if(!Pokecraft::MoveOnTheMap::canGoTo(direction,map,x,y,checkCollision))
         return false;
-    if(DatapackClientLoader::datapackLoader.fightEngine.isInFight())
+    if(Pokecraft::FightEngine::fightEngine.isInFight())
     {
         qDebug() << "Strange, try move when is in fight";
         return false;
@@ -670,12 +670,12 @@ bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction, Pokecra
     Pokecraft::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
     if(Pokecraft::MoveOnTheMap::isGrass(*new_map,x,y) && !new_map->grassMonster.empty())
     {
-        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
+        if(!Pokecraft::FightEngine::fightEngine.canDoFight())
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_Grass);
             return false;
         }
-        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*new_map,x,y))
+        if(!Pokecraft::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
             return false;
@@ -683,12 +683,12 @@ bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction, Pokecra
     }
     if(Pokecraft::MoveOnTheMap::isWater(*new_map,x,y) && !new_map->waterMonster.empty())
     {
-        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
+        if(!Pokecraft::FightEngine::fightEngine.canDoFight())
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_Wather);
             return false;
         }
-        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*new_map,x,y))
+        if(!Pokecraft::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
             return false;
@@ -696,12 +696,12 @@ bool MapVisualiserPlayer::canGoTo(const Pokecraft::Direction &direction, Pokecra
     }
     if(!new_map->caveMonster.empty())
     {
-        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoFight())
+        if(!Pokecraft::FightEngine::fightEngine.canDoFight())
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_Cave);
             return false;
         }
-        if(!DatapackClientLoader::datapackLoader.fightEngine.canDoRandomFight(*new_map,x,y))
+        if(!Pokecraft::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
             return false;

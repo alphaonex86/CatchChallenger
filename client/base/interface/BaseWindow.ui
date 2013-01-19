@@ -2762,7 +2762,7 @@ padding-bottom:3px;
         </layout>
        </widget>
        <widget class="QWidget" name="page_battle">
-        <widget class="QFrame" name="frameFightBottomBar">
+        <widget class="QStackedWidget" name="stackedWidgetFightBottomBar">
          <property name="geometry">
           <rect>
            <x>0</x>
@@ -2784,59 +2784,182 @@ padding-bottom:3px;
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">#frameFightBottomBar{background-image: url(:/images/interface/fight-bottom-bar.png);}</string>
+          <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="0" rowspan="2">
-           <widget class="QLabel" name="labelFightFull">
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QPushButton" name="pushButtonFight1">
-            <property name="text">
-             <string>PushButton</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="pushButtonFight2">
-            <property name="text">
-             <string>PushButton</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QLabel" name="labelFightDetails">
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QPushButton" name="pushButtonFight3">
-            <property name="text">
-             <string>PushButton</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QPushButton" name="pushButtonFight4">
-            <property name="text">
-             <string>PushButton</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QPushButton" name="pushButtonFightReturn">
-            <property name="text">
-             <string>PushButton</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <property name="currentIndex">
+          <number>2</number>
+         </property>
+         <widget class="QWidget" name="stackedWidgetFightBottomBarPageEnter">
+          <layout class="QHBoxLayout" name="horizontalLayout_22">
+           <item>
+            <widget class="QLabel" name="labelFightEnter"/>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_23">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonFightEnterNext">
+             <property name="text">
+              <string>Next</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="stackedWidgetFightBottomBarPageMain">
+          <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="0" rowspan="2">
+            <widget class="QLabel" name="label_15">
+             <property name="text">
+              <string>What do you do?</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <layout class="QVBoxLayout" name="verticalLayout_16">
+             <item>
+              <spacer name="verticalSpacer_15">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButtonFightAttack">
+               <property name="text">
+                <string>Attack</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButtonFightMonster">
+               <property name="text">
+                <string>Monster</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButtonFightBag">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Bag</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_14">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="2">
+            <widget class="QToolButton" name="toolButtonFightQuit">
+             <property name="minimumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="stackedWidgetFightBottomBarPageAttack">
+          <layout class="QHBoxLayout" name="horizontalLayout_23">
+           <item>
+            <widget class="QListWidget" name="listWidgetFightAttack"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelFightAttackDetails">
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>0</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_17">
+             <item>
+              <spacer name="verticalSpacer_16">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButtonFightAttackConfirmed">
+               <property name="text">
+                <string>Attack</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButtonFightReturn">
+               <property name="text">
+                <string>Return</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
         </widget>
         <widget class="QFrame" name="frameFightBackground">
          <property name="geometry">
@@ -2848,7 +2971,7 @@ padding-bottom:3px;
           </rect>
          </property>
          <property name="styleSheet">
-          <string notr="true">#frameFightBackground{background-image: url(:/images/interface/background.png);}</string>
+          <string notr="true">#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}</string>
          </property>
          <widget class="QLabel" name="labelFightPlateformBottom">
           <property name="geometry">
@@ -2872,7 +2995,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/plateform-background.png</pixmap>
+           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/fight/plateform-background.png</pixmap>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightPlateformTop">
@@ -2897,7 +3020,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/plateform-front.png</pixmap>
+           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/fight/plateform-front.png</pixmap>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightMonsterBottom">
@@ -2955,6 +3078,252 @@ padding-bottom:3px;
           <property name="alignment">
            <set>Qt::AlignCenter</set>
           </property>
+         </widget>
+         <widget class="QFrame" name="frameFightTop">
+          <property name="geometry">
+           <rect>
+            <x>70</x>
+            <y>70</y>
+            <width>300</width>
+            <height>88</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>88</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>88</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">#frameFightTop{
+background-image: url(:/images/interface/fight/labelTop.png);
+padding:6px 14px 6px 6px;
+}</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_18">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_25">
+             <item>
+              <widget class="QLabel" name="labelFightTopName">
+               <property name="text">
+                <string notr="true">Name</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_24">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelFightTopLevel">
+               <property name="text">
+                <string notr="true">Level 100</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_24">
+             <item>
+              <widget class="QLabel" name="label_18">
+               <property name="text">
+                <string>HP</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="progressBarFightTopHP">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>10</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>10</height>
+                </size>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_17">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>19</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QFrame" name="frameFightBottom">
+          <property name="geometry">
+           <rect>
+            <x>480</x>
+            <y>310</y>
+            <width>300</width>
+            <height>88</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>88</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>88</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">#frameFightBottom{
+background-image: url(:/images/interface/fight/labelBottom.png);
+padding:6px 6px 6px 14px;
+}
+</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_19">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_28">
+             <item>
+              <widget class="QLabel" name="labelFightBottomName">
+               <property name="text">
+                <string notr="true">Name</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_25">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelFightBottomLevel">
+               <property name="text">
+                <string notr="true">Level 100</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_27">
+             <item>
+              <widget class="QLabel" name="label_21">
+               <property name="text">
+                <string>HP</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="progressBarFightBottomHP">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>10</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>10</height>
+                </size>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelFightBottomHP">
+               <property name="text">
+                <string notr="true">?/?</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_26">
+             <item>
+              <widget class="QLabel" name="label_23">
+               <property name="text">
+                <string>Exp</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="progressBarFightBottopExp">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>10</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>10</height>
+                </size>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_18">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>5</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
          </widget>
         </widget>
        </widget>

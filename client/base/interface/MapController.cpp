@@ -1,13 +1,16 @@
 #include "MapController.h"
+#include "../Api_client_real.h"
 
-MapController::MapController(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapControllerMP(client,centerOnPlayer,debugTags,useCache,OpenGL)
+MapController* MapController::mapController=NULL;
+
+MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+    MapControllerMP(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     qRegisterMetaType<Pokecraft::Plant_collect>("Pokecraft::Plant_collect");
-    connect(client,SIGNAL(insert_plant(quint32,quint16,quint16,quint8,quint16)),this,SLOT(insert_plant(quint32,quint16,quint16,quint8,quint16)));
-    connect(client,SIGNAL(remove_plant(quint32,quint16,quint16)),this,SLOT(remove_plant(quint32,quint16,quint16)));
-    connect(client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
-    connect(client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(insert_plant(quint32,quint16,quint16,quint8,quint16)),this,SLOT(insert_plant(quint32,quint16,quint16,quint8,quint16)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(remove_plant(quint32,quint16,quint16)),this,SLOT(remove_plant(quint32,quint16,quint16)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(plant_collected(Pokecraft::Plant_collect)),this,SLOT(plant_collected(Pokecraft::Plant_collect)));
 }
 
 MapController::~MapController()

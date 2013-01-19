@@ -25,6 +25,12 @@ public:
         BlockedOn_Cave,
         BlockedOn_RandomNumber
     };
+    enum LandFight
+    {
+        LandFight_Water,
+        LandFight_Grass,
+        LandFight_Cave
+    };
 protected:
     //player
     Tiled::MapObject * playerMapObject;
@@ -82,7 +88,7 @@ signals:
     void stopped_in_front_of(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
     void actionOn(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
-    void fightCollision();
+    void fightCollision(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
 };
 
 #endif

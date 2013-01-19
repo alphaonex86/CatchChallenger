@@ -1,7 +1,7 @@
 #include "../base/ClientLocalBroadcast.h"
 #include "../base/BroadCastWithoutSender.h"
 #include "../../general/base/ProtocolParsing.h"
-#include "../base/GlobalData.h"
+#include "../base/GlobalServerData.h"
 
 #include <QDateTime>
 
@@ -12,7 +12,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
     #endif
-    if(!GlobalData::serverPrivateVariables.plants.contains(plant_id))
+    if(!GlobalServerData::serverPrivateVariables.plants.contains(plant_id))
     {
         emit error(QString("plant_id not found: %1").arg(plant_id));
         return;
@@ -140,7 +140,7 @@ void ClientLocalBroadcast::seedValidated()
     {
         if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
         {
-            emit addObjectAndSend(GlobalData::serverPrivateVariables.plants[plant_list_in_waiting.first().plant_id].itemUsed);
+            emit addObjectAndSend(GlobalServerData::serverPrivateVariables.plants[plant_list_in_waiting.first().plant_id].itemUsed);
             QByteArray data;
             data[0]=0x02;
             emit postReply(plant_list_in_waiting.first().query_id,data);
@@ -159,10 +159,10 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
     plantOnMap.player_id=player_informations->id;
-    plantOnMap.mature_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds;
-    plantOnMap.player_owned_expire_at=current_time+GlobalData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds+POKECRAFT_SERVER_OWNER_TIMEOUT;
+    plantOnMap.mature_at=current_time+GlobalServerData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds;
+    plantOnMap.player_owned_expire_at=current_time+GlobalServerData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds+POKECRAFT_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -207,9 +207,9 @@ void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plan
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint16)1;
-    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
         out << (quint8)map->id;
-    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
         out << (quint16)map->id;
     else
         out << (quint32)map->id;
@@ -235,9 +235,9 @@ void ClientLocalBroadcast::removeSeed(const MapServerCrafting::PlantOnMap &plant
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint16)1;
-    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
         out << (quint8)map->id;
-    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
         out << (quint16)map->id;
     else
         out << (quint32)map->id;
@@ -260,9 +260,9 @@ void ClientLocalBroadcast::sendNearPlant()
     while(index<plant_list_size)
     {
         const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
-        if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
             out << (quint8)map->id;
-        else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
             out << (quint16)map->id;
         else
             out << (quint32)map->id;
@@ -307,9 +307,9 @@ void ClientLocalBroadcast::removeNearPlant()
     while(index<plant_list_size)
     {
         const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
-        if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+        if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
             out << (quint8)map->id;
-        else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+        else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
             out << (quint16)map->id;
         else
             out << (quint32)map->id;
@@ -424,7 +424,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                     || player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
             {
                 //remove plant from db
-                switch(GlobalData::serverSettings.database.type)
+                switch(GlobalServerData::serverSettings.database.type)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
@@ -453,14 +453,14 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 }
 
                 //add into the inventory
-                float quantity=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].fix_quantity;
-                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity)
+                float quantity=GlobalServerData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].fix_quantity;
+                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=GlobalServerData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity)
                     quantity++;
 
                 QByteArray data;
                 data[0]=Plant_collect_correctly_collected;
                 emit postReply(query_id,data);
-                emit addObjectAndSend(GlobalData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
+                emit addObjectAndSend(GlobalServerData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
 
                 static_cast<MapServer *>(map)->plants.removeAt(index);
                 return;

@@ -11,7 +11,7 @@
 #include <QTime>
 
 #include "NormalServer.h"
-#include "base/GlobalData.h"
+#include "base/GlobalServerData.h"
 #include "../general/base/DebugClass.h"
 #include "../general/base/GeneralStructures.h"
 #include "../general/base/ChatParsing.h"

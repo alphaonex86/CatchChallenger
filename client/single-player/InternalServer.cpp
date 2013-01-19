@@ -1,5 +1,5 @@
 #include "InternalServer.h"
-#include "../../server/base/GlobalData.h"
+#include "../../server/base/GlobalServerData.h"
 #include "../../general/base/FacilityLib.h"
 
 using namespace Pokecraft;
@@ -7,12 +7,12 @@ using namespace Pokecraft;
 InternalServer::InternalServer() :
     BaseServer()
 {
-    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//broad cast (0)
-    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//map management (1)
-    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//network read (2)
-    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//heavy load (3)
-    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//local calcule (4)
-    GlobalData::serverPrivateVariables.eventThreaderList << &thread;//local broad cast (5)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << &thread;//broad cast (0)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << &thread;//map management (1)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << &thread;//network read (2)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << &thread;//heavy load (3)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << &thread;//local calcule (4)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << &thread;//local broad cast (5)
 
     emit need_be_started();
 }

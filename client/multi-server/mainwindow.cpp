@@ -13,9 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     socket=new Pokecraft::ConnectedSocket(new QTcpSocket());
     client=new Pokecraft::Api_client_real(socket);
-    baseWindow=new Pokecraft::BaseWindow(client);
     ui->setupUi(this);
-    ui->stackedWidget->addWidget(baseWindow);
+    ui->stackedWidget->addWidget(Pokecraft::BaseWindow::baseWindow);
     if(settings.contains("login"))
         ui->lineEditLogin->setText(settings.value("login").toString());
     if(settings.contains("pass"))
@@ -39,17 +38,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
-    connect(baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()));
+    connect(Pokecraft::BaseWindow::baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()));
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
     haveShowDisconnectionReason=false;
-    ui->stackedWidget->addWidget(baseWindow);
-    baseWindow->setMultiPlayer(true);
+    ui->stackedWidget->addWidget(Pokecraft::BaseWindow::baseWindow);
+    Pokecraft::BaseWindow::baseWindow->setMultiPlayer(true);
 
     stateChanged(QAbstractSocket::UnconnectedState);
-    
+
     setWindowTitle("Pokecraft - "+tr("Multi server"));
 }
 
@@ -57,7 +56,6 @@ MainWindow::~MainWindow()
 {
     client->tryDisconnect();
     delete client;
-    delete baseWindow;
     delete ui;
     delete socket;
 }
@@ -65,7 +63,7 @@ MainWindow::~MainWindow()
 void MainWindow::resetAll()
 {
     client->resetAll();
-    baseWindow->resetAll();
+    Pokecraft::BaseWindow::baseWindow->resetAll();
     ui->stackedWidget->setCurrentIndex(0);
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
@@ -158,7 +156,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
         resetAll();
-    baseWindow->stateChanged(socketState);
+    Pokecraft::BaseWindow::baseWindow->stateChanged(socketState);
 }
 
 void MainWindow::error(QAbstractSocket::SocketError socketError)

@@ -3,12 +3,13 @@
 #include "../../general/base/FacilityLib.h"
 #include "DatapackClientLoader.h"
 #include "../ClientVariable.h"
+#include "../Api_client_real.h"
 
 #include <QMessageBox>
 #include <QMessageBox>
 #include <qmath.h>
 
-MapControllerMP::MapControllerMP(Pokecraft::Api_protocol *client,const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     qRegisterMetaType<Pokecraft::Direction>("Pokecraft::Direction");
@@ -17,21 +18,20 @@ MapControllerMP::MapControllerMP(Pokecraft::Api_protocol *client,const bool &cen
     qRegisterMetaType<Pokecraft::Player_private_and_public_informations>("Pokecraft::Player_private_and_public_informations");
     qRegisterMetaType<QList<QPair<quint8,Pokecraft::Direction> > >("QList<QPair<quint8,Pokecraft::Direction> >");
 
-    this->client=client;
     player_informations_is_set=false;
 
     resetAll();
 
     //connect the map controler
-    connect(client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
-    connect(client,SIGNAL(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(client,SIGNAL(remove_player(quint16)),this,SLOT(remove_player(quint16)),Qt::QueuedConnection);
-    connect(client,SIGNAL(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),this,SLOT(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),Qt::QueuedConnection);
-    connect(client,SIGNAL(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(client,SIGNAL(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(client,SIGNAL(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(this,SIGNAL(teleportDone()),client,SLOT(teleportDone()),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(have_current_player_info(Pokecraft::Player_private_and_public_informations)),this,SLOT(have_current_player_info(Pokecraft::Player_private_and_public_informations)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(insert_player(Pokecraft::Player_public_informations,quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(remove_player(quint16)),this,SLOT(remove_player(quint16)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),this,SLOT(move_player(quint16,QList<QPair<quint8,Pokecraft::Direction> >)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),this,SLOT(reinsert_player(quint16,quint32,quint8,quint8,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(this,SIGNAL(send_player_direction(Pokecraft::Direction)),Pokecraft::Api_client_real::client,SLOT(send_player_direction(Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(this,SIGNAL(teleportDone()),Pokecraft::Api_client_real::client,SLOT(teleportDone()),Qt::QueuedConnection);
 
     scaleSize=1;
 }

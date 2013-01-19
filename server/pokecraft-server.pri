@@ -3,7 +3,7 @@ QT       += sql
 TEMPLATE = app
 
 SOURCES += \
-    $$PWD/base/GlobalData.cpp \
+    $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
     $$PWD/base/LocalClientHandler.cpp \
@@ -27,9 +27,10 @@ SOURCES += \
     $$PWD/fight/LocalClientHandlerFight.cpp \
     $$PWD/fight/BaseServerFight.cpp \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
+    $$PWD/base/Api_client_virtual.cpp \
     $$PWD/fight/ClientHeavyLoadFight.cpp
 HEADERS += \
-    $$PWD/base/GlobalData.h \
+    $$PWD/base/GlobalServerData.h \
     $$PWD/base/SqlFunction.h \
     $$PWD/base/BaseServer.h \
     $$PWD/base/LocalClientHandler.h \
@@ -53,6 +54,7 @@ HEADERS += \
     $$PWD/crafting/BaseServerCrafting.h \
     $$PWD/crafting/MapServerCrafting.h \
     $$PWD/fight/ServerStructuresFight.h \
+    $$PWD/base/Api_client_virtual.h \
     $$PWD/fight/BaseServerFight.h
 
 RESOURCES += \

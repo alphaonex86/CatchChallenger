@@ -10,7 +10,7 @@
 #include "../../../general/base/QFakeSocket.h"
 #include "../../../general/base/ConnectedSocket.h"
 #include "../MapServer.h"
-#include "../../../client/base/Api_client_virtual.h"
+#include "../Api_client_virtual.h"
 
 #ifndef POKECRAFT_FakeBot_H
 #define POKECRAFT_FakeBot_H

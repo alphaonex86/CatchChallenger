@@ -1,6 +1,7 @@
 #include "FakeBot.h"
-#include "../GlobalData.h"
+#include "../GlobalServerData.h"
 #include "../ClientMapManagement/MapBasicMove.h"
+#include "../Api_client_virtual.h"
 
 #include <QHostAddress>
 
@@ -56,7 +57,7 @@ void FakeBot::doStep()
     if(do_step && socket.isValid() && map!=NULL)
     {
         random_new_step();
-/*		if(rand()%(GlobalData::botNumber*10)==0)
+/*		if(rand()%(GlobalServerData::botNumber*10)==0)
             api.sendChatText(Chat_type_local,"Hello world!");*/
     }
 }
@@ -129,22 +130,22 @@ void FakeBot::insert_player(Player_public_informations player,QString mapName,qu
     {
         if(details)
             DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2 (%3,%4)").arg(player.simplifiedId).arg(mapName).arg(x).arg(y));
-        if(!GlobalData::serverPrivateVariables.map_list.contains(mapName))
+        if(!GlobalServerData::serverPrivateVariables.map_list.contains(mapName))
         {
             DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(mapName));
             return;
         }
-        if(x>=GlobalData::serverPrivateVariables.map_list[mapName]->width)
+        if(x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width)
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(x).arg(GlobalData::serverPrivateVariables.map_list[mapName]->width));
+            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(x).arg(GlobalServerData::serverPrivateVariables.map_list[mapName]->width));
             return;
         }
-        if(y>=GlobalData::serverPrivateVariables.map_list[mapName]->height)
+        if(y>=GlobalServerData::serverPrivateVariables.map_list[mapName]->height)
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(y).arg(GlobalData::serverPrivateVariables.map_list[mapName]->height));
+            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(y).arg(GlobalServerData::serverPrivateVariables.map_list[mapName]->height));
             return;
         }
-        this->map=GlobalData::serverPrivateVariables.map_list[mapName];
+        this->map=GlobalServerData::serverPrivateVariables.map_list[mapName];
         this->x=x;
         this->y=y;
         this->last_direction=direction;

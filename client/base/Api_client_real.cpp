@@ -10,6 +10,8 @@ using namespace Pokecraft;
 
 //need host + port here to have datapack base
 
+Api_client_real* Api_client_real::client=NULL;
+
 Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     Api_protocol(socket,tolerantMode)
 {

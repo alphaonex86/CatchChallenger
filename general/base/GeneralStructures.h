@@ -381,5 +381,19 @@ struct Monster
     QList<quint32> level_to_xp;//first is xp to level 1
 };
 
+struct ItemToSellOrBuy
+{
+    quint32 object;
+    quint32 price;
+    quint32 quantity;
+};
+
+//permanent bot on client, temp to parse on the server
+struct Bot
+{
+    QHash<quint8,QDomElement> step;
+    QHash<QString,QString> properties;
+};
+
 }
 #endif // STRUCTURES_GENERAL_H

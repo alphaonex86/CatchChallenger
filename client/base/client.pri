@@ -2,9 +2,7 @@ INCLUDEPATH += $$PWD/../../general/libtiled/
 DEPENDPATH += $$PWD/../../general/libtiled/
 LIBS *= -ltiled
 
-SOURCES += $$PWD/Api_protocol.cpp \
-    $$PWD/Api_client_virtual.cpp \
-    $$PWD/Api_client_real.cpp \
+SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/ObjectGroupItem.cpp \
     $$PWD/render/MapVisualiserPlayer.cpp \
@@ -30,8 +28,6 @@ SOURCES += $$PWD/Api_protocol.cpp \
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/ClientStructures.h \
-    $$PWD/Api_protocol.h \
-    $$PWD/Api_client_virtual.h \
     $$PWD/Api_client_real.h \
     $$PWD/render/TileLayerItem.h \
     $$PWD/render/ObjectGroupItem.h \

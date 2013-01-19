@@ -16,6 +16,7 @@ class DatapackClientLoader : public QThread
 {
     Q_OBJECT
 public:
+    static DatapackClientLoader datapackLoader;
     void resetAll();
 
     //static items
@@ -41,10 +42,8 @@ public:
     QHash<quint32,quint8> itemToPlants;
     QHash<quint32,quint32> itemToCrafingRecipes;
     QHash<quint32,Pokecraft::CrafingRecipe> crafingRecipes;
-    Pokecraft::FightEngine fightEngine;
     QStringList maps;
     QPixmap defaultInventoryImage();
-    static DatapackClientLoader datapackLoader;
 protected:
     void run();
 public slots:
@@ -65,6 +64,8 @@ private slots:
     void parseSkills();
     void parseMonsters();
     void parseMonstersExtra();
+    void parseBuffExtra();
+    void parseSkillsExtra();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

@@ -6,6 +6,7 @@
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/MoveOnTheMap.h"
 #include "../base/SqlFunction.h"
+#include "../base/GlobalServerData.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -17,7 +18,7 @@ using namespace Pokecraft;
 void BaseServerCrafting::preload_the_plant()
 {
     //open and quick check the file
-    QFile plantsFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_PLANTS+"plants.xml");
+    QFile plantsFile(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_PLANTS+"plants.xml");
     QByteArray xmlContent;
     if(!plantsFile.open(QIODevice::ReadOnly))
     {
@@ -54,7 +55,7 @@ void BaseServerCrafting::preload_the_plant()
                 quint32 itemUsed=plantItem.attribute("itemUsed").toULongLong(&ok2);
                 if(ok && ok2)
                 {
-                    if(!GlobalData::serverPrivateVariables.plants.contains(id))
+                    if(!GlobalServerData::serverPrivateVariables.plants.contains(id))
                     {
                         ok=true;
                         Plant plant;
@@ -114,14 +115,14 @@ void BaseServerCrafting::preload_the_plant()
                         }
                         if(ok)
                         {
-                            if(!GlobalData::serverPrivateVariables.items.contains(plant.itemUsed))
+                            if(!GlobalServerData::serverPrivateVariables.items.contains(plant.itemUsed))
                             {
                                 ok=false;
                                 DebugClass::debugConsole(QString("preload_crafting_recipes() itemUsed is not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                             }
                         }
                         if(ok)
-                            GlobalData::serverPrivateVariables.plants[id]=plant;
+                            GlobalServerData::serverPrivateVariables.plants[id]=plant;
                     }
                     else
                         DebugClass::debugConsole(QString("Unable to open the plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
@@ -137,14 +138,14 @@ void BaseServerCrafting::preload_the_plant()
         plantItem = plantItem.nextSiblingElement("plant");
     }
 
-    DebugClass::debugConsole(QString("%1 plant(s) loaded").arg(GlobalData::serverPrivateVariables.plants.size()));
+    DebugClass::debugConsole(QString("%1 plant(s) loaded").arg(GlobalServerData::serverPrivateVariables.plants.size()));
 }
 
 void BaseServerCrafting::preload_the_plant_on_map()
 {
     int plant_on_the_map=0;
     QString queryText;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -161,12 +162,12 @@ void BaseServerCrafting::preload_the_plant_on_map()
     {
         bool ok;
         QString map=plantOnMapQuery.value(0).toString();
-        if(!GlobalData::serverPrivateVariables.map_list.contains(map))
+        if(!GlobalServerData::serverPrivateVariables.map_list.contains(map))
         {
             DebugClass::debugConsole(QString("Plant ignored because the map not exists: %1").arg(map));
             continue;
         }
-        if(static_cast<MapServer *>(GlobalData::serverPrivateVariables.map_list[map])->plants.size()>=255)
+        if(static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->plants.size()>=255)
         {
             DebugClass::debugConsole(QString("Plant ignored because the map have 255 or more plant: %1").arg(map));
             continue;
@@ -177,9 +178,9 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QString("Plant ignored because the x is not a number"));
             continue;
         }
-        if(x>=GlobalData::serverPrivateVariables.map_list[map]->width)
+        if(x>=GlobalServerData::serverPrivateVariables.map_list[map]->width)
         {
-            DebugClass::debugConsole(QString("Plant ignored because the x>%1 for the map %2: %3").arg(GlobalData::serverPrivateVariables.map_list[map]->width).arg(map).arg(x));
+            DebugClass::debugConsole(QString("Plant ignored because the x>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map]->width).arg(map).arg(x));
             continue;
         }
         quint8 y=plantOnMapQuery.value(2).toUInt(&ok);
@@ -188,15 +189,15 @@ void BaseServerCrafting::preload_the_plant_on_map()
             DebugClass::debugConsole(QString("Plant ignored because the y is not a number"));
             continue;
         }
-        if(y>=GlobalData::serverPrivateVariables.map_list[map]->height)
+        if(y>=GlobalServerData::serverPrivateVariables.map_list[map]->height)
         {
-            DebugClass::debugConsole(QString("Plant ignored because the y>%1 for the map %2: %3").arg(GlobalData::serverPrivateVariables.map_list[map]->height).arg(map).arg(y));
+            DebugClass::debugConsole(QString("Plant ignored because the y>%1 for the map %2: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map]->height).arg(map).arg(y));
             continue;
         }
         quint8 plant=plantOnMapQuery.value(3).toUInt(&ok);
         if(!ok)
             continue;
-        if(!GlobalData::serverPrivateVariables.plants.contains(plant))
+        if(!GlobalServerData::serverPrivateVariables.plants.contains(plant))
         {
             DebugClass::debugConsole(QString("Plant dropped to not block the player, due to missing plant into the list: %1").arg(plant));
             remove_plant_on_map(map,x,y);
@@ -205,7 +206,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
         quint32 player_id=plantOnMapQuery.value(4).toUInt(&ok);
         if(!ok)
             continue;
-        if(!MoveOnTheMap::isDirt(*GlobalData::serverPrivateVariables.map_list[map],x,y))
+        if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list[map],x,y))
         {
             DebugClass::debugConsole(QString("Plant ignored because coor is no dirt: %1 (%2,%3)").arg(map).arg(x).arg(y));
             continue;
@@ -223,15 +224,15 @@ void BaseServerCrafting::preload_the_plant_on_map()
         plantOnMap.y=y;
         plantOnMap.plant=plant;
         plantOnMap.player_id=player_id;
-        plantOnMap.mature_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_seconds;
-        plantOnMap.player_owned_expire_at=plant_timestamps+GlobalData::serverPrivateVariables.plants[plant].mature_seconds+60*60*24;
-        static_cast<MapServer *>(GlobalData::serverPrivateVariables.map_list[map])->plants << plantOnMap;
+        plantOnMap.mature_at=plant_timestamps+GlobalServerData::serverPrivateVariables.plants[plant].mature_seconds;
+        plantOnMap.player_owned_expire_at=plant_timestamps+GlobalServerData::serverPrivateVariables.plants[plant].mature_seconds+60*60*24;
+        static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->plants << plantOnMap;
         #ifdef DEBUG_MESSAGE_MAP_PLANTS
         DebugClass::debugConsole(QString("put on the map: %1 (%2,%3) the plant: %4, owned by played id: %5, mature at: %6 (%7+%8)")
                                  .arg(map).arg(x).arg(y)
                                  .arg(plant)
                                  .arg(player_id)
-                                 .arg(plantOnMap.mature_at).arg(plant_timestamps).arg(GlobalData::serverPrivateVariables.plants[plant].mature_seconds)
+                                 .arg(plantOnMap.mature_at).arg(plant_timestamps).arg(GlobalServerData::serverPrivateVariables.plants[plant].mature_seconds)
                                  );
         #endif
         plant_on_the_map++;
@@ -243,7 +244,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
 void BaseServerCrafting::preload_crafting_recipes()
 {
     //open and quick check the file
-    QFile craftingRecipesFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml");
+    QFile craftingRecipesFile(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml");
     QByteArray xmlContent;
     if(!craftingRecipesFile.open(QIODevice::ReadOnly))
     {
@@ -310,7 +311,7 @@ void BaseServerCrafting::preload_crafting_recipes()
                 quint32 doItemId=recipeItem.attribute("doItemId").toULongLong(&ok3);
                 if(ok && ok2 && ok3)
                 {
-                    if(!GlobalData::serverPrivateVariables.crafingRecipes.contains(id))
+                    if(!GlobalServerData::serverPrivateVariables.crafingRecipes.contains(id))
                     {
                         ok=true;
                         CrafingRecipe recipe;
@@ -354,7 +355,7 @@ void BaseServerCrafting::preload_crafting_recipes()
                                             break;
                                         }
                                     }
-                                    if(!GlobalData::serverPrivateVariables.items.contains(itemId))
+                                    if(!GlobalServerData::serverPrivateVariables.items.contains(itemId))
                                     {
                                         ok=false;
                                         DebugClass::debugConsole(QString("preload_crafting_recipes() material itemId in not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
@@ -374,7 +375,7 @@ void BaseServerCrafting::preload_crafting_recipes()
                         }
                         if(ok)
                         {
-                            if(!GlobalData::serverPrivateVariables.items.contains(recipe.itemToLearn))
+                            if(!GlobalServerData::serverPrivateVariables.items.contains(recipe.itemToLearn))
                             {
                                 ok=false;
                                 DebugClass::debugConsole(QString("preload_crafting_recipes() itemToLearn is not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
@@ -382,7 +383,7 @@ void BaseServerCrafting::preload_crafting_recipes()
                         }
                         if(ok)
                         {
-                            if(!GlobalData::serverPrivateVariables.items.contains(recipe.doItemId))
+                            if(!GlobalServerData::serverPrivateVariables.items.contains(recipe.doItemId))
                             {
                                 ok=false;
                                 DebugClass::debugConsole(QString("preload_crafting_recipes() doItemId is not into items list for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()));
@@ -390,8 +391,8 @@ void BaseServerCrafting::preload_crafting_recipes()
                         }
                         if(ok)
                         {
-                            GlobalData::serverPrivateVariables.crafingRecipes[id]=recipe;
-                            GlobalData::serverPrivateVariables.itemToCrafingRecipes[recipe.itemToLearn]=id;
+                            GlobalServerData::serverPrivateVariables.crafingRecipes[id]=recipe;
+                            GlobalServerData::serverPrivateVariables.itemToCrafingRecipes[recipe.itemToLearn]=id;
                         }
                     }
                     else
@@ -408,13 +409,13 @@ void BaseServerCrafting::preload_crafting_recipes()
         recipeItem = recipeItem.nextSiblingElement("recipe");
     }
 
-    DebugClass::debugConsole(QString("%1 crafting recipe(s) loaded").arg(GlobalData::serverPrivateVariables.crafingRecipes.size()));
+    DebugClass::debugConsole(QString("%1 crafting recipe(s) loaded").arg(GlobalServerData::serverPrivateVariables.crafingRecipes.size()));
 }
 
 void BaseServerCrafting::preload_shop()
 {
     //open and quick check the file
-    QFile shopFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SHOP+"shop.xml");
+    QFile shopFile(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SHOP+"shop.xml");
     QByteArray xmlContent;
     if(!shopFile.open(QIODevice::ReadOnly))
     {
@@ -450,7 +451,7 @@ void BaseServerCrafting::preload_shop()
                 quint32 id=shopItem.attribute("id").toUInt(&ok);
                 if(ok)
                 {
-                    if(!GlobalData::serverPrivateVariables.shops.contains(id))
+                    if(!GlobalServerData::serverPrivateVariables.shops.contains(id))
                     {
                         Shop shop;
                         QDomElement product = shopItem.firstChildElement("product");
@@ -465,7 +466,7 @@ void BaseServerCrafting::preload_shop()
                                         DebugClass::debugConsole(QString("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                     else
                                     {
-                                        if(!GlobalData::serverPrivateVariables.items.contains(itemId))
+                                        if(!GlobalServerData::serverPrivateVariables.items.contains(itemId))
                                             DebugClass::debugConsole(QString("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                         else
                                             shop.items << itemId;
@@ -478,7 +479,7 @@ void BaseServerCrafting::preload_shop()
                                 DebugClass::debugConsole(QString("preload_shop() material is not an element for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                             product = product.nextSiblingElement("product");
                         }
-                        GlobalData::serverPrivateVariables.shops[id]=shop;
+                        GlobalServerData::serverPrivateVariables.shops[id]=shop;
                     }
                     else
                         DebugClass::debugConsole(QString("Unable to open the shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
@@ -494,13 +495,13 @@ void BaseServerCrafting::preload_shop()
         shopItem = shopItem.nextSiblingElement("shop");
     }
 
-    DebugClass::debugConsole(QString("%1 shops(s) loaded").arg(GlobalData::serverPrivateVariables.shops.size()));
+    DebugClass::debugConsole(QString("%1 shops(s) loaded").arg(GlobalServerData::serverPrivateVariables.shops.size()));
 }
 
 void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,const quint8 &y)
 {
     QString queryText;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -522,7 +523,7 @@ void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,
 
 void BaseServerCrafting::unload_the_plant()
 {
-    GlobalData::serverPrivateVariables.plants.clear();
+    GlobalServerData::serverPrivateVariables.plants.clear();
 }
 
 void BaseServerCrafting::unload_the_plant_on_map()
@@ -531,11 +532,11 @@ void BaseServerCrafting::unload_the_plant_on_map()
 
 void BaseServerCrafting::unload_crafting_recipes()
 {
-    GlobalData::serverPrivateVariables.crafingRecipes.clear();
-    GlobalData::serverPrivateVariables.itemToCrafingRecipes.clear();
+    GlobalServerData::serverPrivateVariables.crafingRecipes.clear();
+    GlobalServerData::serverPrivateVariables.itemToCrafingRecipes.clear();
 }
 
 void BaseServerCrafting::unload_shop()
 {
-    GlobalData::serverPrivateVariables.shops.clear();
+    GlobalServerData::serverPrivateVariables.shops.clear();
 }

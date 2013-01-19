@@ -1,5 +1,5 @@
 #include "NormalServer.h"
-#include "base/GlobalData.h"
+#include "base/GlobalServerData.h"
 #include "../general/base/FacilityLib.h"
 
 /*
@@ -16,12 +16,12 @@ NormalServer::NormalServer() :
     server                                                  = NULL;
     timer_benchmark_stop                                    = NULL;
 
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//broad cast (0)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//map management (1)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//network read (2)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//heavy load (3)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//local calcule (4)
-    GlobalData::serverPrivateVariables.eventThreaderList << new EventThreader();//local broad cast (5)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//broad cast (0)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//map management (1)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//network read (2)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//heavy load (3)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//local calcule (4)
+    GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//local broad cast (5)
 
     botThread = new EventThreader();
     eventDispatcherThread = new EventThreader();
@@ -45,15 +45,15 @@ NormalServer::~NormalServer()
 {
     timer_benchmark_stop->deleteLater();
     int index=0;
-    while(index<GlobalData::serverPrivateVariables.eventThreaderList.size())
+    while(index<GlobalServerData::serverPrivateVariables.eventThreaderList.size())
     {
-        GlobalData::serverPrivateVariables.eventThreaderList.at(index)->quit();
+        GlobalServerData::serverPrivateVariables.eventThreaderList.at(index)->quit();
         index++;
     }
-    while(GlobalData::serverPrivateVariables.eventThreaderList.size()>0)
+    while(GlobalServerData::serverPrivateVariables.eventThreaderList.size()>0)
     {
-        EventThreader * tempThread=GlobalData::serverPrivateVariables.eventThreaderList.first();
-        GlobalData::serverPrivateVariables.eventThreaderList.removeFirst();
+        EventThreader * tempThread=GlobalServerData::serverPrivateVariables.eventThreaderList.first();
+        GlobalServerData::serverPrivateVariables.eventThreaderList.removeFirst();
         tempThread->wait();
         delete tempThread;
     }
@@ -95,7 +95,7 @@ void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const QStri
             tempPoint.map=map_file;
             tempPoint.x=map_to_send.bot_spawn_points.at(index_sub).x;
             tempPoint.y=map_to_send.bot_spawn_points.at(index_sub).y;
-            GlobalData::serverPrivateVariables.botSpawn << tempPoint;
+            GlobalServerData::serverPrivateVariables.botSpawn << tempPoint;
             DebugClass::debugConsole(QString("BotSpawn (bot_spawn_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
             index_sub++;
         }
@@ -104,8 +104,8 @@ void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const QStri
 
 void NormalServer::load_settings()
 {
-    GlobalData::serverPrivateVariables.connected_players	= 0;
-    GlobalData::serverPrivateVariables.number_of_bots_logged= 0;
+    GlobalServerData::serverPrivateVariables.connected_players	= 0;
+    GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
 }
 
 //start with allow real player to connect
@@ -137,12 +137,12 @@ void NormalServer::start_internal_server()
     load_settings();
     QHostAddress address = QHostAddress::Any;
     if(!server_ip.isEmpty())
-        address.setAddress(GlobalData::serverSettings.server_ip);
-    if(!server->listen(address,GlobalData::serverSettings.server_port))
+        address.setAddress(GlobalServerData::serverSettings.server_ip);
+    if(!server->listen(address,GlobalServerData::serverSettings.server_port))
     {
-        DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalData::serverSettings.server_port)).arg(server->errorString()));
+        DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         stat=Down;
-        emit error(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalData::serverSettings.server_port)).arg(server->errorString()));
+        emit error(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         return;
     }
     if(!QFakeServer::server.listen())
@@ -153,9 +153,9 @@ void NormalServer::start_internal_server()
         return;
     }
     if(server_ip.isEmpty())
-        DebugClass::debugConsole(QString("Listen *:%1").arg(GlobalData::serverSettings.server_port));
+        DebugClass::debugConsole(QString("Listen *:%1").arg(GlobalServerData::serverSettings.server_port));
     else
-        DebugClass::debugConsole("Listen "+server_ip+":"+QString::number(GlobalData::serverSettings.server_port));
+        DebugClass::debugConsole("Listen "+server_ip+":"+QString::number(GlobalServerData::serverSettings.server_port));
 
     if(!initialize_the_database())
     {
@@ -164,12 +164,12 @@ void NormalServer::start_internal_server()
         return;
     }
 
-    if(!GlobalData::serverPrivateVariables.db->open())
+    if(!GlobalServerData::serverPrivateVariables.db->open())
     {
-        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
+        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         server->close();
         stat=Down;
-        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
+        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         return;
     }
     preload_the_data();
@@ -198,9 +198,9 @@ void NormalServer::start_internal_benchmark(quint16 second,quint16 number_of_cli
     load_settings();
     //firstly get the spawn point
     if(benchmark_map)
-        GlobalData::serverPrivateVariables.datapack_basePath=":/datapack/";
+        GlobalServerData::serverPrivateVariables.datapack_basePath=":/datapack/";
     else
-        GlobalData::serverPrivateVariables.datapack_basePath=QCoreApplication::applicationDirPath()+"/datapack/";
+        GlobalServerData::serverPrivateVariables.datapack_basePath=QCoreApplication::applicationDirPath()+"/datapack/";
     preload_the_data();
 
     int index=0;
@@ -231,12 +231,12 @@ void NormalServer::stop_benchmark()
     double RX_size=0;
     double second=0;
 
-    if(GlobalData::serverPrivateVariables.fakeBotList.size()>=1)
+    if(GlobalServerData::serverPrivateVariables.fakeBotList.size()>=1)
     {
         second=((double)time_benchmark_first_client.elapsed()/1000);
         if(second>0)
         {
-            QSetIterator<FakeBot *> i(GlobalData::serverPrivateVariables.fakeBotList);
+            QSetIterator<FakeBot *> i(GlobalServerData::serverPrivateVariables.fakeBotList);
             FakeBot *firstBot=i.next();
             TX_size=firstBot->get_TX_size();
             RX_size=firstBot->get_RX_size();
@@ -254,7 +254,7 @@ void NormalServer::stop_benchmark()
 
 bool NormalServer::check_if_now_stopped()
 {
-    if(GlobalData::serverPrivateVariables.fakeBotList.size()!=0)
+    if(GlobalServerData::serverPrivateVariables.fakeBotList.size()!=0)
         return false;
     if(!BaseServer::check_if_now_stopped())
         return false;
@@ -305,14 +305,14 @@ void NormalServer::removeOneBot()
         DebugClass::debugConsole("removeOneBot(): NULL client at disconnection");
         return;
     }
-    GlobalData::serverPrivateVariables.fakeBotList.remove(client);
+    GlobalServerData::serverPrivateVariables.fakeBotList.remove(client);
     client->deleteLater();
     check_if_now_stopped();
 }
 
 void NormalServer::removeBots()
 {
-    QSetIterator<FakeBot *> i(GlobalData::serverPrivateVariables.fakeBotList);
+    QSetIterator<FakeBot *> i(GlobalServerData::serverPrivateVariables.fakeBotList);
     while(i.hasNext())
         i.next()->disconnect();
 }
@@ -322,12 +322,12 @@ void NormalServer::removeBots()
 void NormalServer::addBot()
 {
     FakeBot * newFakeBot=new FakeBot();
-    GlobalData::serverPrivateVariables.fakeBotList << newFakeBot;
-    GlobalData::serverPrivateVariables.botSockets << &newFakeBot->fakeSocket;
+    GlobalServerData::serverPrivateVariables.fakeBotList << newFakeBot;
+    GlobalServerData::serverPrivateVariables.botSockets << &newFakeBot->fakeSocket;
 
-    if(GlobalData::serverPrivateVariables.fakeBotList.size()==1)
+    if(GlobalServerData::serverPrivateVariables.fakeBotList.size()==1)
     {
-        //GlobalData::serverPrivateVariables.fake_clients.last()->show_details();
+        //GlobalServerData::serverPrivateVariables.fake_clients.last()->show_details();
         time_benchmark_first_client.start();
     }
     newFakeBot->moveToThread(botThread);
@@ -365,7 +365,7 @@ void NormalServer::serverCommand(const QString &command, const QString &extraTex
         }
         if(command=="addbots")
         {
-            if(!GlobalData::serverPrivateVariables.fakeBotList.empty())
+            if(!GlobalServerData::serverPrivateVariables.fakeBotList.empty())
             {
                 //client->local_sendPM(client->getPseudo(),"Remove previous bots firstly");
                 DebugClass::debugConsole("Remove previous bots firstly");
@@ -382,10 +382,10 @@ void NormalServer::serverCommand(const QString &command, const QString &extraTex
                     return;
                 }
             }
-            if(number_player>(GlobalData::serverSettings.max_players-client_list.size()))
-                number_player=GlobalData::serverSettings.max_players-client_list.size();
+            if(number_player>(GlobalServerData::serverSettings.max_players-client_list.size()))
+                number_player=GlobalServerData::serverSettings.max_players-client_list.size();
             int index=0;
-            while(index<number_player && client_list.size()<GlobalData::serverSettings.max_players)
+            while(index<number_player && client_list.size()<GlobalServerData::serverSettings.max_players)
             {
                 addBot();//add way to locate the bot spawn
                 index++;
@@ -418,10 +418,10 @@ void NormalServer::newConnection()
         if(socket!=NULL)
         {
             //to know if need login or not
-            if(GlobalData::serverPrivateVariables.botSockets.contains(socket->getTheOtherSocket()))
+            if(GlobalServerData::serverPrivateVariables.botSockets.contains(socket->getTheOtherSocket()))
             {
                 DebugClass::debugConsole(QString("new client connected by fake socket"));
-                GlobalData::serverPrivateVariables.botSockets.remove(socket->getTheOtherSocket());
+                GlobalServerData::serverPrivateVariables.botSockets.remove(socket->getTheOtherSocket());
                 connect_the_last_client(new Client(new ConnectedSocket(socket),true,getClientMapManagement()));
             }
             else
@@ -468,12 +468,12 @@ bool NormalServer::isInBenchmark()
 
 quint16 NormalServer::player_current()
 {
-    return GlobalData::serverPrivateVariables.connected_players;
+    return GlobalServerData::serverPrivateVariables.connected_players;
 }
 
 quint16 NormalServer::player_max()
 {
-    return GlobalData::serverSettings.max_players;
+    return GlobalServerData::serverSettings.max_players;
 }
 
 /////////////////////////////////// Async the call ///////////////////////////////////
