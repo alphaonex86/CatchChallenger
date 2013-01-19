@@ -1,6 +1,6 @@
 #include "LocalClientHandler.h"
 #include "../../general/base/ProtocolParsing.h"
-#include "GlobalData.h"
+#include "GlobalServerData.h"
 
 /** \todo do client near list for the local player
   the list is limited to 50
@@ -40,36 +40,36 @@ void LocalClientHandler::extraStop()
 {
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
     //virtual stop the player
-    Orientation orientation;
+    //Orientation orientation;
     QString orientationString;
     switch(last_direction)
     {
         case Direction_look_at_bottom:
         case Direction_move_at_bottom:
             orientationString="bottom";
-            orientation=Orientation_bottom;
+            //orientation=Orientation_bottom;
         break;
         case Direction_look_at_top:
         case Direction_move_at_top:
             orientationString="top";
-            orientation=Orientation_top;
+            //orientation=Orientation_top;
         break;
         case Direction_look_at_left:
         case Direction_move_at_left:
             orientationString="left";
-            orientation=Orientation_left;
+            //orientation=Orientation_left;
         break;
         case Direction_look_at_right:
         case Direction_move_at_right:
             orientationString="right";
-            orientation=Orientation_right;
+            //orientation=Orientation_right;
         break;
         default:
             #ifdef DEBUG_MESSAGE_CLIENT_MOVE
             DebugClass::debugConsole("direction wrong and fixed before save");
             #endif
             orientationString="bottom";
-            orientation=Orientation_bottom;
+            //orientation=Orientation_bottom;
         break;
     }
     /* disable because use memory, but useful only into less than < 0.1% of case
@@ -86,7 +86,7 @@ void LocalClientHandler::extraStop()
     if(!player_informations->is_logged || player_informations->isFake)
         return;
     QString updateMapPositionQuery;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -123,13 +123,13 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     out.setVersion(QDataStream::Qt_4_4);
 
     out << (quint8)0x01;
-    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
         out << (quint8)map->id;
-    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
         out << (quint16)map->id;
     else
         out << (quint32)map->id;
-    if(GlobalData::serverSettings.max_players<=255)
+    if(GlobalServerData::serverSettings.max_players<=255)
     {
         out << (quint8)0x01;
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
@@ -217,7 +217,7 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
     if(player_informations->public_and_private_informations.items.contains(item))
     {
         player_informations->public_and_private_informations.items[item]+=quantity;
-        switch(GlobalData::serverSettings.database.type)
+        switch(GlobalServerData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
@@ -238,7 +238,7 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
     }
     else
     {
-        switch(GlobalData::serverSettings.database.type)
+        switch(GlobalServerData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
@@ -267,7 +267,7 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
         if(player_informations->public_and_private_informations.items[item]>quantity)
         {
             player_informations->public_and_private_informations.items[item]-=quantity;
-            switch(GlobalData::serverSettings.database.type)
+            switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
@@ -291,7 +291,7 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
         {
             quint32 removed_quantity=player_informations->public_and_private_informations.items[item];
             player_informations->public_and_private_informations.items.remove(item);
-            switch(GlobalData::serverSettings.database.type)
+            switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
@@ -337,7 +337,7 @@ quint32 LocalClientHandler::objectQuantity(const quint32 &item)
 void LocalClientHandler::addCash(const quint64 &cash)
 {
     player_informations->public_and_private_informations.cash+=cash;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -358,7 +358,7 @@ void LocalClientHandler::addCash(const quint64 &cash)
 void LocalClientHandler::removeCash(const quint64 &cash)
 {
     player_informations->public_and_private_informations.cash-=cash;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -395,7 +395,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
             return;
         }
-        if(!GlobalData::serverPrivateVariables.items.contains(objectId))
+        if(!GlobalServerData::serverPrivateVariables.items.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
             return;
@@ -431,7 +431,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(!GlobalData::serverPrivateVariables.items.contains(objectId))
+        if(!GlobalServerData::serverPrivateVariables.items.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;
@@ -494,9 +494,9 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
     if(player_informations->public_and_private_informations.items.contains(itemId))
     {
         //if is crafting recipe
-        if(GlobalData::serverPrivateVariables.itemToCrafingRecipes.contains(itemId))
+        if(GlobalServerData::serverPrivateVariables.itemToCrafingRecipes.contains(itemId))
         {
-            quint32 recipeId=GlobalData::serverPrivateVariables.itemToCrafingRecipes[itemId];
+            quint32 recipeId=GlobalServerData::serverPrivateVariables.itemToCrafingRecipes[itemId];
             if(player_informations->public_and_private_informations.recipes.contains(recipeId))
             {
                 emit error(QString("can't use the object: %1 because recipe already registred").arg(itemId));
@@ -510,7 +510,7 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
             out << (quint8)ObjectUsage_correctlyUsed;
             emit postReply(query_id,outputData);
             //add into db
-            switch(GlobalData::serverSettings.database.type)
+            switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
@@ -556,7 +556,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
-    if(!GlobalData::serverPrivateVariables.shops.contains(shopId))
+    if(!GlobalServerData::serverPrivateVariables.shops.contains(shopId))
     {
         emit error(QString("shopId not found: %1").arg(shopId));
         return;
@@ -715,7 +715,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
         }
     }
     //send the shop items (no taxes from now)
-    QList<quint32> items=GlobalData::serverPrivateVariables.shops[shopId].items;
+    QList<quint32> items=GlobalServerData::serverPrivateVariables.shops[shopId].items;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -726,10 +726,10 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     int objectCount=0;
     while(index<items.size())
     {
-        if(GlobalData::serverPrivateVariables.items[items.at(index)].price>0)
+        if(GlobalServerData::serverPrivateVariables.items[items.at(index)].price>0)
         {
             out2 << (quint32)items.at(index);
-            out2 << (quint32)GlobalData::serverPrivateVariables.items[items.at(index)].price;
+            out2 << (quint32)GlobalServerData::serverPrivateVariables.items[items.at(index)].price;
             out2 << (quint32)0;
             objectCount++;
         }
@@ -744,7 +744,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
-    if(!GlobalData::serverPrivateVariables.shops.contains(shopId))
+    if(!GlobalServerData::serverPrivateVariables.shops.contains(shopId))
     {
         emit error(QString("shopId not found: %1").arg(shopId));
         return;
@@ -908,7 +908,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         }
     }
     //send the shop items (no taxes from now)
-    QList<quint32> items=GlobalData::serverPrivateVariables.shops[shopId].items;
+    QList<quint32> items=GlobalServerData::serverPrivateVariables.shops[shopId].items;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -918,27 +918,27 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         emit postReply(query_id,outputData);
         return;
     }
-    if(GlobalData::serverPrivateVariables.items[objectId].price==0)
+    if(GlobalServerData::serverPrivateVariables.items[objectId].price==0)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
         emit postReply(query_id,outputData);
         return;
     }
-    if(GlobalData::serverPrivateVariables.items[objectId].price>price)
+    if(GlobalServerData::serverPrivateVariables.items[objectId].price>price)
     {
         out << (quint8)BuyStat_PriceHaveChanged;
         emit postReply(query_id,outputData);
         return;
     }
-    if(GlobalData::serverPrivateVariables.items[objectId].price<price)
+    if(GlobalServerData::serverPrivateVariables.items[objectId].price<price)
     {
         out << (quint8)BuyStat_BetterPrice;
-        out << (quint32)GlobalData::serverPrivateVariables.items[objectId].price;
+        out << (quint32)GlobalServerData::serverPrivateVariables.items[objectId].price;
     }
     else
         out << (quint8)BuyStat_Done;
-    if(player_informations->public_and_private_informations.cash>=(GlobalData::serverPrivateVariables.items[objectId].price*quantity))
-        removeCash(GlobalData::serverPrivateVariables.items[objectId].price*quantity);
+    if(player_informations->public_and_private_informations.cash>=(GlobalServerData::serverPrivateVariables.items[objectId].price*quantity))
+        removeCash(GlobalServerData::serverPrivateVariables.items[objectId].price*quantity);
     else
     {
         emit error(QString("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));
@@ -953,7 +953,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("getShopList(%1,%2)").arg(query_id).arg(shopId));
     #endif
-    if(!GlobalData::serverPrivateVariables.shops.contains(shopId))
+    if(!GlobalServerData::serverPrivateVariables.shops.contains(shopId))
     {
         emit error(QString("shopId not found: %1").arg(shopId));
         return;
@@ -1120,7 +1120,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    if(!GlobalData::serverPrivateVariables.items.contains(objectId))
+    if(!GlobalServerData::serverPrivateVariables.items.contains(objectId))
     {
         emit error("this item don't exists");
         return;
@@ -1130,7 +1130,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
         emit error("you have not this quantity to sell");
         return;
     }
-    quint32 realPrice=GlobalData::serverPrivateVariables.items[objectId].price/2;
+    quint32 realPrice=GlobalServerData::serverPrivateVariables.items[objectId].price/2;
     if(realPrice<price)
     {
         out << (quint8)SoldStat_PriceHaveChanged;

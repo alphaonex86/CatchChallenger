@@ -2,7 +2,7 @@
 #define POKECRAFT_MAPCONTROLLER_H
 
 #include "MapControllerMP.h"
-#include "../../client/base/Api_protocol.h"
+#include "../../../general/base/Api_protocol.h"
 
 #include <QString>
 #include <QList>
@@ -14,9 +14,9 @@ class MapController : public MapControllerMP
 {
     Q_OBJECT
 public:
-    explicit MapController(Pokecraft::Api_protocol *client, const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
+    explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
     ~MapController();
-
+    static MapController *mapController;
     virtual void resetAll();
 private:
     //the delayed action

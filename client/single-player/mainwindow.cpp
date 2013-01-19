@@ -22,25 +22,24 @@ MainWindow::MainWindow(QWidget *parent) :
 
     socket=new Pokecraft::ConnectedSocket(new Pokecraft::QFakeSocket());
     client=new Pokecraft::Api_client_virtual(socket);
-    baseWindow=new Pokecraft::BaseWindow(client);
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
-    ui->stackedWidget->addWidget(baseWindow);
+    ui->stackedWidget->addWidget(Pokecraft::BaseWindow::baseWindow);
     selectedSavegame=NULL;
     internalServer=NULL;
     datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
     savegamePath=QCoreApplication::applicationDirPath()+"/savegames/";
     datapackPathExists=QDir(datapackPath).exists();
 
-    connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
-    connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
-    connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
+    connect(Pokecraft::Api_client_real::client,SIGNAL(message(QString)),this,SLOT(message(QString)),Qt::QueuedConnection);
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
-    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
+    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),Pokecraft::BaseWindow::baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
 
-    ui->stackedWidget->addWidget(baseWindow);
-    baseWindow->setMultiPlayer(false);
+    ui->stackedWidget->addWidget(Pokecraft::BaseWindow::baseWindow);
+    Pokecraft::BaseWindow::baseWindow->setMultiPlayer(false);
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
@@ -59,8 +58,7 @@ MainWindow::~MainWindow()
     if(internalServer!=NULL)
         delete internalServer;
     internalServer=NULL;
-    delete client;
-    delete baseWindow;
+    delete Pokecraft::Api_client_real::client;
     delete ui;
     socket->deleteLater();
 }
@@ -81,8 +79,8 @@ void MainWindow::resetAll()
 {
     if(internalServer!=NULL)
         internalServer->stop();
-    client->resetAll();
-    baseWindow->resetAll();
+    Pokecraft::Api_client_real::client->resetAll();
+    Pokecraft::BaseWindow::baseWindow->resetAll();
     ui->stackedWidget->setCurrentIndex(0);
     lastMessageSend="";
 /*    if(internalServer!=NULL)
@@ -115,7 +113,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
         resetAll();
-    baseWindow->stateChanged(socketState);
+    Pokecraft::BaseWindow::baseWindow->stateChanged(socketState);
 }
 
 void MainWindow::error(QAbstractSocket::SocketError socketError)
@@ -167,7 +165,7 @@ void MainWindow::message(QString message)
 
 void MainWindow::protocol_is_good()
 {
-    client->tryLogin("admin",pass);
+    Pokecraft::Api_client_real::client->tryLogin("admin",pass);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
 }
 
@@ -570,7 +568,7 @@ void MainWindow::is_started(bool started)
     }
     else
     {
-        baseWindow->serverIsReady();
+        Pokecraft::BaseWindow::baseWindow->serverIsReady();
         socket->connectToHost("localhost",9999);
     }
 }
@@ -586,7 +584,7 @@ void MainWindow::saveTime()
         {
             if(metaData.status()==QSettings::NoError)
             {
-                QString locaction=baseWindow->lastLocation();
+                QString locaction=Pokecraft::BaseWindow::baseWindow->lastLocation();
                 QString mapPath=datapackPath+DATAPACK_BASE_PATH_MAP;
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
@@ -629,7 +627,7 @@ void MainWindow::play(const QString &savegamesPath)
     connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);
 
     ui->stackedWidget->setCurrentIndex(1);
-    baseWindow->serverIsLoading();
+    Pokecraft::BaseWindow::baseWindow->serverIsLoading();
 }
 
 void MainWindow::sendSettings(Pokecraft::InternalServer * internalServer,const QString &savegamesPath)

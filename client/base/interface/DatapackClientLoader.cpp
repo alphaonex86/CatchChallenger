@@ -45,6 +45,8 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseSkills();
     parseMonsters();
     parseMonstersExtra();
+    parseBuffExtra();
+    parseSkillsExtra();
 
     emit datapackParsed();
 }
@@ -212,10 +214,4 @@ void DatapackClientLoader::resetAll()
      itemToPlants.clear();
      itemToCrafingRecipes.clear();
      crafingRecipes.clear();
-
-     fightEngine.monsterExtra.clear();
-     fightEngine.monsterBuffs.clear();
-     fightEngine.monsterSkills.clear();
-     fightEngine.monsters.clear();
-     fightEngine.resetAll();
 }

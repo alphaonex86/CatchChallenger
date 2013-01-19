@@ -1,5 +1,5 @@
 #include "ClientHeavyLoad.h"
-#include "GlobalData.h"
+#include "GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
@@ -39,7 +39,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
         return;
     }
     QString queryText;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -60,7 +60,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     {
         if(!loginQuery.next())
             loginIsWrong(query_id,"Wrong login/pass",QString("No login/pass found into the db, login: \"%1\", pass: \"%2\"").arg(login).arg(QString(hash.toHex())));
-        else if(GlobalData::serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
+        else if(GlobalServerData::serverPrivateVariables.connected_players_id_list.contains(loginQuery.value(0).toUInt()))
             loginIsWrong(query_id,"Already logged","Already logged");
         else if(simplifiedIdList.size()<=0)
             loginIsWrong(query_id,"Not free id to login","Not free id to login");
@@ -81,8 +81,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             }
             player_informations->public_and_private_informations.public_informations.pseudo=loginQuery.value(1).toString();
             QString skinString=loginQuery.value(2).toString();
-            if(GlobalData::serverPrivateVariables.skinList.contains(skinString))
-                player_informations->public_and_private_informations.public_informations.skinId=GlobalData::serverPrivateVariables.skinList[skinString];
+            if(GlobalServerData::serverPrivateVariables.skinList.contains(skinString))
+                player_informations->public_and_private_informations.public_informations.skinId=GlobalServerData::serverPrivateVariables.skinList[skinString];
             else
             {
                 emit message(QString("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
@@ -132,7 +132,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             }
             //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
             //all is rights
-            if(GlobalData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
+            if(GlobalServerData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
             {
                 quint8 x=loginQuery.value(3).toUInt(&ok);
                 if(!ok)
@@ -148,7 +148,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 }
                 loginIsRight(query_id,
                      player_informations->id,
-                     GlobalData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
+                     GlobalServerData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
                      x,
                      y,
                      (Orientation)orentation);
@@ -162,11 +162,11 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
 
 void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
 {
-    if(GlobalData::serverPrivateVariables.botSpawn.size()==0)
+    if(GlobalServerData::serverPrivateVariables.botSpawn.size()==0)
         loginIsWrong(query_id,"Not bot point","Not bot point");
     else
     {
-        if(!GlobalData::serverPrivateVariables.map_list.contains(GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map))
+        if(!GlobalServerData::serverPrivateVariables.map_list.contains(GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).map))
             loginIsWrong(query_id,"Bot point not resolved","Bot point not resolved");
         else if(simplifiedIdList.size()<=0)
             loginIsWrong(query_id,"Not free id to login","Not free id to login");
@@ -174,7 +174,7 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
         {
             player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
             player_informations->public_and_private_informations.public_informations.clan=0;
-            player_informations->id=999999999-GlobalData::serverPrivateVariables.number_of_bots_logged;
+            player_informations->id=999999999-GlobalServerData::serverPrivateVariables.number_of_bots_logged;
             player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
             player_informations->public_and_private_informations.public_informations.skinId=0x00;//use the first skin by alaphabetic order
             player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
@@ -187,15 +187,15 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
             {
                 loginIsRight(query_id,
                      player_informations->id,
-                     GlobalData::serverPrivateVariables.map_list[GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).map],
-                     GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).x,
-                     GlobalData::serverPrivateVariables.botSpawn.at(GlobalData::serverPrivateVariables.botSpawnIndex).y,
+                     GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).map],
+                     GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).x,
+                     GlobalServerData::serverPrivateVariables.botSpawn.at(GlobalServerData::serverPrivateVariables.botSpawnIndex).y,
                      Orientation_bottom);
 
-                GlobalData::serverPrivateVariables.botSpawnIndex++;
-                if(GlobalData::serverPrivateVariables.botSpawnIndex>=GlobalData::serverPrivateVariables.botSpawn.size())
-                    GlobalData::serverPrivateVariables.botSpawnIndex=0;
-                GlobalData::serverPrivateVariables.number_of_bots_logged++;
+                GlobalServerData::serverPrivateVariables.botSpawnIndex++;
+                if(GlobalServerData::serverPrivateVariables.botSpawnIndex>=GlobalServerData::serverPrivateVariables.botSpawn.size())
+                    GlobalServerData::serverPrivateVariables.botSpawnIndex=0;
+                GlobalServerData::serverPrivateVariables.number_of_bots_logged++;
             }
         }
     }
@@ -206,7 +206,7 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
     loadLinkedData();
 
     //load the variables
-    GlobalData::serverPrivateVariables.connected_players_id_list << id;
+    GlobalServerData::serverPrivateVariables.connected_players_id_list << id;
     player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
     simplifiedIdList.removeFirst();
     player_informations->is_logged=true;
@@ -216,13 +216,13 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)02;
-    out << (quint16)GlobalData::serverSettings.max_players;
-    if(GlobalData::serverSettings.max_players<=255)
+    out << (quint16)GlobalServerData::serverSettings.max_players;
+    if(GlobalServerData::serverSettings.max_players<=255)
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
     else
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
     out << (quint64)player_informations->public_and_private_informations.cash;
-    out << (quint32)GlobalData::serverPrivateVariables.map_list.size();
+    out << (quint32)GlobalServerData::serverPrivateVariables.map_list.size();
 
     //temporary variable
     quint32 index,sub_index;
@@ -329,7 +329,7 @@ void ClientHeavyLoad::askIfIsReadyToStop()
     if(player_informations->is_logged)
     {
         simplifiedIdList << player_informations->public_and_private_informations.public_informations.simplifiedId;
-        GlobalData::serverPrivateVariables.connected_players_id_list.remove(player_informations->id);
+        GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(player_informations->id);
     }
     emit isReadyToStop();
 }
@@ -337,7 +337,7 @@ void ClientHeavyLoad::askIfIsReadyToStop()
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
 {
-    QHash<QString,quint64> filesList=GlobalData::serverPrivateVariables.filesList;
+    QHash<QString,quint64> filesList=GlobalServerData::serverPrivateVariables.filesList;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -396,7 +396,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
     QByteArray fileNameRaw=FacilityLib::toUTF8(fileName);
     if(fileNameRaw.size()>255 || fileNameRaw.size()==0)
         return false;
-    QFile file(GlobalData::serverPrivateVariables.datapack_basePath+fileName);
+    QFile file(GlobalServerData::serverPrivateVariables.datapack_basePath+fileName);
     if(file.open(QIODevice::ReadOnly))
     {
         QByteArray content=file.readAll();
@@ -428,5 +428,5 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
     QSqlQuery sqlQuery;
     if(!sqlQuery.exec(queryText))
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
-    GlobalData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
+    GlobalServerData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
 }

@@ -1,7 +1,7 @@
 #include "ClientLocalBroadcast.h"
 #include "BroadCastWithoutSender.h"
 #include "../../general/base/ProtocolParsing.h"
-#include "GlobalData.h"
+#include "GlobalServerData.h"
 
 using namespace Pokecraft;
 

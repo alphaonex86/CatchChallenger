@@ -1,6 +1,6 @@
 #include "PlayerUpdater.h"
 #include "../../general/base/DebugClass.h"
-#include "GlobalData.h"
+#include "GlobalServerData.h"
 
 using namespace Pokecraft;
 PlayerUpdater::PlayerUpdater()
@@ -82,7 +82,7 @@ void PlayerUpdater::internal_removeConnectedPlayer()
 
 void PlayerUpdater::send_timer()
 {
-    if(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber && sended_connected_players!=connected_players)
+    if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber && sended_connected_players!=connected_players)
     {
         sended_connected_players=connected_players;
         emit newConnectedPlayer(connected_players);

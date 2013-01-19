@@ -1,5 +1,5 @@
 #include "../base/ClientHeavyLoad.h"
-#include "../base/GlobalData.h"
+#include "../base/GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
@@ -10,7 +10,7 @@ void ClientHeavyLoad::loadRecipes()
 {
     //recipes
     QString queryText;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -28,7 +28,7 @@ void ClientHeavyLoad::loadRecipes()
         recipeId=recipesQuery.value(0).toUInt(&ok);
         if(ok)
         {
-            if(GlobalData::serverPrivateVariables.crafingRecipes.contains(recipeId))
+            if(GlobalServerData::serverPrivateVariables.crafingRecipes.contains(recipeId))
                 player_informations->public_and_private_informations.recipes << recipeId;
             else
                 emit message(QString("recipeId: %1 is not into recipe list").arg(recipeId));
@@ -42,7 +42,7 @@ void ClientHeavyLoad::loadItems()
 {
     //do the query
     QString queryText;
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
@@ -75,7 +75,7 @@ void ClientHeavyLoad::loadItems()
         if(quantity==0)
         {
             QString queryText;
-            switch(GlobalData::serverSettings.database.type)
+            switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
@@ -93,7 +93,7 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }
-        if(!GlobalData::serverPrivateVariables.items.contains(id))
+        if(!GlobalServerData::serverPrivateVariables.items.contains(id))
         {
             emit message(QString("The item %1 is ignored because it's not into the items list").arg(id));
             continue;

@@ -1,5 +1,4 @@
 #include "../base/ServerStructures.h"
-#include "../base/GlobalData.h"
 
 #ifndef POKECRAFT_BASESERVERFIGHT_H
 #define POKECRAFT_BASESERVERFIGHT_H

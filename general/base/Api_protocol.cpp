@@ -1952,6 +1952,11 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
     output->packOutcommingQuery(0x10,0x000C,queryNumber(),outputData);
 }
 
+void Api_protocol::tryEscape()
+{
+    output->packOutcommingData(0x50,0x0002,QByteArray());
+}
+
 void Api_protocol::collectMaturePlant()
 {
     if(havePlantAction)

@@ -1,13 +1,15 @@
 #include "Chat.h"
 #include "ui_Chat.h"
+#include "../Api_client_real.h"
 
 using namespace Pokecraft;
 
-Chat::Chat(QWidget *parent,Pokecraft::Api_protocol *client) :
+Chat* Chat::chat=NULL;
+
+Chat::Chat(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Chat)
 {
-    this->client=client;
     ui->setupUi(this);
     connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()),Qt::QueuedConnection);
     connect(ui->comboBox_chat_type,SIGNAL(currentIndexChanged(int)),this,SLOT(comboBox_chat_type_currentIndexChanged(int)));
@@ -99,14 +101,14 @@ void Chat::lineEdit_chat_text_returnPressed()
             chat_type=Chat_type_clan;
         break;
         }
-        client->sendChatText(chat_type,text);
+        Pokecraft::Api_client_real::client->sendChatText(chat_type,text);
     }
     else if(text.contains(QRegExp("^/pm [^ ]+ .+$")))
     {
         QString pseudo=text;
         pseudo.replace(QRegExp("^/pm ([^ ]+) .+$"), "\\1");
         text.replace(QRegExp("^/pm [^ ]+ (.+)$"), "\\1");
-        client->sendPM(text,pseudo);
+        Pokecraft::Api_client_real::client->sendPM(text,pseudo);
     }
 }
 

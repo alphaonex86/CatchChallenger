@@ -26,7 +26,7 @@
    <string>Pokecraft</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../base/resources/resources.qrc">
+   <iconset resource="../base/resources/client-resources.qrc">
     <normaloff>:/images/pokecraft.png</normaloff>:/images/pokecraft.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -42,9 +42,9 @@
       <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="page">
+      <widget class="QWidget" name="page_login">
        <property name="styleSheet">
-        <string notr="true">background-image: url(:/images/background.png);</string>
+        <string notr="true">#page_login{background-image: url(:/images/background.png);}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
@@ -96,7 +96,7 @@
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/background-dialog.png);</string>
+             <string notr="true">#frame_login_2{background-image: url(:/images/background-dialog.png);}</string>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <property name="spacing">
@@ -118,9 +118,6 @@
                  <width>411</width>
                  <height>161</height>
                 </size>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">background-image: url(:/images/empty.png);</string>
                </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
@@ -257,24 +254,8 @@ border-image: url(:/images/empty.png);</string>
                   </item>
                   <item>
                    <widget class="QPushButton" name="pushButtonTryLogin">
-                    <property name="styleSheet">
-                     <string notr="true">QPushButton {
-     border-radius: 15px;
-     border-color:#000;
-     border: 1px outset #999;
-     background-color: rgb(255, 255, 255);
-     padding:1px 10px;
-}
- QPushButton:pressed {
-     background-color: rgb(240,240,240);
-     border-style: inset;
- }</string>
-                    </property>
                     <property name="text">
                      <string> Ok </string>
-                    </property>
-                    <property name="flat">
-                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -390,7 +371,7 @@ padding: 0 5px;</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../base/resources/resources.qrc"/>
+  <include location="../base/resources/client-resources.qrc"/>
  </resources>
  <connections/>
 </ui>

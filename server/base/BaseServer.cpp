@@ -1,5 +1,5 @@
 #include "BaseServer.h"
-#include "../../server/base/GlobalData.h"
+#include "GlobalServerData.h"
 #include "../../general/base/FacilityLib.h"
 
 #include <QFile>
@@ -23,20 +23,20 @@ BaseServer::BaseServer()
     qRegisterMetaType<Player_public_informations>("Player_public_informations");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
 
-    GlobalData::serverPrivateVariables.connected_players	= 0;
-    GlobalData::serverPrivateVariables.number_of_bots_logged= 0;
-    GlobalData::serverPrivateVariables.db                   = NULL;
-    GlobalData::serverPrivateVariables.timer_player_map     = NULL;
+    GlobalServerData::serverPrivateVariables.connected_players	= 0;
+    GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
+    GlobalServerData::serverPrivateVariables.db                   = NULL;
+    GlobalServerData::serverPrivateVariables.timer_player_map     = NULL;
 
-    GlobalData::serverPrivateVariables.botSpawnIndex=0;
-    GlobalData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
-    GlobalData::serverPrivateVariables.datapack_rightFileName	= QRegExp(DATAPACK_FILE_REGEX);
+    GlobalServerData::serverPrivateVariables.botSpawnIndex=0;
+    GlobalServerData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
+    GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegExp(DATAPACK_FILE_REGEX);
 
-    GlobalData::serverSettings.database.type=ServerSettings::Database::DatabaseType_Mysql;
-    GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
-    GlobalData::serverSettings.mapVisibility.simple.max		= 30;
-    GlobalData::serverSettings.mapVisibility.simple.reshow		= 20;
-    GlobalData::serverPrivateVariables.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
+    GlobalServerData::serverSettings.database.type=ServerSettings::Database::DatabaseType_Mysql;
+    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
+    GlobalServerData::serverSettings.mapVisibility.simple.max		= 30;
+    GlobalServerData::serverSettings.mapVisibility.simple.reshow		= 20;
+    GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
     stat=Down;
 
@@ -53,28 +53,28 @@ BaseServer::BaseServer()
  * \warning this function is thread safe because it quit all thread before remove */
 BaseServer::~BaseServer()
 {
-    GlobalData::serverPrivateVariables.stopIt=true;
-    GlobalData::serverPrivateVariables.eventThreaderList.clear();
-    if(GlobalData::serverPrivateVariables.db!=NULL)
+    GlobalServerData::serverPrivateVariables.stopIt=true;
+    GlobalServerData::serverPrivateVariables.eventThreaderList.clear();
+    if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
-        GlobalData::serverPrivateVariables.db->close();
-        delete GlobalData::serverPrivateVariables.db;
-        GlobalData::serverPrivateVariables.db=NULL;
+        GlobalServerData::serverPrivateVariables.db->close();
+        delete GlobalServerData::serverPrivateVariables.db;
+        GlobalServerData::serverPrivateVariables.db=NULL;
     }
 }
 
 void BaseServer::initAll()
 {
     /// \bug QObject::moveToThread: Current thread (0x79e1f0) is not the object's thread (0x6b4690)
-    GlobalData::serverPrivateVariables.player_updater.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
-    BroadCastWithoutSender::broadCastWithoutSender.moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
+    GlobalServerData::serverPrivateVariables.player_updater.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
+    BroadCastWithoutSender::broadCastWithoutSender.moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
 }
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
 
 void BaseServer::preload_the_data()
 {
-    GlobalData::serverPrivateVariables.stopIt=false;
+    GlobalServerData::serverPrivateVariables.stopIt=false;
 
     preload_the_datapack();
     preload_the_skin();
@@ -93,16 +93,16 @@ void BaseServer::preload_the_data()
 
 void BaseServer::preload_the_map()
 {
-    GlobalData::serverPrivateVariables.datapack_mapPath=GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MAP;
+    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MAP;
     #ifdef DEBUG_MESSAGE_MAP_LOAD
-    DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalData::serverPrivateVariables.datapack_mapPath));
+    DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
     int shops_number=0;
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
     QStringList full_map_name;
-    QStringList returnList=FacilityLib::listFolder(GlobalData::serverPrivateVariables.datapack_mapPath);
+    QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
 
     //load the map
     int size=returnList.size();
@@ -112,69 +112,69 @@ void BaseServer::preload_the_map()
     {
         QString fileName=returnList.at(index);
         fileName.replace('\\','/');
-        if(fileName.contains(mapFilter) && GlobalData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
+        if(fileName.contains(mapFilter) && GlobalServerData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             DebugClass::debugConsole(QString("load the map: %1").arg(fileName));
             #endif
             full_map_name << fileName;
-            if(map_temp.tryLoadMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName))
+            if(map_temp.tryLoadMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName))
             {
-                switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+                switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                 {
                     case MapVisibilityAlgorithm_simple:
-                        GlobalData::serverPrivateVariables.map_list[fileName]=new Map_server_MapVisibility_simple;
+                        GlobalServerData::serverPrivateVariables.map_list[fileName]=new Map_server_MapVisibility_simple;
                     break;
                     case MapVisibilityAlgorithm_none:
                     default:
-                        GlobalData::serverPrivateVariables.map_list[fileName]=new MapServer;
+                        GlobalServerData::serverPrivateVariables.map_list[fileName]=new MapServer;
                     break;
                 }
 
-                GlobalData::serverPrivateVariables.map_list[fileName]->width			= map_temp.map_to_send.width;
-                GlobalData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
-                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
-                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
-                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
-                GlobalData::serverPrivateVariables.map_list[fileName]->parsed_layer.dirt		= map_temp.map_to_send.parsed_layer.dirt;
-                GlobalData::serverPrivateVariables.map_list[fileName]->map_file			= fileName;
-                GlobalData::serverPrivateVariables.map_list[fileName]->grassMonster     = map_temp.map_to_send.grassMonster;
-                GlobalData::serverPrivateVariables.map_list[fileName]->waterMonster     = map_temp.map_to_send.waterMonster;
-                GlobalData::serverPrivateVariables.map_list[fileName]->caveMonster     = map_temp.map_to_send.caveMonster;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->width			= map_temp.map_to_send.width;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.dirt		= map_temp.map_to_send.parsed_layer.dirt;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file			= fileName;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->grassMonster     = map_temp.map_to_send.grassMonster;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->waterMonster     = map_temp.map_to_send.waterMonster;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->caveMonster     = map_temp.map_to_send.caveMonster;
 
-                GlobalData::serverPrivateVariables.map_list[fileName];
+                GlobalServerData::serverPrivateVariables.map_list[fileName];
                 map_name << fileName;
 
                 parseJustLoadedMap(map_temp.map_to_send,fileName);
 
                 Map_semi map_semi;
-                map_semi.map				= GlobalData::serverPrivateVariables.map_list[fileName];
+                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list[fileName];
 
                 if(!map_temp.map_to_send.border.top.fileName.isEmpty())
                 {
-                    map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
                     map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
                 }
                 if(!map_temp.map_to_send.border.bottom.fileName.isEmpty())
                 {
-                    map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
                     map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
                 }
                 if(!map_temp.map_to_send.border.left.fileName.isEmpty())
                 {
-                    map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
                     map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
                 }
                 if(!map_temp.map_to_send.border.right.fileName.isEmpty())
                 {
-                    map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
                     map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
                 }
 
                 int sub_index=0;
                 while(sub_index<map_temp.map_to_send.teleport.size())
                 {
-                    map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalData::serverPrivateVariables.datapack_mapPath);
+                    map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
                     sub_index++;
                 }
 
@@ -194,23 +194,23 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(semi_loaded_map.at(index).border.bottom.fileName!="" && GlobalData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
-            semi_loaded_map[index].map->border.bottom.map=GlobalData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.bottom.fileName];
+        if(semi_loaded_map.at(index).border.bottom.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
+            semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.bottom.fileName];
         else
             semi_loaded_map[index].map->border.bottom.map=NULL;
 
-        if(semi_loaded_map.at(index).border.top.fileName!="" && GlobalData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
-            semi_loaded_map[index].map->border.top.map=GlobalData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.top.fileName];
+        if(semi_loaded_map.at(index).border.top.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
+            semi_loaded_map[index].map->border.top.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.top.fileName];
         else
             semi_loaded_map[index].map->border.top.map=NULL;
 
-        if(semi_loaded_map.at(index).border.left.fileName!="" && GlobalData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
-            semi_loaded_map[index].map->border.left.map=GlobalData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.left.fileName];
+        if(semi_loaded_map.at(index).border.left.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
+            semi_loaded_map[index].map->border.left.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.left.fileName];
         else
             semi_loaded_map[index].map->border.left.map=NULL;
 
-        if(semi_loaded_map.at(index).border.right.fileName!="" && GlobalData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
-            semi_loaded_map[index].map->border.right.map=GlobalData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.right.fileName];
+        if(semi_loaded_map.at(index).border.right.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
+            semi_loaded_map[index].map->border.right.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.right.fileName];
         else
             semi_loaded_map[index].map->border.right.map=NULL;
 
@@ -225,9 +225,9 @@ void BaseServer::preload_the_map()
         int sub_index=0;
         while(sub_index<semi_loaded_map[index].old_map.teleport.size())
         {
-            if(GlobalData::serverPrivateVariables.map_list.contains(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
-                    && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x<GlobalData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->width
-                    && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y<GlobalData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->height
+            if(GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
+                    && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->width
+                    && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->height
                 )
             {
                 int virtual_position=semi_loaded_map[index].old_map.teleport.at(sub_index).source_x+semi_loaded_map[index].old_map.teleport.at(sub_index).source_y*semi_loaded_map[index].map->width;
@@ -252,7 +252,7 @@ void BaseServer::preload_the_map()
                                  .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
                                  .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
                     #endif
-                    semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
+                    semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
                     semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
                     semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
                 }
@@ -303,7 +303,7 @@ void BaseServer::preload_the_map()
                                 if(!ok)
                                     Pokecraft::DebugClass::debugConsole(QString("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                                else if(!GlobalData::serverPrivateVariables.shops.contains(shop))
+                                else if(!GlobalServerData::serverPrivateVariables.shops.contains(shop))
                                     Pokecraft::DebugClass::debugConsole(QString("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else
@@ -331,37 +331,37 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL && GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map!=GlobalData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map==NULL)
+                DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map->map_file));
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map=NULL;
+                DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map->map_file));
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map=NULL;
         }
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL && GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map!=GlobalData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map==NULL)
+                DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map->map_file));
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map=NULL;
+                DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map->map_file));
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map=NULL;
         }
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map!=GlobalData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map==NULL)
+                DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map->map_file));
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map=NULL;
+                DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map->map_file));
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map=NULL;
         }
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map!=GlobalData::serverPrivateVariables.map_list[map_name.at(index)])
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file));
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map==NULL)
+                DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file).arg(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map=NULL;
+                DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map=NULL;
         }
         index++;
     }
@@ -371,42 +371,42 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)];
+        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)];
 
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL && !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
         {
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
         }
 
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL && !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
         {
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL &&  !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL &&  !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
         }
 
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map))
         {
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL &&  !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
         }
 
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map))
         {
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL &&  !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
-            if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
-                GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map;
+            if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL &&  !GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.contains(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map))
+                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map << GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map;
         }
 
         index++;
@@ -417,22 +417,22 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL)
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=semi_loaded_map.at(index).border.bottom.x_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.bottom.fileName)).border.top.x_offset;
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL)
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=semi_loaded_map.at(index).border.bottom.x_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.bottom.fileName)).border.top.x_offset;
         else
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=0;
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL)
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=semi_loaded_map.at(index).border.top.x_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.top.fileName)).border.bottom.x_offset;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.x_offset=0;
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL)
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=semi_loaded_map.at(index).border.top.x_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.top.fileName)).border.bottom.x_offset;
         else
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=0;
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL)
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=semi_loaded_map.at(index).border.left.y_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.left.fileName)).border.right.y_offset;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.x_offset=0;
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL)
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=semi_loaded_map.at(index).border.left.y_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.left.fileName)).border.right.y_offset;
         else
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=0;
-        if(GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL)
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=semi_loaded_map.at(index).border.right.y_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.y_offset=0;
+        if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL)
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=semi_loaded_map.at(index).border.right.y_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset;
         else
-            GlobalData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=0;
+            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=0;
         index++;
     }
 
@@ -440,12 +440,12 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(GlobalData::serverPrivateVariables.map_list.contains(full_map_name.at(index)))
-            GlobalData::serverPrivateVariables.map_list[full_map_name.at(index)]->id=index;
+        if(GlobalServerData::serverPrivateVariables.map_list.contains(full_map_name.at(index)))
+            GlobalServerData::serverPrivateVariables.map_list[full_map_name.at(index)]->id=index;
         index++;
     }
 
-    DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalData::serverPrivateVariables.map_list.size()));
+    DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
     DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
 
     botFiles.clear();
@@ -453,21 +453,21 @@ void BaseServer::preload_the_map()
 
 void BaseServer::preload_the_skin()
 {
-    QStringList skinFolderList=FacilityLib::skinIdList(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
+    QStringList skinFolderList=FacilityLib::skinIdList(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     int index=0;
     while(index<skinFolderList.size())
     {
-        GlobalData::serverPrivateVariables.skinList[skinFolderList.at(index)]=index;
+        GlobalServerData::serverPrivateVariables.skinList[skinFolderList.at(index)]=index;
         index++;
     }
 
-    DebugClass::debugConsole(QString("%1 skin(s) loaded").arg(GlobalData::serverPrivateVariables.skinList.size()));
+    DebugClass::debugConsole(QString("%1 skin(s) loaded").arg(GlobalServerData::serverPrivateVariables.skinList.size()));
 }
 
 void BaseServer::preload_the_items()
 {
     //open and quick check the file
-    QFile itemsFile(GlobalData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_ITEM+"items.xml");
+    QFile itemsFile(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_ITEM+"items.xml");
     QByteArray xmlContent;
     if(!itemsFile.open(QIODevice::ReadOnly))
     {
@@ -503,7 +503,7 @@ void BaseServer::preload_the_items()
                 quint32 id=item.attribute("id").toULongLong(&ok);
                 if(ok)
                 {
-                    if(!GlobalData::serverPrivateVariables.items.contains(id))
+                    if(!GlobalServerData::serverPrivateVariables.items.contains(id))
                     {
                         quint32 price=0;
                         if(item.hasAttribute("price"))
@@ -517,7 +517,7 @@ void BaseServer::preload_the_items()
                         }
                         Item item;
                         item.price=price;
-                        GlobalData::serverPrivateVariables.items[id]=item;
+                        GlobalServerData::serverPrivateVariables.items[id]=item;
                     }
                     else
                         DebugClass::debugConsole(QString("Unable to open the items file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -533,40 +533,40 @@ void BaseServer::preload_the_items()
         item = item.nextSiblingElement("item");
     }
 
-    DebugClass::debugConsole(QString("%1 item(s) loaded").arg(GlobalData::serverPrivateVariables.items.size()));
+    DebugClass::debugConsole(QString("%1 item(s) loaded").arg(GlobalServerData::serverPrivateVariables.items.size()));
 }
 
 void BaseServer::preload_the_datapack()
 {
-    QStringList returnList=FacilityLib::listFolder(GlobalData::serverPrivateVariables.datapack_basePath);
+    QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverPrivateVariables.datapack_basePath);
     int index=0;
     int size=returnList.size();
     while(index<size)
     {
         QString fileName=returnList.at(index);
-        if(fileName.contains(GlobalData::serverPrivateVariables.datapack_rightFileName))
+        if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            QFile file(GlobalData::serverPrivateVariables.datapack_basePath+returnList.at(index));
+            QFile file(GlobalServerData::serverPrivateVariables.datapack_basePath+returnList.at(index));
             if(file.size()<=8*1024*1024)
             {
                 if(file.open(QIODevice::ReadOnly))
                 {
                     fileName.replace("\\","/");//remplace if is under windows server
-                    GlobalData::serverPrivateVariables.filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
+                    GlobalServerData::serverPrivateVariables.filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
                     file.close();
                 }
             }
         }
         index++;
     }
-    DebugClass::debugConsole(QString("%1 file(s) list for datapack cached").arg(GlobalData::serverPrivateVariables.filesList.size()));
+    DebugClass::debugConsole(QString("%1 file(s) list for datapack cached").arg(GlobalServerData::serverPrivateVariables.filesList.size()));
 }
 
 void BaseServer::preload_the_players()
 {
     ClientHeavyLoad::simplifiedIdList.clear();
     int index=0;
-    while(index<GlobalData::serverSettings.max_players)
+    while(index<GlobalServerData::serverSettings.max_players)
     {
         ClientHeavyLoad::simplifiedIdList << index;
         index++;
@@ -575,9 +575,9 @@ void BaseServer::preload_the_players()
 
 void BaseServer::preload_the_visibility_algorithm()
 {
-    QHash<QString,Map *>::const_iterator i = GlobalData::serverPrivateVariables.map_list.constBegin();
-    QHash<QString,Map *>::const_iterator i_end = GlobalData::serverPrivateVariables.map_list.constEnd();
-    switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    QHash<QString,Map *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
+    QHash<QString,Map *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithm_simple:
         while (i != i_end)
@@ -599,44 +599,44 @@ void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
 
 bool BaseServer::initialize_the_database()
 {
-    if(GlobalData::serverPrivateVariables.db!=NULL)
+    if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
-        GlobalData::serverPrivateVariables.db->close();
-        delete GlobalData::serverPrivateVariables.db;
-        GlobalData::serverPrivateVariables.db=NULL;
+        GlobalServerData::serverPrivateVariables.db->close();
+        delete GlobalServerData::serverPrivateVariables.db;
+        GlobalServerData::serverPrivateVariables.db=NULL;
     }
-    switch(GlobalData::serverSettings.database.type)
+    switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         DebugClass::debugConsole(QString("database type unknow"));
         return false;
         case ServerSettings::Database::DatabaseType_Mysql:
-        GlobalData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL");
-        GlobalData::serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
-        GlobalData::serverPrivateVariables.db->setHostName(GlobalData::serverSettings.database.mysql.host);
-        GlobalData::serverPrivateVariables.db->setDatabaseName(GlobalData::serverSettings.database.mysql.db);
-        GlobalData::serverPrivateVariables.db->setUserName(GlobalData::serverSettings.database.mysql.login);
-        GlobalData::serverPrivateVariables.db->setPassword(GlobalData::serverSettings.database.mysql.pass);
-        GlobalData::serverPrivateVariables.db_type_string="mysql";
+        GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
+        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL");
+        GlobalServerData::serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
+        GlobalServerData::serverPrivateVariables.db->setHostName(GlobalServerData::serverSettings.database.mysql.host);
+        GlobalServerData::serverPrivateVariables.db->setDatabaseName(GlobalServerData::serverSettings.database.mysql.db);
+        GlobalServerData::serverPrivateVariables.db->setUserName(GlobalServerData::serverSettings.database.mysql.login);
+        GlobalServerData::serverPrivateVariables.db->setPassword(GlobalServerData::serverSettings.database.mysql.pass);
+        GlobalServerData::serverPrivateVariables.db_type_string="mysql";
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        GlobalData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
-        GlobalData::serverPrivateVariables.db->setDatabaseName(GlobalData::serverSettings.database.sqlite.file);
-        GlobalData::serverPrivateVariables.db_type_string="sqlite";
+        GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
+        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
+        GlobalServerData::serverPrivateVariables.db->setDatabaseName(GlobalServerData::serverSettings.database.sqlite.file);
+        GlobalServerData::serverPrivateVariables.db_type_string="sqlite";
         break;
     }
-    if(!GlobalData::serverPrivateVariables.db->open())
+    if(!GlobalServerData::serverPrivateVariables.db->open())
     {
-        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
-        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalData::serverSettings.database.mysql.login).arg(GlobalData::serverPrivateVariables.db->lastError().databaseText()));
+        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
+        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         return false;
     }
     DebugClass::debugConsole(QString("Connected to %1 at %2 (%3)")
-                             .arg(GlobalData::serverPrivateVariables.db_type_string)
-                             .arg(GlobalData::serverSettings.database.mysql.host)
-                             .arg(GlobalData::serverPrivateVariables.db->isOpen()));
+                             .arg(GlobalServerData::serverPrivateVariables.db_type_string)
+                             .arg(GlobalServerData::serverSettings.database.mysql.host)
+                             .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
     return true;
 }
 
@@ -713,7 +713,7 @@ void BaseServer::loadBotFile(const QString &fileName)
 
 void BaseServer::unload_the_data()
 {
-    GlobalData::serverPrivateVariables.stopIt=true;
+    GlobalServerData::serverPrivateVariables.stopIt=true;
 
     unload_monsters();
     unload_skills();
@@ -731,8 +731,8 @@ void BaseServer::unload_the_data()
 
 void BaseServer::unload_the_map()
 {
-    QHash<QString,Map *>::const_iterator i = GlobalData::serverPrivateVariables.map_list.constBegin();
-    QHash<QString,Map *>::const_iterator i_end = GlobalData::serverPrivateVariables.map_list.constEnd();
+    QHash<QString,Map *>::const_iterator i = GlobalServerData::serverPrivateVariables.map_list.constBegin();
+    QHash<QString,Map *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     while (i != i_end)
     {
         if(i.value()->parsed_layer.walkable!=NULL)
@@ -744,13 +744,13 @@ void BaseServer::unload_the_map()
         delete i.value();
         i++;
     }
-    GlobalData::serverPrivateVariables.map_list.clear();
-    GlobalData::serverPrivateVariables.botSpawn.clear();
+    GlobalServerData::serverPrivateVariables.map_list.clear();
+    GlobalServerData::serverPrivateVariables.botSpawn.clear();
 }
 
 void BaseServer::unload_the_skin()
 {
-    GlobalData::serverPrivateVariables.skinList.clear();
+    GlobalServerData::serverPrivateVariables.skinList.clear();
 }
 
 void BaseServer::unload_the_visibility_algorithm()
@@ -759,12 +759,12 @@ void BaseServer::unload_the_visibility_algorithm()
 
 void BaseServer::unload_the_items()
 {
-    GlobalData::serverPrivateVariables.items.clear();
+    GlobalServerData::serverPrivateVariables.items.clear();
 }
 
 void BaseServer::unload_the_datapack()
 {
-    GlobalData::serverPrivateVariables.filesList.clear();
+    GlobalServerData::serverPrivateVariables.filesList.clear();
 }
 
 void BaseServer::unload_the_players()
@@ -780,8 +780,8 @@ bool BaseServer::check_if_now_stopped()
         return false;
 
     DebugClass::debugConsole("Fully stopped");
-    if(GlobalData::serverPrivateVariables.db!=NULL)
-        GlobalData::serverPrivateVariables.db->close();
+    if(GlobalServerData::serverPrivateVariables.db!=NULL)
+        GlobalServerData::serverPrivateVariables.db->close();
     stat=Down;
     emit is_started(false);
 
@@ -792,7 +792,7 @@ bool BaseServer::check_if_now_stopped()
 void BaseServer::setSettings(ServerSettings settings)
 {
     //load it
-    GlobalData::serverSettings=settings;
+    GlobalServerData::serverSettings=settings;
 
     loadAndFixSettings();
 }
@@ -800,30 +800,30 @@ void BaseServer::setSettings(ServerSettings settings)
 void BaseServer::loadAndFixSettings()
 {
     //check the settings here
-    if(GlobalData::serverSettings.max_players<1)
-        GlobalData::serverSettings.max_players=200;
-    ProtocolParsing::setMaxPlayers(GlobalData::serverSettings.max_players);
+    if(GlobalServerData::serverSettings.max_players<1)
+        GlobalServerData::serverSettings.max_players=200;
+    ProtocolParsing::setMaxPlayers(GlobalServerData::serverSettings.max_players);
 
-    quint8 player_list_size;
-    if(GlobalData::serverSettings.max_players<=255)
+/*    quint8 player_list_size;
+    if(GlobalServerData::serverSettings.max_players<=255)
         player_list_size=sizeof(quint8);
     else
-        player_list_size=sizeof(quint16);
+        player_list_size=sizeof(quint16);*/
     quint8 map_list_size;
-    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
         map_list_size=sizeof(quint8);
-    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
         map_list_size=sizeof(quint16);
     else
         map_list_size=sizeof(quint32);
-    GlobalData::serverPrivateVariables.sizeofInsertRequest=
+    GlobalServerData::serverPrivateVariables.sizeofInsertRequest=
             //mutualised
             sizeof(quint8)+map_list_size+/*player_list_size same with move, delete, ...*/
             //of the player
             /*player_list_size same with move, delete, ...*/+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+sizeof(quint8)+0/*pseudo size put directy*/+sizeof(quint8);
 
-    if(GlobalData::serverSettings.mapVisibility.simple.max>GlobalData::serverSettings.max_players)
-        GlobalData::serverSettings.mapVisibility.simple.max=GlobalData::serverSettings.max_players;
+    if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
+        GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
 }
 
 //call by normal stop
@@ -849,7 +849,7 @@ void BaseServer::stop_internal_server()
 /////////////////////////////////////// player related //////////////////////////////////////
 ClientMapManagement * BaseServer::getClientMapManagement()
 {
-    switch(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         default:
         case MapVisibilityAlgorithm_simple:

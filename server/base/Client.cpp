@@ -1,5 +1,5 @@
 #include "Client.h"
-#include "GlobalData.h"
+#include "GlobalServerData.h"
 #include "../../general/base/QFakeSocket.h"
 
 using namespace Pokecraft;
@@ -25,7 +25,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     clientLocalBroadcast=new ClientLocalBroadcast();
     this->clientMapManagement=clientMapManagement;
 
-    if(GlobalData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
+    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
     {
         connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
         connect(clientMapManagement,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
@@ -34,7 +34,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
         connect(clientNetworkRead,	SIGNAL(teleportValidatedTo(Map*,quint8,quint8,Orientation)),			clientMapManagement,	SLOT(teleportValidatedTo(Map*,quint8,quint8,Orientation)),				Qt::QueuedConnection);
         connect(clientMapManagement,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
         connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-        connect(&GlobalData::serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),clientMapManagement,SLOT(purgeBuffer()),Qt::QueuedConnection);
+        connect(&GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),clientMapManagement,SLOT(purgeBuffer()),Qt::QueuedConnection);
     }
 
     remote_ip=socket->peerAddress().toString();
@@ -47,12 +47,12 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     ask_is_ready_to_stop=false;
 
-    clientBroadCast->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(0));
-    clientMapManagement->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(1));
-    clientNetworkRead->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(2));
-    clientHeavyLoad->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(3));
-    localClientHandler->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(4));
-    clientLocalBroadcast->moveToThread(GlobalData::serverPrivateVariables.eventThreaderList.at(5));
+    clientBroadCast->moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(0));
+    clientMapManagement->moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(1));
+    clientNetworkRead->moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(2));
+    clientHeavyLoad->moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(3));
+    localClientHandler->moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(4));
+    clientLocalBroadcast->moveToThread(GlobalServerData::serverPrivateVariables.eventThreaderList.at(5));
 
     //set variables
     clientBroadCast->setVariable(&player_informations);
@@ -249,9 +249,9 @@ void Client::disconnectNextStep()
         //remove the player
         if(player_informations.is_logged)
         {
-            GlobalData::serverPrivateVariables.connected_players--;
-            if(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber)
-                GlobalData::serverPrivateVariables.player_updater.removeConnectedPlayer();
+            GlobalServerData::serverPrivateVariables.connected_players--;
+            if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber)
+                GlobalServerData::serverPrivateVariables.player_updater.removeConnectedPlayer();
         }
         player_informations.is_logged=false;
 
@@ -317,9 +317,9 @@ void Client::send_player_informations()
     #endif
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(player_informations);
     this->player_informations=player_informations;
-    GlobalData::serverPrivateVariables.connected_players++;
-    if(GlobalData::serverSettings.commmonServerSettings.sendPlayerNumber)
-        GlobalData::serverPrivateVariables.player_updater.addConnectedPlayer();
+    GlobalServerData::serverPrivateVariables.connected_players++;
+    if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber)
+        GlobalServerData::serverPrivateVariables.player_updater.addConnectedPlayer();
 
     //remove the useless connection
     /*disconnect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()));

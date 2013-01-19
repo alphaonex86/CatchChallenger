@@ -3,7 +3,7 @@
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../Api_protocol.h"
+#include "../../general/base/Api_protocol.h"
 
 #include <QWidget>
 #include <QTimer>
@@ -17,11 +17,10 @@ namespace Pokecraft {
 class Chat : public QWidget
 {
     Q_OBJECT
-
 public:
-    explicit Chat(QWidget *parent,Pokecraft::Api_protocol *client);
+    explicit Chat(QWidget *parent);
     ~Chat();
-    Pokecraft::Api_protocol *client;
+    static Chat *chat;
     void resetAll();
 public slots:
     void new_system_text(Pokecraft::Chat_type chat_type,QString text);

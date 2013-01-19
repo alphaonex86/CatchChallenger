@@ -20,8 +20,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/ConnectedSocket.h"
-#include "ClientStructures.h"
-#include "Api_protocol.h"
+#include "../../general/base/Api_protocol.h"
 
 namespace Pokecraft {
 class Api_client_virtual : public Api_protocol
