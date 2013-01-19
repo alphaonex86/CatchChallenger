@@ -28,8 +28,6 @@ public:
 protected:
     void changeEvent(QEvent *e);
 private slots:
-    void on_pushButtonTryLogin_pressed();
-    void on_pushButtonTryLogin_released();
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();

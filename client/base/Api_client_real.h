@@ -28,7 +28,7 @@ class Api_client_real : public Api_protocol
 public:
     explicit Api_client_real(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_client_real();
-    static Api_client_real *client;
+    static Api_protocol *client;
     void resetAll();
 
     //connection related
