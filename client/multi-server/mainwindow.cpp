@@ -12,7 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<Pokecraft::Player_type>("Pokecraft::Player_type");
 
     socket=new Pokecraft::ConnectedSocket(new QTcpSocket());
-    client=new Pokecraft::Api_client_real(socket);
+    Pokecraft::Api_client_real::client=new Pokecraft::Api_client_real(socket);
+    Pokecraft::BaseWindow::baseWindow=new Pokecraft::BaseWindow();
     ui->setupUi(this);
     ui->stackedWidget->addWidget(Pokecraft::BaseWindow::baseWindow);
     if(settings.contains("login"))
@@ -25,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(settings.contains("server_list"))
         server_list=settings.value("server_list").toStringList();
     if(server_list.size()==0)
-        server_list << client->getHost()+":"+QString::number(client->getPort());
+        server_list << static_cast<Pokecraft::Api_client_real *>(Pokecraft::Api_client_real::client)->getHost()+":"+QString::number(static_cast<Pokecraft::Api_client_real *>(Pokecraft::Api_client_real::client)->getPort());
     ui->comboBoxServerList->addItems(server_list);
     if(settings.contains("last_server"))
     {
@@ -33,9 +34,9 @@ MainWindow::MainWindow(QWidget *parent) :
         if(index!=-1)
             ui->comboBoxServerList->setCurrentIndex(index);
     }
-    connect(client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
-    connect(client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
-    connect(client,SIGNAL(message(QString)),this,SLOT(message(QString)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(message(QString)),this,SLOT(message(QString)));
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
     connect(Pokecraft::BaseWindow::baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()));
@@ -54,15 +55,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    client->tryDisconnect();
-    delete client;
+    Pokecraft::Api_client_real::client->tryDisconnect();
+    delete Pokecraft::Api_client_real::client;
+    delete Pokecraft::BaseWindow::baseWindow;
     delete ui;
     delete socket;
 }
 
 void MainWindow::resetAll()
 {
-    client->resetAll();
+    Pokecraft::Api_client_real::client->resetAll();
     Pokecraft::BaseWindow::baseWindow->resetAll();
     ui->stackedWidget->setCurrentIndex(0);
     chat_list_player_pseudo.clear();
@@ -96,16 +98,6 @@ void MainWindow::changeEvent(QEvent *e)
     default:
     break;
     }
-}
-
-void MainWindow::on_pushButtonTryLogin_pressed()
-{
-    ui->pushButtonTryLogin->setStyleSheet("border-radius:15px;border-color:#000;border:1px solid #000;background-color:rgb(220, 220, 220);padding:1px 10px;color:rgb(150,150,150);");
-}
-
-void MainWindow::on_pushButtonTryLogin_released()
-{
-    ui->pushButtonTryLogin->setStyleSheet("border-radius:15px;border-color:#000;border:1px solid #000;background-color:rgb(255, 255, 255);padding:1px 10px;color:rgb(0,0,0);");
 }
 
 void MainWindow::on_lineEditLogin_returnPressed()
@@ -149,7 +141,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     }
 
     ui->stackedWidget->setCurrentIndex(1);
-    client->tryConnect(host,port);
+    static_cast<Pokecraft::Api_client_real *>(Pokecraft::Api_client_real::client)->tryConnect(host,port);
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -213,10 +205,10 @@ void MainWindow::message(QString message)
 
 void MainWindow::protocol_is_good()
 {
-    client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
+    Pokecraft::Api_client_real::client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
 }
 
 void MainWindow::needQuit()
 {
-    client->tryDisconnect();
+    Pokecraft::Api_client_real::client->tryDisconnect();
 }
