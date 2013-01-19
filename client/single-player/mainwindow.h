@@ -54,7 +54,6 @@ private slots:
     void sendSettings(Pokecraft::InternalServer * internalServer, const QString &savegamesPath);
 private:
     Ui::MainWindow *ui;
-    Pokecraft::Api_client_virtual *client;
     void resetAll();
     bool rmpath(const QDir &dir);
     void updateSavegameList();

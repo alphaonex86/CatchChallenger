@@ -17,7 +17,7 @@
 
 using namespace Pokecraft;
 
-BaseWindow* BaseWindow::baseWindow=new Pokecraft::BaseWindow();
+BaseWindow* BaseWindow::baseWindow=NULL;
 
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)

@@ -28,8 +28,6 @@ public:
 protected:
     void changeEvent(QEvent *e);
 private slots:
-    void on_pushButtonTryLogin_pressed();
-    void on_pushButtonTryLogin_released();
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();
@@ -42,7 +40,6 @@ private slots:
     void needQuit();
 private:
     Ui::MainWindow *ui;
-    Pokecraft::Api_client_real *client;
     void resetAll();
     QStringList chat_list_player_pseudo;
     QList<Pokecraft::Player_type> chat_list_player_type;
