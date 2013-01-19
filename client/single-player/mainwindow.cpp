@@ -21,7 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<Pokecraft::Direction>("Pokecraft::Direction");
 
     socket=new Pokecraft::ConnectedSocket(new Pokecraft::QFakeSocket());
-    client=new Pokecraft::Api_client_virtual(socket);
+    Pokecraft::Api_client_real::client=new Pokecraft::Api_client_virtual(socket);
+    Pokecraft::BaseWindow::baseWindow=new Pokecraft::BaseWindow();
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
     ui->stackedWidget->addWidget(Pokecraft::BaseWindow::baseWindow);
@@ -59,6 +60,7 @@ MainWindow::~MainWindow()
         delete internalServer;
     internalServer=NULL;
     delete Pokecraft::Api_client_real::client;
+    delete Pokecraft::BaseWindow::baseWindow;
     delete ui;
     socket->deleteLater();
 }

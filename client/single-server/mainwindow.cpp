@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     socket=new Pokecraft::ConnectedSocket(new QTcpSocket());
     Pokecraft::Api_client_real::client=new Pokecraft::Api_client_real(socket);
     ui->setupUi(this);
+    Pokecraft::BaseWindow::baseWindow=new Pokecraft::BaseWindow();
     ui->stackedWidget->addWidget(Pokecraft::BaseWindow::baseWindow);
     if(settings.contains("login"))
         ui->lineEditLogin->setText(settings.value("login").toString());
@@ -54,6 +55,7 @@ MainWindow::~MainWindow()
 {
     Pokecraft::Api_client_real::client->tryDisconnect();
     delete Pokecraft::Api_client_real::client;
+    delete Pokecraft::BaseWindow::baseWindow;
     delete ui;
     delete socket;
 }
@@ -97,16 +99,6 @@ void MainWindow::changeEvent(QEvent *e)
     }
 }
 
-void MainWindow::on_pushButtonTryLogin_pressed()
-{
-    ui->pushButtonTryLogin->setStyleSheet("border-radius:15px;border-color:#000;border:1px solid #000;background-color:rgb(220, 220, 220);padding:1px 10px;color:rgb(150,150,150);");
-}
-
-void MainWindow::on_pushButtonTryLogin_released()
-{
-    ui->pushButtonTryLogin->setStyleSheet("border-radius:15px;border-color:#000;border:1px solid #000;background-color:rgb(255, 255, 255);padding:1px 10px;color:rgb(0,0,0);");
-}
-
 void MainWindow::on_lineEditLogin_returnPressed()
 {
     ui->lineEditPass->setFocus();
@@ -129,7 +121,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     quint16 port=SERVER_PORT;
 
     ui->stackedWidget->setCurrentIndex(1);
-    Pokecraft::Api_client_real::client->tryConnect(host,port);
+    static_cast<Pokecraft::Api_client_real *>(Pokecraft::Api_client_real::client)->tryConnect(host,port);
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
