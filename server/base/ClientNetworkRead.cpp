@@ -1,5 +1,5 @@
 #include "ClientNetworkRead.h"
-#include "GlobalData.h"
+#include "GlobalServerData.h"
 #include "MapServer.h"
 
 using namespace Pokecraft;
@@ -60,9 +60,9 @@ void ClientNetworkRead::teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const 
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    if(GlobalData::serverPrivateVariables.map_list.size()<=255)
+    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
         out << (quint8)map->id;
-    else if(GlobalData::serverPrivateVariables.map_list.size()<=65535)
+    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
         out << (quint16)map->id;
     else
         out << (quint32)map->id;
@@ -96,12 +96,12 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                 {
                     QString protocol;
                     in >> protocol;
-                    if(GlobalData::serverPrivateVariables.connected_players>=GlobalData::serverSettings.max_players)
+                    if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
                     {
                         out << (quint8)0x03;		//server full
                         out << QString("Server full");
                         emit postReply(queryNumber,outputData);
-                        emit error(QString("Server full (%1/%2)").arg(GlobalData::serverPrivateVariables.connected_players).arg(GlobalData::serverSettings.max_players));
+                        emit error(QString("Server full (%1/%2)").arg(GlobalServerData::serverPrivateVariables.connected_players).arg(GlobalServerData::serverSettings.max_players));
                         return;
                     }
                     if(protocol==PROTOCOL_HEADER)
@@ -744,7 +744,7 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 
 
 void ClientNetworkRead::parseError(const QString &errorString)
 {
-    if(GlobalData::serverSettings.tolerantMode)
+    if(GlobalServerData::serverSettings.tolerantMode)
         emit message(QString("Packed dropped, due to: %1").arg(errorString));
     else
         emit error(errorString);

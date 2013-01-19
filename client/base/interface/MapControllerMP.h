@@ -2,7 +2,7 @@
 #define POKECRAFT_MAPCONTROLLERMP_H
 
 #include "../../client/base/render/MapVisualiserPlayer.h"
-#include "../../client/base/Api_protocol.h"
+#include "../../../general/base/Api_protocol.h"
 
 #include <QString>
 #include <QList>
@@ -14,7 +14,7 @@ class MapControllerMP : public MapVisualiserPlayer
 {
     Q_OBJECT
 public:
-    explicit MapControllerMP(Pokecraft::Api_protocol *client, const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
+    explicit MapControllerMP(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
     ~MapControllerMP();
 
     virtual void resetAll();
@@ -60,8 +60,6 @@ private:
     QHash<quint16,OtherPlayer> otherPlayerList;
     QHash<QTimer *,quint16> otherPlayerListByTimer;
     QHash<QString,quint16> mapUsedByOtherPlayer;
-
-    Pokecraft::Api_protocol *client;
 
     //datapack
     QStringList skinFolderList;

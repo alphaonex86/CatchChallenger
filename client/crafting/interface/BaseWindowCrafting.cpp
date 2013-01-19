@@ -97,7 +97,7 @@ void BaseWindow::load_crafting_inventory()
     ui->listCraftingList->clear();
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
-    Player_private_and_public_informations informations=client->get_player_informations();
+    Player_private_and_public_informations informations=Pokecraft::Api_client_real::client->get_player_informations();
     int index=0;
     while(index<informations.recipes.size())
     {
@@ -351,7 +351,7 @@ void BaseWindow::on_craftingUse_clicked()
     load_plant_inventory();
     on_listCraftingList_itemSelectionChanged();
     //send to the network
-    client->useRecipe(crafting_recipes_items_graphical[selectedItem]);
+    Pokecraft::Api_client_real::client->useRecipe(crafting_recipes_items_graphical[selectedItem]);
 }
 
 void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)

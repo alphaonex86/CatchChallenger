@@ -1,10 +1,10 @@
-#ifndef POKECRAFT_GLOBALDATA_H
-#define POKECRAFT_GLOBALDATA_H
+#ifndef POKECRAFT_GLOBALSERVERDATA_H
+#define POKECRAFT_GLOBALSERVERDATA_H
 
 #include "ServerStructures.h"
 
 namespace Pokecraft {
-class GlobalData
+class GlobalServerData
 {
 public:
 	//shared into all the program

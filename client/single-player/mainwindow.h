@@ -62,7 +62,6 @@ private:
     QString lastMessageSend;
     QStringList server_list;
     Pokecraft::ConnectedSocket *socket;
-    Pokecraft::BaseWindow *baseWindow;
     QList<SaveGameLabel *> savegame;
     QHash<SaveGameLabel *,QString> savegamePathList;
     QHash<SaveGameLabel *,bool> savegameWithMetaData;

@@ -43,7 +43,6 @@ private slots:
     void have_current_player_info(const Pokecraft::Player_private_and_public_informations &informations);
 private:
     Ui::MainWindow *ui;
-    Pokecraft::Api_client_real *client;
     void resetAll();
     QStringList chat_list_player_pseudo;
     QList<Pokecraft::Player_type> chat_list_player_type;
@@ -56,7 +55,6 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     Pokecraft::ConnectedSocket *socket;
-    Pokecraft::BaseWindow *baseWindow;
 };
 
 #endif // MAINWINDOW_H
