@@ -31,8 +31,9 @@ class BaseWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit BaseWindow(Pokecraft::Api_protocol *client);
+    explicit BaseWindow();
     ~BaseWindow();
+    static BaseWindow* baseWindow;
     void setMultiPlayer(bool multiplayer);
     void resetAll();
     void serverIsLoading();
@@ -153,7 +154,15 @@ private slots:
     void on_toolButton_monster_list_quit_clicked();
 
     //fight
-    void fightCollision();
+    void fightCollision(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
+    void on_pushButtonFightEnterNext_clicked();
+    void moveFightMonsterBottom();
+    void on_toolButtonFightQuit_clicked();
+    void on_pushButtonFightAttack_clicked();
+    void on_pushButtonFightMonster_clicked();
+    void on_pushButtonFightAttackConfirmed_clicked();
+    void on_pushButtonFightReturn_clicked();
+    void on_listWidgetFightAttack_itemSelectionChanged();
 protected slots:
     //datapack
     void datapackParsed();
@@ -173,6 +182,7 @@ private:
     quint32 tempQuantityForSell;
     bool waitToSell;
     QList<ItemToSellOrBuy> itemsToSell;
+    QPixmap playerFrontImage,playerBackImage;
 
     //plant seed in waiting
     quint32 seed_in_waiting;
@@ -181,14 +191,11 @@ private:
     QTime updateRXTXTime;
     QTimer updateRXTXTimer;
     quint64 previousRXSize,previousTXSize;
-    Pokecraft::Api_protocol *client;
     QString toHtmlEntities(QString text);
     QSettings settings;
     bool haveShowDisconnectionReason;
     QString toSmilies(QString text);
     QStringList server_list;
-    MapController *mapController;
-    Chat *chat;
     QAbstractSocket::SocketState socketState;
     QStringList skinFolderList;
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
@@ -203,6 +210,7 @@ private:
     QHash<quint32,QListWidgetItem *> plants_items_to_graphical;
     QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;
     QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
+    QHash<QListWidgetItem *,PlayerMonster::Skill> fight_attacks_graphical;
     bool inSelection;
     QList<quint32> objectInUsing;
 
@@ -212,6 +220,9 @@ private:
 
     //bot
     Bot actualBot;
+
+    //fight
+    QTimer moveFightMonsterBottomTimer;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

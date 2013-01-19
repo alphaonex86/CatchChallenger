@@ -19,7 +19,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "ClientStructures.h"
-#include "Api_protocol.h"
+#include "../../general/base/Api_protocol.h"
 
 namespace Pokecraft {
 class Api_client_real : public Api_protocol
@@ -28,6 +28,7 @@ class Api_client_real : public Api_protocol
 public:
     explicit Api_client_real(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_client_real();
+    static Api_client_real *client;
     void resetAll();
 
     //connection related

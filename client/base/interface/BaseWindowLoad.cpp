@@ -3,12 +3,12 @@
 #include "../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
+#include "Chat.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QDesktopServices>
 
 using namespace Pokecraft;
 
@@ -17,8 +17,8 @@ void BaseWindow::resetAll()
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
     ui->stackedWidget->setCurrentWidget(ui->page_init);
-    chat->resetAll();
-    mapController->resetAll();
+    Chat::chat->resetAll();
+    MapController::mapController->resetAll();
     haveDatapack=false;
     havePlayerInformations=false;
     DatapackClientLoader::datapackLoader.resetAll();
@@ -50,6 +50,8 @@ void BaseWindow::resetAll()
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);
     waitToSell=false;
+
+    Pokecraft::FightEngine::fightEngine.resetAll();
 }
 
 void BaseWindow::serverIsLoading()
@@ -86,7 +88,7 @@ void BaseWindow::notLogged(QString reason)
 void BaseWindow::logged()
 {
     updateConnectingStatus();
-    client->sendDatapackContent();
+    Pokecraft::Api_client_real::client->sendDatapackContent();
 }
 
 void BaseWindow::protocol_is_good()
@@ -106,7 +108,7 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
         {
             haveShowDisconnectionReason=false;
             ui->label_connecting_status->setText(tr("Try initialise the protocol..."));
-            client->sendProtocol();
+            Pokecraft::Api_client_real::client->sendProtocol();
         }
         else
             ui->label_connecting_status->setText(tr("Connecting to the server..."));
@@ -121,7 +123,7 @@ void BaseWindow::have_current_player_info()
     if(havePlayerInformations)
         return;
     havePlayerInformations=true;
-    Player_private_and_public_informations informations=client->get_player_informations();
+    Player_private_and_public_informations informations=Pokecraft::Api_client_real::client->get_player_informations();
     cash=informations.cash;
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
@@ -139,7 +141,7 @@ void BaseWindow::haveTheDatapack()
         return;
     haveDatapack=true;
 
-    emit parseDatapack(client->get_datapack_base_name());
+    emit parseDatapack(Pokecraft::Api_client_real::client->get_datapack_base_name());
 }
 
 void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
@@ -236,9 +238,9 @@ void BaseWindow::updateConnectingStatus()
         if(!check_monsters())
             return;
         load_monsters();
-        this->setWindowTitle(tr("Pokecraft - %1").arg(client->getPseudo()));
+        this->setWindowTitle(tr("Pokecraft - %1").arg(Pokecraft::Api_client_real::client->getPseudo()));
         ui->stackedWidget->setCurrentWidget(ui->page_map);
-        showTip(tr("Welcome <b><i>%1</i></b> on pokecraft").arg(client->getPseudo()));
+        showTip(tr("Welcome <b><i>%1</i></b> on pokecraft").arg(Pokecraft::Api_client_real::client->getPseudo()));
         return;
     }
     ui->label_connecting_status->setText(tr("Waiting: %1").arg(waitedData.join(", ")));
@@ -248,24 +250,42 @@ void BaseWindow::updatePlayerImage()
 {
     if(havePlayerInformations && haveDatapack)
     {
-        Player_public_informations informations=client->get_player_informations().public_informations;
-        skinFolderList=Pokecraft::FacilityLib::skinIdList(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
-        QPixmap playerImage;
+        Player_public_informations informations=Pokecraft::Api_client_real::client->get_player_informations().public_informations;
+        skinFolderList=Pokecraft::FacilityLib::skinIdList(Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
+
+        //front image
         if(informations.skinId<skinFolderList.size())
         {
-            playerImage=QPixmap(client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png");
-            if(!playerImage.isNull())
-                ui->player_informations_front->setPixmap(playerImage);
-            else
+            playerFrontImage=QPixmap(Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png");
+            if(playerFrontImage.isNull())
             {
-                ui->player_informations_front->setPixmap(QPixmap(":/images/player_default/front.png"));
-                qDebug() << "Unable to load the player image: "+client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png";
+                playerFrontImage=QPixmap(":/images/player_default/front.png");
+                qDebug() << "Unable to load the player image: "+Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png";
             }
         }
         else
         {
-            ui->player_informations_front->setPixmap(QPixmap(":/images/player_default/front.png"));
+            playerFrontImage=QPixmap(":/images/player_default/front.png");
             qDebug() << "The skin id: "+QString::number(informations.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
         }
+
+        //back image
+        if(informations.skinId<skinFolderList.size())
+        {
+            playerBackImage=QPixmap(Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/back.png");
+            if(playerBackImage.isNull())
+            {
+                playerBackImage=QPixmap(":/images/player_default/back.png");
+                qDebug() << "Unable to load the player image: "+Pokecraft::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/back.png";
+            }
+        }
+        else
+        {
+            playerBackImage=QPixmap(":/images/player_default/back.png");
+            qDebug() << "The skin id: "+QString::number(informations.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
+        }
+
+        //load into the UI
+        ui->player_informations_front->setPixmap(playerFrontImage);
     }
 }

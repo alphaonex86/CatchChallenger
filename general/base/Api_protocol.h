@@ -19,7 +19,6 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/MoveOnTheMap.h"
-#include "ClientStructures.h"
 
 namespace Pokecraft {
 class Api_protocol : public ProtocolParsingInput, public MoveOnTheMap
@@ -167,6 +166,9 @@ public slots:
     void getShopList(const quint32 &shopId);
     void buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     void sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+
+    //fight
+    void tryEscape();
 };
 }
 
