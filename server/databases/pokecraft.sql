@@ -1,20 +1,5 @@
--- phpMyAdmin SQL Dump
--- version 3.4.7.1
--- http://www.phpmyadmin.net
---
--- Host: localhost
--- Generation Time: Jan 04, 2013 at 12:54 PM
--- Server version: 5.1.66
--- PHP Version: 5.4.9--pl0-gentoo
-
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8 */;
 
 --
 -- Database: `pokecraft`
@@ -119,6 +104,10 @@ CREATE TABLE IF NOT EXISTS `player` (
   `type` enum('normal','premium','gm','dev') NOT NULL,
   `clan` int(11) NOT NULL,
   `cash` int(11) NOT NULL,
+  `rescue_map` text NOT NULL,
+  `rescue_x` int(11) NOT NULL,
+  `rescue_y` int(11) NOT NULL,
+  `rescue_orientation` enum('top','bottom','left','right') NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
@@ -149,7 +138,3 @@ CREATE TABLE IF NOT EXISTS `recipes` (
   PRIMARY KEY (`player`,`recipe`),
   KEY `player` (`player`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

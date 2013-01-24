@@ -194,7 +194,7 @@ void DatapackClientLoader::parseBuffExtra()
                         Pokecraft::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
-                        Pokecraft::FightEngine::MonsterBuffExtra monsterBuffExtraEntry;
+                        Pokecraft::FightEngine::MonsterExtra::Buff monsterBuffExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         Pokecraft::DebugClass::debugConsole(QString("monster extra loading: %1").arg(id));
                         #endif
@@ -238,14 +238,14 @@ void DatapackClientLoader::parseBuffExtra()
         item = item.nextSiblingElement("buff");
     }
 
-    QHashIterator<quint32,Pokecraft::MonsterBuff> i(Pokecraft::FightEngine::fightEngine.monsterBuffs);
+    QHashIterator<quint32,Pokecraft::Monster::Buff> i(Pokecraft::FightEngine::fightEngine.monsterBuffs);
     while(i.hasNext())
     {
         i.next();
         if(!Pokecraft::FightEngine::fightEngine.monsterBuffsExtra.contains(i.key()))
         {
             Pokecraft::DebugClass::debugConsole(QString("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
-            Pokecraft::FightEngine::MonsterBuffExtra monsterBuffExtraEntry;
+            Pokecraft::FightEngine::MonsterExtra::Buff monsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown");
             monsterBuffExtraEntry.description=tr("Unknown");
             Pokecraft::FightEngine::fightEngine.monsterBuffsExtra[i.key()]=monsterBuffExtraEntry;
@@ -300,7 +300,7 @@ void DatapackClientLoader::parseSkillsExtra()
                         Pokecraft::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
-                        Pokecraft::FightEngine::MonsterSkillExtra monsterSkillExtraEntry;
+                        Pokecraft::FightEngine::MonsterExtra::Skill monsterSkillExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         Pokecraft::DebugClass::debugConsole(QString("monster extra loading: %1").arg(id));
                         #endif
@@ -344,14 +344,14 @@ void DatapackClientLoader::parseSkillsExtra()
         item = item.nextSiblingElement("skill");
     }
 
-    QHashIterator<quint32,Pokecraft::MonsterSkill> i(Pokecraft::FightEngine::fightEngine.monsterSkills);
+    QHashIterator<quint32,Pokecraft::Monster::Skill> i(Pokecraft::FightEngine::fightEngine.monsterSkills);
     while(i.hasNext())
     {
         i.next();
         if(!Pokecraft::FightEngine::fightEngine.monsterSkillsExtra.contains(i.key()))
         {
             Pokecraft::DebugClass::debugConsole(QString("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
-            Pokecraft::FightEngine::MonsterSkillExtra monsterSkillExtraEntry;
+            Pokecraft::FightEngine::MonsterExtra::Skill monsterSkillExtraEntry;
             monsterSkillExtraEntry.name=tr("Unknown");
             monsterSkillExtraEntry.description=tr("Unknown");
             Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[i.key()]=monsterSkillExtraEntry;

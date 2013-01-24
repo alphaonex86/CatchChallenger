@@ -31,24 +31,28 @@ public:
         QPixmap front;
         QPixmap back;
         QPixmap small;
+        struct Buff
+        {
+            QString name;
+            QString description;
+        };
+        struct Skill
+        {
+            QString name;
+            QString description;
+        };
     };
-    struct MonsterBuffExtra
+    struct MonsterSkillEffect
     {
-        QString name;
-        QString description;
-    };
-    struct MonsterSkillExtra
-    {
-        QString name;
-        QString description;
+        quint32 skill;
     };
     //fight
     QHash<quint32,Monster> monsters;
-    QHash<quint32,MonsterSkill> monsterSkills;
-    QHash<quint32,MonsterBuff> monsterBuffs;
+    QHash<quint32,Monster::Skill> monsterSkills;
+    QHash<quint32,Monster::Buff> monsterBuffs;
     QHash<quint32,MonsterExtra> monsterExtra;
-    QHash<quint32,MonsterBuffExtra> monsterBuffsExtra;
-    QHash<quint32,MonsterSkillExtra> monsterSkillsExtra;
+    QHash<quint32,MonsterExtra::Buff> monsterBuffsExtra;
+    QHash<quint32,MonsterExtra::Skill> monsterSkillsExtra;
     void setPlayerMonster(const QList<PlayerMonster> &playerMonsterList);
     QList<PlayerMonster> getPlayerMonster();
     PlayerMonster getFightMonster();
@@ -60,13 +64,22 @@ public:
     QList<PlayerMonster> wildMonsters;
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
+    QList<Monster::Skill::BuffEffect> buffEffectOtherMonster;
+    QList<Monster::Skill::LifeEffect> lifeEffectOtherMonster;
+    quint32 generateOtherAttack(bool *ok);
+    bool wildMonsterIsKO();
+    bool currentMonsterIsKO();
+    bool dropKOWildMonster();
+    bool dropKOCurrentMonster();
 private:
     int selectedMonster;
     QByteArray m_randomSeeds;
     QList<PlayerMonster> playerMonsterList;
     bool m_canDoFight;
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList, bool *ok);
-    inline quint8 getOneSeed();
+    inline quint8 getOneSeed(const quint8 &max=0);
+    void applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect);
+    void applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
 private:
     void updateCanDoFight();
     explicit FightEngine();
