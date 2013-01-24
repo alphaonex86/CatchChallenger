@@ -75,6 +75,10 @@ BaseWindow::BaseWindow() :
     connect(Pokecraft::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&FightEngine::fightEngine,SLOT(appendRandomSeeds(QByteArray)));
     connect(MapController::mapController,SIGNAL(fightCollision(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(fightCollision(Pokecraft::Map_client*,quint8,quint8)));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
+    connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
+    connect(&otherMonsterAttack,SIGNAL(timeout()),this,SLOT(otherMonsterAttackUpdate()));
+    connect(&currentMonsterAttack,SIGNAL(timeout()),this,SLOT(currentMonsterAttackUpdate()));
+    connect(&finalFightText,SIGNAL(timeout()),this,SLOT(finalFightTextQuit()));
 
     //plants
     connect(this,SIGNAL(useSeed(quint8)),Pokecraft::Api_client_real::client,SLOT(useSeed(quint8)));
@@ -120,6 +124,14 @@ BaseWindow::BaseWindow() :
 
     moveFightMonsterBottomTimer.setSingleShot(true);
     moveFightMonsterBottomTimer.setInterval(20);
+    moveFightMonsterTopTimer.setSingleShot(true);
+    moveFightMonsterTopTimer.setInterval(20);
+    otherMonsterAttack.setSingleShot(true);
+    otherMonsterAttack.setInterval(20);
+    currentMonsterAttack.setSingleShot(true);
+    currentMonsterAttack.setInterval(20);
+    finalFightText.setSingleShot(true);
+    finalFightText.setInterval(2000);
 
     Chat::chat->setGeometry(QRect(0, 0, 300, 400));
 

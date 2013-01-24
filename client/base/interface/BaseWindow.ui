@@ -2787,7 +2787,7 @@ padding-bottom:3px;
           <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageEnter">
           <layout class="QHBoxLayout" name="horizontalLayout_22">
@@ -3054,8 +3054,8 @@ border-image: url(:/images/empty.png);
          <widget class="QLabel" name="labelFightMonsterTop">
           <property name="geometry">
            <rect>
-            <x>500</x>
-            <y>60</y>
+            <x>510</x>
+            <y>90</y>
             <width>160</width>
             <height>160</height>
            </rect>
