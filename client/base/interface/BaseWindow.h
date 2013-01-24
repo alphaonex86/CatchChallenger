@@ -51,6 +51,11 @@ public:
         QueryType_Seed,
         QueryType_CollectPlant
     };
+    enum MoveType
+    {
+        MoveType_Enter,
+        MoveType_Dead
+    };
 protected:
     void changeEvent(QEvent *e);
 public slots:
@@ -157,12 +162,19 @@ private slots:
     void fightCollision(Pokecraft::Map_client *map, const quint8 &x, const quint8 &y);
     void on_pushButtonFightEnterNext_clicked();
     void moveFightMonsterBottom();
+    void updateCurrentMonsterInformation();
+    void moveFightMonsterTop();
+    void otherMonsterAttackUpdate();
+    void updateOtherMonsterInformation();
+    void currentMonsterAttackUpdate();
+    void finalMonstersUpdate();
     void on_toolButtonFightQuit_clicked();
     void on_pushButtonFightAttack_clicked();
     void on_pushButtonFightMonster_clicked();
     void on_pushButtonFightAttackConfirmed_clicked();
     void on_pushButtonFightReturn_clicked();
     void on_listWidgetFightAttack_itemSelectionChanged();
+    void finalFightTextQuit();
 protected slots:
     //datapack
     void datapackParsed();
@@ -223,6 +235,13 @@ private:
 
     //fight
     QTimer moveFightMonsterBottomTimer;
+    QTimer moveFightMonsterTopTimer;
+    QTimer otherMonsterAttack;
+    int otherMonsterAttackInt;
+    QTimer currentMonsterAttack;
+    int currentMonsterAttackInt;
+    MoveType moveType;
+    QTimer finalFightText;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

@@ -130,18 +130,11 @@ void BaseWindow::fightCollision(Pokecraft::Map_client *map, const quint8 &x, con
     PlayerMonster fightMonster=Pokecraft::FightEngine::fightEngine.getFightMonster();
     qDebug() << QString("You are in front of monster id: %1").arg(otherMonster.monster);
     ui->labelFightEnter->setText(tr("A wild %1 is in front of you!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[fightMonster.monster].name));
-    ui->labelFightMonsterTop->setPixmap(Pokecraft::FightEngine::fightEngine.monsterExtra[otherMonster.monster].front.scaled(160,160));
+    updateOtherMonsterInformation();
     ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
     ui->stackedWidget->setCurrentWidget(ui->page_battle);
     ui->pushButtonFightEnterNext->setVisible(true);
-    //other monster
-    ui->frameFightTop->setVisible(true);
-    ui->labelFightTopName->setText(Pokecraft::FightEngine::fightEngine.monsterExtra[otherMonster.monster].name);
-    ui->labelFightTopLevel->setText(tr("Level: %1").arg(otherMonster.level));
-    Monster::Stat otherStat=Pokecraft::FightEngine::getStat(Pokecraft::FightEngine::fightEngine.monsters[otherMonster.monster],otherMonster.level);
-    ui->progressBarFightTopHP->setMaximum(otherStat.hp);
-    ui->progressBarFightTopHP->setValue(otherMonster.hp);
     //current monster
     ui->frameFightBottom->setVisible(false);
     ui->labelFightBottomName->setText(Pokecraft::FightEngine::fightEngine.monsterExtra[fightMonster.monster].name);
@@ -157,6 +150,7 @@ void BaseWindow::fightCollision(Pokecraft::Map_client *map, const quint8 &x, con
 void BaseWindow::on_pushButtonFightEnterNext_clicked()
 {
     ui->pushButtonFightEnterNext->setVisible(false);
+    moveType=MoveType_Enter;
     moveFightMonsterBottom();
     PlayerMonster monster=Pokecraft::FightEngine::fightEngine.getFightMonster();
     ui->labelFightEnter->setText(tr("Protect me %1!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[monster.monster].name));
@@ -164,38 +158,157 @@ void BaseWindow::on_pushButtonFightEnterNext_clicked()
 
 void BaseWindow::moveFightMonsterBottom()
 {
-    QPoint p=ui->labelFightMonsterBottom->pos();
-    p.setX(p.rx()-4);
+    if(moveType==MoveType_Enter)
+    {
+        QPoint p=ui->labelFightMonsterBottom->pos();
+        p.setX(p.rx()-4);
+        ui->labelFightMonsterBottom->move(p);
+        if(ui->labelFightMonsterBottom->pos().rx()>(-ui->labelFightMonsterBottom->size().width()))
+            moveFightMonsterBottomTimer.start();
+        else
+            updateCurrentMonsterInformation();
+    }
+    if(moveType==MoveType_Dead)
+    {
+        QPoint p=ui->labelFightMonsterBottom->pos();
+        p.setY(p.ry()+4);
+        ui->labelFightMonsterBottom->move(p);
+        if(ui->labelFightMonsterBottom->pos().ry()<440)
+            moveFightMonsterBottomTimer.start();
+        else
+        {
+            Pokecraft::FightEngine::fightEngine.currentMonsterIsKO();
+            if(Pokecraft::FightEngine::fightEngine.canDoFight())
+                updateCurrentMonsterInformation();
+            else
+            {
+                //no more monster, tp to last recue point
+                finalFightText.start();
+                ui->labelFightEnter->setText(tr("You lost!"));
+                ui->pushButtonFightEnterNext->setVisible(false);
+            }
+        }
+    }
+}
+
+void BaseWindow::updateCurrentMonsterInformation()
+{
+    PlayerMonster monster=Pokecraft::FightEngine::fightEngine.getFightMonster();
+    QPoint p;
+    p.setX(60);
+    p.setY(280);
     ui->labelFightMonsterBottom->move(p);
-    if(ui->labelFightMonsterBottom->pos().rx()>(-ui->labelFightMonsterBottom->size().width()))
-        moveFightMonsterBottomTimer.start();
+    ui->labelFightMonsterBottom->setPixmap(Pokecraft::FightEngine::fightEngine.monsterExtra[monster.monster].back.scaled(160,160));
+    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
+    ui->frameFightBottom->setVisible(true);
+    //list the attack
+    fight_attacks_graphical.clear();
+    ui->listWidgetFightAttack->clear();
+    int index=0;
+    while(index<monster.skills.size())
+    {
+        QListWidgetItem *item=new QListWidgetItem();
+        const PlayerMonster::Skill &skill=monster.skills.at(index);
+        if(skill.level>1)
+            item->setText(QString("%1, level %2").arg(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].name).arg(skill.level));
+        else
+            item->setText(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].name);
+        item->setToolTip(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].description);
+        fight_attacks_graphical[item]=skill;
+        ui->listWidgetFightAttack->addItem(item);
+        index++;
+    }
+    on_listWidgetFightAttack_itemSelectionChanged();
+}
+
+void BaseWindow::moveFightMonsterTop()
+{
+    if(moveType==MoveType_Enter)
+    {
+        QPoint p=ui->labelFightMonsterTop->pos();
+        p.setX(p.rx()+4);
+        ui->labelFightMonsterTop->move(p);
+        if(ui->labelFightMonsterTop->pos().rx()<800)
+            moveFightMonsterTopTimer.start();
+        else
+            updateCurrentMonsterInformation();
+    }
+    if(moveType==MoveType_Dead)
+    {
+        QPoint p=ui->labelFightMonsterTop->pos();
+        p.setX(p.rx()+4);
+        ui->labelFightMonsterTop->move(p);
+        if(ui->labelFightMonsterTop->pos().rx()<800)
+            moveFightMonsterTopTimer.start();
+        else
+        {
+            Pokecraft::FightEngine::fightEngine.dropKOWildMonster();
+            if(Pokecraft::FightEngine::fightEngine.haveOtherMonster())
+                updateOtherMonsterInformation();
+            else
+            {
+                //have win, return to the map
+                finalFightText.start();
+                ui->labelFightEnter->setText(tr("You win!"));
+                ui->pushButtonFightEnterNext->setVisible(false);
+            }
+        }
+    }
+}
+
+void BaseWindow::updateOtherMonsterInformation()
+{
+    QPoint p;
+    p.setX(510);
+    p.setY(90);
+    ui->labelFightMonsterTop->move(p);
+    PlayerMonster otherMonster=Pokecraft::FightEngine::fightEngine.getOtherMonster();
+    ui->labelFightMonsterTop->setPixmap(Pokecraft::FightEngine::fightEngine.monsterExtra[otherMonster.monster].front.scaled(160,160));
+    //other monster
+    ui->frameFightTop->setVisible(true);
+    ui->labelFightTopName->setText(Pokecraft::FightEngine::fightEngine.monsterExtra[otherMonster.monster].name);
+    ui->labelFightTopLevel->setText(tr("Level: %1").arg(otherMonster.level));
+    Monster::Stat otherStat=Pokecraft::FightEngine::getStat(Pokecraft::FightEngine::fightEngine.monsters[otherMonster.monster],otherMonster.level);
+    ui->progressBarFightTopHP->setMaximum(otherStat.hp);
+    ui->progressBarFightTopHP->setValue(otherMonster.hp);
+}
+
+void BaseWindow::otherMonsterAttackUpdate()
+{
+    if(otherMonsterAttackInt%20 /* each 400ms */ && otherMonsterAttackInt<100 /* 2000ms */)
+        ui->labelFightMonsterBottom->setVisible(!ui->labelFightMonsterBottom->isVisible());
+    int hp_to_remove=ui->progressBarFightBottomHP->maximum()/200;//0.5%
+    PlayerMonster otherMonster=Pokecraft::FightEngine::fightEngine.getFightMonster();
+    if(ui->progressBarFightBottomHP->value()<hp_to_remove || (ui->progressBarFightBottomHP->value()-hp_to_remove)<otherMonster.hp)
+    {
+        //attack is finish
+        finalMonstersUpdate();
+    }
     else
     {
-        PlayerMonster monster=Pokecraft::FightEngine::fightEngine.getFightMonster();
-        p.setX(60);
-        ui->labelFightMonsterBottom->move(p);
-        ui->labelFightMonsterBottom->setPixmap(Pokecraft::FightEngine::fightEngine.monsterExtra[monster.monster].back.scaled(160,160));
-        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
-        ui->frameFightBottom->setVisible(true);
-        //list the attack
-        fight_attacks_graphical.clear();
-        ui->listWidgetFightAttack->clear();
-        int index=0;
-        while(index<monster.skills.size())
-        {
-            QListWidgetItem *item=new QListWidgetItem();
-            const PlayerMonster::Skill &skill=monster.skills.at(index);
-            if(skill.level>1)
-                item->setText(QString("%1, level %2").arg(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].name).arg(skill.level));
-            else
-                item->setText(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].name);
-            item->setToolTip(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].description);
-            fight_attacks_graphical[item]=skill;
-            ui->listWidgetFightAttack->addItem(item);
-            index++;
-        }
-        on_listWidgetFightAttack_itemSelectionChanged();
+        ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()-hp_to_remove);
+        otherMonsterAttack.start();
     }
+}
+
+void BaseWindow::finalMonstersUpdate()
+{
+    ui->labelFightMonsterBottom->setVisible(true);
+    ui->labelFightMonsterTop->setVisible(true);
+    ui->progressBarFightBottomHP->setValue(Pokecraft::FightEngine::fightEngine.getFightMonster().hp);
+    ui->progressBarFightTopHP->setValue(Pokecraft::FightEngine::fightEngine.getOtherMonster().hp);
+
+    if(Pokecraft::FightEngine::fightEngine.getFightMonster().hp==0)
+    {
+        //current player monster is dead
+        moveType=MoveType_Dead;
+        moveFightMonsterBottom();
+        ui->labelFightEnter->setText(tr("%1 have lost!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getFightMonster().monster].name));
+    }
+}
+
+void BaseWindow::currentMonsterAttackUpdate()
+{
 }
 
 void BaseWindow::on_toolButtonFightQuit_clicked()
@@ -206,11 +319,27 @@ void BaseWindow::on_toolButtonFightQuit_clicked()
         return;
     }
     if(Pokecraft::FightEngine::fightEngine.tryEscape())
-        ui->stackedWidget->setCurrentWidget(ui->page_battle);
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
     else
     {//the other attack
+        bool ok;
+        quint32 attack=Pokecraft::FightEngine::fightEngine.generateOtherAttack(&ok);
+        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+        ui->pushButtonFightEnterNext->setVisible(false);
+        if(ok)
+            ui->labelFightEnter->setText(tr("%1 do the attack %2")
+                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name)
+                    .arg(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[attack].name)
+                    );
+        else
+        {
+            ui->labelFightEnter->setText(tr("%1 can't attack")
+                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name)
+                    );
+        }
+        otherMonsterAttackInt=0;
+        otherMonsterAttack.start();
     }
-
 }
 
 void BaseWindow::on_pushButtonFightAttack_clicked()
@@ -243,4 +372,9 @@ void BaseWindow::on_listWidgetFightAttack_itemSelectionChanged()
     }
     quint32 skillId=fight_attacks_graphical[itemsList.first()].skill;
     ui->labelFightAttackDetails->setText(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[skillId].description);
+}
+
+void BaseWindow::finalFightTextQuit()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }

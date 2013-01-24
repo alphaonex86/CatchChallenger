@@ -139,11 +139,155 @@ bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y
     return false;
 }
 
-quint8 FightEngine::getOneSeed()
+quint8 FightEngine::getOneSeed(const quint8 &max)
 {
-    quint8 number=static_cast<quint8>(m_randomSeeds.at(0));
+    quint16 number=static_cast<quint8>(m_randomSeeds.at(0));
+    if(max!=0)
+    {
+        number*=max;
+        number/=255;
+    }
     m_randomSeeds.remove(0,1);
     return number;
+}
+
+quint32 FightEngine::generateOtherAttack(bool *ok)
+{
+    *ok=false;
+    const PlayerMonster &playerMonster=wildMonsters.first();
+    if(playerMonster.skills.empty())
+        return 0;
+    int position;
+    if(playerMonster.skills.size()==1)
+        position=0;
+    else
+        position=getOneSeed()%playerMonster.skills.size();
+    const PlayerMonster::Skill &playerMonsterSkill=playerMonster.skills.at(position);
+    const Monster::Skill::SkillList &skillList=monsterSkills[playerMonsterSkill.skill].level.at(playerMonsterSkill.level-1);
+    int index=0;
+    while(index<skillList.buff.size())
+    {
+        const Monster::Skill::Buff &buff=skillList.buff.at(index);
+        bool success;
+        if(buff.success==100)
+            success=true;
+        else
+            success=(getOneSeed(100)<buff.success);
+        if(success)
+        {
+            buffEffectOtherMonster << buff.effect;
+            applyOtherBuffEffect(buff.effect);
+        }
+        index++;
+    }
+    index=0;
+    while(index<skillList.life.size())
+    {
+        const Monster::Skill::Life &life=skillList.life.at(index);
+        bool success;
+        if(life.success==100)
+            success=true;
+        else
+            success=(getOneSeed(100)<life.success);
+        if(success)
+        {
+            lifeEffectOtherMonster << life.effect;
+            applyOtherLifeEffect(life.effect);
+        }
+        index++;
+    }
+    *ok=true;
+    return playerMonsterSkill.skill;
+}
+
+void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
+{
+    qint32 quantity;
+    Monster::Stat stat;
+    switch(effect.on)
+    {
+        case Monster::ApplyOn_AloneEnemy:
+        case Monster::ApplyOn_AllEnemy:
+            if(effect.type==QuantityType_Quantity)
+                quantity=effect.quantity;
+            else
+                quantity=(playerMonsterList[selectedMonster].hp*effect.quantity)/100;
+            stat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
+            if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
+                playerMonsterList[selectedMonster].hp=0;
+            else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
+                playerMonsterList[selectedMonster].hp=stat.hp;
+            else
+                playerMonsterList[selectedMonster].hp+=quantity;
+        break;
+        case Monster::ApplyOn_Themself:
+        case Monster::ApplyOn_AllAlly:
+            if(effect.type==QuantityType_Quantity)
+                quantity=effect.quantity;
+            else
+                quantity=(wildMonsters.first().hp*effect.quantity)/100;
+            stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+            if(quantity<0 && (-quantity)>wildMonsters.first().hp)
+                wildMonsters.first().hp=0;
+            else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
+                wildMonsters.first().hp=stat.hp;
+            else
+                wildMonsters.first().hp+=quantity;
+        break;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+        break;
+    }
+}
+
+void FightEngine::applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect)
+{
+    PlayerMonster::Buff tempBuff;
+    tempBuff.buff=effect.buff;
+    tempBuff.level=effect.level;
+    switch(effect.on)
+    {
+        case Monster::ApplyOn_AloneEnemy:
+        case Monster::ApplyOn_AllEnemy:
+            playerMonsterList[selectedMonster].buffs << tempBuff;
+        break;
+        case Monster::ApplyOn_Themself:
+        case Monster::ApplyOn_AllAlly:
+            wildMonsters.first().buffs << tempBuff;
+        break;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+        break;
+    }
+}
+
+bool FightEngine::wildMonsterIsKO()
+{
+    if(wildMonsters.first().hp==0)
+    {
+        wildMonsters.first().buffs.clear();
+        return true;
+    }
+    return false;
+}
+
+bool FightEngine::currentMonsterIsKO()
+{
+    if(playerMonsterList[selectedMonster].hp==0)
+    {
+        playerMonsterList[selectedMonster].buffs.clear();
+        updateCanDoFight();
+        return true;
+    }
+    return false;
+}
+
+bool FightEngine::dropKOWildMonster()
+{
+    if(!wildMonsterIsKO())
+        return false;
+    wildMonsters.removeFirst();
+    return true;
 }
 
 PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList,bool *ok)
