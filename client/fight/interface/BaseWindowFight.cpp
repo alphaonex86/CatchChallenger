@@ -184,11 +184,21 @@ void BaseWindow::moveFightMonsterBottom()
             {
                 //no more monster, tp to last recue point
                 finalFightText.start();
-                ui->labelFightEnter->setText(tr("You lost!"));
+                ui->labelFightEnter->setText(tr("You lost!<br />Waiting the recue..."));
                 ui->pushButtonFightEnterNext->setVisible(false);
             }
         }
     }
+}
+
+void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction)
+{
+    Q_UNUSED(mapId);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(direction);
+    if(!Pokecraft::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 void BaseWindow::updateCurrentMonsterInformation()

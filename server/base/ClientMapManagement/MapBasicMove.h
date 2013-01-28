@@ -22,16 +22,19 @@ public:
     virtual ~MapBasicMove();
     virtual void setVariable(Player_internal_informations *player_informations);
     //info linked
-    COORD_TYPE			x,y;//can't be negative
-    Map*			map;
-    //map vector informations
-    Direction			last_direction;
+
+    Direction getLastDirection();
+    Map* getMap();
+    COORD_TYPE getX();
+    COORD_TYPE getY();
 
     //internal var
     Player_internal_informations *player_informations;
 protected:
     //pass to the Map management visibility algorithm
     virtual bool singleMove(const Direction &direction) = 0;
+    COORD_TYPE			x,y;//can't be negative
+    Map*                map;
 
     //related to stop
     //volatile bool stopCurrentMethod;
@@ -53,7 +56,9 @@ public slots:
     virtual void askIfIsReadyToStop();
 private:
     //temp variable for put on map
-    /*quint8 moveThePlayer_index_move;*//// \warning not static because have multiple thread access
+    /*quint8 moveThePlayer_index_move;*/ /// \warning not static because have multiple thread access
+    //map vector informations
+    Direction			last_direction;
 };
 }
 

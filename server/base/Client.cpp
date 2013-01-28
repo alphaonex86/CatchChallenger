@@ -138,6 +138,9 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	SIGNAL(buyObject(quint32,quint32,quint32,quint32,quint32)),		localClientHandler,	SLOT(buyObject(quint32,quint32,quint32,quint32,quint32)),	Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(sellObject(quint32,quint32,quint32,quint32,quint32)),    localClientHandler,	SLOT(sellObject(quint32,quint32,quint32,quint32,quint32)),	Qt::QueuedConnection);
 
+    //shops
+    connect(clientNetworkRead,	SIGNAL(tryEscape()),                                localClientHandler,	SLOT(tryEscape()),                         Qt::QueuedConnection);
+
     //connect the message
     connect(clientBroadCast,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);

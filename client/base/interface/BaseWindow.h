@@ -175,6 +175,7 @@ private slots:
     void on_pushButtonFightReturn_clicked();
     void on_listWidgetFightAttack_itemSelectionChanged();
     void finalFightTextQuit();
+    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
 protected slots:
     //datapack
     void datapackParsed();

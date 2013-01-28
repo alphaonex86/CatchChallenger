@@ -21,7 +21,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the dirt
-    switch(last_direction)
+    switch(getLastDirection())
     {
         case Direction_look_at_top:
             if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
@@ -332,7 +332,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the dirt
-    switch(last_direction)
+    switch(getLastDirection())
     {
         case Direction_look_at_top:
             if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))

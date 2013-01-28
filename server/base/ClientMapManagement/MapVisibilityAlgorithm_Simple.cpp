@@ -372,7 +372,7 @@ void MapVisibilityAlgorithm_Simple::send_insert()
             out << (quint16)i_insert.key();
         out << (COORD_TYPE)i_insert.value()->x;
         out << (COORD_TYPE)i_insert.value()->y;
-        out << (quint8)((quint8)i_insert.value()->last_direction | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
+        out << (quint8)((quint8)i_insert.value()->getLastDirection() | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
         out << i_insert.value()->player_informations->public_and_private_informations.public_informations.speed;
         //clan
         out << i_insert.value()->player_informations->public_and_private_informations.public_informations.clan;
@@ -518,7 +518,7 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
             out << (quint16)i_insert.key();
         out << i_insert.value()->x;
         out << i_insert.value()->y;
-        out << (quint8)i_insert.value()->last_direction;
+        out << (quint8)i_insert.value()->getLastDirection();
 
         ++i_insert;
     }

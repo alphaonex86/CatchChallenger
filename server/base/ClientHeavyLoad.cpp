@@ -43,12 +43,12 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
@@ -130,7 +130,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 orentation=Orientation_bottom;
                 emit message(QString("Wrong orientation corrected with bottom"));
             }
-            //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8)
+            //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8),cash(9),rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13)
             //all is rights
             if(GlobalServerData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
             {
@@ -146,12 +146,27 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                     loginIsWrong(query_id,"Wrong account data","y coord is not a number");
                     return;
                 }
-                loginIsRight(query_id,
-                     player_informations->id,
-                     GlobalServerData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
-                     x,
-                     y,
-                     (Orientation)orentation);
+                if(x>=GlobalServerData::serverPrivateVariables.map_list[loginQuery.value(6).toString()]->width)
+                {
+                    loginIsWrong(query_id,"Wrong account data","x to out of map");
+                    return;
+                }
+                if(y>=GlobalServerData::serverPrivateVariables.map_list[loginQuery.value(6).toString()]->height)
+                {
+                    loginIsWrong(query_id,"Wrong account data","y to out of map");
+                    return;
+                }
+                loginIsRightWithRescue(query_id,
+                    player_informations->id,
+                    GlobalServerData::serverPrivateVariables.map_list[loginQuery.value(6).toString()],
+                    x,
+                    y,
+                    (Orientation)orentation,
+                    loginQuery.value(10),
+                    loginQuery.value(11),
+                    loginQuery.value(12),
+                    loginQuery.value(13)
+                );
             }
             else
                 loginIsWrong(query_id,"Map not found","Map not found: "+loginQuery.value(6).toString());
@@ -201,7 +216,67 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
     }
 }
 
+void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
+                  const QVariant &rescue_map,const QVariant &rescue_x,const QVariant &rescue_y,const QVariant &rescue_orientation)
+{
+    if(!GlobalServerData::serverPrivateVariables.map_list.contains(rescue_map.toString()))
+    {
+        emit message(QString("rescue map ,not found"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    bool ok;
+    quint8 rescue_new_x=rescue_x.toUInt(&ok);
+    if(!ok)
+    {
+        emit message(QString("rescue x coord is not a number"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    quint8 rescue_new_y=rescue_y.toUInt(&ok);
+    if(!ok)
+    {
+        emit message(QString("rescue y coord is not a number"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    if(rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->width)
+    {
+        emit message(QString("rescue x to out of map"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    if(rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->height)
+    {
+        emit message(QString("rescue y to out of map"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    QString orientationString=rescue_orientation.toString();
+    Orientation rescue_new_orientation;
+    if(orientationString=="top")
+        rescue_new_orientation=Orientation_top;
+    else if(orientationString=="bottom")
+        rescue_new_orientation=Orientation_bottom;
+    else if(orientationString=="left")
+        rescue_new_orientation=Orientation_left;
+    else if(orientationString=="right")
+        rescue_new_orientation=Orientation_right;
+    else
+    {
+        rescue_new_orientation=Orientation_bottom;
+        emit message(QString("Wrong rescue orientation corrected with bottom"));
+    }
+    loginIsRightWithParsedRescue(query_id,id,map,x,y,orientation,GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()],rescue_new_x,rescue_new_y,rescue_new_orientation);
+}
+
 void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
+{
+    loginIsRightWithParsedRescue(query_id,id,map,x,y,orientation,map,x,y,orientation);
+}
+
+void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
+                  Map* rescue_map,const /*COORD_TYPE*/ quint8 &rescue_x,const /*COORD_TYPE*/ quint8 &rescue_y,const Orientation &rescue_orientation)
 {
     loadLinkedData();
 
@@ -276,6 +351,11 @@ void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, 
 
     emit postReply(query_id,outputData);
     sendInventory();
+
+    player_informations->rescue.map=rescue_map;
+    player_informations->rescue.x=rescue_x;
+    player_informations->rescue.y=rescue_y;
+    player_informations->rescue.orientation=rescue_orientation;
 
     //send signals into the server
     emit message(QString("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));

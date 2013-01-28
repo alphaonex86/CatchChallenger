@@ -79,6 +79,7 @@ BaseWindow::BaseWindow() :
     connect(&otherMonsterAttack,SIGNAL(timeout()),this,SLOT(otherMonsterAttackUpdate()));
     connect(&currentMonsterAttack,SIGNAL(timeout()),this,SLOT(currentMonsterAttackUpdate()));
     connect(&finalFightText,SIGNAL(timeout()),this,SLOT(finalFightTextQuit()));
+    connect(Pokecraft::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
 
     //plants
     connect(this,SIGNAL(useSeed(quint8)),Pokecraft::Api_client_real::client,SLOT(useSeed(quint8)));

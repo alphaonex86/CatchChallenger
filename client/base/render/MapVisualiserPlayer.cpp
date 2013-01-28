@@ -649,6 +649,7 @@ void MapVisualiserPlayer::resetAll()
     moveTimer.stop();
     lookToMove.stop();
     keyPressed.clear();
+    inMove=false;
     MapVisualiser::resetAll();
 }
 

@@ -17,6 +17,9 @@ QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
 
 LocalClientHandler::LocalClientHandler()
 {
+    stepFight_Grass=0;
+    stepFight_Water=0;
+    stepFight_Cave=0;
 }
 
 LocalClientHandler::~LocalClientHandler()
@@ -42,7 +45,7 @@ void LocalClientHandler::extraStop()
     //virtual stop the player
     //Orientation orientation;
     QString orientationString;
-    switch(last_direction)
+    switch(getLastDirection())
     {
         case Direction_look_at_bottom:
         case Direction_move_at_bottom:
@@ -142,7 +145,7 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     out << x;
     out << y;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    qDebug() << "put_on_the_map merge" << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type) << "=" << (quint8)orientation << "|" << (quint8)player_informations->public_and_private_informations.public_informations.type;
+    emit message(QString("put_on_the_map merge: %1 = %2 | %3").arg(quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type)).arg((quint8)orientation).arg((quint8)player_informations->public_and_private_informations.public_informations.type));
     #endif
     out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
     out << player_informations->public_and_private_informations.public_informations.speed;
@@ -158,6 +161,8 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     getRandomNumberIfNeeded();
 
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
+
+    updateCanDoFight();
 }
 
 bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
@@ -168,7 +173,7 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
                  .arg(y)
                  .arg(player_informations->public_and_private_informations.public_informations.simplifiedId)
                  .arg(previousMovedUnit)
-                 .arg(MoveOnTheMap::directionToString(last_direction))
+                 .arg(MoveOnTheMap::directionToString(getLastDirection()))
                  .arg(MoveOnTheMap::directionToString(direction))
                  );
     #endif
@@ -177,6 +182,11 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
 
 bool LocalClientHandler::singleMove(const Direction &direction)
 {
+    if(!wildMonsters.empty())//check if is in fight
+    {
+        emit error(QString("error: try move when is in fight"));
+        return false;
+    }
     COORD_TYPE x=this->x,y=this->y;
     temp_direction=direction;
     Map* map=this->map;
@@ -187,15 +197,10 @@ bool LocalClientHandler::singleMove(const Direction &direction)
         return false;
     }
     MoveOnTheMap::move(direction,&map,&x,&y);
-    if(!player_informations->ableToFight)
-        if(MoveOnTheMap::isGrass(*map,x,y))
-        {
-            emit error(QString("LocalClientHandler::singleMove(), can't walk into the grass into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
-            return false;
-        }
     this->map=static_cast<Map_server_MapVisibility_simple*>(map);
     this->x=x;
     this->y=y;
+    checkFightCollision(map,x,y);
     return true;
 }
 
@@ -470,7 +475,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
                 emit receiveSystemText(QString("%1 is not connected, usage: /tp player1 to player2").arg(arguments.last()));
                 return;
             }
-            playerByPseudo[arguments.first()]->receiveTeleportTo(playerByPseudo[arguments.last()]->map,playerByPseudo[arguments.last()]->x,playerByPseudo[arguments.last()]->y,MoveOnTheMap::directionToOrientation(playerByPseudo[arguments.last()]->last_direction));
+            playerByPseudo[arguments.first()]->receiveTeleportTo(playerByPseudo[arguments.last()]->map,playerByPseudo[arguments.last()]->x,playerByPseudo[arguments.last()]->y,MoveOnTheMap::directionToOrientation(playerByPseudo[arguments.last()]->getLastDirection()));
         }
         else
         {
@@ -565,7 +570,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
-    switch(last_direction)
+    switch(getLastDirection())
     {
         case Direction_look_at_top:
             if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
@@ -637,7 +642,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
         QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
         if(!shops.contains(shopId))
         {
-            switch(last_direction)
+            switch(getLastDirection())
             {
                 case Direction_look_at_top:
                     if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
@@ -758,7 +763,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
-    switch(last_direction)
+    switch(getLastDirection())
     {
         case Direction_look_at_top:
             if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
@@ -830,7 +835,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
         if(!shops.contains(shopId))
         {
-            switch(last_direction)
+            switch(getLastDirection())
             {
                 case Direction_look_at_top:
                     if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
@@ -967,7 +972,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     quint8 x=this->x;
     quint8 y=this->y;
     //resolv the object
-    switch(last_direction)
+    switch(getLastDirection())
     {
         case Direction_look_at_top:
             if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
@@ -1039,7 +1044,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
         QList<quint32> shops=static_cast<MapServer*>(this->map)->shops.values(QPair<quint8,quint8>(x,y));
         if(!shops.contains(shopId))
         {
-            switch(last_direction)
+            switch(getLastDirection())
             {
                 case Direction_look_at_top:
                     if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
