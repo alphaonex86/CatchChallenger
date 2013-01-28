@@ -8,7 +8,6 @@ using namespace Pokecraft;
 
 void ClientHeavyLoad::loadMonsters()
 {
-    player_informations->ableToFight=false;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -131,8 +130,6 @@ void ClientHeavyLoad::loadMonsters()
         //finish it
         if(ok)
         {
-            if(playerMonster.hp>0 && playerMonster.egg_step==0)
-                player_informations->ableToFight=true;
             playerMonster.buffs=loadMonsterBuffs(monsterId);
             playerMonster.skills=loadMonsterSkills(monsterId);
             player_informations->public_and_private_informations.playerMonster << playerMonster;

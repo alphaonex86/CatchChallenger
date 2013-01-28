@@ -56,9 +56,12 @@ void ProtocolParsing::initialiseTheVariable()
     }
     sizeOnlyMainCodePacketServerToClient[0xC4]=0;
     sizeOnlyMainCodePacketClientToServer[0x40]=2;
+    sizeOnlyMainCodePacketClientToServer[0x61]=1;
     sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
     sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
     sizeMultipleCodePacketClientToServer[0x50][0x0002]=8;
+    sizeMultipleCodePacketClientToServer[0x60][0x0002]=0;
+    sizeMultipleCodePacketClientToServer[0x60][0x0003]=1;
     //define the size of the reply
     replySizeMultipleCodePacketServerToClient[0x79][0x0001]=0;
     replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;

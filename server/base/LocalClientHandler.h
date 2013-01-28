@@ -40,6 +40,22 @@ private:
     static QHash<QString,LocalClientHandler *> playerByPseudo;
     QByteArray randomSeeds;
 
+    //fight
+    quint8 selectedMonster;
+    bool ableToFight;
+    QList<PlayerMonster> wildMonsters;
+    QList<Monster::Stat> wildMonstersStat;
+    quint8 stepFight_Grass,stepFight_Water,stepFight_Cave;
+    inline quint8 getOneSeed(const quint8 &max=0);
+    PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
+    Monster::Stat getStat(const Monster &monster, const quint8 &level);
+    void applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect);
+    void applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
+    void generateOtherAttack();
+    void updateCanDoFight();
+    bool tryEscapeInternal();
+    void checkKOMonsters();
+
     //map move
     bool singleMove(const Direction &direction);
 public slots:
@@ -71,6 +87,9 @@ public slots:
     void getShopList(const quint32 &query_id,const quint32 &shopId);
     void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    //fight
+    void tryEscape();
+    bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
 private slots:
     virtual void extraStop();
 signals:

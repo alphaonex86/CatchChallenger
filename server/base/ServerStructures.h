@@ -49,7 +49,14 @@ struct Player_internal_informations
     quint32 id;
     QByteArray rawPseudo;
     volatile bool isConnected;
-    bool ableToFight;
+    struct Rescue
+    {
+        Map* map;
+        COORD_TYPE x;
+        COORD_TYPE y;
+        Orientation orientation;
+    };
+    Rescue rescue;
 };
 
 struct ServerSettings
