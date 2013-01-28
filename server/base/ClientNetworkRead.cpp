@@ -391,6 +391,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
             break;
         }
         break;
+        //inventory
         case 0x50:
             switch(subCodeType)
             {
@@ -413,6 +414,20 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                     in >> quantity;
                     emit destroyObject(itemId,quantity);
                 }
+                break;
+                default:
+                    parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    return;
+                break;
+            }
+        break;
+        //battle
+        case 0x60:
+            switch(subCodeType)
+            {
+                //Try escape
+                case 0x0002:
+                    emit tryEscape();
                 break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));

@@ -86,8 +86,7 @@ bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y
             }
             else
             {
-                stepFight_Water << (m_randomSeeds.at(0)%16);
-                m_randomSeeds.remove(0,1);
+                stepFight_Water << (getOneSeed()%16);
                 qDebug() << QString("next water monster into: %1").arg(stepFight_Water.last());
             }
         }
@@ -154,16 +153,16 @@ quint8 FightEngine::getOneSeed(const quint8 &max)
 quint32 FightEngine::generateOtherAttack(bool *ok)
 {
     *ok=false;
-    const PlayerMonster &playerMonster=wildMonsters.first();
-    if(playerMonster.skills.empty())
+    const PlayerMonster &otherMonster=wildMonsters.first();
+    if(otherMonster.skills.empty())
         return 0;
     int position;
-    if(playerMonster.skills.size()==1)
+    if(otherMonster.skills.size()==1)
         position=0;
     else
-        position=getOneSeed()%playerMonster.skills.size();
-    const PlayerMonster::Skill &playerMonsterSkill=playerMonster.skills.at(position);
-    const Monster::Skill::SkillList &skillList=monsterSkills[playerMonsterSkill.skill].level.at(playerMonsterSkill.level-1);
+        position=getOneSeed()%otherMonster.skills.size();
+    const PlayerMonster::Skill &otherMonsterSkill=otherMonster.skills.at(position);
+    const Monster::Skill::SkillList &skillList=monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index=0;
     while(index<skillList.buff.size())
     {
@@ -197,7 +196,7 @@ quint32 FightEngine::generateOtherAttack(bool *ok)
         index++;
     }
     *ok=true;
-    return playerMonsterSkill.skill;
+    return otherMonsterSkill.skill;
 }
 
 void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
@@ -287,6 +286,7 @@ bool FightEngine::dropKOWildMonster()
     if(!wildMonsterIsKO())
         return false;
     wildMonsters.removeFirst();
+    wildMonstersStat.removeFirst();
     return true;
 }
 
@@ -364,6 +364,7 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
         index--;
     }
     *ok=true;
+    wildMonstersStat << monsterStat;
     return playerMonster;
 }
 

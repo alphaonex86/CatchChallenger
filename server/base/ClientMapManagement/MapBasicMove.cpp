@@ -40,6 +40,26 @@ void MapBasicMove::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
+Direction MapBasicMove::getLastDirection()
+{
+    return last_direction;
+}
+
+Map* MapBasicMove::getMap()
+{
+    return map;
+}
+
+COORD_TYPE MapBasicMove::getX()
+{
+    return x;
+}
+
+COORD_TYPE MapBasicMove::getY()
+{
+    return y;
+}
+
 void MapBasicMove::extraStop()
 {
 }
@@ -86,11 +106,12 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
     switch(last_direction)
     {
         case Direction_move_at_top:
+            /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_top: Previous action is moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
                 if(!singleMove(Direction_move_at_top))
@@ -99,18 +120,20 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }
         break;
         case Direction_look_at_top:
+            /* can be look into other direction
             if(unlikely(previousMovedUnit>0))
             {
                 emit error(QString("Direction_look_at_top: Previous action is not moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
         break;
         case Direction_move_at_right:
+            /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_right: Previous action is moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
                 if(!singleMove(Direction_move_at_right))
@@ -119,18 +142,20 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }
         break;
         case Direction_look_at_right:
+            /* can be look into other direction
             if(unlikely(previousMovedUnit>0))
             {
                 emit error(QString("Direction_look_at_right: Previous action is not moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
         break;
         case Direction_move_at_bottom:
+            /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_bottom: Previous action is moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
                 if(!singleMove(Direction_move_at_bottom))
@@ -139,18 +164,20 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }
         break;
         case Direction_look_at_bottom:
+            /* can be look into other direction
             if(unlikely(previousMovedUnit>0))
             {
                 emit error(QString("Direction_look_at_bottom: Previous action is not moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
         break;
         case Direction_move_at_left:
+            /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
                 emit error(QString("Direction_move_at_left: Previous action is moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
                 if(!singleMove(Direction_move_at_left))
@@ -159,11 +186,12 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }
         break;
         case Direction_look_at_left:
+            /* can be look into other direction
             if(unlikely(previousMovedUnit>0))
             {
                 emit error(QString("Direction_look_at_left: Previous action is not moving: %1").arg(last_direction));
                 return false;
-            }
+            }*/
         break;
         default:
             emit error(QString("moveThePlayer(): direction not managed"));

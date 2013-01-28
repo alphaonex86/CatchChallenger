@@ -162,6 +162,7 @@ struct Player_private_and_public_informations
     //crafting
     QList<quint32> recipes;
     //fight
+    /// \todo put out of here to have mutalised engine
     QList<PlayerMonster> playerMonster;
 };
 
