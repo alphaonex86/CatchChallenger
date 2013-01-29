@@ -133,6 +133,9 @@ private:
     //reply to the query
     QHash<quint8,quint16> replySize;
     QSet<quint8> replyCompression;
+    #ifdef POKECRAFT_EXTRA_CHECK
+    QSet<quint8> queryReceived;
+    #endif
 signals:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
     void newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);

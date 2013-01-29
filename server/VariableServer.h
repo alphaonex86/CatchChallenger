@@ -35,6 +35,10 @@
 /// \brief drop the previous if stopped step, need POKECRAFT_SERVER_MAP_DROP_OVER_MOVE
 #define POKECRAFT_SERVER_MAP_DROP_STOP_MOVE
 
+//one of this line
+#define POKECRAFT_SERVER_FIGHT_SAVE_MODE_BY_TURN//more safe in crash case, but use more power
+//#define POKECRAFT_SERVER_FIGHT_SAVE_MODE_AFTER_ALL//less safe in crash case, but use less power
+
 //put for map, add for local thread
 //put this size into the options
 #define POKECRAFT_SERVER_RANDOM_LIST_SIZE 512

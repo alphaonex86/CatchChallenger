@@ -51,7 +51,7 @@ void LocalClientHandler::checkKOMonsters()
         if(!ableToFight)
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            emit message(QString("Player have lost, tp and heal"));
+            emit message(QString("Player have lost, tp to %1 (%2,%3) and heal").arg(player_informations->rescue.map->map_file).arg(player_informations->rescue.x).arg(player_informations->rescue.y));
             #endif
             //teleport
             emit teleportTo(player_informations->rescue.map,player_informations->rescue.x,player_informations->rescue.y,player_informations->rescue.orientation);
@@ -110,18 +110,20 @@ bool LocalClientHandler::checkFightCollision(Map *map,const COORD_TYPE &x,const 
                 return false;
             }
             else
-                stepFight_Grass=getOneSeed()%16;
+                stepFight_Grass=getOneSeed(16);
         }
         else
             stepFight_Grass--;
         if(stepFight_Grass==0)
         {
-            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            emit message(QString("Start grass fight"));
-            #endif
             PlayerMonster monster=getRandomMonster(map->grassMonster,&ok);
             if(ok)
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+                emit message(QString("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
+                #endif
                 wildMonsters << monster;
+            }
             else
                 emit error(QString("error: no more random seed here to have the get"));
             return ok;
@@ -144,18 +146,20 @@ bool LocalClientHandler::checkFightCollision(Map *map,const COORD_TYPE &x,const 
                 return false;
             }
             else
-                stepFight_Water=getOneSeed()%16;
+                stepFight_Water=getOneSeed(16);
         }
         else
             stepFight_Water--;
         if(stepFight_Water==0)
         {
-            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            emit message(QString("Start wather fight"));
-            #endif
             PlayerMonster monster=getRandomMonster(map->waterMonster,&ok);
             if(ok)
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+                emit message(QString("Start water fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
+                #endif
                 wildMonsters << monster;
+            }
             else
                 emit error(QString("error: no more random seed here to have the get"));
             return ok;
@@ -178,18 +182,20 @@ bool LocalClientHandler::checkFightCollision(Map *map,const COORD_TYPE &x,const 
                 return false;
             }
             else
-                stepFight_Cave=getOneSeed()%16;
+                stepFight_Cave=getOneSeed(16);
         }
         else
             stepFight_Cave--;
         if(stepFight_Cave==0)
         {
-            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-            emit message(QString("Start cave fight"));
-            #endif
             PlayerMonster monster=getRandomMonster(map->caveMonster,&ok);
             if(ok)
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+                emit message(QString("Start cave fight with monseter id: %1 level %2").arg(monster.monster).arg(monster.level));
+                #endif
                 wildMonsters << monster;
+            }
             else
                 emit error(QString("error: no more random seed here to have the get"));
             return ok;
@@ -221,7 +227,7 @@ PlayerMonster LocalClientHandler::getRandomMonster(const QList<MapMonster> &mons
     playerMonster.egg_step=0;
     playerMonster.remaining_xp=0;
     playerMonster.sp=0;
-    quint8 randomMonsterInt=getOneSeed()%100;
+    quint8 randomMonsterInt=getOneSeed(100);
     bool monsterFound=false;
     int index=0;
     while(index<monsterList.size())
@@ -235,9 +241,7 @@ PlayerMonster LocalClientHandler::getRandomMonster(const QList<MapMonster> &mons
             if(monsterList.at(index).maxLevel==monsterList.at(index).minLevel)
                 playerMonster.level=monsterList.at(index).minLevel;
             else
-            {
-                playerMonster.level=getOneSeed()%(monsterList.at(index).maxLevel-monsterList.at(index).minLevel+1)+monsterList.at(index).minLevel;
-            }
+                playerMonster.level=getOneSeed(monsterList.at(index).maxLevel-monsterList.at(index).minLevel+1)+monsterList.at(index).minLevel;
             monsterFound=true;
             break;
         }
@@ -257,7 +261,7 @@ PlayerMonster LocalClientHandler::getRandomMonster(const QList<MapMonster> &mons
     Monster monsterDef=GlobalServerData::serverPrivateVariables.monsters[playerMonster.monster];
     if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
     {
-        qint8 temp_ratio=getOneSeed()%101;
+        qint8 temp_ratio=getOneSeed(101);
         if(temp_ratio<monsterDef.ratio_gender)
             playerMonster.gender=PlayerMonster::Male;
         else
@@ -307,7 +311,8 @@ Monster::Stat LocalClientHandler::getStat(const Monster &monster, const quint8 &
 
 bool LocalClientHandler::tryEscapeInternal()
 {
-    quint8 value=getOneSeed()%101;
+    return false;
+    quint8 value=getOneSeed(101);
     if(wildMonsters.first().level<player_informations->public_and_private_informations.playerMonster.at(selectedMonster).level && value<75)
         return true;
     if(wildMonsters.first().level==player_informations->public_and_private_informations.playerMonster.at(selectedMonster).level && value<50)
@@ -346,7 +351,7 @@ void LocalClientHandler::generateOtherAttack()
     if(otherMonster.skills.size()==1)
         position=0;
     else
-        position=getOneSeed()%otherMonster.skills.size();
+        position=getOneSeed(otherMonster.skills.size());
     const PlayerMonster::Skill &otherMonsterSkill=otherMonster.skills.at(position);
     const Monster::Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index=0;
@@ -393,7 +398,11 @@ void LocalClientHandler::applyOtherLifeEffect(const Monster::Skill::LifeEffect &
                 quantity=(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp*effect.quantity)/100;
             stat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
             if(quantity<0 && (-quantity)>player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+            {
                 player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=0;
+                player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs.clear();
+                updateCanDoFight();
+            }
             else if(quantity>0 && quantity>(stat.hp-player_informations->public_and_private_informations.playerMonster[selectedMonster].hp))
                 player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=stat.hp;
             else

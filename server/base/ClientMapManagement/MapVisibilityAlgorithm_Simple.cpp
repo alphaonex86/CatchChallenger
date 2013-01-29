@@ -45,7 +45,7 @@ void MapVisibilityAlgorithm_Simple::insertClient()
     if(likely(loop_size<=GlobalServerData::serverSettings.mapVisibility.simple.max))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-        emit message(QString("insertClient() insert the client, into: %1").arg(map->map_file));
+        emit message(QString("insertClient() insert the client, into: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
         #endif
         //insert the new client
         index=0;
@@ -677,13 +677,14 @@ bool MapVisibilityAlgorithm_Simple::moveThePlayer(const quint8 &previousMovedUni
 void MapVisibilityAlgorithm_Simple::teleportValidatedTo(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
     bool mapChange=(this->map!=map);
+    if(mapChange)
+        unloadFromTheMap();
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
     if(mapChange)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QString("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
         #endif
-        unloadFromTheMap();
         this->map=static_cast<Map_server_MapVisibility_simple*>(map);
         loadOnTheMap();
     }

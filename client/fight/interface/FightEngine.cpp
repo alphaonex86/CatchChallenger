@@ -57,7 +57,7 @@ bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y
             }
             else
             {
-                stepFight_Grass << (getOneSeed()%16);
+                stepFight_Grass << getOneSeed(16);
                 qDebug() << QString("next grass monster into: %1").arg(stepFight_Grass.last());
             }
         }
@@ -86,7 +86,7 @@ bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y
             }
             else
             {
-                stepFight_Water << (getOneSeed()%16);
+                stepFight_Water << getOneSeed(16);
                 qDebug() << QString("next water monster into: %1").arg(stepFight_Water.last());
             }
         }
@@ -115,7 +115,7 @@ bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y
             }
             else
             {
-                stepFight_Cave << (getOneSeed()%16);
+                stepFight_Cave << getOneSeed(16);
                 qDebug() << QString("next cave monster into: %1").arg(stepFight_Cave.last());
             }
         }
@@ -160,7 +160,7 @@ quint32 FightEngine::generateOtherAttack(bool *ok)
     if(otherMonster.skills.size()==1)
         position=0;
     else
-        position=getOneSeed()%otherMonster.skills.size();
+        position=getOneSeed(otherMonster.skills.size());
     const PlayerMonster::Skill &otherMonsterSkill=otherMonster.skills.at(position);
     const Monster::Skill::SkillList &skillList=monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index=0;
@@ -213,7 +213,11 @@ void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
                 quantity=(playerMonsterList[selectedMonster].hp*effect.quantity)/100;
             stat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
             if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
+            {
                 playerMonsterList[selectedMonster].hp=0;
+                playerMonsterList[selectedMonster].buffs.clear();
+                updateCanDoFight();
+            }
             else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
                 playerMonsterList[selectedMonster].hp=stat.hp;
             else
@@ -297,7 +301,7 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
     playerMonster.egg_step=0;
     playerMonster.remaining_xp=0;
     playerMonster.sp=0;
-    quint8 randomMonsterInt=getOneSeed()%100;
+    quint8 randomMonsterInt=getOneSeed(100);
     bool monsterFound=false;
     int index=0;
     while(index<monsterList.size())
@@ -311,9 +315,7 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
             if(monsterList.at(index).maxLevel==monsterList.at(index).minLevel)
                 playerMonster.level=monsterList.at(index).minLevel;
             else
-            {
-                playerMonster.level=getOneSeed()%(monsterList.at(index).maxLevel-monsterList.at(index).minLevel+1)+monsterList.at(index).minLevel;
-            }
+                playerMonster.level=getOneSeed(monsterList.at(index).maxLevel-monsterList.at(index).minLevel+1)+monsterList.at(index).minLevel;
             monsterFound=true;
             break;
         }
@@ -333,7 +335,7 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
     Monster monsterDef=monsters[playerMonster.monster];
     if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
     {
-        qint8 temp_ratio=getOneSeed()%101;
+        qint8 temp_ratio=getOneSeed(101);
         if(temp_ratio<monsterDef.ratio_gender)
             playerMonster.gender=PlayerMonster::Male;
         else
@@ -371,6 +373,17 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
 bool FightEngine::canDoFight()
 {
     return m_canDoFight;
+}
+
+void FightEngine::healAllMonsters()
+{
+    int index=0;
+    while(index<playerMonsterList.size())
+    {
+        if(playerMonsterList.at(index).egg_step==0)
+            playerMonsterList[index].hp=0;
+        index++;
+    }
 }
 
 bool FightEngine::isInFight()
@@ -434,9 +447,11 @@ void FightEngine::resetAll()
     m_canDoFight=false;
 
     monsterExtra.clear();
-    monsterBuffs.clear();
-    monsterSkills.clear();
-    monsters.clear();
+    monsterBuffsExtra.clear();
+    monsterSkillsExtra.clear();
+
+    wildMonsters.clear();
+    wildMonstersStat.clear();
 }
 
 void FightEngine::appendRandomSeeds(const QByteArray &data)
@@ -464,8 +479,21 @@ const QByteArray FightEngine::randomSeeds()
 
 bool FightEngine::tryEscape()
 {
+    if(internalTryEscape())
+    {
+        wildMonsters.clear();
+        wildMonstersStat.clear();
+        return true;
+    }
+    else
+        return false;
+}
+
+bool FightEngine::internalTryEscape()
+{
     Pokecraft::Api_client_real::client->tryEscape();
-    quint8 value=getOneSeed()%101;
+    return false;
+    quint8 value=getOneSeed(101);
     if(wildMonsters.first().level<playerMonsterList.at(selectedMonster).level && value<75)
         return true;
     if(wildMonsters.first().level==playerMonsterList.at(selectedMonster).level && value<50)
