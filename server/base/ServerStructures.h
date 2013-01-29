@@ -75,12 +75,19 @@ struct ServerSettings
 
     struct Database
     {
-        enum DatabaseType
+        enum Type
         {
             DatabaseType_Mysql,
             DatabaseType_SQLite
         };
-        DatabaseType type;
+        Type type;
+
+        enum FightSync
+        {
+            FightSync_AtEachTurn=0x00,
+            FightSync_AtTheEndOfBattle=0x01//or at the object usage
+        };
+        FightSync fightSync;
 
         struct Mysql
         {

@@ -8,7 +8,6 @@
 #include <QByteArray>
 #include <QList>
 #include <QPair>
-#include <QApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QDateTime>

@@ -39,6 +39,7 @@ public:
     //stat function
     bool isListen();
     bool isStopped();
+    static void load_default_settings(QSettings *settings);
 public slots:
     //to manipulate the server for restart and stop
     void start_server();
