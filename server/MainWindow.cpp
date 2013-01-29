@@ -280,77 +280,7 @@ void MainWindow::clean_updated_info()
 
 void MainWindow::load_settings()
 {
-    if(!settings->contains("max-players"))
-        settings->setValue("max-players",200);
-    if(!settings->contains("server-ip"))
-        settings->setValue("server-ip","");
-    if(!settings->contains("pvp"))
-        settings->setValue("pvp",true);
-    if(!settings->contains("server-port"))
-        settings->setValue("server-port",42489);
-    if(!settings->contains("benchmark_map"))
-        settings->setValue("benchmark_map",true);
-    if(!settings->contains("benchmark_seconds"))
-        settings->setValue("benchmark_seconds",60);
-    if(!settings->contains("benchmark_clients"))
-        settings->setValue("benchmark_clients",400);
-    if(!settings->contains("sendPlayerNumber"))
-        settings->setValue("sendPlayerNumber",false);
-    if(!settings->contains("tolerantMode"))
-        settings->setValue("tolerantMode",false);
-
-    settings->beginGroup("MapVisibilityAlgorithm");
-    if(!settings->contains("MapVisibilityAlgorithm"))
-        settings->setValue("MapVisibilityAlgorithm",0);
-    settings->endGroup();
-
-    settings->beginGroup("MapVisibilityAlgorithm-Simple");
-    if(!settings->contains("Max"))
-        settings->setValue("Max",50);
-    if(!settings->contains("Reshow"))
-        settings->setValue("Reshow",30);
-    settings->endGroup();
-
-    settings->beginGroup("rates");
-    if(!settings->contains("xp_normal"))
-        settings->setValue("xp_normal",1.0);
-    if(!settings->contains("xp_premium"))
-        settings->setValue("xp_premium",1.0);
-    if(!settings->contains("gold_normal"))
-        settings->setValue("gold_normal",1.0);
-    if(!settings->contains("gold_premium"))
-        settings->setValue("gold_premium",1.0);
-    if(!settings->contains("shiny_normal"))
-        settings->setValue("shiny_normal",0.0001);
-    if(!settings->contains("shiny_premium"))
-        settings->setValue("shiny_premium",0.0002);
-    settings->endGroup();
-
-    settings->beginGroup("chat");
-    if(!settings->contains("allow-all"))
-        settings->setValue("allow-all",true);
-    if(!settings->contains("allow-local"))
-        settings->setValue("allow-local",true);
-    if(!settings->contains("allow-private"))
-        settings->setValue("allow-private",true);
-    if(!settings->contains("allow-aliance"))
-        settings->setValue("allow-aliance",true);
-    if(!settings->contains("allow-clan"))
-        settings->setValue("allow-clan",true);
-    settings->endGroup();
-
-    settings->beginGroup("db");
-    if(!settings->contains("type"))
-        settings->setValue("type","mysql");
-    if(!settings->contains("mysql_host"))
-        settings->setValue("mysql_host","localhost");
-    if(!settings->contains("mysql_login"))
-        settings->setValue("mysql_login","pokecraft-login");
-    if(!settings->contains("mysql_pass"))
-        settings->setValue("mysql_pass","pokecraft-pass");
-    if(!settings->contains("mysql_db"))
-        settings->setValue("mysql_db","pokecraft");
-    settings->endGroup();
+    NormalServer::load_default_settings(settings);
     // --------------------------------------------------
     ui->max_player->setValue(settings->value("max-players").toUInt());
     ui->server_ip->setText(settings->value("server-ip").toString());
@@ -428,6 +358,10 @@ void MainWindow::load_settings()
     QString db_mysql_login=settings->value("mysql_login").toString();
     QString db_mysql_pass=settings->value("mysql_pass").toString();
     QString db_mysql_base=settings->value("mysql_db").toString();
+    QString db_fight_sync=settings->value("db_fight_sync").toString();
+
+    if(!settings->contains("db_fight_sync"))
+        settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
     settings->endGroup();
 
     if(db_type=="mysql")
@@ -440,6 +374,12 @@ void MainWindow::load_settings()
     ui->db_mysql_login->setText(db_mysql_login);
     ui->db_mysql_pass->setText(db_mysql_pass);
     ui->db_mysql_base->setText(db_mysql_base);
+    if(db_fight_sync=="FightSync_AtEachTurn")
+        ui->db_fight_sync->setCurrentIndex(0);
+    else if(db_fight_sync=="FightSync_AtTheEndOfBattle")
+        ui->db_fight_sync->setCurrentIndex(1);
+    else
+        ui->db_fight_sync->setCurrentIndex(0);
 
     ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
 
@@ -496,6 +436,7 @@ void MainWindow::send_settings()
             formatedServerSettings.database.sqlite.file				= ui->db_sqlite_file->text();
         break;
     }
+    formatedServerSettings.database.fightSync                       = (ServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();
 
     //connection
     formatedServerSettings.max_players					= ui->max_player->value();
@@ -736,4 +677,20 @@ void Pokecraft::MainWindow::on_db_sqlite_browse_clicked()
 void Pokecraft::MainWindow::on_tolerantMode_toggled(bool checked)
 {
     settings->setValue("tolerantMode",checked);
+}
+
+void Pokecraft::MainWindow::on_db_fight_sync_currentIndexChanged(int index)
+{
+    settings->beginGroup("db");
+    switch(index)
+    {
+        case 0:
+            settings->setValue("db_fight_sync","FightSync_AtEachTurn");
+        break;
+        case 1:
+        default:
+            settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
+        break;
+    }
+    settings->endGroup();
 }

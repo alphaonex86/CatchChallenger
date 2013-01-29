@@ -13,7 +13,7 @@ using namespace Pokecraft;
 Api_client_virtual::Api_client_virtual(ConnectedSocket *socket) :
     Api_protocol(socket)
 {
-    datapack_base_name=QString("%1/datapack/").arg(QApplication::applicationDirPath());
+    datapack_base_name=QString("%1/datapack/").arg(QCoreApplication::applicationDirPath());
 }
 
 Api_client_virtual::~Api_client_virtual()
