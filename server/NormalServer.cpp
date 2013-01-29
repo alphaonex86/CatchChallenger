@@ -498,3 +498,80 @@ void NormalServer::start_benchmark(quint16 second,quint16 number_of_client,bool 
     in_benchmark_mode=true;
     emit try_start_benchmark(second,number_of_client,benchmark_map);
 }
+
+void NormalServer::load_default_settings(QSettings *settings)
+{
+    if(!settings->contains("max-players"))
+        settings->setValue("max-players",200);
+    if(!settings->contains("server-ip"))
+        settings->setValue("server-ip","");
+    if(!settings->contains("pvp"))
+        settings->setValue("pvp",true);
+    if(!settings->contains("server-port"))
+        settings->setValue("server-port",42489);
+    if(!settings->contains("benchmark_map"))
+        settings->setValue("benchmark_map",true);
+    if(!settings->contains("benchmark_seconds"))
+        settings->setValue("benchmark_seconds",60);
+    if(!settings->contains("benchmark_clients"))
+        settings->setValue("benchmark_clients",400);
+    if(!settings->contains("sendPlayerNumber"))
+        settings->setValue("sendPlayerNumber",false);
+    if(!settings->contains("tolerantMode"))
+        settings->setValue("tolerantMode",false);
+
+    settings->beginGroup("MapVisibilityAlgorithm");
+    if(!settings->contains("MapVisibilityAlgorithm"))
+        settings->setValue("MapVisibilityAlgorithm",0);
+    settings->endGroup();
+
+    settings->beginGroup("MapVisibilityAlgorithm-Simple");
+    if(!settings->contains("Max"))
+        settings->setValue("Max",50);
+    if(!settings->contains("Reshow"))
+        settings->setValue("Reshow",30);
+    settings->endGroup();
+
+    settings->beginGroup("rates");
+    if(!settings->contains("xp_normal"))
+        settings->setValue("xp_normal",1.0);
+    if(!settings->contains("xp_premium"))
+        settings->setValue("xp_premium",1.0);
+    if(!settings->contains("gold_normal"))
+        settings->setValue("gold_normal",1.0);
+    if(!settings->contains("gold_premium"))
+        settings->setValue("gold_premium",1.0);
+    if(!settings->contains("shiny_normal"))
+        settings->setValue("shiny_normal",0.0001);
+    if(!settings->contains("shiny_premium"))
+        settings->setValue("shiny_premium",0.0002);
+    settings->endGroup();
+
+    settings->beginGroup("chat");
+    if(!settings->contains("allow-all"))
+        settings->setValue("allow-all",true);
+    if(!settings->contains("allow-local"))
+        settings->setValue("allow-local",true);
+    if(!settings->contains("allow-private"))
+        settings->setValue("allow-private",true);
+    if(!settings->contains("allow-aliance"))
+        settings->setValue("allow-aliance",true);
+    if(!settings->contains("allow-clan"))
+        settings->setValue("allow-clan",true);
+    settings->endGroup();
+
+    settings->beginGroup("db");
+    if(!settings->contains("type"))
+        settings->setValue("type","mysql");
+    if(!settings->contains("mysql_host"))
+        settings->setValue("mysql_host","localhost");
+    if(!settings->contains("mysql_login"))
+        settings->setValue("mysql_login","pokecraft-login");
+    if(!settings->contains("mysql_pass"))
+        settings->setValue("mysql_pass","pokecraft-pass");
+    if(!settings->contains("mysql_db"))
+        settings->setValue("mysql_db","pokecraft");
+    if(!settings->contains("db_fight_sync"))
+        settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
+    settings->endGroup();
+}
