@@ -23,6 +23,7 @@ public:
     bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool haveRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool canDoFight();
+    void healAllMonsters();
     bool isInFight();
     struct MonsterExtra
     {
@@ -81,6 +82,7 @@ private:
     inline quint8 getOneSeed(const quint8 &max=0);
     void applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect);
     void applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
+    bool internalTryEscape();
 private:
     void updateCanDoFight();
     explicit FightEngine();

@@ -63,12 +63,15 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketClientToServer[0x60][0x0002]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0003]=1;
     //define the size of the reply
-    replySizeMultipleCodePacketServerToClient[0x79][0x0001]=0;
+    /** \note previously send by: sizeMultipleCodePacketServerToClient */
+    replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
+    /** \note previously send by: sizeMultipleCodePacketClientToServer */
     replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;
     replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
 
     compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
     //define the compression of the reply
+    /** \note previously send by: sizeMultipleCodePacketClientToServer */
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x0002;
 
@@ -748,6 +751,16 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
 
 bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray data)
 {
+    #ifdef POKECRAFT_EXTRA_CHECK
+    if(!queryReceived.contains(queryNumber))
+    {
+        DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
+        return false;
+    }
+    else
+        queryReceived.remove(queryNumber);
+    #endif
+
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
     if(isClient)
@@ -800,6 +813,11 @@ quint64 ProtocolParsingOutput::getTXSize()
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber)
 {
+    #ifdef POKECRAFT_EXTRA_CHECK
+    if(queryReceived.contains(queryNumber))
+        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) query with same id previously say").arg(mainCodeType).arg(queryNumber));
+    queryReceived << queryNumber;
+    #endif
     if(replySize.contains(queryNumber))
     {
         emit error("Query with this query number already found");
@@ -831,7 +849,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
             #ifdef POKECRAFT_EXTRA_CHECK
-            if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
+            if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
                 DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
             #endif
             replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
@@ -851,6 +869,11 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
 
 void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
+    #ifdef POKECRAFT_EXTRA_CHECK
+    if(queryReceived.contains(queryNumber))
+        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) query with same id previously say").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+    queryReceived << queryNumber;
+    #endif
     if(replySize.contains(queryNumber))
     {
         emit error("Query with this query number already found");
