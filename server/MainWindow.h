@@ -94,6 +94,7 @@ private slots:
     void on_sendPlayerNumber_toggled(bool checked);
     void on_db_sqlite_browse_clicked();
     void on_tolerantMode_toggled(bool checked);
+    void on_db_fight_sync_currentIndexChanged(int index);
 signals:
     void record_latency();
 };
