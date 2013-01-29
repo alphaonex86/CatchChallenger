@@ -83,6 +83,12 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 
 void MapVisualiserPlayer::keyPressParse()
 {
+    if(Pokecraft::FightEngine::fightEngine.isInFight())
+    {
+        qDebug() << "Strange, try move when is in fight at keyPressParse()";
+        return;
+    }
+
     //ignore is already in move
     if(inMove)
         return;
@@ -339,6 +345,12 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         stopGrassAnimation();
 
+        if(Pokecraft::FightEngine::fightEngine.isInFight())
+        {
+            qDebug() << "Strange, try move when is in fight at moveStepSlot()";
+            return;
+        }
+
         //check if is in fight collision
         if(Pokecraft::FightEngine::fightEngine.haveRandomFight(*map,x,y))
         {
@@ -355,6 +367,7 @@ void MapVisualiserPlayer::moveStepSlot()
             //can't go into this direction, then just look into this direction
             if(!canGoTo(Pokecraft::Direction_move_at_left,current_map->logicalMap,x,y,true))
             {
+                keyPressed.remove(Qt::Key_Left);
                 direction=Pokecraft::Direction_look_at_left;
                 playerMapObject->setTile(playerTileset->tileAt(10));
                 inMove=false;
@@ -376,6 +389,7 @@ void MapVisualiserPlayer::moveStepSlot()
             //can't go into this direction, then just look into this direction
             if(!canGoTo(Pokecraft::Direction_move_at_right,current_map->logicalMap,x,y,true))
             {
+                keyPressed.remove(Qt::Key_Right);
                 direction=Pokecraft::Direction_look_at_right;
                 playerMapObject->setTile(playerTileset->tileAt(4));
                 inMove=false;
@@ -397,6 +411,7 @@ void MapVisualiserPlayer::moveStepSlot()
             //can't go into this direction, then just look into this direction
             if(!canGoTo(Pokecraft::Direction_move_at_top,current_map->logicalMap,x,y,true))
             {
+                keyPressed.remove(Qt::Key_Up);
                 direction=Pokecraft::Direction_look_at_top;
                 playerMapObject->setTile(playerTileset->tileAt(1));
                 inMove=false;
@@ -418,6 +433,7 @@ void MapVisualiserPlayer::moveStepSlot()
             //can't go into this direction, then just look into this direction
             if(!canGoTo(Pokecraft::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
             {
+                keyPressed.remove(Qt::Key_Down);
                 direction=Pokecraft::Direction_look_at_bottom;
                 playerMapObject->setTile(playerTileset->tileAt(7));
                 inMove=false;
