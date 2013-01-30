@@ -173,10 +173,7 @@ quint32 FightEngine::generateOtherAttack(bool *ok)
         else
             success=(getOneSeed(100)<buff.success);
         if(success)
-        {
-            buffEffectOtherMonster << buff.effect;
             applyOtherBuffEffect(buff.effect);
-        }
         index++;
     }
     index=0;
@@ -189,10 +186,7 @@ quint32 FightEngine::generateOtherAttack(bool *ok)
         else
             success=(getOneSeed(100)<life.success);
         if(success)
-        {
-            lifeEffectOtherMonster << life.effect;
             applyOtherLifeEffect(life.effect);
-        }
         index++;
     }
     *ok=true;
@@ -203,15 +197,30 @@ void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
 {
     qint32 quantity;
     Monster::Stat stat;
+    Monster::Stat otherStat;
     switch(effect.on)
     {
         case Monster::ApplyOn_AloneEnemy:
         case Monster::ApplyOn_AllEnemy:
+            stat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
             if(effect.type==QuantityType_Quantity)
-                quantity=effect.quantity;
+            {
+                otherStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
             else
                 quantity=(playerMonsterList[selectedMonster].hp*effect.quantity)/100;
-            stat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
             if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
             {
                 playerMonsterList[selectedMonster].hp=0;
@@ -225,11 +234,24 @@ void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
         break;
         case Monster::ApplyOn_Themself:
         case Monster::ApplyOn_AllAlly:
+            stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
             if(effect.type==QuantityType_Quantity)
-                quantity=effect.quantity;
+            {
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*stat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
             else
                 quantity=(wildMonsters.first().hp*effect.quantity)/100;
-            stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
             if(quantity<0 && (-quantity)>wildMonsters.first().hp)
                 wildMonsters.first().hp=0;
             else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
@@ -240,6 +262,13 @@ void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
         default:
             qDebug() << "Not apply match, can't apply the buff";
         break;
+    }
+    if(effect.quantity!=0)
+    {
+        Monster::Skill::LifeEffectReturn effect_to_return;
+        effect_to_return.on=effect.on;
+        effect_to_return.quantity=quantity;
+        lifeEffectOtherMonster << effect_to_return;
     }
 }
 
@@ -262,6 +291,7 @@ void FightEngine::applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect)
             qDebug() << "Not apply match, can't apply the buff";
         break;
     }
+    buffEffectOtherMonster << effect;
 }
 
 bool FightEngine::wildMonsterIsKO()
@@ -290,7 +320,6 @@ bool FightEngine::dropKOWildMonster()
     if(!wildMonsterIsKO())
         return false;
     wildMonsters.removeFirst();
-    wildMonstersStat.removeFirst();
     return true;
 }
 
@@ -366,7 +395,6 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
         index--;
     }
     *ok=true;
-    wildMonstersStat << monsterStat;
     return playerMonster;
 }
 
@@ -451,7 +479,6 @@ void FightEngine::resetAll()
     monsterSkillsExtra.clear();
 
     wildMonsters.clear();
-    wildMonstersStat.clear();
 }
 
 void FightEngine::appendRandomSeeds(const QByteArray &data)
@@ -464,11 +491,23 @@ Monster::Stat FightEngine::getStat(const Monster &monster, const quint8 &level)
 {
     Monster::Stat stat=monster.stat;
     stat.attack=stat.attack*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.attack==0)
+        stat.attack=1;
     stat.defense=stat.defense*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.defense==0)
+        stat.defense=1;
     stat.hp=stat.hp*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.hp==0)
+        stat.hp=1;
     stat.special_attack=stat.special_attack*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.special_attack==0)
+        stat.special_attack=1;
     stat.special_defense=stat.special_defense*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.special_defense==0)
+        stat.special_defense=1;
     stat.speed=stat.speed*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.speed==0)
+        stat.speed=1;
     return stat;
 }
 
@@ -482,7 +521,6 @@ bool FightEngine::tryEscape()
     if(internalTryEscape())
     {
         wildMonsters.clear();
-        wildMonstersStat.clear();
         return true;
     }
     else
