@@ -1377,6 +1377,12 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         {
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id bd, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.id;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id, line: %1").arg(__LINE__));
                                 return;
                             }

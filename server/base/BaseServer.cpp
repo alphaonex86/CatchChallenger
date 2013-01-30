@@ -38,6 +38,10 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.mapVisibility.simple.reshow		= 20;
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(POKECRAFT_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
+    GlobalServerData::serverSettings.database.fightSync=ServerSettings::Database::FightSync_AtTheEndOfBattle;
+    GlobalServerData::serverSettings.database.positionTeleportSync=true;
+    GlobalServerData::serverSettings.database.secondToPositionSync=0;
+
     stat=Down;
 
     connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
@@ -824,6 +828,11 @@ void BaseServer::loadAndFixSettings()
 
     if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
         GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
+
+    if(GlobalServerData::serverSettings.database.secondToPositionSync==0)
+        GlobalServerData::serverPrivateVariables.positionSync.stop();
+    else
+        GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000);
 }
 
 //call by normal stop

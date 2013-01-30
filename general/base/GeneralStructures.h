@@ -152,6 +152,7 @@ struct PlayerMonster
     quint32 egg_step;
     QList<Buff> buffs;
     QList<Skill> skills;
+    quint32 id;
 };
 
 struct Player_private_and_public_informations

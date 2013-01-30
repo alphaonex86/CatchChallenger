@@ -29,6 +29,7 @@ void LocalClientHandler::tryEscape()
         #endif
         wildMonsters.clear();
         wildMonstersStat.clear();
+        saveCurrentMonsterStat();
     }
     else
     {
@@ -40,8 +41,41 @@ void LocalClientHandler::tryEscape()
     }
 }
 
+void LocalClientHandler::saveCurrentMonsterStat()
+{
+    //save into the db
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
+                             .arg(player_informations->id)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
+                             .arg(player_informations->id)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
+                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                             );
+            break;
+        }
+    }
+}
+
 void LocalClientHandler::checkKOMonsters()
 {
+    int old_selectedMonster=selectedMonster;
     if(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp==0)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -63,6 +97,24 @@ void LocalClientHandler::checkKOMonsters()
                 player_informations->public_and_private_informations.playerMonster[index].hp=
                         GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[index].monster].stat.hp*
                         player_informations->public_and_private_informations.playerMonster[index].level/POKECRAFT_MONSTER_LEVEL_MAX;
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                     .arg(player_informations->id)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                     .arg(player_informations->id)
+                                     );
+                    break;
+                }
                 index++;
             }
             updateCanDoFight();
@@ -84,7 +136,51 @@ void LocalClientHandler::checkKOMonsters()
         wildMonsters.removeFirst();
         wildMonstersStat.removeFirst();
         //drop the drop item here
+        //give xp here
+        //save into db here
+        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE monster SET xp=%3,level=%4,sp=%5 WHERE id=%1 AND player_id=%2;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
+                                 .arg(player_informations->id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE monster SET xp=%3,level=%4,sp=%5 WHERE id=%1 AND player_id=%2;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
+                                 .arg(player_informations->id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                                 );
+                break;
+            }
     }
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                             .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].hp)
+                             .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].id)
+                             .arg(player_informations->id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                             .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].hp)
+                             .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].id)
+                             .arg(player_informations->id)
+                             );
+            break;
+        }
 }
 
 bool LocalClientHandler::checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
@@ -95,6 +191,8 @@ bool LocalClientHandler::checkFightCollision(Map *map,const COORD_TYPE &x,const 
         emit error(QString("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
     }
+    if(player_informations->isFake)
+        return false;
     if(Pokecraft::MoveOnTheMap::isGrass(*map,x,y) && !map->grassMonster.empty())
     {
         if(!ableToFight)

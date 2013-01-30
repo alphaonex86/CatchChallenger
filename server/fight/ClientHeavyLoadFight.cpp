@@ -25,7 +25,7 @@ void ClientHeavyLoad::loadMonsters()
     while(monstersQuery.next())
     {
         PlayerMonster playerMonster;
-        quint32 monsterId=monstersQuery.value(0).toUInt(&ok);
+        playerMonster.id=monstersQuery.value(0).toUInt(&ok);
         if(!ok)
             emit message(QString("monsterId: %1 is not a number").arg(monstersQuery.value(0).toString()));
         if(ok)
@@ -61,9 +61,9 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.remaining_xp=monstersQuery.value(4).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.remaining_xp>GlobalServerData::serverPrivateVariables.monsters[monsterId].level_to_xp.at(playerMonster.level-1))
+                if(playerMonster.remaining_xp>GlobalServerData::serverPrivateVariables.monsters[playerMonster.id].level_to_xp.at(playerMonster.level-1))
                 {
-                    emit message(QString("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(GlobalServerData::serverPrivateVariables.monsters[monsterId].level_to_xp.at(playerMonster.level-1)));
+                    emit message(QString("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(GlobalServerData::serverPrivateVariables.monsters[playerMonster.id].level_to_xp.at(playerMonster.level-1)));
                     playerMonster.remaining_xp=0;
                 }
             }
@@ -113,15 +113,15 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.hp>((GlobalServerData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX))
+                if(playerMonster.hp>((GlobalServerData::serverPrivateVariables.monsters[playerMonster.id].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX))
                 {
                     emit message(QString("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
                                  .arg(playerMonster.hp)
-                                 .arg(((GlobalServerData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX))
+                                 .arg(((GlobalServerData::serverPrivateVariables.monsters[playerMonster.id].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX))
                                  .arg(playerMonster.level)
                                  .arg(playerMonster.monster)
                                  );
-                    playerMonster.hp=((GlobalServerData::serverPrivateVariables.monsters[monsterId].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX);
+                    playerMonster.hp=((GlobalServerData::serverPrivateVariables.monsters[playerMonster.id].stat.hp*playerMonster.level)/POKECRAFT_MONSTER_LEVEL_MAX);
                 }
             }
             else
@@ -130,8 +130,8 @@ void ClientHeavyLoad::loadMonsters()
         //finish it
         if(ok)
         {
-            playerMonster.buffs=loadMonsterBuffs(monsterId);
-            playerMonster.skills=loadMonsterSkills(monsterId);
+            playerMonster.buffs=loadMonsterBuffs(playerMonster.id);
+            playerMonster.skills=loadMonsterSkills(playerMonster.id);
             player_informations->public_and_private_informations.playerMonster << playerMonster;
         }
     }
