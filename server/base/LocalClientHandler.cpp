@@ -42,6 +42,58 @@ bool LocalClientHandler::checkCollision()
 void LocalClientHandler::extraStop()
 {
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
+
+    #ifdef DEBUG_MESSAGE_CLIENT_MOVE
+    DebugClass::debugConsole(
+                QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
+                .arg(map->map_file)
+                .arg(x)
+                .arg(y)
+                .arg(orientationString)
+                );
+    #endif
+    if(!player_informations->is_logged || player_informations->isFake)
+        return;
+    //save the monster
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
+    {
+        int index=0;
+        int size=player_informations->public_and_private_informations.playerMonster.size();
+        while(index<size)
+        {
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(player_informations->id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].remaining_xp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].level)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(player_informations->id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].remaining_xp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].level)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                 );
+                break;
+            }
+        }
+    }
+    savePosition();
+}
+
+void LocalClientHandler::savePosition()
+{
+    if(player_informations->isFake)
+        return;
     //virtual stop the player
     //Orientation orientation;
     QString orientationString;
@@ -77,17 +129,6 @@ void LocalClientHandler::extraStop()
     }
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
-    #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    DebugClass::debugConsole(
-                QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
-                .arg(map->map_file)
-                .arg(x)
-                .arg(y)
-                .arg(orientationString)
-                );
-    #endif
-    if(!player_informations->is_logged || player_informations->isFake)
-        return;
     QString updateMapPositionQuery;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -161,6 +202,8 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     getRandomNumberIfNeeded();
 
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
+    if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
+        connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
 
     updateCanDoFight();
 }
@@ -554,6 +597,8 @@ void LocalClientHandler::teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8
 {
     emit message(QString("teleportValidatedTo(%1,%2,%3,%4)").arg(map->map_file).arg(x).arg(y).arg((quint8)orientation));
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
+    if(GlobalServerData::serverSettings.database.positionTeleportSync)
+        savePosition();
 }
 
 void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shopId)

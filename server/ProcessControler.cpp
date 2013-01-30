@@ -78,8 +78,12 @@ void ProcessControler::send_settings()
     }
     if(settings->value("db_fight_sync").toString()=="FightSync_AtEachTurn")
         formatedServerSettings.database.fightSync                       = Pokecraft::ServerSettings::Database::FightSync_AtEachTurn;
+    else if(settings->value("db_fight_sync").toString()=="FightSync_AtTheDisconnexion")
+        formatedServerSettings.database.fightSync                       = Pokecraft::ServerSettings::Database::FightSync_AtTheDisconnexion;
     else
         formatedServerSettings.database.fightSync                       = Pokecraft::ServerSettings::Database::FightSync_AtTheEndOfBattle;
+    formatedServerSettings.database.positionTeleportSync=settings->value("positionTeleportSync").toBool();
+    formatedServerSettings.database.secondToPositionSync=settings->value("secondToPositionSync").toUInt();
     settings->endGroup();
 
     //connection
