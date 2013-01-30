@@ -85,9 +85,12 @@ struct ServerSettings
         enum FightSync
         {
             FightSync_AtEachTurn=0x00,
-            FightSync_AtTheEndOfBattle=0x01//or at the object usage
+            FightSync_AtTheEndOfBattle=0x01,//or at the object usage
+            FightSync_AtTheDisconnexion=0x02
         };
         FightSync fightSync;
+        bool positionTeleportSync;
+        quint32 secondToPositionSync;//0 is disabled
 
         struct Mysql
         {
@@ -174,7 +177,8 @@ struct ServerPrivateVariables
 
     //map
     QHash<QString,Map *> map_list;
-    QTimer timer_to_send_insert_move_remove;
+    QTimer timer_to_send_insert_move_remove;/// \todo put on timer by thread without Qt::QueuedConnection to improve the performance
+    QTimer positionSync;/// \todo put into the local thread to drop Qt::QueuedConnection and improve the performance
     qint8 sizeofInsertRequest;
 
     //connection

@@ -573,5 +573,9 @@ void NormalServer::load_default_settings(QSettings *settings)
         settings->setValue("mysql_db","pokecraft");
     if(!settings->contains("db_fight_sync"))
         settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
+    if(!settings->contains("secondToPositionSync"))
+        settings->setValue("secondToPositionSync",0);
+    if(!settings->contains("positionTeleportSync"))
+        settings->setValue("positionTeleportSync",true);
     settings->endGroup();
 }

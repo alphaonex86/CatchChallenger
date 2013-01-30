@@ -320,6 +320,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint3
     while(index<size)
     {
         const PlayerMonster &monster=player_informations->public_and_private_informations.playerMonster.at(index);
+        out << (quint32)monster.id;
         out << (quint32)monster.monster;
         out << (quint8)monster.level;
         out << (quint32)monster.remaining_xp;
@@ -505,6 +506,11 @@ QString ClientHeavyLoad::SQL_text_quote(QString text)
 
 void ClientHeavyLoad::dbQuery(const QString &queryText)
 {
+    if(player_informations->isFake)
+    {
+        emit message(QString("Query canceled because is fake: %1").arg(queryText));
+        return;
+    }
     QSqlQuery sqlQuery;
     if(!sqlQuery.exec(queryText))
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());

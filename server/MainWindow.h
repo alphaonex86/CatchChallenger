@@ -30,7 +30,7 @@ protected:
     void changeEvent(QEvent *e);
 private:
     Ui::MainWindow *ui;
-    NormalServer eventDispatcher;
+    NormalServer server;
     bool need_be_restarted;
     bool need_be_closed;
     void closeEvent(QCloseEvent *event);

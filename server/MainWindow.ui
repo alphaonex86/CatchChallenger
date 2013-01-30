@@ -735,9 +735,39 @@
                </item>
                <item>
                 <property name="text">
-                 <string>At the end of the battle (less safe, more performance)</string>
+                 <string>At the end of the battle (medium safe, medium performance)</string>
                 </property>
                </item>
+               <item>
+                <property name="text">
+                 <string>At the disconnexion (less safe, more performance)</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="positionTeleportSync">
+             <property name="text">
+              <string>Save the position at teleport</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <item>
+              <widget class="QLabel" name="label_23">
+               <property name="text">
+                <string>Second to save the position (0 = disabled)</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="secondToPositionSync">
+               <property name="maximum">
+                <number>999999999</number>
+               </property>
               </widget>
              </item>
             </layout>

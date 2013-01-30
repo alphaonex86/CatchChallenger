@@ -6,11 +6,9 @@
 #include <QObject>
 #include <QList>
 #include <QString>
-#include <QTimer>
 #include <QHash>
 #include <QHashIterator>
 #include <QSqlQuery>
-#include <QSqlError>
 
 #include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
@@ -55,6 +53,7 @@ private:
     void updateCanDoFight();
     bool tryEscapeInternal();
     void checkKOMonsters();
+    void saveCurrentMonsterStat();
 
     //map move
     bool singleMove(const Direction &direction);
@@ -92,6 +91,7 @@ public slots:
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
 private slots:
     virtual void extraStop();
+    void savePosition();
 signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
