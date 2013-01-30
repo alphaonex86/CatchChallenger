@@ -4,6 +4,7 @@
 #include <QAbstractSocket>
 #include <QSettings>
 #include <QTimer>
+#include <QTime>
 #include <QListWidgetItem>
 #include <QFrame>
 #include <QVBoxLayout>
@@ -176,6 +177,7 @@ private slots:
     void on_listWidgetFightAttack_itemSelectionChanged();
     void finalFightTextQuit();
     void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
+    void fightEnd();
 protected slots:
     //datapack
     void datapackParsed();
@@ -241,8 +243,13 @@ private:
     int otherMonsterAttackInt;
     QTimer currentMonsterAttack;
     int currentMonsterAttackInt;
+    QTime updateAttackTime;
+    QTime updateAttackTextTime;
     MoveType moveType;
     QTimer finalFightText;
+    QTimer timerFightEnd;
+    bool fightTimerFinish;
+    int lifeEffectOtherMonsterIndex;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

@@ -63,11 +63,10 @@ public:
     QList<quint8> stepFight_Water,stepFight_Grass,stepFight_Cave;
     //current fight
     QList<PlayerMonster> wildMonsters;
-    QList<Monster::Stat> wildMonstersStat;
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
     QList<Monster::Skill::BuffEffect> buffEffectOtherMonster;
-    QList<Monster::Skill::LifeEffect> lifeEffectOtherMonster;
+    QList<Monster::Skill::LifeEffectReturn> lifeEffectOtherMonster;
     quint32 generateOtherAttack(bool *ok);
     bool wildMonsterIsKO();
     bool currentMonsterIsKO();

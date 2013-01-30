@@ -55,6 +55,8 @@ void LocalClientHandler::extraStop()
     if(!player_informations->is_logged || player_informations->isFake)
         return;
     //save the monster
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && !wildMonsters.empty())
+        saveCurrentMonsterStat();
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
     {
         int index=0;
@@ -65,7 +67,7 @@ void LocalClientHandler::extraStop()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                  .arg(player_informations->id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
@@ -75,7 +77,7 @@ void LocalClientHandler::extraStop()
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                  .arg(player_informations->id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
@@ -85,6 +87,7 @@ void LocalClientHandler::extraStop()
                                  );
                 break;
             }
+            index++;
         }
     }
     savePosition();

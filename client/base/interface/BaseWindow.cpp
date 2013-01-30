@@ -36,6 +36,27 @@ BaseWindow::BaseWindow() :
     ui->setupUi(this);
     Chat::chat=new Chat(ui->page_map);
 
+    updateRXTXTimer.start(1000);
+    updateRXTXTime.restart();
+
+    tip_timeout.setInterval(TIMETODISPLAY_TIP);
+    gain_timeout.setInterval(TIMETODISPLAY_GAIN);
+    tip_timeout.setSingleShot(true);
+    gain_timeout.setSingleShot(true);
+
+    moveFightMonsterBottomTimer.setSingleShot(true);
+    moveFightMonsterBottomTimer.setInterval(20);
+    moveFightMonsterTopTimer.setSingleShot(true);
+    moveFightMonsterTopTimer.setInterval(20);
+    otherMonsterAttack.setSingleShot(true);
+    otherMonsterAttack.setInterval(50);
+    currentMonsterAttack.setSingleShot(true);
+    currentMonsterAttack.setInterval(50);
+    finalFightText.setSingleShot(true);
+    finalFightText.setInterval(2000);
+    timerFightEnd.setSingleShot(true);
+    timerFightEnd.setInterval(3000);
+
     connect(Pokecraft::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(Pokecraft::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
     connect(Pokecraft::Api_client_real::client,SIGNAL(error(QString)),this,SLOT(error(QString)),Qt::QueuedConnection);
@@ -80,6 +101,7 @@ BaseWindow::BaseWindow() :
     connect(&currentMonsterAttack,SIGNAL(timeout()),this,SLOT(currentMonsterAttackUpdate()));
     connect(&finalFightText,SIGNAL(timeout()),this,SLOT(finalFightTextQuit()));
     connect(Pokecraft::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
+    connect(&timerFightEnd,SIGNAL(timeout()),this,SLOT(fightEnd()));
 
     //plants
     connect(this,SIGNAL(useSeed(quint8)),Pokecraft::Api_client_real::client,SLOT(useSeed(quint8)));
@@ -98,13 +120,6 @@ BaseWindow::BaseWindow() :
     connect(this,SIGNAL(destroyObject(quint32,quint32)),Pokecraft::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
 
-    updateRXTXTimer.start(1000);
-    updateRXTXTime.restart();
-
-    tip_timeout.setInterval(TIMETODISPLAY_TIP);
-    gain_timeout.setInterval(TIMETODISPLAY_GAIN);
-    tip_timeout.setSingleShot(true);
-    gain_timeout.setSingleShot(true);
     connect(&tip_timeout,SIGNAL(timeout()),this,SLOT(tipTimeout()));
     connect(&gain_timeout,SIGNAL(timeout()),this,SLOT(gainTimeout()));
 
@@ -122,17 +137,6 @@ BaseWindow::BaseWindow() :
     renderFrame->lower();
     renderFrame->lower();
     renderFrame->lower();
-
-    moveFightMonsterBottomTimer.setSingleShot(true);
-    moveFightMonsterBottomTimer.setInterval(20);
-    moveFightMonsterTopTimer.setSingleShot(true);
-    moveFightMonsterTopTimer.setInterval(20);
-    otherMonsterAttack.setSingleShot(true);
-    otherMonsterAttack.setInterval(20);
-    currentMonsterAttack.setSingleShot(true);
-    currentMonsterAttack.setInterval(20);
-    finalFightText.setSingleShot(true);
-    finalFightText.setInterval(2000);
 
     Chat::chat->setGeometry(QRect(0, 0, 300, 400));
 

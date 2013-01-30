@@ -372,6 +372,11 @@ struct Monster
             QuantityType type;
             ApplyOn on;
         };
+        struct LifeEffectReturn
+        {
+            qint32 quantity;
+            ApplyOn on;
+        };
         struct Buff
         {
             quint8 success;

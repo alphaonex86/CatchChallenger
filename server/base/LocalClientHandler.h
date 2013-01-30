@@ -42,7 +42,6 @@ private:
     quint8 selectedMonster;
     bool ableToFight;
     QList<PlayerMonster> wildMonsters;
-    QList<Monster::Stat> wildMonstersStat;
     quint8 stepFight_Grass,stepFight_Water,stepFight_Cave;
     inline quint8 getOneSeed(const quint8 &max=0);
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
