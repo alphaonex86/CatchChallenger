@@ -14,14 +14,14 @@ MainWindow::MainWindow(QWidget *parent) :
     on_MapVisibilityAlgorithm_currentIndexChanged(0);
     updateActionButton();
     qRegisterMetaType<Chat_type>("Chat_type");
-    connect(&eventDispatcher,SIGNAL(is_started(bool)),this,SLOT(server_is_started(bool)));
-    connect(&eventDispatcher,SIGNAL(need_be_stopped()),this,SLOT(server_need_be_stopped()));
-    connect(&eventDispatcher,SIGNAL(need_be_restarted()),this,SLOT(server_need_be_restarted()));
-    connect(&eventDispatcher,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SLOT(new_player_is_connected(Player_internal_informations)));
-    connect(&eventDispatcher,SIGNAL(player_is_disconnected(QString)),this,SLOT(player_is_disconnected(QString)));
-    connect(&eventDispatcher,SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SLOT(new_chat_message(QString,Chat_type,QString)));
-    connect(&eventDispatcher,SIGNAL(error(QString)),this,SLOT(server_error(QString)));
-    connect(&eventDispatcher,SIGNAL(benchmark_result(int,double,double,double,double,double)),this,SLOT(benchmark_result(int,double,double,double,double,double)));
+    connect(&server,SIGNAL(is_started(bool)),this,SLOT(server_is_started(bool)));
+    connect(&server,SIGNAL(need_be_stopped()),this,SLOT(server_need_be_stopped()));
+    connect(&server,SIGNAL(need_be_restarted()),this,SLOT(server_need_be_restarted()));
+    connect(&server,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SLOT(new_player_is_connected(Player_internal_informations)));
+    connect(&server,SIGNAL(player_is_disconnected(QString)),this,SLOT(player_is_disconnected(QString)));
+    connect(&server,SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SLOT(new_chat_message(QString,Chat_type,QString)));
+    connect(&server,SIGNAL(error(QString)),this,SLOT(server_error(QString)));
+    connect(&server,SIGNAL(benchmark_result(int,double,double,double,double,double)),this,SLOT(benchmark_result(int,double,double,double,double,double)));
     connect(&timer_update_the_info,SIGNAL(timeout()),this,SLOT(update_the_info()));
     connect(&check_latency,SIGNAL(timeout()),this,SLOT(start_calculate_latency()));
     connect(this,SIGNAL(record_latency()),this,SLOT(stop_calculate_latency()),Qt::QueuedConnection);
@@ -47,7 +47,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->ignore();
     this->hide();
     need_be_closed=true;
-    if(!eventDispatcher.isStopped())
+    if(!server.isStopped())
         server_need_be_stopped();
     else
         QCoreApplication::exit();
@@ -72,27 +72,27 @@ void MainWindow::on_lineEdit_returnPressed()
 
 void MainWindow::updateActionButton()
 {
-    ui->pushButton_server_start->setEnabled(eventDispatcher.isStopped());
-    ui->pushButton_server_restart->setEnabled(eventDispatcher.isListen());
-    ui->pushButton_server_stop->setEnabled(eventDispatcher.isListen());
-    ui->pushButton_server_benchmark->setEnabled(eventDispatcher.isStopped());
+    ui->pushButton_server_start->setEnabled(server.isStopped());
+    ui->pushButton_server_restart->setEnabled(server.isListen());
+    ui->pushButton_server_stop->setEnabled(server.isListen());
+    ui->pushButton_server_benchmark->setEnabled(server.isStopped());
 }
 
 void MainWindow::on_pushButton_server_start_clicked()
 {
     send_settings();
-    eventDispatcher.start_server();
+    server.start_server();
 }
 
 void MainWindow::on_pushButton_server_stop_clicked()
 {
-    eventDispatcher.stop_server();
+    server.stop_server();
 }
 
 void MainWindow::on_pushButton_server_restart_clicked()
 {
     need_be_restarted=true;
-    eventDispatcher.stop_server();
+    server.stop_server();
 }
 
 void MainWindow::server_is_started(bool is_started)
@@ -110,20 +110,20 @@ void MainWindow::server_is_started(bool is_started)
         {
             need_be_restarted=false;
             send_settings();
-            eventDispatcher.start_server();
+            server.start_server();
         }
     }
 }
 
 void MainWindow::server_need_be_stopped()
 {
-    eventDispatcher.stop_server();
+    server.stop_server();
 }
 
 void MainWindow::server_need_be_restarted()
 {
     need_be_restarted=true;
-    eventDispatcher.stop_server();
+    server.stop_server();
 }
 
 void MainWindow::new_player_is_connected(Player_internal_informations player)
@@ -199,11 +199,11 @@ void MainWindow::update_the_info()
         ui->listLatency->addItem(tr("%1ms").arg(internal_currentLatency));
     else
         ui->listLatency->item(0)->setText(tr("%1ms").arg(internal_currentLatency));
-    if(eventDispatcher.isListen() || eventDispatcher.isInBenchmark())
+    if(server.isListen() || server.isInBenchmark())
     {
         quint16 player_current,player_max;
-        player_current=eventDispatcher.player_current();
-        player_max=eventDispatcher.player_max();
+        player_current=server.player_current();
+        player_max=server.player_max();
         ui->label_player->setText(QString("%1/%2").arg(player_current).arg(player_max));
         ui->progressBar_player->setMaximum(player_max);
         ui->progressBar_player->setValue(player_current);
@@ -359,6 +359,8 @@ void MainWindow::load_settings()
     QString db_mysql_pass=settings->value("mysql_pass").toString();
     QString db_mysql_base=settings->value("mysql_db").toString();
     QString db_fight_sync=settings->value("db_fight_sync").toString();
+    bool positionTeleportSync=settings->value("positionTeleportSync").toBool();
+    quint32 secondToPositionSync=settings->value("secondToPositionSync").toUInt();
 
     if(!settings->contains("db_fight_sync"))
         settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
@@ -378,8 +380,12 @@ void MainWindow::load_settings()
         ui->db_fight_sync->setCurrentIndex(0);
     else if(db_fight_sync=="FightSync_AtTheEndOfBattle")
         ui->db_fight_sync->setCurrentIndex(1);
+    else if(db_fight_sync=="FightSync_AtTheDisconnexion")
+        ui->db_fight_sync->setCurrentIndex(2);
     else
         ui->db_fight_sync->setCurrentIndex(0);
+    ui->positionTeleportSync->setChecked(positionTeleportSync);
+    ui->secondToPositionSync->setValue(secondToPositionSync);
 
     ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+"/pokecraft.db.sqlite");
 
@@ -437,6 +443,8 @@ void MainWindow::send_settings()
         break;
     }
     formatedServerSettings.database.fightSync                       = (ServerSettings::Database::FightSync)ui->db_fight_sync->currentIndex();
+    formatedServerSettings.database.positionTeleportSync=ui->positionTeleportSync->isChecked();
+    formatedServerSettings.database.secondToPositionSync=ui->secondToPositionSync->value();
 
     //connection
     formatedServerSettings.max_players					= ui->max_player->value();
@@ -459,7 +467,7 @@ void MainWindow::send_settings()
     formatedServerSettings.mapVisibility.simple.max				= ui->MapVisibilityAlgorithmSimpleMax->value();
     formatedServerSettings.mapVisibility.simple.reshow			= ui->MapVisibilityAlgorithmSimpleReshow->value();
 
-    eventDispatcher.setSettings(formatedServerSettings);
+    server.setSettings(formatedServerSettings);
 }
 
 void MainWindow::on_max_player_valueChanged(int arg1)
@@ -591,7 +599,7 @@ void MainWindow::on_db_mysql_base_editingFinished()
 void MainWindow::on_pushButton_server_benchmark_clicked()
 {
     send_settings();
-    eventDispatcher.start_benchmark(ui->benchmark_seconds->value(),ui->benchmark_clients->value(),ui->benchmark_benchmarkMap->isChecked());
+    server.start_benchmark(ui->benchmark_seconds->value(),ui->benchmark_clients->value(),ui->benchmark_benchmarkMap->isChecked());
     updateActionButton();
 }
 
