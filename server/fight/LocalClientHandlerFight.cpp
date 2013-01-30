@@ -28,7 +28,6 @@ void LocalClientHandler::tryEscape()
         emit message(QString("escape is successful"));
         #endif
         wildMonsters.clear();
-        wildMonstersStat.clear();
         saveCurrentMonsterStat();
     }
     else
@@ -50,9 +49,8 @@ void LocalClientHandler::saveCurrentMonsterStat()
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                             .arg(player_informations->id)
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
@@ -60,9 +58,8 @@ void LocalClientHandler::saveCurrentMonsterStat()
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1 AND player_id=%2;")
+                emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                             .arg(player_informations->id)
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
                              .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
@@ -101,17 +98,15 @@ void LocalClientHandler::checkKOMonsters()
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                     .arg(player_informations->id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                     .arg(player_informations->id)
                                      );
                     break;
                 }
@@ -134,7 +129,6 @@ void LocalClientHandler::checkKOMonsters()
         emit message(QString("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
         #endif
         wildMonsters.removeFirst();
-        wildMonstersStat.removeFirst();
         //drop the drop item here
         //give xp here
         //save into db here
@@ -143,18 +137,16 @@ void LocalClientHandler::checkKOMonsters()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET xp=%3,level=%4,sp=%5 WHERE id=%1 AND player_id=%2;")
+                    emit dbQuery(QString("UPDATE monster SET xp=%2,level=%3,sp=%4 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                                 .arg(player_informations->id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET xp=%3,level=%4,sp=%5 WHERE id=%1 AND player_id=%2;")
+                    emit dbQuery(QString("UPDATE monster SET xp=%2,level=%3,sp=%4 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                                 .arg(player_informations->id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
@@ -167,17 +159,15 @@ void LocalClientHandler::checkKOMonsters()
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
                              .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].hp)
                              .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].id)
-                             .arg(player_informations->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2 AND player_id=%3;")
+                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
                              .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].hp)
                              .arg(player_informations->public_and_private_informations.playerMonster[old_selectedMonster].id)
-                             .arg(player_informations->id)
                              );
             break;
         }
@@ -390,7 +380,6 @@ PlayerMonster LocalClientHandler::getRandomMonster(const QList<MapMonster> &mons
         index--;
     }
     *ok=true;
-    wildMonstersStat << monsterStat;
     return playerMonster;
 }
 
@@ -399,11 +388,23 @@ Monster::Stat LocalClientHandler::getStat(const Monster &monster, const quint8 &
 {
     Monster::Stat stat=monster.stat;
     stat.attack=stat.attack*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.attack==0)
+        stat.attack=1;
     stat.defense=stat.defense*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.defense==0)
+        stat.defense=1;
     stat.hp=stat.hp*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.hp==0)
+        stat.hp=1;
     stat.special_attack=stat.special_attack*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.special_attack==0)
+        stat.special_attack=1;
     stat.special_defense=stat.special_defense*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.special_defense==0)
+        stat.special_defense=1;
     stat.speed=stat.speed*level/POKECRAFT_MONSTER_LEVEL_MAX;
+    if(stat.speed==0)
+        stat.speed=1;
     return stat;
 }
 
@@ -486,15 +487,30 @@ void LocalClientHandler::applyOtherLifeEffect(const Monster::Skill::LifeEffect &
 {
     qint32 quantity;
     Monster::Stat stat;
+    Monster::Stat otherStat;
     switch(effect.on)
     {
         case Monster::ApplyOn_AloneEnemy:
         case Monster::ApplyOn_AllEnemy:
+            stat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
             if(effect.type==QuantityType_Quantity)
-                quantity=effect.quantity;
+            {
+                otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
             else
                 quantity=(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp*effect.quantity)/100;
-            stat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
             if(quantity<0 && (-quantity)>player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
             {
                 player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=0;
@@ -505,20 +521,45 @@ void LocalClientHandler::applyOtherLifeEffect(const Monster::Skill::LifeEffect &
                 player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=stat.hp;
             else
                 player_informations->public_and_private_informations.playerMonster[selectedMonster].hp+=quantity;
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            if(effect.quantity<0)
+                emit message(QString("The wild monster take %1 of dammage").arg(-quantity));
+            if(effect.quantity>0)
+                emit message(QString("The wild monster is healed of %1").arg(quantity));
+            #endif
         break;
         case Monster::ApplyOn_Themself:
         case Monster::ApplyOn_AllAlly:
+            stat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
             if(effect.type==QuantityType_Quantity)
-                quantity=effect.quantity;
+            {
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*stat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
             else
                 quantity=(wildMonsters.first().hp*effect.quantity)/100;
-            stat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
             if(quantity<0 && (-quantity)>wildMonsters.first().hp)
                 wildMonsters.first().hp=0;
             else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
                 wildMonsters.first().hp=stat.hp;
             else
                 wildMonsters.first().hp+=quantity;
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            if(effect.quantity<0)
+                emit message(QString("Take %1 of dammage").arg(-quantity));
+            if(effect.quantity>0)
+                emit message(QString("Is healed of %1").arg(quantity));
+            #endif
         break;
         default:
             qDebug() << "Not apply match, can't apply the buff";
