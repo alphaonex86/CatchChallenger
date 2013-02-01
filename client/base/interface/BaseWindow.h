@@ -165,10 +165,7 @@ private slots:
     void moveFightMonsterBottom();
     void updateCurrentMonsterInformation();
     void moveFightMonsterTop();
-    void otherMonsterAttackUpdate();
     void updateOtherMonsterInformation();
-    void currentMonsterAttackUpdate();
-    void finalMonstersUpdate();
     void on_toolButtonFightQuit_clicked();
     void on_pushButtonFightAttack_clicked();
     void on_pushButtonFightMonster_clicked();
@@ -177,7 +174,9 @@ private slots:
     void on_listWidgetFightAttack_itemSelectionChanged();
     void finalFightTextQuit();
     void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const Pokecraft::Direction &direction);
-    void fightEnd();
+    void doNextAction();
+    void displayAttack();
+    void displayText(const QString &text);
 protected slots:
     //datapack
     void datapackParsed();
@@ -239,17 +238,21 @@ private:
     //fight
     QTimer moveFightMonsterBottomTimer;
     QTimer moveFightMonsterTopTimer;
-    QTimer otherMonsterAttack;
-    int otherMonsterAttackInt;
-    QTimer currentMonsterAttack;
-    int currentMonsterAttackInt;
+    QTimer displayAttackTimer;
+    QTimer doNextActionTimer;
     QTime updateAttackTime;
-    QTime updateAttackTextTime;
     MoveType moveType;
-    QTimer finalFightText;
-    QTimer timerFightEnd;
     bool fightTimerFinish;
-    int lifeEffectOtherMonsterIndex;
+    int displayAttackProgression;
+    enum DoNextActionStep
+    {
+        DoNextActionStep_Start,
+        DoNextActionStep_Lose,
+        DoNextActionStep_Win
+    };
+    DoNextActionStep doNextActionStep;
+    void lose();
+    void win();
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
