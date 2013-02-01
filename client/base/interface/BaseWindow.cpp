@@ -48,14 +48,10 @@ BaseWindow::BaseWindow() :
     moveFightMonsterBottomTimer.setInterval(20);
     moveFightMonsterTopTimer.setSingleShot(true);
     moveFightMonsterTopTimer.setInterval(20);
-    otherMonsterAttack.setSingleShot(true);
-    otherMonsterAttack.setInterval(50);
-    currentMonsterAttack.setSingleShot(true);
-    currentMonsterAttack.setInterval(50);
-    finalFightText.setSingleShot(true);
-    finalFightText.setInterval(2000);
-    timerFightEnd.setSingleShot(true);
-    timerFightEnd.setInterval(3000);
+    displayAttackTimer.setSingleShot(true);
+    displayAttackTimer.setInterval(50);
+    doNextActionTimer.setSingleShot(true);
+    doNextActionTimer.setInterval(3000);
 
     connect(Pokecraft::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(Pokecraft::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
@@ -97,11 +93,9 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,SIGNAL(fightCollision(Pokecraft::Map_client*,quint8,quint8)),this,SLOT(fightCollision(Pokecraft::Map_client*,quint8,quint8)));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
     connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
-    connect(&otherMonsterAttack,SIGNAL(timeout()),this,SLOT(otherMonsterAttackUpdate()));
-    connect(&currentMonsterAttack,SIGNAL(timeout()),this,SLOT(currentMonsterAttackUpdate()));
-    connect(&finalFightText,SIGNAL(timeout()),this,SLOT(finalFightTextQuit()));
+    connect(&displayAttackTimer,SIGNAL(timeout()),this,SLOT(displayAttack()));
+    connect(&doNextActionTimer,SIGNAL(timeout()),this,SLOT(doNextAction()));
     connect(Pokecraft::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,Pokecraft::Direction)),Qt::QueuedConnection);
-    connect(&timerFightEnd,SIGNAL(timeout()),this,SLOT(fightEnd()));
 
     //plants
     connect(this,SIGNAL(useSeed(quint8)),Pokecraft::Api_client_real::client,SLOT(useSeed(quint8)));

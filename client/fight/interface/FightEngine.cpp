@@ -150,18 +150,21 @@ quint8 FightEngine::getOneSeed(const quint8 &max)
     return number;
 }
 
-quint32 FightEngine::generateOtherAttack(bool *ok)
+void FightEngine::generateOtherAttack()
 {
-    *ok=false;
+    Monster::Skill::AttackReturn attackReturn;
+    attackReturn.doByTheCurrentMonster=false;
+    attackReturn.success=false;
     const PlayerMonster &otherMonster=wildMonsters.first();
     if(otherMonster.skills.empty())
-        return 0;
+        return;
     int position;
     if(otherMonster.skills.size()==1)
         position=0;
     else
         position=getOneSeed(otherMonster.skills.size());
     const PlayerMonster::Skill &otherMonsterSkill=otherMonster.skills.at(position);
+    attackReturn.attack=otherMonsterSkill.skill;
     const Monster::Skill::SkillList &skillList=monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index=0;
     while(index<skillList.buff.size())
@@ -173,7 +176,11 @@ quint32 FightEngine::generateOtherAttack(bool *ok)
         else
             success=(getOneSeed(100)<buff.success);
         if(success)
+        {
             applyOtherBuffEffect(buff.effect);
+            attackReturn.buffEffectMonster << buff.effect;
+            attackReturn.success=true;
+        }
         index++;
     }
     index=0;
@@ -186,14 +193,16 @@ quint32 FightEngine::generateOtherAttack(bool *ok)
         else
             success=(getOneSeed(100)<life.success);
         if(success)
-            applyOtherLifeEffect(life.effect);
+        {
+            attackReturn.lifeEffectMonster << applyOtherLifeEffect(life.effect);
+            attackReturn.success=true;
+        }
         index++;
     }
-    *ok=true;
-    return otherMonsterSkill.skill;
+    attackReturnList << attackReturn;
 }
 
-void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
+Monster::Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
 {
     qint32 quantity;
     Monster::Stat stat;
@@ -263,13 +272,10 @@ void FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
             qDebug() << "Not apply match, can't apply the buff";
         break;
     }
-    if(effect.quantity!=0)
-    {
-        Monster::Skill::LifeEffectReturn effect_to_return;
-        effect_to_return.on=effect.on;
-        effect_to_return.quantity=quantity;
-        lifeEffectOtherMonster << effect_to_return;
-    }
+    Monster::Skill::LifeEffectReturn effect_to_return;
+    effect_to_return.on=effect.on;
+    effect_to_return.quantity=quantity;
+    return effect_to_return;
 }
 
 void FightEngine::applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect)
@@ -291,7 +297,6 @@ void FightEngine::applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect)
             qDebug() << "Not apply match, can't apply the buff";
         break;
     }
-    buffEffectOtherMonster << effect;
 }
 
 bool FightEngine::wildMonsterIsKO()
@@ -305,6 +310,16 @@ bool FightEngine::wildMonsterIsKO()
 }
 
 bool FightEngine::currentMonsterIsKO()
+{
+    if(playerMonsterList[selectedMonster].hp==0)
+    {
+        playerMonsterList[selectedMonster].buffs.clear();
+        return true;
+    }
+    return false;
+}
+
+bool FightEngine::dropKOCurrentMonster()
 {
     if(playerMonsterList[selectedMonster].hp==0)
     {
@@ -409,7 +424,9 @@ void FightEngine::healAllMonsters()
     while(index<playerMonsterList.size())
     {
         if(playerMonsterList.at(index).egg_step==0)
-            playerMonsterList[index].hp=0;
+            playerMonsterList[index].hp=
+                    monsters[playerMonsterList.at(index).monster].stat.hp*
+                    playerMonsterList.at(index).level/POKECRAFT_MONSTER_LEVEL_MAX;
         index++;
     }
 }
