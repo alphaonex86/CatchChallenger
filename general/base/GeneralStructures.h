@@ -377,6 +377,14 @@ struct Monster
             qint32 quantity;
             ApplyOn on;
         };
+        struct AttackReturn
+        {
+            bool doByTheCurrentMonster;
+            bool success;
+            QList<Monster::Skill::BuffEffect> buffEffectMonster;
+            QList<Monster::Skill::LifeEffectReturn> lifeEffectMonster;
+            quint32 attack;
+        };
         struct Buff
         {
             quint8 success;
