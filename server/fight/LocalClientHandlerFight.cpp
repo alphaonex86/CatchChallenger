@@ -91,24 +91,27 @@ void LocalClientHandler::checkKOMonsters()
             int size=player_informations->public_and_private_informations.playerMonster.size();
             while(index<size)
             {
-                player_informations->public_and_private_informations.playerMonster[index].hp=
-                        GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[index].monster].stat.hp*
-                        player_informations->public_and_private_informations.playerMonster[index].level/POKECRAFT_MONSTER_LEVEL_MAX;
-                switch(GlobalServerData::serverSettings.database.type)
+                if(player_informations->public_and_private_informations.playerMonster[index].egg_step==0)
                 {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                     );
-                    break;
+                    player_informations->public_and_private_informations.playerMonster[index].hp=
+                            GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[index].monster].stat.hp*
+                            player_informations->public_and_private_informations.playerMonster[index].level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                         );
+                        break;
+                    }
                 }
                 index++;
             }

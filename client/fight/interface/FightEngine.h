@@ -65,9 +65,9 @@ public:
     QList<PlayerMonster> wildMonsters;
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
-    QList<Monster::Skill::BuffEffect> buffEffectOtherMonster;
-    QList<Monster::Skill::LifeEffectReturn> lifeEffectOtherMonster;
-    quint32 generateOtherAttack(bool *ok);
+    QList<Monster::Skill::AttackReturn> attackReturnList;
+    QList<quint32> otherMonsterAttack;
+    void generateOtherAttack();
     bool wildMonsterIsKO();
     bool currentMonsterIsKO();
     bool dropKOWildMonster();
@@ -80,7 +80,7 @@ private:
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList, bool *ok);
     inline quint8 getOneSeed(const quint8 &max=0);
     void applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect);
-    void applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
+    Monster::Skill::LifeEffectReturn applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
     bool internalTryEscape();
 private:
     void updateCanDoFight();

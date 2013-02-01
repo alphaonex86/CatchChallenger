@@ -176,24 +176,7 @@ void BaseWindow::moveFightMonsterBottom()
         if(ui->labelFightMonsterBottom->pos().ry()<440)
             moveFightMonsterBottomTimer.start();
         else
-        {
-            Pokecraft::FightEngine::fightEngine.currentMonsterIsKO();
-            if(Pokecraft::FightEngine::fightEngine.canDoFight())
-                updateCurrentMonsterInformation();
-            else
-            {
-                //no more monster, tp to last recue point
-                finalFightText.start();
-                ui->labelFightEnter->setText(tr("You lose!<br />Waiting the recue..."));
-                ui->pushButtonFightEnterNext->setVisible(false);
-                //heal all the monster
-                Pokecraft::FightEngine::fightEngine.healAllMonsters();
-                //update the view
-                load_monsters();
-                fightTimerFinish=false;
-                timerFightEnd.start();
-            }
-        }
+            doNextAction();
     }
 }
 
@@ -206,18 +189,7 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
     if(!Pokecraft::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
     {
         if(fightTimerFinish)
-            ui->stackedWidget->setCurrentWidget(ui->page_map);
-        else
-            fightTimerFinish=true;
-    }
-}
-
-void BaseWindow::fightEnd()
-{
-    if(!Pokecraft::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
-    {
-        if(fightTimerFinish)
-            ui->stackedWidget->setCurrentWidget(ui->page_map);
+            lose();
         else
             fightTimerFinish=true;
     }
@@ -274,17 +246,8 @@ void BaseWindow::moveFightMonsterTop()
             moveFightMonsterTopTimer.start();
         else
         {
-            Pokecraft::FightEngine::fightEngine.dropKOWildMonster();
-            if(Pokecraft::FightEngine::fightEngine.haveOtherMonster())
-                updateOtherMonsterInformation();
-            else
-            {
-                //have win, return to the map
-                finalFightText.start();
-                ui->labelFightEnter->setText(tr("You win!"));
-                ui->pushButtonFightEnterNext->setVisible(false);
-                load_monsters();
-            }
+            Pokecraft::FightEngine::fightEngine.wildMonsterIsKO();
+            doNextAction();
         }
     }
 }
@@ -306,91 +269,6 @@ void BaseWindow::updateOtherMonsterInformation()
     ui->progressBarFightTopHP->setValue(otherMonster.hp);
 }
 
-void BaseWindow::otherMonsterAttackUpdate()
-{
-    otherMonsterAttackInt++;
-    if(otherMonsterAttackInt%100 /* each 400ms */)
-    {
-        if(updateAttackTime.elapsed()<2000 /* 2000ms */)
-            ui->labelFightMonsterBottom->setVisible(!ui->labelFightMonsterBottom->isVisible());
-        else
-            ui->labelFightMonsterBottom->setVisible(true);
-    }
-    //alternate the text
-    if(updateAttackTime.elapsed()>1500 /* 2000ms */)
-    {
-        if(updateAttackTextTime.elapsed()>1500)
-        {
-            if(lifeEffectOtherMonsterIndex<Pokecraft::FightEngine::fightEngine.lifeEffectOtherMonster.size())
-            {
-                Monster::Skill::LifeEffectReturn effect=Pokecraft::FightEngine::fightEngine.lifeEffectOtherMonster.at(lifeEffectOtherMonsterIndex);
-                if(effect.on==Monster::ApplyOn_AloneEnemy || effect.on==Monster::ApplyOn_AllEnemy)
-                {
-                    if(effect.quantity<0)
-                        ui->labelFightEnter->setText(tr("The wild %1 take %2 of damage").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name).arg(-effect.quantity));
-                    else
-                        ui->labelFightEnter->setText(tr("The wild %1 is healed of %2").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name).arg(effect.quantity));
-                }
-                else
-                {
-                    if(effect.quantity<0)
-                        ui->labelFightEnter->setText(tr("You take %1 of damage").arg(-effect.quantity));
-                    else
-                        ui->labelFightEnter->setText(tr("You are healed of %1").arg(effect.quantity));
-                }
-
-            }
-            if(lifeEffectOtherMonsterIndex<=Pokecraft::FightEngine::fightEngine.lifeEffectOtherMonster.size())
-                lifeEffectOtherMonsterIndex++;
-            //show the buff
-            updateAttackTextTime.restart();
-        }
-    }
-    int hp_to_remove=ui->progressBarFightBottomHP->maximum()/200;//0.5%
-    if(hp_to_remove==0)
-        hp_to_remove=1;
-    PlayerMonster currentMonster=Pokecraft::FightEngine::fightEngine.getFightMonster();
-    if(updateAttackTime.elapsed()>3000 /*3000ms*/ && (lifeEffectOtherMonsterIndex)>Pokecraft::FightEngine::fightEngine.lifeEffectOtherMonster.size() &&
-            (ui->progressBarFightBottomHP->value()<=hp_to_remove || (ui->progressBarFightBottomHP->value()-hp_to_remove)<=currentMonster.hp))
-    {
-        //attack is finish
-        finalMonstersUpdate();
-    }
-    else
-    {
-        if((quint32)ui->progressBarFightBottomHP->value()>currentMonster.hp)
-        {
-            ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()-hp_to_remove);
-            ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
-        }
-        otherMonsterAttack.start();
-    }
-}
-
-void BaseWindow::finalMonstersUpdate()
-{
-    ui->labelFightMonsterBottom->setVisible(true);
-    ui->labelFightMonsterTop->setVisible(true);
-    if(!Pokecraft::FightEngine::fightEngine.currentMonsterIsKO())
-    {
-        Monster::Stat fightStat=Pokecraft::FightEngine::getStat(Pokecraft::FightEngine::fightEngine.monsters[Pokecraft::FightEngine::fightEngine.getFightMonster().monster],Pokecraft::FightEngine::fightEngine.getFightMonster().level);
-        ui->labelFightBottomHP->setText(QString("%1/%2").arg(Pokecraft::FightEngine::fightEngine.getFightMonster().hp).arg(fightStat.hp));
-        ui->progressBarFightBottomHP->setValue(Pokecraft::FightEngine::fightEngine.getFightMonster().hp);
-        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
-    }
-    else
-    {
-        //current player monster is dead
-        moveType=MoveType_Dead;
-        moveFightMonsterBottom();
-        ui->labelFightEnter->setText(tr("%1 have lost!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getFightMonster().monster].name));
-    }
-}
-
-void BaseWindow::currentMonsterAttackUpdate()
-{
-}
-
 void BaseWindow::on_toolButtonFightQuit_clicked()
 {
     if(!Pokecraft::FightEngine::fightEngine.canDoFightAction())
@@ -405,26 +283,12 @@ void BaseWindow::on_toolButtonFightQuit_clicked()
     }
     else
     {//the other attack
-        bool ok;
-        quint32 attack=Pokecraft::FightEngine::fightEngine.generateOtherAttack(&ok);
-        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-        ui->pushButtonFightEnterNext->setVisible(false);
-        if(ok)
-            ui->labelFightEnter->setText(tr("The wild %1 do the attack %2")
-                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name)
-                    .arg(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[attack].name)
-                    );
+        doNextActionStep=DoNextActionStep_Start;
+        Pokecraft::FightEngine::fightEngine.generateOtherAttack();
+        if(!Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
+            displayText(tr("You can't escape!"));
         else
-        {
-            ui->labelFightEnter->setText(tr("The wild %1 can't attack")
-                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name)
-                    );
-        }
-        lifeEffectOtherMonsterIndex=0;
-        otherMonsterAttackInt=0;
-        updateAttackTextTime.restart();
-        updateAttackTime.restart();
-        otherMonsterAttack.start();
+            displayText(tr("The wild %1 can't attack").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
     }
 }
 
@@ -463,4 +327,221 @@ void BaseWindow::on_listWidgetFightAttack_itemSelectionChanged()
 void BaseWindow::finalFightTextQuit()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void BaseWindow::lose()
+{
+    Pokecraft::FightEngine::fightEngine.healAllMonsters();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    fightTimerFinish=false;
+    doNextActionStep=DoNextActionStep_Start;
+    load_monsters();
+}
+
+void BaseWindow::win()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    fightTimerFinish=false;
+    doNextActionStep=DoNextActionStep_Start;
+    load_monsters();
+}
+
+void BaseWindow::doNextAction()
+{
+    //apply the effect
+    if(!Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
+    {
+        displayAttackProgression=0;
+        displayAttack();
+        return;
+    }
+    //if the current monster is KO
+    if(Pokecraft::FightEngine::fightEngine.canDoFight() && Pokecraft::FightEngine::fightEngine.currentMonsterIsKO())
+    {
+        Pokecraft::FightEngine::fightEngine.dropKOCurrentMonster();
+        doNextActionStep=DoNextActionStep_Start;
+        //current player monster is KO
+        moveType=MoveType_Dead;
+        moveFightMonsterBottom();
+        ui->labelFightEnter->setText(tr("%1 have lost!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getFightMonster().monster].name));
+        return;
+    }
+    //if the current monster is KO
+    if(Pokecraft::FightEngine::fightEngine.isInFight() && Pokecraft::FightEngine::fightEngine.wildMonsterIsKO())
+    {
+        Pokecraft::FightEngine::fightEngine.dropKOWildMonster();
+        doNextActionStep=DoNextActionStep_Start;
+        //current player monster is KO
+        moveType=MoveType_Dead;
+        moveFightMonsterTop();
+        ui->labelFightEnter->setText(tr("The wild %1 have lost!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
+        return;
+    }
+    if(doNextActionStep==DoNextActionStep_Lose)
+    {
+        if(fightTimerFinish)
+            lose();
+        else
+            fightTimerFinish=true;
+        return;
+    }
+    //if lose
+    if(!Pokecraft::FightEngine::fightEngine.canDoFight())
+        if(doNextActionStep<DoNextActionStep_Lose)
+        {
+            displayText(tr("You lose!"));
+            doNextActionStep=DoNextActionStep_Lose;
+            return;
+        }
+    if(doNextActionStep==DoNextActionStep_Win)
+    {
+        if(fightTimerFinish)
+            win();
+        else
+            fightTimerFinish=true;
+        return;
+    }
+    //if win
+    if(Pokecraft::FightEngine::fightEngine.wildMonsters.empty())
+    {
+        displayText(tr("You win!"));
+        doNextActionStep=DoNextActionStep_Win;
+        return;
+    }
+    //replace the KO monster
+    if(ui->progressBarFightTopHP->value()==0)
+    {
+        QMessageBox::information(this,"Todo","Part todo");
+    }
+    if(ui->progressBarFightBottomHP->value()==0)
+    {
+        Pokecraft::FightEngine::fightEngine.currentMonsterIsKO();
+        updateCurrentMonsterInformation();
+    }
+    //nothing to done, show the menu
+    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
+    return;
+}
+
+void BaseWindow::displayAttack()
+{
+    bool applyOnOtherMonster=(
+                Pokecraft::FightEngine::fightEngine.attackReturnList.first().doByTheCurrentMonster &&
+                (Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_AloneEnemy ||
+                 Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_AllEnemy)
+        ) || (
+                    !Pokecraft::FightEngine::fightEngine.attackReturnList.first().doByTheCurrentMonster &&
+                    (Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_Themself ||
+                     Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_AllAlly)
+            );
+    //if start, display text
+    if(displayAttackProgression==0)
+    {
+        updateAttackTime.restart();
+        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+        ui->pushButtonFightEnterNext->setVisible(false);
+        QString attackOwner;
+        if(Pokecraft::FightEngine::fightEngine.attackReturnList.first().doByTheCurrentMonster)
+            attackOwner=tr("Your %1 do the attack %2")
+                .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getFightMonster().monster].name)
+                .arg(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[Pokecraft::FightEngine::fightEngine.attackReturnList.first().attack].name);
+        else
+            attackOwner=tr("The wild %1 do the attack %2")
+                .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name)
+                .arg(Pokecraft::FightEngine::fightEngine.monsterSkillsExtra[Pokecraft::FightEngine::fightEngine.attackReturnList.first().attack].name);
+        QString damage;
+        qint32 quantity=Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity;
+        if(applyOnOtherMonster)
+        {
+            if(quantity>0)
+                damage=tr("The wild %1 is healed of %2")
+                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name)
+                    .arg(quantity);
+            else
+                damage=tr("The wild %1 take %2 of damage")
+                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name)
+                    .arg(-quantity);
+        }
+        else
+        {
+            if(quantity>0)
+                damage=tr("Your %1 is healed of %2")
+                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getFightMonster().monster].name)
+                    .arg(quantity);
+            else
+                damage=tr("Your %1 take %2 of damage")
+                    .arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getFightMonster().monster].name)
+                    .arg(-quantity);
+        }
+        ui->labelFightEnter->setText(QString("%1<br />%2").arg(attackOwner).arg(damage));
+    }
+    if(displayAttackProgression%100 /* each 400ms */)
+    {
+        if(applyOnOtherMonster)
+        {
+            if(updateAttackTime.elapsed()<2000 /* 2000ms */)
+                ui->labelFightMonsterTop->setVisible(!ui->labelFightMonsterTop->isVisible());
+            else
+                ui->labelFightMonsterTop->setVisible(true);
+        }
+        else
+        {
+            if(updateAttackTime.elapsed()<2000 /* 2000ms */)
+                ui->labelFightMonsterBottom->setVisible(!ui->labelFightMonsterBottom->isVisible());
+            else
+                ui->labelFightMonsterBottom->setVisible(true);
+        }
+    }
+    int hp_to_change;
+    if(applyOnOtherMonster)
+        hp_to_change=ui->progressBarFightTopHP->maximum()/200;//0.5%
+    else
+        hp_to_change=ui->progressBarFightBottomHP->maximum()/200;//0.5%
+    if(hp_to_change==0)
+        hp_to_change=1;
+    if(updateAttackTime.elapsed()>3000 /*3000ms*/)
+    {
+        Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.removeFirst();
+        if(Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.isEmpty())
+            Pokecraft::FightEngine::fightEngine.attackReturnList.removeFirst();
+        //attack is finish
+        doNextAction();
+    }
+    else
+    {
+        if(Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity<0)
+        {
+            hp_to_change=-hp_to_change;
+            if(Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity>hp_to_change)
+                hp_to_change=Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity;
+        }
+        else if(Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity>0)
+        {
+            hp_to_change=-hp_to_change;
+            if(Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity<hp_to_change)
+                hp_to_change=Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity;
+        }
+        else
+            hp_to_change=0;
+        if(hp_to_change!=0)
+        {
+            Pokecraft::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().quantity-=hp_to_change;
+            if(applyOnOtherMonster)
+                ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+hp_to_change);
+            else
+            {
+                ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+hp_to_change);
+                ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
+            }
+        }
+        displayAttackTimer.start();
+    }
+    displayAttackProgression++;
+}
+
+void BaseWindow::displayText(const QString &text)
+{
+    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+    ui->labelFightEnter->setText(text);
+    doNextActionTimer.start();
 }
