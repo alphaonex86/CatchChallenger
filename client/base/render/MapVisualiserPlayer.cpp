@@ -358,6 +358,7 @@ void MapVisualiserPlayer::moveStepSlot()
             emit send_player_direction(direction);
             parseStop();
             emit fightCollision(static_cast<Pokecraft::Map_client *>(map),x,y);
+            keyPressed.clear();
             return;
         }
 
