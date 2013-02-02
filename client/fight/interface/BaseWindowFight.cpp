@@ -186,7 +186,7 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
     Q_UNUSED(x);
     Q_UNUSED(y);
     Q_UNUSED(direction);
-    if(!Pokecraft::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
+    if(Pokecraft::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
     {
         if(fightTimerFinish)
             lose();
@@ -276,17 +276,19 @@ void BaseWindow::on_toolButtonFightQuit_clicked()
         QMessageBox::warning(this,"Server problem","Sorry but the client wait more data from the server to do it");
         return;
     }
+    doNextActionStep=DoNextActionStep_Start;
     if(Pokecraft::FightEngine::fightEngine.tryEscape())
     {
+        escape=true;
+        displayText(tr("Your escape is successful"));
         qDebug() << "escape is successful";
-        ui->stackedWidget->setCurrentWidget(ui->page_map);
     }
     else
     {//the other attack
-        doNextActionStep=DoNextActionStep_Start;
+        escape=false;
         Pokecraft::FightEngine::fightEngine.generateOtherAttack();
         if(!Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
-            displayText(tr("You can't escape!"));
+            displayText(tr("You have failed!"));
         else
             displayText(tr("The wild %1 can't attack").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
     }
@@ -404,8 +406,14 @@ void BaseWindow::doNextAction()
     //if win
     if(Pokecraft::FightEngine::fightEngine.wildMonsters.empty())
     {
-        displayText(tr("You win!"));
+        if(!escape)
+            displayText(tr("You win!"));
         doNextActionStep=DoNextActionStep_Win;
+        if(escape)
+        {
+            fightTimerFinish=true;
+            doNextAction();
+        }
         return;
     }
     //replace the KO monster
