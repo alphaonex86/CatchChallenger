@@ -547,7 +547,6 @@ bool FightEngine::tryEscape()
 bool FightEngine::internalTryEscape()
 {
     Pokecraft::Api_client_real::client->tryEscape();
-    return false;
     quint8 value=getOneSeed(101);
     if(wildMonsters.first().level<playerMonsterList.at(selectedMonster).level && value<75)
         return true;
