@@ -253,7 +253,9 @@ private:
     DoNextActionStep doNextActionStep;
     void lose();
     void win();
-    bool escape;
+    bool escape,escapeSuccess;
+    bool haveDisplayCurrentAttackSuccess;
+    bool haveDisplayOtherAttackSuccess;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
