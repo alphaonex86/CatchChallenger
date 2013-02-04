@@ -168,6 +168,7 @@ public slots:
 
     //fight
     void tryEscape();
+    void useSkill(const quint32 &skill);
 };
 }
 

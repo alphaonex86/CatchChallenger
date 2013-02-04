@@ -96,27 +96,31 @@ void LocalClientHandler::checkKOMonsters()
                     player_informations->public_and_private_informations.playerMonster[index].hp=
                             GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[index].monster].stat.hp*
                             player_informations->public_and_private_informations.playerMonster[index].level/POKECRAFT_MONSTER_LEVEL_MAX;
-                    switch(GlobalServerData::serverSettings.database.type)
+                    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn || GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
                     {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                         );
-                        break;
+                        switch(GlobalServerData::serverSettings.database.type)
+                        {
+                            default:
+                            case ServerSettings::Database::DatabaseType_Mysql:
+                                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                             .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                             .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                             );
+                            break;
+                            case ServerSettings::Database::DatabaseType_SQLite:
+                                emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                             .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                             .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                             );
+                            break;
+                        }
                     }
                 }
                 index++;
             }
             updateCanDoFight();
             #ifdef POKECRAFT_EXTRA_CHECK
+            emit message("You lost the battle");
             if(!ableToFight)
             {
                 emit error(QString("after lost in fight, remain unable to do a fight"));
@@ -135,7 +139,8 @@ void LocalClientHandler::checkKOMonsters()
         //drop the drop item here
         //give xp here
         //save into db here
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
+                (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
@@ -156,8 +161,15 @@ void LocalClientHandler::checkKOMonsters()
                                  );
                 break;
             }
+        if(wildMonsters.empty())
+        {
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            emit message("You win the battle");
+            #endif
+        }
     }
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
+            (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
@@ -413,7 +425,6 @@ Monster::Stat LocalClientHandler::getStat(const Monster &monster, const quint8 &
 
 bool LocalClientHandler::tryEscapeInternal()
 {
-    return false;
     quint8 value=getOneSeed(101);
     if(wildMonsters.first().level<player_informations->public_and_private_informations.playerMonster.at(selectedMonster).level && value<75)
         return true;
@@ -466,9 +477,7 @@ void LocalClientHandler::generateOtherAttack()
         else
             success=(getOneSeed(100)<buff.success);
         if(success)
-        {
             applyOtherBuffEffect(buff.effect);
-        }
         index++;
     }
     index=0;
@@ -584,6 +593,177 @@ void LocalClientHandler::applyOtherBuffEffect(const Monster::Skill::BuffEffect &
         case Monster::ApplyOn_Themself:
         case Monster::ApplyOn_AllAlly:
             wildMonsters.first().buffs << tempBuff;
+        break;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+        break;
+    }
+}
+
+void LocalClientHandler::useSkill(const quint32 &skill)
+{
+    Monster::Stat currentMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
+    Monster::Stat otherMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
+    bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
+    //do the current monster attack
+    if(currentMonsterStatIsFirstToAttack)
+    {
+        doTheCurrentMonsterAttack(skill,currentMonsterStat,otherMonsterStat);
+        checkKOMonsters();
+    }
+    //do the other monster attack
+    generateOtherAttack();
+    checkKOMonsters();
+    //do the current monster attack
+    if(!currentMonsterStatIsFirstToAttack)
+    {
+        doTheCurrentMonsterAttack(skill,currentMonsterStat,otherMonsterStat);
+        checkKOMonsters();
+    }
+}
+
+void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat)
+{
+    int index=0;
+    while(index<wildMonsters.first().skills.size())
+    {
+        if(wildMonsters.first().skills.at(index).skill==skill)
+            break;
+        index++;
+    }
+    if(index==wildMonsters.first().skills.size())
+    {
+        emit message(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(wildMonsters.first().monster).arg(wildMonsters.first().level).arg(skill));
+        return;
+    }
+
+    const Monster::Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[wildMonsters.first().skills.at(index).skill].level.at(wildMonsters.first().skills.at(index).level-1);
+    index=0;
+    while(index<skillList.buff.size())
+    {
+        const Monster::Skill::Buff &buff=skillList.buff.at(index);
+        bool success;
+        if(buff.success==100)
+            success=true;
+        else
+            success=(getOneSeed(100)<buff.success);
+        if(success)
+            applyCurrentBuffEffect(buff.effect);
+        index++;
+    }
+    index=0;
+    while(index<skillList.life.size())
+    {
+        const Monster::Skill::Life &life=skillList.life.at(index);
+        bool success;
+        if(life.success==100)
+            success=true;
+        else
+            success=(getOneSeed(100)<life.success);
+        if(success)
+            applyCurrentLifeEffect(life.effect);
+        index++;
+    }
+}
+
+void LocalClientHandler::applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect)
+{
+    qint32 quantity;
+    Monster::Stat stat;
+    Monster::Stat otherStat;
+    switch(effect.on)
+    {
+        case Monster::ApplyOn_AloneEnemy:
+        case Monster::ApplyOn_AllEnemy:
+            stat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
+            if(effect.type==QuantityType_Quantity)
+            {
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*stat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
+            else
+                quantity=(wildMonsters.first().hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>wildMonsters.first().hp)
+                wildMonsters.first().hp=0;
+            else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
+                wildMonsters.first().hp=stat.hp;
+            else
+                wildMonsters.first().hp+=quantity;
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            if(effect.quantity<0)
+                emit message(QString("Take %1 of dammage").arg(-quantity));
+            if(effect.quantity>0)
+                emit message(QString("Is healed of %1").arg(quantity));
+            #endif
+        break;
+        case Monster::ApplyOn_Themself:
+        case Monster::ApplyOn_AllAlly:
+            stat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
+            if(effect.type==QuantityType_Quantity)
+            {
+                otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
+            else
+                quantity=(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+            {
+                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=0;
+                player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs.clear();
+                updateCanDoFight();
+            }
+            else if(quantity>0 && quantity>(stat.hp-player_informations->public_and_private_informations.playerMonster[selectedMonster].hp))
+                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=stat.hp;
+            else
+                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp+=quantity;
+            #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+            if(effect.quantity<0)
+                emit message(QString("The wild monster take %1 of dammage").arg(-quantity));
+            if(effect.quantity>0)
+                emit message(QString("The wild monster is healed of %1").arg(quantity));
+            #endif
+        break;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+        break;
+    }
+}
+
+void LocalClientHandler::applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect)
+{
+    PlayerMonster::Buff tempBuff;
+    tempBuff.buff=effect.buff;
+    tempBuff.level=effect.level;
+    switch(effect.on)
+    {
+        case Monster::ApplyOn_AloneEnemy:
+        case Monster::ApplyOn_AllEnemy:
+            wildMonsters.first().buffs << tempBuff;
+        break;
+        case Monster::ApplyOn_Themself:
+        case Monster::ApplyOn_AllAlly:
+            player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs << tempBuff;
         break;
         default:
             qDebug() << "Not apply match, can't apply the buff";

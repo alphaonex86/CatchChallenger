@@ -564,3 +564,171 @@ bool FightEngine::canDoFightAction()
     else
         return false;
 }
+
+void FightEngine::useSkill(const quint32 &skill)
+{
+    Pokecraft::Api_client_real::client->useSkill(skill);
+    Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    Monster::Stat otherMonsterStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+    bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
+    //do the current monster attack
+    if(currentMonsterStatIsFirstToAttack)
+        doTheCurrentMonsterAttack(skill);
+    //do the other monster attack
+    generateOtherAttack();
+    //do the current monster attack
+    if(!currentMonsterStatIsFirstToAttack)
+        doTheCurrentMonsterAttack(skill);
+}
+
+void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
+{
+    int index=0;
+    while(index<wildMonsters.first().skills.size())
+    {
+        if(wildMonsters.first().skills.at(index).skill==skill)
+            break;
+        index++;
+    }
+    if(index==wildMonsters.first().skills.size())
+    {
+        qDebug() << QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(wildMonsters.first().monster).arg(wildMonsters.first().level).arg(skill);
+        return;
+    }
+    Monster::Skill::AttackReturn attackReturn;
+    attackReturn.doByTheCurrentMonster=true;
+    attackReturn.success=false;
+    const Monster::Skill::SkillList &skillList=monsterSkills[wildMonsters.first().skills.at(index).skill].level.at(wildMonsters.first().skills.at(index).level-1);
+    index=0;
+    while(index<skillList.buff.size())
+    {
+        const Monster::Skill::Buff &buff=skillList.buff.at(index);
+        bool success;
+        if(buff.success==100)
+            success=true;
+        else
+            success=(getOneSeed(100)<buff.success);
+        if(success)
+        {
+            applyCurrentBuffEffect(buff.effect);
+            attackReturn.buffEffectMonster << buff.effect;
+            attackReturn.success=true;
+        }
+        index++;
+    }
+    index=0;
+    while(index<skillList.life.size())
+    {
+        const Monster::Skill::Life &life=skillList.life.at(index);
+        bool success;
+        if(life.success==100)
+            success=true;
+        else
+            success=(getOneSeed(100)<life.success);
+        if(success)
+        {
+            attackReturn.lifeEffectMonster << applyCurrentLifeEffect(life.effect);
+            attackReturn.success=true;
+        }
+        index++;
+    }
+    attackReturnList << attackReturn;
+}
+
+Monster::Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect)
+{
+    qint32 quantity;
+    Monster::Stat stat;
+    Monster::Stat otherStat;
+    switch(effect.on)
+    {
+        case Monster::ApplyOn_AloneEnemy:
+        case Monster::ApplyOn_AllEnemy:
+            stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+            if(effect.type==QuantityType_Quantity)
+            {
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*stat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
+            else
+                quantity=(wildMonsters.first().hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>wildMonsters.first().hp)
+                wildMonsters.first().hp=0;
+            else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
+                wildMonsters.first().hp=stat.hp;
+            else
+                wildMonsters.first().hp+=quantity;
+        break;
+        case Monster::ApplyOn_Themself:
+        case Monster::ApplyOn_AllAlly:
+            stat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
+            if(effect.type==QuantityType_Quantity)
+            {
+                otherStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+                if(effect.quantity<0)
+                {
+                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
+                    if(quantity==0)
+                        quantity=-1;
+                }
+                else if(effect.quantity>0)//ignore the def for heal
+                {
+                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    if(quantity==0)
+                        quantity=1;
+                }
+            }
+            else
+                quantity=(playerMonsterList[selectedMonster].hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
+            {
+                playerMonsterList[selectedMonster].hp=0;
+                playerMonsterList[selectedMonster].buffs.clear();
+                updateCanDoFight();
+            }
+            else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
+                playerMonsterList[selectedMonster].hp=stat.hp;
+            else
+                playerMonsterList[selectedMonster].hp+=quantity;
+        break;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+        break;
+    }
+    Monster::Skill::LifeEffectReturn effect_to_return;
+    effect_to_return.on=effect.on;
+    effect_to_return.quantity=quantity;
+    return effect_to_return;
+}
+
+void FightEngine::applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect)
+{
+    PlayerMonster::Buff tempBuff;
+    tempBuff.buff=effect.buff;
+    tempBuff.level=effect.level;
+    switch(effect.on)
+    {
+        case Monster::ApplyOn_AloneEnemy:
+        case Monster::ApplyOn_AllEnemy:
+            wildMonsters.first().buffs << tempBuff;
+        break;
+        case Monster::ApplyOn_Themself:
+        case Monster::ApplyOn_AllAlly:
+            playerMonsterList[selectedMonster].buffs << tempBuff;
+        break;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+        break;
+    }
+}
+
