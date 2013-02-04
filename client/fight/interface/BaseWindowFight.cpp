@@ -273,25 +273,18 @@ void BaseWindow::on_toolButtonFightQuit_clicked()
 {
     if(!Pokecraft::FightEngine::fightEngine.canDoFightAction())
     {
-        QMessageBox::warning(this,"Server problem","Sorry but the client wait more data from the server to do it");
+        QMessageBox::warning(this,"Communication problem",tr("Sorry but the client wait more data from the server to do it"));
         return;
     }
     doNextActionStep=DoNextActionStep_Start;
+    escape=true;
     if(Pokecraft::FightEngine::fightEngine.tryEscape())
-    {
-        escape=true;
-        displayText(tr("Your escape is successful"));
-        qDebug() << "escape is successful";
-    }
+        escapeSuccess=true;
     else
-    {//the other attack
-        escape=false;
-        Pokecraft::FightEngine::fightEngine.generateOtherAttack();
-        if(!Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
-            displayText(tr("You have failed!"));
-        else
-            displayText(tr("The wild %1 can't attack").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
-    }
+        escapeSuccess=false;
+    haveDisplayCurrentAttackSuccess=false;
+    haveDisplayOtherAttackSuccess=false;
+    doNextAction();
 }
 
 void BaseWindow::on_pushButtonFightAttack_clicked()
@@ -305,6 +298,23 @@ void BaseWindow::on_pushButtonFightMonster_clicked()
 
 void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
 {
+    if(!Pokecraft::FightEngine::fightEngine.canDoFightAction())
+    {
+        QMessageBox::warning(this,"Communication problem",tr("Sorry but the client wait more data from the server to do it"));
+        return;
+    }
+    QList<QListWidgetItem *> itemsList=ui->listWidgetFightAttack->selectedItems();
+    if(itemsList.size()!=1)
+    {
+        QMessageBox::warning(this,tr("Selection error"),tr("You need select an attack"));
+        return;
+    }
+    doNextActionStep=DoNextActionStep_Start;
+    escape=false;
+    haveDisplayCurrentAttackSuccess=false;
+    haveDisplayOtherAttackSuccess=false;
+    Pokecraft::FightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()].skill);
+    doNextAction();
 }
 
 void BaseWindow::on_pushButtonFightReturn_clicked()
@@ -350,6 +360,18 @@ void BaseWindow::win()
 
 void BaseWindow::doNextAction()
 {
+    if(escape)
+    {
+        if(!escapeSuccess)
+        {//the other attack
+            escape=false;
+            Pokecraft::FightEngine::fightEngine.generateOtherAttack();
+            if(!Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
+                displayText(tr("You have failed!"));
+            else
+                displayText(tr("The wild %1 can't attack").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
+        }
+    }
     //apply the effect
     if(!Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
     {
@@ -408,6 +430,13 @@ void BaseWindow::doNextAction()
     {
         if(!escape)
             displayText(tr("You win!"));
+        else
+        {
+            if(escapeSuccess)
+                displayText(tr("Your escape is successful"));
+            else
+                displayText(tr("Your escape have failed but you win"));
+        }
         doNextActionStep=DoNextActionStep_Win;
         if(escape)
         {

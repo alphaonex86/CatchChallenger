@@ -196,19 +196,33 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
     switch(mainCodeType)
     {
         case 0x40:
-        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
         {
-            parseError("Wrong size in move packet");
-            return;
+            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8)*2)
+            {
+                parseError("Wrong size in move packet");
+                return;
+            }
+            in >> previousMovedUnit;
+            in >> direction;
         }
-        in >> previousMovedUnit;
-        in >> direction;
         if(direction<1 || direction>8)
         {
             parseError(QString("Bad direction number: %1").arg(direction));
             return;
         }
         emit moveThePlayer(previousMovedUnit,(Direction)direction);
+        break;
+        case 0x61:
+        {
+            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+            {
+                parseError("Wrong size in move packet");
+                return;
+            }
+            quint32 skill;
+            in >> skill;
+            emit useSkill(skill);
+        }
         break;
         default:
             parseError("unknow main ident: "+QString::number(mainCodeType));
