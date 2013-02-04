@@ -48,11 +48,14 @@ private:
     Monster::Stat getStat(const Monster &monster, const quint8 &level);
     void applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect);
     void applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
+    void applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect);
+    void applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect);
     void generateOtherAttack();
     void updateCanDoFight();
     bool tryEscapeInternal();
     void checkKOMonsters();
     void saveCurrentMonsterStat();
+    void doTheCurrentMonsterAttack(const quint32 &skill,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
 
     //map move
     bool singleMove(const Direction &direction);
@@ -88,6 +91,7 @@ public slots:
     //fight
     void tryEscape();
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    void useSkill(const quint32 &skill);
 private slots:
     virtual void extraStop();
     void savePosition();

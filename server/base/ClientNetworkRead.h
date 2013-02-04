@@ -84,6 +84,7 @@ signals:
     void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     //fight
     void tryEscape();
+    void useSkill(const quint32 &skill);
 private:
     // for status
     bool have_send_protocol;

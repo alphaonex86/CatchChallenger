@@ -65,6 +65,7 @@ public:
     QList<PlayerMonster> wildMonsters;
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
+    void useSkill(const quint32 &skill);
     QList<Monster::Skill::AttackReturn> attackReturnList;
     QList<quint32> otherMonsterAttack;
     void generateOtherAttack();
@@ -81,6 +82,9 @@ private:
     inline quint8 getOneSeed(const quint8 &max=0);
     void applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect);
     Monster::Skill::LifeEffectReturn applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
+    void doTheCurrentMonsterAttack(const quint32 &skill);
+    void applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect);
+    Monster::Skill::LifeEffectReturn applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect);
     bool internalTryEscape();
 private:
     void updateCanDoFight();

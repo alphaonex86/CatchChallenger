@@ -1963,6 +1963,15 @@ void Api_protocol::tryEscape()
     output->packOutcommingData(0x60,0x0002,QByteArray());
 }
 
+void Api_protocol::useSkill(const quint32 &skill)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)skill;
+    output->packOutcommingData(0x61,outputData);
+}
+
 void Api_protocol::collectMaturePlant()
 {
     if(havePlantAction)
@@ -1999,6 +2008,7 @@ void Api_protocol::resetAll()
     number_of_map=0;
     havePlantAction=false;
     player_informations.recipes.clear();
+    player_informations.playerMonster.clear();
     player_informations.items.clear();
     haveShopAction=false;
 
