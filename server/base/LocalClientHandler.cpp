@@ -43,15 +43,6 @@ void LocalClientHandler::extraStop()
 {
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
 
-    #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-    DebugClass::debugConsole(
-                QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
-                .arg(map->map_file)
-                .arg(x)
-                .arg(y)
-                .arg(orientationString)
-                );
-    #endif
     if(!player_informations->is_logged || player_informations->isFake)
         return;
     //save the monster
@@ -124,12 +115,21 @@ void LocalClientHandler::savePosition()
         break;
         default:
             #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-            DebugClass::debugConsole("direction wrong and fixed before save");
+            emit message("direction wrong and fixed before save");
             #endif
             orientationString="bottom";
             //orientation=Orientation_bottom;
         break;
     }
+    #ifdef DEBUG_MESSAGE_CLIENT_MOVE
+    emit message(
+                QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
+                .arg(map->map_file)
+                .arg(x)
+                .arg(y)
+                .arg(orientationString)
+                );
+    #endif
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
     QString updateMapPositionQuery;
@@ -213,7 +213,7 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
 
 bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
 {
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    #ifdef DEBUG_MESSAGE_CLIENT_MOVE
     emit message(QString("moveThePlayer(): for player (%1,%2): %3, previousMovedUnit: %4 (%5), next direction: %6")
                  .arg(x)
                  .arg(y)
@@ -236,7 +236,9 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     COORD_TYPE x=this->x,y=this->y;
     temp_direction=direction;
     Map* map=this->map;
+    #ifdef DEBUG_MESSAGE_CLIENT_MOVE
     emit message(QString("LocalClientHandler::singleMove(), go in this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+    #endif
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
     {
         emit error(QString("LocalClientHandler::singleMove(), can't go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));

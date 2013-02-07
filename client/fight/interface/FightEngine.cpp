@@ -205,16 +205,14 @@ void FightEngine::generateOtherAttack()
 Monster::Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
 {
     qint32 quantity;
-    Monster::Stat stat;
-    Monster::Stat otherStat;
+    Monster::Stat stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
     switch(effect.on)
     {
         case Monster::ApplyOn_AloneEnemy:
         case Monster::ApplyOn_AllEnemy:
-            stat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
             if(effect.type==QuantityType_Quantity)
             {
-                otherStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+                Monster::Stat otherStat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
                 if(effect.quantity<0)
                 {
                     quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
@@ -243,7 +241,6 @@ Monster::Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Monster
         break;
         case Monster::ApplyOn_Themself:
         case Monster::ApplyOn_AllAlly:
-            stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
@@ -301,6 +298,8 @@ void FightEngine::applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect)
 
 bool FightEngine::wildMonsterIsKO()
 {
+    if(wildMonsters.empty())
+        return true;
     if(wildMonsters.first().hp==0)
     {
         wildMonsters.first().buffs.clear();
@@ -584,21 +583,21 @@ void FightEngine::useSkill(const quint32 &skill)
 void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
 {
     int index=0;
-    while(index<wildMonsters.first().skills.size())
+    while(index<playerMonsterList.at(selectedMonster).skills.size())
     {
-        if(wildMonsters.first().skills.at(index).skill==skill)
+        if(playerMonsterList.at(selectedMonster).skills.at(index).skill==skill)
             break;
         index++;
     }
-    if(index==wildMonsters.first().skills.size())
+    if(index==playerMonsterList.at(selectedMonster).skills.size())
     {
-        qDebug() << QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(wildMonsters.first().monster).arg(wildMonsters.first().level).arg(skill);
+        qDebug() << QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(playerMonsterList.at(selectedMonster).monster).arg(playerMonsterList.at(selectedMonster).level).arg(skill);
         return;
     }
     Monster::Skill::AttackReturn attackReturn;
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.success=false;
-    const Monster::Skill::SkillList &skillList=monsterSkills[wildMonsters.first().skills.at(index).skill].level.at(wildMonsters.first().skills.at(index).level-1);
+    const Monster::Skill::SkillList &skillList=monsterSkills[playerMonsterList.at(selectedMonster).skills.at(index).skill].level.at(playerMonsterList.at(selectedMonster).skills.at(index).level-1);
     index=0;
     while(index<skillList.buff.size())
     {
@@ -638,24 +637,24 @@ void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
 Monster::Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect)
 {
     qint32 quantity;
-    Monster::Stat stat;
+    Monster::Stat stat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
     Monster::Stat otherStat;
     switch(effect.on)
     {
         case Monster::ApplyOn_AloneEnemy:
         case Monster::ApplyOn_AllEnemy:
-            stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
             if(effect.type==QuantityType_Quantity)
             {
+                otherStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
                 if(effect.quantity<0)
                 {
-                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*stat.defense));
+                    quantity=-((-effect.quantity*stat.attack*playerMonsterList.at(selectedMonster).level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
                     if(quantity==0)
                         quantity=-1;
                 }
                 else if(effect.quantity>0)//ignore the def for heal
                 {
-                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    quantity=effect.quantity*playerMonsterList.at(selectedMonster).level/POKECRAFT_MONSTER_LEVEL_MAX;
                     if(quantity==0)
                         quantity=1;
                 }
@@ -671,19 +670,17 @@ Monster::Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Monst
         break;
         case Monster::ApplyOn_Themself:
         case Monster::ApplyOn_AllAlly:
-            stat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
             if(effect.type==QuantityType_Quantity)
             {
-                otherStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
                 if(effect.quantity<0)
                 {
-                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
+                    quantity=-((-effect.quantity*stat.attack*playerMonsterList.at(selectedMonster).level)/(POKECRAFT_MONSTER_LEVEL_MAX*otherStat.defense));
                     if(quantity==0)
                         quantity=-1;
                 }
                 else if(effect.quantity>0)//ignore the def for heal
                 {
-                    quantity=effect.quantity*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+                    quantity=effect.quantity*playerMonsterList.at(selectedMonster).level/POKECRAFT_MONSTER_LEVEL_MAX;
                     if(quantity==0)
                         quantity=1;
                 }
