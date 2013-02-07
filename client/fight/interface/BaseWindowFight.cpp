@@ -245,10 +245,7 @@ void BaseWindow::moveFightMonsterTop()
         if(ui->labelFightMonsterTop->pos().rx()<800)
             moveFightMonsterTopTimer.start();
         else
-        {
-            Pokecraft::FightEngine::fightEngine.wildMonsterIsKO();
             doNextAction();
-        }
     }
 }
 
@@ -393,12 +390,12 @@ void BaseWindow::doNextAction()
     //if the current monster is KO
     if(Pokecraft::FightEngine::fightEngine.isInFight() && Pokecraft::FightEngine::fightEngine.wildMonsterIsKO())
     {
+        ui->labelFightEnter->setText(tr("The wild %1 have lost!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
         Pokecraft::FightEngine::fightEngine.dropKOWildMonster();
         doNextActionStep=DoNextActionStep_Start;
         //current player monster is KO
         moveType=MoveType_Dead;
         moveFightMonsterTop();
-        ui->labelFightEnter->setText(tr("The wild %1 have lost!").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
         return;
     }
     if(doNextActionStep==DoNextActionStep_Lose)

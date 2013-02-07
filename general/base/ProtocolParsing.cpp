@@ -47,7 +47,7 @@ void ProtocolParsing::initialiseTheVariable()
 {
     //def query without the sub code
     mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xD1 << 0xD2;
-    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41;
+    mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41 << 0x61;
 
     //define the size of direct query
     {
@@ -56,7 +56,7 @@ void ProtocolParsing::initialiseTheVariable()
     }
     sizeOnlyMainCodePacketServerToClient[0xC4]=0;
     sizeOnlyMainCodePacketClientToServer[0x40]=2;
-    sizeOnlyMainCodePacketClientToServer[0x61]=1;
+    sizeOnlyMainCodePacketClientToServer[0x61]=4;
     sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
     sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
     sizeMultipleCodePacketClientToServer[0x50][0x0002]=8;
@@ -683,6 +683,13 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     }
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return;
+        }
+        #endif
         if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
             replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
@@ -694,6 +701,13 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return;
+        }
+        #endif
         if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
             replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
@@ -718,6 +732,13 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     }
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return;
+        }
+        #endif
         if(replySizeMultipleCodePacketServerToClient.contains(mainCodeType))
         {
             if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
@@ -731,6 +752,13 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return;
+        }
+        #endif
         if(replySizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
             if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
@@ -825,6 +853,13 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     }
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return;
+        }
+        #endif
         if(replySizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
             #ifdef POKECRAFT_EXTRA_CHECK
@@ -846,6 +881,13 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return;
+        }
+        #endif
         if(replySizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
             #ifdef POKECRAFT_EXTRA_CHECK
@@ -881,6 +923,13 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     }
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return;
+        }
+        #endif
         if(replySizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
             if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
@@ -927,6 +976,13 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return;
+        }
+        #endif
         if(replySizeMultipleCodePacketServerToClient.contains(mainCodeType))
         {
             if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
@@ -982,6 +1038,13 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
+        #endif
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
             if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
@@ -1036,6 +1099,13 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
+        #endif
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
         {
             if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
@@ -1100,6 +1170,13 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            return false;
+        }
+        #endif
         if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
             #ifdef POKECRAFT_EXTRA_CHECK
@@ -1124,6 +1201,13 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            return false;
+        }
+        #endif
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
             #ifdef POKECRAFT_EXTRA_CHECK
@@ -1161,6 +1245,13 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
 
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return false;
+        }
+        #endif
         if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
             #ifdef POKECRAFT_EXTRA_CHECK
@@ -1185,6 +1276,13 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return false;
+        }
+        #endif
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
             #ifdef POKECRAFT_EXTRA_CHECK
@@ -1223,6 +1321,13 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
 
     if(isClient)
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
+        #endif
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
             if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
@@ -1277,6 +1382,13 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     }
     else
     {
+        #ifdef POKECRAFT_EXTRA_CHECK
+        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
+        #endif
         if(!sizeMultipleCodePacketServerToClient.contains(mainCodeType))
         {
             if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
