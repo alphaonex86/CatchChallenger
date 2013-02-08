@@ -13,6 +13,7 @@
 #include <QSet>
 #include <QSqlQuery>
 #include <QDataStream>
+#include <QMultiHash>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
@@ -142,6 +143,14 @@ struct Item
     quint32 price;
 };
 
+struct MonsterDrops
+{
+    quint32 item;
+    quint32 quantity_min;
+    quint32 quantity_max;
+    quint32 luck;
+};
+
 struct ServerPrivateVariables
 {
     //bd
@@ -161,6 +170,7 @@ struct ServerPrivateVariables
 
     //fight
     QHash<quint32,Monster> monsters;
+    QMultiHash<quint32,MonsterDrops> monsterDrops;
     QHash<quint32,Monster::Skill> monsterSkills;
     QHash<quint32,Monster::Buff> monsterBuffs;
 

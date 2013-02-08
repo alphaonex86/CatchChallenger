@@ -6,6 +6,12 @@
 #include "../base/GlobalServerData.h"
 #include "../VariableServer.h"
 
+#include <QFile>
+#include <QString>
+#include <QByteArray>
+#include <QDomDocument>
+#include <QDomElement>
+
 using namespace Pokecraft;
 
 void BaseServerFight::preload_monsters()
@@ -13,6 +19,13 @@ void BaseServerFight::preload_monsters()
     GlobalServerData::serverPrivateVariables.monsters=FightLoader::loadMonster(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",GlobalServerData::serverPrivateVariables.monsterSkills);
 
     DebugClass::debugConsole(QString("%1 monster(s) loaded").arg(GlobalServerData::serverPrivateVariables.monsters.size()));
+}
+
+void BaseServerFight::preload_monsters_drops()
+{
+    GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",GlobalServerData::serverPrivateVariables.items,GlobalServerData::serverPrivateVariables.monsters);
+
+    DebugClass::debugConsole(QString("%1 monster drop(s) loaded").arg(GlobalServerData::serverPrivateVariables.monsters.size()));
 }
 
 void BaseServerFight::preload_skills()
@@ -101,7 +114,183 @@ void BaseServerFight::unload_skills()
     GlobalServerData::serverPrivateVariables.monsterSkills.clear();
 }
 
+void BaseServerFight::unload_monsters_drops()
+{
+    GlobalServerData::serverPrivateVariables.monsterDrops.clear();
+}
+
 void BaseServerFight::unload_monsters()
 {
     GlobalServerData::serverPrivateVariables.monsters.clear();
+}
+
+QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file, QHash<quint32,Item> items,const QHash<quint32,Monster> &monsters)
+{
+    QMultiHash<quint32,MonsterDrops> monsterDrops;
+    //open and quick check the file
+    QFile xmlFile(file);
+    QByteArray xmlContent;
+    if(!xmlFile.open(QIODevice::ReadOnly))
+    {
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        return monsterDrops;
+    }
+    xmlContent=xmlFile.readAll();
+    xmlFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return monsterDrops;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="list")
+    {
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        return monsterDrops;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement item = root.firstChildElement("monster");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+        {
+            if(item.hasAttribute("id"))
+            {
+                quint32 id=item.attribute("id").toUInt(&ok);
+                if(!ok)
+                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                else if(!monsters.contains(id))
+                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, id into the monster list, skip: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                else
+                {
+                    QDomElement drops = item.firstChildElement("drops");
+                    if(!drops.isNull())
+                    {
+                        if(drops.isElement())
+                        {
+                            QDomElement drop = drops.firstChildElement("drop");
+                            while(!drop.isNull())
+                            {
+                                if(drop.isElement())
+                                {
+                                    if(drop.hasAttribute("item"))
+                                    {
+                                        MonsterDrops dropVar;
+                                        if(drop.hasAttribute("quantity_min"))
+                                        {
+                                            dropVar.quantity_min=drop.attribute("quantity_min").toUInt(&ok);
+                                            if(!ok)
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, quantity_min is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                        }
+                                        else
+                                            dropVar.quantity_min=1;
+                                        if(ok)
+                                        {
+                                            if(drop.hasAttribute("quantity_max"))
+                                            {
+                                                dropVar.quantity_max=drop.attribute("quantity_max").toUInt(&ok);
+                                                if(!ok)
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, quantity_max is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                            else
+                                                dropVar.quantity_max=1;
+                                        }
+                                        if(ok)
+                                        {
+                                            if(dropVar.quantity_min<=0)
+                                            {
+                                                ok=false;
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, dropVar.quantity_min is 0: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                        }
+                                        if(ok)
+                                        {
+                                            if(dropVar.quantity_max<=0)
+                                            {
+                                                ok=false;
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, dropVar.quantity_max is 0: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                        }
+                                        if(ok)
+                                        {
+                                            if(dropVar.quantity_max<dropVar.quantity_min)
+                                            {
+                                                ok=false;
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, dropVar.quantity_max<dropVar.quantity_min: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                        }
+                                        if(ok)
+                                        {
+                                            if(drop.hasAttribute("luck"))
+                                            {
+                                                QString luck=drop.attribute("luck");
+                                                luck.remove("%");
+                                                dropVar.luck=luck.toUShort(&ok);
+                                                if(!ok)
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, luck is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                            else
+                                                dropVar.luck=100;
+                                        }
+                                        if(ok)
+                                        {
+                                            if(dropVar.luck<=0)
+                                            {
+                                                ok=false;
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, luck is 0!: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                            if(dropVar.luck>100)
+                                            {
+                                                ok=false;
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, luck is greater than 100: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                        }
+                                        if(ok)
+                                        {
+                                            if(drop.hasAttribute("item"))
+                                            {
+                                                dropVar.item=drop.attribute("item").toUInt(&ok);
+                                                if(!ok)
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, item is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                            else
+                                                dropVar.luck=100;
+                                        }
+                                        if(ok)
+                                        {
+                                            if(!items.contains(dropVar.item))
+                                            {
+                                                ok=false;
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, the item is not into the item list: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            }
+                                        }
+                                        if(ok)
+                                            monsterDrops.insert(id,dropVar);
+                                    }
+                                    else
+                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, as not item attribute: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                }
+                                else
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                drop = drop.nextSiblingElement("drop");
+                            }
+                        }
+                        else
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, drops balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    }
+                }
+            }
+            else
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+        }
+        else
+            DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+        item = item.nextSiblingElement("monster");
+    }
+    return monsterDrops;
 }
