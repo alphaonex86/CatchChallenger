@@ -511,6 +511,9 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
         emit message(QString("Query canceled because is fake: %1").arg(queryText));
         return;
     }
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    emit message("Do mysql query: "+queryText);
+    #endif
     QSqlQuery sqlQuery;
     if(!sqlQuery.exec(queryText))
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());

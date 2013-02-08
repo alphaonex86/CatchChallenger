@@ -136,32 +136,81 @@ bool LocalClientHandler::checkKOMonsters()
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
         #endif
-        wildMonsters.removeFirst();
         //drop the drop item here
-        //give xp here
+        //give xp/sp here
+        const Monster &wildmonster=GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster];
+        const Monster &currentmonster=GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster];
+        player_informations->public_and_private_informations.playerMonster[selectedMonster].sp+=wildmonster.give_sp*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+        quint32 give_xp=wildmonster.give_xp*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX));
+        #endif
+        bool haveChangeOfLevel=false;
+        quint32 xp=player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp;
+        quint32 level=player_informations->public_and_private_informations.playerMonster[selectedMonster].level;
+        while(currentmonster.level_to_xp.at(level-1)<(xp+give_xp))
+        {
+            quint32 old_max_hp=currentmonster.stat.hp*level/POKECRAFT_MONSTER_LEVEL_MAX;
+            quint32 new_max_hp=currentmonster.stat.hp*(level+1)/POKECRAFT_MONSTER_LEVEL_MAX;
+            give_xp-=currentmonster.level_to_xp.at(level-1)-xp;
+            xp=0;
+            level++;
+            haveChangeOfLevel=true;
+            player_informations->public_and_private_informations.playerMonster[selectedMonster].hp+=new_max_hp-old_max_hp;
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            emit message(QString("You pass to the level %1").arg(level));
+            #endif
+        }
+        xp+=give_xp;
+        player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp=xp;
+        if(haveChangeOfLevel)
+            player_informations->public_and_private_informations.playerMonster[selectedMonster].level=level;
+
         //save into db here
+        wildMonsters.removeFirst();
         if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
                 (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET xp=%2,level=%3,sp=%4 WHERE id=%1;")
+                    emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET xp=%2,level=%3,sp=%4 WHERE id=%1;")
+                    emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
                                  .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
                                  );
                 break;
             }
+        if(haveChangeOfLevel)
+        {
+            if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
+                    (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
+                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
+                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                                     );
+                    break;
+                }
+        }
         if(wildMonsters.empty())
         {
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
