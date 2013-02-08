@@ -70,7 +70,7 @@ void LocalClientHandler::saveCurrentMonsterStat()
     }
 }
 
-void LocalClientHandler::checkKOMonsters()
+bool LocalClientHandler::checkKOMonsters()
 {
     int old_selectedMonster=selectedMonster;
     if(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp==0)
@@ -119,15 +119,16 @@ void LocalClientHandler::checkKOMonsters()
                 index++;
             }
             updateCanDoFight();
+            wildMonsters.clear();
             #ifdef POKECRAFT_EXTRA_CHECK
             emit message("You lost the battle");
             if(!ableToFight)
             {
                 emit error(QString("after lost in fight, remain unable to do a fight"));
-                return;
+                return true;
             }
             #endif
-            return;
+            return true;
         }
     }
     if(wildMonsters.first().hp==0)
@@ -167,6 +168,7 @@ void LocalClientHandler::checkKOMonsters()
             emit message("You win the battle");
             #endif
         }
+        return true;
     }
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
             (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
@@ -186,6 +188,7 @@ void LocalClientHandler::checkKOMonsters()
                              );
             break;
         }
+    return false;
 }
 
 bool LocalClientHandler::checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
@@ -609,16 +612,19 @@ void LocalClientHandler::useSkill(const quint32 &skill)
     if(currentMonsterStatIsFirstToAttack)
     {
         doTheCurrentMonsterAttack(skill,currentMonsterStat,otherMonsterStat);
-        checkKOMonsters();
+        if(checkKOMonsters())
+            return;
     }
     //do the other monster attack
     generateOtherAttack();
-    checkKOMonsters();
+    if(checkKOMonsters())
+        return;
     //do the current monster attack
     if(!currentMonsterStatIsFirstToAttack)
     {
         doTheCurrentMonsterAttack(skill,currentMonsterStat,otherMonsterStat);
-        checkKOMonsters();
+        if(checkKOMonsters())
+            return;
     }
 }
 
