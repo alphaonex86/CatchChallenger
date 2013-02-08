@@ -86,6 +86,7 @@ private:
     void applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect);
     Monster::Skill::LifeEffectReturn applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect);
     bool internalTryEscape();
+    void addXPSP();
 private:
     void updateCanDoFight();
     explicit FightEngine();

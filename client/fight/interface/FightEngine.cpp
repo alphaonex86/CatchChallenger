@@ -259,7 +259,10 @@ Monster::Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Monster
             else
                 quantity=(wildMonsters.first().hp*effect.quantity)/100;
             if(quantity<0 && (-quantity)>wildMonsters.first().hp)
+            {
                 wildMonsters.first().hp=0;
+                addXPSP();
+            }
             else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
                 wildMonsters.first().hp=stat.hp;
             else
@@ -556,6 +559,28 @@ bool FightEngine::internalTryEscape()
     return false;
 }
 
+void FightEngine::addXPSP()
+{
+    const Monster &wildmonster=monsters[wildMonsters.first().monster];
+    const Monster &currentmonster=monsters[playerMonsterList[selectedMonster].monster];
+    playerMonsterList[selectedMonster].sp+=wildmonster.give_sp*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+    quint32 give_xp=wildmonster.give_xp*wildMonsters.first().level/POKECRAFT_MONSTER_LEVEL_MAX;
+    quint32 xp=playerMonsterList[selectedMonster].remaining_xp;
+    quint32 level=playerMonsterList[selectedMonster].level;
+    while(currentmonster.level_to_xp.at(level-1)<(xp+give_xp))
+    {
+        quint32 old_max_hp=currentmonster.stat.hp*level/POKECRAFT_MONSTER_LEVEL_MAX;
+        quint32 new_max_hp=currentmonster.stat.hp*(level+1)/POKECRAFT_MONSTER_LEVEL_MAX;
+        give_xp-=currentmonster.level_to_xp.at(level-1)-xp;
+        xp=0;
+        level++;
+        playerMonsterList[selectedMonster].hp+=new_max_hp-old_max_hp;
+        playerMonsterList[selectedMonster].level=level;
+    }
+    xp+=give_xp;
+    playerMonsterList[selectedMonster].remaining_xp=xp;
+}
+
 bool FightEngine::canDoFightAction()
 {
     if(m_randomSeeds.size()>5)
@@ -672,7 +697,10 @@ Monster::Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Monst
             else
                 quantity=(wildMonsters.first().hp*effect.quantity)/100;
             if(quantity<0 && (-quantity)>wildMonsters.first().hp)
+            {
                 wildMonsters.first().hp=0;
+                addXPSP();
+            }
             else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
                 wildMonsters.first().hp=stat.hp;
             else
