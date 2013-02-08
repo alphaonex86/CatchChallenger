@@ -18,7 +18,7 @@ bool operator<(const Monster::Attack &entry1, const Monster::Attack &entry2)
         return entry1.skill.skill < entry2.skill.skill;
 }
 
-QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint32, Monster::Skill> monsterSkills)
+QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash<quint32, Monster::Skill> &monsterSkills)
 {
     QHash<quint32,Monster> monsters;
     //open and quick check the file
@@ -298,7 +298,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, QHash<quint
     return monsters;
 }
 
-QHash<quint32,Monster::Skill> FightLoader::loadMonsterSkill(const QString &file, QHash<quint32, Monster::Buff> monsterBuffs)
+QHash<quint32,Monster::Skill> FightLoader::loadMonsterSkill(const QString &file, const QHash<quint32, Monster::Buff> &monsterBuffs)
 {
     QHash<quint32,Monster::Skill> monsterSkills;
     //open and quick check the file

@@ -137,6 +137,34 @@ bool LocalClientHandler::checkKOMonsters()
         emit message(QString("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
         #endif
         //drop the drop item here
+        QList<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.values(wildMonsters.first().monster);
+        int index=0;
+        bool success;
+        quint32 quantity;
+        while(index<drops.size())
+        {
+            if(drops.at(index).luck==100)
+                success=true;
+            else
+            {
+                if(rand()%100<(qint8)drops.at(index).luck)
+                    success=true;
+                else
+                    success=false;
+            }
+            if(success)
+            {
+                if(drops.at(index).quantity_max==1)
+                    quantity=1;
+                else
+                    quantity=rand()%(drops.at(index).quantity_max-drops.at(index).quantity_min+1)+drops.at(index).quantity_min;
+                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                emit message(QString("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
+                #endif
+                addObjectAndSend(drops.at(index).item,quantity);
+            }
+            index++;
+        }
         //give xp/sp here
         const Monster &wildmonster=GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster];
         const Monster &currentmonster=GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster];
@@ -168,8 +196,9 @@ bool LocalClientHandler::checkKOMonsters()
 
         //save into db here
         wildMonsters.removeFirst();
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
-                (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
+        if(wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+            saveCurrentMonsterStat();
+        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
@@ -190,8 +219,7 @@ bool LocalClientHandler::checkKOMonsters()
             }
         if(haveChangeOfLevel)
         {
-            if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
-                    (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
+            if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
                 switch(GlobalServerData::serverSettings.database.type)
                 {
                     default:
@@ -219,8 +247,7 @@ bool LocalClientHandler::checkKOMonsters()
         }
         return true;
     }
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn ||
-            (wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle))
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:

@@ -92,6 +92,7 @@ void BaseServer::preload_the_data()
     preload_buff();
     preload_skills();
     preload_monsters();
+    preload_monsters_drops();
     check_monsters_map();
 }
 
@@ -719,6 +720,7 @@ void BaseServer::unload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
+    unload_monsters_drops();
     unload_monsters();
     unload_skills();
     unload_buff();
