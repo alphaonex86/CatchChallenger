@@ -425,6 +425,7 @@ void BaseWindow::doNextAction()
     //if win
     if(Pokecraft::FightEngine::fightEngine.wildMonsters.empty())
     {
+        doNextActionStep=DoNextActionStep_Win;
         if(!escape)
             displayText(tr("You win!"));
         else
@@ -434,7 +435,6 @@ void BaseWindow::doNextAction()
             else
                 displayText(tr("Your escape have failed but you win"));
         }
-        doNextActionStep=DoNextActionStep_Win;
         if(escape)
         {
             fightTimerFinish=true;
