@@ -53,7 +53,7 @@ private:
     void generateOtherAttack();
     void updateCanDoFight();
     bool tryEscapeInternal();
-    void checkKOMonsters();
+    bool checkKOMonsters();//true if one monster is KO
     void saveCurrentMonsterStat();
     void doTheCurrentMonsterAttack(const quint32 &skill,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
 

@@ -572,12 +572,22 @@ void FightEngine::useSkill(const quint32 &skill)
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     //do the current monster attack
     if(currentMonsterStatIsFirstToAttack)
+    {
         doTheCurrentMonsterAttack(skill);
+        if(!m_canDoFight || wildMonsterIsKO())
+            return;
+    }
     //do the other monster attack
     generateOtherAttack();
+    if(!m_canDoFight || wildMonsterIsKO())
+        return;
     //do the current monster attack
     if(!currentMonsterStatIsFirstToAttack)
+    {
         doTheCurrentMonsterAttack(skill);
+        if(!m_canDoFight || wildMonsterIsKO())
+            return;
+    }
 }
 
 void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
