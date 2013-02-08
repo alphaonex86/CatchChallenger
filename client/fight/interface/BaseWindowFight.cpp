@@ -369,10 +369,14 @@ void BaseWindow::doNextAction()
                 displayText(tr("The wild %1 can't attack").arg(Pokecraft::FightEngine::fightEngine.monsterExtra[Pokecraft::FightEngine::fightEngine.getOtherMonster().monster].name));
         }
     }
+    if(doNextActionStep==DoNextActionStep_Start || !Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
+    {
+        fightTimerFinish=false;
+        displayAttackProgression=0;
+    }
     //apply the effect
     if(!Pokecraft::FightEngine::fightEngine.attackReturnList.empty())
     {
-        displayAttackProgression=0;
         displayAttack();
         return;
     }
@@ -416,10 +420,7 @@ void BaseWindow::doNextAction()
         }
     if(doNextActionStep==DoNextActionStep_Win)
     {
-        if(fightTimerFinish)
-            win();
-        else
-            fightTimerFinish=true;
+        win();
         return;
     }
     //if win
