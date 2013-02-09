@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>im-user.png</file>
+        <file>images/inventory/unknow-object.png</file>
+    </qresource>
+</RCC>

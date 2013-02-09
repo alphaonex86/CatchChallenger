@@ -1,0 +1,63 @@
+<html>
+<body>
+<script type="text/javascript" src="jquery-1.7.2.min.js"></script>
+<div class="body">
+	<div class="hand">
+		<div class="head">
+			<div class="hear">
+			</div>
+		</div>
+	</div>
+</div>
+<style type="text/css">
+.body{position:absolute;left:0px;top:0px;width:16px;height:32px;background-image:url('body.png');background-repeat:no-repeat;background-attachment:fixed;background-position:16px 0px;}
+.hand{position:absolute;left:0px;top:0px;width:16px;height:32px;background-image:url('hand.png');background-repeat:no-repeat;background-attachment:fixed;background-position:16px 0px;}
+.head{position:absolute;left:0px;top:0px;width:16px;height:32px;background-image:url('head.png');background-repeat:no-repeat;background-attachment:fixed;background-position:16px 0px;}
+.hear{position:absolute;left:0px;top:0px;width:16px;height:32px;background-image:url('hear.png');background-repeat:no-repeat;background-attachment:fixed;background-position:16px 0px;}
+</style>
+<script type="text/javascript">
+var base_width=16;
+var base_height=24;
+var index_ani=0;
+var index_direction=0;
+function updatePlayer()
+{
+	if($('#stop').is(':checked'))
+		return;
+
+	var index_ani_temp=index_ani+1;
+	if(index_ani_temp>=3)
+		index_ani_temp-=3;
+	//alert(''+(index_ani_temp*base_width)+'px 0px');
+	$('.body').css('background-position','-'+(index_ani_temp*base_width)+'px -'+(index_direction*base_height)+'px');
+	$('.hand').css('background-position','-'+(index_ani_temp*base_width)+'px -'+(index_direction*base_height)+'px');
+	$('.head').css('background-position','-'+(index_ani_temp*base_width)+'px -'+(index_direction*base_height)+'px');
+	$('.hear').css('background-position','-'+(index_ani_temp*base_width)+'px -'+(index_direction*base_height)+'px');
+	index_ani++;
+	if(index_ani>=3)
+		index_ani=0;
+}
+function updateDirection()
+{
+	index_direction=parseInt($('#direction').val());
+}
+
+updatePlayer();
+setInterval(function(){updatePlayer()},200);
+</script>
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+Look on: <select onchange="updateDirection()" id="direction">
+  <option value="0">Top</option>
+  <option value="1">Right</option>
+  <option value="2">Bottom</option>
+  <option value="3">Left</option>
+</select>
+<br />
+<input type="checkbox" id="stop"> Stop
+</body>
+</html>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="type" value="city"/>
+ </properties>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
+ <layer name="Walkable" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJyVlEESwzAIA/P4+t/pMeNB2uXAuLUJRkjyeZ7n/OP3iXOtU5xPTHtTTN9R3t3H1GvKNZHyNzWnc/M9zeee781NOk91W9/T77RncCV8G/1s6t29pV43WqSZp/pTLzR74pr4SDk0f9sP1W330/y3Xmp3WuxGv2lWpGN7Tnoy/0krpMHET5uZvbtx2oJ83HRptWo0kHTQ3omWs8FgeCJ+DM7GocG68YnRxkY7VqsbTzZvmv2kucannTG9FQ0/+bv5pnFp8TVMxqvbGpueN7NLvaactia9GfyWJ+OPVJs0R361PNGbQZib72x/bU3RuGwzJL1TH4aXFFTvBSTp0dE=
+  </data>
+ </layer>
+ <layer name="WalkBottom" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYCAdhAJxGBSHk6GfXDBq76i9o/aO2jtqL+3tdSQDOyPZ60KmGWEjDGcPEB4qgBGImbBgZhrbKwbE4lgwK43sh/mTBYe9MCxBZXtx+ZPW9moDsQ4RWJfK9o6CUTAKcAMAe7U+Og==
+  </data>
+ </layer>
+ <layer name="LedgesLeft" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzTEBAAAIA6D1D2MJixljHlCABACAhim9W3qBfw47CgFy
+  </data>
+ </layer>
+ <layer name="LedgesRight" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzTEBAAAEADD90yihlwouDluBRQAAMJFHbz17gT0Nwn8COw==
+  </data>
+ </layer>
+ <layer name="LedgesDown" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztwzENAAAMA6D6dzg3s9CrFyQkAACwcUVg5wHhmgei
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="30" height="30">
+  <object type="border-right" gid="247" x="464" y="240">
+   <properties>
+    <property name="map" value="1.1"/>
+   </properties>
+  </object>
+  <object type="border-top" gid="247" x="224" y="16">
+   <properties>
+    <property name="map" value="0.0"/>
+   </properties>
+  </object>
+  <object type="border-left" gid="247" x="0" y="240">
+   <properties>
+    <property name="map" value="-1.1"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaOA9uAGkepu0dQVo2AUDE4QNUAYAJIQDD8=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztwzEJAAAMA7Cam39Loyr6JJAEAACAutGVB83/CBc=
+  </data>
+ </layer>
+</map>
