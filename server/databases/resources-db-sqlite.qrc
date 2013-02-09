@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>pokecraft.db.sqlite</file>
-    </qresource>
-</RCC>
