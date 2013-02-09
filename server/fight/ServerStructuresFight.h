@@ -1,0 +1,11 @@
+#ifndef CATCHCHALLENGER_SERVER_STRUCTURES_FIGHT_H
+#define CATCHCHALLENGER_SERVER_STRUCTURES_FIGHT_H
+
+#include <QString>
+#include <QList>
+
+namespace CatchChallenger {
+
+}
+
+#endif // CATCHCHALLENGER_SERVER_STRUCTURES_FIGHT_H

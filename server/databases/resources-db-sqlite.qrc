@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>catchchallenger.db.sqlite</file>
+    </qresource>
+</RCC>

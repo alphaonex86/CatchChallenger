@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="40" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="type" value="city"/>
+ </properties>
+ <tileset firstgid="1" source="../tileset/texture.tsx"/>
+ <layer name="Walkable" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJytlMsOgzAMBPl48t+9UAlV2dlx1EMkCPHG3gfruq77WetZ7+cF+7v3N9a9WWvznPbS9939pqbdlZbFSXMlHn8xqW/LKdUmvNYfYSdOEq71QZqD+J3oYflrfiBeGveJxykHqa5xdIpJczV8mnlS03AoIzssygPdTT4zc6V+G3bqi/Ammk/82LinzBmuqT/KFmlNOtHdNIfxQPMh+Y34mJ6fZsRm9B9aNswpj0mXdDbxQRk0++QHM/fkjuTdVHPqb5qtzdm0abOQ/pN8tkwZjzYdmjaNU+PZ5qWWPboz5d/k1NYTb9YbNAfpYHLZzk78aPU1OSZfmMw0r9oMN/0Nt+k7aWsxTd5o3pTdk8y3Wtur1bLhNZ9O+p/wkngijSkP5D86S33Yvq337T+geTLNlXRL+hmuqL9p3kw2mibf9w/loG0x
+  </data>
+ </layer>
+ <layer name="second texture" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJzt0rEJgFAMRdG/f604gw6h7qDuoE5hCoVXBC1+kSD3wO0fIaXEaqz2pWjsq5N9X28Nd13Jt095t8zkuaXeMSO9Y0b6kwDwZbQmpzlwk1qs1WmLHCXYV2e3DqczchQA4Lcuo1s+OA==
+  </data>
+ </layer>
+ <layer name="Water" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzrEJADAMBDFvm/03SOEFDF/EBAmuvyoAaGfYK/4y/jLb/wAAfnYBn74YJQ==
+  </data>
+ </layer>
+ <layer name="WalkOver" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztl9sJgDAMADuaiiv4WkEFZ1F3EHdQdzN+CH41NulTe3BfQjkoIXUQ/jIEoq/EPh6xjwfWl4Ap0cxCXwGWRKuA+0ZwQpwV+xqwU7CXnLtIvt2sin067usm9vHwvW8Dd8TDYd9bYh8Plb5cmN9nnD4b++xrfa2Q77DacR+G6fn5Ux8235R3rc4+XT7v4et92HxTfL5rQ/9/c83VdgJpN4vs
+  </data>
+ </layer>
+ <layer name="bridge" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzsEJgDAUBNH0YOxB00NiD2oTNpHas0f5oNclMA/mPikBADCHJ7SorFbn1EsPbWpXxTn1o6qmDvfIh1Nd6naPAAAAwG4AHbQGBw==
+  </data>
+ </layer>
+ <layer name="Collisions" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztk7ENgEAMxDLCww4POyCGoP79J2ACboRILhKks+TuChfJiojV3K64j+E+hvsY7mO4j+E+hvsYFX1DbnJPbCv6pjzkmdhW9F3ykXdiW3V/b3Ln/2C4j+E+hvsYf+nr7AdiozIu
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="40" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzrEJwDAQwEAv9/uvZALZQM0b7kC95uw1f1v5a/w1/hp/jb/GX+Ov8df4a/w1/hp/jb9mHmmr7+0Ch6Maaw==
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="40" height="30"/>
+</map>

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/player-select.png</file>
+        <file>images/savegame-select.png</file>
+    </qresource>
+</RCC>
