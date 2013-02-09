@@ -1,0 +1,18 @@
+--- orthogonalrenderer.cpp.org	2012-08-28 12:55:27.000000000 +0200
++++ orthogonalrenderer.cpp	2012-08-28 12:55:40.587108320 +0200
+@@ -315,13 +315,13 @@
+         const QPoint paintOrigin(0, -img.height());
+         painter->drawPixmap(paintOrigin, img);
+ 
+-        QPen pen(Qt::SolidLine);
++/*        QPen pen(Qt::SolidLine);
+         painter->setPen(pen);
+         painter->drawRect(QRect(paintOrigin, img.size()));
+         pen.setStyle(Qt::DotLine);
+         pen.setColor(color);
+         painter->setPen(pen);
+-        painter->drawRect(QRect(paintOrigin, img.size()));
++        painter->drawRect(QRect(paintOrigin, img.size()));*/
+     } else {
+         const QPen linePen(color, 2);
+         const QPen shadowPen(Qt::black, 2);
