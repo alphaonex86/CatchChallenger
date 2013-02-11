@@ -60,10 +60,11 @@ protected:
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
     Tiled::Tileset * animationTileset;
-private slots:
-    void keyPressParse();
+protected slots:
+    virtual void keyPressParse();
 
     void moveStepSlot();
+    virtual bool haveStopTileAction();
     //have look into another direction, if the key remain pressed, apply like move
     void transformLookToMove();
 
@@ -71,7 +72,6 @@ private slots:
     virtual void startGrassAnimation(const CatchChallenger::Direction &direction);
     virtual void stopGrassAnimation();
     void loadGrassTile();
-protected slots:
     //call after enter on new map
     virtual void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())

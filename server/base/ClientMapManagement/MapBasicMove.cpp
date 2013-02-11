@@ -106,6 +106,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
     switch(last_direction)
     {
         case Direction_move_at_top:
+        {
+            CatchChallenger::ParsedLayerLedges ledge;
             /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
@@ -114,10 +116,20 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
-                if(!singleMove(Direction_move_at_top))
+                do
+                {
+                    if(!singleMove(Direction_move_at_top))
+                        return false;
+                    ledge=MoveOnTheMap::getLedge(*map,x,y);
+                } while(ledge==ParsedLayerLedges_LedgesTop);
+                if(ledge!=ParsedLayerLedges_NoLedges)
+                {
+                    emit error(QString("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
+                }
                 moveThePlayer_index_move++;
             }
+        }
         break;
         case Direction_look_at_top:
             /* can be look into other direction
@@ -128,6 +140,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
         break;
         case Direction_move_at_right:
+        {
+            CatchChallenger::ParsedLayerLedges ledge;
             /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
@@ -136,10 +150,20 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
-                if(!singleMove(Direction_move_at_right))
+                do
+                {
+                    if(!singleMove(Direction_move_at_right))
+                        return false;
+                    ledge=MoveOnTheMap::getLedge(*map,x,y);
+                } while(ledge==ParsedLayerLedges_LedgesRight);
+                if(ledge!=ParsedLayerLedges_NoLedges)
+                {
+                    emit error(QString("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
+                }
                 moveThePlayer_index_move++;
             }
+        }
         break;
         case Direction_look_at_right:
             /* can be look into other direction
@@ -150,6 +174,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
         break;
         case Direction_move_at_bottom:
+        {
+            CatchChallenger::ParsedLayerLedges ledge;
             /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
@@ -158,10 +184,20 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
-                if(!singleMove(Direction_move_at_bottom))
+                do
+                {
+                    if(!singleMove(Direction_move_at_bottom))
+                        return false;
+                    ledge=MoveOnTheMap::getLedge(*map,x,y);
+                } while(ledge==ParsedLayerLedges_LedgesBottom);
+                if(ledge!=ParsedLayerLedges_NoLedges)
+                {
+                    emit error(QString("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
+                }
                 moveThePlayer_index_move++;
             }
+        }
         break;
         case Direction_look_at_bottom:
             /* can be look into other direction
@@ -172,6 +208,8 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
         break;
         case Direction_move_at_left:
+        {
+            CatchChallenger::ParsedLayerLedges ledge;
             /* can be moving by grouping
             if(unlikely(previousMovedUnit==0 || previousMovedUnit==255))
             {
@@ -180,10 +218,20 @@ bool MapBasicMove::moveThePlayer(const quint8 &previousMovedUnit,const Direction
             }*/
             while(moveThePlayer_index_move<previousMovedUnit)
             {
-                if(!singleMove(Direction_move_at_left))
+                do
+                {
+                    if(!singleMove(Direction_move_at_left))
+                        return false;
+                    ledge=MoveOnTheMap::getLedge(*map,x,y);
+                } while(ledge==ParsedLayerLedges_LedgesLeft);
+                if(ledge!=ParsedLayerLedges_NoLedges)
+                {
+                    emit error(QString("Try pass on wrong ledge, direction: %1, ledge: %2").arg(last_direction).arg(ledge));
                     return false;
+                }
                 moveThePlayer_index_move++;
             }
+        }
         break;
         case Direction_look_at_left:
             /* can be look into other direction
