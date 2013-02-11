@@ -232,6 +232,24 @@ struct MapMonster
     quint8 luck;
 };
 
+enum ParsedLayerLedges
+{
+    ParsedLayerLedges_NoLedges=0x00,
+    ParsedLayerLedges_LedgesLeft=0x01,
+    ParsedLayerLedges_LedgesRight=0x02,
+    ParsedLayerLedges_LedgesTop=0x03,
+    ParsedLayerLedges_LedgesBottom=0x04
+};
+
+struct ParsedLayer
+{
+    bool *walkable;
+    bool *water;
+    bool *grass;
+    bool *dirt;
+    quint8 *ledges;
+};
+
 struct Map_to_send
 {
     Map_semi_border border;
@@ -243,14 +261,7 @@ struct Map_to_send
 
     QHash<QString,QVariant> property;
 
-    struct MapToSend_ParsedLayer
-    {
-        bool *walkable;
-        bool *water;
-        bool *grass;
-        bool *dirt;
-    };
-    MapToSend_ParsedLayer parsed_layer;
+    ParsedLayer parsed_layer;
 
     QList<Map_semi_teleport> teleport;
 
