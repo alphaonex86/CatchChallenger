@@ -2,7 +2,6 @@
 
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../interface/DatapackClientLoader.h"
-#include "../../fight/interface/FightEngine.h"
 
 #include <qmath.h>
 
@@ -83,12 +82,6 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 
 void MapVisualiserPlayer::keyPressParse()
 {
-    if(CatchChallenger::FightEngine::fightEngine.isInFight())
-    {
-        qDebug() << "Strange, try move when is in fight at keyPressParse()";
-        return;
-    }
-
     //ignore is already in move
     if(inMove)
         return;
@@ -345,22 +338,8 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         stopGrassAnimation();
 
-        if(CatchChallenger::FightEngine::fightEngine.isInFight())
-        {
-            qDebug() << "Strange, try move when is in fight at moveStepSlot()";
+        if(haveStopTileAction())
             return;
-        }
-
-        //check if is in fight collision
-        if(CatchChallenger::FightEngine::fightEngine.haveRandomFight(*map,x,y))
-        {
-            inMove=false;
-            emit send_player_direction(direction);
-            parseStop();
-            emit fightCollision(static_cast<CatchChallenger::Map_client *>(map),x,y);
-            keyPressed.clear();
-            return;
-        }
 
         //check if one arrow key is pressed to continue to move into this direction
         if(keyPressed.contains(Qt::Key_Left))
@@ -461,6 +440,11 @@ void MapVisualiserPlayer::moveStepSlot()
     }
     else
         moveTimer.start();
+}
+
+bool MapVisualiserPlayer::haveStopTileAction()
+{
+    return false;
 }
 
 void MapVisualiserPlayer::parseStop()
@@ -677,54 +661,39 @@ void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
 
 bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::Map map, quint8 x, quint8 y, const bool &checkCollision)
 {
-    if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,map,x,y,checkCollision))
-        return false;
-    if(CatchChallenger::FightEngine::fightEngine.isInFight())
+    CatchChallenger::Map *mapPointer=&map;
+    CatchChallenger::ParsedLayerLedges ledge;
+    do
     {
-        qDebug() << "Strange, try move when is in fight";
-        return false;
-    }
-    CatchChallenger::Map *new_map=&map;
-    CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    if(CatchChallenger::MoveOnTheMap::isGrass(*new_map,x,y) && !new_map->grassMonster.empty())
-    {
-        if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_Grass);
+        if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*mapPointer,x,y,checkCollision))
             return false;
-        }
-        if(!CatchChallenger::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+        if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision))
             return false;
-        }
-    }
-    if(CatchChallenger::MoveOnTheMap::isWater(*new_map,x,y) && !new_map->waterMonster.empty())
-    {
-        if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
+        ledge=CatchChallenger::MoveOnTheMap::getLedge(map,x,y);
+        if(ledge==CatchChallenger::ParsedLayerLedges_NoLedges)
+            return true;
+        switch(direction)
         {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_Wather);
-            return false;
+            case CatchChallenger::Direction_move_at_bottom:
+            if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesBottom)
+                return false;
+            break;
+            case CatchChallenger::Direction_move_at_top:
+            if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesTop)
+                return false;
+            break;
+            case CatchChallenger::Direction_move_at_left:
+            if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesLeft)
+                return false;
+            break;
+            case CatchChallenger::Direction_move_at_right:
+            if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesRight)
+                return false;
+            break;
+            default:
+            break;
         }
-        if(!CatchChallenger::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-            return false;
-        }
-    }
-    if(!new_map->caveMonster.empty())
-    {
-        if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_Cave);
-            return false;
-        }
-        if(!CatchChallenger::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
-        {
-            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-            return false;
-        }
-    }
+    } while(ledge!=CatchChallenger::ParsedLayerLedges_NoLedges);
     return true;
 }
 

@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_MAPCONTROLLERMP_H
 #define CATCHCHALLENGER_MAPCONTROLLERMP_H
 
-#include "../../client/base/render/MapVisualiserPlayer.h"
+#include "../../fight/interface/MapVisualiserPlayerWithFight.h"
 #include "../../../general/base/Api_protocol.h"
 
 #include <QString>
@@ -10,7 +10,7 @@
 #include <QHash>
 #include <QTimer>
 
-class MapControllerMP : public MapVisualiserPlayer
+class MapControllerMP : public MapVisualiserPlayerWithFight
 {
     Q_OBJECT
 public:

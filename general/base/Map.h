@@ -12,16 +12,8 @@ namespace CatchChallenger {
 class Map
 {
 public:
-    Map();
     //the index is position (x+y*width)
-    struct Map_ParsedLayer
-    {
-        bool *walkable;
-        bool *water;
-        bool *grass;
-        bool *dirt;
-    };
-    Map_ParsedLayer parsed_layer;
+    ParsedLayer parsed_layer;
 
     struct Map_Border
     {
@@ -59,6 +51,8 @@ public:
     QList<MapMonster> grassMonster;
     QList<MapMonster> waterMonster;
     QList<MapMonster> caveMonster;
+
+    static void removeParsedLayer(const ParsedLayer &parsed_layer);
 };
 }
 

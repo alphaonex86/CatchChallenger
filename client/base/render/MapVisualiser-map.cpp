@@ -12,6 +12,7 @@
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/libtiled/tile.h"
+#include "../../general/base/Map.h"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
 void MapVisualiser::destroyMap(Map_full *map)
@@ -21,14 +22,7 @@ void MapVisualiser::destroyMap(Map_full *map)
     //remove from the list
     all_map.remove(map->logicalMap.map_file);
     //delete common variables
-    if(map->logicalMap.parsed_layer.walkable!=NULL)
-        delete map->logicalMap.parsed_layer.walkable;
-    if(map->logicalMap.parsed_layer.water!=NULL)
-        delete map->logicalMap.parsed_layer.water;
-    if(map->logicalMap.parsed_layer.grass!=NULL)
-        delete map->logicalMap.parsed_layer.grass;
-    if(map->logicalMap.parsed_layer.grass!=NULL)
-        delete map->logicalMap.parsed_layer.dirt;
+    CatchChallenger::Map::removeParsedLayer(map->logicalMap.parsed_layer);
     qDeleteAll(map->tiledMap->tilesets());
     delete map->tiledMap;
     delete map->tiledRender;
@@ -91,10 +85,7 @@ QString MapVisualiser::loadOtherMap(const QString &fileName)
     //copy the variables
     tempMapObject->logicalMap.width                                 = map_loader.map_to_send.width;
     tempMapObject->logicalMap.height                                = map_loader.map_to_send.height;
-    tempMapObject->logicalMap.parsed_layer.walkable                 = map_loader.map_to_send.parsed_layer.walkable;
-    tempMapObject->logicalMap.parsed_layer.water                    = map_loader.map_to_send.parsed_layer.water;
-    tempMapObject->logicalMap.parsed_layer.grass                    = map_loader.map_to_send.parsed_layer.grass;
-    tempMapObject->logicalMap.parsed_layer.dirt                     = map_loader.map_to_send.parsed_layer.dirt;
+    tempMapObject->logicalMap.parsed_layer                          = map_loader.map_to_send.parsed_layer;
     tempMapObject->logicalMap.map_file                              = resolvedFileName;
     tempMapObject->logicalMap.border.bottom.map                     = NULL;
     tempMapObject->logicalMap.border.top.map                        = NULL;
