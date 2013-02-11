@@ -10,7 +10,7 @@
 #include <qmath.h>
 
 MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
+    MapVisualiserPlayerWithFight(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");

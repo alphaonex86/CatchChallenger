@@ -138,10 +138,7 @@ void BaseServer::preload_the_map()
 
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->width			= map_temp.map_to_send.width;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->height			= map_temp.map_to_send.height;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.walkable	= map_temp.map_to_send.parsed_layer.walkable;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.water		= map_temp.map_to_send.parsed_layer.water;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.grass		= map_temp.map_to_send.parsed_layer.grass;
-                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer.dirt		= map_temp.map_to_send.parsed_layer.dirt;
+                GlobalServerData::serverPrivateVariables.map_list[fileName]->parsed_layer	= map_temp.map_to_send.parsed_layer;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->map_file			= fileName;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->grassMonster     = map_temp.map_to_send.grassMonster;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->waterMonster     = map_temp.map_to_send.waterMonster;
@@ -741,12 +738,7 @@ void BaseServer::unload_the_map()
     QHash<QString,Map *>::const_iterator i_end = GlobalServerData::serverPrivateVariables.map_list.constEnd();
     while (i != i_end)
     {
-        if(i.value()->parsed_layer.walkable!=NULL)
-            delete i.value()->parsed_layer.walkable;
-        if(i.value()->parsed_layer.water!=NULL)
-            delete i.value()->parsed_layer.water;
-        if(i.value()->parsed_layer.grass!=NULL)
-            delete i.value()->parsed_layer.grass;
+        Map::removeParsedLayer(i.value()->parsed_layer);
         delete i.value();
         i++;
     }

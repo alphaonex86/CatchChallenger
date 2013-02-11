@@ -35,19 +35,15 @@ Map_loader::Map_loader()
 
 Map_loader::~Map_loader()
 {
-    error="";
-    map_to_send.parsed_layer.walkable=NULL;
-    map_to_send.parsed_layer.water=NULL;
-    map_to_send.parsed_layer.grass=NULL;
-    map_to_send.parsed_layer.dirt=NULL;
 }
 
 bool Map_loader::tryLoadMap(const QString &fileName)
 {
+    error="";
     Map_to_send map_to_send;
 
     QFile mapFile(fileName);
-    QByteArray xmlContent,Walkable,Collisions,Water,Grass,Dirt;
+    QByteArray xmlContent,Walkable,Collisions,Water,Grass,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
     if(!mapFile.open(QIODevice::ReadOnly))
     {
         error=mapFile.fileName()+": "+mapFile.errorString();
@@ -507,6 +503,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     Grass=data;
                 else if(name=="Dirt")
                     Dirt=data;
+                else if(name=="LedgesRight")
+                    LedgesRight=data;
+                else if(name=="LedgesLeft")
+                    LedgesLeft=data;
+                else if(name=="LedgesBottom")
+                    LedgesBottom=data;
+                else if(name=="LedgesTop")
+                    LedgesTop=data;
             }
         }
         child = child.nextSiblingElement("layer");
@@ -535,10 +539,14 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         map_to_send.parsed_layer.dirt		= new bool[map_to_send.width*map_to_send.height];
     else
         map_to_send.parsed_layer.dirt		= NULL;
+    if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
+        map_to_send.parsed_layer.ledges		= new quint8[map_to_send.width*map_to_send.height];
+    else
+        map_to_send.parsed_layer.ledges		= NULL;
 
     quint32 x=0;
     quint32 y=0;
-    bool walkable=false,water=false,collisions=false,grass=false,dirt=false;
+    bool walkable=false,water=false,collisions=false,grass=false,dirt=false,ledgesRight=false,ledgesLeft=false,ledgesBottom=false,ledgesTop=false;
     while(x<map_to_send.width)
     {
         y=0;
@@ -548,26 +556,40 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 walkable=Walkable.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
                 walkable=false;
-
             if(x*4+y*map_to_send.width*4<(quint32)Water.size())
                 water=Water.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
                 water=false;
-
             if(x*4+y*map_to_send.width*4<(quint32)Collisions.size())
                 collisions=Collisions.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
                 collisions=false;
-
             if(x*4+y*map_to_send.width*4<(quint32)Grass.size())
                 grass=Grass.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
                 grass=false;
-
             if(x*4+y*map_to_send.width*4<(quint32)Dirt.size())
                 dirt=Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data;
             else//if layer not found
                 dirt=false;
+
+            if(x*4+y*map_to_send.width*4<(quint32)LedgesRight.size())
+                ledgesRight=LedgesRight.mid(x*4+y*map_to_send.width*4,4)!=null_data;
+            else//if layer not found
+                ledgesRight=false;
+            if(x*4+y*map_to_send.width*4<(quint32)LedgesLeft.size())
+                ledgesLeft=LedgesLeft.mid(x*4+y*map_to_send.width*4,4)!=null_data;
+            else//if layer not found
+                ledgesLeft=false;
+            if(x*4+y*map_to_send.width*4<(quint32)LedgesBottom.size())
+                ledgesBottom=LedgesBottom.mid(x*4+y*map_to_send.width*4,4)!=null_data;
+            else//if layer not found
+                ledgesBottom=false;
+            if(x*4+y*map_to_send.width*4<(quint32)LedgesTop.size())
+                ledgesTop=LedgesTop.mid(x*4+y*map_to_send.width*4,4)!=null_data;
+            else//if layer not found
+                ledgesTop=false;
+
 
             if(Walkable.size()>0)
                 map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=walkable && !water && !collisions && !dirt;
@@ -577,6 +599,50 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 map_to_send.parsed_layer.grass[x+y*map_to_send.width]=walkable && grass && !water && !collisions;
             if(Dirt.size()>0)
                 map_to_send.parsed_layer.dirt[x+y*map_to_send.width]=dirt && !water;
+            if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
+            {
+                map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_NoLedges;
+                if(ledgesLeft)
+                {
+                    if(ledgesRight || ledgesBottom || ledgesTop)
+                    {
+                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                    }
+                    else
+                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesLeft;
+                }
+                if(ledgesRight)
+                {
+                    if(ledgesLeft || ledgesBottom || ledgesTop)
+                    {
+                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                    }
+                    else
+                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesRight;
+                }
+                if(ledgesTop)
+                {
+                    if(ledgesRight || ledgesBottom || ledgesLeft)
+                    {
+                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                    }
+                    else
+                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesTop;
+                }
+                if(ledgesBottom)
+                {
+                    if(ledgesRight || ledgesLeft || ledgesTop)
+                    {
+                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
+                    }
+                    else
+                        map_to_send.parsed_layer.ledges[x+y*map_to_send.width]=(quint8)ParsedLayerLedges_LedgesBottom;
+                }
+            }
             y++;
         }
         x++;

@@ -215,6 +215,14 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
     return false;
 }
 
+CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const Map &map, const quint8 &x, const quint8 &y)
+{
+    if(map.parsed_layer.ledges==NULL)
+        return CatchChallenger::ParsedLayerLedges_NoLedges;
+    quint8 i=map.parsed_layer.ledges[x+y*(map.width)];
+    return static_cast<ParsedLayerLedges>((quint32)i);
+}
+
 bool MoveOnTheMap::haveGrass(const Map &map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(map.parsed_layer.grass==NULL)

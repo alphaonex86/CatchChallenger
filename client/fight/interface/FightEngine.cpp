@@ -496,6 +496,7 @@ void FightEngine::resetAll()
     monsterExtra.clear();
     monsterBuffsExtra.clear();
     monsterSkillsExtra.clear();
+    attackReturnList.clear();
 
     wildMonsters.clear();
 }
