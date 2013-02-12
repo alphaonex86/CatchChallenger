@@ -255,7 +255,7 @@ void MapVisualiserPlayer::moveStepSlot()
     }
 
     //apply the right step of the base step defined previously by the direction
-    switch(moveStep)
+    switch(moveStep%5)
     {
         //stopped step
         case 0:
@@ -293,23 +293,23 @@ void MapVisualiserPlayer::moveStepSlot()
         switch(direction)
         {
             case CatchChallenger::Direction_move_at_left:
-            CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
-        direction=CatchChallenger::Direction_look_at_left;
+                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                direction=CatchChallenger::Direction_look_at_left;
             break;
             case CatchChallenger::Direction_move_at_right:
-            CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
-        direction=CatchChallenger::Direction_look_at_right;
+                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                direction=CatchChallenger::Direction_look_at_right;
             break;
             case CatchChallenger::Direction_move_at_top:
-            CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
-        direction=CatchChallenger::Direction_look_at_top;
+                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                direction=CatchChallenger::Direction_look_at_top;
             break;
             case CatchChallenger::Direction_move_at_bottom:
-            CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
-        direction=CatchChallenger::Direction_look_at_bottom;
+                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                direction=CatchChallenger::Direction_look_at_bottom;
             break;
             default:
-            qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(moveStep);
+                qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(moveStep).arg(direction);
             return;
         }
         //if the map have changed
@@ -340,6 +340,32 @@ void MapVisualiserPlayer::moveStepSlot()
 
         if(haveStopTileAction())
             return;
+
+        if(CatchChallenger::MoveOnTheMap::getLedge(*map,x,y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
+        {
+            switch(direction)
+            {
+                case CatchChallenger::Direction_look_at_left:
+                    direction=CatchChallenger::Direction_move_at_left;
+                break;
+                case CatchChallenger::Direction_look_at_right:
+                    direction=CatchChallenger::Direction_move_at_right;
+                break;
+                case CatchChallenger::Direction_look_at_top:
+                    direction=CatchChallenger::Direction_move_at_top;
+                break;
+                case CatchChallenger::Direction_look_at_bottom:
+                    direction=CatchChallenger::Direction_move_at_bottom;
+                break;
+                default:
+                    qDebug() << QString("moveStepSlot(): direction: %1, wrong direction").arg(direction);
+                return;
+            }
+            moveStep=0;
+            moveTimer.start();
+            startGrassAnimation(direction);
+            return;
+        }
 
         //check if one arrow key is pressed to continue to move into this direction
         if(keyPressed.contains(Qt::Key_Left))
