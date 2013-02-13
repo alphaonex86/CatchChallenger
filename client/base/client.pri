@@ -24,7 +24,8 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/interface/BaseWindowLoad.cpp \
     $$PWD/../fight/interface/BaseWindowFight.cpp \
     $$PWD/interface/Chat.cpp \
-    $$PWD/../fight/interface/FightEngine.cpp
+    $$PWD/../fight/interface/FightEngine.cpp \
+    $$PWD/../fight/interface/MapVisualiserPlayerWithFight.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/ClientStructures.h \
@@ -43,7 +44,8 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/ClientVariable.h \
     $$PWD/Options.h \
     $$PWD/interface/Chat.h \
-    $$PWD/../fight/interface/FightEngine.h
+    $$PWD/../fight/interface/FightEngine.h \
+    $$PWD/../fight/interface/MapVisualiserPlayerWithFight.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui

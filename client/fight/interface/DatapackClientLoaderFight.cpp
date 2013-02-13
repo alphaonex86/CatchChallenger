@@ -114,9 +114,9 @@ void DatapackClientLoader::parseMonstersExtra()
                         monsterExtraEntry.back=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("back.png"));
                         if(monsterExtraEntry.back.isNull())
                             monsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
-                        monsterExtraEntry.small=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("small.png"));
-                        if(monsterExtraEntry.small.isNull())
-                            monsterExtraEntry.small=QPixmap(":/images/monsters/default/small.png");
+                        monsterExtraEntry.thumb=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("small.png"));
+                        if(monsterExtraEntry.thumb.isNull())
+                            monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
                         CatchChallenger::FightEngine::fightEngine.monsterExtra[id]=monsterExtraEntry;
                     }
                 }
@@ -141,7 +141,7 @@ void DatapackClientLoader::parseMonstersExtra()
             monsterExtraEntry.description=tr("Unknown");
             monsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
             monsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
-            monsterExtraEntry.small=QPixmap(":/images/monsters/default/small.png");
+            monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
             CatchChallenger::FightEngine::fightEngine.monsterExtra[i.key()]=monsterExtraEntry;
         }
     }
