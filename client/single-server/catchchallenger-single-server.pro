@@ -4,11 +4,9 @@ include(../../general/general.pri)
 TARGET = catchchallenger-single-server
 
 SOURCES += main.cpp\
-	mainwindow.cpp \
-    ../fight/interface/MapVisualiserPlayerWithFight.cpp
+	mainwindow.cpp
 
-HEADERS  += mainwindow.h \
-    ../fight/interface/MapVisualiserPlayerWithFight.h
+HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui
 

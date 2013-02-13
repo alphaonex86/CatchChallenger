@@ -31,7 +31,7 @@ public:
         QString description;
         QPixmap front;
         QPixmap back;
-        QPixmap small;
+        QPixmap thumb;
         struct Buff
         {
             QString name;
