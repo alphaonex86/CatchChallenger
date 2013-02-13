@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS `monster_buff` (
   `monster` int(11) NOT NULL,
   `buff` int(11) NOT NULL,
   `level` int(11) NOT NULL,
-  PRIMARY KEY (`monster`,`buff`),
-  UNIQUE KEY `monster` (`monster`)
+  PRIMARY KEY (`monster`),
+  UNIQUE KEY `monster` (`monster`,`buff`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -137,4 +137,17 @@ CREATE TABLE IF NOT EXISTS `recipes` (
   `recipe` int(11) NOT NULL,
   PRIMARY KEY (`player`,`recipe`),
   KEY `player` (`player`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reputation`
+--
+
+CREATE TABLE IF NOT EXISTS `reputation` (
+  `player` int(11) NOT NULL,
+  `type` varchar(32) NOT NULL,
+  `point` bigint(20) NOT NULL,
+  PRIMARY KEY (`player`,`type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
