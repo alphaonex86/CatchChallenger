@@ -13,11 +13,11 @@
 				<a href="2">Buy</a><br />
 				<a href="3">Sell</a><br />
 				<a href="4">More about this bot</a><br />
-				<a href="http://pokecraft.first-world.info/shop/">Buy with real money</a><br />
+				<a href="http://catchchallenger.first-world.info/shop/">Buy with real money</a><br />
 			</center>]]></text>
 		</step>
 		<step id="2" type="shop" shop="1" />
-		<step id="3" type="sell" />
+		<step id="3" type="sell" shop="1" />
 		<step id="4" type="text">
 			<text lang="en"><![CDATA[Is test bot, with external link, buy/sell features.]]></text>
 		</step>

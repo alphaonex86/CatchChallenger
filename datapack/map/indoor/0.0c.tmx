@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="15" height="15" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="../tileset/inside-terra.tsx"/>
+ <tileset firstgid="1025" source="../tileset/invisible.tsx"/>
+ <tileset firstgid="1041" source="../tileset/inside-mobilier.tsx"/>
+ <tileset firstgid="2065" source="../tileset/inside-decoration.tsx"/>
+ <layer name="Walkable" width="15" height="15">
+  <data encoding="base64" compression="zlib">
+   eJxrZ2BgaB/Fo3gUDxgGAI6fdqg=
+  </data>
+ </layer>
+ <layer name="Other" width="15" height="15">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgYIMHCwCDJgqBJUWsBxJZIND5AitrhCEbDefADAI5pBZE=
+  </data>
+ </layer>
+ <layer name="Collisions" width="15" height="15">
+  <data encoding="base64" compression="zlib">
+   eJxbzMDAsHgA8AwWBoaZLAgaH0BXuwOIdyLR+AApaokBdkAz9gNxPQGziFVHazBUw3kkAQAdpSu7
+  </data>
+ </layer>
+ <layer name="Other" width="15" height="15">
+  <data encoding="base64" compression="zlib">
+   eJzjYGBg4CATa1CABwt4xcjA8BqI3zCSrpeLiYGBG4h5mKjvrlEwcgAATpcFvA==
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="15" height="15">
+  <data encoding="base64" compression="zlib">
+   eJxjYBh5QI6FgWE+EMezUEfdKBgFlAAAty8CUQ==
+  </data>
+ </layer>
+ <layer name="Other" width="15" height="15">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUDCQAAAOEAAE=
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="15" height="15">
+  <object name="teleport on push" type="teleport on push " gid="1027" x="112" y="240">
+   <properties>
+    <property name="map" value="0.0"/>
+    <property name="x, y" value="15.15"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

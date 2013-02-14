@@ -1,0 +1,37 @@
+<list>
+	<type name="normal" />
+	<type name="fire" />
+	<type name="wather" />
+	<efficiency>
+		<!-- if not specified, value 1 -->
+		<attack type="normal">
+			<on type="normal" value="1">
+			<on type="fire" value="1">
+			<on type="wather" value="1">
+			<on type="ground" value="1">
+		</attack>
+		<attack type="fire">
+			<on type="normal" value="1">
+			<on type="fire" value="0.5">
+			<on type="wather" value="0.5">
+			<on type="ground" value="0.5">
+		</attack>
+		<attack type="wather">
+			<on type="normal" value="1">
+			<on type="fire" value="2">
+			<on type="wather" value="0.5">
+			<on type="ground" value="4">
+		</attack>
+		<attack type="ground">
+			<on type="normal" value="1">
+			<on type="fire" value="4">
+			<on type="wather" value="1">
+			<on type="ground" value="2">
+		</attack>
+	</efficiency>
+	<environment>
+		<type name="desert">
+			<boost type="ground" value="1.2" />
+		</type>
+	</environment>
+</list>

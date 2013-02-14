@@ -1,0 +1,25 @@
+﻿<!-- Default:
+text -> text simple quand joueur parle 
+shop -> ouvre une fentre de shop avec item (id) au prix (X)
+M1 = monstre 1
+-->
+
+<list>
+
+  <bot>
+	 <info id="1" skin="1" orientation="left,right,up,down"/>
+			<step textFr="Bonjours bla bla." textEn="hello .."/>
+	</bot>
+  <bot>
+	 <info id="2" skin="2" orientation="left"/>
+			<step textFr="Bonjours bla bla." textEn="hello."/>
+			<step2 m1="id-lvl-idattack;idattack" m2="id-lvl-idattack;idattack"/>
+      <step3 textFr="J'ai perdu." textEn="I have lose."/>
+      <step3 rewardMoney="0" rewardxItem="id-number"/>
+	</bot>
+
+	 <info id="3" skin="1" orientation="right">
+      <step textFr="Je vend ..." textEn="i sold ..."/>
+      <step2 shop="id-id-id" price="100-200-430"/>
+      <step textFr="Au revoir" textEn="Goodbye"/>
+</list>
