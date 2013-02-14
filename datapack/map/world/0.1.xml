@@ -1,0 +1,5 @@
+<map type="outdoor" backgroundsound="toto.ogg" zone="test">
+	<name lang="en">Road 1</name>
+	<name lang="fr">Route1</name>
+	<wather></wather>
+</map>

@@ -6,6 +6,7 @@ Some special product can be added onetime too
 -->
 <shops>
 	<shop id="1">
-		<product itemId="1" />
+		<product itemId="8" />
+		<product itemId="9" />
 	</shop>
 </shops>
