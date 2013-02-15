@@ -35,10 +35,11 @@
   </data>
  </layer>
  <objectgroup name="Moving" width="11" height="11">
-  <object name="teleport on push" type="teleport on push " gid="1027" x="80" y="192">
+  <object name="teleport on push" type="teleport on push" gid="1027" x="80" y="192">
    <properties>
-    <property name="map" value="0.0"/>
-    <property name="x, y" value="15.15"/>
+    <property name="map" value="../world/0.0"/>
+    <property name="x" value="15"/>
+    <property name="y" value="15"/>
    </properties>
   </object>
  </objectgroup>

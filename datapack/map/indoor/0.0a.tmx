@@ -2,6 +2,7 @@
 <map version="1.0" orientation="orthogonal" width="11" height="11" tilewidth="16" tileheight="16">
  <tileset firstgid="1" source="../tileset/inside-terra.tsx"/>
  <tileset firstgid="1025" source="../tileset/invisible.tsx"/>
+ <tileset firstgid="2065" source="../tileset/inside-decoration.tsx"/>
  <tileset firstgid="1041" name="1" tilewidth="16" tileheight="16">
   <image source="../tileset/inside-mobilier.png" trans="000000" width="512" height="512"/>
   <tile id="32">
@@ -75,7 +76,6 @@
    </properties>
   </tile>
  </tileset>
- <tileset firstgid="2065" source="../../Tileset/inside-decoration.tsx"/>
  <layer name="Walkable" width="11" height="11">
   <data encoding="base64" compression="zlib">
    eJxbzMDAsBiI2YnAi6FYnQjcOIoHDQYAPRI2Dg==
@@ -107,22 +107,18 @@
   </data>
  </layer>
  <objectgroup name="Moving" width="11" height="11">
-  <object name="teleport on push " type="teleport on push " gid="1027" x="80" y="192">
+  <object name="teleport on push" type="teleport on push" gid="1027" x="80" y="192">
    <properties>
-    <property name="map" value="0.0"/>
-    <property name="x, y" value="8.10"/>
-   </properties>
-  </object>
-  <object name="teleport on push " type="teleport on push " gid="1027" x="80" y="192">
-   <properties>
-    <property name="map" value="0.0"/>
-    <property name="x, y" value="8.10"/>
+    <property name="map" value="../world/0.0"/>
+    <property name="x" value="8"/>
+    <property name="y" value="10"/>
    </properties>
   </object>
   <object name="teleport on push" type="teleport on push" gid="1027" x="96" y="192">
    <properties>
-    <property name="map" value="0.0"/>
-    <property name="x, y" value="8.10"/>
+    <property name="map" value="../world/0.0"/>
+    <property name="x" value="8"/>
+    <property name="y" value="10"/>
    </properties>
   </object>
  </objectgroup>

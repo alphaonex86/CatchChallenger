@@ -69,13 +69,6 @@
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="30">
-  <object name="border" type="border-top" gid="5124" x="240" y="16">
-   <properties>
-    <property name="map" value="-1.2"/>
-    <property name="x" value="15"/>
-    <property name="y" value="29"/>
-   </properties>
-  </object>
   <object name="border" type="border-left" gid="5124" x="0" y="256">
    <properties>
     <property name="map" value="-2.1"/>

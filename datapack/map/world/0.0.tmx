@@ -83,37 +83,23 @@
     <property name="y" value="15"/>
    </properties>
   </object>
-  <object name="border" type="border-right" gid="5124" x="464" y="256">
-   <properties>
-    <property name="map" value="1.0"/>
-    <property name="x" value="0"/>
-    <property name="y" value="15"/>
-   </properties>
-  </object>
-  <object name="border" type="border-bottom" gid="5124" x="240" y="480">
-   <properties>
-    <property name="map" value="0.-1"/>
-    <property name="x" value="15"/>
-    <property name="y" value="0"/>
-   </properties>
-  </object>
   <object name="door" type="door" gid="5123" x="352" y="352">
    <properties>
-    <property name="map" value="0.0A"/>
+    <property name="map" value="../indoor/0.0a"/>
     <property name="x" value="5"/>
     <property name="y" value="10"/>
    </properties>
   </object>
   <object name="door" type="door" gid="5123" x="128" y="352">
    <properties>
-    <property name="map" value="0.0A"/>
+    <property name="map" value="../indoor/0.0a"/>
     <property name="x" value="5"/>
     <property name="y" value="10"/>
    </properties>
   </object>
   <object name="door" type="door" gid="5123" x="240" y="160">
    <properties>
-    <property name="map" value="0.0A"/>
+    <property name="map" value="../indoor/0.0a"/>
     <property name="x" value="5"/>
     <property name="y" value="10"/>
    </properties>
