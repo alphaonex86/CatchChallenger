@@ -46,11 +46,11 @@ void ClientHeavyLoad::loadItems()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=\"%1\"")
+            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=\"%1\"")
+            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
     }

@@ -29,7 +29,7 @@ public:
     QString errorString();
     bool tryLoadMap(const QString &fileName);
     bool loadMonsterMap(const QString &fileName);
-    static QString resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath);
+    static QString resolvRelativeMap(const QString &fileName,const QString &link,const QString &datapackPath="");
 private:
     QByteArray decompress(const QByteArray &data, int expectedSize);
     QString error;

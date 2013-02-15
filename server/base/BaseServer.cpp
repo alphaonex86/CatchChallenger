@@ -1,6 +1,7 @@
 #include "BaseServer.h"
 #include "GlobalServerData.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/DatapackGeneralLoader.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -94,6 +95,7 @@ void BaseServer::preload_the_data()
     preload_monsters();
     preload_monsters_drops();
     check_monsters_map();
+    preload_reputation();
 }
 
 void BaseServer::preload_the_map()
@@ -595,6 +597,12 @@ void BaseServer::preload_the_visibility_algorithm()
     }
 }
 
+void BaseServer::preload_reputation()
+{
+    GlobalServerData::serverPrivateVariables.reputation=DatapackGeneralLoader::loadReputation(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_PLAYER+"reputation.xml");
+    DebugClass::debugConsole(QString("%1 reputation(s) loaded").arg(GlobalServerData::serverPrivateVariables.reputation.size()));
+}
+
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
 {
 }
@@ -717,6 +725,7 @@ void BaseServer::unload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
+    unload_reputation();
     unload_monsters_drops();
     unload_monsters();
     unload_skills();
@@ -753,6 +762,11 @@ void BaseServer::unload_the_skin()
 
 void BaseServer::unload_the_visibility_algorithm()
 {
+}
+
+void BaseServer::unload_reputation()
+{
+    GlobalServerData::serverPrivateVariables.reputation.clear();
 }
 
 void BaseServer::unload_the_items()

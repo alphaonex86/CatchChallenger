@@ -1,6 +1,7 @@
 #include "../interface/DatapackClientLoader.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/DatapackGeneralLoader.h"
 
 #include <QDebug>
 #include <QFile>
@@ -44,6 +45,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseBuff();
     parseSkills();
     parseMonsters();
+    parseReputation();
     parseMonstersExtra();
     parseBuffExtra();
     parseSkillsExtra();
@@ -175,6 +177,12 @@ void DatapackClientLoader::parseItems()
     }
 
     qDebug() << QString("%1 item(s) loaded").arg(DatapackClientLoader::items.size());
+}
+
+void DatapackClientLoader::parseReputation()
+{
+    reputation=CatchChallenger::DatapackGeneralLoader::loadReputation(datapackPath+DATAPACK_BASE_PATH_PLAYER+"reputation.xml");
+    qDebug() << QString("%1 reputation(s) loaded").arg(reputation.size());
 }
 
 void DatapackClientLoader::parseMaps()
