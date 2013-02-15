@@ -1,41 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="25" height="25" tilewidth="16" tileheight="16">
+<map version="1.0" orientation="orthogonal" width="11" height="11" tilewidth="16" tileheight="16">
  <tileset firstgid="1" source="../tileset/inside-terra.tsx"/>
  <tileset firstgid="1025" source="../tileset/invisible.tsx"/>
  <tileset firstgid="1041" source="../tileset/inside-mobilier.tsx"/>
  <tileset firstgid="2065" source="../tileset/inside-decoration.tsx"/>
- <layer name="Walkable" width="25" height="25">
+ <layer name="Walkable" width="11" height="11">
   <data encoding="base64" compression="zlib">
-   eJw7xcjAcIpITC4g1vxRO4aPHaNgFIyCUTAKRsEooC0AAAleNFc=
+   eJw7xcjAcGoUD2sMAHpcX/Q=
   </data>
  </layer>
- <layer name="Other" width="25" height="25">
+ <layer name="Other" width="11" height="11">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20ON6AAAHgzCcQAAQ==
+   eJxjYBgFwx0AAAHkAAE=
   </data>
  </layer>
- <layer name="Collisions" width="25" height="25">
+ <layer name="Collisions" width="11" height="11">
   <data encoding="base64" compression="zlib">
-   eJxbzMDAsHgY4FEwCkbBKBgFo2AUjIKRBADRJh/X
+   eJxbzMDAsJgGeBQMHgAAMsAOAw==
   </data>
  </layer>
- <layer name="Other" width="25" height="25">
+ <layer name="Other" width="11" height="11">
   <data encoding="base64" compression="zlib">
-   eJztzbENACAMwLCUEfj/SOAIegSVGGIpc0A/WwE7O1H36A1GNlvdQ5IkvXUBsSgC7A==
+   eJxjYBgFgxW8YmRgeA3EbxgJq+ViYmDgBmIeJkw5AMGDAuw=
   </data>
  </layer>
- <layer name="WalkBehind" width="25" height="25">
+ <layer name="WalkBehind" width="11" height="11">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20ON6AAAHgzCcQAAQ==
+   eJxjYBgFwx0AAAHkAAE=
   </data>
  </layer>
- <layer name="Other" width="25" height="25">
+ <layer name="Other" width="11" height="11">
   <data encoding="base64" compression="zlib">
-   eJztwQENAAAAwqD3T20ON6AAAHgzCcQAAQ==
+   eJxjYBgFwx0AAAHkAAE=
   </data>
  </layer>
- <objectgroup name="Moving" width="25" height="25">
-  <object name="teleport on push" type="teleport on push " gid="1027" x="192" y="400">
+ <objectgroup name="Moving" width="11" height="11">
+  <object name="teleport on push" type="teleport on push" gid="1027" x="80" y="192">
    <properties>
     <property name="map" value="0.0"/>
     <property name="x, y" value="15.15"/>
