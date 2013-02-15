@@ -104,5 +104,6 @@
     <property name="y" value="10"/>
    </properties>
   </object>
+  <object name="bot spawn" type="bot spawn" gid="5122" x="288" y="224"/>
  </objectgroup>
 </map>
