@@ -178,6 +178,7 @@ struct ServerPrivateVariables
     QList<EventThreader *> eventThreaderList;
     QTimer *timer_player_map;
     bool stopIt;
+    QHash<QString, Reputation> reputation;
 
     //interconnected thread
     //QMutex clientBroadCastListMutex;

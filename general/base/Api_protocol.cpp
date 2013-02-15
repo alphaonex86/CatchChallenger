@@ -1495,6 +1495,43 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             index++;
                         }
 
+
+
+                        //reputation
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the reputation list size, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        PlayerReputation playerReputation;
+                        QString type;
+                        index=0;
+                        quint8 sub_size8;
+                        in >> sub_size8;
+                        while(index<monster_list_size)
+                        {
+                            if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                                return;
+                            }
+                            in >> type;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(qint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the reputation level, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> playerReputation.level;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(qint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the reputation point, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> playerReputation.point;
+                            player_informations.reputation[type]=playerReputation;
+                            index++;
+                        }
+
                         is_logged=true;
                         emit logged();
                     }
@@ -2010,6 +2047,7 @@ void Api_protocol::resetAll()
     player_informations.recipes.clear();
     player_informations.playerMonster.clear();
     player_informations.items.clear();
+    player_informations.reputation.clear();
     haveShopAction=false;
 
     //to send trame
