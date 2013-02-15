@@ -96,6 +96,8 @@ private slots:
     void load_crafting_inventory();
     void load_monsters();
     bool check_monsters();
+    bool check_senddata();//with the datapack content
+    void show_reputation();
     void addCash(const quint32 &cash);
     void removeCash(const quint32 &cash);
     //render

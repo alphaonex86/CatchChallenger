@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>8</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -834,330 +834,349 @@ background-image: url(:/images/empty.png);</string>
             </spacer>
            </item>
            <item>
-            <widget class="QFrame" name="frame">
-             <property name="minimumSize">
-              <size>
-               <width>430</width>
-               <height>195</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>430</width>
-               <height>195</height>
-              </size>
-             </property>
+            <widget class="QTabWidget" name="tabWidgetTrainerCard">
              <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/background-dialog.png);</string>
+              <string notr="true">#tabWidgetTrainerCardPage2{
+background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 200), stop:1 rgba(221, 221, 221, 200));
+border-color: rgb(204, 204, 204);
+border-radius: 5px;
+}</string>
              </property>
-             <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
+             <property name="currentIndex">
+              <number>0</number>
              </property>
-             <property name="frameShadow">
-              <enum>QFrame::Plain</enum>
-             </property>
-             <layout class="QGridLayout" name="gridLayout_2">
-              <item row="0" column="0">
-               <widget class="QFrame" name="frame_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>415</width>
-                  <height>174</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>415</width>
-                  <height>174</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-image: url(:/images/empty.png);</string>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout">
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_3">
-                   <item>
-                    <spacer name="horizontalSpacer_2">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>88</width>
-                       <height>14</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="label_2">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>16</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>16</height>
-                      </size>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-color: rgb(104, 184, 248);
+             <widget class="QWidget" name="tabWidgetTrainerCardPage1">
+              <property name="styleSheet">
+               <string notr="true">#tabWidgetTrainerCardPage1{
+background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 200), stop:1 rgba(221, 221, 221, 200));
+border-color: rgb(204, 204, 204);
+border-radius: 5px;
+}</string>
+              </property>
+              <attribute name="title">
+               <string>Informations</string>
+              </attribute>
+              <layout class="QGridLayout" name="gridLayout_2">
+               <item row="0" column="0">
+                <widget class="QFrame" name="frame_2">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>415</width>
+                   <height>174</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>415</width>
+                   <height>174</height>
+                  </size>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout">
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_3">
+                    <item>
+                     <spacer name="horizontalSpacer_2">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>88</width>
+                        <height>14</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_2">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>16</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>16</height>
+                       </size>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true">background-color: rgb(104, 184, 248);
 border: 1px solid rgb(64, 136, 192);</string>
-                     </property>
-                     <property name="text">
-                      <string>Trainer card</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <spacer name="horizontalSpacer_3">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>87</width>
-                       <height>14</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                  </layout>
-                 </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_5">
-                   <item>
-                    <widget class="QFrame" name="frame_5">
-                     <layout class="QVBoxLayout" name="verticalLayout_7">
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_7">
-                        <item>
-                         <widget class="QLabel" name="label_3">
-                          <property name="minimumSize">
-                           <size>
-                            <width>8</width>
-                            <height>8</height>
-                           </size>
-                          </property>
-                          <property name="maximumSize">
-                           <size>
-                            <width>8</width>
-                            <height>8</height>
-                           </size>
-                          </property>
-                          <property name="pixmap">
-                           <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_5">
-                          <property name="text">
-                           <string>Name: </string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="player_informations_pseudo">
-                          <property name="minimumSize">
-                           <size>
-                            <width>150</width>
-                            <height>0</height>
-                           </size>
-                          </property>
-                          <property name="maximumSize">
-                           <size>
-                            <width>150</width>
-                            <height>16777215</height>
-                           </size>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <spacer name="horizontalSpacer_6">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>40</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
-                        </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_8">
-                        <item>
-                         <widget class="QLabel" name="label_6">
-                          <property name="minimumSize">
-                           <size>
-                            <width>8</width>
-                            <height>8</height>
-                           </size>
-                          </property>
-                          <property name="maximumSize">
-                           <size>
-                            <width>8</width>
-                            <height>8</height>
-                           </size>
-                          </property>
-                          <property name="pixmap">
-                           <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_7">
-                          <property name="text">
-                           <string>Cash: </string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="player_informations_cash">
-                          <property name="minimumSize">
-                           <size>
-                            <width>150</width>
-                            <height>0</height>
-                           </size>
-                          </property>
-                          <property name="maximumSize">
-                           <size>
-                            <width>150</width>
-                            <height>16777215</height>
-                           </size>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <spacer name="horizontalSpacer_7">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>40</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
-                        </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <spacer name="verticalSpacer">
-                        <property name="orientation">
-                         <enum>Qt::Vertical</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>20</width>
-                          <height>43</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="player_informations_front">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                       <horstretch>150</horstretch>
-                       <verstretch>100</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="minimumSize">
-                      <size>
-                       <width>160</width>
-                       <height>100</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>160</width>
-                       <height>100</height>
-                      </size>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-image: url(:/images/interface/player/ball.png);
+                      </property>
+                      <property name="text">
+                       <string>Trainer card</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_3">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>87</width>
+                        <height>14</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_5">
+                    <item>
+                     <widget class="QFrame" name="frame_5">
+                      <layout class="QVBoxLayout" name="verticalLayout_7">
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_7">
+                         <item>
+                          <widget class="QLabel" name="label_3">
+                           <property name="minimumSize">
+                            <size>
+                             <width>8</width>
+                             <height>8</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>8</width>
+                             <height>8</height>
+                            </size>
+                           </property>
+                           <property name="pixmap">
+                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLabel" name="label_5">
+                           <property name="text">
+                            <string>Name: </string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLabel" name="player_informations_pseudo">
+                           <property name="minimumSize">
+                            <size>
+                             <width>150</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>150</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <spacer name="horizontalSpacer_6">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_8">
+                         <item>
+                          <widget class="QLabel" name="label_6">
+                           <property name="minimumSize">
+                            <size>
+                             <width>8</width>
+                             <height>8</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>8</width>
+                             <height>8</height>
+                            </size>
+                           </property>
+                           <property name="pixmap">
+                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLabel" name="label_7">
+                           <property name="text">
+                            <string>Cash: </string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QLabel" name="player_informations_cash">
+                           <property name="minimumSize">
+                            <size>
+                             <width>150</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>150</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <spacer name="horizontalSpacer_7">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <spacer name="verticalSpacer">
+                         <property name="orientation">
+                          <enum>Qt::Vertical</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>20</width>
+                           <height>43</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="player_informations_front">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                        <horstretch>150</horstretch>
+                        <verstretch>100</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>160</width>
+                        <height>100</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>160</width>
+                        <height>100</height>
+                       </size>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true">background-image: url(:/images/interface/player/ball.png);
 background-repeat:no-repeat;
 background-position:center; </string>
-                     </property>
-                     <property name="pixmap">
-                      <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_4">
-                   <item>
-                    <widget class="QLabel" name="label_4">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>16</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>16</height>
-                      </size>
-                     </property>
-                     <property name="styleSheet">
-                      <string notr="true">background-image: url(:/images/empty.png);</string>
-                     </property>
-                     <property name="text">
-                      <string>Badges:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="label_badges">
-                     <property name="text">
-                      <string>&lt;span style=&quot; color:#a0a0a0;&quot;&gt;None&lt;/span&gt;</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <spacer name="horizontalSpacer_5">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>345</width>
-                       <height>14</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                  </layout>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
+                      </property>
+                      <property name="pixmap">
+                       <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_4">
+                    <item>
+                     <widget class="QLabel" name="label_4">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>16</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>16</height>
+                       </size>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true">background-image: url(:/images/empty.png);</string>
+                      </property>
+                      <property name="text">
+                       <string>Badges:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_badges">
+                      <property name="text">
+                       <string>&lt;span style=&quot; color:#a0a0a0;&quot;&gt;None&lt;/span&gt;</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_5">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>345</width>
+                        <height>14</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tabWidgetTrainerCardPage2">
+              <property name="styleSheet">
+               <string notr="true">#tabWidgetTrainerCardPage2{
+background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 200), stop:1 rgba(221, 221, 221, 200));
+border-color: rgb(204, 204, 204);
+border-radius: 5px;
+}</string>
+              </property>
+              <attribute name="title">
+               <string>Reputation</string>
+              </attribute>
+              <layout class="QHBoxLayout" name="horizontalLayout_29">
+               <item>
+                <widget class="QLabel" name="labelReputation">
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </widget>
            </item>
            <item>

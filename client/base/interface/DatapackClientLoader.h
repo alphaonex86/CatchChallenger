@@ -38,6 +38,12 @@ public:
         float quantity;
         Tiled::Tileset * tileset;
     };
+    struct ReputationExtra
+    {
+        QStringList reputation_positive,reputation_negative;
+    };
+    QHash<QString, CatchChallenger::Reputation> reputation;
+    QHash<QString, ReputationExtra> reputationExtra;
     QHash<quint8,Plant> plants;
     QHash<quint32,quint8> itemToPlants;
     QHash<quint32,quint32> itemToCrafingRecipes;
@@ -63,6 +69,7 @@ private slots:
     void parseBuff();
     void parseSkills();
     void parseMonsters();
+    void parseReputation();
     void parseMonstersExtra();
     void parseBuffExtra();
     void parseSkillsExtra();
