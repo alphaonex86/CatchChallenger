@@ -155,6 +155,18 @@ struct PlayerMonster
     quint32 id;
 };
 
+struct PlayerReputation
+{
+    qint8 level;
+    qint32 point;
+};
+
+struct Reputation
+{
+    QList<qint32> reputation_positive,reputation_negative;
+    QStringList text_positive,text_negative;
+};
+
 struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
@@ -162,6 +174,7 @@ struct Player_private_and_public_informations
     QHash<quint32,quint32> items;
     //crafting
     QList<quint32> recipes;
+    QHash<QString,PlayerReputation> reputation;
     //fight
     /// \todo put out of here to have mutalised engine
     QList<PlayerMonster> playerMonster;

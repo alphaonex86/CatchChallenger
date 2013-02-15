@@ -350,6 +350,16 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint3
         index++;
     }
 
+    //send reputation
+    out << (quint8)player_informations->public_and_private_informations.reputation.size();
+    QHashIterator<QString,PlayerReputation> i(player_informations->public_and_private_informations.reputation);
+    while (i.hasNext()) {
+        i.next();
+        out << i.key();
+        out << i.value().level;
+        out << i.value().point;
+    }
+
     emit postReply(query_id,outputData);
     sendInventory();
 
@@ -392,6 +402,7 @@ void ClientHeavyLoad::loadLinkedData()
     loadItems();
     loadRecipes();
     loadMonsters();
+    loadReputation();
 }
 
 bool ClientHeavyLoad::loadTheRawUTF8String()
@@ -518,4 +529,96 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
     if(!sqlQuery.exec(queryText))
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
+}
+
+void ClientHeavyLoad::loadReputation()
+{
+    //do the query
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+        queryText=QString("SELECT `type`,`point`,level FROM reputation WHERE player=%1")
+                .arg(player_informations->id);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+        queryText=QString("SELECT `type`,`point`,level FROM reputation WHERE player=%1")
+                .arg(player_informations->id);
+        break;
+    }
+    bool ok;
+    QSqlQuery loginQuery(queryText);
+
+    //parse the result
+    while(loginQuery.next())
+    {
+        QString type=loginQuery.value(0).toString();
+        qint32 point=loginQuery.value(1).toInt(&ok);
+        if(!ok)
+        {
+            emit message(QString("point is not a number, skip"));
+            continue;
+        }
+        qint32 level=loginQuery.value(2).toInt(&ok);
+        if(!ok)
+        {
+            emit message(QString("level is not a number, skip"));
+            continue;
+        }
+        if(level<-100 || level>100)
+        {
+            emit message(QString("level is <100 or >100, skip"));
+            continue;
+        }
+        if(!GlobalServerData::serverPrivateVariables.reputation.contains(type))
+        {
+            emit message(QString("The reputation: %1 don't exist").arg(type));
+            continue;
+        }
+        if(level>=0)
+        {
+            if(level>=GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.size())
+            {
+                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.size()));
+                continue;
+            }
+        }
+        else
+        {
+            if((-level)>GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size())
+            {
+                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size()));
+                continue;
+            }
+        }
+        if(point>0)
+        {
+            if(GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.size()==(level+1))//start at level 0 in positive
+            {
+                emit message(QString("The reputation level is already at max, drop point"));
+                point=0;
+            }
+            if(point>=GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.at(level+1))//start at level 0 in positive
+            {
+                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.at(level)));
+                continue;
+            }
+        }
+        else if(point<0)
+        {
+            if(GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size()==-level)//start at level -1 in negative
+            {
+                emit message(QString("The reputation level is already at min, drop point"));
+                point=0;
+            }
+            if(point<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-level))//start at level -1 in negative
+            {
+                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(level)));
+                continue;
+            }
+        }
+        player_informations->public_and_private_informations.reputation[type].level=level;
+        player_informations->public_and_private_informations.reputation[type].point=point;
+    }
 }

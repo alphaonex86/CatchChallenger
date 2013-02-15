@@ -16,7 +16,8 @@ SOURCES += $$PWD/base/Api_protocol.cpp \
     $$PWD/base/Map.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/ConnectedSocket.cpp \
-    $$PWD/fight/FightLoader.cpp
+    $$PWD/fight/FightLoader.cpp \
+    $$PWD/base/DatapackGeneralLoader.cpp
 
 HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/DebugClass.h \
@@ -32,4 +33,5 @@ HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/QFakeSocket.h \
     $$PWD/base/FacilityLib.h \
     $$PWD/base/ConnectedSocket.h \
-    $$PWD/fight/FightLoader.h
+    $$PWD/fight/FightLoader.h \
+    $$PWD/base/DatapackGeneralLoader.h

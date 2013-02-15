@@ -1118,7 +1118,7 @@ QString Map_loader::resolvRelativeMap(const QString &fileName,const QString &lin
     QString currentPath=QFileInfo(fileName).absolutePath();
     QFileInfo newmap(currentPath+QDir::separator()+link);
     QString newPath=newmap.absoluteFilePath();
-    if(newPath.startsWith(datapackPath))
+    if(datapackPath.isEmpty() || newPath.startsWith(datapackPath))
     {
         newPath.remove(0,datapackPath.size());
         #if defined (DEBUG_MESSAGE_MAP_BORDER) || defined (DEBUG_MESSAGE_MAP_TP)
