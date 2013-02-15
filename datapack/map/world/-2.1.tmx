@@ -69,20 +69,6 @@
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="30">
-  <object name="border" type="border-top" gid="5124" x="240" y="16">
-   <properties>
-    <property name="map" value="-2.2"/>
-    <property name="x" value="15"/>
-    <property name="y" value="29"/>
-   </properties>
-  </object>
-  <object name="border" type="border-left" gid="5124" x="0" y="256">
-   <properties>
-    <property name="map" value="-3.1"/>
-    <property name="x" value="29"/>
-    <property name="y" value="15"/>
-   </properties>
-  </object>
   <object name="border" type="border-right" gid="5124" x="464" y="256">
    <properties>
     <property name="map" value="-1.1"/>
@@ -90,37 +76,30 @@
     <property name="y" value="15"/>
    </properties>
   </object>
-  <object name="border" type="border-bottom" gid="5124" x="240" y="480">
-   <properties>
-    <property name="map" value="-2.0"/>
-    <property name="x" value="15"/>
-    <property name="y" value="0"/>
-   </properties>
-  </object>
   <object name="door" type="door" gid="5123" x="272" y="176">
    <properties>
-    <property name="map" value="0.0B"/>
+    <property name="map" value="../indoor/0.0b"/>
     <property name="x" value="5"/>
     <property name="y" value="10"/>
    </properties>
   </object>
   <object name="door" type="door" gid="5123" x="384" y="176">
    <properties>
-    <property name="map" value="0.0B"/>
+    <property name="map" value="../indoor/0.0b"/>
     <property name="x" value="5"/>
     <property name="y" value="10"/>
    </properties>
   </object>
   <object name="door" type="door" gid="5123" x="352" y="336">
    <properties>
-    <property name="map" value="0.0A"/>
+    <property name="map" value="../indoor/0.0a"/>
     <property name="x" value="5"/>
     <property name="y" value="10"/>
    </properties>
   </object>
   <object name="door" type="door" gid="5123" x="208" y="336">
    <properties>
-    <property name="map" value="0.0A"/>
+    <property name="map" value="../indoor/0.0a"/>
     <property name="x" value="5"/>
     <property name="y" value="10"/>
    </properties>
