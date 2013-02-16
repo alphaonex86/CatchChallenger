@@ -7,11 +7,12 @@
 #include <QMessageBox>
 #include <QDebug>
 
-NewGame::NewGame(QWidget *parent) :
+NewGame::NewGame(const QStringList &forcedSkin,QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewGame)
 {
     ui->setupUi(this);
+    this->forcedSkin=forcedSkin;
     ok=false;
     skinPath=QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_SKIN;
     QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
@@ -20,9 +21,12 @@ NewGame::NewGame(QWidget *parent) :
     {
         if(entryList.at(index).isDir())
         {
-            QString currentPath=skinPath+entryList.at(index).fileName();
-            if(QFile::exists(currentPath+"/back.png") && QFile::exists(currentPath+"/front.png") && QFile::exists(currentPath+"/trainer.png"))
-                skinList << entryList.at(index).fileName();
+            if(forcedSkin.empty() || forcedSkin.contains(entryList.at(index).fileName()))
+            {
+                QString currentPath=skinPath+entryList.at(index).fileName();
+                if(QFile::exists(currentPath+"/back.png") && QFile::exists(currentPath+"/front.png") && QFile::exists(currentPath+"/trainer.png"))
+                    skinList << entryList.at(index).fileName();
+            }
         }
         index++;
     }
@@ -33,6 +37,12 @@ NewGame::NewGame(QWidget *parent) :
     currentSkin=0;
     updateSkin();
     ui->pseudo->setFocus();
+    if(skinList.empty())
+    {
+        QMessageBox::critical(this,tr("Error"),tr("No skin to select!"));
+        close();
+        return;
+    }
 }
 
 NewGame::~NewGame()

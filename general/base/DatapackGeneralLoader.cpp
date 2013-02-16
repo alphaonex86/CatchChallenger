@@ -119,7 +119,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                                                 ok=false;
                                                 break;
                                             }
-                                            if(point_list_negative.at(index)>point)
+                                            if(point_list_negative.at(index)<point)
                                             {
                                                 point_list_negative.insert(index,point);
                                                 text_negative.insert(index,text_val);
