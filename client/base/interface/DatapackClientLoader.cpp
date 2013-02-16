@@ -14,6 +14,7 @@ DatapackClientLoader DatapackClientLoader::datapackLoader;
 DatapackClientLoader::DatapackClientLoader()
 {
     mDefaultInventoryImage=NULL;
+    inProgress=false;
     start();
 }
 
@@ -35,8 +36,19 @@ void DatapackClientLoader::run()
     exec();
 }
 
+bool DatapackClientLoader::isParsingDatapack()
+{
+    return inProgress;
+}
+
 void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 {
+    if(inProgress)
+    {
+        qDebug() << QString("already in progress");
+        return;
+    }
+    inProgress=true;
     this->datapackPath=datapackPath;
     parseItems();
     parseMaps();
@@ -49,7 +61,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseMonstersExtra();
     parseBuffExtra();
     parseSkillsExtra();
-
+    inProgress=false;
     emit datapackParsed();
 }
 

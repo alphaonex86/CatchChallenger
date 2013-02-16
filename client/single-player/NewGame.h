@@ -12,7 +12,7 @@ class NewGame : public QDialog
     Q_OBJECT
 
 public:
-    explicit NewGame(QWidget *parent = 0);
+    explicit NewGame(const QStringList &forcedSkin,QWidget *parent = 0);
     ~NewGame();
     bool haveTheInformation();
     QString pseudo();
@@ -28,6 +28,7 @@ private slots:
     void on_previousSkin_clicked();
     void on_gameName_textChanged(const QString &arg1);
 private:
+    QStringList forcedSkin;
     Ui::NewGame *ui;
     bool ok;
     bool skinLoaded;

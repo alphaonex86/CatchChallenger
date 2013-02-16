@@ -22,7 +22,7 @@ void BaseServerCrafting::preload_the_plant()
     QByteArray xmlContent;
     if(!plantsFile.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to open the plants file: %1, error: %2").arg(plantsFile.fileName()).arg(plantsFile.errorString()));
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(plantsFile.fileName()).arg(plantsFile.errorString()));
         return;
     }
     xmlContent=plantsFile.readAll();
@@ -32,13 +32,13 @@ void BaseServerCrafting::preload_the_plant()
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        DebugClass::debugConsole(QString("Unable to open the plants file: %1, Parse error at line %2, column %3: %4").arg(plantsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(plantsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="plants")
     {
-        DebugClass::debugConsole(QString("Unable to open the plants file: %1, \"plants\" root balise not found for the xml file").arg(plantsFile.fileName()));
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(plantsFile.fileName()));
         return;
     }
 
@@ -74,20 +74,20 @@ void BaseServerCrafting::preload_the_plant()
                                         if(!ok2)
                                         {
                                             ok=false;
-                                            DebugClass::debugConsole(QString("preload_the_plant() fruits in not an number for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                            DebugClass::debugConsole(QString("preload_the_plant() fruits in not an number for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                         }
                                     }
                                     else
-                                        DebugClass::debugConsole(QString("preload_the_plant() fruit is not element for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                        DebugClass::debugConsole(QString("preload_the_plant() fruit is not element for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("preload_the_plant() fruit is null for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                    DebugClass::debugConsole(QString("preload_the_plant() fruit is null for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                             }
                             else
-                                DebugClass::debugConsole(QString("preload_the_plant() grow is not an element for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_the_plant() grow is not an element for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                         }
                         else
-                            DebugClass::debugConsole(QString("preload_the_plant() grow is null for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                            DebugClass::debugConsole(QString("preload_the_plant() grow is null for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                         if(ok)
                         {
                             QDomElement quantity = plantItem.firstChildElement("quantity");
@@ -104,14 +104,14 @@ void BaseServerCrafting::preload_the_plant()
                                     if(!ok2)
                                     {
                                         ok=false;
-                                        DebugClass::debugConsole(QString("preload_the_plant() quantity is not a number for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                        DebugClass::debugConsole(QString("preload_the_plant() quantity is not a number for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                                     }
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("preload_the_plant() quantity is not element for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                    DebugClass::debugConsole(QString("preload_the_plant() quantity is not element for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                             }
                             else
-                                DebugClass::debugConsole(QString("preload_the_plant() quantity is null for plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                                DebugClass::debugConsole(QString("preload_the_plant() quantity is null for xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                         }
                         if(ok)
                         {
@@ -125,16 +125,16 @@ void BaseServerCrafting::preload_the_plant()
                             GlobalServerData::serverPrivateVariables.plants[id]=plant;
                     }
                     else
-                        DebugClass::debugConsole(QString("Unable to open the plants file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
                 }
                 else
-                    DebugClass::debugConsole(QString("Unable to open the plants file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
             }
             else
-                DebugClass::debugConsole(QString("Unable to open the plants file: %1, have not the plant id: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the plant id: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
         }
         else
-            DebugClass::debugConsole(QString("Unable to open the plants file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
+            DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber()));
         plantItem = plantItem.nextSiblingElement("plant");
     }
 

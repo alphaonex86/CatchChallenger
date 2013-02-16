@@ -1324,7 +1324,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             }
                             in >> player_informations.public_informations.simplifiedId;
                         }
-                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash, line: %1").arg(__LINE__));
                             return;
@@ -1494,9 +1494,6 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             player_informations.playerMonster << monster;
                             index++;
                         }
-
-
-
                         //reputation
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -1508,7 +1505,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         index=0;
                         quint8 sub_size8;
                         in >> sub_size8;
-                        while(index<monster_list_size)
+                        while(index<sub_size8)
                         {
                             if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                             {
@@ -1763,7 +1760,10 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(tr("Procotol wrong or corrupted"),QString("error: remaining data: parseReplyData(%1,%2,%3), line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+        parseError(tr("Procotol wrong or corrupted"),QString("error: remaining data: parseReplyData(%1,%2,%3), line: %4, data: %5 %6").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__)
+                   .arg(QString(data.mid(0,in.device()->pos()).toHex()))
+                   .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                   );
         return;
     }
 }
