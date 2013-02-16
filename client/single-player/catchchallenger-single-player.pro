@@ -12,15 +12,18 @@ SOURCES += main.cpp\
         mainwindow.cpp \
         SaveGameLabel.cpp \
         InternalServer.cpp \
-        NewGame.cpp
+        NewGame.cpp \
+    NewProfile.cpp
 
 HEADERS  += mainwindow.h \
         InternalServer.h \
         NewGame.h \
-        SaveGameLabel.h
+        SaveGameLabel.h \
+    NewProfile.h
 
 FORMS    += mainwindow.ui \
-    NewGame.ui
+    NewGame.ui \
+    NewProfile.ui
 
 RESOURCES += \
     resources/resources-single-player.qrc \

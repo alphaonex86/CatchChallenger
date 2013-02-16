@@ -50,6 +50,7 @@ public:
     QHash<quint32,CatchChallenger::CrafingRecipe> crafingRecipes;
     QStringList maps;
     QPixmap defaultInventoryImage();
+    bool isParsingDatapack();
 protected:
     void run();
 public slots:
@@ -57,6 +58,7 @@ public slots:
 signals:
     void datapackParsed();
 private:
+    bool inProgress;
     QString datapackPath;
     QPixmap *mDefaultInventoryImage;
     explicit DatapackClientLoader();

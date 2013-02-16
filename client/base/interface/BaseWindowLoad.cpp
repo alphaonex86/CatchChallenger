@@ -345,13 +345,13 @@ void BaseWindow::show_reputation()
                     .arg(DatapackClientLoader::datapackLoader.reputation[i.key()].text_negative.last());
             else
             {
-                qint32 next_level_xp=DatapackClientLoader::datapackLoader.reputation[i.key()].reputation_positive.at(-i.value().level-1);
+                qint32 next_level_xp=DatapackClientLoader::datapackLoader.reputation[i.key()].reputation_negative.at(-i.value().level);
                 if(next_level_xp==0)
                 {
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=DatapackClientLoader::datapackLoader.reputation[i.key()].text_positive.at(-i.value().level-1);
+                QString text=DatapackClientLoader::datapackLoader.reputation[i.key()].text_negative.at(-i.value().level-1);
                 html+=QString("<li>%1% %2</li>")
                     .arg((i.value().point*100)/next_level_xp)
                     .arg(text);

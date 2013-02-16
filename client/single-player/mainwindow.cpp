@@ -1,12 +1,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "NewGame.h"
+#include "NewProfile.h"
 
 #include <QSettings>
 #include <QInputDialog>
 
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/FacilityLib.h"
+#include "../base/interface/DatapackClientLoader.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -181,8 +183,15 @@ void MainWindow::try_stop_server()
 
 void MainWindow::on_SaveGame_New_clicked()
 {
+    CatchChallenger::FightEngine::fightEngine.resetAll();
+    DatapackClientLoader::datapackLoader.resetAll();
     //load the information
-    NewGame nameGame(this);
+    NewProfile newProfile(datapackPath,this);
+    newProfile.exec();
+    if(!newProfile.ok)
+        return;
+    NewProfile::Profile profile=newProfile.getProfile();
+    NewGame nameGame(profile.forcedskin,this);
     if(!nameGame.haveSkin())
     {
         QMessageBox::critical(this,tr("Error"),QString("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
@@ -278,20 +287,118 @@ void MainWindow::on_SaveGame_New_clicked()
 
 
     //empty the player db and put the new player into it
+    int player_id=1;
     QSqlQuery sqlQuery;
-    if(!sqlQuery.exec(QString("DELETE FROM \"player\"")))
+    if(!sqlQuery.exec(
+           QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9);")
+           .arg(player_id)
+           .arg(QString(passHash.toHex()))
+           .arg(nameGame.pseudo())
+           .arg(nameGame.skin())
+           .arg(profile.x)
+           .arg(profile.y)
+           .arg(profile.map)
+           .arg(profile.cash)
+           .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
+                ))
     {
         db.close();
-        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: clean the table: %1)").arg(sqlQuery.lastError().text()));
+        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
         rmpath(savegamesPath);
         return;
     }
-    if(!sqlQuery.exec(QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\") VALUES(1,'admin','%1','%2','%3',1,1,'bottom','world/0.0.tmx','normal',NULL,0);").arg(QString(passHash.toHex())).arg(nameGame.pseudo()).arg(nameGame.skin())))
+    index=0;
+    while(index<profile.monsters.size())
     {
-        db.close();
-        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame (error: initialize the entry: %1)").arg(sqlQuery.lastError().text()));
-        rmpath(savegamesPath);
-        return;
+        QString gender="unknown";
+        if(CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].ratio_gender!=-1)
+        {
+            if(rand()%101<CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].ratio_gender)
+                gender="female";
+            else
+                gender="male";
+        }
+        CatchChallenger::Monster::Stat stat=CatchChallenger::FightEngine::fightEngine.getStat(CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
+        QList<CatchChallenger::PlayerMonster::Skill> skills;
+        QList<CatchChallenger::Monster::Attack> attack=CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].attack;
+        int sub_index=0;
+        while(sub_index<attack.size())
+        {
+            if(attack[sub_index].level<=profile.monsters.at(index).level)
+                skills << attack[sub_index].skill;
+            sub_index++;
+        }
+        while(skills.size()>4)
+            skills.removeFirst();
+        if(!sqlQuery.exec(
+               QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0);")
+               .arg(index+1)
+               .arg(stat.hp)
+               .arg(player_id)
+               .arg(profile.monsters.at(index).id)
+               .arg(profile.monsters.at(index).level)
+               .arg(profile.monsters.at(index).captured_with)
+               .arg(gender)
+                    ))
+        {
+            db.close();
+            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+            rmpath(savegamesPath);
+            return;
+        }
+        sub_index=0;
+        while(sub_index<skills.size())
+        {
+            if(!sqlQuery.exec(
+                   QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\") VALUES(%1,%2,%3);")
+                   .arg(index+1)
+                   .arg(skills[sub_index].skill)
+                   .arg(skills[sub_index].level)
+                        ))
+            {
+                db.close();
+                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+                rmpath(savegamesPath);
+                return;
+            }
+            sub_index++;
+        }
+        index++;
+    }
+    index=0;
+    while(index<profile.reputation.size())
+    {
+        if(!sqlQuery.exec(
+               QString("INSERT INTO \"reputation\"(\"player\",\"type\",\"point\",\"level\") VALUES(%1,\"%2\",%3,%4);")
+               .arg(player_id)
+               .arg(profile.reputation.at(index).type)
+               .arg(profile.reputation.at(index).point)
+               .arg(profile.reputation.at(index).level)
+                    ))
+        {
+            db.close();
+            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+            rmpath(savegamesPath);
+            return;
+        }
+        index++;
+    }
+    index=0;
+    while(index<profile.items.size())
+    {
+        if(!sqlQuery.exec(
+               QString("INSERT INTO \"item\"(\"item_id\",\"player_id\",\"quantity\") VALUES(%1,%2,%3);")
+               .arg(profile.items.at(index).id)
+               .arg(player_id)
+               .arg(profile.items.at(index).quantity)
+                    ))
+        {
+            db.close();
+            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+            rmpath(savegamesPath);
+            return;
+        }
+        index++;
     }
     db.close();
 
@@ -610,6 +717,8 @@ void MainWindow::saveTime()
 
 void MainWindow::play(const QString &savegamesPath)
 {
+    CatchChallenger::FightEngine::fightEngine.resetAll();
+    DatapackClientLoader::datapackLoader.resetAll();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
     if(!metaData.contains("pass"))
     {
