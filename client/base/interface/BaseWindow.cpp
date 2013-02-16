@@ -87,6 +87,7 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,SIGNAL(stopped_in_front_of(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(stopped_in_front_of(CatchChallenger::Map_client*,quint8,quint8)));
     connect(MapController::mapController,SIGNAL(actionOn(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(actionOn(CatchChallenger::Map_client*,quint8,quint8)));
     connect(MapController::mapController,SIGNAL(blockedOn(MapVisualiserPlayer::BlockedOn)),this,SLOT(blockedOn(MapVisualiserPlayer::BlockedOn)));
+    connect(MapController::mapController,SIGNAL(error(QString)),this,SLOT(error(QString)));
 
     //fight
     connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&FightEngine::fightEngine,SLOT(appendRandomSeeds(QByteArray)));

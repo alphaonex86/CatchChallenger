@@ -140,7 +140,9 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
     }
     if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
     {
-        qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        /// \bug here pass after delete a party, create a new
+        QStringList maps=DatapackClientLoader::datapackLoader.maps;
+        emit error("mapId greater than DatapackClientLoader::datapackLoader.maps.size(): "+QString::number(DatapackClientLoader::datapackLoader.maps.size()));
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -678,7 +680,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     }
     if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
     {
-        qDebug() << "mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        emit error("mapId greater than DatapackClientLoader::datapackLoader.maps.size(): "+QString::number(DatapackClientLoader::datapackLoader.maps.size()));
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
