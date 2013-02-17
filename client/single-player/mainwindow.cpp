@@ -183,8 +183,7 @@ void MainWindow::try_stop_server()
 
 void MainWindow::on_SaveGame_New_clicked()
 {
-    CatchChallenger::FightEngine::fightEngine.resetAll();
-    DatapackClientLoader::datapackLoader.resetAll();
+    resetAll();
     //load the information
     NewProfile newProfile(datapackPath,this);
     newProfile.exec();
@@ -717,8 +716,7 @@ void MainWindow::saveTime()
 
 void MainWindow::play(const QString &savegamesPath)
 {
-    CatchChallenger::FightEngine::fightEngine.resetAll();
-    DatapackClientLoader::datapackLoader.resetAll();
+    resetAll();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
     if(!metaData.contains("pass"))
     {
