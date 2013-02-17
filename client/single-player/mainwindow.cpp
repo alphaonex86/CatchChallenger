@@ -286,8 +286,20 @@ void MainWindow::on_SaveGame_New_clicked()
 
 
     //empty the player db and put the new player into it
-    int player_id=1;
     QSqlQuery sqlQuery;
+    int player_id,size;
+    do
+    {
+        player_id=rand();
+        if(!sqlQuery.exec(QString("SELECT * FROM \"player\" WHERE id=%1").arg(player_id)))
+        {
+            db.close();
+            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+            rmpath(savegamesPath);
+            return;
+        }
+        size=sqlQuery.size();
+    } while(size>0);
     if(!sqlQuery.exec(
            QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9);")
            .arg(player_id)
@@ -330,7 +342,7 @@ void MainWindow::on_SaveGame_New_clicked()
         while(skills.size()>4)
             skills.removeFirst();
         if(!sqlQuery.exec(
-               QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0);")
+               QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3);")
                .arg(index+1)
                .arg(stat.hp)
                .arg(player_id)

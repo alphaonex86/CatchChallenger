@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `captured_with` int(11) NOT NULL,
   `gender` enum('unknown','male','female') NOT NULL,
   `egg_step` int(11) NOT NULL,
+  `player_origin` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `player` (`player`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
@@ -149,5 +150,6 @@ CREATE TABLE IF NOT EXISTS `reputation` (
   `player` int(11) NOT NULL,
   `type` varchar(32) NOT NULL,
   `point` bigint(20) NOT NULL,
+  `level` int(11) NOT NULL,
   PRIMARY KEY (`player`,`type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
