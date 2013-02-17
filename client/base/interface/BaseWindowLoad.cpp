@@ -58,6 +58,7 @@ void BaseWindow::resetAll()
 void BaseWindow::serverIsLoading()
 {
     ui->label_connecting_status->setText(tr("Preparing the game data"));
+    resetAll();
 }
 
 void BaseWindow::serverIsReady()
