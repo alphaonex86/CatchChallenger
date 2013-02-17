@@ -8,6 +8,7 @@
 #include "../base/SqlFunction.h"
 #include "../base/GlobalServerData.h"
 
+#include <QSqlError>
 #include <QFile>
 #include <QByteArray>
 #include <QDomDocument>
@@ -155,7 +156,9 @@ void BaseServerCrafting::preload_the_plant_on_map()
             queryText=QString("SELECT map,x,y,plant,player_id,plant_timestamps FROM plant");
         break;
     }
-    QSqlQuery plantOnMapQuery(queryText);
+    QSqlQuery plantOnMapQuery;
+    if(!plantOnMapQuery.exec(queryText))
+        DebugClass::debugConsole(plantOnMapQuery.lastQuery()+": "+plantOnMapQuery.lastError().text());
     if(plantOnMapQuery.isValid())
         DebugClass::debugConsole(QString("SQL query is not valid: %1").arg(queryText));
     while(plantOnMapQuery.next())

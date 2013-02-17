@@ -21,7 +21,9 @@ void ClientHeavyLoad::loadMonsters()
     }
 
     bool ok;
-    QSqlQuery monstersQuery(queryText);
+    QSqlQuery monstersQuery;
+    if(!monstersQuery.exec(queryText))
+        emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
     while(monstersQuery.next())
     {
         PlayerMonster playerMonster;
@@ -91,13 +93,13 @@ void ClientHeavyLoad::loadMonsters()
         {
             if(monstersQuery.value(7).toString()=="male")
                 playerMonster.gender=PlayerMonster::Male;
-            if(monstersQuery.value(7).toString()=="female")
+            else if(monstersQuery.value(7).toString()=="female")
                 playerMonster.gender=PlayerMonster::Female;
-            if(monstersQuery.value(7).toString()=="unknown")
+            else if(monstersQuery.value(7).toString()=="unknown")
                 playerMonster.gender=PlayerMonster::Unknown;
             else
             {
-                emit message(QString("unknown monster gender"));
+                emit message(QString("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
                 ok=false;
             }
         }
@@ -153,7 +155,9 @@ QList<PlayerMonster::Buff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &mons
     }
 
     bool ok;
-    QSqlQuery monsterBuffsQuery(queryText);
+    QSqlQuery monsterBuffsQuery;
+    if(!monsterBuffsQuery.exec(queryText))
+        emit message(monsterBuffsQuery.lastQuery()+": "+monsterBuffsQuery.lastError().text());
     while(monsterBuffsQuery.next())
     {
         PlayerMonster::Buff buff;
@@ -204,7 +208,9 @@ QList<PlayerMonster::Skill> ClientHeavyLoad::loadMonsterSkills(const quint32 &mo
     }
 
     bool ok;
-    QSqlQuery monsterSkillsQuery(queryText);
+    QSqlQuery monsterSkillsQuery;
+    if(!monsterSkillsQuery.exec(queryText))
+        emit message(monsterSkillsQuery.lastQuery()+": "+monsterSkillsQuery.lastError().text());
     while(monsterSkillsQuery.next())
     {
         PlayerMonster::Skill skill;
