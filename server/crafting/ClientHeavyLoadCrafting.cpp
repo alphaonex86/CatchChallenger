@@ -22,7 +22,9 @@ void ClientHeavyLoad::loadRecipes()
     }
     bool ok;
     quint32 recipeId;
-    QSqlQuery recipesQuery(queryText);
+    QSqlQuery recipesQuery;
+    if(!recipesQuery.exec(queryText))
+        emit message(recipesQuery.lastQuery()+": "+recipesQuery.lastError().text());
     while(recipesQuery.next())
     {
         recipeId=recipesQuery.value(0).toUInt(&ok);
@@ -55,18 +57,19 @@ void ClientHeavyLoad::loadItems()
         break;
     }
     bool ok;
-    QSqlQuery loginQuery(queryText);
-
+    QSqlQuery itemQuery;
+    if(!itemQuery.exec(queryText))
+        emit message(itemQuery.lastQuery()+": "+itemQuery.lastError().text());
     //parse the result
-    while(loginQuery.next())
+    while(itemQuery.next())
     {
-        quint32 id=loginQuery.value(0).toUInt(&ok);
+        quint32 id=itemQuery.value(0).toUInt(&ok);
         if(!ok)
         {
             emit message(QString("item id is not a number, skip"));
             continue;
         }
-        quint32 quantity=loginQuery.value(1).toUInt(&ok);
+        quint32 quantity=itemQuery.value(1).toUInt(&ok);
         if(!ok)
         {
             emit message(QString("quantity is not a number, skip"));

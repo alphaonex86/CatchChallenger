@@ -53,7 +53,9 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
     }
-    QSqlQuery loginQuery(queryText);
+    QSqlQuery loginQuery;
+    if(!loginQuery.exec(queryText))
+        emit message(loginQuery.lastQuery()+": "+loginQuery.lastError().text());
     if(loginQuery.size()==0)
         loginIsWrong(query_id,"Bad login","Bad login for: "+login+", hash: "+hash.toHex());
     else
@@ -548,19 +550,20 @@ void ClientHeavyLoad::loadReputation()
         break;
     }
     bool ok;
-    QSqlQuery loginQuery(queryText);
-
+    QSqlQuery reputationQuery;
+    if(!reputationQuery.exec(queryText))
+        emit message(reputationQuery.lastQuery()+": "+reputationQuery.lastError().text());
     //parse the result
-    while(loginQuery.next())
+    while(reputationQuery.next())
     {
-        QString type=loginQuery.value(0).toString();
-        qint32 point=loginQuery.value(1).toInt(&ok);
+        QString type=reputationQuery.value(0).toString();
+        qint32 point=reputationQuery.value(1).toInt(&ok);
         if(!ok)
         {
             emit message(QString("point is not a number, skip"));
             continue;
         }
-        qint32 level=loginQuery.value(2).toInt(&ok);
+        qint32 level=reputationQuery.value(2).toInt(&ok);
         if(!ok)
         {
             emit message(QString("level is not a number, skip"));
