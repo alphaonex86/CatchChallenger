@@ -33,18 +33,6 @@ CREATE TABLE player (
     "rescue_x" INTEGER,
     "rescue_y" INTEGER
 , "rescue_orientation" TEXT);
-CREATE TABLE "monster" (
-    "id" INTEGER PRIMARY KEY,
-    "hp" INTEGER,
-    "player" INTEGER,
-    "monster" INTEGER,
-    "level" INTEGER,
-    "xp" INTEGER,
-    "sp" INTEGER,
-    "captured_with" INTEGER,
-    "gender" TEXT,
-    "egg_step" INTEGER
-);
 CREATE TABLE "monster_buff" (
     "monster" INTEGER PRIMARY KEY,
     "buff" INTEGER,
@@ -60,6 +48,18 @@ CREATE TABLE reputation (
     "type" TEXT,
     "point" INTEGER
 , "level" INTEGER);
+CREATE TABLE monster (
+    "id" INTEGER,
+    "hp" INTEGER,
+    "player" INTEGER,
+    "monster" INTEGER,
+    "level" INTEGER,
+    "xp" INTEGER,
+    "sp" INTEGER,
+    "captured_with" INTEGER,
+    "gender" TEXT,
+    "egg_step" INTEGER
+, "player_origin" INTEGER);
 CREATE INDEX "player_item_index" on item (player_id ASC);
 CREATE UNIQUE INDEX "player_item_unique_index" on item (item_id ASC, player_id ASC);
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
@@ -67,8 +67,8 @@ CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
 CREATE INDEX "player_recipe_list" on recipes (player ASC);
 CREATE UNIQUE INDEX "id" on player (id ASC);
 CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
-CREATE INDEX "monster_by_player" on monster (player ASC);
 CREATE UNIQUE INDEX "monster_buff_2" on monster_buff (monster ASC, buff ASC);
 CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
 CREATE UNIQUE INDEX "reputation_index" on reputation (player ASC, type ASC);
+CREATE INDEX "monster_by_player" on monster (player ASC);
 COMMIT;
