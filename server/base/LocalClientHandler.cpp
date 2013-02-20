@@ -40,6 +40,9 @@ void LocalClientHandler::registerTradeRequest(LocalClientHandler * otherPlayerTr
         emit message("Already in trade, internal error");
         return;
     }
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("%1 have requested trade with you").arg(otherPlayerTrade->player_informations->public_and_private_informations.public_informations.pseudo));
+    #endif
     this->otherPlayerTrade=otherPlayerTrade;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -211,9 +214,6 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     }
     out << x;
     out << y;
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("put_on_the_map merge: %1 = %2 | %3").arg(quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type)).arg((quint8)orientation).arg((quint8)player_informations->public_and_private_informations.public_informations.type));
-    #endif
     out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
     out << player_informations->public_and_private_informations.public_informations.speed;
     out << player_informations->public_and_private_informations.public_informations.clan;
@@ -576,6 +576,9 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("%1 is already in trade").arg(extraText));
             return;
         }
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message("Trade requested");
+        #endif
         otherPlayerTrade=playerByPseudo[extraText];
         otherPlayerTrade->registerTradeRequest(this);
     }
@@ -1254,16 +1257,16 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
 
 void LocalClientHandler::tradeCanceled()
 {
-    internalTradeCanceled(true);
     if(otherPlayerTrade!=NULL)
-        otherPlayerTrade->internalTradeCanceled(false);
+        otherPlayerTrade->internalTradeCanceled(true);
+    internalTradeCanceled(false);
 }
 
 void LocalClientHandler::tradeAccepted()
 {
-    internalTradeCanceled(true);
     if(otherPlayerTrade!=NULL)
-        otherPlayerTrade->internalTradeAccepted(false);
+        otherPlayerTrade->internalTradeAccepted(true);
+    internalTradeAccepted(false);
 }
 
 void LocalClientHandler::internalTradeCanceled(const bool &send)
@@ -1273,10 +1276,18 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
         emit message("Trade already canceled");
         return;
     }
-    tradeIsValidated=false;
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message("Trade canceled");
+    #endif
     otherPlayerTrade=NULL;
     if(send)
-        emit sendPacket(0xD0,0x0006);
+    {
+        if(tradeIsValidated)
+            emit sendPacket(0xD0,0x0006);
+        else
+            emit receiveSystemText(QString("Trade declined"));
+    }
+    tradeIsValidated=false;
 }
 
 void LocalClientHandler::internalTradeAccepted(const bool &send)
@@ -1286,6 +1297,14 @@ void LocalClientHandler::internalTradeAccepted(const bool &send)
         emit message("Can't accept trade if not in trade");
         return;
     }
+    if(tradeIsValidated)
+    {
+        emit message("Trade already validated");
+        return;
+    }
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message("Trade accepted");
+    #endif
     tradeIsValidated=true;
     if(send)
     {
