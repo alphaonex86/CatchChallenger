@@ -107,6 +107,8 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(recipeUsed(RecipeUsage)),this,SLOT(recipeUsed(RecipeUsage)));
     //trade
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeRequested(QString,quint8)),this,SLOT(tradeRequested(QString,quint8)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAcceptedByOther(QString,quint8)),this,SLOT(tradeAcceptedByOther(QString,quint8)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeCanceledByOther()),this,SLOT(tradeCanceledByOther()));
     //inventory
     connect(CatchChallenger::Api_client_real::client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
     //shop
@@ -152,7 +154,7 @@ BaseWindow::~BaseWindow()
 
 void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)
 {
-    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Trade request"),tr("Do you accept the trade with <b>%1</b>?"),QMessageBox::Yes|QMessageBox::No);
+    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Trade request"),tr("Do you accept the trade with <b>%1</b>?").arg(pseudo),QMessageBox::Yes|QMessageBox::No);
     if(button!=QMessageBox::Yes)
     {
         CatchChallenger::Api_client_real::client->tradeRefused();
@@ -207,6 +209,7 @@ void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const quint8 &skinIn
 void BaseWindow::tradeCanceledByOther()
 {
     showTip(tr("The other player have canceled your trade request"));
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 QString BaseWindow::lastLocation() const

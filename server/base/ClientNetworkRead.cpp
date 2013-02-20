@@ -446,6 +446,10 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                     emit destroyObject(itemId,quantity);
                 }
                 break;
+                //trade canceled after the accept
+                case 0x0005:
+                    emit tradeCanceled();
+                break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
