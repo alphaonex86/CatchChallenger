@@ -29,6 +29,8 @@ class LocalClientHandler : public MapBasicMove
 public:
     explicit LocalClientHandler();
     virtual ~LocalClientHandler();
+    inline bool getInTrade();
+    void registerTradeRequest(LocalClientHandler * otherPlayerTrade);
 private:
     bool checkCollision();
     void getRandomNumberIfNeeded();
@@ -37,6 +39,9 @@ private:
     static Direction	temp_direction;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
     QByteArray randomSeeds;
+    //trade
+    LocalClientHandler * otherPlayerTrade;
+    bool tradeIsValidated;
 
     //fight
     quint8 selectedMonster;
@@ -59,6 +64,9 @@ private:
 
     //map move
     bool singleMove(const Direction &direction);
+    //trade
+    void internalTradeCanceled(const bool &send);
+    void internalTradeAccepted(const bool &send);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
@@ -92,6 +100,9 @@ public slots:
     void tryEscape();
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void useSkill(const quint32 &skill);
+    //trade
+    void tradeCanceled();
+    void tradeAccepted();
 private slots:
     virtual void extraStop();
     void savePosition();
@@ -100,6 +111,7 @@ signals:
     void askRandomNumber();
     void receiveSystemText(const QString &text,const bool &important=false);
     void postReply(const quint8 &queryNumber,const QByteArray &data);
+    void sendTradeRequest(const QByteArray &data);
 
     void seedValidated();
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
