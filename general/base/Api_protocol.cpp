@@ -1068,6 +1068,90 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     emit remove_to_inventory(items);
                 }
                 break;
+                //the other player have put object
+                case 0x0004:
+                {
+                    if(!isInTrade)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("not in trade trade with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint8 type;
+                    in >> type;
+                    switch(type)
+                    {
+                        //cash
+                        case 0x01:
+                        {
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint64)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),"wrong remaining size for trade add cash");
+                                return;
+                            }
+                            quint64 cash;
+                            in >> cash;
+                            emit tradeAddTradeCash(cash);
+                        }
+                        break;
+                        //item
+                        case 0x02:
+                        {
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),"wrong remaining size for trade add item id");
+                                return;
+                            }
+                            quint32 item;
+                            in >> item;
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),"wrong remaining size for trade add item quantity");
+                                return;
+                            }
+                            quint32 quantity;
+                            in >> quantity;
+                            emit tradeAddTradeObject(item,quantity);
+                        }
+                        break;
+                        //monster
+                        case 0x03:
+                        {
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),"wrong remaining size for trade add monster");
+                                return;
+                            }
+                            quint32 monsterId;
+                            in >> monsterId;
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),"wrong remaining size for trade add monster level");
+                                return;
+                            }
+                            quint8 level;
+                            in >> level;
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),"wrong remaining size for trade add monster gender");
+                                return;
+                            }
+                            quint8 gender;
+                            in >> gender;
+                            emit tradeAddTradeMonster(monsterId,level,gender);
+                        }
+                        break;
+                        default:
+                            parseError(tr("Procotol wrong or corrupted"),"wrong type for trade add");
+                            return;
+                        break;
+                    }
+                }
+                break;
                 //the other player have accepted
                 case 0x0005:
                 {
@@ -1079,6 +1163,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     if(isInTrade)
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("already in trade trade with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
                     }
                     quint8 pseudoSize;
@@ -2206,6 +2295,52 @@ void Api_protocol::tradeFinish()
     }
     isInTrade=false;
     output->packOutcommingData(0x50,0x0004,QByteArray());
+}
+
+void Api_protocol::addTradeCash(const quint64 &cash)
+{
+    if(!isInTrade)
+    {
+        emit newError(tr("Internal problem"),QString("no in trade to send cash"));
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << cash;
+    output->packOutcommingData(0x50,0x0003,outputData);
+}
+
+void Api_protocol::addObject(const quint32 &item,const quint32 &quantity)
+{
+    if(!isInTrade)
+    {
+        emit newError(tr("Internal problem"),QString("no in trade to send object"));
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    out << item;
+    out << quantity;
+    output->packOutcommingData(0x50,0x0003,outputData);
+}
+
+void Api_protocol::addMonster(const quint32 &monsterId)
+{
+    if(!isInTrade)
+    {
+        emit newError(tr("Internal problem"),QString("no in trade to send monster"));
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x03;
+    out << monsterId;
+    output->packOutcommingData(0x50,0x0003,outputData);
 }
 
 //to reset all
