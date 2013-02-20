@@ -4,6 +4,7 @@
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 #include "Chat.h"
+#include "../fight/interface/FightEngine.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -190,8 +191,7 @@ void BaseWindow::load_inventory()
         }
         if(show)
         {
-            QListWidgetItem *item;
-            item=new QListWidgetItem();
+            QListWidgetItem *item=new QListWidgetItem();
             items_to_graphical[i.key()]=item;
             items_graphical[item]=i.key();
             if(DatapackClientLoader::datapackLoader.items.contains(i.key()))

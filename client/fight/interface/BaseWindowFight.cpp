@@ -2,6 +2,7 @@
 #include "../base/interface/DatapackClientLoader.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralStructures.h"
+#include "FightEngine.h"
 #include "ui_BaseWindow.h"
 
 #include <QListWidgetItem>
@@ -579,4 +580,35 @@ void BaseWindow::displayText(const QString &text)
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
     ui->labelFightEnter->setText(text);
     doNextActionTimer.start();
+}
+
+void BaseWindow::tradeAddTradeMonster(const quint32 &monsterId,const quint8 &level,const quint8 &gender)
+{
+    QString genderString;
+    switch(gender)
+    {
+        case 0x01:
+        genderString=tr("Male");
+        break;
+        case 0x02:
+        genderString=tr("Female");
+        break;
+        default:
+        genderString=tr("Unknown");
+        break;
+    }
+    QListWidgetItem *item=new QListWidgetItem();
+    if(CatchChallenger::FightEngine::fightEngine.monsterExtra.contains(monsterId))
+    {
+        item->setIcon(CatchChallenger::FightEngine::fightEngine.monsterExtra[monsterId].front);
+        item->setText(CatchChallenger::FightEngine::fightEngine.monsterExtra[monsterId].name);
+        item->setToolTip(QString("Level: %1, Gender: %2").arg(level).arg(genderString));
+    }
+    else
+    {
+        item->setIcon(QIcon(":/images/monsters/default/front.png"));
+        item->setText(tr("Unknown"));
+        item->setToolTip(QString("Level: %1, Gender: %2").arg(level).arg(genderString));
+    }
+    ui->tradeOtherMonsters->addItem(item);
 }

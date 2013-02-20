@@ -446,6 +446,75 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                     emit destroyObject(itemId,quantity);
                 }
                 break;
+                //Destroy an object
+                case 0x0003:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                    {
+                        parseError("wrong remaining size for trade add type");
+                        return;
+                    }
+                    quint8 type;
+                    in >> type;
+                    switch(type)
+                    {
+                        //cash
+                        case 0x01:
+                        {
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint64)))
+                            {
+                                parseError("wrong remaining size for trade add cash");
+                                return;
+                            }
+                            quint64 cash;
+                            in >> cash;
+                            emit tradeAddTradeCash(cash);
+                        }
+                        break;
+                        //item
+                        case 0x02:
+                        {
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            {
+                                parseError("wrong remaining size for trade add item id");
+                                return;
+                            }
+                            quint32 item;
+                            in >> item;
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            {
+                                parseError("wrong remaining size for trade add item quantity");
+                                return;
+                            }
+                            quint32 quantity;
+                            in >> quantity;
+                            emit tradeAddTradeObject(item,quantity);
+                        }
+                        break;
+                        //monster
+                        case 0x03:
+                        {
+                            if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                            {
+                                parseError("wrong remaining size for trade add monster");
+                                return;
+                            }
+                            quint32 monsterId;
+                            in >> monsterId;
+                            emit tradeAddTradeMonster(monsterId);
+                        }
+                        break;
+                        default:
+                            parseError("wrong type for trade add");
+                            return;
+                        break;
+                    }
+                }
+                break;
+                //trade finished after the accept
+                case 0x0004:
+                    emit tradeFinished();
+                break;
                 //trade canceled after the accept
                 case 0x0005:
                     emit tradeCanceled();
