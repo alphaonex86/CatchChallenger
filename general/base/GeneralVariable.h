@@ -26,6 +26,8 @@
 #define CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER 5
 //32Bits for the monster, 8Bits for the gender, 8Bits for level, 8Bits for the next step
 #define CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT 7
+//if need more than this size and receive less, bug with the preivous message, reset
+#define CATCHCHALLENGER_MIN_PACKET_SIZE 128
 
 #define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]*[0-9a-zA-Z]\\.[a-z]{3,4}$"
 #define DATAPACK_BASE_PATH_MAP "map/"

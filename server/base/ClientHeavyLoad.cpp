@@ -10,10 +10,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include <QTime>
-
-#define WAIT(a) {QTime time;while(time.elapsed()<a){}}
-
 using namespace CatchChallenger;
 
 QList<quint16> ClientHeavyLoad::simplifiedIdList;

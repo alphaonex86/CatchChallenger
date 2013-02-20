@@ -1076,9 +1076,9 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         parseError(tr("Internal error"),QString("request is running, skip this trade exchange"));
                         return;
                     }
-                    if(!isInTrade)
+                    if(isInTrade)
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3, already in trade trade").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        parseError(tr("Procotol wrong or corrupted"),QString("already in trade trade with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
                     }
                     quint8 pseudoSize;
@@ -1298,6 +1298,7 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeT
                         return;
                     }
                     in >> skinInt;
+                    tradeRequestId << queryNumber;
                     emit tradeRequested(pseudo,skinInt);
                 }
                 break;
@@ -2158,7 +2159,7 @@ void Api_protocol::tradeRefused()
 {
     if(tradeRequestId.isEmpty())
     {
-        emit newError(tr("Internal problem"),QString("no trade request"));
+        emit newError(tr("Internal problem"),QString("no trade request to refuse"));
         return;
     }
     QByteArray outputData;
@@ -2173,7 +2174,7 @@ void Api_protocol::tradeAccepted()
 {
     if(tradeRequestId.isEmpty())
     {
-        emit newError(tr("Internal problem"),QString("no trade request"));
+        emit newError(tr("Internal problem"),QString("no trade request to accept"));
         return;
     }
     QByteArray outputData;
