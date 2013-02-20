@@ -36,6 +36,7 @@ public slots:
     void askIfIsReadyToStop();
 
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void sendTradeRequest(const QByteArray &data);
 private:
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
     //have message without reply
@@ -64,6 +65,8 @@ signals:
     //packet parsed (map management)
     void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void tradeCanceled();
+    void tradeAccepted();
     //packet parsed (broadcast)
     void sendPM(const QString &text,const QString &pseudo);
     void sendChatText(const Chat_type &chatType,const QString &text);

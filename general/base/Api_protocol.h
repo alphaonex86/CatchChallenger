@@ -92,6 +92,10 @@ protected:
 
     //teleport list query id
     QList<quint8> teleportList;
+
+    //trade
+    QList<quint32> tradeRequestId;
+    bool isInTrade;
 signals:
     void newError(const QString &error,const QString &detailedError);
 
@@ -143,6 +147,11 @@ signals:
     void haveShopList(const QList<ItemToSellOrBuy> &items);
     void haveBuyObject(const BuyStat &stat,const quint32 &newPrice);
     void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
+
+    //trade
+    void tradeRequested(const QString &pseudo,const quint8 &skinInt);
+    void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
+    void tradeCanceledByOther();
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -156,6 +165,12 @@ public slots:
     //crafting
     void useRecipe(const quint32 &recipeId);
     void addRecipe(const quint32 &recipeId);
+
+    //trade
+    void tradeRefused();
+    void tradeAccepted();
+    void tradeCanceled();
+    void tradeFinish();
 
     //inventory
     void destroyObject(const quint32 &object,const quint32 &quantity=1);

@@ -60,6 +60,8 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
     sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
     sizeMultipleCodePacketClientToServer[0x50][0x0002]=8;
+    sizeMultipleCodePacketClientToServer[0x50][0x0004]=0;
+    sizeMultipleCodePacketClientToServer[0x50][0x0005]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0002]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0003]=1;
     //define the size of the reply
@@ -753,7 +755,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     else
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
+        if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
@@ -1044,6 +1046,11 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return false;
         }
+        if(mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
         #endif
         if(!sizeMultipleCodePacketClientToServer.contains(mainCodeType))
         {
@@ -1103,6 +1110,11 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
+        if(mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return false;
         }
         #endif
@@ -1176,6 +1188,11 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return false;
         }
+        if(mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            return false;
+        }
         #endif
         if(!sizeOnlyMainCodePacketClientToServer.contains(mainCodeType))
         {
@@ -1207,6 +1224,11 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return false;
         }
+        if(mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            return false;
+        }
         #endif
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
@@ -1236,8 +1258,6 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
 
 bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
-    emit newOutputQuery(mainCodeType,queryNumber);
-
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
     out << mainCodeType;
@@ -1249,6 +1269,11 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return false;
+        }
+        if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return false;
         }
         #endif
@@ -1282,6 +1307,11 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return false;
         }
+        if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            return false;
+        }
         #endif
         if(!sizeOnlyMainCodePacketServerToClient.contains(mainCodeType))
         {
@@ -1306,13 +1336,12 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         }
     }
 
+    emit newOutputQuery(mainCodeType,queryNumber);
     return internalPackOutcommingData(block+data);
 }
 
 bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data)
 {
-    emit newOutputQuery(mainCodeType,subCodeType,queryNumber);
-
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
     out << mainCodeType;
@@ -1325,6 +1354,11 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
+        if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return false;
         }
         #endif
@@ -1383,9 +1417,14 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     else
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
+        if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
             DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            return false;
+        }
+        if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
+        {
+            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return false;
         }
         #endif
@@ -1442,6 +1481,8 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         }
     }
 
+    emit newOutputQuery(mainCodeType,subCodeType,queryNumber);
+    //doit étre bloquer avant, car e main code devrai pas avoir de sub code
     return internalPackOutcommingData(block+data);
 }
 
