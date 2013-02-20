@@ -64,12 +64,14 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketClientToServer[0x50][0x0005]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0002]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0003]=1;
+    sizeMultipleCodePacketServerToClient[0xD0][0x0006]=0;
     //define the size of the reply
     /** \note previously send by: sizeMultipleCodePacketServerToClient */
     replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
     /** \note previously send by: sizeMultipleCodePacketClientToServer */
     replySizeMultipleCodePacketServerToClient[0x10][0x0006]=1;
     replySizeMultipleCodePacketServerToClient[0x10][0x0007]=1;
+    replySizeMultipleCodePacketServerToClient[0x80][0x0001]=1;
 
     compressionMultipleCodePacketClientToServer[0x02] << 0x000C;
     //define the compression of the reply
@@ -79,7 +81,7 @@ void ProtocolParsing::initialiseTheVariable()
 
     //main code for query with reply
     ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x10 << 0x20 << 0x30;
-    ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x90 << 0xA0;
+    ProtocolParsing::mainCode_IsQueryServerToClient << 0x79 << 0x80 << 0x90 << 0xA0;
 
     //reply code
     ProtocolParsing::replyCodeServerToClient=0xC1;
@@ -489,6 +491,30 @@ void ProtocolParsingInput::parseIncommingData()
                 }
                 else //if need more data
                 {
+                    if(socket->bytesAvailable()<CATCHCHALLENGER_MIN_PACKET_SIZE && (dataSize-data.size())>CATCHCHALLENGER_MIN_PACKET_SIZE)
+                    {
+                        if(!need_query_number)
+                        {
+                            if(!need_subCodeType)
+                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
+                            else
+                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                        }
+                        else
+                        {
+                            if(!is_reply)
+                            {
+                                if(!need_subCodeType)
+                                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
+                                else
+                                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                            }
+                            else
+                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                        }
+                        dataClear();
+                        return;
+                    }
                     RXSize+=socket->bytesAvailable();
                     data.append(socket->readAll());
                     #ifdef PROTOCOLPARSINGDEBUG
@@ -654,7 +680,6 @@ void ProtocolParsingInput::parseIncommingData()
                     parseReplyData(mainCodeType,subCodeType,queryNumber,data);
                 }
             }
-
         }
         dataClear();
     }
@@ -666,6 +691,7 @@ void ProtocolParsingInput::reset()
     replySize.clear();
     reply_mainCodeType.clear();
     reply_subCodeType.clear();
+
     dataClear();
 }
 
@@ -1522,4 +1548,8 @@ void ProtocolParsingOutput::reset()
 {
     TXSize=0;
     replySize.clear();
+    replyCompression.clear();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    queryReceived.clear();
+    #endif
 }

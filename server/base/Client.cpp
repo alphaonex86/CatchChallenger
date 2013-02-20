@@ -104,6 +104,8 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     //connect for trade
     connect(localClientHandler,	SIGNAL(sendTradeRequest(QByteArray)),	clientNetworkRead,SLOT(sendTradeRequest(QByteArray)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeAccepted()),	localClientHandler,SLOT(tradeAccepted()),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeCanceled()),	localClientHandler,SLOT(tradeCanceled()),Qt::QueuedConnection);
 
     //connect the player information
     connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
@@ -314,7 +316,7 @@ void Client::normalOutput(QString message)
     if(!player_informations.is_logged)
         DebugClass::debugConsole(QString("%1:%2 %3").arg(remote_ip).arg(port).arg(message));
     else
-        DebugClass::debugConsole(QString("%1: %2").arg(player_informations.public_and_private_informations.public_informations.simplifiedId).arg(message));
+        DebugClass::debugConsole(QString("%1: %2").arg(player_informations.public_and_private_informations.public_informations.pseudo).arg(message));
 }
 
 void Client::send_player_informations()
