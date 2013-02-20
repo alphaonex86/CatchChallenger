@@ -1220,6 +1220,29 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     }
                 }
                 break;
+                //the other player have finished
+                case 0x0007:
+                {
+                    if(!isInTrade)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("not in trade with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    emit tradeFinishedByOther();
+                }
+                break;
+                //the server have validated the transaction
+                case 0x0008:
+                {
+                    if(!isInTrade)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("not in trade with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    isInTrade=false;
+                    emit tradeValidatedByTheServer();
+                }
+                break;
                 //random seeds as input
                 case 0x0009:
                 {
@@ -2299,6 +2322,11 @@ void Api_protocol::tradeFinish()
 
 void Api_protocol::addTradeCash(const quint64 &cash)
 {
+    if(cash==0)
+    {
+        emit newError(tr("Internal problem"),QString("can't send 0 for the cash"));
+        return;
+    }
     if(!isInTrade)
     {
         emit newError(tr("Internal problem"),QString("no in trade to send cash"));
@@ -2314,6 +2342,11 @@ void Api_protocol::addTradeCash(const quint64 &cash)
 
 void Api_protocol::addObject(const quint32 &item,const quint32 &quantity)
 {
+    if(quantity==0)
+    {
+        emit newError(tr("Internal problem"),QString("can't send a quantity of 0"));
+        return;
+    }
     if(!isInTrade)
     {
         emit newError(tr("Internal problem"),QString("no in trade to send object"));

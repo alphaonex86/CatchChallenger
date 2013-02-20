@@ -1329,14 +1329,16 @@ void LocalClientHandler::tradeFinished()
 
         otherPlayerTrade->resetTheTrade();
         resetTheTrade();
+        emit otherPlayerTrade->sendPacket(0xD0,0x0008);
+        emit sendPacket(0xD0,0x0008);
     }
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message("Trade freezed");
         #endif
+        emit otherPlayerTrade->sendPacket(0xD0,0x0007);
     }
-    emit otherPlayerTrade->sendPacket(0xD0,0x0007);
 }
 
 void LocalClientHandler::resetTheTrade()
