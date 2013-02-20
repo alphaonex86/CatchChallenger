@@ -57,6 +57,11 @@ public:
         MoveType_Enter,
         MoveType_Dead
     };
+    enum TradeOtherStat
+    {
+        TradeOtherStat_InWait,
+        TradeOtherStat_Accepted
+    };
 protected:
     void changeEvent(QEvent *e);
 public slots:
@@ -113,6 +118,10 @@ private slots:
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const ObjectUsage &objectUsage);
+    //trade
+    void tradeRequested(const QString &pseudo, const quint8 &skinInt);
+    void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
+    void tradeCanceledByOther();
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
@@ -131,6 +140,25 @@ private slots:
 
     //bot
     void goToBotStep(const quint8 &step);
+
+    //fight
+    void fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void on_pushButtonFightEnterNext_clicked();
+    void moveFightMonsterBottom();
+    void updateCurrentMonsterInformation();
+    void moveFightMonsterTop();
+    void updateOtherMonsterInformation();
+    void on_toolButtonFightQuit_clicked();
+    void on_pushButtonFightAttack_clicked();
+    void on_pushButtonFightMonster_clicked();
+    void on_pushButtonFightAttackConfirmed_clicked();
+    void on_pushButtonFightReturn_clicked();
+    void on_listWidgetFightAttack_itemSelectionChanged();
+    void finalFightTextQuit();
+    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    void doNextAction();
+    void displayAttack();
+    void displayText(const QString &text);
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
@@ -160,25 +188,10 @@ private slots:
     void on_shopBuy_clicked();
     void on_pushButton_interface_monsters_clicked();
     void on_toolButton_monster_list_quit_clicked();
-
-    //fight
-    void fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
-    void on_pushButtonFightEnterNext_clicked();
-    void moveFightMonsterBottom();
-    void updateCurrentMonsterInformation();
-    void moveFightMonsterTop();
-    void updateOtherMonsterInformation();
-    void on_toolButtonFightQuit_clicked();
-    void on_pushButtonFightAttack_clicked();
-    void on_pushButtonFightMonster_clicked();
-    void on_pushButtonFightAttackConfirmed_clicked();
-    void on_pushButtonFightReturn_clicked();
-    void on_listWidgetFightAttack_itemSelectionChanged();
-    void finalFightTextQuit();
-    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    void doNextAction();
-    void displayAttack();
-    void displayText(const QString &text);
+    void on_tradePlayerCash_editingFinished();
+    void on_toolButton_bioscan_quit_clicked();
+    void on_tradeCancel_clicked();
+    void on_tradeValidate_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -258,6 +271,9 @@ private:
     bool escape,escapeSuccess;
     bool haveDisplayCurrentAttackSuccess;
     bool haveDisplayOtherAttackSuccess;
+
+    //trade
+    TradeOtherStat tradeOtherStat;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

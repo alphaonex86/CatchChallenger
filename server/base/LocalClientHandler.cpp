@@ -20,10 +20,32 @@ LocalClientHandler::LocalClientHandler()
     stepFight_Grass=0;
     stepFight_Water=0;
     stepFight_Cave=0;
+    otherPlayerTrade=NULL;
+    tradeIsValidated=false;
 }
 
 LocalClientHandler::~LocalClientHandler()
 {
+}
+
+bool LocalClientHandler::getInTrade()
+{
+    return (otherPlayerTrade!=NULL);
+}
+
+void LocalClientHandler::registerTradeRequest(LocalClientHandler * otherPlayerTrade)
+{
+    if(getInTrade())
+    {
+        emit message("Already in trade, internal error");
+        return;
+    }
+    this->otherPlayerTrade=otherPlayerTrade;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << otherPlayerTrade->player_informations->public_and_private_informations.public_informations.skinId;
+    emit sendTradeRequest(otherPlayerTrade->player_informations->rawPseudo+outputData);
 }
 
 bool LocalClientHandler::checkCollision()
@@ -41,6 +63,7 @@ bool LocalClientHandler::checkCollision()
 
 void LocalClientHandler::extraStop()
 {
+    tradeCanceled();
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
 
     if(!player_informations->is_logged || player_informations->isFake)
@@ -530,6 +553,31 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("Wrong arguments number for the command, usage: /tp player1 to player2");
             return;
         }
+    }
+    else if(command=="trade")
+    {
+        if(!playerByPseudo.contains(extraText))
+        {
+            emit receiveSystemText(QString("%1 is not connected").arg(extraText));
+            return;
+        }
+        if(player_informations->public_and_private_informations.public_informations.pseudo==extraText)
+        {
+            emit receiveSystemText(QString("You can't trade with yourself").arg(extraText));
+            return;
+        }
+        if(getInTrade())
+        {
+            emit receiveSystemText(QString("you are already in trade"));
+            return;
+        }
+        if(playerByPseudo[extraText]->getInTrade())
+        {
+            emit receiveSystemText(QString("%1 is already in trade").arg(extraText));
+            return;
+        }
+        otherPlayerTrade=playerByPseudo[extraText];
+        otherPlayerTrade->registerTradeRequest(this);
     }
 }
 
@@ -1202,4 +1250,49 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     removeObject(objectId,quantity);
     addCash(realPrice*quantity);
     emit postReply(query_id,outputData);
+}
+
+void LocalClientHandler::tradeCanceled()
+{
+    internalTradeCanceled(true);
+    if(otherPlayerTrade!=NULL)
+        otherPlayerTrade->internalTradeCanceled(false);
+}
+
+void LocalClientHandler::tradeAccepted()
+{
+    internalTradeCanceled(true);
+    if(otherPlayerTrade!=NULL)
+        otherPlayerTrade->internalTradeAccepted(false);
+}
+
+void LocalClientHandler::internalTradeCanceled(const bool &send)
+{
+    if(otherPlayerTrade==NULL)
+    {
+        emit message("Trade already canceled");
+        return;
+    }
+    tradeIsValidated=false;
+    otherPlayerTrade=NULL;
+    if(send)
+        emit sendPacket(0xD0,0x0006);
+}
+
+void LocalClientHandler::internalTradeAccepted(const bool &send)
+{
+    if(otherPlayerTrade==NULL)
+    {
+        emit message("Can't accept trade if not in trade");
+        return;
+    }
+    tradeIsValidated=true;
+    if(send)
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << otherPlayerTrade->player_informations->public_and_private_informations.public_informations.skinId;
+        emit sendPacket(0xD0,0x0005,otherPlayerTrade->player_informations->rawPseudo+outputData);
+    }
 }

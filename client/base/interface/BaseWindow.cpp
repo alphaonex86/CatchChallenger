@@ -105,6 +105,8 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(plant_collected(CatchChallenger::Plant_collect)),this,SLOT(plant_collected(CatchChallenger::Plant_collect)));
     //crafting
     connect(CatchChallenger::Api_client_real::client,SIGNAL(recipeUsed(RecipeUsage)),this,SLOT(recipeUsed(RecipeUsage)));
+    //trade
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeRequested(QString,quint8)),this,SLOT(tradeRequested(QString,quint8)));
     //inventory
     connect(CatchChallenger::Api_client_real::client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
     //shop
@@ -146,6 +148,65 @@ BaseWindow::~BaseWindow()
     delete ui;
     delete MapController::mapController;
     delete Chat::chat;
+}
+
+void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)
+{
+    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Trade request"),tr("Do you accept the trade with <b>%1</b>?"),QMessageBox::Yes|QMessageBox::No);
+    if(button!=QMessageBox::Yes)
+    {
+        CatchChallenger::Api_client_real::client->tradeRefused();
+        return;
+    }
+    CatchChallenger::Api_client_real::client->tradeAccepted();
+    tradeAcceptedByOther(pseudo,skinInt);
+}
+
+void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt)
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_trade);
+    //reset the current player info
+    ui->tradePlayerCash->setMinimum(0);
+    ui->tradePlayerCash->setValue(0);
+    ui->tradePlayerItems->clear();
+    ui->tradePlayerMonsters->clear();
+    ui->tradePlayerCash->setEnabled(true);
+    ui->tradePlayerItems->setEnabled(true);
+    ui->tradePlayerMonsters->setEnabled(true);
+    ui->tradeAddItem->setEnabled(true);
+    ui->tradeAddMonster->setEnabled(true);
+    ui->tradeValidate->setEnabled(true);
+
+    skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
+    QPixmap otherFrontImage;
+    //front image
+    if(skinInt<skinFolderList.size())
+    {
+        otherFrontImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinInt)+"/front.png");
+        if(otherFrontImage.isNull())
+        {
+            otherFrontImage=QPixmap(":/images/player_default/front.png");
+            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinInt)+"/front.png";
+        }
+    }
+    else
+    {
+        otherFrontImage=QPixmap(":/images/player_default/front.png");
+        qDebug() << "The skin id: "+QString::number(skinInt)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into tradeRequested()";
+    }
+
+    //reset the other player info
+    ui->tradeOtherImage->setPixmap(otherFrontImage);
+    ui->tradeOtherPseudo->setText(pseudo);
+    ui->tradeOtherCash->setValue(0);
+    ui->tradeOtherItems->clear();
+    ui->tradeOtherMonsters->clear();
+    ui->tradeOtherStat->setText(tr("The other player have not validation their selection"));
+}
+
+void BaseWindow::tradeCanceledByOther()
+{
+    showTip(tr("The other player have canceled your trade request"));
 }
 
 QString BaseWindow::lastLocation() const
@@ -1207,12 +1268,14 @@ void BaseWindow::addCash(const quint32 &cash)
 {
     this->cash+=cash;
     ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+    ui->tradePlayerCash->setMaximum(this->cash);
 }
 
 void BaseWindow::removeCash(const quint32 &cash)
 {
     this->cash-=cash;
     ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+    ui->tradePlayerCash->setMaximum(this->cash);
 }
 
 void BaseWindow::on_pushButton_interface_monsters_clicked()
@@ -1223,4 +1286,36 @@ void BaseWindow::on_pushButton_interface_monsters_clicked()
 void BaseWindow::on_toolButton_monster_list_quit_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void CatchChallenger::BaseWindow::on_tradePlayerCash_editingFinished()
+{
+    ui->tradePlayerCash->setMinimum(ui->tradePlayerCash->value());
+}
+
+void CatchChallenger::BaseWindow::on_toolButton_bioscan_quit_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void CatchChallenger::BaseWindow::on_tradeCancel_clicked()
+{
+    CatchChallenger::Api_client_real::client->tradeCanceled();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void CatchChallenger::BaseWindow::on_tradeValidate_clicked()
+{
+    CatchChallenger::Api_client_real::client->tradeFinish();
+    if(tradeOtherStat==TradeOtherStat_Accepted)
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
+    else
+    {
+        ui->tradePlayerCash->setEnabled(false);
+        ui->tradePlayerItems->setEnabled(false);
+        ui->tradePlayerMonsters->setEnabled(false);
+        ui->tradeAddItem->setEnabled(false);
+        ui->tradeAddMonster->setEnabled(false);
+        ui->tradeValidate->setEnabled(false);
+    }
 }

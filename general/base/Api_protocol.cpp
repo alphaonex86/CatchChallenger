@@ -1068,6 +1068,69 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     emit remove_to_inventory(items);
                 }
                 break;
+                //the other player have accepted
+                case 0x0005:
+                {
+                    if(!tradeRequestId.empty())
+                    {
+                        parseError(tr("Internal error"),QString("request is running, skip this trade exchange"));
+                        return;
+                    }
+                    if(!isInTrade)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3, already in trade trade").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint8 pseudoSize;
+                    in >> pseudoSize;
+                    if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(pseudoSize)
+                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                    QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                    in.device()->seek(in.device()->pos()+rawText.size());
+                    if(pseudo.isEmpty())
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(QString(rawText.toHex()))
+                                      .arg(rawText.size())
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    quint8 skinId;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> skinId;
+                    isInTrade=true;
+                    emit tradeAcceptedByOther(pseudo,skinId);
+                }
+                break;
+                //the other player have canceled
+                case 0x0006:
+                {
+                    isInTrade=false;
+                    emit tradeCanceledByOther();
+                    if(!tradeRequestId.empty())
+                    {
+                        tradeCanceled();
+                        return;
+                    }
+                }
+                break;
                 //random seeds as input
                 case 0x0009:
                 {
@@ -1181,6 +1244,61 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeT
 
                     teleportList << queryNumber;
                     emit teleportTo(mapId,x,y,direction);
+                }
+                break;
+                default:
+                parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                return;
+            }
+        }
+        break;
+        case 0x80:
+        {
+            switch(subCodeType)
+            {
+                //Another player request a trade
+                case 0x0001:
+                {
+                    if(!tradeRequestId.isEmpty() || isInTrade)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("Already on trade"));
+                        return;
+                    }
+                    quint8 pseudoSize;
+                    in >> pseudoSize;
+                    if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(pseudoSize)
+                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                    QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                    in.device()->seek(in.device()->pos()+rawText.size());
+                    if(pseudo.isEmpty())
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(QString(rawText.toHex()))
+                                      .arg(rawText.size())
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    quint8 skinInt;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> skinInt;
+                    emit tradeRequested(pseudo,skinInt);
                 }
                 break;
                 default:
@@ -2035,6 +2153,60 @@ void Api_protocol::addRecipe(const quint32 &recipeId)
     player_informations.recipes << recipeId;
 }
 
+//trade
+void Api_protocol::tradeRefused()
+{
+    if(tradeRequestId.isEmpty())
+    {
+        emit newError(tr("Internal problem"),QString("no trade request"));
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    output->postReplyData(tradeRequestId.first(),outputData);
+    tradeRequestId.removeFirst();
+}
+
+void Api_protocol::tradeAccepted()
+{
+    if(tradeRequestId.isEmpty())
+    {
+        emit newError(tr("Internal problem"),QString("no trade request"));
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    output->postReplyData(tradeRequestId.first(),outputData);
+    tradeRequestId.removeFirst();
+    isInTrade=true;
+}
+
+void Api_protocol::tradeCanceled()
+{
+    if(!isInTrade)
+    {
+        emit newError(tr("Internal problem"),QString("in not in trade"));
+        return;
+    }
+    isInTrade=false;
+    output->packOutcommingData(0x50,0x0005,QByteArray());
+}
+
+void Api_protocol::tradeFinish()
+{
+    if(!isInTrade)
+    {
+        emit newError(tr("Internal problem"),QString("in not in trade"));
+        return;
+    }
+    isInTrade=false;
+    output->packOutcommingData(0x50,0x0004,QByteArray());
+}
+
 //to reset all
 void Api_protocol::resetAll()
 {
@@ -2049,6 +2221,8 @@ void Api_protocol::resetAll()
     player_informations.items.clear();
     player_informations.reputation.clear();
     haveShopAction=false;
+    isInTrade=false;
+    tradeRequestId.clear();
 
     //to send trame
     lastQueryNumber=1;
