@@ -8,7 +8,6 @@
 #include <QStringList>
 
 #include "../../general/base/GeneralStructures.h"
-#include "../../fight/interface/FightEngine.h"
 
 #include "tileset.h"
 

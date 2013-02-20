@@ -2,6 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
+#include "../fight/interface/FightEngine.h"
 #include "DatapackClientLoader.h"
 #include "MapController.h"
 #include "Chat.h"
@@ -109,6 +110,9 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeRequested(QString,quint8)),this,SLOT(tradeRequested(QString,quint8)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAcceptedByOther(QString,quint8)),this,SLOT(tradeAcceptedByOther(QString,quint8)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeCanceledByOther()),this,SLOT(tradeCanceledByOther()));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeCash(quint64)),this,SLOT(tradeAddTradeCash(quint64)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeObject(quint32,quint32)),this,SLOT(tradeAddTradeObject(quint32,quint32)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeMonster(quint32,quint8,quint8)),this,SLOT(tradeAddTradeMonster(quint32,quint8,quint8)));
     //inventory
     connect(CatchChallenger::Api_client_real::client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
     //shop
@@ -210,6 +214,41 @@ void BaseWindow::tradeCanceledByOther()
 {
     showTip(tr("The other player have canceled your trade request"));
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void BaseWindow::tradeAddTradeCash(const quint64 &cash)
+{
+    ui->tradeOtherCash->setValue(ui->tradeOtherCash->value()+cash);
+}
+
+void BaseWindow::tradeAddTradeObject(const quint32 &item,const quint32 &quantity)
+{
+    if(tradeOtherObjects.contains(item))
+        tradeOtherObjects[item]+=quantity;
+    else
+        tradeOtherObjects[item]=quantity;
+    ui->tradeOtherItems->clear();
+    QHashIterator<quint32,quint32> i(tradeOtherObjects);
+    while (i.hasNext()) {
+        i.next();
+        QListWidgetItem *item=new QListWidgetItem();
+        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+            if(i.value()>1)
+                item->setText(QString::number(i.value()));
+            item->setToolTip(DatapackClientLoader::datapackLoader.items[i.key()].name);
+        }
+        else
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+            if(i.value()>1)
+                item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
+            else
+                item->setText(QString("id: %1").arg(i.key()));
+        }
+        ui->tradeOtherItems->addItem(item);
+    }
 }
 
 QString BaseWindow::lastLocation() const
@@ -1293,6 +1332,9 @@ void BaseWindow::on_toolButton_monster_list_quit_clicked()
 
 void CatchChallenger::BaseWindow::on_tradePlayerCash_editingFinished()
 {
+    if(ui->tradePlayerCash->value()==ui->tradePlayerCash->minimum())
+        return;
+    CatchChallenger::Api_client_real::client->addTradeCash(ui->tradePlayerCash->value()-ui->tradePlayerCash->minimum());
     ui->tradePlayerCash->setMinimum(ui->tradePlayerCash->value());
 }
 

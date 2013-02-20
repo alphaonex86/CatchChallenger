@@ -51,6 +51,26 @@ void LocalClientHandler::registerTradeRequest(LocalClientHandler * otherPlayerTr
     emit sendTradeRequest(otherPlayerTrade->player_informations->rawPseudo+outputData);
 }
 
+bool LocalClientHandler::getIsFreezed()
+{
+    return tradeIsFreezed;
+}
+
+quint64 LocalClientHandler::getTradeCash()
+{
+    return tradeCash;
+}
+
+QHash<quint32,quint32> LocalClientHandler::getTradeObjects()
+{
+    return tradeObjects;
+}
+
+QList<PlayerMonster> LocalClientHandler::getTradeMonster()
+{
+    return tradeMonster;
+}
+
 bool LocalClientHandler::checkCollision()
 {
     if(map->parsed_layer.walkable==NULL)
@@ -1269,6 +1289,213 @@ void LocalClientHandler::tradeAccepted()
     internalTradeAccepted(false);
 }
 
+void LocalClientHandler::tradeFinished()
+{
+    if(!tradeIsValidated)
+    {
+        emit error("Trade not valid");
+        return;
+    }
+    if(tradeIsFreezed)
+    {
+        emit error("Trade is freezed, unable to re-free");
+        return;
+    }
+    tradeIsFreezed=true;
+    if(getIsFreezed() && getIsFreezed())
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message("Trade finished");
+        #endif
+        //cash
+        otherPlayerTrade->addCash(tradeCash);
+        addCash(otherPlayerTrade->getTradeCash());
+
+        //object
+        QHashIterator<quint32,quint32> i(tradeObjects);
+        while (i.hasNext()) {
+            i.next();
+            otherPlayerTrade->addObject(i.key(),i.value());
+        }
+        QHashIterator<quint32,quint32> j(otherPlayerTrade->getTradeObjects());
+        while (j.hasNext()) {
+            j.next();
+            addObject(j.key(),j.value());
+        }
+
+        //monster
+        otherPlayerTrade->addExistingMonster(tradeMonster);
+        addExistingMonster(otherPlayerTrade->tradeMonster);
+
+        otherPlayerTrade->resetTheTrade();
+        resetTheTrade();
+    }
+    else
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message("Trade freezed");
+        #endif
+    }
+    emit otherPlayerTrade->sendPacket(0xD0,0x0007);
+}
+
+void LocalClientHandler::resetTheTrade()
+{
+    //reset out of trade
+    tradeIsValidated=false;
+    otherPlayerTrade=NULL;
+    tradeCash=0;
+    tradeObjects.clear();
+    tradeMonster.clear();
+    updateCanDoFight();
+}
+
+void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
+{
+    int index=0;
+    while(index<tradeMonster.size())
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE monster SET player=%2 WHERE id=%1;")
+                             .arg(tradeMonster.at(index).id)
+                             .arg(player_informations->id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE monster SET player=%2 WHERE id=%1;")
+                             .arg(tradeMonster.at(index).id)
+                             .arg(player_informations->id)
+                             );
+            break;
+        }
+        index++;
+    }
+    player_informations->public_and_private_informations.playerMonster << tradeMonster;
+}
+
+void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
+{
+    if(!tradeIsValidated)
+    {
+        emit error("Trade not valid");
+        return;
+    }
+    if(tradeIsFreezed)
+    {
+        emit error("Trade is freezed, unable to change something");
+        return;
+    }
+    if(cash==0)
+    {
+        emit error("Can't add 0 cash!");
+        return;
+    }
+    if(cash>player_informations->public_and_private_informations.cash)
+    {
+        emit error("Trade cash superior to the actual cash");
+        return;
+    }
+    tradeCash+=cash;
+    player_informations->public_and_private_informations.cash-=cash;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << cash;
+    emit otherPlayerTrade->sendPacket(0xD0,0x0004,outputData);
+}
+
+void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &quantity)
+{
+    if(!tradeIsValidated)
+    {
+        emit error("Trade not valid");
+        return;
+    }
+    if(tradeIsFreezed)
+    {
+        emit error("Trade is freezed, unable to change something");
+        return;
+    }
+    if(quantity==0)
+    {
+        emit error("Can add 0 of quantity");
+        return;
+    }
+    if(quantity>objectQuantity(item))
+    {
+        emit error("Trade object quantity superior to the actual quantity");
+        return;
+    }
+    if(tradeObjects.contains(item))
+        tradeObjects[item]+=quantity;
+    else
+        tradeObjects[item]=quantity;
+    player_informations->public_and_private_informations.items[item]-=quantity;
+    if(player_informations->public_and_private_informations.items[item]==0)
+        player_informations->public_and_private_informations.items.remove(item);
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    out << item;
+    out << quantity;
+    emit otherPlayerTrade->sendPacket(0xD0,0x0004,outputData);
+}
+
+void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
+{
+    if(!tradeIsValidated)
+    {
+        emit error("Trade not valid");
+        return;
+    }
+    if(tradeIsFreezed)
+    {
+        emit error("Trade is freezed, unable to change something");
+        return;
+    }
+    if(player_informations->public_and_private_informations.playerMonster.size()<=1)
+    {
+        emit error("Unable to trade your last monster");
+        return;
+    }
+    if(isInFight())
+    {
+        emit error("You can't trade monster because you are in fight");
+        return;
+    }
+    int index=0;
+    while(index<player_informations->public_and_private_informations.playerMonster.size())
+    {
+        if(player_informations->public_and_private_informations.playerMonster.at(index).id==monsterId)
+        {
+            if(remainMonstersToFight(monsterId))
+            {
+                emit error("You can't trade monster because you are in fight");
+                return;
+            }
+            tradeMonster << player_informations->public_and_private_informations.playerMonster.at(index);
+            player_informations->public_and_private_informations.playerMonster.removeAt(index);
+            updateCanDoFight();
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)0x03;
+            out << (quint32)tradeMonster.last().monster;
+            out << (quint8)tradeMonster.last().level;
+            out << (quint8)tradeMonster.last().gender;
+            emit otherPlayerTrade->sendPacket(0xD0,0x0004,outputData);
+            return;
+        }
+        index++;
+    }
+    emit error("Trade monster not found");
+}
+
 void LocalClientHandler::internalTradeCanceled(const bool &send)
 {
     if(otherPlayerTrade==NULL)
@@ -1279,6 +1506,23 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message("Trade canceled");
     #endif
+    if(tradeIsValidated)
+    {
+        player_informations->public_and_private_informations.cash+=tradeCash;
+        tradeCash=0;
+        QHashIterator<quint32,quint32> i(tradeObjects);
+        while (i.hasNext()) {
+            i.next();
+            if(player_informations->public_and_private_informations.items.contains(i.key()))
+                player_informations->public_and_private_informations.items[i.key()]+=i.value();
+            else
+                player_informations->public_and_private_informations.items[i.key()]=i.value();
+        }
+        tradeObjects.clear();
+        player_informations->public_and_private_informations.playerMonster << tradeMonster;
+        tradeMonster.clear();
+        updateCanDoFight();
+    }
     otherPlayerTrade=NULL;
     if(send)
     {
@@ -1306,6 +1550,8 @@ void LocalClientHandler::internalTradeAccepted(const bool &send)
     emit message("Trade accepted");
     #endif
     tradeIsValidated=true;
+    tradeIsFreezed=false;
+    tradeCash=0;
     if(send)
     {
         QByteArray outputData;

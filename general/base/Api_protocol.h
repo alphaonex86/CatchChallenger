@@ -152,6 +152,9 @@ signals:
     void tradeRequested(const QString &pseudo,const quint8 &skinInt);
     void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
     void tradeCanceledByOther();
+    void tradeAddTradeCash(const quint64 &cash);
+    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
+    void tradeAddTradeMonster(const quint32 &monsterId,const quint8 &level,const quint8 &gender);
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -171,6 +174,9 @@ public slots:
     void tradeAccepted();
     void tradeCanceled();
     void tradeFinish();
+    void addTradeCash(const quint64 &cash);
+    void addObject(const quint32 &item,const quint32 &quantity);
+    void addMonster(const quint32 &monsterId);
 
     //inventory
     void destroyObject(const quint32 &object,const quint32 &quantity=1);

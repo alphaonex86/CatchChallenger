@@ -3359,6 +3359,9 @@ padding:6px 6px 6px 14px;
              <height>80</height>
             </size>
            </property>
+           <property name="movement">
+            <enum>QListView::Static</enum>
+           </property>
           </widget>
          </item>
          <item>
@@ -3517,7 +3520,14 @@ border-image: url(:/images/empty.png);
               </layout>
              </item>
              <item>
-              <widget class="QListWidget" name="tradePlayerItems"/>
+              <widget class="QListWidget" name="tradePlayerItems">
+               <property name="movement">
+                <enum>QListView::Static</enum>
+               </property>
+               <property name="viewMode">
+                <enum>QListView::IconMode</enum>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QPushButton" name="tradeAddItem">
@@ -3527,7 +3537,14 @@ border-image: url(:/images/empty.png);
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="tradePlayerMonsters"/>
+              <widget class="QListWidget" name="tradePlayerMonsters">
+               <property name="movement">
+                <enum>QListView::Static</enum>
+               </property>
+               <property name="viewMode">
+                <enum>QListView::IconMode</enum>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QPushButton" name="tradeAddMonster">
@@ -3641,10 +3658,24 @@ border-image: url(:/images/empty.png);
               </layout>
              </item>
              <item>
-              <widget class="QListWidget" name="tradeOtherItems"/>
+              <widget class="QListWidget" name="tradeOtherItems">
+               <property name="movement">
+                <enum>QListView::Static</enum>
+               </property>
+               <property name="viewMode">
+                <enum>QListView::IconMode</enum>
+               </property>
+              </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="tradeOtherMonsters"/>
+              <widget class="QListWidget" name="tradeOtherMonsters">
+               <property name="movement">
+                <enum>QListView::Static</enum>
+               </property>
+               <property name="viewMode">
+                <enum>QListView::IconMode</enum>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QLabel" name="tradeOtherStat">

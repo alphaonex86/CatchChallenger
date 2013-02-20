@@ -31,6 +31,12 @@ public:
     virtual ~LocalClientHandler();
     inline bool getInTrade();
     void registerTradeRequest(LocalClientHandler * otherPlayerTrade);
+    bool getIsFreezed();
+    quint64 getTradeCash();
+    QHash<quint32,quint32> getTradeObjects();
+    QList<PlayerMonster> getTradeMonster();
+    void resetTheTrade();
+    void addExistingMonster(QList<PlayerMonster> tradeMonster);
 private:
     bool checkCollision();
     void getRandomNumberIfNeeded();
@@ -42,6 +48,10 @@ private:
     //trade
     LocalClientHandler * otherPlayerTrade;
     bool tradeIsValidated;
+    bool tradeIsFreezed;
+    quint64 tradeCash;
+    QHash<quint32,quint32> tradeObjects;
+    QList<PlayerMonster> tradeMonster;
 
     //fight
     quint8 selectedMonster;
@@ -55,6 +65,8 @@ private:
     void applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
     void applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect);
     void applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect);
+    bool isInFight();
+    bool remainMonstersToFight(const quint32 &monsterId);
     void generateOtherAttack();
     void updateCanDoFight();
     bool tryEscapeInternal();
@@ -103,6 +115,10 @@ public slots:
     //trade
     void tradeCanceled();
     void tradeAccepted();
+    void tradeFinished();
+    void tradeAddTradeCash(const quint64 &cash);
+    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
+    void tradeAddTradeMonster(const quint32 &monsterId);
 private slots:
     virtual void extraStop();
     void savePosition();
