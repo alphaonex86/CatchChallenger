@@ -128,6 +128,7 @@ void BaseWindow::have_current_player_info()
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     cash=informations.cash;
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
+    ui->tradePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
     DebugClass::debugConsole(QString("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
     updatePlayerImage();
@@ -404,5 +405,6 @@ void BaseWindow::updatePlayerImage()
 
         //load into the UI
         ui->player_informations_front->setPixmap(playerFrontImage);
+        ui->tradePlayerImage->setPixmap(playerFrontImage);
     }
 }

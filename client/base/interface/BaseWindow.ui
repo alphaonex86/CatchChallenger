@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>11</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -3450,6 +3450,263 @@ border-image: url(:/images/empty.png);
          </property>
         </widget>
        </widget>
+       <widget class="QWidget" name="page_trade">
+        <property name="styleSheet">
+         <string notr="true">#page_trade{background-image: url(:/images/interface/player/background.png);}</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_22">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_33">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_20">
+             <item>
+              <widget class="QLabel" name="tradePlayerImage">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>80</height>
+                </size>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="tradePlayerPseudo">
+               <property name="text">
+                <string notr="true">Pseudo</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_30">
+               <item>
+                <widget class="QLabel" name="label_22">
+                 <property name="text">
+                  <string>Cash:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="tradePlayerCash">
+                 <property name="maximum">
+                  <number>999999999</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_26">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QListWidget" name="tradePlayerItems"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="tradeAddItem">
+               <property name="text">
+                <string>Add item</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="tradePlayerMonsters"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="tradeAddMonster">
+               <property name="text">
+                <string>Add monster</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_32">
+               <item>
+                <spacer name="horizontalSpacer_28">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="tradeValidate">
+                 <property name="text">
+                  <string>Validate</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_29">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_21">
+             <item>
+              <widget class="QLabel" name="tradeOtherImage">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>80</height>
+                </size>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="tradeOtherPseudo">
+               <property name="text">
+                <string notr="true">Pseudo</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_31">
+               <item>
+                <widget class="QLabel" name="label_24">
+                 <property name="text">
+                  <string>Cash:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="tradeOtherCash">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="buttonSymbols">
+                  <enum>QAbstractSpinBox::NoButtons</enum>
+                 </property>
+                 <property name="maximum">
+                  <number>999999999</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_27">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QListWidget" name="tradeOtherItems"/>
+             </item>
+             <item>
+              <widget class="QListWidget" name="tradeOtherMonsters"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="tradeOtherStat">
+               <property name="text">
+                <string>TextLabel</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_34">
+           <item>
+            <spacer name="horizontalSpacer_30">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="tradeCancel">
+             <property name="minimumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -3469,8 +3726,8 @@ border-image: url(:/images/empty.png);
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>514</x>
-     <y>198</y>
+     <x>527</x>
+     <y>189</y>
     </hint>
     <hint type="destinationlabel">
      <x>481</x>

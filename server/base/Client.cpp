@@ -102,6 +102,9 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     //connect for crafting
     connect(clientNetworkRead,	SIGNAL(useRecipe(quint8,quint32)),	localClientHandler,SLOT(useRecipe(quint8,quint32)),Qt::QueuedConnection);
 
+    //connect for trade
+    connect(localClientHandler,	SIGNAL(sendTradeRequest(QByteArray)),	clientNetworkRead,SLOT(sendTradeRequest(QByteArray)),Qt::QueuedConnection);
+
     //connect the player information
     connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	localClientHandler,	SLOT(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
