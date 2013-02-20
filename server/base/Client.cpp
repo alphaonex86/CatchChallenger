@@ -103,9 +103,13 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	SIGNAL(useRecipe(quint8,quint32)),	localClientHandler,SLOT(useRecipe(quint8,quint32)),Qt::QueuedConnection);
 
     //connect for trade
-    connect(localClientHandler,	SIGNAL(sendTradeRequest(QByteArray)),	clientNetworkRead,SLOT(sendTradeRequest(QByteArray)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeAccepted()),	localClientHandler,SLOT(tradeAccepted()),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeCanceled()),	localClientHandler,SLOT(tradeCanceled()),Qt::QueuedConnection);
+    connect(localClientHandler,	SIGNAL(sendTradeRequest(QByteArray)),       clientNetworkRead,SLOT(sendTradeRequest(QByteArray)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeAccepted()),                    localClientHandler,SLOT(tradeAccepted()),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeCanceled()),                    localClientHandler,SLOT(tradeCanceled()),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeFinished()),                    localClientHandler,SLOT(tradeFinished()),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeAddTradeCash(quint64)),         localClientHandler,SLOT(tradeAddTradeCash(quint64)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeAddTradeObject(quint32,quint32)),localClientHandler,SLOT(tradeAddTradeObject(quint32,quint32)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(tradeAddTradeMonster(quint32)),      localClientHandler,SLOT(tradeAddTradeMonster(quint32)),Qt::QueuedConnection);
 
     //connect the player information
     connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);

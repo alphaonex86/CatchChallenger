@@ -3,6 +3,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/fight/FightLoader.h"
+#include "../fight/interface/FightEngine.h"
 
 #include <QDomElement>
 #include <QDomDocument>

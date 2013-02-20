@@ -17,7 +17,7 @@ void LocalClientHandler::newRandomNumber(const QByteArray &randomData)
 
 void LocalClientHandler::tryEscape()
 {
-    if(wildMonsters.empty())//check if is in fight
+    if(!isInFight())//check if is in fight
     {
         emit error(QString("error: tryEscape() when is not in fight"));
         return;
@@ -196,7 +196,7 @@ bool LocalClientHandler::checkKOMonsters()
 
         //save into db here
         wildMonsters.removeFirst();
-        if(wildMonsters.empty() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+        if(!isInFight() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
             saveCurrentMonsterStat();
         if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
             switch(GlobalServerData::serverSettings.database.type)
@@ -239,7 +239,7 @@ bool LocalClientHandler::checkKOMonsters()
                     break;
                 }
         }
-        if(wildMonsters.empty())
+        if(!isInFight())
         {
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message("You win the battle");
@@ -270,7 +270,7 @@ bool LocalClientHandler::checkKOMonsters()
 bool LocalClientHandler::checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     bool ok;
-    if(!wildMonsters.empty())
+    if(isInFight())
     {
         emit error(QString("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
@@ -531,6 +531,29 @@ void LocalClientHandler::updateCanDoFight()
     }
 }
 
+bool LocalClientHandler::remainMonstersToFight(const quint32 &monsterId)
+{
+    int index=0;
+    while(index<player_informations->public_and_private_informations.playerMonster.size())
+    {
+        const PlayerMonster &playerMonsterEntry=player_informations->public_and_private_informations.playerMonster.at(index);
+        if(playerMonsterEntry.id==monsterId)
+        {
+            //the current monster can't fight, echange it will do nothing
+            if(playerMonsterEntry.hp<=0 || playerMonsterEntry.egg_step>0)
+                return true;
+        }
+        else
+        {
+            //other monster can fight, can continue to fight
+            if(playerMonsterEntry.hp>0 && playerMonsterEntry.egg_step==0)
+                return true;
+        }
+        index++;
+    }
+    return false;
+}
+
 void LocalClientHandler::generateOtherAttack()
 {
     const PlayerMonster &otherMonster=wildMonsters.first();
@@ -752,6 +775,11 @@ void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Mo
             applyCurrentLifeEffect(life.effect);
         index++;
     }
+}
+
+bool LocalClientHandler::isInFight()
+{
+    return !wildMonsters.empty();
 }
 
 void LocalClientHandler::applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect)

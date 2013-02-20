@@ -65,8 +65,13 @@ signals:
     //packet parsed (map management)
     void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    //trade
     void tradeCanceled();
     void tradeAccepted();
+    void tradeFinished();
+    void tradeAddTradeCash(const quint64 &cash);
+    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
+    void tradeAddTradeMonster(const quint32 &monsterId);
     //packet parsed (broadcast)
     void sendPM(const QString &text,const QString &pseudo);
     void sendChatText(const Chat_type &chatType,const QString &text);

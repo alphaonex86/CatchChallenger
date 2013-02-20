@@ -122,6 +122,9 @@ private slots:
     void tradeRequested(const QString &pseudo, const quint8 &skinInt);
     void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
     void tradeCanceledByOther();
+    void tradeAddTradeCash(const quint64 &cash);
+    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
+    void tradeAddTradeMonster(const quint32 &monsterId,const quint8 &level,const quint8 &gender);
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
@@ -274,6 +277,7 @@ private:
 
     //trade
     TradeOtherStat tradeOtherStat;
+    QHash<quint32,quint32> tradeOtherObjects;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
