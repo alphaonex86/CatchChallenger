@@ -94,7 +94,7 @@ private slots:
     void updatePlayerImage();
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items);
-    void add_to_inventory(const QHash<quint32,quint32> &items);
+    void add_to_inventory(const QHash<quint32,quint32> &items, const bool &showGain=true);
     void remove_to_inventory(const QHash<quint32,quint32> &items);
     void load_inventory();
     void load_plant_inventory();
@@ -122,6 +122,8 @@ private slots:
     void tradeRequested(const QString &pseudo, const quint8 &skinInt);
     void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
     void tradeCanceledByOther();
+    void tradeFinishedByOther();
+    void tradeValidatedByTheServer();
     void tradeAddTradeCash(const quint64 &cash);
     void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
     void tradeAddTradeMonster(const quint32 &monsterId,const quint8 &level,const quint8 &gender);
@@ -277,7 +279,7 @@ private:
 
     //trade
     TradeOtherStat tradeOtherStat;
-    QHash<quint32,quint32> tradeOtherObjects;
+    QHash<quint32,quint32> tradeOtherObjects,tradeCurrentObjects;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

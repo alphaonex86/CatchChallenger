@@ -110,6 +110,8 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeRequested(QString,quint8)),this,SLOT(tradeRequested(QString,quint8)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAcceptedByOther(QString,quint8)),this,SLOT(tradeAcceptedByOther(QString,quint8)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeCanceledByOther()),this,SLOT(tradeCanceledByOther()));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeFinishedByOther()),this,SLOT(tradeFinishedByOther()));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeValidatedByTheServer()),this,SLOT(tradeValidatedByTheServer()));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeCash(quint64)),this,SLOT(tradeAddTradeCash(quint64)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeObject(quint32,quint32)),this,SLOT(tradeAddTradeObject(quint32,quint32)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeMonster(quint32,quint8,quint8)),this,SLOT(tradeAddTradeMonster(quint32,quint8,quint8)));
@@ -212,8 +214,30 @@ void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const quint8 &skinIn
 
 void BaseWindow::tradeCanceledByOther()
 {
+    if(ui->stackedWidget->currentWidget()!=ui->page_trade)
+        return;
     showTip(tr("The other player have canceled your trade request"));
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+    addCash(ui->tradePlayerCash->value());
+    add_to_inventory(tradeCurrentObjects,false);
+}
+
+void BaseWindow::tradeFinishedByOther()
+{
+    tradeOtherStat=TradeOtherStat_Accepted;
+    if(!ui->tradeValidate->isEnabled())
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
+    else
+        ui->tradeOtherStat->setText(tr("The other player have validated the selection"));
+}
+
+void BaseWindow::tradeValidatedByTheServer()
+{
+    if(ui->stackedWidget->currentWidget()==ui->page_trade)
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
+    add_to_inventory(tradeOtherObjects);
+    showTip(tr("Your trade is successfull"));
+    addCash(ui->tradeOtherCash->value());
 }
 
 void BaseWindow::tradeAddTradeCash(const quint64 &cash)
@@ -381,49 +405,54 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
     }
 }
 
-void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items)
+void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool &showGain)
 {
-    QString html=tr("You have obtained: ");
-    QStringList objects;
-    QHashIterator<quint32,quint32> i(items);
-    while (i.hasNext()) {
-        i.next();
+    if(items.empty())
+        return;
+    if(showGain)
+    {
+        QString html=tr("You have obtained: ");
+        QStringList objects;
+        QHashIterator<quint32,quint32> i(items);
+        while (i.hasNext()) {
+            i.next();
 
-        //add really to the list
-        if(this->items.contains(i.key()))
-            this->items[i.key()]+=i.value();
-        else
-            this->items[i.key()]=i.value();
-
-        QPixmap image;
-        QString name;
-        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
-        {
-            image=DatapackClientLoader::datapackLoader.items[i.key()].image;
-            name=DatapackClientLoader::datapackLoader.items[i.key()].name;
-        }
-        else
-        {
-            image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
-            name=QString("id: %1").arg(i.key());
-        }
-
-        image=image.scaled(24,24);
-        QByteArray byteArray;
-        QBuffer buffer(&byteArray);
-        image.save(&buffer, "PNG");
-        if(objects.size()<16)
-        {
-            if(i.value()>1)
-                objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
+            //add really to the list
+            if(this->items.contains(i.key()))
+                this->items[i.key()]+=i.value();
             else
-                objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
+                this->items[i.key()]=i.value();
+
+            QPixmap image;
+            QString name;
+            if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+            {
+                image=DatapackClientLoader::datapackLoader.items[i.key()].image;
+                name=DatapackClientLoader::datapackLoader.items[i.key()].name;
+            }
+            else
+            {
+                image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
+                name=QString("id: %1").arg(i.key());
+            }
+
+            image=image.scaled(24,24);
+            QByteArray byteArray;
+            QBuffer buffer(&byteArray);
+            image.save(&buffer, "PNG");
+            if(objects.size()<16)
+            {
+                if(i.value()>1)
+                    objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
+                else
+                    objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
+            }
         }
+        if(objects.size()==16)
+            objects << "...";
+        html+=objects.join(", ");
+        BaseWindow::showGain(html);
     }
-    if(objects.size()==16)
-        objects << "...";
-    html+=objects.join(", ");
-    showGain(html);
 
     load_inventory();
     load_plant_inventory();

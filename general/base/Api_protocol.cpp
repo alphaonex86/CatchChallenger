@@ -2316,7 +2316,6 @@ void Api_protocol::tradeFinish()
         emit newError(tr("Internal problem"),QString("in not in trade"));
         return;
     }
-    isInTrade=false;
     output->packOutcommingData(0x50,0x0004,QByteArray());
 }
 
