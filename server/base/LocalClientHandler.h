@@ -91,10 +91,11 @@ public slots:
     //inventory
     void addObjectAndSend(const quint32 &item,const quint32 &quantity=1);
     void addObject(const quint32 &item,const quint32 &quantity=1);
+    void saveObjectRetention(const quint32 &item);
     quint32 removeObject(const quint32 &item,const quint32 &quantity=1);
     void sendRemoveObject(const quint32 &item,const quint32 &quantity=1);
     quint32 objectQuantity(const quint32 &item);
-    void addCash(const quint64 &cash);
+    void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);
 
     void sendHandlerCommand(const QString &command,const QString &extraText);

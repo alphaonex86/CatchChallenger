@@ -44,7 +44,8 @@ public:
     {
         ObjectType_All,
         ObjectType_Seed,
-        ObjectType_Sell
+        ObjectType_Sell,
+        ObjectType_Trade
     };
     ObjectType waitedObjectType;
     enum QueryType
@@ -67,7 +68,7 @@ protected:
 public slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void selectObject(const ObjectType &objectType);
-    void objectSelection(const bool &ok,const quint32 &itemId,const quint32 &quantity=1);
+    void objectSelection(const bool &ok,const quint32 &itemId=0,const quint32 &quantity=1);
 private slots:
     void message(QString message);
     void disconnected(QString reason);
@@ -126,7 +127,8 @@ private slots:
     void tradeValidatedByTheServer();
     void tradeAddTradeCash(const quint64 &cash);
     void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
-    void tradeAddTradeMonster(const quint32 &monsterId,const quint8 &level,const quint8 &gender);
+    void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
+    void tradeUpdateCurrentObject();
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
@@ -197,6 +199,7 @@ private slots:
     void on_toolButton_bioscan_quit_clicked();
     void on_tradeCancel_clicked();
     void on_tradeValidate_clicked();
+    void on_tradeAddItem_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -280,6 +283,7 @@ private:
     //trade
     TradeOtherStat tradeOtherStat;
     QHash<quint32,quint32> tradeOtherObjects,tradeCurrentObjects;
+    QList<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

@@ -356,6 +356,50 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
     }
 }
 
+void LocalClientHandler::saveObjectRetention(const quint32 &item)
+{
+    if(player_informations->public_and_private_informations.items.contains(item))
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                             .arg(player_informations->public_and_private_informations.items[item])
+                             .arg(item)
+                             .arg(player_informations->id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                             .arg(player_informations->public_and_private_informations.items[item])
+                             .arg(item)
+                             .arg(player_informations->id)
+                         );
+            break;
+        }
+    }
+    else
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                             .arg(item)
+                             .arg(player_informations->id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                         .arg(item)
+                         .arg(player_informations->id)
+                         );
+            break;
+        }
+    }
+}
+
 quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quantity)
 {
     if(player_informations->public_and_private_informations.items.contains(item))
@@ -430,9 +474,9 @@ quint32 LocalClientHandler::objectQuantity(const quint32 &item)
         return 0;
 }
 
-void LocalClientHandler::addCash(const quint64 &cash)
+void LocalClientHandler::addCash(const quint64 &cash, const bool &forceSave)
 {
-    if(cash==0)
+    if(cash==0 && !forceSave)
         return;
     player_informations->public_and_private_informations.cash+=cash;
     switch(GlobalServerData::serverSettings.database.type)
@@ -1312,19 +1356,21 @@ void LocalClientHandler::tradeFinished()
         emit message("Trade finished");
         #endif
         //cash
-        otherPlayerTrade->addCash(tradeCash);
-        addCash(otherPlayerTrade->getTradeCash());
+        otherPlayerTrade->addCash(tradeCash,(otherPlayerTrade->getTradeCash()!=0));
+        addCash(otherPlayerTrade->getTradeCash(),(tradeCash!=0));
 
         //object
         QHashIterator<quint32,quint32> i(tradeObjects);
         while (i.hasNext()) {
             i.next();
             otherPlayerTrade->addObject(i.key(),i.value());
+            saveObjectRetention(i.key());
         }
         QHashIterator<quint32,quint32> j(otherPlayerTrade->getTradeObjects());
         while (j.hasNext()) {
             j.next();
             addObject(j.key(),j.value());
+            otherPlayerTrade->saveObjectRetention(j.key());
         }
 
         //monster
@@ -1404,6 +1450,9 @@ void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
         emit error("Trade cash superior to the actual cash");
         return;
     }
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("Add cash to trade: %1").arg(cash));
+    #endif
     tradeCash+=cash;
     player_informations->public_and_private_informations.cash-=cash;
     QByteArray outputData;
@@ -1433,9 +1482,12 @@ void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &
     }
     if(quantity>objectQuantity(item))
     {
-        emit error("Trade object quantity superior to the actual quantity");
+        emit error(QString("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
         return;
     }
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
+    #endif
     if(tradeObjects.contains(item))
         tradeObjects[item]+=quantity;
     else
@@ -1474,6 +1526,9 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
         emit error("You can't trade monster because you are in fight");
         return;
     }
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("Add monster to trade: %1").arg(monsterId));
+    #endif
     int index=0;
     while(index<player_informations->public_and_private_informations.playerMonster.size())
     {
@@ -1491,9 +1546,34 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);
             out << (quint8)0x03;
-            out << (quint32)tradeMonster.last().monster;
-            out << (quint8)tradeMonster.last().level;
-            out << (quint8)tradeMonster.last().gender;
+            const PlayerMonster &monster=tradeMonster.last();
+            out << (quint32)monster.id;
+            out << (quint32)monster.monster;
+            out << (quint8)monster.level;
+            out << (quint32)monster.remaining_xp;
+            out << (quint32)monster.hp;
+            out << (quint32)monster.sp;
+            out << (quint32)monster.captured_with;
+            out << (quint8)monster.gender;
+            out << (quint32)monster.egg_step;
+            int sub_index=0;
+            int sub_size=monster.buffs.size();
+            out << (quint32)sub_size;
+            while(sub_index<sub_size)
+            {
+                out << (quint32)monster.buffs.at(sub_index).buff;
+                out << (quint8)monster.buffs.at(sub_index).level;
+                sub_index++;
+            }
+            sub_index=0;
+            sub_size=monster.skills.size();
+            out << (quint32)sub_size;
+            while(sub_index<sub_size)
+            {
+                out << (quint32)monster.skills.at(sub_index).skill;
+                out << (quint8)monster.skills.at(sub_index).level;
+                sub_index++;
+            }
             emit otherPlayerTrade->sendPacket(0xD0,0x0004,outputData);
             return;
         }

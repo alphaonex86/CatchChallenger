@@ -88,6 +88,9 @@ void ProtocolParsing::initialiseTheVariable()
     //reply code
     ProtocolParsing::replyCodeServerToClient=0xC1;
     ProtocolParsing::replyCodeClientToServer=0x41;
+
+    //register meta type
+    qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
 }
 
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
