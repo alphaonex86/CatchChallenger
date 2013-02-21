@@ -173,6 +173,7 @@ void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)
 void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt)
 {
     ui->stackedWidget->setCurrentWidget(ui->page_trade);
+    tradeOtherStat=TradeOtherStat_InWait;
     //reset the current player info
     ui->tradePlayerCash->setMinimum(0);
     ui->tradePlayerCash->setValue(0);
@@ -221,6 +222,7 @@ void BaseWindow::tradeCanceledByOther()
     addCash(ui->tradePlayerCash->value());
     add_to_inventory(tradeCurrentObjects,false);
     CatchChallenger::FightEngine::fightEngine.addPlayerMonster(tradeCurrentMonsters);
+    load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();
     tradeCurrentMonsters.clear();
@@ -244,6 +246,7 @@ void BaseWindow::tradeValidatedByTheServer()
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
     CatchChallenger::FightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
+    load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();
     tradeCurrentMonsters.clear();
@@ -369,6 +372,10 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             ui->stackedWidget->setCurrentWidget(ui->page_shop);
             displaySellList();
         break;
+        case ObjectType_Monster:
+            ui->selectMonster->setVisible(true);
+            ui->stackedWidget->setCurrentWidget(ui->page_monster);
+        break;
         case ObjectType_All:
         case ObjectType_Trade:
         default:
@@ -438,6 +445,43 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             load_plant_inventory();
             tradeUpdateCurrentObject();
         break;
+        case ObjectType_Monster:
+        {
+            ui->stackedWidget->setCurrentWidget(ui->page_trade);
+            if(!ok)
+                break;
+            QList<PlayerMonster> playerMonster=FightEngine::fightEngine.getPlayerMonster();
+            if(playerMonster.size()<=1)
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
+                break;
+            }
+            if(!FightEngine::fightEngine.remainMonstersToFight(itemId))
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
+                break;
+            }
+            int index=0;
+            while(index<playerMonster.size())
+            {
+                if(playerMonster.at(index).id==itemId)
+                {
+                    tradeCurrentMonsters << playerMonster.at(index);
+                    FightEngine::fightEngine.removeMonster(itemId);
+                    CatchChallenger::Api_client_real::client->addMonster(itemId);
+
+                    QListWidgetItem *item=new QListWidgetItem();
+                    item->setText(CatchChallenger::FightEngine::fightEngine.monsterExtra[tradeCurrentMonsters.last().monster].name);
+                    item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.last().level));
+                    item->setIcon(CatchChallenger::FightEngine::fightEngine.monsterExtra[tradeCurrentMonsters.last().monster].front);
+                    ui->tradePlayerMonsters->addItem(item);
+                    break;
+                }
+                index++;
+            }
+            load_monsters();
+        }
+        break;
         case ObjectType_Seed:
             ui->plantUse->setVisible(false);
             if(!ok)
@@ -467,6 +511,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         qDebug() << "waitedObjectType is unknow";
         return;
     }
+    waitedObjectType==ObjectType_All;
 }
 
 void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool &showGain)
@@ -1441,6 +1486,11 @@ void BaseWindow::on_pushButton_interface_monsters_clicked()
 
 void BaseWindow::on_toolButton_monster_list_quit_clicked()
 {
+    if(waitedObjectType==ObjectType_Monster && inSelection)
+    {
+        objectSelection(false);
+        return;
+    }
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
@@ -1482,4 +1532,24 @@ void BaseWindow::on_tradeValidate_clicked()
 void BaseWindow::on_tradeAddItem_clicked()
 {
     selectObject(ObjectType_Trade);
+}
+
+void CatchChallenger::BaseWindow::on_tradeAddMonster_clicked()
+{
+    selectObject(ObjectType_Monster);
+}
+
+void CatchChallenger::BaseWindow::on_selectMonster_clicked()
+{
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    if(selectedMonsters.size()!=1)
+        return;
+    on_monsterList_itemActivated(selectedMonsters.first());
+}
+
+void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
+{
+    if(!monsters_items_graphical.contains(item))
+        return;
+    objectSelection(true,monsters_items_graphical[item]);
 }

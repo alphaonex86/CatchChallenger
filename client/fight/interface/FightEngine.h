@@ -57,6 +57,8 @@ public:
     void setPlayerMonster(const QList<PlayerMonster> &playerMonsterList);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     QList<PlayerMonster> getPlayerMonster();
+    bool removeMonster(const quint32 &monsterId);
+    bool remainMonstersToFight(const quint32 &monsterId);
     PlayerMonster getFightMonster();
     PlayerMonster getOtherMonster();
     bool haveOtherMonster();

@@ -475,6 +475,45 @@ QList<PlayerMonster> FightEngine::getPlayerMonster()
     return playerMonsterList;
 }
 
+bool FightEngine::removeMonster(const quint32 &monsterId)
+{
+    int index=0;
+    while(index<playerMonsterList.size())
+    {
+        if(playerMonsterList.at(index).id==monsterId)
+        {
+            playerMonsterList.removeAt(index);
+            updateCanDoFight();
+            return true;
+        }
+        index++;
+    }
+    return false;
+}
+
+bool FightEngine::remainMonstersToFight(const quint32 &monsterId)
+{
+    int index=0;
+    while(index<playerMonsterList.size())
+    {
+        const PlayerMonster &playerMonsterEntry=playerMonsterList.at(index);
+        if(playerMonsterEntry.id==monsterId)
+        {
+            //the current monster can't fight, echange it will do nothing
+            if(playerMonsterEntry.hp<=0 || playerMonsterEntry.egg_step>0)
+                return true;
+        }
+        else
+        {
+            //other monster can fight, can continue to fight
+            if(playerMonsterEntry.hp>0 && playerMonsterEntry.egg_step==0)
+                return true;
+        }
+        index++;
+    }
+    return false;
+}
+
 PlayerMonster FightEngine::getFightMonster()
 {
     return playerMonsterList.at(selectedMonster);
