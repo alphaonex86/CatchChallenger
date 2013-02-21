@@ -432,6 +432,8 @@ quint32 LocalClientHandler::objectQuantity(const quint32 &item)
 
 void LocalClientHandler::addCash(const quint64 &cash)
 {
+    if(cash==0)
+        return;
     player_informations->public_and_private_informations.cash+=cash;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -453,6 +455,8 @@ void LocalClientHandler::addCash(const quint64 &cash)
 
 void LocalClientHandler::removeCash(const quint64 &cash)
 {
+    if(cash==0)
+        return;
     player_informations->public_and_private_informations.cash-=cash;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -1302,7 +1306,7 @@ void LocalClientHandler::tradeFinished()
         return;
     }
     tradeIsFreezed=true;
-    if(getIsFreezed() && getIsFreezed())
+    if(getIsFreezed() && otherPlayerTrade->getIsFreezed())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message("Trade finished");
@@ -1327,10 +1331,10 @@ void LocalClientHandler::tradeFinished()
         otherPlayerTrade->addExistingMonster(tradeMonster);
         addExistingMonster(otherPlayerTrade->tradeMonster);
 
-        otherPlayerTrade->resetTheTrade();
-        resetTheTrade();
         emit otherPlayerTrade->sendPacket(0xD0,0x0008);
         emit sendPacket(0xD0,0x0008);
+        otherPlayerTrade->resetTheTrade();
+        resetTheTrade();
     }
     else
     {
