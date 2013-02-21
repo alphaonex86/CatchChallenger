@@ -52,6 +52,7 @@ void BaseWindow::resetAll()
     ui->craftingUse->setVisible(false);
     waitToSell=false;
     ui->tabWidgetTrainerCard->setCurrentWidget(ui->tabWidgetTrainerCardPage1);
+    ui->selectMonster->setVisible(false);
 
     CatchChallenger::FightEngine::fightEngine.resetAll();
 }

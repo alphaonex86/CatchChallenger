@@ -45,7 +45,8 @@ public:
         ObjectType_All,
         ObjectType_Seed,
         ObjectType_Sell,
-        ObjectType_Trade
+        ObjectType_Trade,
+        ObjectType_Monster
     };
     ObjectType waitedObjectType;
     enum QueryType
@@ -200,6 +201,9 @@ private slots:
     void on_tradeCancel_clicked();
     void on_tradeValidate_clicked();
     void on_tradeAddItem_clicked();
+    void on_tradeAddMonster_clicked();
+    void on_selectMonster_clicked();
+    void on_monsterList_itemActivated(QListWidgetItem *item);
 protected slots:
     //datapack
     void datapackParsed();
@@ -248,6 +252,7 @@ private:
     QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;
     QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
     QHash<QListWidgetItem *,PlayerMonster::Skill> fight_attacks_graphical;
+    QHash<QListWidgetItem *,quint32> monsters_items_graphical;
     bool inSelection;
     QList<quint32> objectInUsing;
 
