@@ -114,7 +114,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeValidatedByTheServer()),this,SLOT(tradeValidatedByTheServer()));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeCash(quint64)),this,SLOT(tradeAddTradeCash(quint64)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeObject(quint32,quint32)),this,SLOT(tradeAddTradeObject(quint32,quint32)));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeMonster(quint32,quint8,quint8)),this,SLOT(tradeAddTradeMonster(quint32,quint8,quint8)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(tradeAddTradeMonster(CatchChallenger::PlayerMonster)),this,SLOT(tradeAddTradeMonster(CatchChallenger::PlayerMonster)));
     //inventory
     connect(CatchChallenger::Api_client_real::client,SIGNAL(objectUsed(ObjectUsage)),this,SLOT(objectUsed(ObjectUsage)));
     //shop
@@ -216,10 +216,15 @@ void BaseWindow::tradeCanceledByOther()
 {
     if(ui->stackedWidget->currentWidget()!=ui->page_trade)
         return;
-    showTip(tr("The other player have canceled your trade request"));
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("The other player have canceled your trade request"));
     addCash(ui->tradePlayerCash->value());
     add_to_inventory(tradeCurrentObjects,false);
+    CatchChallenger::FightEngine::fightEngine.addPlayerMonster(tradeCurrentMonsters);
+    tradeOtherObjects.clear();
+    tradeCurrentObjects.clear();
+    tradeCurrentMonsters.clear();
+    tradeOtherMonsters.clear();
 }
 
 void BaseWindow::tradeFinishedByOther()
@@ -235,9 +240,14 @@ void BaseWindow::tradeValidatedByTheServer()
 {
     if(ui->stackedWidget->currentWidget()==ui->page_trade)
         ui->stackedWidget->setCurrentWidget(ui->page_map);
-    add_to_inventory(tradeOtherObjects);
     showTip(tr("Your trade is successfull"));
+    add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
+    CatchChallenger::FightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
+    tradeOtherObjects.clear();
+    tradeCurrentObjects.clear();
+    tradeCurrentMonsters.clear();
+    tradeOtherMonsters.clear();
 }
 
 void BaseWindow::tradeAddTradeCash(const quint64 &cash)
@@ -272,6 +282,32 @@ void BaseWindow::tradeAddTradeObject(const quint32 &item,const quint32 &quantity
                 item->setText(QString("id: %1").arg(i.key()));
         }
         ui->tradeOtherItems->addItem(item);
+    }
+}
+
+void BaseWindow::tradeUpdateCurrentObject()
+{
+    ui->tradePlayerItems->clear();
+    QHashIterator<quint32,quint32> i(tradeCurrentObjects);
+    while (i.hasNext()) {
+        i.next();
+        QListWidgetItem *item=new QListWidgetItem();
+        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+            if(i.value()>1)
+                item->setText(QString::number(i.value()));
+            item->setToolTip(DatapackClientLoader::datapackLoader.items[i.key()].name);
+        }
+        else
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+            if(i.value()>1)
+                item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
+            else
+                item->setText(QString("id: %1").arg(i.key()));
+        }
+        ui->tradePlayerItems->addItem(item);
     }
 }
 
@@ -334,7 +370,10 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             displaySellList();
         break;
         case ObjectType_All:
+        case ObjectType_Trade:
         default:
+            ui->inventoryUse->setText(tr("Select"));
+            ui->inventoryUse->setVisible(true);
             ui->stackedWidget->setCurrentWidget(ui->page_inventory);
             on_listCraftingList_itemSelectionChanged();
         break;
@@ -349,7 +388,6 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
     switch(waitedObjectType)
     {
         case ObjectType_Sell:
-            ui->plantUse->setVisible(false);
             if(!ok)
                 break;
             if(!items.contains(itemId))
@@ -373,6 +411,32 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             CatchChallenger::Api_client_real::client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
             load_plant_inventory();
+        break;
+        case ObjectType_Trade:
+            ui->stackedWidget->setCurrentWidget(ui->page_trade);
+            if(!ok)
+                break;
+            if(!items.contains(itemId))
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(items[itemId]<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            CatchChallenger::Api_client_real::client->addObject(itemId,quantity);
+            items[itemId]-=quantity;
+            if(items[itemId]==0)
+                items.remove(itemId);
+            if(tradeCurrentObjects.contains(itemId))
+                tradeCurrentObjects[itemId]+=quantity;
+            else
+                tradeCurrentObjects[itemId]=quantity;
+            load_inventory();
+            load_plant_inventory();
+            tradeUpdateCurrentObject();
         break;
         case ObjectType_Seed:
             ui->plantUse->setVisible(false);
@@ -508,7 +572,7 @@ void BaseWindow::on_toolButton_quit_inventory_clicked()
     ui->inventory->reset();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     if(inSelection)
-        objectSelection(false,0);
+        objectSelection(false);
     on_inventory_itemSelectionChanged();
 }
 
@@ -542,7 +606,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                          /* is a plant */
                                          DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical[item])
                                          );
-    ui->inventoryUse->setVisible(!inSelection &&
+    ui->inventoryUse->setVisible(inSelection ||
                                          /* is a recipe */
                                          DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(items_graphical[item])
                                          );
@@ -943,7 +1007,28 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     }
     if(inSelection)
     {
-        objectSelection(true,items_graphical[item]);
+        quint32 tempQuantitySelected;
+        bool ok=true;
+        if(items[items_graphical[item]]>1)
+            tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,items[items_graphical[item]],1,&ok);
+        else
+            tempQuantitySelected=1;
+        if(!ok)
+        {
+            objectSelection(false);
+            return;
+        }
+        if(!items.contains(items_graphical[item]))
+        {
+            objectSelection(false);
+            return;
+        }
+        if(items[items_graphical[item]]<tempQuantitySelected)
+        {
+            objectSelection(false);
+            return;
+        }
+        objectSelection(true,items_graphical[item],tempQuantitySelected);
         return;
     }
 
@@ -1359,7 +1444,7 @@ void BaseWindow::on_toolButton_monster_list_quit_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void CatchChallenger::BaseWindow::on_tradePlayerCash_editingFinished()
+void BaseWindow::on_tradePlayerCash_editingFinished()
 {
     if(ui->tradePlayerCash->value()==ui->tradePlayerCash->minimum())
         return;
@@ -1367,18 +1452,18 @@ void CatchChallenger::BaseWindow::on_tradePlayerCash_editingFinished()
     ui->tradePlayerCash->setMinimum(ui->tradePlayerCash->value());
 }
 
-void CatchChallenger::BaseWindow::on_toolButton_bioscan_quit_clicked()
+void BaseWindow::on_toolButton_bioscan_quit_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void CatchChallenger::BaseWindow::on_tradeCancel_clicked()
+void BaseWindow::on_tradeCancel_clicked()
 {
     CatchChallenger::Api_client_real::client->tradeCanceled();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void CatchChallenger::BaseWindow::on_tradeValidate_clicked()
+void BaseWindow::on_tradeValidate_clicked()
 {
     CatchChallenger::Api_client_real::client->tradeFinish();
     if(tradeOtherStat==TradeOtherStat_Accepted)
@@ -1392,4 +1477,9 @@ void CatchChallenger::BaseWindow::on_tradeValidate_clicked()
         ui->tradeAddMonster->setEnabled(false);
         ui->tradeValidate->setEnabled(false);
     }
+}
+
+void BaseWindow::on_tradeAddItem_clicked()
+{
+    selectObject(ObjectType_Trade);
 }

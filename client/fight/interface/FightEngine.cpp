@@ -447,6 +447,12 @@ void FightEngine::setPlayerMonster(const QList<PlayerMonster> &playerMonster)
     updateCanDoFight();
 }
 
+void FightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
+{
+    playerMonsterList << playerMonster;
+    updateCanDoFight();
+}
+
 void FightEngine::updateCanDoFight()
 {
     m_canDoFight=false;

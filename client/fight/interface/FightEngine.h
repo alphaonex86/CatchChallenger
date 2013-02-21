@@ -55,6 +55,7 @@ public:
     QHash<quint32,MonsterExtra::Buff> monsterBuffsExtra;
     QHash<quint32,MonsterExtra::Skill> monsterSkillsExtra;
     void setPlayerMonster(const QList<PlayerMonster> &playerMonsterList);
+    void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     QList<PlayerMonster> getPlayerMonster();
     PlayerMonster getFightMonster();
     PlayerMonster getOtherMonster();

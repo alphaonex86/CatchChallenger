@@ -156,7 +156,7 @@ signals:
     void tradeValidatedByTheServer();
     void tradeAddTradeCash(const quint64 &cash);
     void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
-    void tradeAddTradeMonster(const quint32 &monsterId,const quint8 &level,const quint8 &gender);
+    void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
