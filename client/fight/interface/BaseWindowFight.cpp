@@ -88,6 +88,7 @@ void BaseWindow::load_monsters()
 {
     const QList<PlayerMonster> &playerMonster=CatchChallenger::FightEngine::fightEngine.getPlayerMonster();
     ui->monsterList->clear();
+    monsters_items_graphical.clear();
     int index=0;
     int size=playerMonster.size();
     while(index<size)
@@ -97,7 +98,7 @@ void BaseWindow::load_monsters()
         {
             Monster::Stat stat=CatchChallenger::FightEngine::getStat(CatchChallenger::FightEngine::fightEngine.monsters[monster.monster],monster.level);
             QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString("%1, level: %2\nHP: %3/%4")
+            item->setText(tr("%1, level: %2\nHP: %3/%4")
                     .arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[monster.monster].name)
                     .arg(monster.level)
                     .arg(monster.hp)
@@ -106,6 +107,7 @@ void BaseWindow::load_monsters()
             item->setToolTip(CatchChallenger::FightEngine::fightEngine.monsterExtra[monster.monster].description);
             item->setIcon(CatchChallenger::FightEngine::fightEngine.monsterExtra[monster.monster].front);
             ui->monsterList->addItem(item);
+            monsters_items_graphical[item]=monster.id;
         }
         else
         {

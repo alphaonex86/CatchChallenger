@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2742,6 +2742,18 @@ border-image: url(:/images/empty.png);
               <height>25</height>
              </rect>
             </property>
+            <property name="minimumSize">
+             <size>
+              <width>110</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>110</width>
+              <height>25</height>
+             </size>
+            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton::hover {
 background-position:left center;
@@ -3380,6 +3392,26 @@ padding:6px 6px 6px 14px;
             </spacer>
            </item>
            <item>
+            <widget class="QPushButton" name="selectMonster">
+             <property name="text">
+              <string>Select</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_31">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <widget class="QToolButton" name="toolButton_monster_list_quit">
              <property name="minimumSize">
               <size>
@@ -3521,6 +3553,12 @@ border-image: url(:/images/empty.png);
              </item>
              <item>
               <widget class="QListWidget" name="tradePlayerItems">
+               <property name="iconSize">
+                <size>
+                 <width>48</width>
+                 <height>48</height>
+                </size>
+               </property>
                <property name="movement">
                 <enum>QListView::Static</enum>
                </property>
@@ -3538,6 +3576,12 @@ border-image: url(:/images/empty.png);
              </item>
              <item>
               <widget class="QListWidget" name="tradePlayerMonsters">
+               <property name="iconSize">
+                <size>
+                 <width>80</width>
+                 <height>80</height>
+                </size>
+               </property>
                <property name="movement">
                 <enum>QListView::Static</enum>
                </property>
@@ -3659,6 +3703,12 @@ border-image: url(:/images/empty.png);
              </item>
              <item>
               <widget class="QListWidget" name="tradeOtherItems">
+               <property name="iconSize">
+                <size>
+                 <width>48</width>
+                 <height>48</height>
+                </size>
+               </property>
                <property name="movement">
                 <enum>QListView::Static</enum>
                </property>
@@ -3669,6 +3719,12 @@ border-image: url(:/images/empty.png);
              </item>
              <item>
               <widget class="QListWidget" name="tradeOtherMonsters">
+               <property name="iconSize">
+                <size>
+                 <width>80</width>
+                 <height>80</height>
+                </size>
+               </property>
                <property name="movement">
                 <enum>QListView::Static</enum>
                </property>

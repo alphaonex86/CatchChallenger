@@ -624,6 +624,11 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
     }
     else if(command=="trade")
     {
+        if(extraText.isEmpty())
+        {
+            emit receiveSystemText(QString("no player given, syntaxe: /trade player").arg(extraText));
+            return;
+        }
         if(!playerByPseudo.contains(extraText))
         {
             emit receiveSystemText(QString("%1 is not connected").arg(extraText));
@@ -1534,7 +1539,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
     {
         if(player_informations->public_and_private_informations.playerMonster.at(index).id==monsterId)
         {
-            if(remainMonstersToFight(monsterId))
+            if(!remainMonstersToFight(monsterId))
             {
                 emit error("You can't trade monster because you are in fight");
                 return;
