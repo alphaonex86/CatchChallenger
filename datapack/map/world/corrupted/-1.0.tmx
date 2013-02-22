@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="dayMonster" value=""/>
+  <property name="nightMonster" value=""/>
+  <property name="type" value=""/>
+  <property name="waterMonster" value=""/>
+  <property name="wildProbability" value=""/>
+ </properties>
+ <tileset firstgid="1" name="1" tilewidth="16" tileheight="16">
+  <image source="../../tileset/terra.png" trans="000000" width="512" height="512"/>
+  <tile id="32">
+   <properties>
+    <property name="Grass" value="true"/>
+   </properties>
+  </tile>
+  <tile id="837">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="838">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="839">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="869">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="870">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="871">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="901">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="902">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="903">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="934">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="935">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="966">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="967">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="1025" name="1" tilewidth="16" tileheight="16">
+  <image source="../../tileset/wood.png" trans="000000" width="512" height="512"/>
+  <tile id="32">
+   <properties>
+    <property name="Grass" value="true"/>
+   </properties>
+  </tile>
+  <tile id="837">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="838">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="839">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="869">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="870">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="871">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="901">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="902">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="903">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="934">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="935">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="966">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="967">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="2049" source="../../tileset/invisible.tsx"/>
+ <tileset firstgid="2065" source="../../tileset/corruption.tsx"/>
+ <layer name="Walkable" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJyVlrGSw0AIQ1P6Snv/9P6/uGs8o3l+Yp1iJw7BCwghch2fz/V/TnzeZ4V9xe9L/FY8n7hzxaf55H208Xuz8/7JvuAzvUNMmD9rZa7pe9t/f57nkjsNuwu2hfjEPeO3uNbL83jWmjEMx/TLM9XbesYetD5avRPO+R7vz5pv/6yHPWj4tLjGl1X8MzZry+/JuxaX+E55Zmz2euoL8SUuuzyZL+OSb23WOLP57q5e43Gr37TD/Jhnw5l1mdZRB0y3GTft1gvWeB3PvMkF86E+Uw9NU5mnYWuYN7xtT5jWEyfjuuk35/fNfmM/DWerhfc23pMHpoOtf9T9qW/5zPzINcNv4qzlY9xqe85ynWZutweNh21umM9u/zSNN95MvW9asdM57qNpv+xm402c3d5v82IacT9/G9NminFsPni+jWs61WbSdsa3tZq+2pzzd5udCce2C4lh06OmTy0utanx37jStIjvv/3PZjpt9p2uTTPEmmxmyOE2N7RP/PkDV7uauw==
+  </data>
+ </layer>
+ <layer name="terain-split" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztllsKgCAQRf10AbYQzRYSraTaPzSCgUy+UyOYA/fTjkyjI2PEFwjO2OFk4mO8G/Ks5A0iXvyXUq/bDydkr3RrWDNDJERBlsQ38D4Nb9wpX8xr6N0X2tZF2TqN8ob2kFsvgiDqcWetL6PmL2bkvdPDi98xMWTD+y40P3y0rHGON3f25iLsm8BF8Wdaz5KSGpP3P977zOKeMlzIWRkZ
+  </data>
+ </layer>
+ <layer name="WalkOver" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBhZYDoHA8MMIJ7JQT02MXbR0y+0BGE0Np9SQK9woAQM9jAkBgyFcB4OgN7hPBzSJjmAGuE8UsOOFDBabtAHkBPOpKTf0bQOASMhPQ8GPw4GN9ACDEQbHh8AAABzKZU=
+  </data>
+ </layer>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztl8kNwjAQRX0kR7aUwlJJoBJIWWyFsBUCgTuP28hiJGw8FqB86clzcGT7SUk8Vce5GcyhSlSPYQJTr5ZzFrCEOmGt7UfOKSF1tP3ISA8xGUU+Jz3kjObBOp96jk3rOU9+xXPs++rnWzyvGNewgS3sjPbje94zHuAIJzgbret7vjBeoYEb3I3W9T13C+d60IcBDAubddvvRp78g+eQb1lOz/KMOT1rd91XSfUfeEa761pEu8Nbew7tKVLVoT2Fda9k0R+9c64Hjs1uGA==
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBhZQJyDgUECiCU5BtolwxuMhjN9wGg40wcMlnCeCLR/EhBPBuIpQDx1mMX7YAnn4Q5Gw5k+YCSE82Dw42BwAy0Asr8Ggx9xuYda7MHmr5EGAOzuCug=
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="30" height="30">
+  <object name="border" type="border-right" gid="2052" x="464" y="256">
+   <properties>
+    <property name="map" value="0.0"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
