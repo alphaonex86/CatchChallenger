@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="dayMonster" value=""/>
+  <property name="nightMonster" value=""/>
+  <property name="type" value=""/>
+  <property name="waterMonster" value=""/>
+  <property name="wildProbability" value=""/>
+ </properties>
+ <tileset firstgid="1" name="1" tilewidth="16" tileheight="16">
+  <image source="../../tileset/terra.png" trans="000000" width="512" height="512"/>
+  <tile id="32">
+   <properties>
+    <property name="Grass" value="true"/>
+   </properties>
+  </tile>
+  <tile id="837">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="838">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="839">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="869">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="870">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="871">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="901">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="902">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="903">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="934">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="935">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="966">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="967">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="1025" name="1" tilewidth="16" tileheight="16">
+  <image source="../../tileset/wood.png" trans="000000" width="512" height="512"/>
+  <tile id="32">
+   <properties>
+    <property name="Grass" value="true"/>
+   </properties>
+  </tile>
+  <tile id="837">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="838">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="839">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="869">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="870">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="871">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="901">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="902">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="903">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="934">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="935">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="966">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="967">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="2049" source="../../tileset/invisible.tsx"/>
+ <tileset firstgid="2065" source="../../tileset/corruption.tsx"/>
+ <layer name="Walkable" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztlbEOwzAIRN3NHWP+tD/V32yHWkEIUzhwu2Q4ZYl4OTjI6K2Ntw72fNxrdGtryXfpw7dq7ORqbKt2ljt7TUFulC3rEzjjKFf2dAS8ZmZM/dTs8S8yfYgdmv6znq1MafO1dmk3l2ca9Y1web5IzCDLk7nSuJzt9R7hyvvMbxaabQ9Xq12xSxZ3dRMt7rOfynBXmcpyLXbUq4fh4crdQG/V6j9nceWdrMgQ0ucK3m4u8m3a96G5vbj2fLPcb7UQrtdLtd8KXdz/cl+uPSfl
+  </data>
+ </layer>
+ <layer name="terain-split" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztlk0SwiAMhVnSfT2IPz2IFg9SWy+iF7aMZXyDBBIoduObYdPM5ONBEqrUt05aqaMOBIQaGzrWzvlvy9oBy2c/ms9ag9tD7rOmY5TsPq5E/mn+3hMx9JXDvTTvRbFjnh0bufb8R8EdDxlcx+6Aw/HKUYob2kftmqZU4tkstf/M7KVDpm+Oz1gvIV+yBw4X73LwPMf2GBLnfH2289QVcKeln6l5IRHeP7enY7OKyu3OuRWyfElqaw/nXDo7Up5xJmI9rzGzOG8SepXOZysTeB9S74Jfx1KvBvIjWzInc7y6/LaH7kwu1rK0fl2/+jyMU7W11ptHKeS5pD9LuL/QFlwjeCOkeWP/lDW8TkQN1+Zy9Oduy30Bwh04uA==
+  </data>
+ </layer>
+ <layer name="terrainplit2" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBjcoISTgSEIiEs5B9olEFA8QO4AhcNEIA4eQPtHwSgYBaNgFIwCZDAZWjfRGwTS0c5JnBA8ebQeHAVUBIHQ9m0QndPyaDoeBdgAAA2GCWw=
+  </data>
+ </layer>
+ <layer name="WalkOver" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgYMJ2DgWEGEM/kGCAHDBI3jIJRMApGwSgYBaNgFIwC8sBIbctV0tm/IzWcRwoAAMrcCAI=
+  </data>
+ </layer>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztl80OATEUhe9iFmbJM5BgxwZ7EjyAnzULvADWBE8ingSP5WxONDdpaqbTJpP4kpN2fjq3pz+T231F5AAdoTm0gJbQKhVZQ1URqUEdqGuUvK+f1xORRuIuTfZGH06IeU6/39PY+jHEN0eJuywKW/9+8RuC0H5dxPZLXH5nlbDxY/slsef3T1zKtq4u2GdXQ7eM+y6v37uK88gYN69f37h5/T4R52XoHcmvL2Vbz77Qbw/z04cGap5894sN+jVzORPfdWuDfs1cLkZc+rWNc2i/sceZfjnOzNOJ7/9BY8vrmKeHQud1TagFtVW9aLTfMTSBpqquzz+6PbG95/K7gbbQTtX1+Yfx2I7XrvMaS+33A76YRUA=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBiegIWFgYGVBZMe7mCk+RcGRpp/RwF9wEhLV6P+Hd5gpPpXnIOBQQKIJTkG2kW0BQMdv/QO54H2L73AYGnXcQDt5gRiLhZUNrUBpf6ldzih20eq/YMlfgGJaAKF
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="30" height="30">
+  <object name="border" type="border-left" gid="2052" x="0" y="256">
+   <properties>
+    <property name="map" value="-1.0"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
