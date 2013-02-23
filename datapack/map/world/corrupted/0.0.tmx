@@ -183,7 +183,7 @@
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztl00OAUEQhUsyi7HkDCTYscGeBAfws2aBCwxrgpOIk+BY3sKLTiWdZlp3IvElL9Xmr/r1j1RnqcgG2kITaArNoHlRZAGVRKQMNaGWEXld368kItXEHU0yow875NwXX9/T2PrRwzf7iTt+C1v/3vEbgtB+XcT2S1x+x2nY/LH9Fp4x9vz+iUvsdUXyrqsD9tnR0OnDfZfX71nluXyYN69f37x5/V6R52boHsmvL7+2nn2h3zbmpwN11Tz57hcb9GvWcia+69YG/Zq1XIy89Gsb59B+Y48z/XKcWacT3/8Hja2uY50eCl3X1aA61FDtb6P9DqAhNFJtff7R7xPbcy6/S2gFrVVbn3+Yj+/xt+u8xqj9PgDI+EVB
+   eJztl00OAUEQhWsxCxIbzkCCHRvsSXAAP2sWuADWBCcRJ8GxvERedCrptJme7kTiS16qzV/16x+p3hZEdtAemkIzaA4tiiJLqCwiFagFtY3I6/p+NRGpJe5osjX6cEDOY/HzPY2tH318c5C4Y17Y+veN3xCE9usitl/i8jsphM0f22+79I6x5/dPXGKvK5J1XZ2wz86GLin3XVa/V5XnljJvVr++ebP6vSPPw9Azkl9ffm09+0K/HcxPF+qpefLdLzbo16zlTHzXrQ36NWu5GHnp1zbOof3GHmf65TizTie+/w8aW13HOj0Uuq6rQw2oqdp5o/0OoRE0Vm19/tHvE9tzLr8raA1tVFuff5iP7/G367zGqP2+AEH5RX4=
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
@@ -200,6 +200,11 @@
   <object type="bot spawn" gid="2050" x="224" y="144"/>
  </objectgroup>
  <objectgroup name="Object" width="30" height="30">
-  <object type="bot" gid="3122" x="416" y="128"/>
+  <object type="bot" gid="2051" x="416" y="128">
+   <properties>
+    <property name="file" value="../../bots.xml"/>
+    <property name="id" value="2"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
