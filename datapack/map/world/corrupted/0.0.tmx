@@ -203,7 +203,7 @@
   <object type="bot" gid="2051" x="416" y="128">
    <properties>
     <property name="file" value="../../bots.xml"/>
-    <property name="id" value="2"/>
+    <property name="id" value="3"/>
    </properties>
   </object>
  </objectgroup>

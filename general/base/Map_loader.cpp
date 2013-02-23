@@ -158,7 +158,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     {
                         quint32 object_x=SubChild.attribute("x").toUInt(&ok)/16;
                         if(!ok)
-                            DebugClass::debugConsole(QString("Wrong conversion with x: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                            DebugClass::debugConsole(QString("Wrong conversion with x: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
@@ -166,9 +166,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                             quint32 object_y=(SubChild.attribute("y").toUInt(&ok)/16)-1;
 
                             if(!ok)
-                                DebugClass::debugConsole(QString("Wrong conversion with y: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                                DebugClass::debugConsole(QString("Wrong conversion with y: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                             else if(object_x>map_to_send.width || object_y>map_to_send.height)
-                                DebugClass::debugConsole(QString("Object out of the map: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                                DebugClass::debugConsole(QString("Object out of the map: %1 (at line: %2), file: %3").arg(SubChild.tagName()).arg(SubChild.lineNumber()).arg(fileName));
                             else if(SubChild.hasAttribute("type"))
                             {
                                 QString type=SubChild.attribute("type");
@@ -321,10 +321,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                 }
                                 else
                                 {
-                                    DebugClass::debugConsole(QString("unknow type: %1, object_x: %2, object_y: %3")
+                                    DebugClass::debugConsole(QString("unknow type: %1, object_x: %2, object_y: %3 (moving), %4 (line: %5)")
                                          .arg(type)
                                          .arg(object_x)
                                          .arg(object_y)
+                                         .arg(SubChild.tagName())
+                                         .arg(SubChild.lineNumber())
                                          );
                                 }
 
@@ -407,10 +409,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                 }
                                 else
                                 {
-                                    DebugClass::debugConsole(QString("unknow type: %1, object_x: %2, object_y: %3")
+                                    DebugClass::debugConsole(QString("unknow type: %1, object_x: %2, object_y: %3 (object), %4 (at line: %5)")
                                          .arg(type)
                                          .arg(object_x)
                                          .arg(object_y)
+                                         .arg(SubChild.tagName())
+                                         .arg(SubChild.lineNumber())
                                          );
                                 }
 

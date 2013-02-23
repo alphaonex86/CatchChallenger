@@ -266,7 +266,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             return;
         }
 
-        loadOtherPlayerFromMap(tempPlayer);
+        loadOtherPlayerFromMap(tempPlayer,false);
 
         tempPlayer.informations=player;
         tempPlayer.oneStepMore=new QTimer();
@@ -298,7 +298,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
 }
 
 //call after enter on new map
-void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer)
+void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool &display)
 {
     //remove the player tile if needed
     Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
@@ -313,17 +313,22 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer)
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.x,otherPlayer.y+1));
 
-    QSet<QString> mapUsed=loadMap(otherPlayer.presumed_map,true);
-    QSetIterator<QString> i(mapUsed);
-    while (i.hasNext())
+    if(display)
     {
-        QString map = i.next();
-        if(mapUsedByOtherPlayer.contains(map))
-            mapUsedByOtherPlayer[map]++;
-        else
-            mapUsedByOtherPlayer[map]=1;
+        QSet<QString> mapUsed=loadMap(otherPlayer.presumed_map,display);
+        QSetIterator<QString> i(mapUsed);
+        while (i.hasNext())
+        {
+            QString map = i.next();
+            if(mapUsedByOtherPlayer.contains(map))
+                mapUsedByOtherPlayer[map]++;
+            else
+                mapUsedByOtherPlayer[map]=1;
+        }
+        removeUnusedMap();
     }
-    removeUnusedMap();
+    /// \todo temp fix, do a better fix
+    centerOn(MapObjectItem::objectLink[playerMapObject]);
 
     if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.presumed_map->objectGroup))
         ObjectGroupItem::objectGroupLink[otherPlayer.presumed_map->objectGroup]->addObject(otherPlayer.playerMapObject);
