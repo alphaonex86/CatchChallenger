@@ -41,6 +41,8 @@ void MapController::datapackParsed()
 
 void MapController::loadBotOnTheMap(Map_full *parsedMap,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
 {
+    if(skin.isEmpty())
+        return;
     if(!ObjectGroupItem::objectGroupLink.contains(parsedMap->objectGroup))
     {
         qDebug() << QString("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
