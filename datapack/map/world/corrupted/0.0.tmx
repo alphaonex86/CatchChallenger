@@ -191,5 +191,6 @@
     <property name="map" value="-1.0"/>
    </properties>
   </object>
+  <object type="bot spawn" gid="2050" x="224" y="144"/>
  </objectgroup>
 </map>
