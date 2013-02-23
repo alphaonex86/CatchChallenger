@@ -155,6 +155,7 @@
  </tileset>
  <tileset firstgid="2049" source="../../tileset/invisible.tsx"/>
  <tileset firstgid="2065" source="../../tileset/corruption.tsx"/>
+ <tileset firstgid="3089" source="../../tileset/rename.tsx"/>
  <layer name="Walkable" width="30" height="30">
   <data encoding="base64" compression="zlib">
    eJztlbEOwzAIRN3NHWP+tD/V32yHWkEIUzhwu2Q4ZYl4OTjI6K2Ntw72fNxrdGtryXfpw7dq7ORqbKt2ljt7TUFulC3rEzjjKFf2dAS8ZmZM/dTs8S8yfYgdmv6znq1MafO1dmk3l2ca9Y1web5IzCDLk7nSuJzt9R7hyvvMbxaabQ9Xq12xSxZ3dRMt7rOfynBXmcpyLXbUq4fh4crdQG/V6j9nceWdrMgQ0ucK3m4u8m3a96G5vbj2fLPcb7UQrtdLtd8KXdz/cl+uPSfl
@@ -182,7 +183,7 @@
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztl80OATEUhe9iFmbJM5BgxwZ7EjyAnzULvADWBE8ingSP5WxONDdpaqbTJpP4kpN2fjq3pz+T231F5AAdoTm0gJbQKhVZQ1URqUEdqGuUvK+f1xORRuIuTfZGH06IeU6/39PY+jHEN0eJuywKW/9+8RuC0H5dxPZLXH5nlbDxY/slsef3T1zKtq4u2GdXQ7eM+y6v37uK88gYN69f37h5/T4R52XoHcmvL2Vbz77Qbw/z04cGap5894sN+jVzORPfdWuDfs1cLkZc+rWNc2i/sceZfjnOzNOJ7/9BY8vrmKeHQud1TagFtVW9aLTfMTSBpqquzz+6PbG95/K7gbbQTtX1+Yfx2I7XrvMaS+33A76YRUA=
+   eJztl00OAUEQhUsyi7HkDCTYscGeBAfws2aBCwxrgpOIk+BY3sKLTiWdZlp3IvElL9Xmr/r1j1RnqcgG2kITaArNoHlRZAGVRKQMNaGWEXld368kItXEHU0yow875NwXX9/T2PrRwzf7iTt+C1v/3vEbgtB+XcT2S1x+x2nY/LH9Fp4x9vz+iUvsdUXyrqsD9tnR0OnDfZfX71nluXyYN69f37x5/V6R52boHsmvL7+2nn2h3zbmpwN11Tz57hcb9GvWcia+69YG/Zq1XIy89Gsb59B+Y48z/XKcWacT3/8Hja2uY50eCl3X1aA61FDtb6P9DqAhNFJtff7R7xPbcy6/S2gFrVVbn3+Yj+/xt+u8xqj9PgDI+EVB
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
@@ -197,5 +198,8 @@
    </properties>
   </object>
   <object type="bot spawn" gid="2050" x="224" y="144"/>
+ </objectgroup>
+ <objectgroup name="Object" width="30" height="30">
+  <object type="bot" gid="3122" x="416" y="128"/>
  </objectgroup>
 </map>
