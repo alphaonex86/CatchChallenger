@@ -155,70 +155,38 @@
  </tileset>
  <tileset firstgid="2049" source="../../tileset/invisible.tsx"/>
  <tileset firstgid="2065" source="../../tileset/corruption.tsx"/>
+ <tileset firstgid="3089" source="../../tileset/building-small.tsx"/>
  <layer name="Walkable" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJyVlrGSw0AIQ1P6Snv/9P6/uGs8o3l+Yp1iJw7BCwghch2fz/V/TnzeZ4V9xe9L/FY8n7hzxaf55H208Xuz8/7JvuAzvUNMmD9rZa7pe9t/f57nkjsNuwu2hfjEPeO3uNbL83jWmjEMx/TLM9XbesYetD5avRPO+R7vz5pv/6yHPWj4tLjGl1X8MzZry+/JuxaX+E55Zmz2euoL8SUuuzyZL+OSb23WOLP57q5e43Gr37TD/Jhnw5l1mdZRB0y3GTft1gvWeB3PvMkF86E+Uw9NU5mnYWuYN7xtT5jWEyfjuuk35/fNfmM/DWerhfc23pMHpoOtf9T9qW/5zPzINcNv4qzlY9xqe85ynWZutweNh21umM9u/zSNN95MvW9asdM57qNpv+xm402c3d5v82IacT9/G9NminFsPni+jWs61WbSdsa3tZq+2pzzd5udCce2C4lh06OmTy0utanx37jStIjvv/3PZjpt9p2uTTPEmmxmyOE2N7RP/PkDV7uauw==
+   eJztlsEOwiAQRHvEI8uf8Sn9/4M1SvKYTCUSWz30sMFiy8zsDgvrbVnWLXJalrpFSc/fj1hvx0fDDOCfhRvQexYu8X6BWzHWCez4kHN+5ZnjjLfoE+Zuj0vTF9A6o7fhcr3GY09vFszZPDNf1P3Oz9xHM96K1Efzy9E+pUdU+5G4V1xxxf9E67WBHvaN3sNepr2mmPmGW827AY6j/pRljWIwMtbV3st+zp44OlP0zOJ5ybk6wNJxVAvNXaSeSzUcmA9yyBKcd3qzcKU+5l45KFaRoAbVH/I/7xshz/qOy4P6hblxvnL4moOcev6sPc93auc3xK2p51hkLWLoOe7q6OrsfNY06b3K7Zdi3tW7jPME702aC1fjkG+KWc9hKHfWRutPPY7HHp7uQc0T60Cf3wGmxDZ8
   </data>
  </layer>
  <layer name="terain-split" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztllsKgCAQRf10AbYQzRYSraTaPzSCgUy+UyOYA/fTjkyjI2PEFwjO2OFk4mO8G/Ks5A0iXvyXUq/bDydkr3RrWDNDJERBlsQ38D4Nb9wpX8xr6N0X2tZF2TqN8ob2kFsvgiDqcWetL6PmL2bkvdPDi98xMWTD+y40P3y0rHGON3f25iLsm8BF8Wdaz5KSGpP3P977zOKeMlzIWRkZ
+   eJxjYGBgCORgwAqCcYhTC4zaCwEmQHFjEuw2BKo1gmJi9OGyFwRI8TOyOSZIbsDlFlrYS4xZo/bSx95CIL8IBy6mob3UAvjcT6ofRsEoGC4AuX4hVMaTCnCZC8KmeMzGVt9Q223kAlq3GwabvSaDIMxJbTNRE4y0+B4M6WwU0AcAACX5HnI=
   </data>
  </layer>
  <layer name="WalkOver" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBhZYDoHA8MMIJ7JQT02MXbR0y+0BGE0Nn8kgNEwHAXEAnrlaxgYqWmTGuE8UsOOFEDv9DxSATnhTEr6HU3rEDAS0vNg8ONgcAMtwEC04fEBAIBbJdU=
+   eJxjYBgFo2AUjIJRMApGwSgYnuA5BwKPAuqC6cAwnQHEM0dg2NLT76PhPBrOtAYAqzkMLg==
   </data>
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJzNV0kKAjEQzNE5KgrqQ1xeMvoS9VluD3F7iBuoJwtEaEJ6Jkt3tKCYhsmQ6iKVScqGMRNwCpZC9RAcgWOrpmNm4BxcCNacHjpGA5weSQyUtP8aS/S1AtfgBtxm6nOHefbgATyCJ895U/WeMf4CXsEbePf8PlbvF83CmFbxqdt4doo0vTTXGuD00lznRGiupfKq7TMH2+dcObV9Tl33vrB9js1pKGyfY3MaCu1/Iod/Wc+5oOVzXR4lfaZ7WV0etXx25ZH2qOWzK4/cWdeFqv/AA++e4MtTM3fWDUUXPfTAfsXewp3htfeN0DuFVB16p9C+K2ncj3z6egOuyZJW
+   eJxjYBgFgw0oczIwnOKAYFEGBFuFk7b2ruZAsMWQ2Cs5MNXSyl5kMGrvqL0DbW8yMM+lAHEXB27cgWYeNextBtrZQiC/o9tDr3AejvbCylhs+PQA+RcdDDZ7T+IJM1yYGvYSC8yB+i2A2BKLOch1LKH4JhWEA/VHAHEkFrNdaFiHlwPNrwDiSg78fqc2QLYL2e+0Bsh2Ifud1mA0nAd/OCOrp4RNajgjq6eETWo4I6unhA0AqGNjIg==
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBhZQJwDQktyDKw7BhuYCAyPSUA8GYinAPHUQR4+Q8295AILTgYGS07c8qD0LMFB/fQcAbQzEo+9Iw3QKpxJBcM93cPC2QyY9swHIP2FAe0MHwHpfrCk56EOCOXHkRDO1PLjDqD+nUC8iwxzKHHDDaCem0B8axDGEbK/BkNawuUearEHm79GGgAAweoaxg==
+   eJxjYBhZQJwDQktyDKw7hjsYDWf6gNFwpg+gZziP5DgVp6OfR8OZfnZJcIzccKaX30fDeTScaQ2Q/U5MGYKunlz2SAMD5XcA7QAGvg==
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="30">
-  <object name="border" type="border-right" gid="2052" x="464" y="256">
-   <properties>
-    <property name="map" value="0.0"/>
-   </properties>
-  </object>
-  <object type="bot spawn" gid="2050" x="256" y="240"/>
-  <object name="border" type="border-left" gid="2052" x="0" y="256">
+  <object name="border" type="border-bottom" gid="2052" x="240" y="480">
    <properties>
     <property name="map" value="-2.0"/>
    </properties>
   </object>
-  <object type="door" gid="2323" x="192" y="144">
-   <properties>
-    <property name="map" value="../../indoor/corrupted/house-left-top.tmx"/>
-    <property name="x" value="5"/>
-    <property name="y" value="10"/>
-   </properties>
-  </object>
-  <object type="door" gid="2323" x="416" y="160">
-   <properties>
-    <property name="map" value="../../indoor/corrupted/house-right-top.tmx"/>
-    <property name="x" value="5"/>
-    <property name="y" value="10"/>
-   </properties>
-  </object>
-  <object type="door" gid="2323" x="384" y="384">
-   <properties>
-    <property name="map" value="../../indoor/corrupted/house-right-bottom.tmx"/>
-    <property name="x" value="5"/>
-    <property name="y" value="10"/>
-   </properties>
-  </object>
-  <object type="door" gid="2323" x="96" y="272">
-   <properties>
-    <property name="map" value="../../indoor/corrupted/house-left-bottom.tmx"/>
-    <property name="x" value="5"/>
-    <property name="y" value="10"/>
-   </properties>
-  </object>
+  <object type="bot spawn" gid="2050" x="224" y="160"/>
  </objectgroup>
 </map>
