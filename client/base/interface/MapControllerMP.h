@@ -138,7 +138,7 @@ private slots:
     void moveOtherPlayerStepSlot();
 protected slots:
     //call after enter on new map
-    virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer);
+    virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
 };
