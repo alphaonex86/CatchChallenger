@@ -10,14 +10,19 @@
    eJxrYmBgaBrFoxiKSQUAPt5DCQ==
   </data>
  </layer>
- <layer name="Collisions" width="12" height="12">
-  <data encoding="base64" compression="zlib">
-   eJwL4WFgCCEBl5CIKQFCLAwMQWhYmAW3eiOgXBEaNsajfiiB7SSG5XUKw55YAAAP/A/x
-  </data>
- </layer>
  <layer name="Other" width="12" height="12">
   <data encoding="base64" compression="zlib">
-   eJxjYBjc4BoPdvYoIB/YA7EDlcwCAPriAkQ=
+   eJxjYKAfuMaDnz8K6APsgdiBSmYBAFM5AkQ=
+  </data>
+ </layer>
+ <layer name="Collisions" width="12" height="12">
+  <data encoding="base64" compression="zlib">
+   eJwL4WFgCCEBl5CISQV2LAwM+4nE9Sykmz9UwXYSw/I6GWFPDgAA1N0Uig==
+  </data>
+ </layer>
+ <layer name="Tile Layer 4" width="12" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAtkGNhYJhPJJZnobFjRgHVAQDiPQak
   </data>
  </layer>
  <objectgroup name="Moving" width="12" height="12">
@@ -31,8 +36,18 @@
   <object name="teleport on push" type="teleport on push" gid="1027" x="96" y="192">
    <properties>
     <property name="map" value="../../world/corrupted/-1.0.tmx"/>
-    <property name="x" value="6"/>
-    <property name="y" value="17"/>
+    <property name="x" value="12"/>
+    <property name="y" value="9"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup name="Object" width="12" height="12">
+  <object type="bot" gid="1027" x="80" y="48">
+   <properties>
+    <property name="file" value="../../bots.xml"/>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="bandit"/>
    </properties>
   </object>
  </objectgroup>

@@ -172,7 +172,12 @@
  </layer>
  <layer name="WalkOver" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBgYMJ2DgWEGEM/kGCAHDBI3jIJRMApGwSgYBaNgFIwC8sBIbctV0tm/IzWcRwoAAMrcCAI=
+   eJxjYBgYMJ2DgWEGEM/kGCAHDBI3jIJRMApGwSgYBaOAeoANiNmBmN5VuxqU1hi1l6720qstN1D+dQNidyD2QBOvpHMCH20zD28AAP5cCnI=
+  </data>
+ </layer>
+ <layer name="Dirt" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztzTENAAAMA6C6qX+HFbFrCRggAQDgql4vPDTykgDE
   </data>
  </layer>
  <layer name="Collisions" width="30" height="30">
