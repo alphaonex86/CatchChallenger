@@ -2,7 +2,7 @@
 <bots>
 	<bot id="1">
 		<step id="1" type="text">
-			<text lang="en">Hello world!</text>
+			<text lang="en"><![CDATA[Hello world!]]></text>
 		</step>
 	</bot>
 	<bot id="2">
@@ -20,6 +20,11 @@
 		<step id="3" type="sell" shop="1" />
 		<step id="4" type="text">
 			<text lang="en"><![CDATA[Is test bot, with external link, buy/sell features.]]></text>
+		</step>
+	</bot>
+	<bot id="3">
+		<step id="1" type="text">
+			<text lang="en"><![CDATA[You are into dangerous zone.<br />Take care.]]></text>
 		</step>
 	</bot>
 </bots>
