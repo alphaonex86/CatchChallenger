@@ -511,7 +511,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         qDebug() << "waitedObjectType is unknow";
         return;
     }
-    waitedObjectType==ObjectType_All;
+    waitedObjectType=ObjectType_All;
 }
 
 void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool &showGain)
@@ -1325,6 +1325,8 @@ void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveShopList()";
     #endif
+    QFont MissingQuantity;
+    MissingQuantity.setItalic(true);
     ui->shopItemList->clear();
     itemsIntoTheShop.clear();
     shop_items_graphical.clear();
@@ -1351,6 +1353,11 @@ void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
                 item->setText(tr("Item %1\nPrice: %2$").arg(items.at(index).object).arg(items.at(index).price));
             else
                 item->setText(tr("Item %1 at %2$\nQuantity: %3").arg(items.at(index).object).arg(items.at(index).price).arg(items.at(index).quantity));
+        }
+        if(items.at(index).price>cash)
+        {
+            item->setFont(MissingQuantity);
+            item->setForeground(QBrush(QColor(200,20,20)));
         }
         ui->shopItemList->addItem(item);
         index++;

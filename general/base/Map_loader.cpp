@@ -690,7 +690,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             layers_name << "Grass";
         if(Dirt.size()>0)
             layers_name << "Dirt";
-        DebugClass::debugConsole(layers_name.join(" + ")+" = walkable");
+        DebugClass::debugConsole("For "+fileName+": "+layers_name.join(" + ")+" = walkable");
         while(y<map_to_send.height)
         {
             QString line;
