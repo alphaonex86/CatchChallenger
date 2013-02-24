@@ -35,6 +35,7 @@ protected slots:
     void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
+    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
 public slots:
     virtual void datapackParsed();
     virtual void reinject_signals();

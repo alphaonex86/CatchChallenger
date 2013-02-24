@@ -39,6 +39,17 @@ void MapController::datapackParsed()
     delayedPlantInsert.clear();
 }
 
+bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision)
+{
+    if(!MapVisualiserPlayerWithFight::canGoTo(direction,map,x,y,checkCollision))
+        return false;
+    CatchChallenger::Map *new_map=&map;
+    CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
+    if(all_map[new_map->map_file]->logicalMap.bots.contains(QPair<quint8,quint8>(x,y)))
+        return false;
+    return true;
+}
+
 void MapController::loadBotOnTheMap(Map_full *parsedMap,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
 {
     if(skin.isEmpty())
