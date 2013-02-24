@@ -27,4 +27,14 @@
 			<text lang="en"><![CDATA[You are into dangerous zone.<br />Take care.]]></text>
 		</step>
 	</bot>
+	<bot id="4">
+		<step id="1" type="text">
+			<text lang="en"><![CDATA[I can learn you some attack<br />
+			<br />
+			<center>
+				<a href="2">Learn</a><br />
+			</center>]]></text>
+		</step>
+		<step id="2" type="learn" />
+	</bot>
 </bots>
