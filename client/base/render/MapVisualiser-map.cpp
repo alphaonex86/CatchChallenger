@@ -765,6 +765,8 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
         QString skin;
         if(i.value().properties.contains("skin"))
             skin=i.value().properties["skin"];
+        else
+            skin="empty";
         loadBotOnTheMap(tempMapObject,i.key().first,i.key().second,direction,skin);
     }
 

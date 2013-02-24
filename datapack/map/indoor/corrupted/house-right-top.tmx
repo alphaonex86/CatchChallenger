@@ -10,14 +10,19 @@
    eJxrYmBgaBrFoxiKSQUAPt5DCQ==
   </data>
  </layer>
+ <layer name="Other" width="12" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFIw3YA7EDlcwCACb0AIA=
+  </data>
+ </layer>
  <layer name="Collisions" width="12" height="12">
   <data encoding="base64" compression="zlib">
-   eJwL4WFgCCEBl5CIKQFCLAwMQWhYmAW3eiOgXBEaNsajfiiB7SSG5XUKw55YAAAP/A/x
+   eJwL4WFgCCEBl5CIKQFCLAwMQWhYmAW3eiOgXBEaNsajfhRQDgBABQ5L
   </data>
  </layer>
  <layer name="Other" width="12" height="12">
   <data encoding="base64" compression="zlib">
-   eJxjYBjc4BoPdvYoIB/YA7EDlcwCAPriAkQ=
+   eJxjYBjc4BoPdvYoGBwAANYuAcU=
   </data>
  </layer>
  <objectgroup name="Moving" width="12" height="12">

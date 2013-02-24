@@ -13,6 +13,7 @@
  <tileset firstgid="3073" source="../tileset/building-small.tsx"/>
  <tileset firstgid="4097" source="../tileset/animation.tsx"/>
  <tileset firstgid="5121" source="../tileset/invisible.tsx"/>
+ <tileset firstgid="5137" source="../tileset/building-town.tsx"/>
  <layer name="Walkable" width="30" height="30">
   <data encoding="base64" compression="zlib">
    eJztyiEBAEAIBLDDf/9G9MKR4AViYm6VpAAAWP3+HIDrBrfABSU=
@@ -55,17 +56,17 @@
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztlssuBEEUhmsxC4uWxhuMFVbaQwhWeAo8hoyd++UFhJ375Q2wch/eACv3y95XUaJS06VrqrvHBH/ypStTJ+fkO+l0plQQYgxKNX4uwfIPPGvtWW++Mk3BB83QopBp474dOnLwlelkTqTRpeb2cN8LfTn5RkElMkPcD8OIqvNJNb5RzJ5lZkIhZmEO5mEh/Oo/znkCJmEKptXdd762ufqeZTbptQXbsAO72twVzquwBuuwEbr59sMADCrMPRfhjF7nUIYLuNTmHnI+gmM4gVMHX1v0Pcu5T/R6hhd4hTdt7i3nO7iHB3h08LXF3LNPbL5FS0/5e97vsy3m++wTH98s9mzOd/HNYs+fqcZ3NIa4xNW5fJ9tWSxU4lqX9H1O8vVJFr57fLv2obtRiIMgvs6scfFNyhV9rhU3lrlmTWtDOt80Sevrm3/f+vD9a/+ff7vvO4x6RuQ=
+   eJztljlOw0AUhqdIQRHkxhcIFdABd4iADrgEcAJqFDogrBdA0LEvNwAqdsINgIp96fksBTEaexbGjomAX/rkUebpPX1PlpVKQYgJqOT8XIaVH3jm7dlsvqa0c98BnQ3wNaWX+z7oz9l3mPsRGLXUmWLyHQvjqHuOMhsIMQfzsACLwVf/Sc5TMA1VmKnfmXy7mNMt0RPG9xxli17bsAO7sCfNXeW8BuuwAZuB3XeAOYMSQ2F8zyU4p9cFXEINrqS5R5yP4QRO4czBVxd5z9HcZ3q9wCu8wbs0947zPTzAIzw5+Oqi7tknOt+Spmf0e6PfZ13U99knPr5Z7Fmd7+KbxZ4/8x3f8QSSklSX5vu8VIjjWmf7Ptt8fZKF735RiAMotwpxWEyuU2tcfG25ps9NnVvNXLWmrSWdb5qk9fXNv29z+P61/8+/3fcD4ANF+A==
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBgYkMLCwJDKQn96oAA2d3DwMjBwImEuXqg4UJ4TiLlo5F8+HgYGTV4E5uehj3/1gPZ48iKwPhXtxedfkL3xULtANMxe5HAGgUJ+BoYiIC4G4hIgLuVHmJEDZOcCcR4Q5wNxAT+qHbj8iwzo7V9WAVT/UhNg868f1B5VAQjtjyOcKbFvoAC9yxFy7KFGOKPbP9DhTi9Ain+TWDAxseoGS7iS6l9WYHnNBsXsvNjVoauhhn9VgeaoQbE6DnuJUUOqO1yB5rgBcT2wDHPHYSY2NdSK3/lElNn41NArnQ3F9DwU7CHVHSOt/Tzc/TtQAADh1GBd
+   eJxjYBgYkMLCwJDKQn96oAA2d3DwMjBwImEuXqg4UJ4TiLmGmX/pYR8pADmcQaCQn4GhCIiLgbgEiEv5EWpzgOxcIM4D4nwgLuBHNWsw+VdchIFhtxgDA6sAhC8hQjv7kd0RDrVHFWpvBJSPHs6U2DdQYDDFLy5AjXBGt3+gw51egBT/JrFgYmLVDZZwJdW/rMC6iQ2K2Xmxq0NXQw3/qgLNUYNidRz2EqOGVHe4As1xA+J6HgYGdxxmYlNDrfidz0OZGnqls6GYnoeCPaS6Y6S1n4e7fwcKAABaklxO
   </data>
  </layer>
  <layer name="other" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFwjwMDCJIWJSHPvYaA+0xQcKmdLC3CGhHMRCXIOFSOvl3FIyCUTAKRsEoGAqAVYA6akgFqkSYSYyaUTAKRsEoIAUAAKy6BXM=
+   eJxjYBgFIwkU8Qy0C+gPqsQYGKqRcI0YfeydBbRnNhKeQyd7dwHt6RNhYNgtBsF76GQvCKwToZ9do2AUjIJRQCvAKkAdNaQCVSLMJEbNKBgFo2AUkAIAR0AMBQ==
   </data>
  </layer>
  <objectgroup name="Moving" width="30" height="30">
