@@ -9,6 +9,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/FacilityLib.h"
 #include "../base/interface/DatapackClientLoader.h"
+#include "../fight/interface/FightEngine.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
