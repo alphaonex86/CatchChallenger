@@ -139,9 +139,9 @@ void ClientHeavyLoad::loadMonsters()
     }
 }
 
-QList<PlayerMonster::Buff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
+QList<PlayerMonster::PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
 {
-    QList<PlayerMonster::Buff> buffs;
+    QList<PlayerMonster::PlayerBuff> buffs;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -160,7 +160,7 @@ QList<PlayerMonster::Buff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &mons
         emit message(monsterBuffsQuery.lastQuery()+": "+monsterBuffsQuery.lastError().text());
     while(monsterBuffsQuery.next())
     {
-        PlayerMonster::Buff buff;
+        PlayerMonster::PlayerBuff buff;
         buff.buff=monsterBuffsQuery.value(0).toUInt(&ok);
         if(ok)
         {
@@ -192,9 +192,9 @@ QList<PlayerMonster::Buff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &mons
     return buffs;
 }
 
-QList<PlayerMonster::Skill> ClientHeavyLoad::loadMonsterSkills(const quint32 &monsterId)
+QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint32 &monsterId)
 {
-    QList<PlayerMonster::Skill> skills;
+    QList<PlayerMonster::PlayerSkill> skills;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -213,7 +213,7 @@ QList<PlayerMonster::Skill> ClientHeavyLoad::loadMonsterSkills(const quint32 &mo
         emit message(monsterSkillsQuery.lastQuery()+": "+monsterSkillsQuery.lastError().text());
     while(monsterSkillsQuery.next())
     {
-        PlayerMonster::Skill skill;
+        PlayerMonster::PlayerSkill skill;
         skill.skill=monsterSkillsQuery.value(0).toUInt(&ok);
         if(ok)
         {

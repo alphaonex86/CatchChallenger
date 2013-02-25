@@ -466,11 +466,16 @@ PlayerMonster LocalClientHandler::getRandomMonster(const QList<MapMonster> &mons
     }
     Monster::Stat monsterStat=getStat(monsterDef,playerMonster.level);
     playerMonster.hp=monsterStat.hp;
-    index=monsterDef.attack.size()-1;
+    index=monsterDef.learn.size()-1;
     while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
     {
-        if(monsterDef.attack.at(index).level<=playerMonster.level)
-            playerMonster.skills << monsterDef.attack.at(index).skill;
+        if(monsterDef.learn.at(index).learnAtLevel<=playerMonster.level)
+        {
+            PlayerMonster::PlayerSkill temp;
+            temp.level=monsterDef.learn.at(index).learnSkillLevel;
+            temp.skill=monsterDef.learn.at(index).learnSkill;
+            playerMonster.skills << temp;
+        }
         index--;
     }
     *ok=true;
@@ -567,15 +572,15 @@ void LocalClientHandler::generateOtherAttack()
         position=0;
     else
         position=getOneSeed(otherMonster.skills.size());
-    const PlayerMonster::Skill &otherMonsterSkill=otherMonster.skills.at(position);
+    const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster.skills.at(position);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
     emit message(QString("The wild monster use skill %1 at level %2").arg(otherMonsterSkill.skill).arg(otherMonsterSkill.level));
     #endif
-    const Monster::Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
+    const Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index=0;
     while(index<skillList.buff.size())
     {
-        const Monster::Skill::Buff &buff=skillList.buff.at(index);
+        const Skill::Buff &buff=skillList.buff.at(index);
         bool success;
         if(buff.success==100)
             success=true;
@@ -588,7 +593,7 @@ void LocalClientHandler::generateOtherAttack()
     index=0;
     while(index<skillList.life.size())
     {
-        const Monster::Skill::Life &life=skillList.life.at(index);
+        const Skill::Life &life=skillList.life.at(index);
         bool success;
         if(life.success==100)
             success=true;
@@ -600,14 +605,14 @@ void LocalClientHandler::generateOtherAttack()
     }
 }
 
-void LocalClientHandler::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
+void LocalClientHandler::applyOtherLifeEffect(const Skill::LifeEffect &effect)
 {
     qint32 quantity;
     const Monster::Stat &stat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             if(effect.type==QuantityType_Quantity)
             {
                 Monster::Stat otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
@@ -643,8 +648,8 @@ void LocalClientHandler::applyOtherLifeEffect(const Monster::Skill::LifeEffect &
                 emit message(QString("The wild monster heal you of %1").arg(quantity));
             #endif
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
@@ -681,19 +686,19 @@ void LocalClientHandler::applyOtherLifeEffect(const Monster::Skill::LifeEffect &
     }
 }
 
-void LocalClientHandler::applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect)
+void LocalClientHandler::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::Buff tempBuff;
+    PlayerMonster::PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs << tempBuff;
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             wildMonsters.first().buffs << tempBuff;
         break;
         default:
@@ -745,14 +750,14 @@ void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Mo
         return;
     }
 
-    const Monster::Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[skill].level.at(player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.at(index).level-1);
+    const Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[skill].level.at(player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.at(index).level-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
     emit message(QString("You use skill %1 at level %2").arg(skill).arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.at(index).level));
     #endif
     index=0;
     while(index<skillList.buff.size())
     {
-        const Monster::Skill::Buff &buff=skillList.buff.at(index);
+        const Skill::Buff &buff=skillList.buff.at(index);
         bool success;
         if(buff.success==100)
             success=true;
@@ -765,7 +770,7 @@ void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Mo
     index=0;
     while(index<skillList.life.size())
     {
-        const Monster::Skill::Life &life=skillList.life.at(index);
+        const Skill::Life &life=skillList.life.at(index);
         bool success;
         if(life.success==100)
             success=true;
@@ -782,14 +787,14 @@ bool LocalClientHandler::isInFight()
     return !wildMonsters.empty();
 }
 
-void LocalClientHandler::applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect)
+void LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
     qint32 quantity;
     const Monster::Stat &stat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             if(effect.type==QuantityType_Quantity)
             {
                 Monster::Stat otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
@@ -821,8 +826,8 @@ void LocalClientHandler::applyCurrentLifeEffect(const Monster::Skill::LifeEffect
                 emit message(QString("You heal the wild monster of %1").arg(quantity));
             #endif
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
@@ -863,19 +868,19 @@ void LocalClientHandler::applyCurrentLifeEffect(const Monster::Skill::LifeEffect
     }
 }
 
-void LocalClientHandler::applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect)
+void LocalClientHandler::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::Buff tempBuff;
+    PlayerMonster::PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             wildMonsters.first().buffs << tempBuff;
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs << tempBuff;
         break;
         default:
