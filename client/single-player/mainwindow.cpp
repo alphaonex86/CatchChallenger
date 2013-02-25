@@ -323,6 +323,19 @@ void MainWindow::on_SaveGame_New_clicked()
     index=0;
     while(index<profile.monsters.size())
     {
+        int monster_id;
+        do
+        {
+            monster_id=rand();
+            if(!sqlQuery.exec(QString("SELECT * FROM \"monster\" WHERE id=%1").arg(monster_id)))
+            {
+                db.close();
+                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+                rmpath(savegamesPath);
+                return;
+            }
+            size=sqlQuery.size();
+        } while(size>0);
         QString gender="unknown";
         if(CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].ratio_gender!=-1)
         {
@@ -350,7 +363,7 @@ void MainWindow::on_SaveGame_New_clicked()
             skills.removeFirst();
         if(!sqlQuery.exec(
                QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3);")
-               .arg(index+1)
+               .arg(monster_id)
                .arg(stat.hp)
                .arg(player_id)
                .arg(profile.monsters.at(index).id)
@@ -369,7 +382,7 @@ void MainWindow::on_SaveGame_New_clicked()
         {
             if(!sqlQuery.exec(
                    QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\") VALUES(%1,%2,%3);")
-                   .arg(index+1)
+                   .arg(monster_id)
                    .arg(skills[sub_index].skill)
                    .arg(skills[sub_index].level)
                         ))

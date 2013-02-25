@@ -3896,7 +3896,7 @@ border-image: url(:/images/empty.png);
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
-           <widget class="QLabel" name="label_17">
+           <widget class="QLabel" name="learnDescription">
             <property name="geometry">
              <rect>
               <x>10</x>

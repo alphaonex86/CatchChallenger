@@ -169,6 +169,10 @@ private slots:
     void displayAttack();
     void displayText(const QString &text);
 
+    //learn
+    bool showLearnSkill(const quint32 &monsterId);
+    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
     void on_toolButton_interface_quit_clicked();
@@ -207,6 +211,7 @@ private slots:
     void on_monsterList_itemActivated(QListWidgetItem *item);
     void on_learnQuit_clicked();
     void on_learnValidate_clicked();
+    void on_learnAttackList_itemActivated(QListWidgetItem *item);
 protected slots:
     //datapack
     void datapackParsed();
@@ -256,6 +261,7 @@ private:
     QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
     QHash<QListWidgetItem *,quint32> fight_attacks_graphical;
     QHash<QListWidgetItem *,quint32> monsters_items_graphical;
+    QHash<QListWidgetItem *,quint32> attack_to_learn_graphical;
     bool inSelection;
     QList<quint32> objectInUsing;
 

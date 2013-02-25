@@ -93,6 +93,7 @@ signals:
     //fight
     void tryEscape();
     void useSkill(const quint32 &skill);
+    void learnSkill(const quint32 &monsterId,const quint32 &skill);
 private:
     // for status
     bool have_send_protocol;

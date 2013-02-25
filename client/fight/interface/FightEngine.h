@@ -25,6 +25,7 @@ public:
     bool canDoFight();
     void healAllMonsters();
     bool isInFight();
+    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     struct MonsterExtra
     {
         QString name;
