@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
  <properties>
-  <property name="dayMonster" value=""/>
-  <property name="nightMonster" value=""/>
-  <property name="type" value=""/>
-  <property name="waterMonster" value=""/>
-  <property name="wildProbability" value=""/>
+  <property name="type" value="outdoor"/>
+  <property name="zone" value="corruption"/>
  </properties>
  <tileset firstgid="1" name="1" tilewidth="16" tileheight="16">
   <image source="../../tileset/terra.png" trans="000000" width="512" height="512"/>
@@ -173,7 +170,7 @@
  </layer>
  <layer name="WalkOver" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJxjYBgYMJ2DgWEGEM/kGCAHDBI3jIJRMApGwSgYBaOAeoANiNmBmN5VuxqU1hi1l6720qstN1D+dQNidyD2QBOvpHMCH20zD28AAP5cCnI=
+   eJxjYBgYMJ2DgWEGEM/kGCAHDBI3jALagrDRuB0Fo2AUjIIRBdiAmB2I6V38q0FpjVF76WovvdpyA+VfNyB2B2IPNPFKOifw0Tbz8AYAGj8K0A==
   </data>
  </layer>
  <layer name="Dirt" width="30" height="30">
@@ -183,7 +180,7 @@
  </layer>
  <layer name="Collisions" width="30" height="30">
   <data encoding="base64" compression="zlib">
-   eJztl00OAUEQhWsxCxIbzkCCHRvsSXAAP2sWuADWBCcRJ8GxvERedCrptJme7kTiS16qzV/16x+p3hZEdtAemkIzaA4tiiJLqCwiFagFtY3I6/p+NRGpJe5osjX6cEDOY/HzPY2tH318c5C4Y17Y+veN3xCE9usitl/i8jsphM0f22+79I6x5/dPXGKvK5J1XZ2wz86GLin3XVa/V5XnljJvVr++ebP6vSPPw9Azkl9ffm09+0K/HcxPF+qpefLdLzbo16zlTHzXrQ36NWu5GHnp1zbOof3GHmf65TizTie+/w8aW13HOj0Uuq6rQw2oqdp5o/0OoRE0Vm19/tHvE9tzLr8raA1tVFuff5iP7/G367zGqP2+AEH5RX4=
+   eJztl80OATEUhe9iFiOx4RlIsGODPQleAGsWeIFhTfAk4knwWE4iJ5qbNGWqFYkvObmdn87t6XQmt1kqsoY20BiaQFNoVhCZQyURKUNNqGVEntfXK4lINXFHk8wYwxY5d4Xn8zS2cfTwzH7ijp/CNr5X/IYgtF8Xsf2Sb/klsf22io/4Lb9/4hB7XZG862qPf/fB0DF9r39evyeV5/xm3rx+ffPm9XtBnquhWyS/vvzaevaFftt4Px2oq96T7/dig37NWs7Ed93aoF+zlouRl35t8xzab+x5pl/OM+t04vt/0NjqOtbpodB1XQ2qQw3V/jTa7wAaQiPV1vsf3Z/Y7nP5XUBLaKXaev/DfOzHY9d+jVH7vQMmJUUg
   </data>
  </layer>
  <layer name="WalkBehind" width="30" height="30">
@@ -204,6 +201,7 @@
    <properties>
     <property name="file" value="../../bots.xml"/>
     <property name="id" value="3"/>
+    <property name="skin" value=""/>
    </properties>
   </object>
  </objectgroup>

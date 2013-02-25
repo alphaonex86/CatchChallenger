@@ -13,7 +13,7 @@
 				<a href="2">Buy</a><br />
 				<a href="3">Sell</a><br />
 				<a href="4">More about this bot</a><br />
-				<a href="http://catchchallenger.first-world.info/shop/">Buy with real money</a><br />
+				<a href="http://catchchallenger.first-world.info/shop/" only="remote">Buy with real money<br /></a>
 			</center>]]></text>
 		</step>
 		<step id="2" type="shop" shop="1" />

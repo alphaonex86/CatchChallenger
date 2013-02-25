@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="12" height="12" tilewidth="16" tileheight="16">
+<map version="1.0" orientation="orthogonal" width="12" height="12" tilewidth="16" tileheight="16" backgroundcolor="#000000">
+ <properties>
+  <property name="type" value="indoor"/>
+  <property name="zone" value="corruption"/>
+ </properties>
  <tileset firstgid="1" source="../../tileset/inside-terra.tsx"/>
  <tileset firstgid="1025" source="../../tileset/invisible.tsx"/>
  <tileset firstgid="1041" source="../../tileset/inside-mobilier.tsx"/>
