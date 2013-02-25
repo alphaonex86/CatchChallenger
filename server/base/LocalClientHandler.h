@@ -82,6 +82,7 @@ private:
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
+    Direction lookToMove(const Direction &direction);
     //random linked signals
     void newRandomNumber(const QByteArray &randomData);
     //seed
@@ -114,6 +115,7 @@ public slots:
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void useSkill(const quint32 &skill);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+    bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
     //trade
     void tradeCanceled();
     void tradeAccepted();
