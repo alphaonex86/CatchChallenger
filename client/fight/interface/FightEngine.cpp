@@ -446,6 +446,54 @@ bool FightEngine::isInFight()
         return false;
 }
 
+bool FightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill)
+{
+    int index=0;
+    while(index<playerMonsterList.size())
+    {
+        const PlayerMonster &monster=playerMonsterList.at(index);
+        if(monster.id==monsterId)
+        {
+            int sub_index2=0;
+            while(sub_index2<monster.skills.size())
+            {
+                if(monster.skills.at(sub_index2).skill==skill)
+                    break;
+                sub_index2++;
+            }
+            int sub_index=0;
+            while(sub_index<CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.size())
+            {
+                const Monster::AttackToLearn &learn=CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.at(sub_index);
+                if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
+                {
+                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
+                    {
+                        quint32 sp=CatchChallenger::FightEngine::fightEngine.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
+                        if(sp>monster.sp)
+                            return false;
+                        playerMonsterList[index].sp-=sp;
+                        if(learn.learnSkillLevel==1)
+                        {
+                            PlayerMonster::PlayerSkill temp;
+                            temp.skill=skill;
+                            temp.level=1;
+                            playerMonsterList[index].skills << temp;
+                        }
+                        else
+                            playerMonsterList[index].skills[sub_index2].level++;
+                        return true;
+                    }
+                }
+                sub_index++;
+            }
+            return false;
+        }
+        index++;
+    }
+    return false;
+}
+
 void FightEngine::setPlayerMonster(const QList<PlayerMonster> &playerMonster)
 {
     this->playerMonsterList=playerMonster;

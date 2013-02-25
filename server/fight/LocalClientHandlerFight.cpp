@@ -888,3 +888,108 @@ void LocalClientHandler::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
         break;
     }
 }
+
+bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skill)
+{
+    int index=0;
+    while(index<player_informations->public_and_private_informations.playerMonster.size())
+    {
+        const PlayerMonster &monster=player_informations->public_and_private_informations.playerMonster.at(index);
+        if(monster.id==monsterId)
+        {
+            int sub_index2=0;
+            while(sub_index2<monster.skills.size())
+            {
+                if(monster.skills.at(sub_index2).skill==skill)
+                    break;
+                sub_index2++;
+            }
+            int sub_index=0;
+            while(sub_index<GlobalServerData::serverPrivateVariables.monsters[monster.monster].learn.size())
+            {
+                const Monster::AttackToLearn &learn=GlobalServerData::serverPrivateVariables.monsters[monster.monster].learn.at(sub_index);
+                if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
+                {
+                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
+                    {
+                        quint32 sp=GlobalServerData::serverPrivateVariables.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
+                        if(sp>monster.sp)
+                        {
+                            emit error(QString("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));
+                            return false;
+                        }
+                        player_informations->public_and_private_informations.playerMonster[index].sp-=sp;
+                        switch(GlobalServerData::serverSettings.database.type)
+                        {
+                            default:
+                            case ServerSettings::Database::DatabaseType_Mysql:
+                                emit dbQuery(QString("UPDATE monster SET sp=%1 WHERE id=%2;")
+                                             .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                             .arg(monsterId)
+                                             );
+                            break;
+                            case ServerSettings::Database::DatabaseType_SQLite:
+                                emit dbQuery(QString("UPDATE monster SET sp=%1 WHERE id=%2;")
+                                             .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                             .arg(monsterId)
+                                             );
+                            break;
+                        }
+                        if(learn.learnSkillLevel==1)
+                        {
+                            PlayerMonster::PlayerSkill temp;
+                            temp.skill=skill;
+                            temp.level=1;
+                            player_informations->public_and_private_informations.playerMonster[index].skills << temp;
+                            switch(GlobalServerData::serverSettings.database.type)
+                            {
+                                default:
+                                case ServerSettings::Database::DatabaseType_Mysql:
+                                    emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level) VALUES(%1,%2,1);")
+                                                 .arg(monsterId)
+                                                 .arg(skill)
+                                                 );
+                                break;
+                                case ServerSettings::Database::DatabaseType_SQLite:
+                                    emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level) VALUES(%1,%2,1);")
+                                                 .arg(monsterId)
+                                                 .arg(skill)
+                                                 );
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            player_informations->public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
+                            switch(GlobalServerData::serverSettings.database.type)
+                            {
+                                default:
+                                case ServerSettings::Database::DatabaseType_Mysql:
+                                    emit dbQuery(QString("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
+                                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index2].level)
+                                                 .arg(monsterId)
+                                                 .arg(skill)
+                                                 );
+                                break;
+                                case ServerSettings::Database::DatabaseType_SQLite:
+                                    emit dbQuery(QString("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
+                                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index2].level)
+                                                 .arg(monsterId)
+                                                 .arg(skill)
+                                                 );
+                                break;
+                            }
+                        }
+                        return true;
+                    }
+                }
+                sub_index++;
+            }
+            emit error(QString("The skill %1 is not into learn skill list for the monster").arg(skill));
+            return false;
+        }
+        index++;
+    }
+    emit error(QString("The monster is not found: %1").arg(monsterId));
+    return false;
+}

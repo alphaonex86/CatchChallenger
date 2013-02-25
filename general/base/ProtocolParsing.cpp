@@ -64,6 +64,7 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketClientToServer[0x50][0x0005]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0002]=0;
     sizeMultipleCodePacketClientToServer[0x60][0x0003]=1;
+    sizeMultipleCodePacketClientToServer[0x60][0x0004]=8;
     sizeMultipleCodePacketServerToClient[0xD0][0x0006]=0;
     sizeMultipleCodePacketServerToClient[0xD0][0x0007]=0;
     sizeMultipleCodePacketServerToClient[0xD0][0x0008]=0;
