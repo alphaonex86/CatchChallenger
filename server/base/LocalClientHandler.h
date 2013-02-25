@@ -61,10 +61,10 @@ private:
     inline quint8 getOneSeed(const quint8 &max=0);
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
     Monster::Stat getStat(const Monster &monster, const quint8 &level);
-    void applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect);
-    void applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect);
-    void applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect);
-    void applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect);
+    void applyOtherBuffEffect(const Skill::BuffEffect &effect);
+    void applyOtherLifeEffect(const Skill::LifeEffect &effect);
+    void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
+    void applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     bool isInFight();
     bool remainMonstersToFight(const quint32 &monsterId);
     void generateOtherAttack();
