@@ -453,74 +453,12 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 ui->stackedWidget->setCurrentWidget(ui->page_map);
                 return;
             }
-            QFont MissingQuantity;
-            MissingQuantity.setItalic(true);
             ui->stackedWidget->setCurrentWidget(ui->page_learn);
             monsterToLearn=itemId;
-            ui->learnMonster->setPixmap(CatchChallenger::FightEngine::fightEngine.monsterExtra[monsterToLearn].front.scaled(160,160));
-            ui->learnAttackList->clear();
-            QList<PlayerMonster> playerMonster=FightEngine::fightEngine.getPlayerMonster();
-            //get the right monster
-            QHash<quint32,quint8> skillToDisplay;
-            int index=0;
-            while(index<playerMonster.size())
+            if(!showLearnSkill(monsterToLearn))
             {
-                if(playerMonster.at(index).id==itemId)
-                {
-                    PlayerMonster monster=playerMonster.at(index);
-                    ui->learnSP->setText(tr("SP: %1").arg(monster.sp));
-                    int sub_index=0;
-                    while(sub_index<CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.size())
-                    {
-                        Monster::AttackToLearn learn=CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.at(sub_index);
-                        if(learn.learnAtLevel<=monster.level)
-                        {
-                            int sub_index2=0;
-                            while(sub_index2<monster.skills.size())
-                            {
-                                const PlayerMonster::PlayerSkill &skill=monster.skills.at(sub_index2);
-                                if(skill.skill==learn.learnSkill)
-                                    break;
-                                sub_index2++;
-                            }
-                            if(sub_index2==monster.skills.size() || monster.skills[sub_index2].level<learn.learnSkillLevel)
-                            {
-                                if(skillToDisplay.contains(learn.learnSkill))
-                                {
-                                    if(skillToDisplay[learn.learnSkill]>learn.learnSkillLevel)
-                                        skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
-                                }
-                                else
-                                    skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
-                            }
-                        }
-                        sub_index++;
-                    }
-                    QHashIterator<quint32,quint8> i(skillToDisplay);
-                    while (i.hasNext()) {
-                        i.next();
-                        QListWidgetItem *item=new QListWidgetItem();
-                        if(i.value()>1)
-                            item->setText(tr("%1\nSP cost: %2")
-                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[i.key()].name)
-                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkills[i.key()].level[i.value()].sp)
-                                    );
-                        else
-                            item->setText(tr("%1 level %2\nSP cost: %3")
-                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[i.key()].name)
-                                        .arg(i.value())
-                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkills[i.key()].level[i.value()].sp)
-                                    );
-                        if(CatchChallenger::FightEngine::fightEngine.monsterSkills[i.key()].level[i.value()].sp>monster.sp)
-                        {
-                            item->setFont(MissingQuantity);
-                            item->setForeground(QBrush(QColor(200,20,20)));
-                        }
-                        ui->learnAttackList->addItem(item);
-                    }
-                    break;
-                }
-                index++;
+                newError(tr("Internal error"),"Unable to load the right monster");
+                return;
             }
         }
         break;
@@ -684,7 +622,7 @@ void BaseWindow::newError(QString error,QString detailedError)
 
 void BaseWindow::error(QString error)
 {
-    newError("Error with the protocol",error);
+    newError(tr("Error with the protocol"),error);
 }
 
 void BaseWindow::on_pushButton_interface_bag_clicked()
@@ -1652,13 +1590,4 @@ void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *
     if(!monsters_items_graphical.contains(item))
         return;
     objectSelection(true,monsters_items_graphical[item]);
-}
-
-void CatchChallenger::BaseWindow::on_learnQuit_clicked()
-{
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
-}
-
-void CatchChallenger::BaseWindow::on_learnValidate_clicked()
-{
 }
