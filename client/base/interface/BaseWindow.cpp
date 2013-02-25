@@ -457,7 +457,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             MissingQuantity.setItalic(true);
             ui->stackedWidget->setCurrentWidget(ui->page_learn);
             monsterToLearn=itemId;
-            ui->learnMonster->setPixmap(CatchChallenger::FightEngine::fightEngine.monsterExtra[monsterToLearn].front);
+            ui->learnMonster->setPixmap(CatchChallenger::FightEngine::fightEngine.monsterExtra[monsterToLearn].front.scaled(160,160));
             ui->learnAttackList->clear();
             QList<PlayerMonster> playerMonster=FightEngine::fightEngine.getPlayerMonster();
             //get the right monster
@@ -1652,4 +1652,13 @@ void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *
     if(!monsters_items_graphical.contains(item))
         return;
     objectSelection(true,monsters_items_graphical[item]);
+}
+
+void CatchChallenger::BaseWindow::on_learnQuit_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void CatchChallenger::BaseWindow::on_learnValidate_clicked()
+{
 }
