@@ -559,6 +559,13 @@ void MainWindow::updateSavegameList()
                         QString map=metaData.value("location").toString();
                         map.replace(".tmx",".xml");
                         QString mapName=getMapName(datapackPath+DATAPACK_BASE_PATH_MAP+map);
+                        if(mapName.isEmpty())
+                        {
+                            QString zone=getMapZone(datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
+                            //try load the zone
+                            if(!zone.isEmpty())
+                                mapName=getZoneName(zone);
+                        }
                         QString lastLine;
                         if(mapName.isEmpty())
                             lastLine=time_played;
@@ -622,8 +629,6 @@ QString MainWindow::getMapName(const QString &file)
         CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
-
-    //load the content
     QDomElement item = root.firstChildElement("name");
     while(!item.isNull())
     {
@@ -633,8 +638,52 @@ QString MainWindow::getMapName(const QString &file)
                     return item.text();
         item = item.nextSiblingElement("name");
     }
-    if(root.hasAttribute("zone"))
-        return getZoneName(root.attribute("zone"));
+    return QString();
+}
+
+QString MainWindow::getMapZone(const QString &file)
+{
+    //open and quick check the file
+    QFile xmlFile(file);
+    QByteArray xmlContent;
+    if(!xmlFile.open(QIODevice::ReadOnly))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        return QString();
+    }
+    xmlContent=xmlFile.readAll();
+    xmlFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return QString();
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="map")
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        return QString();
+    }
+    QDomElement properties = root.firstChildElement("properties");
+    while(!properties.isNull())
+    {
+        if(properties.isElement())
+        {
+            QDomElement property = properties.firstChildElement("property");
+            while(!property.isNull())
+            {
+                if(property.isElement())
+                    if(property.hasAttribute("name") && property.hasAttribute("value"))
+                        if(property.attribute("name")=="zone")
+                            return property.attribute("value");
+                property = property.nextSiblingElement("property");
+            }
+        }
+        properties = properties.nextSiblingElement("properties");
+    }
     return QString();
 }
 

@@ -754,19 +754,20 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
     QHashIterator<QPair<quint8,quint8>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
     while (i.hasNext()) {
         i.next();
-        QString direction;
-        if(i.value().properties.contains("lookAt"))
-            direction=i.value().properties["lookAt"];
-        else
-        {
-            qDebug() << QString("loadNearMap(): lookAt: missing, fixed to bottom").arg(fileName);
-            direction="bottom";
-        }
         QString skin;
         if(i.value().properties.contains("skin"))
             skin=i.value().properties["skin"];
         else
             skin="empty";
+        QString direction;
+        if(i.value().properties.contains("lookAt"))
+            direction=i.value().properties["lookAt"];
+        else
+        {
+            if(!skin.isEmpty())
+                qDebug() << QString("loadNearMap(): lookAt: missing, fixed to bottom").arg(fileName);
+            direction="bottom";
+        }
         loadBotOnTheMap(tempMapObject,i.key().first,i.key().second,direction,skin);
     }
 

@@ -183,7 +183,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                 {
                                     if(attack.isElement())
                                     {
-                                        if(attack.hasAttribute("level") && attack.hasAttribute("id"))
+                                        if(attack.hasAttribute("level") && attack.hasAttribute("skill"))
                                         {
                                             Monster::AttackToLearn attackVar;
                                             if(attack.hasAttribute("skill_level"))
@@ -251,6 +251,8 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                             else
                                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, one of information is wrong: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                         }
+                                        else
+                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, missing arguements: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                     }
                                     else
                                         DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
