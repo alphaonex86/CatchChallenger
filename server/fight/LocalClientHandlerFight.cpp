@@ -891,6 +891,74 @@ void LocalClientHandler::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 
 bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skill)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("learnSkill(%1,%2)").arg(monsterId).arg(skill));
+    #endif
+    Map *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    Direction direction=getLastDirection();
+    switch(getLastDirection())
+    {
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+            direction=lookToMove(direction);
+            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return false;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return false;
+            }
+        break;
+        default:
+        emit error("Wrong direction to use a learn skill");
+        return false;
+    }
+    if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
+    {
+        switch(direction)
+        {
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
+                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+                {
+                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                    {
+                        emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        return false;
+                    }
+                }
+                else
+                {
+                    emit error("No valid map in this direction");
+                    return false;
+                }
+            break;
+            default:
+            break;
+        }
+        if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
+        {
+            emit error("not learn skill into this direction");
+            return false;
+        }
+    }
+    return learnSkillInternal(monsterId,skill);
+}
+
+bool LocalClientHandler::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
+{
     int index=0;
     while(index<player_informations->public_and_private_informations.playerMonster.size())
     {
