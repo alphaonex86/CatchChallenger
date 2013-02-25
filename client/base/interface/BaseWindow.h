@@ -205,6 +205,8 @@ private slots:
     void on_tradeAddMonster_clicked();
     void on_selectMonster_clicked();
     void on_monsterList_itemActivated(QListWidgetItem *item);
+    void on_learnQuit_clicked();
+    void on_learnValidate_clicked();
 protected slots:
     //datapack
     void datapackParsed();
