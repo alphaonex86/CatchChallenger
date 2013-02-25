@@ -215,13 +215,13 @@ void BaseWindow::updateCurrentMonsterInformation()
     while(index<monster.skills.size())
     {
         QListWidgetItem *item=new QListWidgetItem();
-        const PlayerMonster::Skill &skill=monster.skills.at(index);
+        const PlayerMonster::PlayerSkill &skill=monster.skills.at(index);
         if(skill.level>1)
             item->setText(QString("%1, level %2").arg(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].name).arg(skill.level));
         else
             item->setText(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].name);
         item->setToolTip(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[skill.skill].description);
-        fight_attacks_graphical[item]=skill;
+        fight_attacks_graphical[item]=skill.skill;
         ui->listWidgetFightAttack->addItem(item);
         index++;
     }
@@ -313,7 +313,7 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
     escape=false;
     haveDisplayCurrentAttackSuccess=false;
     haveDisplayOtherAttackSuccess=false;
-    CatchChallenger::FightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()].skill);
+    CatchChallenger::FightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()]);
     doNextAction();
 }
 
@@ -332,7 +332,7 @@ void BaseWindow::on_listWidgetFightAttack_itemSelectionChanged()
         ui->labelFightAttackDetails->setText(tr("Select an attack"));
         return;
     }
-    quint32 skillId=fight_attacks_graphical[itemsList.first()].skill;
+    quint32 skillId=fight_attacks_graphical[itemsList.first()];
     ui->labelFightAttackDetails->setText(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[skillId].description);
 }
 
@@ -465,12 +465,12 @@ void BaseWindow::displayAttack()
 {
     bool applyOnOtherMonster=(
                 CatchChallenger::FightEngine::fightEngine.attackReturnList.first().doByTheCurrentMonster &&
-                (CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_AloneEnemy ||
-                 CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_AllEnemy)
+                (CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==ApplyOn_AloneEnemy ||
+                 CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==ApplyOn_AllEnemy)
         ) || (
                     !CatchChallenger::FightEngine::fightEngine.attackReturnList.first().doByTheCurrentMonster &&
-                    (CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_Themself ||
-                     CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==Monster::ApplyOn_AllAlly)
+                    (CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==ApplyOn_Themself ||
+                     CatchChallenger::FightEngine::fightEngine.attackReturnList.first().lifeEffectMonster.first().on==ApplyOn_AllAlly)
             );
     //if start, display text
     if(displayAttackProgression==0)

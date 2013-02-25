@@ -10,6 +10,7 @@
 #include "../base/FacilityLib.h"
 #include "../base/interface/DatapackClientLoader.h"
 #include "../fight/interface/FightEngine.h"
+#include "../base/DebugClass.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -331,13 +332,18 @@ void MainWindow::on_SaveGame_New_clicked()
                 gender="male";
         }
         CatchChallenger::Monster::Stat stat=CatchChallenger::FightEngine::fightEngine.getStat(CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
-        QList<CatchChallenger::PlayerMonster::Skill> skills;
-        QList<CatchChallenger::Monster::Attack> attack=CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].attack;
+        QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
+        QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].learn;
         int sub_index=0;
         while(sub_index<attack.size())
         {
-            if(attack[sub_index].level<=profile.monsters.at(index).level)
-                skills << attack[sub_index].skill;
+            if(attack[sub_index].learnAtLevel<=profile.monsters.at(index).level)
+            {
+                CatchChallenger::PlayerMonster::PlayerSkill temp;
+                temp.level=attack[sub_index].learnSkillLevel;
+                temp.skill=attack[sub_index].learnSkill;
+                skills << temp;
+            }
             sub_index++;
         }
         while(skills.size()>4)
@@ -550,21 +556,19 @@ void MainWindow::updateSavegameList()
                             time_played=QObject::tr("%n minute(s) and %1 played","",time_played_number/60).arg(QObject::tr("%n second(s)","",time_played_number%60));
 
                         //load the map name
-                        QString mapName=metaData.value("location").toString();
-                        Tiled::MapReader reader;
-                        Tiled::Map * tiledMap = reader.readMap(datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
-                        if(tiledMap)
-                        {
-                            if(tiledMap->properties().contains("name"))
-                                mapName=tiledMap->properties().value("name");
-                            delete tiledMap;
-                        }
+                        QString map=metaData.value("location").toString();
+                        map.replace(".tmx",".xml");
+                        QString mapName=getMapName(datapackPath+DATAPACK_BASE_PATH_MAP+map);
+                        QString lastLine;
+                        if(mapName.isEmpty())
+                            lastLine=time_played;
+                        else
+                            lastLine=QString("%1 (%2)").arg(mapName).arg(time_played);
 
-                        newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3 (%4)</span>")
+                        newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>")
                                           .arg(metaData.value("title").toString())
                                           .arg(dateString)
-                                          .arg(mapName)
-                                          .arg(time_played)
+                                          .arg(lastLine)
                                           );
                     }
                 }
@@ -590,6 +594,88 @@ void MainWindow::updateSavegameList()
         ui->scrollAreaWidgetContents->layout()->addItem(spacer);
     }
     savegameLabelUpdate();
+}
+
+QString MainWindow::getMapName(const QString &file)
+{
+    //open and quick check the file
+    QFile xmlFile(file);
+    QByteArray xmlContent;
+    if(!xmlFile.open(QIODevice::ReadOnly))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        return QString();
+    }
+    xmlContent=xmlFile.readAll();
+    xmlFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return QString();
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="map")
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        return QString();
+    }
+
+    //load the content
+    QDomElement item = root.firstChildElement("name");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+            if(item.hasAttribute("lang"))
+                if(item.attribute("lang")=="en")
+                    return item.text();
+        item = item.nextSiblingElement("name");
+    }
+    if(root.hasAttribute("zone"))
+        return getZoneName(root.attribute("zone"));
+    return QString();
+}
+
+QString MainWindow::getZoneName(const QString &zone)
+{
+    //open and quick check the file
+    QFile xmlFile(datapackPath+DATAPACK_BASE_PATH_ZONE+zone+".xml");
+    QByteArray xmlContent;
+    if(!xmlFile.open(QIODevice::ReadOnly))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        return QString();
+    }
+    xmlContent=xmlFile.readAll();
+    xmlFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return QString();
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="zone")
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        return QString();
+    }
+
+    //load the content
+    QDomElement item = root.firstChildElement("name");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+            if(item.hasAttribute("lang"))
+                if(item.attribute("lang")=="en")
+                    return item.text();
+        item = item.nextSiblingElement("name");
+    }
+    return QString();
 }
 
 void MainWindow::on_SaveGame_Delete_clicked()

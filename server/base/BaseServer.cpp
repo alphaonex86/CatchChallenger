@@ -275,7 +275,7 @@ void BaseServer::preload_the_map()
         index++;
     }
 
-    //resolv the shops
+    //resolv the shops, learn
     size=semi_loaded_map.size();
     index=0;
     while(index<size)
@@ -319,6 +319,20 @@ void BaseServer::preload_the_map()
                                     static_cast<MapServer *>(semi_loaded_map[index].map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
                                     shops_number++;
                                 }
+                            }
+                        }
+                        if(step.attribute("type")=="learn")
+                        {
+                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                                CatchChallenger::DebugClass::debugConsole(QString("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                CatchChallenger::DebugClass::debugConsole(QString("learn point put at: %1 (%2,%3)")
+                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                #endif
+                                static_cast<MapServer *>(semi_loaded_map[index].map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
                             }
                         }
                         step = step.nextSiblingElement("step");

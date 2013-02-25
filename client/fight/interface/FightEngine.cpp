@@ -152,7 +152,7 @@ quint8 FightEngine::getOneSeed(const quint8 &max)
 
 void FightEngine::generateOtherAttack()
 {
-    Monster::Skill::AttackReturn attackReturn;
+    Skill::AttackReturn attackReturn;
     attackReturn.doByTheCurrentMonster=false;
     attackReturn.success=false;
     const PlayerMonster &otherMonster=wildMonsters.first();
@@ -163,13 +163,13 @@ void FightEngine::generateOtherAttack()
         position=0;
     else
         position=getOneSeed(otherMonster.skills.size());
-    const PlayerMonster::Skill &otherMonsterSkill=otherMonster.skills.at(position);
+    const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster.skills.at(position);
     attackReturn.attack=otherMonsterSkill.skill;
-    const Monster::Skill::SkillList &skillList=monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
+    const Skill::SkillList &skillList=monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index=0;
     while(index<skillList.buff.size())
     {
-        const Monster::Skill::Buff &buff=skillList.buff.at(index);
+        const Skill::Buff &buff=skillList.buff.at(index);
         bool success;
         if(buff.success==100)
             success=true;
@@ -186,7 +186,7 @@ void FightEngine::generateOtherAttack()
     index=0;
     while(index<skillList.life.size())
     {
-        const Monster::Skill::Life &life=skillList.life.at(index);
+        const Skill::Life &life=skillList.life.at(index);
         bool success;
         if(life.success==100)
             success=true;
@@ -202,14 +202,14 @@ void FightEngine::generateOtherAttack()
     attackReturnList << attackReturn;
 }
 
-Monster::Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Monster::Skill::LifeEffect &effect)
+Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffect &effect)
 {
     qint32 quantity;
     Monster::Stat stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             if(effect.type==QuantityType_Quantity)
             {
                 Monster::Stat otherStat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
@@ -239,8 +239,8 @@ Monster::Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Monster
             else
                 playerMonsterList[selectedMonster].hp+=quantity;
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
@@ -272,25 +272,25 @@ Monster::Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Monster
             qDebug() << "Not apply match, can't apply the buff";
         break;
     }
-    Monster::Skill::LifeEffectReturn effect_to_return;
+    Skill::LifeEffectReturn effect_to_return;
     effect_to_return.on=effect.on;
     effect_to_return.quantity=quantity;
     return effect_to_return;
 }
 
-void FightEngine::applyOtherBuffEffect(const Monster::Skill::BuffEffect &effect)
+void FightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::Buff tempBuff;
+    PlayerMonster::PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             playerMonsterList[selectedMonster].buffs << tempBuff;
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             wildMonsters.first().buffs << tempBuff;
         break;
         default:
@@ -404,11 +404,16 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
     }
     Monster::Stat monsterStat=getStat(monsterDef,playerMonster.level);
     playerMonster.hp=monsterStat.hp;
-    index=monsterDef.attack.size()-1;
+    index=monsterDef.learn.size()-1;
     while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
     {
-        if(monsterDef.attack.at(index).level<=playerMonster.level)
-            playerMonster.skills << monsterDef.attack.at(index).skill;
+        if(monsterDef.learn.at(index).learnAtLevel<=playerMonster.level)
+        {
+            PlayerMonster::PlayerSkill temp;
+            temp.level=monsterDef.learn.at(index).learnSkillLevel;
+            temp.skill=monsterDef.learn.at(index).learnSkill;
+            playerMonster.skills << temp;
+        }
         index--;
     }
     *ok=true;
@@ -675,14 +680,14 @@ void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
         qDebug() << QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(playerMonsterList.at(selectedMonster).monster).arg(playerMonsterList.at(selectedMonster).level).arg(skill);
         return;
     }
-    Monster::Skill::AttackReturn attackReturn;
+    Skill::AttackReturn attackReturn;
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.success=false;
-    const Monster::Skill::SkillList &skillList=monsterSkills[playerMonsterList.at(selectedMonster).skills.at(index).skill].level.at(playerMonsterList.at(selectedMonster).skills.at(index).level-1);
+    const Skill::SkillList &skillList=monsterSkills[playerMonsterList.at(selectedMonster).skills.at(index).skill].level.at(playerMonsterList.at(selectedMonster).skills.at(index).level-1);
     index=0;
     while(index<skillList.buff.size())
     {
-        const Monster::Skill::Buff &buff=skillList.buff.at(index);
+        const Skill::Buff &buff=skillList.buff.at(index);
         bool success;
         if(buff.success==100)
             success=true;
@@ -699,7 +704,7 @@ void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
     index=0;
     while(index<skillList.life.size())
     {
-        const Monster::Skill::Life &life=skillList.life.at(index);
+        const Skill::Life &life=skillList.life.at(index);
         bool success;
         if(life.success==100)
             success=true;
@@ -715,15 +720,15 @@ void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
     attackReturnList << attackReturn;
 }
 
-Monster::Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Monster::Skill::LifeEffect &effect)
+Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
     qint32 quantity;
     Monster::Stat stat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
     Monster::Stat otherStat;
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             if(effect.type==QuantityType_Quantity)
             {
                 otherStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
@@ -752,8 +757,8 @@ Monster::Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Monst
             else
                 wildMonsters.first().hp+=quantity;
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
@@ -786,25 +791,25 @@ Monster::Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Monst
             qDebug() << "Not apply match, can't apply the buff";
         break;
     }
-    Monster::Skill::LifeEffectReturn effect_to_return;
+    Skill::LifeEffectReturn effect_to_return;
     effect_to_return.on=effect.on;
     effect_to_return.quantity=quantity;
     return effect_to_return;
 }
 
-void FightEngine::applyCurrentBuffEffect(const Monster::Skill::BuffEffect &effect)
+void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::Buff tempBuff;
+    PlayerMonster::PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)
     {
-        case Monster::ApplyOn_AloneEnemy:
-        case Monster::ApplyOn_AllEnemy:
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
             wildMonsters.first().buffs << tempBuff;
         break;
-        case Monster::ApplyOn_Themself:
-        case Monster::ApplyOn_AllAlly:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
             playerMonsterList[selectedMonster].buffs << tempBuff;
         break;
         default:

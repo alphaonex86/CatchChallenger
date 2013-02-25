@@ -57,6 +57,8 @@ private:
     void resetAll();
     bool rmpath(const QDir &dir);
     void updateSavegameList();
+    QString getMapName(const QString &file);
+    QString getZoneName(const QString &zone);
     QSettings settings;
     QString lastMessageSend;
     QStringList server_list;

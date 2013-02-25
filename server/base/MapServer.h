@@ -5,6 +5,8 @@
 #include "../crafting/MapServerCrafting.h"
 
 #include <QSet>
+#include <QList>
+#include <QMultiHash>
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple;
@@ -15,6 +17,7 @@ class MapServer : public Map, public MapServerCrafting
 public:
     QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
     QMultiHash<QPair<quint8,quint8>,quint32> shops;
+    QSet<QPair<quint8,quint8> > learn;
 };
 
 class Map_server_MapVisibility_simple : public MapServer

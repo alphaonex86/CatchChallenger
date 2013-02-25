@@ -10,15 +10,15 @@
 
 using namespace CatchChallenger;
 
-bool operator<(const Monster::Attack &entry1, const Monster::Attack &entry2)
+bool operator<(const Monster::AttackToLearn &entry1, const Monster::AttackToLearn &entry2)
 {
-    if(entry1.level!=entry2.level)
-        return entry1.level < entry2.level;
+    if(entry1.learnAtLevel!=entry2.learnAtLevel)
+        return entry1.learnAtLevel < entry2.learnAtLevel;
     else
-        return entry1.skill.skill < entry2.skill.skill;
+        return entry1.learnSkill < entry2.learnSkill;
 }
 
-QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash<quint32, Monster::Skill> &monsterSkills)
+QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash<quint32, Skill> &monsterSkills)
 {
     QHash<quint32,Monster> monsters;
     //open and quick check the file
@@ -185,30 +185,30 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                     {
                                         if(attack.hasAttribute("level") && attack.hasAttribute("id"))
                                         {
-                                            Monster::Attack attackVar;
-                                            if(attack.hasAttribute("attack_level"))
+                                            Monster::AttackToLearn attackVar;
+                                            if(attack.hasAttribute("skill_level"))
                                             {
-                                                attackVar.skill.level=attack.attribute("attack_level").toUShort(&ok);
+                                                attackVar.learnSkillLevel=attack.attribute("skill_level").toUShort(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, skill.level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, skill_level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                             }
                                             else
-                                                attackVar.skill.level=1;
+                                                attackVar.learnSkillLevel=1;
                                             if(ok)
                                             {
-                                                attackVar.level=attack.attribute("level").toUShort(&ok);
+                                                attackVar.learnAtLevel=attack.attribute("level").toUShort(&ok);
                                                 if(!ok)
                                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                             }
                                             if(ok)
                                             {
-                                                attackVar.skill.skill=attack.attribute("id").toUShort(&ok);
+                                                attackVar.learnSkill=attack.attribute("skill").toUShort(&ok);
                                                 if(!ok)
-                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, skill is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                             }
                                             if(ok)
                                             {
-                                                if(!monsterSkills.contains(attackVar.skill.skill))
+                                                if(!monsterSkills.contains(attackVar.learnSkill))
                                                 {
                                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack is not into attack loaded: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                     ok=false;
@@ -216,28 +216,28 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                             }
                                             if(ok)
                                             {
-                                                if(attackVar.skill.level<=0 || attackVar.skill.level>(quint32)monsterSkills[attackVar.skill.skill].level.size())
+                                                if(attackVar.learnSkillLevel<=0 || attackVar.learnSkillLevel>(quint32)monsterSkills[attackVar.learnSkill].level.size())
                                                 {
-                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack level is not in range 1-%5: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(monsterSkills[attackVar.skill.skill].level.size()));
+                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack level is not in range 1-%5: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(monsterSkills[attackVar.learnSkill].level.size()));
                                                     ok=false;
                                                 }
                                             }
                                             if(ok)
                                             {
                                                 int index=0;
-                                                while(index<monster.attack.size())
+                                                while(index<monster.learn.size())
                                                 {
-                                                    if(monster.attack.at(index).level==attackVar.level && monster.attack.at(index).skill.skill==attackVar.skill.skill)
+                                                    if(monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel && monster.learn.at(index).learnSkill==attackVar.learnSkill)
                                                     {
                                                         DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack already do for this level: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                         ok=false;
                                                         break;
                                                     }
-                                                    if(monster.attack.at(index).skill.skill==attackVar.skill.skill && monster.attack.at(index).skill.level==attackVar.skill.level)
+                                                    if(monster.learn.at(index).learnSkill==attackVar.learnSkill && monster.learn.at(index).learnSkillLevel==attackVar.learnSkillLevel)
                                                     {
                                                         DebugClass::debugConsole(QString("Unable to open the xml file: %1, this attack level is already found %4, level: %5 for attack: %6: child.tagName(): %2 (at line: %3)")
                                                                                  .arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber())
-                                                                                 .arg(attackVar.skill.skill).arg(attackVar.skill.level)
+                                                                                 .arg(attackVar.learnSkill).arg(attackVar.learnSkillLevel)
                                                                                  .arg(index)
                                                                                  );
                                                         ok=false;
@@ -247,7 +247,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                                 }
                                             }
                                             if(ok)
-                                                monster.attack<<attackVar;
+                                                monster.learn<<attackVar;
                                             else
                                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, one of information is wrong: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                         }
@@ -256,7 +256,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                         DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                     attack = attack.nextSiblingElement("attack");
                                 }
-                                qSort(monster.attack);
+                                qSort(monster.learn);
                             }
                             else
                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -298,9 +298,9 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
     return monsters;
 }
 
-QHash<quint32,Monster::Skill> FightLoader::loadMonsterSkill(const QString &file, const QHash<quint32, Monster::Buff> &monsterBuffs)
+QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QHash<quint32, Buff> &monsterBuffs)
 {
-    QHash<quint32,Monster::Skill> monsterSkills;
+    QHash<quint32,Skill> monsterSkills;
     //open and quick check the file
     QFile xmlFile(file);
     QByteArray xmlContent;
@@ -340,7 +340,7 @@ QHash<quint32,Monster::Skill> FightLoader::loadMonsterSkill(const QString &file,
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                 else if(ok)
                 {
-                    QHash<quint8,Monster::Skill::SkillList> levelDef;
+                    QHash<quint8,Skill::SkillList> levelDef;
                     QDomElement effect = item.firstChildElement("effect");
                     if(!effect.isNull())
                     {
@@ -373,25 +373,25 @@ QHash<quint32,Monster::Skill> FightLoader::loadMonsterSkill(const QString &file,
                                                 {
                                                     if(life.isElement())
                                                     {
-                                                        Monster::Skill::Life effect;
+                                                        Skill::Life effect;
                                                         if(life.hasAttribute("applyOn"))
                                                         {
                                                             if(life.attribute("applyOn")=="aloneEnemy")
-                                                                effect.effect.on=Monster::ApplyOn_AloneEnemy;
+                                                                effect.effect.on=ApplyOn_AloneEnemy;
                                                             else if(life.attribute("applyOn")=="themself")
-                                                                effect.effect.on=Monster::ApplyOn_Themself;
+                                                                effect.effect.on=ApplyOn_Themself;
                                                             else if(life.attribute("applyOn")=="allEnemy")
-                                                                effect.effect.on=Monster::ApplyOn_AllEnemy;
+                                                                effect.effect.on=ApplyOn_AllEnemy;
                                                             else if(life.attribute("applyOn")=="allAlly")
-                                                                effect.effect.on=Monster::ApplyOn_AllAlly;
+                                                                effect.effect.on=ApplyOn_AllAlly;
                                                             else
                                                             {
                                                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(life.attribute("applyOn")));
-                                                                effect.effect.on=Monster::ApplyOn_AloneEnemy;
+                                                                effect.effect.on=ApplyOn_AloneEnemy;
                                                             }
                                                         }
                                                         else
-                                                            effect.effect.on=Monster::ApplyOn_AloneEnemy;
+                                                            effect.effect.on=ApplyOn_AloneEnemy;
                                                         QString text;
                                                         if(life.hasAttribute("quantity"))
                                                             text=life.attribute("quantity");
@@ -431,25 +431,25 @@ QHash<quint32,Monster::Skill> FightLoader::loadMonsterSkill(const QString &file,
                                                             quint32 idBuff=buff.attribute("id").toUInt(&ok);
                                                             if(ok)
                                                             {
-                                                                Monster::Skill::Buff effect;
+                                                                Skill::Buff effect;
                                                                 if(life.hasAttribute("applyOn"))
                                                                 {
                                                                     if(life.attribute("applyOn")=="aloneEnemy")
-                                                                        effect.effect.on=Monster::ApplyOn_AloneEnemy;
+                                                                        effect.effect.on=ApplyOn_AloneEnemy;
                                                                     else if(life.attribute("applyOn")=="themself")
-                                                                        effect.effect.on=Monster::ApplyOn_Themself;
+                                                                        effect.effect.on=ApplyOn_Themself;
                                                                     else if(life.attribute("applyOn")=="allEnemy")
-                                                                        effect.effect.on=Monster::ApplyOn_AllEnemy;
+                                                                        effect.effect.on=ApplyOn_AllEnemy;
                                                                     else if(life.attribute("applyOn")=="allAlly")
-                                                                        effect.effect.on=Monster::ApplyOn_AllAlly;
+                                                                        effect.effect.on=ApplyOn_AllAlly;
                                                                     else
                                                                     {
                                                                         DebugClass::debugConsole(QString("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(life.attribute("applyOn")));
-                                                                        effect.effect.on=Monster::ApplyOn_AloneEnemy;
+                                                                        effect.effect.on=ApplyOn_AloneEnemy;
                                                                     }
                                                                 }
                                                                 else
-                                                                    effect.effect.on=Monster::ApplyOn_AloneEnemy;
+                                                                    effect.effect.on=ApplyOn_AloneEnemy;
                                                                 if(!monsterBuffs.contains(idBuff))
                                                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, this buff id is not found: %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).at(idBuff));
                                                                 else
@@ -549,9 +549,9 @@ QHash<quint32,Monster::Skill> FightLoader::loadMonsterSkill(const QString &file,
     return monsterSkills;
 }
 
-QHash<quint32,Monster::Buff> FightLoader::loadMonsterBuff(const QString &file)
+QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
 {
-    QHash<quint32,Monster::Buff> monsterBuffs;
+    QHash<quint32,Buff> monsterBuffs;
     //open and quick check the file
     QFile xmlFile(file);
     QByteArray xmlContent;
@@ -591,7 +591,7 @@ QHash<quint32,Monster::Buff> FightLoader::loadMonsterBuff(const QString &file)
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                 else if(ok)
                 {
-                    QHash<quint8,Monster::Buff::GeneralEffect> levelDef;
+                    QHash<quint8,Buff::GeneralEffect> levelDef;
                     QDomElement effect = item.firstChildElement("effect");
                     if(!effect.isNull())
                     {
@@ -614,17 +614,17 @@ QHash<quint32,Monster::Buff> FightLoader::loadMonsterBuff(const QString &file)
                                                 {
                                                     if(inFight.isElement())
                                                     {
-                                                        Monster::Buff::Effect effect;
+                                                        Buff::Effect effect;
                                                         QString text;
                                                         if(inFight.hasAttribute("hp"))
                                                         {
                                                             text=inFight.attribute("hp");
-                                                            effect.on=Monster::Buff::Effect::EffectOn_HP;
+                                                            effect.on=Buff::Effect::EffectOn_HP;
                                                         }
                                                         else if(inFight.hasAttribute("defense"))
                                                         {
                                                             text=inFight.attribute("defense");
-                                                            effect.on=Monster::Buff::Effect::EffectOn_Defense;
+                                                            effect.on=Buff::Effect::EffectOn_Defense;
                                                         }
                                                         if(text.endsWith("%"))
                                                             effect.type=QuantityType_Percent;
@@ -650,18 +650,18 @@ QHash<quint32,Monster::Buff> FightLoader::loadMonsterBuff(const QString &file)
                                                             quint32 steps=inWalk.attribute("steps").toUInt(&ok);
                                                             if(ok)
                                                             {
-                                                                Monster::Buff::EffectInWalk effect;
+                                                                Buff::EffectInWalk effect;
                                                                 effect.steps=steps;
                                                                 QString text;
                                                                 if(inWalk.hasAttribute("hp"))
                                                                 {
                                                                     text=inWalk.attribute("hp");
-                                                                    effect.effect.on=Monster::Buff::Effect::EffectOn_HP;
+                                                                    effect.effect.on=Buff::Effect::EffectOn_HP;
                                                                 }
                                                                 else if(inWalk.hasAttribute("defense"))
                                                                 {
                                                                     text=inWalk.attribute("defense");
-                                                                    effect.effect.on=Monster::Buff::Effect::EffectOn_Defense;
+                                                                    effect.effect.on=Buff::Effect::EffectOn_Defense;
                                                                 }
                                                                 else
                                                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, not action found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));

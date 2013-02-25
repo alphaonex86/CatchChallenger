@@ -171,8 +171,8 @@ struct ServerPrivateVariables
     //fight
     QHash<quint32,Monster> monsters;
     QMultiHash<quint32,MonsterDrops> monsterDrops;
-    QHash<quint32,Monster::Skill> monsterSkills;
-    QHash<quint32,Monster::Buff> monsterBuffs;
+    QHash<quint32,Skill> monsterSkills;
+    QHash<quint32,Buff> monsterBuffs;
 
     //general data
     QList<EventThreader *> eventThreaderList;
