@@ -113,6 +113,7 @@ public slots:
     void tryEscape();
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void useSkill(const quint32 &skill);
+    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     //trade
     void tradeCanceled();
     void tradeAccepted();

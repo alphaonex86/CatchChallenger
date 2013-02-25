@@ -2340,6 +2340,16 @@ void Api_protocol::useSkill(const quint32 &skill)
     output->packOutcommingData(0x61,outputData);
 }
 
+void Api_protocol::learnSkill(const quint32 &monsterId,const quint32 &skill)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)monsterId;
+    out << (quint32)skill;
+    output->packOutcommingData(0x60,0x0004,outputData);
+}
+
 void Api_protocol::collectMaturePlant()
 {
     if(havePlantAction)
