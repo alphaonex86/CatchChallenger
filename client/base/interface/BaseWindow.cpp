@@ -372,7 +372,8 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             ui->stackedWidget->setCurrentWidget(ui->page_shop);
             displaySellList();
         break;
-        case ObjectType_Monster:
+        case ObjectType_MonsterToTrade:
+        case ObjectType_MonsterToLearn:
             ui->selectMonster->setVisible(true);
             ui->stackedWidget->setCurrentWidget(ui->page_monster);
         break;
@@ -445,8 +446,92 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             load_plant_inventory();
             tradeUpdateCurrentObject();
         break;
-        case ObjectType_Monster:
+        case ObjectType_MonsterToLearn:
         {
+            if(!ok)
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_map);
+                return;
+            }
+            QFont MissingQuantity;
+            MissingQuantity.setItalic(true);
+            ui->stackedWidget->setCurrentWidget(ui->page_learn);
+            monsterToLearn=itemId;
+            ui->learnMonster->setPixmap(CatchChallenger::FightEngine::fightEngine.monsterExtra[monsterToLearn].front);
+            ui->learnAttackList->clear();
+            QList<PlayerMonster> playerMonster=FightEngine::fightEngine.getPlayerMonster();
+            //get the right monster
+            QHash<quint32,quint8> skillToDisplay;
+            int index=0;
+            while(index<playerMonster.size())
+            {
+                if(playerMonster.at(index).id==itemId)
+                {
+                    PlayerMonster monster=playerMonster.at(index);
+                    ui->learnSP->setText(tr("SP: %1").arg(monster.sp));
+                    int sub_index=0;
+                    while(sub_index<CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.size())
+                    {
+                        Monster::AttackToLearn learn=CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.at(sub_index);
+                        if(learn.learnAtLevel<=monster.level)
+                        {
+                            int sub_index2=0;
+                            while(sub_index2<monster.skills.size())
+                            {
+                                const PlayerMonster::PlayerSkill &skill=monster.skills.at(sub_index2);
+                                if(skill.skill==learn.learnSkill)
+                                    break;
+                                sub_index2++;
+                            }
+                            if(sub_index2==monster.skills.size() || monster.skills[sub_index2].level<learn.learnSkillLevel)
+                            {
+                                if(skillToDisplay.contains(learn.learnSkill))
+                                {
+                                    if(skillToDisplay[learn.learnSkill]>learn.learnSkillLevel)
+                                        skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
+                                }
+                                else
+                                    skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
+                            }
+                        }
+                        sub_index++;
+                    }
+                    QHashIterator<quint32,quint8> i(skillToDisplay);
+                    while (i.hasNext()) {
+                        i.next();
+                        QListWidgetItem *item=new QListWidgetItem();
+                        if(i.value()>1)
+                            item->setText(tr("%1\nSP cost: %2")
+                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[i.key()].name)
+                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkills[i.key()].level[i.value()].sp)
+                                    );
+                        else
+                            item->setText(tr("%1 level %2\nSP cost: %3")
+                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[i.key()].name)
+                                        .arg(i.value())
+                                        .arg(CatchChallenger::FightEngine::fightEngine.monsterSkills[i.key()].level[i.value()].sp)
+                                    );
+                        if(CatchChallenger::FightEngine::fightEngine.monsterSkills[i.key()].level[i.value()].sp>monster.sp)
+                        {
+                            item->setFont(MissingQuantity);
+                            item->setForeground(QBrush(QColor(200,20,20)));
+                        }
+                        ui->learnAttackList->addItem(item);
+                    }
+                    break;
+                }
+                index++;
+            }
+        }
+        break;
+        case ObjectType_MonsterToTrade:
+        {
+            if(waitedObjectType==ObjectType_MonsterToLearn)
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_learn);
+                monsterToLearn=itemId;
+                return;
+            }
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;
@@ -461,6 +546,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
             }
+            //get the right monster
             int index=0;
             while(index<playerMonster.size())
             {
@@ -469,7 +555,6 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                     tradeCurrentMonsters << playerMonster.at(index);
                     FightEngine::fightEngine.removeMonster(itemId);
                     CatchChallenger::Api_client_real::client->addMonster(itemId);
-
                     QListWidgetItem *item=new QListWidgetItem();
                     item->setText(CatchChallenger::FightEngine::fightEngine.monsterExtra[tradeCurrentMonsters.last().monster].name);
                     item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.last().level));
@@ -1036,6 +1121,11 @@ void BaseWindow::goToBotStep(const quint8 &step)
         selectObject(ObjectType_Sell);
         return;
     }
+    else if(actualBot.step[step].attribute("type")=="learn")
+    {
+        selectObject(ObjectType_MonsterToLearn);
+        return;
+    }
     else
     {
         showTip(tr("Bot step type error, repport this error please"));
@@ -1493,10 +1583,13 @@ void BaseWindow::on_pushButton_interface_monsters_clicked()
 
 void BaseWindow::on_toolButton_monster_list_quit_clicked()
 {
-    if(waitedObjectType==ObjectType_Monster && inSelection)
+    if(waitedObjectType==ObjectType_MonsterToTrade || waitedObjectType==ObjectType_MonsterToLearn)
     {
-        objectSelection(false);
-        return;
+        if(inSelection)
+        {
+            objectSelection(false);
+            return;
+        }
     }
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
@@ -1543,7 +1636,7 @@ void BaseWindow::on_tradeAddItem_clicked()
 
 void CatchChallenger::BaseWindow::on_tradeAddMonster_clicked()
 {
-    selectObject(ObjectType_Monster);
+    selectObject(ObjectType_MonsterToTrade);
 }
 
 void CatchChallenger::BaseWindow::on_selectMonster_clicked()

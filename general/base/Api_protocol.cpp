@@ -1122,8 +1122,8 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         case 0x03:
                         {
                             PlayerMonster monster;
-                            PlayerMonster::Buff buff;
-                            PlayerMonster::Skill skill;
+                            PlayerMonster::PlayerBuff buff;
+                            PlayerMonster::PlayerSkill skill;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id bd, line: %1").arg(__LINE__));
@@ -1700,8 +1700,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         quint32 monster_list_size;
                         in >> monster_list_size;
                         PlayerMonster monster;
-                        PlayerMonster::Buff buff;
-                        PlayerMonster::Skill skill;
+                        PlayerMonster::PlayerBuff buff;
+                        PlayerMonster::PlayerSkill skill;
                         index=0;
                         quint32 sub_size,sub_index;
                         while(index<monster_list_size)

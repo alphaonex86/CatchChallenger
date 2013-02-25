@@ -239,7 +239,7 @@ void DatapackClientLoader::parseBuffExtra()
         item = item.nextSiblingElement("buff");
     }
 
-    QHashIterator<quint32,CatchChallenger::Monster::Buff> i(CatchChallenger::FightEngine::fightEngine.monsterBuffs);
+    QHashIterator<quint32,CatchChallenger::Buff> i(CatchChallenger::FightEngine::fightEngine.monsterBuffs);
     while(i.hasNext())
     {
         i.next();
@@ -345,7 +345,7 @@ void DatapackClientLoader::parseSkillsExtra()
         item = item.nextSiblingElement("skill");
     }
 
-    QHashIterator<quint32,CatchChallenger::Monster::Skill> i(CatchChallenger::FightEngine::fightEngine.monsterSkills);
+    QHashIterator<quint32,CatchChallenger::Skill> i(CatchChallenger::FightEngine::fightEngine.monsterSkills);
     while(i.hasNext())
     {
         i.next();

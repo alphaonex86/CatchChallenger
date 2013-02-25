@@ -59,8 +59,8 @@ private:
     void loadMonsters();
     void loadReputation();
     void sendInventory();
-    QList<PlayerMonster::Buff> loadMonsterBuffs(const quint32 &monsterId);
-    QList<PlayerMonster::Skill> loadMonsterSkills(const quint32 &monsterId);
+    QList<PlayerMonster::PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
+    QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
 signals:
     //normal signals
     void error(const QString &error);

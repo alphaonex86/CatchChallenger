@@ -31,6 +31,7 @@
 
 #define DATAPACK_FILE_REGEX "^[0-9/a-zA-Z\\.\\- _]*[0-9a-zA-Z]\\.[a-z]{3,4}$"
 #define DATAPACK_BASE_PATH_MAP "map/"
+#define DATAPACK_BASE_PATH_ZONE "map/zone/"
 #define DATAPACK_BASE_PATH_SKIN "skin/fighter/"
 #define DATAPACK_BASE_PATH_ANIMATION "animation/"
 #define DATAPACK_BASE_PATH_ITEM "items/"

@@ -132,12 +132,12 @@ struct PlayerMonster
         Female=0x02,
         Unknown=0x03
     };
-    struct Buff
+    struct PlayerBuff
     {
         quint32 buff;
         quint8 level;
     };
-    struct Skill
+    struct PlayerSkill
     {
         quint32 skill;
         quint8 level;
@@ -150,8 +150,9 @@ struct PlayerMonster
     quint32 captured_with;
     Gender gender;
     quint32 egg_step;
-    QList<Buff> buffs;
-    QList<Skill> skills;
+    //in form of list to get random into the list
+    QList<PlayerBuff> buffs;
+    QList<PlayerSkill> skills;
     quint32 id;
 };
 
@@ -323,6 +324,86 @@ enum QuantityType
     QuantityType_Percent
 };
 
+struct Buff
+{
+    struct Effect
+    {
+        enum EffectOn
+        {
+            EffectOn_HP,
+            EffectOn_Defense
+        };
+        EffectOn on;
+        qint32 quantity;
+        QuantityType type;
+    };
+    struct EffectInWalk
+    {
+        Effect effect;
+        quint32 steps;
+    };
+    struct GeneralEffect
+    {
+        QList<EffectInWalk> walk;
+        QList<Effect> fight;
+    };
+    QList<GeneralEffect> level;//first entry is buff level 1
+};
+
+enum ApplyOn
+{
+    ApplyOn_AloneEnemy,
+    ApplyOn_AllEnemy,
+    ApplyOn_Themself,
+    ApplyOn_AllAlly
+};
+
+struct Skill
+{
+    struct BuffEffect
+    {
+        quint32 buff;
+        ApplyOn on;
+        quint8 level;
+    };
+    struct LifeEffect
+    {
+        qint32 quantity;
+        QuantityType type;
+        ApplyOn on;
+    };
+    struct LifeEffectReturn
+    {
+        qint32 quantity;
+        ApplyOn on;
+    };
+    struct AttackReturn
+    {
+        bool doByTheCurrentMonster;
+        bool success;
+        QList<BuffEffect> buffEffectMonster;
+        QList<LifeEffectReturn> lifeEffectMonster;
+        quint32 attack;
+    };
+    struct Buff
+    {
+        quint8 success;
+        BuffEffect effect;
+    };
+    struct Life
+    {
+        quint8 success;
+        LifeEffect effect;
+    };
+    struct SkillList
+    {
+        QList<Buff> buff;
+        QList<Life> life;
+        quint32 sp;
+    };
+    QList<Skill::SkillList> level;//first is level 1
+};
+
 struct Monster
 {
     QString type,type2;
@@ -342,91 +423,15 @@ struct Monster
         quint32 speed;
     };
     Stat stat;
-    struct Attack
-    {
-        quint8 level;
-        PlayerMonster::Skill skill;
-    };
-    QList<Attack> attack;
     QList<quint32> level_to_xp;//first is xp to level 1
 
-    enum ApplyOn
+    struct AttackToLearn
     {
-        ApplyOn_AloneEnemy,
-        ApplyOn_AllEnemy,
-        ApplyOn_Themself,
-        ApplyOn_AllAlly
+        quint8 learnAtLevel;
+        quint32 learnSkill;
+        quint8 learnSkillLevel;
     };
-    struct Buff
-    {
-        struct Effect
-        {
-            enum EffectOn
-            {
-                EffectOn_HP,
-                EffectOn_Defense
-            };
-            EffectOn on;
-            qint32 quantity;
-            QuantityType type;
-        };
-        struct EffectInWalk
-        {
-            Effect effect;
-            quint32 steps;
-        };
-        struct GeneralEffect
-        {
-            QList<EffectInWalk> walk;
-            QList<Effect> fight;
-        };
-        QList<GeneralEffect> level;//first entry is buff level 1
-    };
-    struct Skill
-    {
-        struct BuffEffect
-        {
-            quint32 buff;
-            ApplyOn on;
-            quint8 level;
-        };
-        struct LifeEffect
-        {
-            qint32 quantity;
-            QuantityType type;
-            ApplyOn on;
-        };
-        struct LifeEffectReturn
-        {
-            qint32 quantity;
-            ApplyOn on;
-        };
-        struct AttackReturn
-        {
-            bool doByTheCurrentMonster;
-            bool success;
-            QList<Monster::Skill::BuffEffect> buffEffectMonster;
-            QList<Monster::Skill::LifeEffectReturn> lifeEffectMonster;
-            quint32 attack;
-        };
-        struct Buff
-        {
-            quint8 success;
-            BuffEffect effect;
-        };
-        struct Life
-        {
-            quint8 success;
-            LifeEffect effect;
-        };
-        struct SkillList
-        {
-            QList<Buff> buff;
-            QList<Life> life;
-            quint32 sp;
-        };
-        QList<SkillList> level;//first entry is buff level 1
-    };
+    QList<AttackToLearn> learn;
 };
 
 struct ItemToSellOrBuy

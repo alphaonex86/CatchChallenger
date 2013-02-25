@@ -46,7 +46,8 @@ public:
         ObjectType_Seed,
         ObjectType_Sell,
         ObjectType_Trade,
-        ObjectType_Monster
+        ObjectType_MonsterToTrade,
+        ObjectType_MonsterToLearn
     };
     ObjectType waitedObjectType;
     enum QueryType
@@ -251,7 +252,7 @@ private:
     QHash<quint32,QListWidgetItem *> plants_items_to_graphical;
     QHash<QListWidgetItem *,quint32> crafting_recipes_items_graphical;
     QHash<quint32,QListWidgetItem *> crafting_recipes_items_to_graphical;
-    QHash<QListWidgetItem *,PlayerMonster::Skill> fight_attacks_graphical;
+    QHash<QListWidgetItem *,quint32> fight_attacks_graphical;
     QHash<QListWidgetItem *,quint32> monsters_items_graphical;
     bool inSelection;
     QList<quint32> objectInUsing;
@@ -289,6 +290,9 @@ private:
     TradeOtherStat tradeOtherStat;
     QHash<quint32,quint32> tradeOtherObjects,tradeCurrentObjects;
     QList<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
+
+    //learn
+    quint32 monsterToLearn;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

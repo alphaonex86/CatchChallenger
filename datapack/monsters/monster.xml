@@ -3,30 +3,38 @@ ratio_gender="50%"
 catch_rate="100"
 pow="3", valid range: >1 and <5
 xp_for_max_level need be < 2000000000
+
+For drop:
+quantity_min="1"
+quantity_max="1"
+luck="100%"
 -->
 <list>
 	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender
 	second line is stat at level 100-->
 	<monster id="1" type="fire" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_for_max_level="10000" pow="2.35"
-		hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" give_sp="100" give_xp="750">
+		hp="185" attack="160" defense="115" special_attack="150" special_defense="130" speed="225" give_sp="100" give_xp="750">
 		<attack_list>
 			<!-- if level is 0, it's base attack, default: attack_level="1" -->
-			<attack level="0" id="3" />
-			<attack level="20" id="1" />
+			<attack level="0" skill="3" />
+			<attack level="20" skill="1" />
 		</attack_list>		
 		<name lang="en">Liondefeu</name>
 		<name lang="fr">Firelion</name>
 		<description lang="en">Firelion use fire for protect himsell.</description>
 		<description lang="fr">Lion de feu utilise le feu afin de ce protége.</description>
+		<drops>
+			<drop item="1" luck="5%" />
+		</drops>
 	</monster>
 	<!-- ratio_gender: 0% only male, 100% only female, -1 no gender
 	second line is stat at level 100-->
 	<monster id="2" type="fly" type2="earth" height="0.76m" weight="45kg" ratio_gender="50%" catch_rate="100" egg_step="5000" xp_for_max_level="1000000"
-	hp="185" attack="263" defense="135" special_attack="245" special_defense="110" speed="192" give_sp="100" give_xp="1000">
+		hp="185" attack="160" defense="115" special_attack="150" special_defense="130" speed="225" give_sp="100" give_xp="1000">
 		<attack_list>
 			<!-- if level is 0, it's base attack, default: attack_level="1" -->
-			<attack level="0" id="3" />
-			<attack level="10" id="3" attack_level="2" />
+			<attack level="0" skill="3" />
+			<attack level="10" skill="3" skill_level="2" />
 		</attack_list>		
 		<name lang="en">F</name>
 		<name lang="fr">F</name>
