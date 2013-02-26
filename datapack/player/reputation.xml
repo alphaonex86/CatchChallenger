@@ -19,7 +19,7 @@
 	0-150: Neutral for the empire
 	150+: Ally of the empire -->
 	<reputation type="empire">
-		<level point="-150"><!-- level -1 -->
+		<level point="-150"><!-- level -2 -->
 			<text lang="en">Ennemy of the empire</text>
 		</level>
 		<level point="-1"><!-- level -1 -->

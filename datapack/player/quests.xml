@@ -1,0 +1,38 @@
+<!--
+Default:
+quantity: 1
+show: true
+bot: "" (empty bot list, the list is separated by ; )
+-->
+<quests>
+	<quest id="1" repeatable="no">
+		<name lang="en"><![CDATA[The corrupted recipe]]></name>
+		<requirements>
+			<reputation type="empire" level="-1" />
+		</requirements>
+		<rewards show="false">
+			<object id="10" />
+		</rewards>
+		<step id="1">
+			<text lang="en"><![CDATA[Collect 10 tooth and abrind to the bandit into the corrupted zone]]></text>
+			<object id="13" quantity="10" monster="1" rate="50%" />
+		</step>
+	</quest>
+	<quest id="2" repeatable="yes">
+		<name lang="en"><![CDATA[Farm your success]]></name>
+		<requirements>
+			<quest id="1" />
+		</requirements>
+		<step id="1" bot="2">
+			<text lang="en"><![CDATA[Abrind 5 craftball to the bandit]]></text>
+			<object id="1" quantity="5" />
+		</step>
+		<step id="2" bot="4"><!-- just talk with a bot -->
+			<text lang="en"><![CDATA[Talk to the reaper]]></text>
+		</step>
+		<rewards>
+			<object id="3" quantity="2" />
+			<reputation type="empire" point="-1" />
+		</rewards>
+	</quest>
+</quests>
