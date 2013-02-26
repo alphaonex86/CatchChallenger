@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `player_origin` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `player` (`player`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
 
 -- --------------------------------------------------------
 
@@ -51,8 +51,7 @@ CREATE TABLE IF NOT EXISTS `monster_buff` (
   `monster` int(11) NOT NULL,
   `buff` int(11) NOT NULL,
   `level` int(11) NOT NULL,
-  PRIMARY KEY (`monster`),
-  UNIQUE KEY `monster` (`monster`,`buff`)
+  PRIMARY KEY (`monster`,`buff`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -124,6 +123,21 @@ CREATE TABLE IF NOT EXISTS `player_skill` (
   `skill` int(11) NOT NULL,
   `level` int(11) NOT NULL,
   PRIMARY KEY (`player`,`skill`),
+  KEY `player` (`player`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quest`
+--
+
+CREATE TABLE IF NOT EXISTS `quest` (
+  `player` int(11) NOT NULL,
+  `quest` int(11) NOT NULL,
+  `finish_one_time` tinyint(1) NOT NULL,
+  `step` int(11) NOT NULL,
+  PRIMARY KEY (`player`,`quest`),
   KEY `player` (`player`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
