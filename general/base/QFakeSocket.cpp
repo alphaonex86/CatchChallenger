@@ -152,7 +152,6 @@ void QFakeSocket::internal_writeData(QByteArray rawData)
         RX_size+=rawData.size();
         this->data+=rawData;
     }
-    DebugClass::debugConsole(QString("emit readyRead()"));
     emit readyRead();
 }
 

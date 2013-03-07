@@ -316,7 +316,7 @@ void MainWindow::load_settings()
     switch(ui->MapVisibilityAlgorithm->currentIndex())
     {
         case 0:
-            ui->benchmark_clients->setMaximum(ui->MapVisibilityAlgorithmSimpleMax->value());
+            update_benchmark();
         break;
         default:
         break;
@@ -470,6 +470,30 @@ void MainWindow::send_settings()
     server.setSettings(formatedServerSettings);
 }
 
+void MainWindow::update_benchmark()
+{
+    switch(ui->MapVisibilityAlgorithm->currentIndex())
+    {
+        case 0:
+            ui->labelBenchTip->setText(tr("The number of bot should be lower than %1*number of map\nSee the max client into the visibility algorithm\nNeed be lower than max player: %2")
+                                       .arg(ui->MapVisibilityAlgorithmSimpleMax->value())
+                                       .arg(ui->max_player->value())
+                                       );
+            ui->pushButton_server_benchmark->setEnabled(true);
+        break;
+        default:
+            ui->labelBenchTip->setText(tr("You need select another visibility algorithm"));
+            ui->pushButton_server_benchmark->setEnabled(false);
+        break;
+    }
+    if(ui->benchmark_clients->value()>ui->MapVisibilityAlgorithmSimpleMax->value())
+        ui->benchmark_clients->setStyleSheet("color: rgb(255, 0, 0);background-color: rgb(255, 230, 230);");
+    else
+        ui->benchmark_clients->setStyleSheet("");
+    ui->benchmark_clients->setMaximum(ui->max_player->value());
+}
+
+
 void MainWindow::on_max_player_valueChanged(int arg1)
 {
     settings->setValue("max-players",arg1);
@@ -618,7 +642,7 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleMax_valueChanged(int arg1)
     settings->setValue("Max",arg1);
     settings->endGroup();
     ui->MapVisibilityAlgorithmSimpleReshow->setMaximum(arg1);
-    ui->benchmark_clients->setMaximum(ui->MapVisibilityAlgorithmSimpleMax->value());
+    update_benchmark();
 }
 
 
@@ -642,6 +666,7 @@ void MainWindow::on_benchmark_seconds_valueChanged(int arg1)
 void MainWindow::on_benchmark_clients_valueChanged(int arg1)
 {
     settings->setValue("benchmark_clients",arg1);
+    update_benchmark();
 }
 
 void MainWindow::on_db_type_currentIndexChanged(int index)

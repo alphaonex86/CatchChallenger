@@ -294,7 +294,9 @@ void ClientLocalBroadcast::sendNearPlant()
 
 void ClientLocalBroadcast::removeNearPlant()
 {
+    #if defined(DEBUG_MESSAGE_MAP_PLANTS)
     emit message("removeNearPlant()");
+    #endif
     //send the remove plant
     quint16 plant_list_size=static_cast<MapServer *>(map)->plants.size();
     if(plant_list_size==0)
