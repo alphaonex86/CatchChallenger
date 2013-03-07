@@ -149,6 +149,8 @@ BaseWindow::BaseWindow() :
     loadSettings();
 
     MapController::mapController->setFocus();
+    
+    CatchChallenger::Api_client_real::client->startReadData();
 }
 
 BaseWindow::~BaseWindow()

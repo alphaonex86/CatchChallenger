@@ -12,7 +12,7 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
     connect(socket,SIGNAL(disconnected()),this,SIGNAL(disconnected()));
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SIGNAL(error(QAbstractSocket::SocketError)));
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
-    connect(socket,SIGNAL(readyRead()),this,SIGNAL(readyRead()));
+    connect(socket,SIGNAL(readyRead()),this,SIGNAL(readyRead()),Qt::DirectConnection);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
@@ -26,7 +26,7 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket,QObject *parent) :
     connect(socket,SIGNAL(disconnected()),this,SIGNAL(disconnected()));
     connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SIGNAL(error(QAbstractSocket::SocketError)));
     connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
-    connect(socket,SIGNAL(readyRead()),this,SIGNAL(readyRead()));
+    connect(socket,SIGNAL(readyRead()),this,SIGNAL(readyRead()),Qt::DirectConnection);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 

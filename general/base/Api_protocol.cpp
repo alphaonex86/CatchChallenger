@@ -1569,7 +1569,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                     in >> returnCode;
                     if(returnCode==0x01)
                     {
-                        have_send_protocol=true;
+                        have_receive_protocol=true;
                         emit protocol_is_good();
                         //DebugClass::debugConsole("the protocol is good");
                     }
@@ -2491,6 +2491,7 @@ void Api_protocol::resetAll()
     //status for the query
     is_logged=false;
     have_send_protocol=false;
+    have_receive_protocol=false;
     max_player=65535;
     number_of_map=0;
     havePlantAction=false;
@@ -2504,6 +2505,11 @@ void Api_protocol::resetAll()
 
     //to send trame
     lastQueryNumber=1;
+}
+
+void Api_protocol::startReadData()
+{
+    canStartReadData=true;
 }
 
 QString Api_protocol::get_datapack_base_name()

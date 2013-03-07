@@ -61,6 +61,8 @@ public:
     friend class ProtocolParsing;
     bool checkStringIntegrity(const QByteArray & data);
     quint64 getRXSize();
+protected slots:
+    void parseIncommingData();
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data) = 0;
@@ -72,6 +74,7 @@ protected:
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
     virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
     // for data
+    bool canStartReadData;
     bool haveData;
     bool haveData_dataSize;
     bool is_reply;
@@ -87,16 +90,11 @@ protected:
     bool have_subCodeType,need_subCodeType,need_query_number,have_query_number;
     // function
     void dataClear();
-    //temp data
-    static quint8 temp_size_8Bits;
-    static quint16 temp_size_16Bits;
-    static quint32 temp_size_32Bits;
     //reply to the query
     QHash<quint8,quint16> replySize;
     QHash<quint8,quint8> reply_mainCodeType;
     QHash<quint8,quint16> reply_subCodeType;
 private slots:
-    void parseIncommingData();
     void reset();
 signals:
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
@@ -129,7 +127,7 @@ private:
     quint64 TXSize;
     bool isClient;
     //temp data
-    static qint64 byteWriten;
+    qint64 byteWriten;
     //reply to the query
     QHash<quint8,quint16> replySize;
     QSet<quint8> replyCompression;

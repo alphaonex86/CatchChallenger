@@ -31,12 +31,6 @@ QHash<quint8,QSet<quint16> > ProtocolParsing::replyComressionMultipleCodePacketS
 QSet<quint8> ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
 QSet<quint8> ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
 
-//temp data
-qint64 ProtocolParsingOutput::byteWriten;
-quint8 ProtocolParsingInput::temp_size_8Bits;
-quint16 ProtocolParsingInput::temp_size_16Bits;
-quint32 ProtocolParsingInput::temp_size_32Bits;
-
 ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
 {
     this->socket=socket;
@@ -109,8 +103,10 @@ void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)
 ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTransmission packetModeTransmission) :
     ProtocolParsing(socket)
 {
+    canStartReadData=false;
     RXSize=0;
-    connect(socket,SIGNAL(readyRead()),this,SLOT(parseIncommingData()));
+    if(!connect(socket,SIGNAL(readyRead()),this,SLOT(parseIncommingData())))
+        DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
     dataClear();
 }
@@ -156,6 +152,8 @@ void ProtocolParsingInput::parseIncommingData()
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): socket->bytesAvailable(): %1").arg(socket->bytesAvailable()));
     #endif
+    if(!canStartReadData)
+        return;
 
     //put this as general
     QDataStream in(socket);
@@ -320,7 +318,7 @@ void ProtocolParsingInput::parseIncommingData()
             #endif
             if(socket->bytesAvailable()<(int)sizeof(quint8))
             {
-                RXSize+=in.device()->pos();
+                RXSize+=in.device()->pos();//todo, write message: need more bytes
                 return;
             }
             in >> queryNumber;
@@ -354,6 +352,10 @@ void ProtocolParsingInput::parseIncommingData()
             #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !haveData_dataSize"));
             #endif
+            //temp data
+            quint8 temp_size_8Bits;
+            quint16 temp_size_16Bits;
+            quint32 temp_size_32Bits;
             while(!haveData_dataSize)
             {
                 switch(data_size.size())
@@ -689,6 +691,10 @@ void ProtocolParsingInput::parseIncommingData()
         }
         dataClear();
     }
+    #ifdef PROTOCOLPARSINGDEBUG
+    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): finish parse the input"));
+    #endif
+
 }
 
 void ProtocolParsingInput::reset()

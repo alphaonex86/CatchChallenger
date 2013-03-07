@@ -33,11 +33,6 @@ void ClientNetworkRead::stopRead()
 //		disconnect(socket,SIGNAL(readyRead()),this,SLOT(readyRead()));
 }
 
-void ClientNetworkRead::fake_send_protocol()
-{
-    have_send_protocol=true;
-}
-
 void ClientNetworkRead::askIfIsReadyToStop()
 {
     stopIt=true;
@@ -922,4 +917,10 @@ void ClientNetworkRead::fake_receive_data(const QByteArray &data)
 {
     Q_UNUSED(data);
 //	parseInputAfterLogin(data);
+}
+
+void ClientNetworkRead::purgeReadBuffer()
+{
+    canStartReadData=true;
+    parseIncommingData();
 }
