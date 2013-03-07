@@ -31,7 +31,7 @@ NormalServer::NormalServer() :
 
     in_benchmark_mode=false;
 
-    nextStep.start(CATCHCHALLENGER_SERVER_NORMAL_SPEED*50);
+    nextStep.start(CATCHCHALLENGER_SERVER_NORMAL_SPEED);
 
     connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
     connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
@@ -332,7 +332,6 @@ void NormalServer::addBot()
     }
     newFakeBot->moveToThread(botThread);
     newFakeBot->start_step();
-    newFakeBot->tryLink();
     connect(&nextStep,SIGNAL(timeout()),newFakeBot,SLOT(doStep()),Qt::QueuedConnection);
     connect(newFakeBot,SIGNAL(isDisconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
 }

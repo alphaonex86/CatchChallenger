@@ -21,7 +21,6 @@ class ClientNetworkRead : public ProtocolParsingInput
 public:
     explicit ClientNetworkRead(Player_internal_informations *player_informations,ConnectedSocket * socket);
     void stopRead();
-    void fake_send_protocol();
 
     struct TeleportationPoint
     {
@@ -32,6 +31,7 @@ public:
     };
 public slots:
     void fake_receive_data(const QByteArray &data);
+    void purgeReadBuffer();
     //normal slots
     void askIfIsReadyToStop();
 
