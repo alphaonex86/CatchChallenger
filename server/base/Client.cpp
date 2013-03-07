@@ -184,6 +184,8 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(this,SIGNAL(askIfIsReadyToStop()),clientLocalBroadcast,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
 
     stopped_object=0;
+
+    clientNetworkRead->purgeReadBuffer();
 }
 
 //need be call after isReadyToDelete() emited

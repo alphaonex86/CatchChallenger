@@ -188,6 +188,7 @@ struct ServerPrivateVariables
 
     //map
     QHash<QString,Map *> map_list;
+    QHash<quint32,QString> id_map_to_map;
     QTimer timer_to_send_insert_move_remove;/// \todo put on timer by thread without Qt::QueuedConnection to improve the performance
     QTimer positionSync;/// \todo put into the local thread to drop Qt::QueuedConnection and improve the performance
     qint8 sizeofInsertRequest;
