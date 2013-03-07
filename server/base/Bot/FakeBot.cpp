@@ -126,7 +126,6 @@ void FakeBot::random_new_step()
 //quint32,QString,quint16,quint16,quint8,quint16
 void FakeBot::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
-    DebugClass::debugConsole("FakeBot::insert_player()");
     if(!GlobalServerData::serverPrivateVariables.id_map_to_map.contains(mapId))
     {
         /// \bug here pass after delete a party, create a new
@@ -163,7 +162,7 @@ void FakeBot::insert_player(const CatchChallenger::Player_public_informations &p
 
 void FakeBot::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
-    DebugClass::debugConsole(QString("FakeBot::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
+//    DebugClass::debugConsole(QString("FakeBot::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
 }
 
 void FakeBot::newError(QString error,QString detailedError)

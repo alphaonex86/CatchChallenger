@@ -34,7 +34,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>8</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -323,7 +323,7 @@
               <number>1</number>
              </property>
              <property name="maximum">
-              <number>999</number>
+              <number>9999</number>
              </property>
              <property name="value">
               <number>50</number>
@@ -861,6 +861,9 @@
            </item>
            <item row="1" column="1">
             <widget class="QSpinBox" name="benchmark_clients">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(255, 230, 230);</string>
+             </property>
              <property name="minimum">
               <number>1</number>
              </property>
@@ -884,6 +887,18 @@
            <string>Benchmark map</string>
           </property>
           <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelBenchTip">
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(255, 255, 163);
+border: 1px solid rgb(255, 221, 50);
+border-radius:5px;</string>
+          </property>
+          <property name="wordWrap">
            <bool>true</bool>
           </property>
          </widget>
