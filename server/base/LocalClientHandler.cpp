@@ -1529,7 +1529,7 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
 {
     if(otherPlayerTrade==NULL)
     {
-        emit message("Trade already canceled");
+        //emit message("Trade already canceled");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE

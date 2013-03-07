@@ -59,6 +59,7 @@ private slots:
     void stop_calculate_latency();
     void benchmark_result(int latency,double TX_speed,double RX_speed,double TX_size,double RX_size,double second);
     void clean_updated_info();
+    void update_benchmark();
     //auto slots
     void on_pushButton_server_start_clicked();
     void on_pushButton_server_stop_clicked();
