@@ -4,7 +4,7 @@
 #include "GeneralVariable.h"
 
 #include <QMutexLocker>
-
+#include <QThread>
 using namespace CatchChallenger;
 
 QFakeSocket::QFakeSocket()
@@ -152,6 +152,7 @@ void QFakeSocket::internal_writeData(QByteArray rawData)
         RX_size+=rawData.size();
         this->data+=rawData;
     }
+    DebugClass::debugConsole(QString("emit readyRead()"));
     emit readyRead();
 }
 

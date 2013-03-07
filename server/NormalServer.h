@@ -52,7 +52,7 @@ private:
     //to load/unload the content
     void load_settings();
     //init, constructor, destructor
-    void initAll();//call before all
+    virtual void initAll();//call before all
     //internal usefull function
     QString listenIpAndPort(QString server_ip,quint16 server_port);
     //store about the network
@@ -60,6 +60,8 @@ private:
     QTcpServer *server;
     //store benchmark related
     bool in_benchmark_mode;
+    bool benchmark_map;
+    int number_of_client;
     int benchmark_latency;
     QTimer *timer_benchmark_stop;
     QTime time_benchmark_first_client;

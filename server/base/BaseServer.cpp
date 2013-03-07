@@ -19,10 +19,14 @@ BaseServer::BaseServer()
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
-    qRegisterMetaType<Direction>("Direction");
     qRegisterMetaType<Map_server_MapVisibility_simple*>("Map_server_MapVisibility_simple*");
-    qRegisterMetaType<Player_public_informations>("Player_public_informations");
+    qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
+    qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");
+    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
+    qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
+    qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
+    qRegisterMetaType<Direction>("Direction");
 
     GlobalServerData::serverPrivateVariables.connected_players	= 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
@@ -335,7 +339,6 @@ void BaseServer::preload_the_map()
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
                             }
                         }
-                        step = step.nextSiblingElement("step");
                     }
                 }
             sub_index++;
@@ -459,7 +462,10 @@ void BaseServer::preload_the_map()
     while(index<size)
     {
         if(GlobalServerData::serverPrivateVariables.map_list.contains(full_map_name.at(index)))
+        {
             GlobalServerData::serverPrivateVariables.map_list[full_map_name.at(index)]->id=index;
+            GlobalServerData::serverPrivateVariables.id_map_to_map[GlobalServerData::serverPrivateVariables.map_list[full_map_name.at(index)]->id]=full_map_name.at(index);
+        }
         index++;
     }
 

@@ -28,7 +28,6 @@ public:
     quint64 get_RX_size();
     QFakeSocket fakeSocket;
     ConnectedSocket socket;
-    void tryLink();
 private:
     Api_client_virtual api;
     //debug
@@ -48,11 +47,12 @@ public slots:
     void doStep();
 private slots:
     void random_new_step();
-    void insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction);
-    void have_current_player_info(Player_private_and_public_informations info,QString pseudo);
+    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
     void newError(QString error,QString detailedError);
     void newSocketError(QAbstractSocket::SocketError error);
     void disconnected();
+    void tryLink();
 signals:
     void isDisconnected();
 };

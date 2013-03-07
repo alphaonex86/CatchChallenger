@@ -16,11 +16,12 @@ FakeBot::FakeBot() :
     socket(&fakeSocket),
     api(&socket)
 {
-    connect(&api,SIGNAL(insert_player(Player_public_informations,QString,quint16,quint16,Direction)),this,SLOT(insert_player(Player_public_informations,QString,quint16,quint16,Direction)));
-    connect(&api,SIGNAL(have_current_player_info(Player_private_and_public_informations,QString)),this,SLOT(have_current_player_info(Player_private_and_public_informations,QString)));
+    connect(&api,SIGNAL(insert_player(CatchChallenger::Player_public_informations,quint32,quint16,quint16,CatchChallenger::Direction)),this,SLOT(insert_player(CatchChallenger::Player_public_informations,quint32,quint16,quint16,CatchChallenger::Direction)));
+    connect(&api,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info(CatchChallenger::Player_private_and_public_informations)));
     connect(&api,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
     connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(newSocketError(QAbstractSocket::SocketError)));
     connect(&socket,SIGNAL(disconnected()),this,SLOT(disconnected()));
+    connect(&socket,SIGNAL(connected()),this,SLOT(tryLink()),Qt::QueuedConnection);
 
     details=false;
     map=NULL;
@@ -33,6 +34,7 @@ FakeBot::FakeBot() :
 
 /*	predefinied_step << Direction_move_at_top;
     predefinied_step << Direction_move_at_bottom;*/
+    api.startReadData();
 }
 
 FakeBot::~FakeBot()
@@ -122,40 +124,46 @@ void FakeBot::random_new_step()
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
-void FakeBot::insert_player(Player_public_informations player,QString mapName,quint16 x,quint16 y,Direction direction)
+void FakeBot::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
+    DebugClass::debugConsole("FakeBot::insert_player()");
+    if(!GlobalServerData::serverPrivateVariables.id_map_to_map.contains(mapId))
+    {
+        /// \bug here pass after delete a party, create a new
+        DebugClass::debugConsole("mapId id not found for bot");
+        return;
+    }
     if(details)
-        DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2 (%3,%4), api.getId(): %5").arg(player.simplifiedId).arg(mapName).arg(x).arg(y).arg(api.getId()));
+        DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2 (%3,%4), api.getId(): %5").arg(player.simplifiedId).arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]).arg(x).arg(y).arg(api.getId()));
     if(player.simplifiedId==api.getId())
     {
         if(details)
-            DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2 (%3,%4)").arg(player.simplifiedId).arg(mapName).arg(x).arg(y));
-        if(!GlobalServerData::serverPrivateVariables.map_list.contains(mapName))
+            DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2 (%3,%4)").arg(player.simplifiedId).arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]).arg(x).arg(y));
+        if(!GlobalServerData::serverPrivateVariables.map_list.contains(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]))
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(mapName));
+            DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]));
             return;
         }
-        if(x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width)
+        if(x>=GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->width)
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(x).arg(GlobalServerData::serverPrivateVariables.map_list[mapName]->width));
+            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(x).arg(GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->width));
             return;
         }
-        if(y>=GlobalServerData::serverPrivateVariables.map_list[mapName]->height)
+        if(y>=GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->height)
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(y).arg(GlobalServerData::serverPrivateVariables.map_list[mapName]->height));
+            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(y).arg(GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->height));
             return;
         }
-        this->map=GlobalServerData::serverPrivateVariables.map_list[mapName];
+        this->map=GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]];
         this->x=x;
         this->y=y;
         this->last_direction=direction;
     }
 }
 
-void FakeBot::have_current_player_info(Player_private_and_public_informations info,QString pseudo)
+void FakeBot::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
-    Q_UNUSED(info);
-    DebugClass::debugConsole(QString("FakeBot::have_current_player_info() pseudo: %1").arg(pseudo));
+    DebugClass::debugConsole(QString("FakeBot::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
 }
 
 void FakeBot::newError(QString error,QString detailedError)

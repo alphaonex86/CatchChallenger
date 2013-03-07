@@ -50,10 +50,13 @@ public:
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
+
+    void startReadData();
 private:
     //status for the query
     bool is_logged;
     bool have_send_protocol;
+    bool have_receive_protocol;
     bool tolerantMode;
 
     //to send trame
