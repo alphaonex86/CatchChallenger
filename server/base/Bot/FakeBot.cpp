@@ -162,6 +162,7 @@ void FakeBot::insert_player(const CatchChallenger::Player_public_informations &p
 
 void FakeBot::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
+    Q_UNUSED(informations);
 //    DebugClass::debugConsole(QString("FakeBot::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
 }
 
