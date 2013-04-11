@@ -156,6 +156,12 @@ struct PlayerMonster
     quint32 id;
 };
 
+struct PlayerQuest
+{
+    quint8 step;
+    bool finish_one_time;
+};
+
 struct PlayerReputation
 {
     qint8 level;
@@ -179,6 +185,7 @@ struct Player_private_and_public_informations
     //fight
     /// \todo put out of here to have mutalised engine
     QList<PlayerMonster> playerMonster;
+    QHash<quint32, PlayerQuest> quests;
 };
 
 /// \brief Define the mode of transmission: client or server
@@ -441,11 +448,59 @@ struct ItemToSellOrBuy
     quint32 quantity;
 };
 
+struct Quest
+{
+    struct Item
+    {
+        quint32 item;
+        quint32 quantity;
+    };
+    struct ItemMonster
+    {
+        quint32 item;
+        QList<quint32> monsters;
+        quint8 rate;
+    };
+    struct ReputationRewards
+    {
+        QString type;
+        qint32 point;
+    };
+    struct ReputationRequirements
+    {
+        QString type;
+        qint8 level;
+    };
+    struct Requirements
+    {
+        QList<quint32> quests;
+        QList<ReputationRequirements> reputation;
+    };
+    struct Rewards
+    {
+        QList<Item> items;
+        QList<ReputationRewards> reputation;
+    };
+    struct Step
+    {
+        QList<ItemMonster> itemsMonster;
+        QList<Item> items;
+        QList<quint32> bots;
+    };
+
+    quint32 id;
+    bool repeatable;
+    Requirements requirements;
+    Rewards rewards;
+    QList<Step> steps;
+};
+
 //permanent bot on client, temp to parse on the server
 struct Bot
 {
     QHash<quint8,QDomElement> step;
     QHash<QString,QString> properties;
+    quint32 botId;
 };
 
 }

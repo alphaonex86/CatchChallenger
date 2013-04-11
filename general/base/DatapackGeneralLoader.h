@@ -10,6 +10,7 @@ class DatapackGeneralLoader
 {
 public:
     static QHash<QString, Reputation> loadReputation(const QString &file);
+    static QHash<quint32, Quest> loadQuests(const QString &folder);
 };
 }
 
