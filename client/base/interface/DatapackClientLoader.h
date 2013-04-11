@@ -41,12 +41,19 @@ public:
     {
         QStringList reputation_positive,reputation_negative;
     };
-    QHash<QString, CatchChallenger::Reputation> reputation;
-    QHash<QString, ReputationExtra> reputationExtra;
+    struct QuestExtra
+    {
+        QString name;
+        QStringList steps;
+    };
+    QHash<QString,CatchChallenger::Reputation> reputation;
+    QHash<QString,ReputationExtra> reputationExtra;
     QHash<quint8,Plant> plants;
     QHash<quint32,quint8> itemToPlants;
     QHash<quint32,quint32> itemToCrafingRecipes;
     QHash<quint32,CatchChallenger::CrafingRecipe> crafingRecipes;
+    QHash<quint32,CatchChallenger::Quest> quests;
+    QHash<quint32,QuestExtra> questsExtra;
     QStringList maps;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
@@ -64,6 +71,7 @@ private:
     ~DatapackClientLoader();
 private slots:
     void parseItems();
+    void parseQuests();
     void parseMaps();
     void parsePlants();
     void parseCraftingRecipes();
@@ -74,6 +82,7 @@ private slots:
     void parseMonstersExtra();
     void parseBuffExtra();
     void parseSkillsExtra();
+    void parseQuestsExtra();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

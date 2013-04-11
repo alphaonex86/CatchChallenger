@@ -348,6 +348,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint3
         index++;
     }
 
+    /// \todo force to 255 max
     //send reputation
     out << (quint8)player_informations->public_and_private_informations.reputation.size();
     QHashIterator<QString,PlayerReputation> i(player_informations->public_and_private_informations.reputation);
@@ -356,6 +357,17 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint3
         out << i.key();
         out << i.value().level;
         out << i.value().point;
+    }
+
+    /// \todo force to 255 max
+    //send quest
+    out << (quint8)player_informations->public_and_private_informations.quests.size();
+    QHashIterator<quint32,PlayerQuest> j(player_informations->public_and_private_informations.quests);
+    while (j.hasNext()) {
+        j.next();
+        out << j.key();
+        out << j.value().step;
+        out << j.value().finish_one_time;
     }
 
     emit postReply(query_id,outputData);
@@ -401,6 +413,7 @@ void ClientHeavyLoad::loadLinkedData()
     loadRecipes();
     loadMonsters();
     loadReputation();
+    loadQuests();
 }
 
 bool ClientHeavyLoad::loadTheRawUTF8String()
@@ -619,5 +632,51 @@ void ClientHeavyLoad::loadReputation()
         }
         player_informations->public_and_private_informations.reputation[type].level=level;
         player_informations->public_and_private_informations.reputation[type].point=point;
+    }
+}
+
+void ClientHeavyLoad::loadQuests()
+{
+    //do the query
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+        queryText=QString("SELECT quest,finish_one_time,step FROM quest WHERE player=%1")
+                .arg(player_informations->id);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+        queryText=QString("SELECT quest,finish_one_time,step FROM quest WHERE player=%1")
+                .arg(player_informations->id);
+        break;
+    }
+    bool ok,ok2;
+    QSqlQuery questsQuery;
+    if(!questsQuery.exec(queryText))
+        emit message(questsQuery.lastQuery()+": "+questsQuery.lastError().text());
+    //parse the result
+    while(questsQuery.next())
+    {
+        PlayerQuest playerQuest;
+        quint32 id=questsQuery.value(0).toUInt(&ok);
+        playerQuest.finish_one_time=questsQuery.value(1).toBool();
+        playerQuest.step=questsQuery.value(2).toUInt(&ok2);
+        if(!ok || !ok2)
+        {
+            emit message(QString("wrong value type, skip"));
+            continue;
+        }
+        if(!GlobalServerData::serverPrivateVariables.quests.contains(id))
+        {
+            emit message(QString("quest is not into the quests list, skip"));
+            continue;
+        }
+        if(playerQuest.step<=0 || playerQuest.step>GlobalServerData::serverPrivateVariables.quests[id].steps.size())
+        {
+            emit message(QString("step out of quest range, skip"));
+            continue;
+        }
+        player_informations->public_and_private_informations.quests[id]=playerQuest;
     }
 }

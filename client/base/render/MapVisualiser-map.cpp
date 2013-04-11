@@ -343,7 +343,7 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
         return;
     }
     bool ok,ok2;
-    //load the bots
+    //load the bots (map->bots)
     QDomElement child = root.firstChildElement("objectgroup");
     while(!child.isNull())
     {
@@ -410,6 +410,7 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
                                                     property_parsed.remove("file");
                                                     property_parsed.remove("id");
                                                     parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].properties=property_parsed;
+                                                    parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].botId=botId;
                                                 }
                                         }
                                         else
