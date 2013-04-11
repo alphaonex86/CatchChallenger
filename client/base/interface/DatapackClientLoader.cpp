@@ -244,6 +244,7 @@ void DatapackClientLoader::resetAll()
      crafingRecipes.clear();
      quests.clear();
      questsExtra.clear();
+     botToQuestStart.clear();
 }
 
 void DatapackClientLoader::parseQuestsExtra()
@@ -381,5 +382,20 @@ void DatapackClientLoader::parseQuestsExtra()
         }
 
         index++;
+    }
+}
+
+void DatapackClientLoader::parseQuestsLink()
+{
+    QHashIterator<quint32,CatchChallenger::Quest> i(quests);
+    while(i.hasNext()) {
+        i.next();
+        QList<quint32> bots=i.value().steps.first().bots;
+        int index=0;
+        while(index<bots.size())
+        {
+            botToQuestStart.insert(bots.at(index),i.key());
+            index++;
+        }
     }
 }

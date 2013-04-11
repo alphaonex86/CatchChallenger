@@ -1889,6 +1889,11 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                                 return;
                             }
                             in >> playerQuest.finish_one_time;
+                            if(playerQuest.step<=0 && !playerQuest.finish_one_time)
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("can't be to step 0 if have never finish the quest, line: %1").arg(__LINE__));
+                                return;
+                            }
                             player_informations.quests[playerQuestId]=playerQuest;
                             index++;
                         }

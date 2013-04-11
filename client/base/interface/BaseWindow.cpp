@@ -951,11 +951,113 @@ void BaseWindow::updateRXTX()
     previousTXSize=TXSize;
 }
 
-bool BaseWindow::actualBotHaveQuest(const quint32 &botId)
+bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 {
-    todo;
+    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    int index=0;
+    while(index<quest.requirements.quests.size())
+    {
+        const quint32 &questId=quest.requirements.quests.at(index);
+        if(!informations.quests.contains(questId))
+            return false;
+        if(!informations.quests[questId].finish_one_time)
+            return false;
+        index++;
+    }
+    index=0;
+    while(index<quest.requirements.reputation.size())
+    {
+        const CatchChallenger::Quest::ReputationRequirements &reputation=quest.requirements.reputation.at(index);
+        if(informations.reputation.contains(reputation.type))
+        {
+            const PlayerReputation &playerReputation=informations.reputation[reputation.type];
+            if(reputation.level<0)
+            {
+                if(reputation.level<playerReputation.level)
+                    return false;
+            }
+            else
+            {
+                if(reputation.level>playerReputation.level || playerReputation.point<0)
+                    return false;
+            }
+        }
+        else
+            if(reputation.level<0)//default level is 0, but required level is negative
+                return false;
+        index++;
+    }
+    return true;
+}
+
+bool BaseWindow::botHaveQuest(const quint32 &botId)
+{
+    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     //do the not started quest here
+    QList<quint32> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    int index=0;
+    while(index<botQuests.size())
+    {
+        const quint8 &questId=botQuests.at(index);
+        const CatchChallenger::Quest &currentQuest=DatapackClientLoader::datapackLoader.quests[questId];
+        if(!informations.quests.contains(botQuests.at(index)))
+        {
+            //quest not started
+            if(haveStartQuestRequirement(currentQuest))
+                return true;
+            else
+                {}//have not the requirement
+        }
+        else
+        {
+            if(!DatapackClientLoader::datapackLoader.quests.contains(botQuests.at(index)))
+                qDebug() << "internal bug: have quest registred, but no quest found with this id";
+            else
+            {
+                if(informations.quests[botQuests.at(index)].step==0)
+                {
+                    if(currentQuest.repeatable)
+                    {
+                        if(informations.quests[botQuests.at(index)].finish_one_time)
+                        {
+                            //quest already done but repeatable
+                            if(haveStartQuestRequirement(currentQuest))
+                                return true;
+                            else
+                                {}//have not the requirement
+                        }
+                        else
+                            {}//bug: can't be !finish_one_time && currentQuest.steps==0
+                    }
+                    else
+                        {}//quest already done
+                }
+                else
+                {
+                    QList<quint32> bots=currentQuest.steps.at(informations.quests[questId].step-1).bots;
+                    if(bots.contains(botId))
+                        return true;//in progress
+                    else
+                        {}//Need got to another bot to progress, this it's just the starting bot
+                }
+            }
+        }
+        index++;
+    }
     //do the started quest here
+    QHashIterator<quint32, PlayerQuest> i(informations.quests);
+    while (i.hasNext()) {
+        i.next();
+        if(!botQuests.contains(i.key()) && i.value().step>0)
+        {
+            CatchChallenger::Quest currentQuest=DatapackClientLoader::datapackLoader.quests[i.key()];
+            QList<quint32> bots=currentQuest.steps.at(i.value().step-1).bots;
+            if(bots.contains(botId))
+                return true;//in progress, but not the starting bot
+            else
+                {}//it's another bot
+        }
+    }
     return false;
 }
 
@@ -984,7 +1086,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 remote.setMinimal(true);
                 textToShow.remove(remote);
                 #endif
-                if(!actualBotHaveQuest(actualBot.botId))//if have not quest
+                if(!botHaveQuest(actualBot.botId))//if have not quest
                 {
                     QRegExp quest(QRegExp::escape("<span class=\"quest\">")+".*"+QRegExp::escape("</span>"));
                     quest.setMinimal(true);
