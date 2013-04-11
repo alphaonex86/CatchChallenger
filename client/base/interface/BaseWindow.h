@@ -148,7 +148,8 @@ private slots:
     void updateRXTX();
 
     //bot
-    bool actualBotHaveQuest(const quint32 &botId);
+    bool haveStartQuestRequirement(const Quest &quest);
+    bool botHaveQuest(const quint32 &botId);
     void goToBotStep(const quint8 &step);
 
     //fight
