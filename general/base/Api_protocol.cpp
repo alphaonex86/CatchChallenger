@@ -1859,6 +1859,39 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             player_informations.reputation[type]=playerReputation;
                             index++;
                         }
+                        //quest
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the reputation list size, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        PlayerQuest playerQuest;
+                        quint32 playerQuestId;
+                        index=0;
+                        in >> sub_size8;
+                        while(index<sub_size8)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(qint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                                return;
+                            }
+                            in >> playerQuestId;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(qint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the reputation level, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> playerQuest.step;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(qint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the reputation point, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> playerQuest.finish_one_time;
+                            player_informations.quests[playerQuestId]=playerQuest;
+                            index++;
+                        }
 
                         is_logged=true;
                         emit logged();
@@ -2499,6 +2532,7 @@ void Api_protocol::resetAll()
     player_informations.playerMonster.clear();
     player_informations.items.clear();
     player_informations.reputation.clear();
+    player_informations.quests.clear();
     haveShopAction=false;
     isInTrade=false;
     tradeRequestId.clear();
