@@ -179,6 +179,7 @@ struct ServerPrivateVariables
     QTimer *timer_player_map;
     bool stopIt;
     QHash<QString, Reputation> reputation;
+    QHash<quint32, Quest> quests;
 
     //interconnected thread
     //QMutex clientBroadCastListMutex;

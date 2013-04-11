@@ -38,6 +38,7 @@
 #define DATAPACK_BASE_PATH_PLANTS "plants/"
 #define DATAPACK_BASE_PATH_MONSTERS "monsters/"
 #define DATAPACK_BASE_PATH_PLAYER "player/"
+#define DATAPACK_BASE_PATH_QUESTS "quests/"
 #define DATAPACK_BASE_PATH_CRAFTING "crafting/"
 #define DATAPACK_BASE_PATH_SHOP "shop/"
 

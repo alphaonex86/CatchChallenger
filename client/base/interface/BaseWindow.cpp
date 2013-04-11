@@ -12,6 +12,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QDesktopServices>
+#include <QRegExp>
 
 //do buy queue
 //do sell queue
@@ -149,7 +150,7 @@ BaseWindow::BaseWindow() :
     loadSettings();
 
     MapController::mapController->setFocus();
-    
+
     CatchChallenger::Api_client_real::client->startReadData();
 }
 
@@ -950,6 +951,14 @@ void BaseWindow::updateRXTX()
     previousTXSize=TXSize;
 }
 
+bool BaseWindow::actualBotHaveQuest(const quint32 &botId)
+{
+    todo;
+    //do the not started quest here
+    //do the started quest here
+    return false;
+}
+
 //bot
 void BaseWindow::goToBotStep(const quint8 &step)
 {
@@ -970,9 +979,23 @@ void BaseWindow::goToBotStep(const quint8 &step)
             else
             {
                 QString textToShow=text.text();
+                #ifdef NOREMOTE
+                QRegExp remote(QRegExp::escape("<span class=\"remote\">")+".*"+QRegExp::escape("</span>"));
+                remote.setMinimal(true);
+                textToShow.remove(remote);
+                #endif
+                if(!actualBotHaveQuest(actualBot.botId))//if have not quest
+                {
+                    QRegExp quest(QRegExp::escape("<span class=\"quest\">")+".*"+QRegExp::escape("</span>"));
+                    quest.setMinimal(true);
+                    textToShow.remove(quest);
+                }
                 textToShow.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
                 textToShow.replace(QRegExp("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/images/link.png\" alt=\"\" /></a>");
                 ui->IG_dialog_text->setText(textToShow);
+                textToShow.replace("<","&lt;");
+                textToShow.replace(">","&gt;");
+                QMessageBox::critical(this,"e",textToShow);
                 ui->IG_dialog->setVisible(true);
                 return;
             }
