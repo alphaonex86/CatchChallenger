@@ -6,6 +6,7 @@
 #include <QHash>
 #include <QString>
 #include <QStringList>
+#include <QMultiHash>
 
 #include "../../general/base/GeneralStructures.h"
 
@@ -54,6 +55,7 @@ public:
     QHash<quint32,CatchChallenger::CrafingRecipe> crafingRecipes;
     QHash<quint32,CatchChallenger::Quest> quests;
     QHash<quint32,QuestExtra> questsExtra;
+    QMultiHash<quint32,quint32> botToQuestStart;
     QStringList maps;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
@@ -83,6 +85,7 @@ private slots:
     void parseBuffExtra();
     void parseSkillsExtra();
     void parseQuestsExtra();
+    void parseQuestsLink();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

@@ -569,18 +569,18 @@ void ClientHeavyLoad::loadReputation()
         qint32 point=reputationQuery.value(1).toInt(&ok);
         if(!ok)
         {
-            emit message(QString("point is not a number, skip"));
+            emit message(QString("point is not a number, skip: %1").arg(type));
             continue;
         }
         qint32 level=reputationQuery.value(2).toInt(&ok);
         if(!ok)
         {
-            emit message(QString("level is not a number, skip"));
+            emit message(QString("level is not a number, skip: %1").arg(type));
             continue;
         }
         if(level<-100 || level>100)
         {
-            emit message(QString("level is <100 or >100, skip"));
+            emit message(QString("level is <100 or >100, skip: %1").arg(type));
             continue;
         }
         if(!GlobalServerData::serverPrivateVariables.reputation.contains(type))
@@ -664,17 +664,22 @@ void ClientHeavyLoad::loadQuests()
         playerQuest.step=questsQuery.value(2).toUInt(&ok2);
         if(!ok || !ok2)
         {
-            emit message(QString("wrong value type, skip"));
+            emit message(QString("wrong value type, skip: %1").arg(id));
             continue;
         }
         if(!GlobalServerData::serverPrivateVariables.quests.contains(id))
         {
-            emit message(QString("quest is not into the quests list, skip"));
+            emit message(QString("quest is not into the quests list, skip: %1").arg(id));
             continue;
         }
         if(playerQuest.step<=0 || playerQuest.step>GlobalServerData::serverPrivateVariables.quests[id].steps.size())
         {
-            emit message(QString("step out of quest range, skip"));
+            emit message(QString("step out of quest range, skip: %1").arg(id));
+            continue;
+        }
+        if(playerQuest.step<=0 && !playerQuest.finish_one_time)
+        {
+            emit message(QString("can't be to step 0 if have never finish the quest, skip: %1").arg(id));
             continue;
         }
         player_informations->public_and_private_informations.quests[id]=playerQuest;
