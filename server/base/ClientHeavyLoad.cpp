@@ -664,7 +664,7 @@ void ClientHeavyLoad::loadQuests()
         playerQuest.step=questsQuery.value(2).toUInt(&ok2);
         if(!ok || !ok2)
         {
-            emit message(QString("wrong value type, skip: %1").arg(id));
+            emit message(QString("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
         if(!GlobalServerData::serverPrivateVariables.quests.contains(id))
@@ -672,7 +672,7 @@ void ClientHeavyLoad::loadQuests()
             emit message(QString("quest is not into the quests list, skip: %1").arg(id));
             continue;
         }
-        if(playerQuest.step<=0 || playerQuest.step>GlobalServerData::serverPrivateVariables.quests[id].steps.size())
+        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>GlobalServerData::serverPrivateVariables.quests[id].steps.size())
         {
             emit message(QString("step out of quest range, skip: %1").arg(id));
             continue;

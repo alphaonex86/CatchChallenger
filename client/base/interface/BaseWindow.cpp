@@ -953,15 +953,28 @@ void BaseWindow::updateRXTX()
 
 bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 {
+    #ifdef DEBUG_CLIENT_QUEST
+    qDebug() << "check quest requirement for: " << quest.id;
+    #endif
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     int index=0;
     while(index<quest.requirements.quests.size())
     {
         const quint32 &questId=quest.requirements.quests.at(index);
         if(!informations.quests.contains(questId))
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            qDebug() << "have never started the quest: " << questId;
+            #endif
             return false;
+        }
         if(!informations.quests[questId].finish_one_time)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            qDebug() << "quest never finished: " << questId;
+            #endif
             return false;
+        }
         index++;
     }
     index=0;
@@ -971,20 +984,35 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
         if(informations.reputation.contains(reputation.type))
         {
             const PlayerReputation &playerReputation=informations.reputation[reputation.type];
-            if(reputation.level<0)
+            if(!reputation.positif)
             {
-                if(reputation.level<playerReputation.level)
+                if(-reputation.level<playerReputation.level)
+                {
+                    #ifdef DEBUG_CLIENT_QUEST
+                    qDebug() << "reputation.level(" << reputation.level << ")<playerReputation.level(" << playerReputation.level << ")";
+                    #endif
                     return false;
+                }
             }
             else
             {
                 if(reputation.level>playerReputation.level || playerReputation.point<0)
+                {
+                    #ifdef DEBUG_CLIENT_QUEST
+                    qDebug() << "reputation.level(" << reputation.level << ")>playerReputation.level(" << playerReputation.level << ") || playerReputation.point(" << playerReputation.point << ")<0";
+                    #endif
                     return false;
+                }
             }
         }
         else
-            if(reputation.level<0)//default level is 0, but required level is negative
+            if(!reputation.positif)//default level is 0, but required level is negative
+            {
+                #ifdef DEBUG_CLIENT_QUEST
+                qDebug() << "reputation.level(" << reputation.level << ")<0 and no reputation.type=" << reputation.type;
+                #endif
                 return false;
+            }
         index++;
     }
     return true;
@@ -992,6 +1020,9 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 
 bool BaseWindow::botHaveQuest(const quint32 &botId)
 {
+    #ifdef DEBUG_CLIENT_QUEST
+    qDebug() << "check bot quest for: " << botId;
+    #endif
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     //do the not started quest here
     QList<quint32> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
@@ -1061,6 +1092,96 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
     return false;
 }
 
+QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
+{
+    QList<QPair<quint32,QString> > entryList;
+    QPair<quint32,QString> oneEntry;
+    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    //do the not started quest here
+    QList<quint32> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    int index=0;
+    while(index<botQuests.size())
+    {
+        const quint8 &questId=botQuests.at(index);
+        const CatchChallenger::Quest &currentQuest=DatapackClientLoader::datapackLoader.quests[questId];
+        if(!informations.quests.contains(botQuests.at(index)))
+        {
+            //quest not started
+            if(haveStartQuestRequirement(currentQuest))
+            {
+                oneEntry.first=questId;
+                oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra[questId].name;
+                entryList << oneEntry;
+            }
+            else
+                {}//have not the requirement
+        }
+        else
+        {
+            if(!DatapackClientLoader::datapackLoader.quests.contains(botQuests.at(index)))
+                qDebug() << "internal bug: have quest registred, but no quest found with this id";
+            else
+            {
+                if(informations.quests[botQuests.at(index)].step==0)
+                {
+                    if(currentQuest.repeatable)
+                    {
+                        if(informations.quests[botQuests.at(index)].finish_one_time)
+                        {
+                            //quest already done but repeatable
+                            if(haveStartQuestRequirement(currentQuest))
+                            {
+                                oneEntry.first=questId;
+                                oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra[questId].name;
+                                entryList << oneEntry;
+                            }
+                            else
+                                {}//have not the requirement
+                        }
+                        else
+                            {}//bug: can't be !finish_one_time && currentQuest.steps==0
+                    }
+                    else
+                        {}//quest already done
+                }
+                else
+                {
+                    QList<quint32> bots=currentQuest.steps.at(informations.quests[questId].step-1).bots;
+                    if(bots.contains(botId))
+                    {
+                        oneEntry.first=questId;
+                        oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra[questId].name);
+                        entryList << oneEntry;
+                    }
+                    else
+                        {}//Need got to another bot to progress, this it's just the starting bot
+                }
+            }
+        }
+        index++;
+    }
+    //do the started quest here
+    QHashIterator<quint32, PlayerQuest> i(informations.quests);
+    while (i.hasNext()) {
+        i.next();
+        if(!botQuests.contains(i.key()) && i.value().step>0)
+        {
+            CatchChallenger::Quest currentQuest=DatapackClientLoader::datapackLoader.quests[i.key()];
+            QList<quint32> bots=currentQuest.steps.at(i.value().step-1).bots;
+            if(bots.contains(botId))
+            {
+                //in progress, but not the starting bot
+                oneEntry.first=i.key();
+                oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra[i.key()].name);
+                entryList << oneEntry;
+            }
+            else
+                {}//it's another bot
+        }
+    }
+    return entryList;
+}
+
 //bot
 void BaseWindow::goToBotStep(const quint8 &step)
 {
@@ -1097,7 +1218,6 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 ui->IG_dialog_text->setText(textToShow);
                 textToShow.replace("<","&lt;");
                 textToShow.replace(">","&gt;");
-                QMessageBox::critical(this,"e",textToShow);
                 ui->IG_dialog->setVisible(true);
                 return;
             }
