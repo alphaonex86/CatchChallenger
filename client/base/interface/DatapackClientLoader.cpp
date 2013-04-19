@@ -63,6 +63,8 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseMonstersExtra();
     parseBuffExtra();
     parseSkillsExtra();
+    parseQuests();
+    parseQuestsLink();
     inProgress=false;
     emit datapackParsed();
 }
@@ -196,7 +198,7 @@ void DatapackClientLoader::parseItems()
 void DatapackClientLoader::parseQuests()
 {
     quests=CatchChallenger::DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS);
-    qDebug() << QString("%1 quest(s) loaded").arg(DatapackClientLoader::items.size());
+    qDebug() << QString("%1 quest(s) loaded").arg(quests.size());
 }
 
 void DatapackClientLoader::parseReputation()
@@ -398,4 +400,5 @@ void DatapackClientLoader::parseQuestsLink()
             index++;
         }
     }
+    qDebug() << QString("%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());
 }

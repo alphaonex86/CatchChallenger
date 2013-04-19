@@ -89,6 +89,7 @@ protected:
     virtual void preload_the_players();
     virtual void preload_the_visibility_algorithm();
     virtual void preload_reputation();
+    virtual void preload_quests();
     virtual void unload_the_data();
     virtual void unload_the_map();
     virtual void unload_the_skin();
@@ -97,6 +98,7 @@ protected:
     virtual void unload_the_players();
     virtual void unload_the_visibility_algorithm();
     virtual void unload_reputation();
+    virtual void unload_quests();
 
     virtual bool initialize_the_database();
     virtual void loadBotFile(const QString &fileName);

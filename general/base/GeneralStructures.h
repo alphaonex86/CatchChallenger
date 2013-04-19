@@ -469,7 +469,8 @@ struct Quest
     struct ReputationRequirements
     {
         QString type;
-        qint8 level;
+        quint8 level;
+        bool positif;
     };
     struct Requirements
     {

@@ -150,6 +150,7 @@ private slots:
     //bot
     bool haveStartQuestRequirement(const Quest &quest);
     bool botHaveQuest(const quint32 &botId);
+    QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
     void goToBotStep(const quint8 &step);
 
     //fight
