@@ -197,7 +197,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
     int index=0;
     while(index<entryList.size())
     {
-        if(!entryList.at(index).isFile())
+        if(!entryList.at(index).isDir())
         {
             index++;
             continue;
@@ -282,12 +282,17 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                     {
                         if(requirementsItem.hasAttribute("type") && requirementsItem.hasAttribute("level"))
                         {
-                            qint8 level=requirementsItem.attribute("level").toShort(&ok);
+                            QString stringLevel=requirementsItem.attribute("level");
+                            bool positif=!stringLevel.startsWith("-");
+                            if(!positif)
+                                stringLevel.remove(0,1);
+                            quint8 level=stringLevel.toUShort(&ok);
                             if(ok)
                             {
                                 CatchChallenger::Quest::ReputationRequirements reputation;
                                 reputation.level=level;
-                                reputation.type=requirements.attribute("type");
+                                reputation.positif=positif;
+                                reputation.type=requirementsItem.attribute("type");
                                 quest.requirements.reputation << reputation;
                             }
                             else
@@ -347,7 +352,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                             {
                                 CatchChallenger::Quest::ReputationRewards reputation;
                                 reputation.point=point;
-                                reputation.type=rewards.attribute("type");
+                                reputation.type=rewardsItem.attribute("type");
                                 quest.rewards.reputation << reputation;
                             }
                             else

@@ -100,6 +100,7 @@ void BaseServer::preload_the_data()
     preload_monsters_drops();
     check_monsters_map();
     preload_reputation();
+    preload_quests();
 }
 
 void BaseServer::preload_the_map()
@@ -623,6 +624,12 @@ void BaseServer::preload_reputation()
     DebugClass::debugConsole(QString("%1 reputation(s) loaded").arg(GlobalServerData::serverPrivateVariables.reputation.size()));
 }
 
+void BaseServer::preload_quests()
+{
+    GlobalServerData::serverPrivateVariables.quests=DatapackGeneralLoader::loadQuests(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_QUESTS);
+    DebugClass::debugConsole(QString("%1 reputation(s) loaded").arg(GlobalServerData::serverPrivateVariables.quests.size()));
+}
+
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
 {
 }
@@ -745,6 +752,7 @@ void BaseServer::unload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
+    unload_quests();
     unload_reputation();
     unload_monsters_drops();
     unload_monsters();
@@ -787,6 +795,11 @@ void BaseServer::unload_the_visibility_algorithm()
 void BaseServer::unload_reputation()
 {
     GlobalServerData::serverPrivateVariables.reputation.clear();
+}
+
+void BaseServer::unload_quests()
+{
+    GlobalServerData::serverPrivateVariables.quests.clear();
 }
 
 void BaseServer::unload_the_items()
