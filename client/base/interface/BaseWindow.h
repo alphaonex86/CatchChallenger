@@ -121,6 +121,7 @@ private slots:
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const ObjectUsage &objectUsage);
+    quint32 itemQuantity(const quint32 &itemId);
     //trade
     void tradeRequested(const QString &pseudo, const quint8 &skinInt);
     void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
@@ -148,6 +149,7 @@ private slots:
     void updateRXTX();
 
     //bot
+    bool haveQuestStepRequirement(const Quest &quest,const quint8 &step);
     bool haveStartQuestRequirement(const Quest &quest);
     bool botHaveQuest(const quint32 &botId);
     QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
@@ -175,6 +177,9 @@ private slots:
     //learn
     bool showLearnSkill(const quint32 &monsterId);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+
+    //quest
+    void getTextEntryPoint();
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
@@ -215,6 +220,8 @@ private slots:
     void on_learnQuit_clicked();
     void on_learnValidate_clicked();
     void on_learnAttackList_itemActivated(QListWidgetItem *item);
+    void on_close_IG_dialog_clicked();
+
 protected slots:
     //datapack
     void datapackParsed();
@@ -304,6 +311,10 @@ private:
 
     //learn
     quint32 monsterToLearn;
+
+    //quest
+    bool isInQuest;
+    quint32 questId;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

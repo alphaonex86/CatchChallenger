@@ -15,64 +15,16 @@ skin is invisible
 			<center>
 				<a href="2">Buy</a><br />
 				<a href="3">Sell</a><br />
-				<span only="remote"><a href="http://catchchallenger.first-world.info/shop/">Buy with real money</a><br /></span>
-				<a href="4">Quest</a><br />
+				<span class="remote"><a href="http://catchchallenger.first-world.info/shop/">Buy with real money</a><br /></span>
+				<span class="quest"><a href="4">Quest<br /></a></span>
 			</center>]]></text>
 		</step>
 		<step id="2" type="shop" shop="1" />
 		<step id="3" type="sell" shop="1" />
-		<step id="4" type="text">
-			<text lang="en"><![CDATA[<a href="5">The corrupted recipe</a><br />
-			<a href="30">Farm your success</a>]]></text>
-		</step>
-		<!-- The corrupted recipe -->
-		<step id="5" type="if" quest="1" step="0" goto="10" else="20" />
-		<step id="10" type="text">
-			<text lang="en"><![CDATA[Ho you hate the empire! Like me.<br />
-			Collect 10 tooth to help me.<br />
-			<br />
-			<a href="11">Yes I hate the empire</a>]]></text>
-		</step>
-		<step id="11" type="quest" quest="1" success="12" /><!-- show the default failure text if failed -->
-		<step id="12" type="text">
-			<text lang="en"><![CDATA[I wait you with the 10 teeth]]></text>
-		</step>
-		<step id="20" type="text">
-			<text lang="en"><![CDATA[Do you have the 10 tooth for me?<br />
-			<br />
-			<a href="21">Yes I have it</a>]]></text>
-		</step>
-		<step id="21" type="quest" quest="1" success="22" failed="23" />
-		<step id="22" type="text">
-			<text lang="en"><![CDATA[Thanks, you have finish my quest.]]></text>
-		</step>
-		<step id="23" type="text">
-			<text lang="en"><![CDATA[You don't have the requiered quantity.]]></text>
-		</step>
+		<step id="4" type="quests" />
+
 		<!-- Farm your success -->
-		<step id="30" type="if" quest="2" step="0" goto="40" else="31" />
-		<step id="31" type="if" quest="2" step="1" goto="50" else="60" />
-		<step id="40" type="text">
-			<text lang="en"><![CDATA[I need 5 craftball to capture monsters. If you help me, I give you some plant.<br />
-			<br />
-			<a href="41">Yes I have it</a>]]></text>
-		</step>
-		<step id="41" type="quest" quest="2" success="42" /><!-- show the default failure text if failed -->
-		<step id="42" type="text">
-			<text lang="en"><![CDATA[I wait you with the 5 craftball]]></text>
-		</step>
-		<step id="50" type="text">
-			<text lang="en"><![CDATA[Do you have the 5 craftball for me?<br />
-			<br />
-			<a href="21">Yes I have it</a>]]></text>
-		</step>
-		<step id="51" type="quest" quest="2" success="52" failed="53" />
-		<step id="52" type="text">
-			<text lang="en"><![CDATA[Now talk to the reaper, it give you the plant]]></text>
-		</step>
-		<step id="53" type="text">
-			<text lang="en"><![CDATA[You don't have requiered quantity.]]></text>
-		</step>
+
 	</bot>
 	<bot id="3">
 		<step id="1" type="text">

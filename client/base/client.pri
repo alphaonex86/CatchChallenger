@@ -2,6 +2,8 @@ INCLUDEPATH += $$PWD/../../general/libtiled/
 DEPENDPATH += $$PWD/../../general/libtiled/
 LIBS *= -ltiled
 
+QT       += script
+
 SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/ObjectGroupItem.cpp \

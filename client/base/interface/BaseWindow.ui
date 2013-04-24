@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>12</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -236,7 +236,7 @@ border-radius: 5px;
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="toolButton_2">
+                 <widget class="QToolButton" name="close_IG_dialog">
                   <property name="minimumSize">
                    <size>
                     <width>22</width>
@@ -4025,7 +4025,7 @@ padding-bottom:3px;
  </resources>
  <connections>
   <connection>
-   <sender>toolButton_2</sender>
+   <sender>close_IG_dialog</sender>
    <signal>clicked()</signal>
    <receiver>IG_dialog</receiver>
    <slot>hide()</slot>
