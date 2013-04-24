@@ -482,10 +482,14 @@ struct Quest
         QList<Item> items;
         QList<ReputationRewards> reputation;
     };
+    struct StepRequirements
+    {
+        QList<Item> items;
+    };
     struct Step
     {
         QList<ItemMonster> itemsMonster;
-        QList<Item> items;
+        StepRequirements requirements;
         QList<quint32> bots;
     };
 
