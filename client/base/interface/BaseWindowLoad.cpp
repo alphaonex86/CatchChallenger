@@ -42,6 +42,7 @@ void BaseWindow::resetAll()
     seedWait=false;
     collectWait=false;
     inSelection=false;
+    isInQuest=false;
     queryList.clear();
     ui->inventoryInformation->setVisible(false);
     ui->inventoryUse->setVisible(false);

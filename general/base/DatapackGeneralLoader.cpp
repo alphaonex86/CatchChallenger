@@ -447,7 +447,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                                             if(!ok)
                                                 item.quantity=1;
                                         }
-                                        stepObject.items << item;
+                                        stepObject.requirements.items << item;
                                         if(stepItem.hasAttribute("monster") && stepItem.hasAttribute("rate"))
                                         {
                                             CatchChallenger::Quest::ItemMonster itemMonster;

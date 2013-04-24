@@ -1,0 +1,13 @@
+<quest id="1" repeatable="no" bot="2">
+	<name lang="en"><![CDATA[The corrupted recipe]]></name>
+	<requirements>
+		<reputation type="empire" level="-1" />
+	</requirements>
+	<rewards show="false">
+		<item id="10" />
+	</rewards>
+	<step id="1">
+		<text lang="en"><![CDATA[Collect 10 tooth and abrind to the bandit into the corrupted zone]]></text>
+		<item id="13" quantity="10" monster="1" rate="50%" />
+	</step>
+</quest> 
