@@ -47,6 +47,10 @@ public:
         QString name;
         QStringList steps;
     };
+    struct QuestText
+    {
+        QHash<quint32,QString> text;
+    };
     QHash<QString,CatchChallenger::Reputation> reputation;
     QHash<QString,ReputationExtra> reputationExtra;
     QHash<quint8,Plant> plants;
@@ -55,6 +59,8 @@ public:
     QHash<quint32,CatchChallenger::CrafingRecipe> crafingRecipes;
     QHash<quint32,CatchChallenger::Quest> quests;
     QHash<quint32,QuestExtra> questsExtra;
+    QHash<quint32,QuestText> questsText;
+    QHash<QString,quint32> questsPathToId;
     QMultiHash<quint32,quint32> botToQuestStart;
     QStringList maps;
     QPixmap defaultInventoryImage();
@@ -85,6 +91,7 @@ private slots:
     void parseBuffExtra();
     void parseSkillsExtra();
     void parseQuestsExtra();
+    void parseQuestsText();
     void parseQuestsLink();
 };
 

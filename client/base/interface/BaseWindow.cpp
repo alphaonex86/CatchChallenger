@@ -13,6 +13,8 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QRegExp>
+#include <QScriptValue>
+#include <QScriptEngine>
 
 //do buy queue
 //do sell queue
@@ -893,6 +895,7 @@ bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, qu
     if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
         return false;
     actualBot=map->bots[QPair<quint8,quint8>(x,y)];
+    isInQuest=false;
     goToBotStep(1);
     return true;
 }
@@ -949,6 +952,34 @@ void BaseWindow::updateRXTX()
     updateRXTXTime.restart();
     previousRXSize=RXSize;
     previousTXSize=TXSize;
+}
+
+bool BaseWindow::haveQuestStepRequirement(const CatchChallenger::Quest &quest, const quint8 &step)
+{
+    #ifdef DEBUG_CLIENT_QUEST
+    qDebug() << "check quest step requirement for: " << quest.id;
+    #endif
+    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    if(step<=0 || step>quest.steps.size())
+    {
+        qDebug() << "step out of range for: " << quest.id;
+        return false;
+    }
+    const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
+    int index=0;
+    while(index<requirements.items.size())
+    {
+        const CatchChallenger::Quest::Item &item=requirements.items.at(index);
+        if(itemQuantity(item.item)<item.quantity)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            qDebug() << "have not the quantity for the item: " << item.item;
+            #endif
+            return false;
+        }
+        index++;
+    }
+    return true;
 }
 
 bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
@@ -1110,7 +1141,13 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
             if(haveStartQuestRequirement(currentQuest))
             {
                 oneEntry.first=questId;
-                oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra[questId].name;
+                if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
+                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra[questId].name;
+                else
+                {
+                    qDebug() << "internal bug: quest extra not found";
+                    oneEntry.second="???";
+                }
                 entryList << oneEntry;
             }
             else
@@ -1132,7 +1169,13 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
                             if(haveStartQuestRequirement(currentQuest))
                             {
                                 oneEntry.first=questId;
-                                oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra[questId].name;
+                                if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
+                                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra[questId].name;
+                                else
+                                {
+                                    qDebug() << "internal bug: quest extra not found";
+                                    oneEntry.second="???";
+                                }
                                 entryList << oneEntry;
                             }
                             else
@@ -1150,7 +1193,13 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
                     if(bots.contains(botId))
                     {
                         oneEntry.first=questId;
-                        oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra[questId].name);
+                        if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
+                            oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra[questId].name);
+                        else
+                        {
+                            qDebug() << "internal bug: quest extra not found";
+                            oneEntry.second=tr("??? (in progress)");
+                        }
                         entryList << oneEntry;
                     }
                     else
@@ -1185,6 +1234,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
 //bot
 void BaseWindow::goToBotStep(const quint8 &step)
 {
+    isInQuest=false;
     if(!actualBot.step.contains(step))
     {
         showTip(tr("Error into the bot, repport this error please"));
@@ -1216,8 +1266,6 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 textToShow.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
                 textToShow.replace(QRegExp("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/images/link.png\" alt=\"\" /></a>");
                 ui->IG_dialog_text->setText(textToShow);
-                textToShow.replace("<","&lt;");
-                textToShow.replace(">","&gt;");
                 ui->IG_dialog->setVisible(true);
                 return;
             }
@@ -1309,6 +1357,23 @@ void BaseWindow::goToBotStep(const quint8 &step)
     else if(actualBot.step[step].attribute("type")=="learn")
     {
         selectObject(ObjectType_MonsterToLearn);
+        return;
+    }
+    else if(actualBot.step[step].attribute("type")=="quests")
+    {
+        QString textToShow;
+        textToShow+="<ul>";
+        QList<QPair<quint32,QString> > quests=BaseWindow::getQuestList(actualBot.botId);
+        int index=0;
+        while(index<quests.size())
+        {
+            QPair<quint32,QString> quest=quests.at(index);
+            textToShow+=QString("<a href=\"quest_%1\">%2</a>").arg(quest.first).arg(quest.second);
+            index++;
+        }
+        textToShow+="</ul>";
+        ui->IG_dialog_text->setText(textToShow);
+        ui->IG_dialog->setVisible(true);
         return;
     }
     else
@@ -1439,6 +1504,13 @@ void BaseWindow::on_inventoryDestroy_clicked()
     load_plant_inventory();
 }
 
+quint32 BaseWindow::itemQuantity(const quint32 &itemId)
+{
+    if(items.contains(itemId))
+        return items[itemId];
+    return 0;
+}
+
 void BaseWindow::on_inventoryUse_clicked()
 {
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
@@ -1495,13 +1567,98 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &link)
         return;
     }
     bool ok;
+    if(link.startsWith("quest_"))
+    {
+        QString tempLink=link;
+        tempLink.remove("quest_");
+        quint32 questId=tempLink.toUShort(&ok);
+        if(!ok)
+        {
+            showTip(QString("Unable to open the link: %1").arg(link));
+            return;
+        }
+        if(!DatapackClientLoader::datapackLoader.quests.contains(questId))
+        {
+            showTip(tr("Quest not found"));
+            return;
+        }
+        isInQuest=true;
+        this->questId=questId;
+        getTextEntryPoint();
+        return;
+    }
     quint8 step=link.toUShort(&ok);
     if(!ok)
     {
-        showTip(QString("Unable to open interpret the link: %1").arg(link));
+        showTip(QString("Unable to open the link: %1").arg(link));
+        return;
+    }
+    if(isInQuest)
+    {
+        showTip(QString("Do quest %1").arg(questId));
         return;
     }
     goToBotStep(step);
+}
+
+void BaseWindow::getTextEntryPoint()
+{
+    if(!isInQuest)
+    {
+        showTip(QString("Internal error: Is not in quest"));
+        return;
+    }
+    QScriptEngine engine;
+
+    QString client_logic=CatchChallenger::Api_client_real::client->get_datapack_base_name()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
+    if(!QFile(client_logic).exists())
+    {
+        showTip(tr("Client file missing"));
+        qDebug() << "client_logic file is missing:" << client_logic;
+        return;
+    }
+
+    QFile scriptFile(client_logic);
+    scriptFile.open(QIODevice::ReadOnly);
+    QTextStream stream(&scriptFile);
+    QString contents = stream.readAll();
+    scriptFile.close();
+    if(!CatchChallenger::Api_client_real::client->get_player_informations().quests.contains(questId))
+    {
+        contents.replace("currentQuestStep()","0");
+        contents.replace("finishOneTime()","false");
+        contents.replace("haveQuestStepRequirements()","false");//bug if use that's
+    }
+    else
+    {
+        PlayerQuest quest=CatchChallenger::Api_client_real::client->get_player_informations().quests[questId];
+        contents.replace("currentQuestStep()",QString::number(quest.step));
+        if(quest.finish_one_time)
+            contents.replace("finishOneTime()","true");
+        else
+            contents.replace("finishOneTime()","false");
+        if(quest.step<=0)
+            contents.replace("haveQuestStepRequirements()","false");
+        else if(haveQuestStepRequirement(DatapackClientLoader::datapackLoader.quests[questId],quest.step))
+            contents.replace("haveQuestStepRequirements()","true");
+        else
+            contents.replace("haveQuestStepRequirements()","false");
+    }
+
+    QScriptValue result = engine.evaluate(contents, client_logic);
+    if (result.isError()) {
+        showTip(QString::fromLatin1("%0:%1: %2")
+        .arg(client_logic)
+        .arg(result.property("lineNumber").toInt32())
+        .arg(result.toString()));
+        return;
+    }
+
+    QScriptValue getTextEntryPoint = engine.globalObject().property("getTextEntryPoint");
+    quint32 textEntryPoint=getTextEntryPoint.call().toNumber();
+    qDebug() << "textEntryPoint:" << textEntryPoint;
+
+    do this part
 }
 
 void BaseWindow::on_toolButton_quit_shop_clicked()
@@ -1837,4 +1994,9 @@ void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *
     if(!monsters_items_graphical.contains(item))
         return;
     objectSelection(true,monsters_items_graphical[item]);
+}
+
+void CatchChallenger::BaseWindow::on_close_IG_dialog_clicked()
+{
+    isInQuest=false;
 }
