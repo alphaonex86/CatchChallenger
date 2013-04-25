@@ -18,7 +18,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
     QByteArray xmlContent;
     if(!itemsFile.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to open the items file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString()));
+        DebugClass::debugConsole(QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString()));
         return reputation;
     }
     xmlContent=itemsFile.readAll();
@@ -28,13 +28,13 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        DebugClass::debugConsole(QString("Unable to open the items file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        DebugClass::debugConsole(QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return reputation;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")
     {
-        DebugClass::debugConsole(QString("Unable to open the items file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName()));
+        DebugClass::debugConsole(QString("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName()));
         return reputation;
     }
 
@@ -75,7 +75,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                                             }
                                     }
                                     else
-                                        DebugClass::debugConsole(QString("Unable to open the items file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                        DebugClass::debugConsole(QString("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                     text = text.nextSiblingElement("level");
                                 }
                                 if(text_val.isEmpty())
@@ -90,7 +90,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                                         {
                                             if(point_list_positive.at(index)==point)
                                             {
-                                                DebugClass::debugConsole(QString("Unable to open the items file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                 found=true;
                                                 ok=false;
                                                 break;
@@ -116,7 +116,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                                         {
                                             if(point_list_negative.at(index)==point)
                                             {
-                                                DebugClass::debugConsole(QString("Unable to open the items file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                 found=true;
                                                 ok=false;
                                                 break;
@@ -139,35 +139,35 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                                 }
                             }
                             else
-                                DebugClass::debugConsole(QString("Unable to open the items file: %1, point is not number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                DebugClass::debugConsole(QString("Unable to open the file: %1, point is not number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         }
                     }
                     else
-                        DebugClass::debugConsole(QString("Unable to open the items file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                     level = level.nextSiblingElement("level");
                 }
                 if(ok)
                     if(point_list_positive.size()<2)
                     {
-                        DebugClass::debugConsole(QString("Unable to open the items file: %1, reputation have to few level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the file: %1, reputation have to few level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         ok=false;
                     }
                 if(ok)
                     if(!point_list_positive.contains(0))
                     {
-                        DebugClass::debugConsole(QString("Unable to open the items file: %1, no starting level for the positive: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the file: %1, no starting level for the positive: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         ok=false;
                     }
                 if(ok)
                     if(!point_list_negative.empty() && !point_list_negative.contains(-1))
                     {
-                        DebugClass::debugConsole(QString("Unable to open the items file: %1, no starting level for the negative: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the file: %1, no starting level for the negative: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         ok=false;
                     }
                 if(ok)
                     if(!item.attribute("type").contains(QRegExp("^[a-z]{1,32}$")))
                     {
-                        DebugClass::debugConsole(QString("Unable to open the items file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
+                        DebugClass::debugConsole(QString("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
                         ok=false;
                     }
                 if(ok)
@@ -179,10 +179,10 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                 }
             }
             else
-                DebugClass::debugConsole(QString("Unable to open the items file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                DebugClass::debugConsole(QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
-            DebugClass::debugConsole(QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+            DebugClass::debugConsole(QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement("reputation");
     }
 
@@ -211,7 +211,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
         QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << QString("Unable to open the items file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+            qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
             index++;
             continue;
         }
@@ -222,14 +222,14 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            qDebug() << QString("Unable to open the items file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             index++;
             continue;
         }
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!="quest")
         {
-            qDebug() << QString("Unable to open the items file: %1, \"quest\" root balise not found for the xml file").arg(itemsFile.fileName());
+            qDebug() << QString("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(itemsFile.fileName());
             index++;
             continue;
         }
@@ -296,13 +296,13 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                                 quest.requirements.reputation << reputation;
                             }
                             else
-                                qDebug() << QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
+                                qDebug() << QString("Unable to open the file: %1, reputation is not a number %4: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(stringLevel);
                         }
                         else
-                            qDebug() << QString("Has attribute: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
+                            qDebug() << QString("Has attribute: %1, have not attribute type or level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                     }
                     else
-                        qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
+                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                     requirementsItem = requirementsItem.nextSiblingElement("requirements");
                 }
                 //load requirements quest
@@ -317,18 +317,18 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                             if(ok)
                                 quest.requirements.quests << questId;
                             else
-                                qDebug() << QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
+                                qDebug() << QString("Unable to open the file: %1, requirement quest item id is not a number %4: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber()).arg(requirementsItem.attribute("id"));
                         }
                         else
-                            qDebug() << QString("Has attribute: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
+                            qDebug() << QString("Has attribute: %1, requirement quest item have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                     }
                     else
-                        qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
+                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                     requirementsItem = requirementsItem.nextSiblingElement("quest");
                 }
             }
             else
-                qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirements.tagName()).arg(requirements.lineNumber());
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirements.tagName()).arg(requirements.lineNumber());
             requirements = requirements.nextSiblingElement("requirements");
         }
 
@@ -347,7 +347,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                     {
                         if(rewardsItem.hasAttribute("type") && rewardsItem.hasAttribute("point"))
                         {
-                            qint32 point=rewardsItem.attribute("point").toUInt(&ok);
+                            qint32 point=rewardsItem.attribute("point").toInt(&ok);
                             if(ok)
                             {
                                 CatchChallenger::Quest::ReputationRewards reputation;
@@ -356,13 +356,13 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                                 quest.rewards.reputation << reputation;
                             }
                             else
-                                qDebug() << QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                                qDebug() << QString("Unable to open the file: %1, quest rewards point is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
                         }
                         else
-                            qDebug() << QString("Has attribute: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                            qDebug() << QString("Has attribute: %1, quest rewards point have not type or point attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
                     }
                     else
-                        qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
                     rewardsItem = rewardsItem.nextSiblingElement("rewards");
                 }
                 //load rewards item
@@ -387,18 +387,18 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                                 quest.rewards.items << item;
                             }
                             else
-                                qDebug() << QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                                qDebug() << QString("Unable to open the file: %1, rewards item id is not a number: %4: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute("id"));
                         }
                         else
-                            qDebug() << QString("Has attribute: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                            qDebug() << QString("Has attribute: %1, rewards item have not attribute id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
                     }
                     else
-                        qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
                     rewardsItem = rewardsItem.nextSiblingElement("quest");
                 }
             }
             else
-                qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewards.tagName()).arg(rewards.lineNumber());
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewards.tagName()).arg(rewards.lineNumber());
             rewards = rewards.nextSiblingElement("rewards");
         }
 
@@ -411,7 +411,7 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
             {
                 if(step.hasAttribute("id"))
                 {
-                    quint32 id=step.attribute("id").toULongLong(&ok);
+                    quint32 id=step.attribute("id").toUInt(&ok);
                     if(ok)
                     {
                         CatchChallenger::Quest::Step stepObject;
@@ -471,25 +471,25 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                                         }
                                     }
                                     else
-                                        qDebug() << QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                                        qDebug() << QString("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber()).arg(stepItem.attribute("id"));
                                 }
                                 else
-                                    qDebug() << QString("Has attribute: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                                    qDebug() << QString("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
                             }
                             else
-                                qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
                             stepItem = stepItem.nextSiblingElement("item");
                         }
                         steps[id]=stepObject;
                     }
                     else
-                        qDebug() << QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                        qDebug() << QString("Unable to open the file: %1, step id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
                 }
                 else
-                    qDebug() << QString("Has attribute: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                    qDebug() << QString("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
             step = step.nextSiblingElement("step");
         }
 
