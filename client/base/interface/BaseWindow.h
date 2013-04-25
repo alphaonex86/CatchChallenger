@@ -154,6 +154,7 @@ private slots:
     bool botHaveQuest(const quint32 &botId);
     QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
     void goToBotStep(const quint8 &step);
+    QString parseHtmlToDisplay(const QString &htmlContent);
 
     //fight
     void fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);

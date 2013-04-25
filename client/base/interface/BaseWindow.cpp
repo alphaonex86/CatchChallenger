@@ -1252,19 +1252,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             else
             {
                 QString textToShow=text.text();
-                #ifdef NOREMOTE
-                QRegExp remote(QRegExp::escape("<span class=\"remote\">")+".*"+QRegExp::escape("</span>"));
-                remote.setMinimal(true);
-                textToShow.remove(remote);
-                #endif
-                if(!botHaveQuest(actualBot.botId))//if have not quest
-                {
-                    QRegExp quest(QRegExp::escape("<span class=\"quest\">")+".*"+QRegExp::escape("</span>"));
-                    quest.setMinimal(true);
-                    textToShow.remove(quest);
-                }
-                textToShow.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
-                textToShow.replace(QRegExp("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/images/link.png\" alt=\"\" /></a>");
+                textToShow=parseHtmlToDisplay(textToShow);
                 ui->IG_dialog_text->setText(textToShow);
                 ui->IG_dialog->setVisible(true);
                 return;
@@ -1381,6 +1369,25 @@ void BaseWindow::goToBotStep(const quint8 &step)
         showTip(tr("Bot step type error, repport this error please"));
         return;
     }
+}
+
+QString BaseWindow::parseHtmlToDisplay(const QString &htmlContent)
+{
+    QString newContent=htmlContent;
+    #ifdef NOREMOTE
+    QRegExp remote(QRegExp::escape("<span class=\"remote\">")+".*"+QRegExp::escape("</span>"));
+    remote.setMinimal(true);
+    newContent.remove(remote);
+    #endif
+    if(!botHaveQuest(actualBot.botId))//if have not quest
+    {
+        QRegExp quest(QRegExp::escape("<span class=\"quest\">")+".*"+QRegExp::escape("</span>"));
+        quest.setMinimal(true);
+        newContent.remove(quest);
+    }
+    newContent.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
+    newContent.replace(QRegExp("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/images/link.png\" alt=\"\" /></a>");
+    return newContent;
 }
 
 void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
@@ -1647,6 +1654,10 @@ void BaseWindow::getTextEntryPoint()
 
     QScriptValue result = engine.evaluate(contents, client_logic);
     if (result.isError()) {
+        qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
+                    .arg(client_logic)
+                    .arg(result.property("lineNumber").toInt32())
+                    .arg(result.toString());
         showTip(QString::fromLatin1("%0:%1: %2")
         .arg(client_logic)
         .arg(result.property("lineNumber").toInt32())
@@ -1658,7 +1669,23 @@ void BaseWindow::getTextEntryPoint()
     quint32 textEntryPoint=getTextEntryPoint.call().toNumber();
     qDebug() << "textEntryPoint:" << textEntryPoint;
 
-    do this part
+    if(!DatapackClientLoader::datapackLoader.questsText.contains(questId))
+    {
+        qDebug() << QString("No quest text for this quest: %1").arg(questId);
+        showTip(tr("No quest text for this quest"));
+        return;
+    }
+    if(!DatapackClientLoader::datapackLoader.questsText[questId].text.contains(textEntryPoint))
+    {
+        qDebug() << "No quest text entry point";
+        showTip(tr("No quest text entry point"));
+        return;
+    }
+
+    QString textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText[questId].text[textEntryPoint]);
+    ui->IG_dialog_text->setText(textToShow);
+    ui->IG_dialog->setVisible(true);
+    return;
 }
 
 void BaseWindow::on_toolButton_quit_shop_clicked()
