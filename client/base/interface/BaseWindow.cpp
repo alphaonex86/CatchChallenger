@@ -988,6 +988,23 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
     qDebug() << "check quest requirement for: " << quest.id;
     #endif
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    if(informations.quests.contains(quest.id))
+    {
+        if(informations.quests[quest.id].step!=0)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            qDebug() << "can start the quest because is already running: " << questId;
+            #endif
+            return false;
+        }
+        if(informations.quests[quest.id].finish_one_time && !quest.repeatable)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            qDebug() << "done one time and no repeatable: " << questId;
+            #endif
+            return false;
+        }
+    }
     int index=0;
     while(index<quest.requirements.quests.size())
     {
@@ -1594,6 +1611,13 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &link)
         getTextEntryPoint();
         return;
     }
+    if(link=="close")
+        return;
+    if(link=="next_quest_step" && isInQuest)
+    {
+        nextQuestStep();
+        return;
+    }
     quint8 step=link.toUShort(&ok);
     if(!ok)
     {
@@ -1602,10 +1626,53 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &link)
     }
     if(isInQuest)
     {
-        showTip(QString("Do quest %1").arg(questId));
+        showQuestText(step);
         return;
     }
     goToBotStep(step);
+}
+
+void BaseWindow::nextQuestStep()
+{
+    if(!DatapackClientLoader::datapackLoader.quests.contains(questId))
+    {
+        showTip(tr("Quest not found"));
+        return;
+    }
+
+    if(!quests.contains(questId))
+    {
+        if(haveStartQuestRequirement(DatapackClientLoader::datapackLoader.quests[questId]))
+        {
+            CatchChallenger::Api_client_real::client->startQuest(questId);
+            CatchChallenger::PlayerQuest quest;
+            quest.step=1;
+            quest.finish_one_time=false;
+            quests[questId]=quest;
+            updateDisplayedQuests();
+        }
+        else
+            showTip(tr("You don't have the requirement to start this quest"));
+        return;
+    }
+    else if(quests[questId].step==0)
+    {
+        if(haveStartQuestRequirement(DatapackClientLoader::datapackLoader.quests[questId]))
+        {
+            CatchChallenger::Api_client_real::client->startQuest(questId);
+            quests[questId].step=1;
+            updateDisplayedQuests();
+        }
+        else
+            showTip(tr("You don't have the requirement to start this quest"));
+        return;
+    }
+    if(quests[questId].step>=(DatapackClientLoader::datapackLoader.quests[questId].steps.size()-1))
+    {
+        showTip(QString("finish quest %1").arg(questId));
+        return;
+    }
+    showTip(QString("next_quest_step quest %1").arg(questId));
 }
 
 void BaseWindow::getTextEntryPoint()
@@ -1630,7 +1697,7 @@ void BaseWindow::getTextEntryPoint()
     QTextStream stream(&scriptFile);
     QString contents = stream.readAll();
     scriptFile.close();
-    if(!CatchChallenger::Api_client_real::client->get_player_informations().quests.contains(questId))
+    if(!quests.contains(questId))
     {
         contents.replace("currentQuestStep()","0");
         contents.replace("finishOneTime()","false");
@@ -1638,7 +1705,7 @@ void BaseWindow::getTextEntryPoint()
     }
     else
     {
-        PlayerQuest quest=CatchChallenger::Api_client_real::client->get_player_informations().quests[questId];
+        PlayerQuest quest=quests[questId];
         contents.replace("currentQuestStep()",QString::number(quest.step));
         if(quest.finish_one_time)
             contents.replace("finishOneTime()","true");
@@ -1668,24 +1735,27 @@ void BaseWindow::getTextEntryPoint()
     QScriptValue getTextEntryPoint = engine.globalObject().property("getTextEntryPoint");
     quint32 textEntryPoint=getTextEntryPoint.call().toNumber();
     qDebug() << "textEntryPoint:" << textEntryPoint;
+    showQuestText(textEntryPoint);
+}
 
+void BaseWindow::showQuestText(const quint32 &textId)
+{
     if(!DatapackClientLoader::datapackLoader.questsText.contains(questId))
     {
         qDebug() << QString("No quest text for this quest: %1").arg(questId);
         showTip(tr("No quest text for this quest"));
         return;
     }
-    if(!DatapackClientLoader::datapackLoader.questsText[questId].text.contains(textEntryPoint))
+    if(!DatapackClientLoader::datapackLoader.questsText[questId].text.contains(textId))
     {
         qDebug() << "No quest text entry point";
         showTip(tr("No quest text entry point"));
         return;
     }
 
-    QString textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText[questId].text[textEntryPoint]);
+    QString textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText[questId].text[textId]);
     ui->IG_dialog_text->setText(textToShow);
     ui->IG_dialog->setVisible(true);
-    return;
 }
 
 void BaseWindow::on_toolButton_quit_shop_clicked()

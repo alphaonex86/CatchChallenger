@@ -1,0 +1,39 @@
+﻿<list>
+	<buff id="1">
+		<name lang="en">Burn</name>
+		<name lang="fr">Brulé</name>
+		<description lang="en">The monster lost life because it's in fire</description>
+		<description lang="fr">Le monster perds de la vie car il est en feu</description>
+		<effect>
+			<level number="1">
+				<inFight hp="-5%" />
+			</level>
+			<level number="2">
+				<inFight hp="-7%" />
+			</level>
+		</effect>
+	</buff>
+	<buff id="2">
+		<name lang="en">Amor</name>
+		<name lang="fr">Amure</name>
+		<description lang="en">Grow the defense</description>
+		<description lang="fr">Augmente la défense</description>
+		<effect>
+			<level number="1">
+				<inFight defense="+100" />
+			</level>
+		</effect>
+	</buff>
+	<buff id="3">
+		<name lang="en">Poisoned</name>
+		<name lang="fr">Empoisonné</name>
+		<description lang="en">The monster is poisoned</description>
+		<description lang="fr">Le monster est empoisonné</description>
+		<effect>
+			<level number="1">
+				<inFight hp="-5" />
+				<inWalk hp="-5" steps="10" />
+			</level>
+		</effect>
+	</buff>
+</list>

@@ -2388,6 +2388,42 @@ void Api_protocol::learnSkill(const quint32 &monsterId,const quint32 &skill)
     output->packOutcommingData(0x60,0x0004,outputData);
 }
 
+void Api_protocol::startQuest(const quint32 &questId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)questId;
+    output->packOutcommingData(0x6a,0x0001,outputData);
+}
+
+void Api_protocol::finishQuest(const quint32 &questId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)questId;
+    output->packOutcommingData(0x6a,0x0002,outputData);
+}
+
+void Api_protocol::cancelQuest(const quint32 &questId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)questId;
+    output->packOutcommingData(0x6a,0x0003,outputData);
+}
+
+void Api_protocol::nextQuestStep(const quint32 &questId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)questId;
+    output->packOutcommingData(0x6a,0x0004,outputData);
+}
+
 void Api_protocol::collectMaturePlant()
 {
     if(havePlantAction)

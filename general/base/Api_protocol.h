@@ -198,6 +198,12 @@ public slots:
 
     //lean
     void learnSkill(const quint32 &monsterId,const quint32 &skill);
+
+    //quest
+    void startQuest(const quint32 &questId);
+    void finishQuest(const quint32 &questId);
+    void cancelQuest(const quint32 &questId);
+    void nextQuestStep(const quint32 &questId);
 };
 }
 

@@ -1,0 +1,6 @@
+<list>
+	<!-- can be overwriten into the map.xml, keep empty if nothing -->
+	<map type="city">music/city.ogg</map>
+	<map type="indoor">music/indoor.ogg</map>
+	<map type="outdoor">music/outdoor.ogg</map>
+</list>

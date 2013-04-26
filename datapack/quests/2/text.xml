@@ -2,8 +2,11 @@
 	<client_logic id="1">
 		<text lang="en"><![CDATA[I need 5 craftball to capture monsters. If you help me, I give you some plant.<br />
 		<br />
-		<a href="41">Yes I have it</a><br />
-		<a href="close">I don't have it</a>]]></text>
+		<a href="next_quest_step">Yes I have it</a><br />
+		<a href="2">I don't have it</a>]]></text>
+	</client_logic>
+	<client_logic id="2">
+		<text lang="en"><![CDATA[Then bye]]></text>
 	</client_logic>
 	<client_logic id="42">
 		<text lang="en"><![CDATA[I wait you with the 5 craftball]]></text>
@@ -11,7 +14,7 @@
 	<client_logic id="50">
 		<text lang="en"><![CDATA[Do you have the 5 craftball for me?<br />
 		<br />
-		<a href="21">Yes I have it</a>]]></text>
+		<a href="next_quest_step">Yes I have it</a>]]></text>
 	</client_logic>
 	<client_logic id="52">
 		<text lang="en"><![CDATA[Now talk to the reaper, it give you the plant]]></text>

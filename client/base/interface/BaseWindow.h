@@ -149,10 +149,6 @@ private slots:
     void updateRXTX();
 
     //bot
-    bool haveQuestStepRequirement(const Quest &quest,const quint8 &step);
-    bool haveStartQuestRequirement(const Quest &quest);
-    bool botHaveQuest(const quint32 &botId);
-    QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
     void goToBotStep(const quint8 &step);
     QString parseHtmlToDisplay(const QString &htmlContent);
 
@@ -181,6 +177,13 @@ private slots:
 
     //quest
     void getTextEntryPoint();
+    void showQuestText(const quint32 &textId);
+    void nextQuestStep();
+    bool haveQuestStepRequirement(const Quest &quest,const quint8 &step);
+    bool haveStartQuestRequirement(const Quest &quest);
+    bool botHaveQuest(const quint32 &botId);
+    QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
+    void updateDisplayedQuests();
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
@@ -222,6 +225,7 @@ private slots:
     void on_learnValidate_clicked();
     void on_learnAttackList_itemActivated(QListWidgetItem *item);
     void on_close_IG_dialog_clicked();
+    void on_questsList_itemSelectionChanged();
 
 protected slots:
     //datapack
@@ -273,6 +277,7 @@ private:
     QHash<QListWidgetItem *,quint32> fight_attacks_graphical;
     QHash<QListWidgetItem *,quint32> monsters_items_graphical;
     QHash<QListWidgetItem *,quint32> attack_to_learn_graphical;
+    QHash<QListWidgetItem *,quint32> quests_to_id_graphical;
     bool inSelection;
     QList<quint32> objectInUsing;
 
@@ -316,6 +321,7 @@ private:
     //quest
     bool isInQuest;
     quint32 questId;
+    QHash<quint32, PlayerQuest> quests;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

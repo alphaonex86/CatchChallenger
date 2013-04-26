@@ -1,0 +1,12 @@
+<!--
+default:
+success: 100 (100%)
+quantity: 1
+-->
+<recipes>
+	<recipe id="1" itemToLearn="10" doItemId="7"><!-- Recipe: Jam -->
+		<material itemId="3" quantity="15" /><!-- Mocochinchi -->
+		<material itemId="8" /><!-- Bottle empty -->
+		<material itemId="9" quantity="3" /><!-- Sugar -->
+	</recipe>
+</recipes>

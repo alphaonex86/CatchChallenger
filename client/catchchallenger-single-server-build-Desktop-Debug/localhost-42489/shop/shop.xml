@@ -1,0 +1,12 @@
+<!-- default attributes for the product
+overrideSellPrice="none"
+overrideBuyPrice="none"
+Warning: The price can't be directly show by the client, because some random part like local taxe need be applied
+Some special product can be added onetime too
+-->
+<shops>
+	<shop id="1">
+		<product itemId="8" />
+		<product itemId="9" />
+	</shop>
+</shops>
