@@ -179,8 +179,10 @@ private slots:
     void getTextEntryPoint();
     void showQuestText(const quint32 &textId);
     void nextQuestStep();
-    bool haveQuestStepRequirement(const Quest &quest,const quint8 &step);
+    bool haveNextStepQuestRequirements(const Quest &quest);
     bool haveStartQuestRequirement(const Quest &quest);
+    bool nextStepQuest(const Quest &quest);
+    bool startQuest(const Quest &quest);
     bool botHaveQuest(const quint32 &botId);
     QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
     void updateDisplayedQuests();

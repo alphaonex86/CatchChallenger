@@ -554,6 +554,68 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                 break;
             }
         break;
+        //quest
+        case 0x6a:
+            switch(subCodeType)
+            {
+                //Quest start
+                case 0x0001:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for quest start");
+                        return;
+                    }
+                    quint32 questId;
+                    in >> questId;
+                    emit newQuestAction(QuestAction_Start,questId);
+                }
+                break;
+                //Quest finish
+                case 0x0002:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for quest finish");
+                        return;
+                    }
+                    quint32 questId;
+                    in >> questId;
+                    emit newQuestAction(QuestAction_Finish,questId);
+                }
+                break;
+                //Quest cancel
+                case 0x0003:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for quest cancel");
+                        return;
+                    }
+                    quint32 questId;
+                    in >> questId;
+                    emit newQuestAction(QuestAction_Cancel,questId);
+                }
+                break;
+                //Quest next step
+                case 0x0004:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for quest next step");
+                        return;
+                    }
+                    quint32 questId;
+                    in >> questId;
+                    emit newQuestAction(QuestAction_NextStep,questId);
+                }
+                break;
+                default:
+                    parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    return;
+                break;
+            }
+        break;
         default:
             parseError("unknow main ident: "+QString::number(mainCodeType));
             return;

@@ -954,12 +954,17 @@ void BaseWindow::updateRXTX()
     previousTXSize=TXSize;
 }
 
-bool BaseWindow::haveQuestStepRequirement(const CatchChallenger::Quest &quest, const quint8 &step)
+bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check quest step requirement for: " << quest.id;
     #endif
-    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    if(!quests.contains(quest.id))
+    {
+        qDebug() << "step out of range for: " << quest.id;
+        return false;
+    }
+    quint8 step=quests[quest.id].step;
     if(step<=0 || step>quest.steps.size())
     {
         qDebug() << "step out of range for: " << quest.id;
@@ -1063,6 +1068,55 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
             }
         index++;
     }
+    return true;
+}
+
+bool BaseWindow::nextStepQuest(const Quest &quest)
+{
+    #ifdef DEBUG_CLIENT_QUEST
+    qDebug() << "drop quest step requirement for: " << quest.id;
+    #endif
+    if(!quests.contains(quest.id))
+    {
+        qDebug() << "step out of range for: " << quest.id;
+        return false;
+    }
+    quint8 step=quests[quest.id].step;
+    if(step<=0 || step>quest.steps.size())
+    {
+        qDebug() << "step out of range for: " << quest.id;
+        return false;
+    }
+    const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
+    int index=0;
+    while(index<requirements.items.size())
+    {
+        const CatchChallenger::Quest::Item &item=requirements.items.at(index);
+        QHash<quint32,quint32> items;
+        items[item.item]=item.quantity;
+        remove_to_inventory(items);
+        index++;
+    }
+    quests[quest.id].step++;
+    if(quests[quest.id].step==quest.steps.size())
+    {
+        #ifdef DEBUG_CLIENT_QUEST
+        qDebug() << "finish the quest: " << quest.id;
+        #endif
+        then have finish the quest
+    }
+    return true;
+}
+
+bool BaseWindow::startQuest(const Quest &quest)
+{
+    if(!quests.contains(quest.id))
+    {
+        quests[quest.id].step=1;
+        quests[quest.id].finish_one_time=false;
+    }
+    else
+        quests[quest.id].step=1;
     return true;
 }
 
@@ -1645,6 +1699,7 @@ void BaseWindow::nextQuestStep()
         if(haveStartQuestRequirement(DatapackClientLoader::datapackLoader.quests[questId]))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
+            startQuest(DatapackClientLoader::datapackLoader.quests[questId]);
             CatchChallenger::PlayerQuest quest;
             quest.step=1;
             quest.finish_one_time=false;
@@ -1660,6 +1715,7 @@ void BaseWindow::nextQuestStep()
         if(haveStartQuestRequirement(DatapackClientLoader::datapackLoader.quests[questId]))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
+            startQuest(DatapackClientLoader::datapackLoader.quests[questId]);
             quests[questId].step=1;
             updateDisplayedQuests();
         }
@@ -1701,7 +1757,7 @@ void BaseWindow::getTextEntryPoint()
     {
         contents.replace("currentQuestStep()","0");
         contents.replace("finishOneTime()","false");
-        contents.replace("haveQuestStepRequirements()","false");//bug if use that's
+        contents.replace("haveNextStepQuestRequirements()","false");//bug if use that's
     }
     else
     {
@@ -1712,11 +1768,11 @@ void BaseWindow::getTextEntryPoint()
         else
             contents.replace("finishOneTime()","false");
         if(quest.step<=0)
-            contents.replace("haveQuestStepRequirements()","false");
-        else if(haveQuestStepRequirement(DatapackClientLoader::datapackLoader.quests[questId],quest.step))
-            contents.replace("haveQuestStepRequirements()","true");
+            contents.replace("haveNextStepQuestRequirements()","false");
+        else if(haveNextStepQuestRequirements(DatapackClientLoader::datapackLoader.quests[questId]))
+            contents.replace("haveNextStepQuestRequirements()","true");
         else
-            contents.replace("haveQuestStepRequirements()","false");
+            contents.replace("haveNextStepQuestRequirements()","false");
     }
 
     QScriptValue result = engine.evaluate(contents, client_logic);

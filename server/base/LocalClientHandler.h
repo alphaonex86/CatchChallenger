@@ -123,9 +123,18 @@ public slots:
     void tradeAddTradeCash(const quint64 &cash);
     void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
     void tradeAddTradeMonster(const quint32 &monsterId);
+    //quest
+    void newQuestAction(const QuestAction &action,const quint32 &questId);
+    //reputation
+    void appendReputationPoint(const QString &type,const qint32 &point);
 private slots:
     virtual void extraStop();
     void savePosition();
+    //quest
+    bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest);
+    bool haveStartQuestRequirement(const CatchChallenger::Quest &quest);
+    bool nextStepQuest(const Quest &quest);
+    bool startQuest(const Quest &quest);
 signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
