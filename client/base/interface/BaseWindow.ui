@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -634,6 +634,9 @@ padding-bottom:3px;
                 <height>25</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Options</string>
+              </property>
               <property name="styleSheet">
                <string notr="true">QToolButton::hover {
 background-position:left center;
@@ -700,6 +703,9 @@ border-image: url(:/images/empty.png);</string>
                 <width>22</width>
                 <height>25</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>Quit</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QToolButton::hover {
@@ -843,7 +849,7 @@ border-radius: 5px;
 }</string>
              </property>
              <property name="currentIndex">
-              <number>0</number>
+              <number>2</number>
              </property>
              <widget class="QWidget" name="tabWidgetTrainerCardPage1">
               <property name="styleSheet">
@@ -1172,6 +1178,33 @@ border-radius: 5px;
                 <widget class="QLabel" name="labelReputation">
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tabWidgetTrainerCardPage3">
+              <property name="styleSheet">
+               <string notr="true">#tabWidgetTrainerCardPage3{
+background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 200), stop:1 rgba(221, 221, 221, 200));
+border-color: rgb(204, 204, 204);
+border-radius: 5px;
+}</string>
+              </property>
+              <attribute name="title">
+               <string>Quests</string>
+              </attribute>
+              <layout class="QHBoxLayout" name="horizontalLayout_36">
+               <item>
+                <widget class="QListWidget" name="questsList"/>
+               </item>
+               <item>
+                <widget class="QTextBrowser" name="questDetails">
+                 <property name="styleSheet">
+                  <string notr="true">background-image: url(:/images/empty.png);</string>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
                  </property>
                 </widget>
                </item>

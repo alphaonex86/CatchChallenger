@@ -1,0 +1,17 @@
+<quest id="2" repeatable="yes" bot="2">
+	<name lang="en"><![CDATA[Farm your success]]></name>
+	<requirements>
+		<quest id="1" />
+	</requirements>
+	<step id="1">
+		<text lang="en"><![CDATA[Abrind 5 craftball to the bandit]]></text>
+		<item id="1" quantity="5" />
+	</step>
+	<step id="2" bot="4"><!-- just talk with a bot -->
+		<text lang="en"><![CDATA[Talk to the reaper]]></text>
+	</step>
+	<rewards>
+		<item id="3" quantity="2" />
+		<reputation type="empire" point="-1" />
+	</rewards>
+</quest>

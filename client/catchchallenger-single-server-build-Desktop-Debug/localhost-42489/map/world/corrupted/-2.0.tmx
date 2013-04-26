@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="30" tilewidth="16" tileheight="16">
+ <properties>
+  <property name="type" value="outdoor"/>
+  <property name="zone" value="corruption"/>
+ </properties>
+ <tileset firstgid="1" name="1" tilewidth="16" tileheight="16">
+  <image source="../../tileset/terra.png" trans="000000" width="512" height="512"/>
+  <tile id="32">
+   <properties>
+    <property name="Grass" value="true"/>
+   </properties>
+  </tile>
+  <tile id="837">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="838">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="839">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="869">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="870">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="871">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="901">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="902">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="903">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="934">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="935">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="966">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="967">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="1025" name="1" tilewidth="16" tileheight="16">
+  <image source="../../tileset/wood.png" trans="000000" width="512" height="512"/>
+  <tile id="32">
+   <properties>
+    <property name="Grass" value="true"/>
+   </properties>
+  </tile>
+  <tile id="837">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="838">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="839">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="869">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="870">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="871">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="901">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="902">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="903">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="934">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="935">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="966">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+  <tile id="967">
+   <properties>
+    <property name="Reflection" value="true"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="2049" source="../../tileset/invisible.tsx"/>
+ <tileset firstgid="2065" source="../../tileset/corruption.tsx"/>
+ <layer name="Walkable" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJydlTGSwzAMA1Mmpcyf5v/FXeMZzmYhMSk0tmRZJEEAup6Px/U/Fp73qLZe7XvJvmrvC2dWe9qefh7XOE/rPH+3Xtiz+4eYMH/Wylyt1vX8xHC19cI+7i/sXTiDNdhg/j0/9prnMs+Sbzus3i8f6RzOidG1yakGcY3zxh3OyT/jdA3qJQeTLowX7Mf1RdzETWJPHi/kcD9TPOKczjIsyHXDaBLXdHTicaq/hnFNm8lD6bHmdeuHuNS7zcmfpP8pzubl5qnM03g8iZt0Rx4lvJOOTn2e3G/sp+FMXk/8ynA2byb3iI/53g5n6oA1pvvPck3xyRHTAc8hlif/pBeZzuz+TLUw387L5NH2b/qHmjSN373bxUh1m99OtNH1YfdYwot3FfViHpHum9NdwvwtjunDRo9r3mJcIK6mSb5bX+g732jH+m657fqb8mVNNk9np7soefdOx4krk+/JR8jL6fqpN+yF9YsYJZ7tdGPrydv+AHR/gh4=
+  </data>
+ </layer>
+ <layer name="terain-split" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo4D+QISDgaEIDYty0N7eYCx2BI7aSzUAi9diOtuLzZ+j9g4fe02AZhsBsfEIyUcDbS8svJGxKR3sHU5AZIDCC18epRUQwVHm0xoMhF9Hor2w8mAUDG8AABK+DuA=
+  </data>
+ </layer>
+ <layer name="WalkOver" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYCANTOdgYJgBxDM5KGOPNDAc/R5GoV8o1Y8NDMdwHoxgNJzpA4ZyONMif9MKDEQ4R9PPqkED6BHOgzXdRdLRrqFcbgwlgC2cB2v6G8pgND3TBwAAZw0eqw==
+  </data>
+ </layer>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJztlksOgzAMRL0ElvQufA/Soh6kfM7NHmeFE2FIFhkiFUsj2QpkoqdRlDojalgtC1lv9vuwBrDvj/1G1gT2rR/OkDriXAHO8HDGlOTc8tx5as3tfczs+29PNufBOVNZ7P1L6d3SvpP9l2zOrm+sMr6SM9L3jHNM3yvOvlkJkclVCGc3T1dzqaynzDmWbwp5DrmvQnTkq3HWMuG7fnanpcL53/I8ibU5oha6571h3m+SM7KXnJG95IzsNzRZaGc=
+  </data>
+ </layer>
+ <layer name="Grass" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMJSACBdhTA09I93ekQ6ICUNahOVIs3ckAVLCmJrhPNLsHQWjgFQAAJWQDms=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zlib">
+   eJxjYBhZQJyDgUECiCU5BtolwxuMhjN9ALnhvJUTP59W4Confv5gBaPpmT4AFs6jgLZgND3TB4yGM33AaDjTByCHMz3Zo4A+AABqrwnY
+  </data>
+ </layer>
+ <objectgroup name="Moving" width="30" height="30">
+  <object name="border" type="border-right" gid="2052" x="464" y="256">
+   <properties>
+    <property name="map" value="-1.0"/>
+   </properties>
+  </object>
+  <object type="bot spawn" gid="2050" x="240" y="96"/>
+  <object name="border" type="border-top" gid="2052" x="240" y="16">
+   <properties>
+    <property name="map" value="-2.-1"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

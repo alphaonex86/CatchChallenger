@@ -1,0 +1,89 @@
+<items>
+	<item id="1" image="other/crystal.png" price="100">
+		<name lang="en">Craftball</name>
+		<name lang="fr">Craftball</name>
+		<description>The craftball is perfect to capture a very low level monsters.</description>
+		<description lang="fr">La craft ball est parfaite pour capturer les monstres de trés bas niveaux.</description>
+	</item>
+	<item id="2" image="other/crystal.png" price="200">
+		<name lang="en">Superball</name>
+		<name lang="fr">Superball</name>
+		<description>The super craftball is perfect to capture a low level monsters.</description>
+		<description lang="fr">La craft ball est parfaite pour capturer les monstres de bas niveaux.</description>
+	</item>
+	<item id="3" image="plants/1.png" price="3"><!-- Mocochinchi -->
+		<name lang="en">Moco Berry</name>
+		<name lang="fr">Baie Moco</name>
+		<description>This bay stimulate nerve impulses, which is used to treat paralisies</description>
+		<description lang="fr">Cette baie stimuler l'influx nerveux, ce qui permet de soigner les paralisies</description>
+		<effect>
+			<curse status="Paralysis" /><!-- apply on monster -->
+		</effect>
+	</item>
+	<item id="4" image="plants/2.png" price="3"><!-- Maracuya -->
+		<name lang="en">Maracu Berry</name>
+		<name lang="fr">Baie Passio</name>
+		<description>Bay restorative grows in low light</description>
+		<description lang="fr">Baie reconstituante qui pousse avec peu de lumière</description>
+		<effect>
+			<regeneration hp="10" /><!-- apply on monster -->
+		</effect>
+	</item>
+	<item id="5" image="plants/3.png" price="3"><!-- Lima -->
+		<name lang="en">Lima Berry</name>
+		<name lang="fr">Baie Lima</name>
+		<description>Sweet bay that can restore 10 points of attack</description>
+		<description lang="fr">Baie douce qui permet de restaurer 10 points d'attaque</description>
+		<effect>
+			<regeneration attack="10" /><!-- apply on attack -->
+		</effect>
+	</item>
+	<item id="6" image="plants/4.png" price="3"><!-- Raspberry -->
+		<name lang="en">Rasp Berry</name>
+		<name lang="fr">Baie Rasp</name>
+		<description>Bay inedible. She goes into the manufacture of certain object</description>
+		<description lang="fr">Baie non comestible. Elle entre dans la fabrication de certain objet</description>
+	</item>
+	<item id="7" image="other/jam.png" price="100"><!-- Jam -->
+		<name lang="en">Jam</name>
+		<name lang="fr">Confiture</name>
+		<description>Delicious handmade jam</description>
+		<description lang="fr">Délicieuse confiture faite main</description>
+	</item>
+	<item id="8" image="other/bottle-empty.png" price="10"><!-- Bottle empty -->
+		<name lang="en">Bottle empty</name>
+		<name lang="fr">Bouteille vide</name>
+		<description>Empty bottle that can be used for food preservation</description>
+		<description lang="fr">Bouteille vide qui peut servir à la conservation des aliments</description>
+	</item>
+	<item id="9" image="other/sugar.png" price="7"><!-- Sugar -->
+		<name lang="en">Sugar</name>
+		<name lang="fr">Sucre</name>
+		<description>Element used to make many dishes</description>
+		<description lang="fr">Élément utilisé pour la confection de nombreux plats</description>
+	</item>
+	<item id="10" image="other/recipe-level-1.png" price="1000"><!-- Recipe: Jam -->
+		<name lang="en">Recipe: Jam</name>
+		<name lang="fr">Recette: Confiture</name>
+		<description><![CDATA[Recipe to learn how do <b>Jam</b>, disappears after use]]></description>
+		<description lang="fr"><![CDATA[Recette pour apprendre comment faire de la <b>Confiture</b>, disparait après utilisation]]></description>
+	</item>
+	<item id="11" image="plants/tuber.png" price="3"><!-- Tuber -->
+		<name lang="en">Tuber</name>
+		<name lang="fr">Tubercule</name>
+		<description>Tuber used for soup</description>
+		<description lang="fr">Tubercule utilisé pour la soupe</description>
+	</item>
+	<item id="12" image="plants/red-mushroom.png" price="3"><!-- Red mushroom -->
+		<name lang="en">Red mushroom</name>
+		<name lang="fr">Champignon rouge</name>
+		<description>Red mushroom, the utility is unknow</description>
+		<description lang="fr">Champignon rouge, l'utilité est inconnu</description>
+	</item>
+	<item id="13" image="other/crystal.png" quest="yes">
+		<name lang="en">Tooth</name>
+		<name lang="fr">Dent</name>
+		<description>The super craftball is perfect to capture a low level monsters.</description>
+		<description lang="fr">La craft ball est parfaite pour capturer les monstres de bas niveaux.</description>
+	</item>
+</items>

@@ -1,0 +1,29 @@
+<!--
+Default:
+forcedskin value="", separated by ;
+cash value="0"
+reputation: none
+The attack of monster is the 4 last attack for the level
+/!\ warning, directly put this information into db
+/!\ not check if x,y is into the range of the map
+-->
+<list>
+	<start>
+		<name lang="en">Normal player</name>
+		<description lang="en">You start a normal game as player</description>
+		<map file="world/0.0.tmx" x="15" y="12" />
+		<cash value="10" />
+		<monster id="1" level="5" captured_with="1" />
+		<reputation type="empire" level="1" />
+		<item id="1" quantity="1" />
+	</start>
+	<start>
+		<name lang="en">Dark player</name>
+		<description lang="en">You start a normal game as dark and evil player</description>
+		<map file="world/corrupted/-1.0.tmx" x="16" y="14" />
+		<forcedskin value="terranite" />
+		<cash value="2" />
+		<monster id="1" level="5" captured_with="1" />
+		<reputation type="empire" level="-1" point="-10" />
+	</start>
+</list> 

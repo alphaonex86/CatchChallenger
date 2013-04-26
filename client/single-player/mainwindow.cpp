@@ -571,7 +571,9 @@ void MainWindow::updateSavegameList()
                         //load the map name
                         QString map=metaData.value("location").toString();
                         map.replace(".tmx",".xml");
-                        QString mapName=getMapName(datapackPath+DATAPACK_BASE_PATH_MAP+map);
+                        QString mapName;
+                        if(QFile(datapackPath+DATAPACK_BASE_PATH_MAP+map).exists())
+                            mapName=getMapName(datapackPath+DATAPACK_BASE_PATH_MAP+map);
                         if(mapName.isEmpty())
                         {
                             QString zone=getMapZone(datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());

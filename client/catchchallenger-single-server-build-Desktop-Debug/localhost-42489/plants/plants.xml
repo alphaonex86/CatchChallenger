@@ -1,0 +1,60 @@
+<!--
+/!\ The id can be 0 to 255
+The decimal part for the quantity is random luck to get another plant, if it's 0.1 then you have 10% of luck to have another
+-->
+<plants>
+	<plant id="1" itemUsed="3"><!-- Mocochinchi -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>120</sprouted>
+			<taller>240</taller>
+			<flowering>300</flowering>
+			<fruits>400</fruits>
+		</grow>
+		<quantity>1.1</quantity>
+	</plant>
+	<plant id="2" itemUsed="4"><!-- Maracuya -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>30</sprouted>
+			<taller>60</taller>
+			<flowering>120</flowering>
+			<fruits>180</fruits>
+		</grow>
+		<quantity>1.3</quantity>
+	</plant>
+	<plant id="3" itemUsed="5"><!-- Lima -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>5</sprouted>
+			<taller>10</taller>
+			<flowering>20</flowering>
+			<fruits>500</fruits>
+		</grow>
+		<quantity>1.2</quantity>
+	</plant>
+	<plant id="4" itemUsed="6"><!-- Raspplant -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>240</sprouted>
+			<taller>480</taller>
+			<flowering>720</flowering>
+			<fruits>1080</fruits>
+		</grow>
+		<quantity>1.4</quantity>
+	</plant>
+	<plant id="5" itemUsed="11"><!-- Tuber -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>240</sprouted>
+			<taller>480</taller>
+			<flowering>720</flowering>
+			<fruits>1080</fruits>
+		</grow>
+		<quantity>2.1</quantity>
+	</plant>
+	<plant id="6" itemUsed="12"><!-- Red mushroom -->
+		<grow><!-- in mins, max 1080mins due to seconds to mature defined on 16Bits -->
+			<sprouted>5</sprouted>
+			<taller>10</taller>
+			<flowering>15</flowering>
+			<fruits>20</fruits>
+		</grow>
+		<quantity>1.001</quantity>
+	</plant>
+</plants>
