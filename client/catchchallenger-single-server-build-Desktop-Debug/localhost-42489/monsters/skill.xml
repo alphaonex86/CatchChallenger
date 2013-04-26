@@ -1,0 +1,63 @@
+﻿<!-- Default:
+success="100%"
+applyOn="aloneEnemy"
+applyOn can be: aloneEnemy, themself, allEnemy, allAlly
+sp="0", can't be learn naturaly
+-->
+
+<list>
+	<skill id="1" success="90%">
+		<name lang="en">Fire punch</name>
+		<name lang="fr">Point feu</name>
+		<description lang="en">Powerful punch on fire</description>
+		<description lang="fr">Puissant coup de poing en feu</description>
+		<effect>
+			<level number="1" sp="100">
+				<life quantity="-100" applyOn="aloneEnemy" />
+				<buff id="1" applyOn="aloneEnemy" />
+			</level>
+			<level number="2" sp="200">
+				<life quantity="-105" applyOn="aloneEnemy" />
+				<buff id="1" level="2" applyOn="aloneEnemy" />
+			</level>
+		</effect>
+	</skill>
+	<skill id="2">
+		<name lang="en">Heal</name>
+		<name lang="fr">Soin</name>
+		<description lang="en">Heals itself</description>
+		<description lang="fr">Se soigne lui même</description>
+		<effect>
+			<level number="1" sp="100">
+				<life quantity="+100%" applyOn="themself" />
+			</level>
+		</effect>
+	</skill>
+	<skill id="3">
+		<name lang="en">Tackle</name>
+		<name lang="fr">Charge</name>
+		<description lang="en">Tackle the enemy</description>
+		<description lang="fr">Charge l'ennemie</description>
+		<effect>
+			<level number="1" sp="100">
+				<life quantity="-40" applyOn="aloneEnemy" />
+				<buff id="3" success="5%" applyOn="allEnemy" />
+			</level>
+			<level number="2">
+				<life quantity="-45" applyOn="aloneEnemy" />
+				<buff id="3" success="10%" applyOn="allEnemy" />
+			</level>
+		</effect>
+	</skill>
+	<skill id="4">
+		<name lang="en">Armor</name>
+		<name lang="fr">Armure</name>
+		<description lang="en">Up armor</description>
+		<description lang="fr">Augmente l'armure</description>
+		<effect>
+			<level number="1" sp="100">
+				<buff id="2" applyOn="allAlly" />
+			</level>
+		</effect>
+	</skill>
+</list>

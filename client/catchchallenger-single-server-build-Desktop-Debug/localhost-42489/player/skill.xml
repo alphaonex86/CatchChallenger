@@ -1,0 +1,39 @@
+﻿<!-- Default:
+success="100%"
+-->
+
+
+<list>
+	<skill id="1">
+		<name lang="en">Crating</name>
+		<name lang="fr">Crating</name>
+		<description lang="en">Crating object</name>
+		<description lang="fr">Crating d'objet</name>
+		<effect>
+			<level number="1"><!-- learn by a quest -->
+				<craft />
+			</level>
+			<level number="2" craftingReputation="1">
+				<craft />
+			</level>
+			<level number="3" craftingReputation="2">
+				<craft />
+			</level>
+			<level number="4" craftingReputation="3">
+				<craft />
+			</level>
+			<level number="5" craftingReputation="4">
+				<craft />
+			</level>
+			<level number="6" craftingReputation="5">
+				<craft />
+			</level>
+			<level number="7" craftingReputation="6">
+				<craft />
+			</level>
+			<level number="8" craftingReputation="7">
+				<craft />
+			</level>
+		</effect>
+	</skill>
+</list>

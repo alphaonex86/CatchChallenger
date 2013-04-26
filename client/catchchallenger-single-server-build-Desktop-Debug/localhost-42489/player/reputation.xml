@@ -1,0 +1,35 @@
+<!-- type need be lower char only less than 32 of lenght -->
+<list>
+	<!-- 0-149: Apprentice
+	150-10000: Crafter
+	10000+: Warsmith -->
+	<reputation type="crafting">
+		<level point="0"><!-- level 0 -->
+			<text lang="en">Apprentice</text>
+		</level>
+		<level point="150"><!-- level 1 -->
+			<text lang="en">Crafter</text>
+		</level>
+		<level point="10000"><!-- level 2 -->
+			<text lang="en">Warsmith</text>
+		</level>
+	</reputation>
+	<!-- 150-: Ennemy of the empire
+	-1 to -150: Dissident of the empire
+	0-150: Neutral for the empire
+	150+: Ally of the empire -->
+	<reputation type="empire">
+		<level point="-150"><!-- level -2 -->
+			<text lang="en">Ennemy of the empire</text>
+		</level>
+		<level point="-1"><!-- level -1 -->
+			<text lang="en">Dissident of the empire</text>
+		</level>
+		<level point="0"><!-- level 0 -->
+			<text lang="en">Neutral for the empire</text>
+		</level>
+		<level point="150"><!-- level 1 -->
+			<text lang="en">Ally of the empire</text>
+		</level>
+	</reputation>
+</list>
