@@ -154,6 +154,8 @@ BaseWindow::BaseWindow() :
     MapController::mapController->setFocus();
 
     CatchChallenger::Api_client_real::client->startReadData();
+    /// \todo able to cancel quest
+    ui->cancelQuest->hide();
 }
 
 BaseWindow::~BaseWindow()
@@ -1103,9 +1105,88 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         #ifdef DEBUG_CLIENT_QUEST
         qDebug() << "finish the quest: " << quest.id;
         #endif
-        then have finish the quest
+        quests[quest.id].step=0;
+        quests[quest.id].finish_one_time=true;
+        index=0;
+        while(index<quest.rewards.reputation.size())
+        {
+            appendReputationPoint(quest.rewards.reputation[index].type,quest.rewards.reputation[index].point);
+            index++;
+        }
     }
     return true;
+}
+
+//reputation
+void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
+{
+    if(point==0)
+        return;
+    if(!DatapackClientLoader::datapackLoader.reputation.contains(type))
+    {
+        emit error(QString("Unknow reputation: %1").arg(type));
+        return;
+    }
+    PlayerReputation playerReputation;
+    playerReputation.point=0;
+    playerReputation.level=0;
+    if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(type))
+        playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation[type];
+    #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+    emit message(QString("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    #endif
+    playerReputation.point+=point;
+    do
+    {
+        if(playerReputation.level<0 && playerReputation.point>0)
+        {
+            playerReputation.level++;
+            playerReputation.point+=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level);
+            continue;
+        }
+        if(playerReputation.level>0 && playerReputation.point<0)
+        {
+            playerReputation.level--;
+            playerReputation.point+=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(playerReputation.level);
+            continue;
+        }
+        if(playerReputation.level<=0 && playerReputation.point<DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level))
+        {
+            if((-playerReputation.level)<DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.size())
+            {
+                playerReputation.point-=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.level--;
+            }
+            else
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+                emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
+                #endif
+                playerReputation.point=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level);
+            }
+            continue;
+        }
+        if(playerReputation.level>=0 && playerReputation.point<DatapackClientLoader::datapackLoader.reputation[type].reputation_positive.at(playerReputation.level))
+        {
+            if(playerReputation.level<DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.size())
+            {
+                playerReputation.point-=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.level++;
+            }
+            else
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+                emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
+                #endif
+                playerReputation.point=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(playerReputation.level);
+            }
+            continue;
+        }
+    } while(false);
+    CatchChallenger::Api_client_real::client->player_informations.reputation[type]=playerReputation;
+    #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+    emit message(QString("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    #endif
 }
 
 bool BaseWindow::startQuest(const Quest &quest)

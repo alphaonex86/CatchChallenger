@@ -186,6 +186,7 @@ private slots:
     bool botHaveQuest(const quint32 &botId);
     QList<QPair<quint32,QString> > getQuestList(const quint32 &botId);
     void updateDisplayedQuests();
+    void appendReputationPoint(const QString &type,const qint32 &point);
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);

@@ -1796,10 +1796,119 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
 //reputation
 void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 &point)
 {
-    qint32 basePoint=0;
+    if(point==0)
+        return;
+    if(!GlobalServerData::serverPrivateVariables.reputation.contains(type))
+    {
+        emit error(QString("Unknow reputation: %1").arg(type));
+        return;
+    }
+    PlayerReputation playerReputation;
+    playerReputation.point=0;
+    playerReputation.level=0;
     if(otherPlayerTrade->player_informations->public_and_private_informations.reputation.contains(type))
-        basePoint=otherPlayerTrade->player_informations->public_and_private_informations.reputation[type];
-    to do
+        playerReputation=otherPlayerTrade->player_informations->public_and_private_informations.reputation[type];
+    #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+    emit message(QString("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    #endif
+    playerReputation.point+=point;
+    do
+    {
+        if(playerReputation.level<0 && playerReputation.point>0)
+        {
+            playerReputation.level++;
+            playerReputation.point+=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level);
+            continue;
+        }
+        if(playerReputation.level>0 && playerReputation.point<0)
+        {
+            playerReputation.level--;
+            playerReputation.point+=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(playerReputation.level);
+            continue;
+        }
+        if(playerReputation.level<=0 && playerReputation.point<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level))
+        {
+            if((-playerReputation.level)<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size())
+            {
+                playerReputation.point-=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.level--;
+            }
+            else
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+                emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
+                #endif
+                playerReputation.point=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level);
+            }
+            continue;
+        }
+        if(playerReputation.level>=0 && playerReputation.point<GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.at(playerReputation.level))
+        {
+            if(playerReputation.level<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size())
+            {
+                playerReputation.point-=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.level++;
+            }
+            else
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+                emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
+                #endif
+                playerReputation.point=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(playerReputation.level);
+            }
+            continue;
+        }
+    } while(false);
+    if(!otherPlayerTrade->player_informations->public_and_private_informations.reputation.contains(type))
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("INSERT INTO reputation(player,type,point,level) VALUES(%1,%2,%3,%4);")
+                             .arg(player_informations->id)
+                             .arg(type)
+                             .arg(playerReputation.point)
+                             .arg(playerReputation.level)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("INSERT INTO reputation(player,type,point,level) VALUES(%1,%2,%3,%4);")
+                             .arg(player_informations->id)
+                             .arg(type)
+                             .arg(playerReputation.point)
+                             .arg(playerReputation.level)
+                             );
+            break;
+        }
+    }
+    else
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=%2;")
+                             .arg(player_informations->id)
+                             .arg(type)
+                             .arg(playerReputation.point)
+                             .arg(playerReputation.level)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=%2;")
+                             .arg(player_informations->id)
+                             .arg(type)
+                             .arg(playerReputation.point)
+                             .arg(playerReputation.level)
+                             );
+            break;
+        }
+    }
+    otherPlayerTrade->player_informations->public_and_private_informations.reputation[type]=playerReputation;
+    #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
+    emit message(QString("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    #endif
 }
 
 bool LocalClientHandler::startQuest(const Quest &quest)
@@ -1835,14 +1944,14 @@ bool LocalClientHandler::startQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE monster SET step=%3 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
                              .arg(player_informations->id)
                              .arg(quest.id)
                              .arg(1)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET step=%3 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
                              .arg(player_informations->id)
                              .arg(quest.id)
                              .arg(1)
