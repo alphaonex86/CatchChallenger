@@ -35,6 +35,7 @@ void BaseWindow::resetAll()
     plants_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     crafting_recipes_items_to_graphical.clear();
+    quests.clear();
     ui->tip->setVisible(false);
     ui->persistant_tip->setVisible(false);
     ui->gain->setVisible(false);
@@ -130,6 +131,7 @@ void BaseWindow::have_current_player_info()
     havePlayerInformations=true;
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     cash=informations.cash;
+    quests=informations.quests;
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
     ui->tradePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
@@ -409,4 +411,52 @@ void BaseWindow::updatePlayerImage()
         ui->player_informations_front->setPixmap(playerFrontImage);
         ui->tradePlayerImage->setPixmap(playerFrontImage);
     }
+}
+
+void BaseWindow::updateDisplayedQuests()
+{
+    ui->questsList->clear();
+    quests_to_id_graphical.clear();
+    QHashIterator<quint32, PlayerQuest> i(quests);
+    while (i.hasNext()) {
+        i.next();
+        if(DatapackClientLoader::datapackLoader.questsExtra.contains(i.key()) && i.value().step>0)
+        {
+            QListWidgetItem * item=new QListWidgetItem(DatapackClientLoader::datapackLoader.questsExtra[i.key()].name);
+            quests_to_id_graphical[item]=i.key();
+            ui->questsList->addItem(item);
+        }
+    }
+    on_questsList_itemSelectionChanged();
+}
+
+void BaseWindow::on_questsList_itemSelectionChanged()
+{
+    QList<QListWidgetItem *> items=ui->questsList->selectedItems();
+    if(items.size()!=1)
+    {
+        qDebug() << "Selected quest is not one";
+        ui->questDetails->setText(tr("Select a quest"));
+        return;
+    }
+    if(!quests_to_id_graphical.contains(items.first()))
+    {
+        qDebug() << "Selected quest have not id";
+        ui->questDetails->setText(tr("Select a quest"));
+        return;
+    }
+    quint32 questId=quests_to_id_graphical[items.first()];
+    if(!quests.contains(questId))
+    {
+        qDebug() << "Selected quest is not into the player list";
+        ui->questDetails->setText(tr("Select a quest"));
+        return;
+    }
+    if(quests[questId].step==0 || quests[questId].step>DatapackClientLoader::datapackLoader.questsExtra[questId].steps.size())
+    {
+        qDebug() << "Selected quest step is out of range";
+        ui->questDetails->setText(tr("Select a quest"));
+        return;
+    }
+    ui->questDetails->setText(DatapackClientLoader::datapackLoader.questsExtra[questId].steps[quests[questId].step-1]);
 }
