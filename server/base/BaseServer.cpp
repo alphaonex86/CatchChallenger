@@ -27,6 +27,7 @@ BaseServer::BaseServer()
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
     qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
     qRegisterMetaType<Direction>("Direction");
+    qRegisterMetaType<QuestAction>("QuestAction");
 
     GlobalServerData::serverPrivateVariables.connected_players	= 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;

@@ -42,6 +42,14 @@ enum MapVisibilityAlgorithm
     MapVisibilityAlgorithm_none
 };
 
+enum QuestAction
+{
+    QuestAction_Start,
+    QuestAction_Finish,
+    QuestAction_Cancel,
+    QuestAction_NextStep
+};
+
 struct Player_internal_informations
 {
     Player_private_and_public_informations public_and_private_informations;
