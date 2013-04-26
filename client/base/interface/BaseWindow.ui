@@ -1194,19 +1194,60 @@ border-radius: 5px;
               <attribute name="title">
                <string>Quests</string>
               </attribute>
-              <layout class="QHBoxLayout" name="horizontalLayout_36">
+              <layout class="QHBoxLayout" name="horizontalLayout_37">
                <item>
                 <widget class="QListWidget" name="questsList"/>
                </item>
                <item>
-                <widget class="QTextBrowser" name="questDetails">
-                 <property name="styleSheet">
-                  <string notr="true">background-image: url(:/images/empty.png);</string>
-                 </property>
-                 <property name="frameShape">
-                  <enum>QFrame::NoFrame</enum>
-                 </property>
-                </widget>
+                <layout class="QVBoxLayout" name="verticalLayout_23">
+                 <item>
+                  <widget class="QTextBrowser" name="questDetails">
+                   <property name="styleSheet">
+                    <string notr="true">background-image: url(:/images/empty.png);</string>
+                   </property>
+                   <property name="frameShape">
+                    <enum>QFrame::NoFrame</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_36">
+                   <item>
+                    <spacer name="horizontalSpacer_32">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="cancelQuest">
+                     <property name="text">
+                      <string>Cancel</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_33">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </item>
               </layout>
              </widget>
