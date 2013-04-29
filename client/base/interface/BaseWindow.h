@@ -209,7 +209,7 @@ private slots:
     void on_checkBoxZoom_toggled(bool checked);
     void on_checkBoxLimitFPS_toggled(bool checked);
     void on_spinBoxMaxFPS_editingFinished();
-    void on_IG_dialog_text_linkActivated(const QString &link);
+    void on_IG_dialog_text_linkActivated(const QString &rawlink);
     void on_toolButton_quit_shop_clicked();
     void on_shopItemList_itemActivated(QListWidgetItem *item);
     void on_shopItemList_itemSelectionChanged();
