@@ -1594,7 +1594,7 @@ void LocalClientHandler::internalTradeAccepted(const bool &send)
 //quest
 void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 &questId)
 {
-    if(GlobalServerData::serverPrivateVariables.quests.contains(questId))
+    if(!GlobalServerData::serverPrivateVariables.quests.contains(questId))
     {
         emit error(QString("unknow questId: %1").arg(questId));
         return;
@@ -1634,12 +1634,12 @@ bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Qu
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     emit message(QString("check quest step requirement for: %1").arg(quest.id));
     #endif
-    if(!otherPlayerTrade->player_informations->public_and_private_informations.quests.contains(quest.id))
+    if(!player_informations->public_and_private_informations.quests.contains(quest.id))
     {
         emit message(QString("step out of range for: %1").arg(quest.id));
         return false;
     }
-    quint8 step=otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step;
+    quint8 step=player_informations->public_and_private_informations.quests[quest.id].step;
     if(step<=0 || step>quest.steps.size())
     {
         emit message(QString("step out of range for: %1").arg(quest.id));
@@ -1665,14 +1665,14 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     emit message(QString("check quest requirement for: %1").arg(quest.id));
     #endif
-    if(otherPlayerTrade->player_informations->public_and_private_informations.quests.contains(quest.id))
+    if(player_informations->public_and_private_informations.quests.contains(quest.id))
     {
-        if(otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step!=0)
+        if(player_informations->public_and_private_informations.quests[quest.id].step!=0)
         {
             emit message(QString("can start the quest because is already running: %1").arg(quest.id));
             return false;
         }
-        if(otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].finish_one_time && !quest.repeatable)
+        if(player_informations->public_and_private_informations.quests[quest.id].finish_one_time && !quest.repeatable)
         {
             emit message(QString("done one time and no repeatable: %1").arg(quest.id));
             return false;
@@ -1682,12 +1682,12 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
     while(index<quest.requirements.quests.size())
     {
         const quint32 &questId=quest.requirements.quests.at(index);
-        if(!otherPlayerTrade->player_informations->public_and_private_informations.quests.contains(questId))
+        if(!player_informations->public_and_private_informations.quests.contains(questId))
         {
             emit message(QString("have never started the quest: %1").arg(questId));
             return false;
         }
-        if(!otherPlayerTrade->player_informations->public_and_private_informations.quests[questId].finish_one_time)
+        if(!player_informations->public_and_private_informations.quests[questId].finish_one_time)
         {
             emit message(QString("quest never finished: %1").arg(questId));
             return false;
@@ -1698,9 +1698,9 @@ bool LocalClientHandler::haveStartQuestRequirement(const CatchChallenger::Quest 
     while(index<quest.requirements.reputation.size())
     {
         const CatchChallenger::Quest::ReputationRequirements &reputation=quest.requirements.reputation.at(index);
-        if(otherPlayerTrade->player_informations->public_and_private_informations.reputation.contains(reputation.type))
+        if(player_informations->public_and_private_informations.reputation.contains(reputation.type))
         {
-            const PlayerReputation &playerReputation=otherPlayerTrade->player_informations->public_and_private_informations.reputation[reputation.type];
+            const PlayerReputation &playerReputation=player_informations->public_and_private_informations.reputation[reputation.type];
             if(!reputation.positif)
             {
                 if(-reputation.level<playerReputation.level)
@@ -1734,12 +1734,12 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     emit message(QString("drop quest step requirement for: %1").arg(quest.id));
     #endif
-    if(!otherPlayerTrade->player_informations->public_and_private_informations.quests.contains(quest.id))
+    if(!player_informations->public_and_private_informations.quests.contains(quest.id))
     {
         emit message(QString("step out of range for: %1").arg(quest.id));
         return false;
     }
-    quint8 step=otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step;
+    quint8 step=player_informations->public_and_private_informations.quests[quest.id].step;
     if(step<=0 || step>quest.steps.size())
     {
         emit message(QString("step out of range for: %1").arg(quest.id));
@@ -1753,8 +1753,8 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         removeObject(item.item,item.quantity);
         index++;
     }
-    otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step++;
-    if(otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step==quest.steps.size())
+    player_informations->public_and_private_informations.quests[quest.id].step++;
+    if(player_informations->public_and_private_informations.quests[quest.id].step==quest.steps.size())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         emit message(QString("finish the quest: %1").arg(quest.id));
@@ -1775,8 +1775,8 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
                              );
             break;
         }
-        otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step=0;
-        otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].finish_one_time=true;
+        player_informations->public_and_private_informations.quests[quest.id].step=0;
+        player_informations->public_and_private_informations.quests[quest.id].finish_one_time=true;
         index=0;
         while(index<quest.rewards.items.size())
         {
@@ -1806,8 +1806,8 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
     PlayerReputation playerReputation;
     playerReputation.point=0;
     playerReputation.level=0;
-    if(otherPlayerTrade->player_informations->public_and_private_informations.reputation.contains(type))
-        playerReputation=otherPlayerTrade->player_informations->public_and_private_informations.reputation[type];
+    if(player_informations->public_and_private_informations.reputation.contains(type))
+        playerReputation=player_informations->public_and_private_informations.reputation[type];
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QString("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
@@ -1859,7 +1859,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
             continue;
         }
     } while(false);
-    if(!otherPlayerTrade->player_informations->public_and_private_informations.reputation.contains(type))
+    if(!player_informations->public_and_private_informations.reputation.contains(type))
     {
         switch(GlobalServerData::serverSettings.database.type)
         {
@@ -1905,7 +1905,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
             break;
         }
     }
-    otherPlayerTrade->player_informations->public_and_private_informations.reputation[type]=playerReputation;
+    player_informations->public_and_private_informations.reputation[type]=playerReputation;
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
     emit message(QString("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
@@ -1913,7 +1913,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
 
 bool LocalClientHandler::startQuest(const Quest &quest)
 {
-    if(!otherPlayerTrade->player_informations->public_and_private_informations.quests.contains(quest.id))
+    if(!player_informations->public_and_private_informations.quests.contains(quest.id))
     {
         switch(GlobalServerData::serverSettings.database.type)
         {
@@ -1935,8 +1935,8 @@ bool LocalClientHandler::startQuest(const Quest &quest)
                              );
             break;
         }
-        otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step=1;
-        otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].finish_one_time=false;
+        player_informations->public_and_private_informations.quests[quest.id].step=1;
+        player_informations->public_and_private_informations.quests[quest.id].finish_one_time=false;
     }
     else
     {
@@ -1958,7 +1958,7 @@ bool LocalClientHandler::startQuest(const Quest &quest)
                              );
             break;
         }
-        otherPlayerTrade->player_informations->public_and_private_informations.quests[quest.id].step=1;
+        player_informations->public_and_private_informations.quests[quest.id].step=1;
     }
     return true;
 }

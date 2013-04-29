@@ -628,7 +628,7 @@ void BaseServer::preload_reputation()
 void BaseServer::preload_quests()
 {
     GlobalServerData::serverPrivateVariables.quests=DatapackGeneralLoader::loadQuests(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_QUESTS);
-    DebugClass::debugConsole(QString("%1 reputation(s) loaded").arg(GlobalServerData::serverPrivateVariables.quests.size()));
+    DebugClass::debugConsole(QString("%1 quest(s) loaded").arg(GlobalServerData::serverPrivateVariables.quests.size()));
 }
 
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)

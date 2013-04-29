@@ -2,7 +2,7 @@
 	<client_logic id="1">
 		<text lang="en"><![CDATA[I need 5 craftball to capture monsters. If you help me, I give you some plant.<br />
 		<br />
-		<a href="next_quest_step">Yes I have it</a><br />
+		<a href="next_quest_step;42">Yes I have it</a><br />
 		<a href="2">I don't have it</a>]]></text>
 	</client_logic>
 	<client_logic id="2">
