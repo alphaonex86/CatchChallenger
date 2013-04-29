@@ -1716,55 +1716,70 @@ void BaseWindow::on_toolButtonOptions_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_options);
 }
 
-void BaseWindow::on_IG_dialog_text_linkActivated(const QString &link)
+void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
 {
     ui->IG_dialog->setVisible(false);
-    if(link.startsWith("http://") || link.startsWith("https://"))
+    QStringList stringList=rawlink.split(";");
+    int index=0;
+    while(index<stringList.size())
     {
-        if(!QDesktopServices::openUrl(QUrl(link)))
-            showTip(QString("Unable to open the url: %1").arg(link));
-        return;
-    }
-    bool ok;
-    if(link.startsWith("quest_"))
-    {
-        QString tempLink=link;
-        tempLink.remove("quest_");
-        quint32 questId=tempLink.toUShort(&ok);
+        const QString &link=stringList.at(index);
+        qDebug() << "parsed link to use: " << link;
+        if(link.startsWith("http://") || link.startsWith("https://"))
+        {
+            if(!QDesktopServices::openUrl(QUrl(link)))
+                showTip(QString("Unable to open the url: %1").arg(link));
+            index++;
+            continue;
+        }
+        bool ok;
+        if(link.startsWith("quest_"))
+        {
+            QString tempLink=link;
+            tempLink.remove("quest_");
+            quint32 questId=tempLink.toUShort(&ok);
+            if(!ok)
+            {
+                showTip(QString("Unable to open the link: %1").arg(link));
+                index++;
+                continue;
+            }
+            if(!DatapackClientLoader::datapackLoader.quests.contains(questId))
+            {
+                showTip(tr("Quest not found"));
+                index++;
+                continue;
+            }
+            isInQuest=true;
+            this->questId=questId;
+            getTextEntryPoint();
+            index++;
+            continue;
+        }
+        if(link=="close")
+            return;
+        if(link=="next_quest_step" && isInQuest)
+        {
+            nextQuestStep();
+            index++;
+            continue;
+        }
+        quint8 step=link.toUShort(&ok);
         if(!ok)
         {
             showTip(QString("Unable to open the link: %1").arg(link));
-            return;
+            index++;
+            continue;
         }
-        if(!DatapackClientLoader::datapackLoader.quests.contains(questId))
+        if(isInQuest)
         {
-            showTip(tr("Quest not found"));
-            return;
+            showQuestText(step);
+            index++;
+            continue;
         }
-        isInQuest=true;
-        this->questId=questId;
-        getTextEntryPoint();
-        return;
+        goToBotStep(step);
+        index++;
     }
-    if(link=="close")
-        return;
-    if(link=="next_quest_step" && isInQuest)
-    {
-        nextQuestStep();
-        return;
-    }
-    quint8 step=link.toUShort(&ok);
-    if(!ok)
-    {
-        showTip(QString("Unable to open the link: %1").arg(link));
-        return;
-    }
-    if(isInQuest)
-    {
-        showQuestText(step);
-        return;
-    }
-    goToBotStep(step);
 }
 
 void BaseWindow::nextQuestStep()

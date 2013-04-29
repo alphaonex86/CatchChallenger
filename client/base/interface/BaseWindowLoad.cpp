@@ -242,6 +242,7 @@ void BaseWindow::updateConnectingStatus()
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();
+        updateDisplayedQuests();
         if(!check_senddata())
             return;
         load_monsters();
