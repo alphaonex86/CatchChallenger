@@ -959,7 +959,7 @@ void BaseWindow::updateRXTX()
 bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << "check quest step requirement for: " << quest.id;
+    qDebug() << QString("haveNextStepQuestRequirements for quest: %1").arg(questId);
     #endif
     if(!quests.contains(quest.id))
     {
@@ -972,6 +972,9 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
         qDebug() << "step out of range for: " << quest.id;
         return false;
     }
+    #ifdef DEBUG_CLIENT_QUEST
+    qDebug() << QString("haveNextStepQuestRequirements for quest: %1, step: %2").arg(questId).arg(step);
+    #endif
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
     int index=0;
     while(index<requirements.items.size())
@@ -1100,7 +1103,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         index++;
     }
     quests[quest.id].step++;
-    if(quests[quest.id].step==quest.steps.size())
+    if(quests[quest.id].step>quest.steps.size())
     {
         #ifdef DEBUG_CLIENT_QUEST
         qDebug() << "finish the quest: " << quest.id;
@@ -1796,10 +1799,6 @@ void BaseWindow::nextQuestStep()
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
             startQuest(DatapackClientLoader::datapackLoader.quests[questId]);
-            CatchChallenger::PlayerQuest quest;
-            quest.step=1;
-            quest.finish_one_time=false;
-            quests[questId]=quest;
             updateDisplayedQuests();
         }
         else
@@ -1812,19 +1811,27 @@ void BaseWindow::nextQuestStep()
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
             startQuest(DatapackClientLoader::datapackLoader.quests[questId]);
-            quests[questId].step=1;
             updateDisplayedQuests();
         }
         else
             showTip(tr("You don't have the requirement to start this quest"));
         return;
     }
-    if(quests[questId].step>=(DatapackClientLoader::datapackLoader.quests[questId].steps.size()-1))
+    if(!haveNextStepQuestRequirements(DatapackClientLoader::datapackLoader.quests[questId]))
     {
-        showTip(QString("finish quest %1").arg(questId));
+        showTip(tr("You don't have the requirement to continue this quest"));
         return;
     }
-    showTip(QString("next_quest_step quest %1").arg(questId));
+    if(quests[questId].step>=(DatapackClientLoader::datapackLoader.quests[questId].steps.size()))
+    {
+        CatchChallenger::Api_client_real::client->finishQuest(questId);
+        nextStepQuest(DatapackClientLoader::datapackLoader.quests[questId]);
+        updateDisplayedQuests();
+        return;
+    }
+    CatchChallenger::Api_client_real::client->nextQuestStep(questId);
+    nextStepQuest(DatapackClientLoader::datapackLoader.quests[questId]);
+    updateDisplayedQuests();
 }
 
 void BaseWindow::getTextEntryPoint()
