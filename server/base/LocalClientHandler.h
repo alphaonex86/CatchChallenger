@@ -79,6 +79,8 @@ private:
     //trade
     void internalTradeCanceled(const bool &send);
     void internalTradeAccepted(const bool &send);
+    //other
+    static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
@@ -125,6 +127,8 @@ public slots:
     void tradeAddTradeMonster(const quint32 &monsterId);
     //quest
     void newQuestAction(const QuestAction &action,const quint32 &questId);
+    static bool addQuestStepDrop(Player_internal_informations *player_informations, const quint32 &questId, const quint8 &step);
+    static bool removeQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step);
     //reputation
     void appendReputationPoint(const QString &type,const qint32 &point);
 private slots:
@@ -135,6 +139,8 @@ private slots:
     bool haveStartQuestRequirement(const CatchChallenger::Quest &quest);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
+    void addQuestStepDrop(const quint32 &questId,const quint8 &questStep);
+    void removeQuestStepDrop(const quint32 &questId,const quint8 &questStep);
 signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
@@ -144,6 +150,7 @@ signals:
 
     void seedValidated();
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+
 };
 }
 

@@ -5,6 +5,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/Map.h"
 #include "SqlFunction.h"
+#include "LocalClientHandler.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -683,5 +684,6 @@ void ClientHeavyLoad::loadQuests()
             continue;
         }
         player_informations->public_and_private_informations.quests[id]=playerQuest;
+        LocalClientHandler::addQuestStepDrop(player_informations,id,playerQuest.step);
     }
 }

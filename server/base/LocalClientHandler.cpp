@@ -1371,6 +1371,19 @@ void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
     player_informations->public_and_private_informations.playerMonster << tradeMonster;
 }
 
+bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
+{
+    if(monsterDrops1.item!=monsterDrops2.item)
+        return false;
+    if(monsterDrops1.luck!=monsterDrops2.luck)
+        return false;
+    if(monsterDrops1.quantity_min!=monsterDrops2.quantity_min)
+        return false;
+    if(monsterDrops1.quantity_max!=monsterDrops2.quantity_max)
+        return false;
+    return true;
+}
+
 void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
 {
     if(!tradeIsValidated)
@@ -1625,8 +1638,85 @@ void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 
             emit error(QString("newQuestAction unknow: %1").arg(action));
         return;
     }
+}
 
-//    haveStartQuestRequirement(
+void LocalClientHandler::addQuestStepDrop(const quint32 &questId,const quint8 &questStep)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
+    emit message(QString("addQuestStepDrop for: %1").arg(questId));
+    #endif
+    if(!addQuestStepDrop(player_informations,questId,questStep))
+        emit message(QString("error append drop for quest have failed: %1").arg(questId));
+}
+
+void LocalClientHandler::removeQuestStepDrop(const quint32 &questId,const quint8 &questStep)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
+    emit message(QString("removeQuestStepDrop for: %1").arg(questId));
+    #endif
+    if(!removeQuestStepDrop(player_informations,questId,questStep))
+        emit message(QString("error append drop for quest have failed: %1").arg(questId));
+}
+
+bool LocalClientHandler::addQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step)
+{
+
+    if(!GlobalServerData::serverPrivateVariables.quests.contains(questId))
+        return false;
+    const CatchChallenger::Quest &quest=GlobalServerData::serverPrivateVariables.quests[questId];
+    if(step<=0 || step>quest.steps.size())
+        return false;
+    Quest::Step stepFull=quest.steps[step];
+    int index=0;
+    int sub_index;
+    while(index<stepFull.itemsMonster.size())
+    {
+        const Quest::ItemMonster &itemMonster=stepFull.itemsMonster.at(index);
+        sub_index=0;
+        const MonsterDrops &monsterDrops=questItemMonsterToMonsterDrops(itemMonster);
+        while(sub_index<itemMonster.monsters.size())
+        {
+            player_informations->questsDrop.insert(itemMonster.monsters.at(sub_index),monsterDrops);
+            sub_index++;
+        }
+        index++;
+    }
+    return true;
+}
+
+bool LocalClientHandler::removeQuestStepDrop(Player_internal_informations *player_informations, const quint32 &questId, const quint8 &step)
+{
+    if(!GlobalServerData::serverPrivateVariables.quests.contains(questId))
+        return false;
+    const CatchChallenger::Quest &quest=GlobalServerData::serverPrivateVariables.quests[questId];
+    if(step<=0 || step>quest.steps.size())
+        return false;
+    Quest::Step stepFull=quest.steps[step];
+    int index=0;
+    int sub_index;
+    while(index<stepFull.itemsMonster.size())
+    {
+        const Quest::ItemMonster &itemMonster=stepFull.itemsMonster.at(index);
+        sub_index=0;
+        const MonsterDrops &monsterDrops=questItemMonsterToMonsterDrops(itemMonster);
+        while(sub_index<itemMonster.monsters.size())
+        {
+            player_informations->questsDrop.remove(itemMonster.monsters.at(sub_index),monsterDrops);
+            sub_index++;
+        }
+        index++;
+    }
+    return true;
+}
+
+MonsterDrops LocalClientHandler::questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster)
+{
+    MonsterDrops monsterDrops;
+    monsterDrops.item=questItemMonster.item;
+    monsterDrops.luck=questItemMonster.rate;
+    monsterDrops.quantity_min=1;
+    monsterDrops.quantity_max=1;
+    return monsterDrops;
 }
 
 bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
@@ -1636,7 +1726,7 @@ bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Qu
     #endif
     if(!player_informations->public_and_private_informations.quests.contains(quest.id))
     {
-        emit message(QString("step out of range for: %1").arg(quest.id));
+        emit message(QString("player quest not found: %1").arg(quest.id));
         return false;
     }
     quint8 step=player_informations->public_and_private_informations.quests[quest.id].step;
@@ -1753,6 +1843,7 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         removeObject(item.item,item.quantity);
         index++;
     }
+    removeQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests[quest.id].step);
     player_informations->public_and_private_informations.quests[quest.id].step++;
     if(player_informations->public_and_private_informations.quests[quest.id].step==quest.steps.size())
     {
@@ -1790,6 +1881,8 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
             index++;
         }
     }
+    else
+        addQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests[quest.id].step);
     return true;
 }
 
@@ -1960,5 +2053,6 @@ bool LocalClientHandler::startQuest(const Quest &quest)
         }
         player_informations->public_and_private_informations.quests[quest.id].step=1;
     }
+    addQuestStepDrop(quest.id,1);
     return true;
 }
