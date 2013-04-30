@@ -50,6 +50,14 @@ enum QuestAction
     QuestAction_NextStep
 };
 
+struct MonsterDrops
+{
+    quint32 item;
+    quint32 quantity_min;
+    quint32 quantity_max;
+    quint32 luck;//seam be 0 to 100
+};
+
 struct Player_internal_informations
 {
     Player_private_and_public_informations public_and_private_informations;
@@ -66,6 +74,7 @@ struct Player_internal_informations
         Orientation orientation;
     };
     Rescue rescue;
+    QMultiHash<quint32,MonsterDrops> questsDrop;
 };
 
 struct ServerSettings
@@ -151,14 +160,6 @@ struct Item
     quint32 price;
 };
 
-struct MonsterDrops
-{
-    quint32 item;
-    quint32 quantity_min;
-    quint32 quantity_max;
-    quint32 luck;
-};
-
 struct ServerPrivateVariables
 {
     //bd
@@ -232,8 +233,8 @@ struct ServerPrivateVariables
     };
 };
 
-
-
 }
+
+bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);
 
 #endif // STRUCTURES_SERVER_H
