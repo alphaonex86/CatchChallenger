@@ -155,10 +155,13 @@ void DatapackClientLoader::parseItems()
                         {
                             if(name.isElement())
                             {
-                                if(!name.hasAttribute("lang"))
+                                if(name.hasAttribute("lang"))
                                 {
-                                    DatapackClientLoader::items[id].name=name.text();
-                                    break;
+                                    if(name.attribute("lang")=="en")
+                                    {
+                                        DatapackClientLoader::items[id].name=name.text();
+                                        break;
+                                    }
                                 }
                             }
                             name = name.nextSiblingElement("name");
