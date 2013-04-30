@@ -138,6 +138,8 @@ bool LocalClientHandler::checkKOMonsters()
         #endif
         //drop the drop item here
         QList<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.values(wildMonsters.first().monster);
+        if(player_informations->questsDrop.contains(wildMonsters.first().monster))
+            drops+=player_informations->questsDrop.values(wildMonsters.first().monster);
         int index=0;
         bool success;
         quint32 quantity;
