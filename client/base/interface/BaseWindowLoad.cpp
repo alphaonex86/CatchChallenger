@@ -436,7 +436,6 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     QList<QListWidgetItem *> items=ui->questsList->selectedItems();
     if(items.size()!=1)
     {
-        qDebug() << "Selected quest is not one";
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }

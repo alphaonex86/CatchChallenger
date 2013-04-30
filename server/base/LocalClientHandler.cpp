@@ -1643,7 +1643,7 @@ void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 
 void LocalClientHandler::addQuestStepDrop(const quint32 &questId,const quint8 &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    emit message(QString("addQuestStepDrop for: %1").arg(questId));
+    emit message(QString("addQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
     if(!addQuestStepDrop(player_informations,questId,questStep))
         emit message(QString("error append drop for quest have failed: %1").arg(questId));
@@ -1652,7 +1652,7 @@ void LocalClientHandler::addQuestStepDrop(const quint32 &questId,const quint8 &q
 void LocalClientHandler::removeQuestStepDrop(const quint32 &questId,const quint8 &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
-    emit message(QString("removeQuestStepDrop for: %1").arg(questId));
+    emit message(QString("removeQuestStepDrop for quest: %1, step: %2").arg(questId).arg(questStep));
     #endif
     if(!removeQuestStepDrop(player_informations,questId,questStep))
         emit message(QString("error append drop for quest have failed: %1").arg(questId));
@@ -1666,7 +1666,7 @@ bool LocalClientHandler::addQuestStepDrop(Player_internal_informations *player_i
     const CatchChallenger::Quest &quest=GlobalServerData::serverPrivateVariables.quests[questId];
     if(step<=0 || step>quest.steps.size())
         return false;
-    Quest::Step stepFull=quest.steps[step];
+    Quest::Step stepFull=quest.steps[step-1];
     int index=0;
     int sub_index;
     while(index<stepFull.itemsMonster.size())
@@ -1691,7 +1691,7 @@ bool LocalClientHandler::removeQuestStepDrop(Player_internal_informations *playe
     const CatchChallenger::Quest &quest=GlobalServerData::serverPrivateVariables.quests[questId];
     if(step<=0 || step>quest.steps.size())
         return false;
-    Quest::Step stepFull=quest.steps[step];
+    Quest::Step stepFull=quest.steps[step-1];
     int index=0;
     int sub_index;
     while(index<stepFull.itemsMonster.size())
@@ -1845,7 +1845,7 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
     }
     removeQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests[quest.id].step);
     player_informations->public_and_private_informations.quests[quest.id].step++;
-    if(player_informations->public_and_private_informations.quests[quest.id].step==quest.steps.size())
+    if(player_informations->public_and_private_informations.quests[quest.id].step>quest.steps.size())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
         emit message(QString("finish the quest: %1").arg(quest.id));
@@ -1882,7 +1882,30 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         }
     }
     else
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
+        emit message(QString("next step in the quest: %1").arg(quest.id));
+        #endif
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE monster SET step=%3,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                             .arg(player_informations->id)
+                             .arg(quest.id)
+                             .arg(player_informations->public_and_private_informations.quests[quest.id].step)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE monster SET step=%3,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                             .arg(player_informations->id)
+                             .arg(quest.id)
+                             .arg(player_informations->public_and_private_informations.quests[quest.id].step)
+                             );
+            break;
+        }
         addQuestStepDrop(quest.id,player_informations->public_and_private_informations.quests[quest.id].step);
+    }
     return true;
 }
 
