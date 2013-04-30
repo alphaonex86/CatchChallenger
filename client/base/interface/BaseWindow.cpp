@@ -1848,12 +1848,18 @@ void BaseWindow::getTextEntryPoint()
     scriptFile.open(QIODevice::ReadOnly);
     QTextStream stream(&scriptFile);
     QString contents = stream.readAll();
+    quint8 currentQuestStepVar;
+    bool haveNextStepQuestRequirementsVar;
+    bool finishOneTimeVar;
     scriptFile.close();
     if(!quests.contains(questId))
     {
         contents.replace("currentQuestStep()","0");
         contents.replace("finishOneTime()","false");
-        contents.replace("haveNextStepQuestRequirements()","false");//bug if use that's
+        contents.replace("haveQuestStepRequirements()","false");//bug if use that's
+        currentQuestStepVar=0;
+        haveNextStepQuestRequirementsVar=false;
+        finishOneTimeVar=false;
     }
     else
     {
@@ -1864,12 +1870,26 @@ void BaseWindow::getTextEntryPoint()
         else
             contents.replace("finishOneTime()","false");
         if(quest.step<=0)
-            contents.replace("haveNextStepQuestRequirements()","false");
+        {
+            contents.replace("haveQuestStepRequirements()","false");
+            haveNextStepQuestRequirementsVar=false;
+        }
         else if(haveNextStepQuestRequirements(DatapackClientLoader::datapackLoader.quests[questId]))
-            contents.replace("haveNextStepQuestRequirements()","true");
+        {
+            contents.replace("haveQuestStepRequirements()","true");
+            haveNextStepQuestRequirementsVar=true;
+        }
         else
-            contents.replace("haveNextStepQuestRequirements()","false");
+        {
+            contents.replace("haveQuestStepRequirements()","false");
+            haveNextStepQuestRequirementsVar=false;
+        }
+        currentQuestStepVar=quest.step;
+        finishOneTimeVar=quest.finish_one_time;
     }
+    #ifdef DEBUG_CLIENT_QUEST
+    qDebug() << "currentQuestStep:" << currentQuestStepVar << ", haveNextStepQuestRequirements:" << haveNextStepQuestRequirementsVar << ", finishOneTime:" << finishOneTimeVar << ", contents:" << contents;
+    #endif
 
     QScriptValue result = engine.evaluate(contents, client_logic);
     if (result.isError()) {
@@ -1885,7 +1905,32 @@ void BaseWindow::getTextEntryPoint()
     }
 
     QScriptValue getTextEntryPoint = engine.globalObject().property("getTextEntryPoint");
-    quint32 textEntryPoint=getTextEntryPoint.call().toNumber();
+    if(getTextEntryPoint.isError())
+    {
+        qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
+                    .arg(client_logic)
+                    .arg(getTextEntryPoint.property("lineNumber").toInt32())
+                    .arg(getTextEntryPoint.toString());
+        showTip(QString::fromLatin1("%0:%1: %2")
+        .arg(client_logic)
+        .arg(getTextEntryPoint.property("lineNumber").toInt32())
+        .arg(getTextEntryPoint.toString()));
+        return;
+    }
+    QScriptValue returnValue=getTextEntryPoint.call();
+    quint32 textEntryPoint=returnValue.toNumber();
+    if(returnValue.isError())
+    {
+        qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
+                    .arg(client_logic)
+                    .arg(returnValue.property("lineNumber").toInt32())
+                    .arg(returnValue.toString());
+        showTip(QString::fromLatin1("%0:%1: %2")
+        .arg(client_logic)
+        .arg(returnValue.property("lineNumber").toInt32())
+        .arg(returnValue.toString()));
+        return;
+    }
     qDebug() << "textEntryPoint:" << textEntryPoint;
     showQuestText(textEntryPoint);
 }
