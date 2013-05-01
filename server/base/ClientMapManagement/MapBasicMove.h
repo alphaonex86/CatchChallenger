@@ -25,8 +25,8 @@ public:
 
     Direction getLastDirection();
     Map* getMap();
-    COORD_TYPE getX();
-    COORD_TYPE getY();
+    inline COORD_TYPE getX();
+    inline COORD_TYPE getY();
 
     //internal var
     Player_internal_informations *player_informations;
