@@ -1854,13 +1854,13 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE monster SET step=0,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=0,finish_one_time=1 WHERE player=%1 AND quest=%2;")
                              .arg(player_informations->id)
                              .arg(quest.id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET step=0,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=0,finish_one_time=1 WHERE player=%1 AND quest=%2;")
                              .arg(player_informations->id)
                              .arg(quest.id)
                              );
@@ -1890,14 +1890,14 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE monster SET step=%3,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
                              .arg(player_informations->id)
                              .arg(quest.id)
                              .arg(player_informations->public_and_private_informations.quests[quest.id].step)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET step=%3,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
                              .arg(player_informations->id)
                              .arg(quest.id)
                              .arg(player_informations->public_and_private_informations.quests[quest.id].step)
@@ -1981,17 +1981,17 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO reputation(player,type,point,level) VALUES(%1,%2,%3,%4);")
+            emit dbQuery(QString("INSERT INTO reputation(player,type,point,level) VALUES(%1,\"%2\",%3,%4);")
                              .arg(player_informations->id)
-                             .arg(type)
+                             .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
                              .arg(playerReputation.level)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO reputation(player,type,point,level) VALUES(%1,%2,%3,%4);")
+                emit dbQuery(QString("INSERT INTO reputation(player,type,point,level) VALUES(%1,\"%2\",%3,%4);")
                              .arg(player_informations->id)
-                             .arg(type)
+                             .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
                              .arg(playerReputation.level)
                              );
@@ -2004,17 +2004,17 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=%2;")
+                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=\"%2\";")
                              .arg(player_informations->id)
-                             .arg(type)
+                             .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
                              .arg(playerReputation.level)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=%2;")
+                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=\"%2\";")
                              .arg(player_informations->id)
-                             .arg(type)
+                             .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
                              .arg(playerReputation.level)
                              );
