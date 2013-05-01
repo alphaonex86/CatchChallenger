@@ -104,8 +104,11 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     //connect for trade
     connect(localClientHandler,	SIGNAL(sendTradeRequest(QByteArray)),       clientNetworkRead,SLOT(sendTradeRequest(QByteArray)),Qt::QueuedConnection);
+    connect(localClientHandler,	SIGNAL(sendBattleRequest(QByteArray)),       clientNetworkRead,SLOT(sendBattleRequest(QByteArray)),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(tradeAccepted()),                    localClientHandler,SLOT(tradeAccepted()),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(tradeCanceled()),                    localClientHandler,SLOT(tradeCanceled()),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(battleAccepted()),                    localClientHandler,SLOT(battleAccepted()),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(battleCanceled()),                    localClientHandler,SLOT(battleCanceled()),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(tradeFinished()),                    localClientHandler,SLOT(tradeFinished()),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(tradeAddTradeCash(quint64)),         localClientHandler,SLOT(tradeAddTradeCash(quint64)),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(tradeAddTradeObject(quint32,quint32)),localClientHandler,SLOT(tradeAddTradeObject(quint32,quint32)),Qt::QueuedConnection);

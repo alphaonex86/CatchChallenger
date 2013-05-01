@@ -79,6 +79,17 @@ void ClientNetworkRead::sendTradeRequest(const QByteArray &data)
     queryNumberList.removeFirst();
 }
 
+void ClientNetworkRead::sendBattleRequest(const QByteArray &data)
+{
+    if(queryNumberList.empty())
+    {
+        emit error(QString("Sorry, no free query number to send this query of trade"));
+        return;
+    }
+    emit sendQuery(0x90,0x0001,queryNumberList.first(),data);
+    queryNumberList.removeFirst();
+}
+
 void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     if(stopIt)
@@ -935,6 +946,34 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 
                         break;
                         case 0x02:
                             emit tradeCanceled();
+                        break;
+                        default:
+                            parseError(QString("ident: %1, sub ident: %2, unknow return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
+                        break;
+                    }
+                }
+            break;
+            default:
+                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                return;
+            break;
+        }
+        break;
+        case 0x90:
+        switch(subCodeType)
+        {
+            //Another player request a trade
+            case 0x0001:
+                {
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                            emit battleAccepted();
+                        break;
+                        case 0x02:
+                            emit battleCanceled();
                         break;
                         default:
                             parseError(QString("ident: %1, sub ident: %2, unknow return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
