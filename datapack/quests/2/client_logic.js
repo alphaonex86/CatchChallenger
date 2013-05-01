@@ -8,8 +8,7 @@ function getTextEntryPoint()
 			return 50;//give all object to pass to step 2
 		else
 			return 42;//need more object
-		return 99;
 	}
 	if(currentQuestStep()==2)
-		return '52';//to finish the quest
+		return '55';//to finish the quest
 }

@@ -22,4 +22,12 @@
 	<client_logic id="53">
 		<text lang="en"><![CDATA[You don't have requiered quantity.]]></text>
 	</client_logic>
+	<client_logic id="55">
+		<text lang="en"><![CDATA[What do you want?<br />
+		<br />
+		<a href="next_quest_step;56">The bandit have say to talk to you</a><br />]]></text>
+	</client_logic>
+	<client_logic id="56">
+		<text lang="en"><![CDATA[Exactly, you have finish the quest for him]]></text>
+	</client_logic>
 </text>

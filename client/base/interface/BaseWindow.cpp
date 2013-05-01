@@ -1209,7 +1209,6 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check bot quest for: " << botId;
     #endif
-    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     //do the not started quest here
     QList<quint32> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
@@ -1217,7 +1216,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
     {
         const quint8 &questId=botQuests.at(index);
         const CatchChallenger::Quest &currentQuest=DatapackClientLoader::datapackLoader.quests[questId];
-        if(!informations.quests.contains(botQuests.at(index)))
+        if(!quests.contains(botQuests.at(index)))
         {
             //quest not started
             if(haveStartQuestRequirement(currentQuest))
@@ -1231,11 +1230,11 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
-                if(informations.quests[botQuests.at(index)].step==0)
+                if(quests[botQuests.at(index)].step==0)
                 {
                     if(currentQuest.repeatable)
                     {
-                        if(informations.quests[botQuests.at(index)].finish_one_time)
+                        if(quests[botQuests.at(index)].finish_one_time)
                         {
                             //quest already done but repeatable
                             if(haveStartQuestRequirement(currentQuest))
@@ -1251,7 +1250,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
                 }
                 else
                 {
-                    QList<quint32> bots=currentQuest.steps.at(informations.quests[questId].step-1).bots;
+                    QList<quint32> bots=currentQuest.steps.at(quests[questId].step-1).bots;
                     if(bots.contains(botId))
                         return true;//in progress
                     else
@@ -1262,7 +1261,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         index++;
     }
     //do the started quest here
-    QHashIterator<quint32, PlayerQuest> i(informations.quests);
+    QHashIterator<quint32, PlayerQuest> i(quests);
     while (i.hasNext()) {
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
@@ -1862,6 +1861,7 @@ void BaseWindow::getTextEntryPoint()
     if(!quests.contains(questId))
     {
         contents.replace("currentQuestStep()","0");
+        contents.replace("currentBot()","0");
         contents.replace("finishOneTime()","false");
         contents.replace("haveQuestStepRequirements()","false");//bug if use that's
         currentQuestStepVar=0;
@@ -1872,6 +1872,7 @@ void BaseWindow::getTextEntryPoint()
     {
         PlayerQuest quest=quests[questId];
         contents.replace("currentQuestStep()",QString::number(quest.step));
+        contents.replace("currentBot()",QString::number(actualBot.botId));
         if(quest.finish_one_time)
             contents.replace("finishOneTime()","true");
         else

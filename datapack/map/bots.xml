@@ -44,7 +44,7 @@ skin is invisible
 			</center>]]></text>
 		</step>
 		<step id="2" type="learn" />
-		<step id="3" type="quest" quest="2" success="10" /><!-- show the default failure text if failed -->
+		<step id="3" type="quests" /><!-- show the default failure text if failed -->
 		<step id="10" type="text">
 			<text lang="en"><![CDATA[The bandit want I give you some plants.]]></text>
 		</step>
