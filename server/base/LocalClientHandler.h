@@ -29,14 +29,19 @@ class LocalClientHandler : public MapBasicMove
 public:
     explicit LocalClientHandler();
     virtual ~LocalClientHandler();
-    inline bool getInTrade();
+    bool getInTrade();
+    bool getInBattle();
     void registerTradeRequest(LocalClientHandler * otherPlayerTrade);
+    void registerBattleRequest(LocalClientHandler * otherPlayerTrade);
     bool getIsFreezed();
     quint64 getTradeCash();
     QHash<quint32,quint32> getTradeObjects();
     QList<PlayerMonster> getTradeMonster();
     void resetTheTrade();
+    void resetTheBattle();
     void addExistingMonster(QList<PlayerMonster> tradeMonster);
+    bool getAbleToFight();
+    PlayerMonster getFirstValidMonster();
 private:
     bool checkCollision();
     void getRandomNumberIfNeeded();
@@ -52,6 +57,9 @@ private:
     quint64 tradeCash;
     QHash<quint32,quint32> tradeObjects;
     QList<PlayerMonster> tradeMonster;
+    //battle
+    LocalClientHandler * otherPlayerBattle;
+    bool battleIsValidated;
 
     //fight
     quint8 selectedMonster;
@@ -67,6 +75,7 @@ private:
     void applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     bool isInFight();
     bool remainMonstersToFight(const quint32 &monsterId);
+    bool monsterIsKO(const PlayerMonster &playerMonter);
     void generateOtherAttack();
     void updateCanDoFight();
     bool tryEscapeInternal();
@@ -82,6 +91,9 @@ private:
     //other
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
     bool otherPlayerIsInRange(LocalClientHandler * otherPlayer);
+    //trade
+    void internalBattleCanceled(const bool &send);
+    void internalBattleAccepted(const bool &send);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
@@ -132,6 +144,10 @@ public slots:
     static bool removeQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step);
     //reputation
     void appendReputationPoint(const QString &type,const qint32 &point);
+    //battle
+    void battleCanceled();
+    void battleAccepted();
+    void battleFinished();
 private slots:
     virtual void extraStop();
     void savePosition();
@@ -148,6 +164,7 @@ signals:
     void receiveSystemText(const QString &text,const bool &important=false);
     void postReply(const quint8 &queryNumber,const QByteArray &data);
     void sendTradeRequest(const QByteArray &data);
+    void sendBattleRequest(const QByteArray &data);
 
     void seedValidated();
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);

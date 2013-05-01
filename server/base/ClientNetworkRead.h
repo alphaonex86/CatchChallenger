@@ -37,6 +37,7 @@ public slots:
 
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     void sendTradeRequest(const QByteArray &data);
+    void sendBattleRequest(const QByteArray &data);
 private:
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
     //have message without reply
@@ -96,6 +97,9 @@ signals:
     void learnSkill(const quint32 &monsterId,const quint32 &skill);
     //quest
     void newQuestAction(const QuestAction &action,const quint32 &questId);
+    //battle
+    void battleCanceled();
+    void battleAccepted();
 private:
     // for status
     bool have_send_protocol;
