@@ -7,6 +7,8 @@ SOURCES += \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
     $$PWD/base/LocalClientHandler.cpp \
+    $$PWD/base/LocalClientHandlerQuest.cpp \
+    $$PWD/base/LocalClientHandlerTrade.cpp \
     $$PWD/base/ClientLocalBroadcast.cpp \
     $$PWD/base/EventThreader.cpp \
     $$PWD/base/Client.cpp \

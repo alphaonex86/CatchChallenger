@@ -81,6 +81,7 @@ private:
     void internalTradeAccepted(const bool &send);
     //other
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
+    bool otherPlayerIsInRange(LocalClientHandler * otherPlayer);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
