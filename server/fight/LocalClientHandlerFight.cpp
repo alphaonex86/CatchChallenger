@@ -528,7 +528,7 @@ void LocalClientHandler::updateCanDoFight()
     while(index<player_informations->public_and_private_informations.playerMonster.size())
     {
         const PlayerMonster &playerMonsterEntry=player_informations->public_and_private_informations.playerMonster.at(index);
-        if(playerMonsterEntry.hp>0 && playerMonsterEntry.egg_step==0)
+        if(!monsterIsKO(playerMonsterEntry))
         {
             selectedMonster=index;
             ableToFight=true;
@@ -536,6 +536,16 @@ void LocalClientHandler::updateCanDoFight()
         }
         index++;
     }
+}
+
+PlayerMonster LocalClientHandler::getFirstValidMonster()
+{
+    return player_informations->public_and_private_informations.playerMonster.at(selectedMonster);
+}
+
+bool LocalClientHandler::getAbleToFight()
+{
+    return ableToFight;
 }
 
 bool LocalClientHandler::remainMonstersToFight(const quint32 &monsterId)
@@ -547,18 +557,23 @@ bool LocalClientHandler::remainMonstersToFight(const quint32 &monsterId)
         if(playerMonsterEntry.id==monsterId)
         {
             //the current monster can't fight, echange it will do nothing
-            if(playerMonsterEntry.hp<=0 || playerMonsterEntry.egg_step>0)
+            if(monsterIsKO(playerMonsterEntry))
                 return true;
         }
         else
         {
             //other monster can fight, can continue to fight
-            if(playerMonsterEntry.hp>0 && playerMonsterEntry.egg_step==0)
+            if(!monsterIsKO(playerMonsterEntry))
                 return true;
         }
         index++;
     }
     return false;
+}
+
+bool LocalClientHandler::monsterIsKO(const PlayerMonster &playerMonter)
+{
+    return playerMonter.hp<=0 || playerMonter.egg_step>0;
 }
 
 void LocalClientHandler::generateOtherAttack()
@@ -786,7 +801,7 @@ void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Mo
 
 bool LocalClientHandler::isInFight()
 {
-    return !wildMonsters.empty();
+    return !wildMonsters.empty() || otherPlayerBattle!=NULL || battleIsValidated;
 }
 
 void LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effect)

@@ -13,14 +13,14 @@ LocalClientHandler::LocalClientHandler()
     stepFight_Water=0;
     stepFight_Cave=0;
     otherPlayerTrade=NULL;
+    otherPlayerBattle=NULL;
     tradeIsValidated=false;
+    battleIsValidated=false;
 }
 
 LocalClientHandler::~LocalClientHandler()
 {
 }
-
-
 
 bool LocalClientHandler::checkCollision()
 {
@@ -38,6 +38,7 @@ bool LocalClientHandler::checkCollision()
 void LocalClientHandler::extraStop()
 {
     tradeCanceled();
+    battleCanceled();
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
 
     if(!player_informations->is_logged || player_informations->isFake)
@@ -595,9 +596,19 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("you are already in trade"));
             return;
         }
+        if(getInBattle())
+        {
+            emit receiveSystemText(QString("you are already in battle"));
+            return;
+        }
         if(playerByPseudo[extraText]->getInTrade())
         {
             emit receiveSystemText(QString("%1 is already in trade").arg(extraText));
+            return;
+        }
+        if(playerByPseudo[extraText]->getInBattle())
+        {
+            emit receiveSystemText(QString("%1 is already in battle").arg(extraText));
             return;
         }
         if(!otherPlayerIsInRange(playerByPseudo[extraText]))
@@ -611,10 +622,80 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         otherPlayerTrade=playerByPseudo[extraText];
         otherPlayerTrade->registerTradeRequest(this);
     }
+    else if(command=="battle")
+    {
+        if(extraText.isEmpty())
+        {
+            emit receiveSystemText(QString("no player given, syntaxe: /battle player").arg(extraText));
+            return;
+        }
+        if(!playerByPseudo.contains(extraText))
+        {
+            emit receiveSystemText(QString("%1 is not connected").arg(extraText));
+            return;
+        }
+        if(player_informations->public_and_private_informations.public_informations.pseudo==extraText)
+        {
+            emit receiveSystemText(QString("You can't battle with yourself").arg(extraText));
+            return;
+        }
+        if(getInBattle())
+        {
+            emit receiveSystemText(QString("you are already in battle"));
+            return;
+        }
+        if(getInTrade())
+        {
+            emit receiveSystemText(QString("you are already in trade"));
+            return;
+        }
+        if(playerByPseudo[extraText]->getInBattle())
+        {
+            emit receiveSystemText(QString("%1 is already in battle").arg(extraText));
+            return;
+        }
+        if(playerByPseudo[extraText]->getInTrade())
+        {
+            emit receiveSystemText(QString("%1 is already in battle").arg(extraText));
+            return;
+        }
+        if(!otherPlayerIsInRange(playerByPseudo[extraText]))
+        {
+            emit receiveSystemText(QString("%1 is not in range").arg(extraText));
+            return;
+        }
+        if(!playerByPseudo[extraText]->getAbleToFight())
+        {
+            emit receiveSystemText("The other player can't fight");
+            return;
+        }
+        if(!getAbleToFight())
+        {
+            emit receiveSystemText("You can't fight");
+            return;
+        }
+        if(playerByPseudo[extraText]->isInFight())
+        {
+            emit receiveSystemText("The other player is in fight");
+            return;
+        }
+        if(isInFight())
+        {
+            emit receiveSystemText("You are in fight");
+            return;
+        }
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message("Battle requested");
+        #endif
+        otherPlayerBattle=playerByPseudo[extraText];
+        otherPlayerBattle->registerBattleRequest(this);
+    }
 }
 
 bool LocalClientHandler::otherPlayerIsInRange(LocalClientHandler * otherPlayer)
 {
+    if(getMap()==NULL)
+        return false;
     return getMap()==otherPlayer->getMap();
 }
 
