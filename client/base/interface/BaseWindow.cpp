@@ -124,6 +124,10 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(haveShopList(QList<ItemToSellOrBuy>)),this,SLOT(haveShopList(QList<ItemToSellOrBuy>)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(haveSellObject(SoldStat,quint32)),this,SLOT(haveSellObject(SoldStat,quint32)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(haveBuyObject(BuyStat,quint32)),this,SLOT(haveBuyObject(BuyStat,quint32)));
+    //battle
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(battleRequested(QString,quint8)),this,SLOT(battleRequested(QString,quint8)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)),this,SLOT(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(battleCanceledByOther()),this,SLOT(battleCanceledByOther()));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),CatchChallenger::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
@@ -319,6 +323,66 @@ void BaseWindow::tradeUpdateCurrentObject()
         }
         ui->tradePlayerItems->addItem(item);
     }
+}
+
+void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
+{
+    Q_UNUSED(skinInt);
+    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Battle request"),tr("Do you accept the trade with <b>%1</b>?").arg(pseudo),QMessageBox::Yes|QMessageBox::No);
+    if(button!=QMessageBox::Yes)
+    {
+        CatchChallenger::Api_client_real::client->battleRefused();
+        return;
+    }
+    CatchChallenger::Api_client_real::client->battleAccepted();
+}
+
+void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster)
+{
+    if(!lastBattleQuery.isEmpty())
+    {
+        qDebug() << "lastBattleQuery have size wrong: "+QString::number(lastBattleQuery.size());
+        lastBattleQuery.clear();
+        CatchChallenger::Api_client_real::client->battleRefused();
+        return;
+    }
+    QPair<QString,quint8> item;
+    item.first=pseudo;
+    item.second=skinId;
+    lastBattleQuery << item;
+    ui->stackedWidget->setCurrentWidget(ui->page_battle);
+
+    skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
+    QPixmap otherFrontImage;
+    //front image
+    if(lastBattleQuery.first().second<skinFolderList.size())
+    {
+        otherFrontImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(lastBattleQuery.first().second)+"/front.png");
+        if(otherFrontImage.isNull())
+        {
+            otherFrontImage=QPixmap(":/images/player_default/front.png");
+            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(lastBattleQuery.first().second)+"/front.png";
+        }
+    }
+    else
+    {
+        otherFrontImage=QPixmap(":/images/player_default/front.png");
+        qDebug() << "The skin id: "+QString::number(lastBattleQuery.first().second)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into battleRequested()";
+    }
+
+    //reset the other player info
+    ui->labelFightMonsterTop->setPixmap(otherFrontImage);
+    //ui->battleOtherPseudo->setText(lastBattleQuery.first().first);
+
+    //todo
+}
+
+void BaseWindow::battleCanceledByOther()
+{
+    lastBattleQuery.clear();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("The other player have canceled the battle"));
+    load_monsters();
 }
 
 QString BaseWindow::lastLocation() const
