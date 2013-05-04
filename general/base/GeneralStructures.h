@@ -156,6 +156,17 @@ struct PlayerMonster
     quint32 id;
 };
 
+struct PublicPlayerMonster
+{
+    quint32 monster;
+    quint8 level;
+    quint32 hp;
+    quint32 captured_with;
+    PlayerMonster::Gender gender;
+    quint32 egg_step;
+    QList<PlayerMonster::PlayerBuff> buffs;
+};
+
 struct PlayerQuest
 {
     quint8 step;
