@@ -67,6 +67,7 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketServerToClient[0xD0][0x0006]=0;
     sizeMultipleCodePacketServerToClient[0xD0][0x0007]=0;
     sizeMultipleCodePacketServerToClient[0xD0][0x0008]=0;
+    sizeMultipleCodePacketServerToClient[0xE0][0x0007]=0;
     //define the size of the reply
     /** \note previously send by: sizeMultipleCodePacketServerToClient */
     replySizeMultipleCodePacketClientToServer[0x79][0x0001]=0;
@@ -91,6 +92,8 @@ void ProtocolParsing::initialiseTheVariable()
 
     //register meta type
     qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
+    qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+    qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
 }
 
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)

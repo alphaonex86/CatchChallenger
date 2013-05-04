@@ -31,14 +31,14 @@ void LocalClientHandler::battleCanceled()
 {
     if(otherPlayerBattle!=NULL)
         otherPlayerBattle->internalBattleCanceled(true);
-    internalBattleCanceled(false);
+    internalBattleCanceled(true);
 }
 
 void LocalClientHandler::battleAccepted()
 {
     if(otherPlayerBattle!=NULL)
         otherPlayerBattle->internalBattleAccepted(true);
-    internalBattleAccepted(false);
+    internalBattleAccepted(true);
 }
 
 void LocalClientHandler::battleFinished()
@@ -100,9 +100,7 @@ void LocalClientHandler::internalBattleCanceled(const bool &send)
     otherPlayerBattle=NULL;
     if(send)
     {
-        if(battleIsValidated)
             emit sendPacket(0xE0,0x0007);
-        else
             emit receiveSystemText(QString("Battle declined"));
     }
     battleIsValidated=false;
@@ -128,16 +126,6 @@ void LocalClientHandler::internalBattleAccepted(const bool &send)
     if(!getAbleToFight())
     {
         emit error("You can't fight");
-        return;
-    }
-    if(otherPlayerBattle->isInFight())
-    {
-        emit receiveSystemText("The other player is in fight");
-        return;
-    }
-    if(isInFight())
-    {
-        emit receiveSystemText("You are in fight");
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -175,6 +163,6 @@ void LocalClientHandler::internalBattleAccepted(const bool &send)
             out << (quint8)firstValidOtherPlayerMonster.buffs[index].level;
             index++;
         }
-        emit sendPacket(0xE0,0x0009,otherPlayerBattle->player_informations->rawPseudo+outputData);
+        emit sendPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData);
     }
 }

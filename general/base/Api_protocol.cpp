@@ -1356,6 +1356,156 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
             }
         }
         break;
+        case 0xE0:
+        {
+            switch(subCodeType)
+            {
+                //The other player have declined you battle request
+                case 0x0007:
+                    emit battleCanceledByOther();
+                break;
+                //The other player have accepted you battle request
+                case 0x0008:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint8 pseudoSize;
+                    in >> pseudoSize;
+                    if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(pseudoSize)
+                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                    QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                    in.device()->seek(in.device()->pos()+rawText.size());
+                    if(pseudo.isEmpty())
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(QString(rawText.toHex()))
+                                      .arg(rawText.size())
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    quint8 skinId;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> skinId;
+                    PublicPlayerMonster publicPlayerMonster;
+                    QList<quint8> stat;
+                    quint8 genderInt;
+                    int buffListSize;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint8 statListSize;
+                    in >> statListSize;
+                    int index=0;
+                    while(index<statListSize)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        quint8 statEntry;
+                        in >> statEntry;
+                        stat << statEntry;
+                        index++;
+                    }
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> publicPlayerMonster.monster;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> publicPlayerMonster.level;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> publicPlayerMonster.hp;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> publicPlayerMonster.captured_with;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> genderInt;
+                    switch(genderInt)
+                    {
+                        case 0x01:
+                        case 0x02:
+                        case 0x03:
+                            publicPlayerMonster.gender=(PlayerMonster::Gender)genderInt;
+                        break;
+                        default:
+                            parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(genderInt));
+                            return;
+                        break;
+                    }
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> buffListSize;
+                    index=0;
+                    while(index<buffListSize)
+                    {
+                        PlayerMonster::PlayerBuff buff;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> buff.buff;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> buff.level;
+                        publicPlayerMonster.buffs << buff;
+                        index++;
+                    }
+                    emit battleAcceptedByOther(pseudo,skinId,stat,publicPlayerMonster);
+                }
+                break;
+                default:
+                parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                return;
+            }
+        }
+        break;
         default:
             parseError(tr("Procotol wrong or corrupted"),QString("unknow ident main code: %1").arg(mainCodeType));
             return;
@@ -1476,6 +1626,11 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeT
                         parseError(tr("Procotol wrong or corrupted"),QString("Already on trade"));
                         return;
                     }
+                    if(!battleRequestId.isEmpty() || isInBattle)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("Already on battle"));
+                        return;
+                    }
                     quint8 pseudoSize;
                     in >> pseudoSize;
                     if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
@@ -1512,6 +1667,67 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeT
                     in >> skinInt;
                     tradeRequestId << queryNumber;
                     emit tradeRequested(pseudo,skinInt);
+                }
+                break;
+                default:
+                parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                return;
+            }
+        }
+        break;
+        case 0x90:
+        {
+            switch(subCodeType)
+            {
+                //Another player request a trade
+                case 0x0001:
+                {
+                    if(!tradeRequestId.isEmpty() || isInTrade)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("Already on trade"));
+                        return;
+                    }
+                    if(!battleRequestId.isEmpty() || isInBattle)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("Already on battle"));
+                        return;
+                    }
+                    quint8 pseudoSize;
+                    in >> pseudoSize;
+                    if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(pseudoSize)
+                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                    QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                    in.device()->seek(in.device()->pos()+rawText.size());
+                    if(pseudo.isEmpty())
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed: mainCodeType: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                                      .arg(mainCodeType)
+                                      .arg(subCodeType)
+                                      .arg(QString(rawText.toHex()))
+                                      .arg(rawText.size())
+                                      .arg(__LINE__)
+                                      );
+                        return;
+                    }
+                    quint8 skinInt;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> skinInt;
+                    battleRequestId << queryNumber;
+                    emit battleRequested(pseudo,skinInt);
                 }
                 break;
                 default:
@@ -2450,6 +2666,36 @@ void Api_protocol::addRecipe(const quint32 &recipeId)
     player_informations.recipes << recipeId;
 }
 
+void Api_protocol::battleRefused()
+{
+    if(battleRequestId.isEmpty())
+    {
+        emit newError(tr("Internal problem"),QString("no battle request to refuse"));
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    output->postReplyData(battleRequestId.first(),outputData);
+    battleRequestId.removeFirst();
+}
+
+void Api_protocol::battleAccepted()
+{
+    if(battleRequestId.isEmpty())
+    {
+        emit newError(tr("Internal problem"),QString("no battle request to accept"));
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    output->postReplyData(battleRequestId.first(),outputData);
+    battleRequestId.removeFirst();
+}
+
 //trade
 void Api_protocol::tradeRefused()
 {
@@ -2577,6 +2823,8 @@ void Api_protocol::resetAll()
     haveShopAction=false;
     isInTrade=false;
     tradeRequestId.clear();
+    isInBattle=false;
+    battleRequestId.clear();
 
     //to send trame
     lastQueryNumber=1;
