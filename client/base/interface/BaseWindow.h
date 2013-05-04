@@ -132,6 +132,10 @@ private slots:
     void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
     void tradeUpdateCurrentObject();
+    //battle
+    void battleRequested(const QString &pseudo, const quint8 &skinInt);
+    void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster);
+    void battleCanceledByOther();
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
@@ -325,6 +329,9 @@ private:
     bool isInQuest;
     quint32 questId;
     QHash<quint32, PlayerQuest> quests;
+
+    //battle
+    QList<QPair<QString,quint8> > lastBattleQuery;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);
