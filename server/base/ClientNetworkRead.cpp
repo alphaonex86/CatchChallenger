@@ -361,6 +361,12 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                                     emit message("send command: /"+command+" "+text);
                                     return;
                                 }
+                                else if(command=="battle")
+                                {
+                                    emit sendHandlerCommand(command,text);
+                                    emit message("send command: /"+command+" "+text);
+                                    return;
+                                }
                             }
                             //the admin command
                             if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
@@ -408,12 +414,14 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                                 else
                                 {
                                     emit message("unknow send command: /"+command+" and \""+text+"\"");
-                                    //emit sendChatText((Chat_type)chatType,text);
+                                    receiveSystemText("unknow send command: /"+command+" and \""+text+"\"");
                                 }
                             }
                             else
+                            {
                                 emit message("unknow send command: /"+command+" and \""+text+"\"");
-                                //emit sendChatText((Chat_type)chatType,text);
+                                receiveSystemText("unknow send command: /"+command+" and \""+text+"\"");
+                            }
                         }
                         else
                             emit message("commands seem not right: \""+text+"\"");
@@ -1024,4 +1032,14 @@ void ClientNetworkRead::purgeReadBuffer()
 {
     canStartReadData=true;
     parseIncommingData();
+}
+
+void ClientNetworkRead::receiveSystemText(const QString &text)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)Chat_type_system;
+    out << text;
+    emit sendPacket(0xC2,0x0005,outputData);
 }

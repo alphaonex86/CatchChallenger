@@ -99,6 +99,9 @@ protected:
     //trade
     QList<quint32> tradeRequestId;
     bool isInTrade;
+    //battle
+    QList<quint32> battleRequestId;
+    bool isInBattle;
 signals:
     void newError(const QString &error,const QString &detailedError);
 
@@ -160,6 +163,11 @@ signals:
     void tradeAddTradeCash(const quint64 &cash);
     void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
+
+    //battle
+    void battleRequested(const QString &pseudo,const quint8 &skinInt);
+    void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster);
+    void battleCanceledByOther();
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -182,6 +190,10 @@ public slots:
     void addTradeCash(const quint64 &cash);
     void addObject(const quint32 &item,const quint32 &quantity);
     void addMonster(const quint32 &monsterId);
+
+    //battle
+    void battleRefused();
+    void battleAccepted();
 
     //inventory
     void destroyObject(const quint32 &object,const quint32 &quantity=1);
