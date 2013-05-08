@@ -32,6 +32,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
     qRegisterMetaType<QHash<quint32,quint32> >("CatchChallenger::Plant_collect");
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
+    qRegisterMetaType<QPair<AttackReturn,AttackReturn> >("QPair<AttackReturn,AttackReturn>");
 
     socketState=QAbstractSocket::UnconnectedState;
 
@@ -52,6 +53,8 @@ BaseWindow::BaseWindow() :
     moveFightMonsterBottomTimer.setInterval(20);
     moveFightMonsterTopTimer.setSingleShot(true);
     moveFightMonsterTopTimer.setInterval(20);
+    moveFightMonsterBothTimer.setSingleShot(true);
+    moveFightMonsterBothTimer.setInterval(20);
     displayAttackTimer.setSingleShot(true);
     displayAttackTimer.setInterval(50);
     doNextActionTimer.setSingleShot(true);
@@ -98,6 +101,7 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,SIGNAL(fightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(fightCollision(CatchChallenger::Map_client*,quint8,quint8)));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
     connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
+    connect(&moveFightMonsterBothTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBoth()));
     connect(&displayAttackTimer,SIGNAL(timeout()),this,SLOT(displayAttack()));
     connect(&doNextActionTimer,SIGNAL(timeout()),this,SLOT(doNextAction()));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),Qt::QueuedConnection);
@@ -128,6 +132,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleRequested(QString,quint8)),this,SLOT(battleRequested(QString,quint8)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)),this,SLOT(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleCanceledByOther()),this,SLOT(battleCanceledByOther()));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(bool,QPair<AttackReturn,AttackReturn>,QPair<AttackReturn,AttackReturn>)),this,SLOT(sendBattleReturn(bool,QPair<AttackReturn,AttackReturn>,QPair<AttackReturn,AttackReturn>)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),CatchChallenger::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
@@ -328,7 +333,7 @@ void BaseWindow::tradeUpdateCurrentObject()
 void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
 {
     Q_UNUSED(skinInt);
-    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Battle request"),tr("Do you accept the trade with <b>%1</b>?").arg(pseudo),QMessageBox::Yes|QMessageBox::No);
+    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Battle request"),tr("Do you accept the battle with <b>%1</b>?").arg(pseudo),QMessageBox::Yes|QMessageBox::No);
     if(button!=QMessageBox::Yes)
     {
         CatchChallenger::Api_client_real::client->battleRefused();
@@ -350,6 +355,7 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
     item.first=pseudo;
     item.second=skinId;
     lastBattleQuery << item;
+    battleType=BattleType_OtherPlayer;
     ui->stackedWidget->setCurrentWidget(ui->page_battle);
 
     skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
@@ -373,8 +379,18 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
     //reset the other player info
     ui->labelFightMonsterTop->setPixmap(otherFrontImage);
     //ui->battleOtherPseudo->setText(lastBattleQuery.first().first);
+    ui->frameFightTop->hide();
+    ui->frameFightBottom->hide();
+    ui->labelFightMonsterBottom->setPixmap(playerBackImage);
+    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+    ui->labelFightEnter->setText(tr("%1 wish fight with you").arg(pseudo));
+    ui->pushButtonFightEnterNext->hide();
 
-    //todo
+    resetPosition(true);
+    moveType=MoveType_Enter;
+    battleStep=BattleStep_Presentation;
+    moveFightMonsterBoth();
+    CatchChallenger::FightEngine::fightEngine.addBattleMonster(publicPlayerMonster);
 }
 
 void BaseWindow::battleCanceledByOther()

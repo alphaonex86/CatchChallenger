@@ -41,7 +41,8 @@ public:
     void resetTheBattle();
     void addExistingMonster(QList<PlayerMonster> tradeMonster);
     bool getAbleToFight();
-    PlayerMonster getFirstValidMonster();
+    PlayerMonster &getSelectedMonster();
+    PlayerMonster& getEnemyMonster();
 private:
     bool checkCollision();
     void getRandomNumberIfNeeded();
@@ -60,6 +61,8 @@ private:
     //battle
     LocalClientHandler * otherPlayerBattle;
     bool battleIsValidated;
+    quint32 currentSkill;
+    bool haveCurrentSkill;
 
     //fight
     quint8 selectedMonster;
@@ -72,7 +75,7 @@ private:
     void applyOtherBuffEffect(const Skill::BuffEffect &effect);
     void applyOtherLifeEffect(const Skill::LifeEffect &effect);
     void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
-    void applyCurrentLifeEffect(const Skill::LifeEffect &effect);
+    qint32 applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     bool isInFight();
     bool remainMonstersToFight(const quint32 &monsterId);
     bool monsterIsKO(const PlayerMonster &playerMonter);
@@ -81,7 +84,7 @@ private:
     bool tryEscapeInternal();
     bool checkKOMonsters();//true if one monster is KO
     void saveCurrentMonsterStat();
-    void doTheCurrentMonsterAttack(const quint32 &skill,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
+    QPair<AttackReturn,AttackReturn> doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
 
     //map move
     bool singleMove(const Direction &direction);
@@ -94,6 +97,11 @@ private:
     //trade
     void internalBattleCanceled(const bool &send);
     void internalBattleAccepted(const bool &send);
+    //battle
+    bool haveBattleSkill();
+    void haveUsedTheBattleSkill();
+    void useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
+    void sendBattleReturn(const bool currentMonsterStatIsFirstToAttack,const QPair<LocalClientHandler::AttackReturn,LocalClientHandler::AttackReturn> &currentMonsterReturn,const QPair<LocalClientHandler::AttackReturn,LocalClientHandler::AttackReturn> &otherMonsterReturn);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
