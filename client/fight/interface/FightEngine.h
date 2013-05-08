@@ -61,12 +61,13 @@ public:
     bool removeMonster(const quint32 &monsterId);
     bool remainMonstersToFight(const quint32 &monsterId);
     PlayerMonster getFightMonster();
-    PlayerMonster getOtherMonster();
+    PublicPlayerMonster getOtherMonster();
     bool haveOtherMonster();
     //last step
     QList<quint8> stepFight_Water,stepFight_Grass,stepFight_Cave;
     //current fight
-    QList<PlayerMonster> wildMonsters;
+    QList<PlayerMonster> wildMonsters,botMonsters;
+    QList<PublicPlayerMonster> battleCurrentMonster;
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
     void useSkill(const quint32 &skill);
@@ -77,6 +78,8 @@ public:
     bool currentMonsterIsKO();
     bool dropKOWildMonster();
     bool dropKOCurrentMonster();
+    void addBattleMonster(const PublicPlayerMonster &publicPlayerMonster);
+    bool haveWin();
 private:
     int selectedMonster;
     QByteArray m_randomSeeds;

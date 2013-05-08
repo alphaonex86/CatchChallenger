@@ -58,12 +58,26 @@ public:
     enum MoveType
     {
         MoveType_Enter,
+        MoveType_Leave,
         MoveType_Dead
     };
     enum TradeOtherStat
     {
         TradeOtherStat_InWait,
         TradeOtherStat_Accepted
+    };
+    enum BattleType
+    {
+        BattleType_Wild,
+        BattleType_Bot,
+        BattleType_OtherPlayer
+    };
+    enum BattleStep
+    {
+        BattleStep_Presentation,
+        BattleStep_PresentationMonster,
+        BattleStep_Middle,
+        BattleStep_Final
     };
 protected:
     void changeEvent(QEvent *e);
@@ -136,6 +150,7 @@ private slots:
     void battleRequested(const QString &pseudo, const quint8 &skinInt);
     void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster);
     void battleCanceledByOther();
+    void sendBattleReturn(const bool currentMonsterStatIsFirstToAttack,const QPair<AttackReturn,AttackReturn> &currentMonsterReturn,const QPair<AttackReturn,AttackReturn> &otherMonsterReturn);
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
@@ -162,6 +177,7 @@ private slots:
     void moveFightMonsterBottom();
     void updateCurrentMonsterInformation();
     void moveFightMonsterTop();
+    void moveFightMonsterBoth();
     void updateOtherMonsterInformation();
     void on_toolButtonFightQuit_clicked();
     void on_pushButtonFightAttack_clicked();
@@ -174,6 +190,7 @@ private slots:
     void doNextAction();
     void displayAttack();
     void displayText(const QString &text);
+    void resetPosition(bool outOfScreen=false);
 
     //learn
     bool showLearnSkill(const quint32 &monsterId);
@@ -298,6 +315,7 @@ private:
     //fight
     QTimer moveFightMonsterBottomTimer;
     QTimer moveFightMonsterTopTimer;
+    QTimer moveFightMonsterBothTimer;
     QTimer displayAttackTimer;
     QTimer doNextActionTimer;
     QTime updateAttackTime;
@@ -316,6 +334,7 @@ private:
     bool escape,escapeSuccess;
     bool haveDisplayCurrentAttackSuccess;
     bool haveDisplayOtherAttackSuccess;
+    BattleType battleType;
 
     //trade
     TradeOtherStat tradeOtherStat;
@@ -332,6 +351,7 @@ private:
 
     //battle
     QList<QPair<QString,quint8> > lastBattleQuery;
+    BattleStep battleStep;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

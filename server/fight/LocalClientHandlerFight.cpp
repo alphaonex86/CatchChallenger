@@ -50,20 +50,20 @@ void LocalClientHandler::saveCurrentMonsterStat()
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                             .arg(getSelectedMonster().id)
+                             .arg(getSelectedMonster().hp)
+                             .arg(getSelectedMonster().remaining_xp)
+                             .arg(getSelectedMonster().level)
+                             .arg(getSelectedMonster().sp)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
-                             .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                             .arg(getSelectedMonster().id)
+                             .arg(getSelectedMonster().hp)
+                             .arg(getSelectedMonster().remaining_xp)
+                             .arg(getSelectedMonster().level)
+                             .arg(getSelectedMonster().sp)
                              );
             break;
         }
@@ -73,10 +73,10 @@ void LocalClientHandler::saveCurrentMonsterStat()
 bool LocalClientHandler::checkKOMonsters()
 {
     int old_selectedMonster=selectedMonster;
-    if(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp==0)
+    if(getSelectedMonster().hp==0)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("You current monster (%1) is KO").arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].monster));
+        emit message(QString("You current monster (%1) is KO").arg(getSelectedMonster().monster));
         #endif
         updateCanDoFight();
         if(!ableToFight)
@@ -169,15 +169,15 @@ bool LocalClientHandler::checkKOMonsters()
         }
         //give xp/sp here
         const Monster &wildmonster=GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster];
-        const Monster &currentmonster=GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster];
-        player_informations->public_and_private_informations.playerMonster[selectedMonster].sp+=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        const Monster &currentmonster=GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster];
+        getSelectedMonster().sp+=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
         quint32 give_xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
         #endif
         bool haveChangeOfLevel=false;
-        quint32 xp=player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp;
-        quint32 level=player_informations->public_and_private_informations.playerMonster[selectedMonster].level;
+        quint32 xp=getSelectedMonster().remaining_xp;
+        quint32 level=getSelectedMonster().level;
         while(currentmonster.level_to_xp.at(level-1)<(xp+give_xp))
         {
             quint32 old_max_hp=currentmonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
@@ -186,15 +186,15 @@ bool LocalClientHandler::checkKOMonsters()
             xp=0;
             level++;
             haveChangeOfLevel=true;
-            player_informations->public_and_private_informations.playerMonster[selectedMonster].hp+=new_max_hp-old_max_hp;
+            getSelectedMonster().hp+=new_max_hp-old_max_hp;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message(QString("You pass to the level %1").arg(level));
             #endif
         }
         xp+=give_xp;
-        player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp=xp;
+        getSelectedMonster().remaining_xp=xp;
         if(haveChangeOfLevel)
-            player_informations->public_and_private_informations.playerMonster[selectedMonster].level=level;
+            getSelectedMonster().level=level;
 
         //save into db here
         wildMonsters.removeFirst();
@@ -206,16 +206,16 @@ bool LocalClientHandler::checkKOMonsters()
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
                     emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                                 .arg(getSelectedMonster().id)
+                                 .arg(getSelectedMonster().remaining_xp)
+                                 .arg(getSelectedMonster().sp)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
                     emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].remaining_xp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].sp)
+                                 .arg(getSelectedMonster().id)
+                                 .arg(getSelectedMonster().remaining_xp)
+                                 .arg(getSelectedMonster().sp)
                                  );
                 break;
             }
@@ -227,16 +227,16 @@ bool LocalClientHandler::checkKOMonsters()
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
-                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                                     .arg(getSelectedMonster().id)
+                                     .arg(getSelectedMonster().level)
+                                     .arg(getSelectedMonster().hp)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
-                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].id)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level)
-                                     .arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                                     .arg(getSelectedMonster().id)
+                                     .arg(getSelectedMonster().level)
+                                     .arg(getSelectedMonster().hp)
                                      );
                     break;
                 }
@@ -538,9 +538,17 @@ void LocalClientHandler::updateCanDoFight()
     }
 }
 
-PlayerMonster LocalClientHandler::getFirstValidMonster()
+PlayerMonster& LocalClientHandler::getSelectedMonster()
 {
-    return player_informations->public_and_private_informations.playerMonster.at(selectedMonster);
+    return player_informations->public_and_private_informations.playerMonster[selectedMonster];
+}
+
+PlayerMonster& LocalClientHandler::getEnemyMonster()
+{
+    if(battleIsValidated)
+        return otherPlayerBattle->getSelectedMonster();
+    else
+        return wildMonsters.first();
 }
 
 bool LocalClientHandler::getAbleToFight()
@@ -632,7 +640,7 @@ void LocalClientHandler::applyOtherLifeEffect(const Skill::LifeEffect &effect)
         case ApplyOn_AllEnemy:
             if(effect.type==QuantityType_Quantity)
             {
-                Monster::Stat otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
+                Monster::Stat otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster],getSelectedMonster().level);
                 if(effect.quantity<0)
                 {
                     quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
@@ -647,17 +655,17 @@ void LocalClientHandler::applyOtherLifeEffect(const Skill::LifeEffect &effect)
                 }
             }
             else
-                quantity=(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                quantity=(getSelectedMonster().hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>getSelectedMonster().hp)
             {
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=0;
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs.clear();
+                getSelectedMonster().hp=0;
+                getSelectedMonster().buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(stat.hp-player_informations->public_and_private_informations.playerMonster[selectedMonster].hp))
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=stat.hp;
+            else if(quantity>0 && quantity>(stat.hp-getSelectedMonster().hp))
+                getSelectedMonster().hp=stat.hp;
             else
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp+=quantity;
+                getSelectedMonster().hp+=quantity;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             if(effect.quantity<0)
                 emit message(QString("The wild monster give to you %1 of damage").arg(-quantity));
@@ -712,7 +720,7 @@ void LocalClientHandler::applyOtherBuffEffect(const Skill::BuffEffect &effect)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
-            player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs << tempBuff;
+            getSelectedMonster().buffs << tempBuff;
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
@@ -726,13 +734,31 @@ void LocalClientHandler::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 
 void LocalClientHandler::useSkill(const quint32 &skill)
 {
-    Monster::Stat currentMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
+    int index=0;
+    while(index<getSelectedMonster().skills.size())
+    {
+        if(getSelectedMonster().skills.at(index).skill==skill)
+            break;
+        index++;
+    }
+    if(index==getSelectedMonster().skills.size())
+    {
+        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(getSelectedMonster().monster).arg(getSelectedMonster().level).arg(skill));
+        return;
+    }
+    quint8 skillLevel=getSelectedMonster().skills.at(index).level;
+    if(battleIsValidated)
+    {
+        useBattleSkill(skill,skillLevel);
+        return;
+    }
+    Monster::Stat currentMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster],getSelectedMonster().level);
     Monster::Stat otherMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     //do the current monster attack
     if(currentMonsterStatIsFirstToAttack)
     {
-        doTheCurrentMonsterAttack(skill,currentMonsterStat,otherMonsterStat);
+        doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
         if(checkKOMonsters())
             return;
     }
@@ -743,35 +769,26 @@ void LocalClientHandler::useSkill(const quint32 &skill)
     //do the current monster attack
     if(!currentMonsterStatIsFirstToAttack)
     {
-        doTheCurrentMonsterAttack(skill,currentMonsterStat,otherMonsterStat);
+        doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
         if(checkKOMonsters())
             return;
     }
 }
 
-void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat)
+QPair<LocalClientHandler::AttackReturn,LocalClientHandler::AttackReturn> LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat)
 {
     /// \todo use the variable currentMonsterStat and otherMonsterStat to have better speed
     Q_UNUSED(currentMonsterStat);
     Q_UNUSED(otherMonsterStat);
-    int index=0;
-    while(index<player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.size())
-    {
-        if(player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.at(index).skill==skill)
-            break;
-        index++;
-    }
-    if(index==player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.size())
-    {
-        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].monster).arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].level).arg(skill));
-        return;
-    }
-
-    const Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[skill].level.at(player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.at(index).level-1);
+    LocalClientHandler::AttackReturn currentMonster,enemyMonster;
+    LocalClientHandler::AttackReturn::AttackReturnBuff tempReturnBuff;
+    currentMonster.hpChange=0;
+    enemyMonster.hpChange=0;
+    const Skill::SkillList &skillList=GlobalServerData::serverPrivateVariables.monsterSkills[skill].level.at(skillLevel-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-    emit message(QString("You use skill %1 at level %2").arg(skill).arg(player_informations->public_and_private_informations.playerMonster[selectedMonster].skills.at(index).level));
+    emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
     #endif
-    index=0;
+    int index=0;
     while(index<skillList.buff.size())
     {
         const Skill::Buff &buff=skillList.buff.at(index);
@@ -781,7 +798,27 @@ void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Mo
         else
             success=(getOneSeed(100)<buff.success);
         if(success)
+        {
             applyCurrentBuffEffect(buff.effect);
+            switch(buff.effect.on)
+            {
+                case ApplyOn_AloneEnemy:
+                case ApplyOn_AllEnemy:
+                    tempReturnBuff.buff=buff.effect.buff;
+                    tempReturnBuff.level=buff.effect.level;
+                    enemyMonster.addBuff << tempReturnBuff;
+                break;
+                case ApplyOn_Themself:
+                case ApplyOn_AllAlly:
+                    tempReturnBuff.buff=buff.effect.buff;
+                    tempReturnBuff.level=buff.effect.level;
+                    currentMonster.addBuff << tempReturnBuff;
+                break;
+                default:
+                    qDebug() << "Not apply match, can't apply the buff";
+                break;
+            }
+        }
         index++;
     }
     index=0;
@@ -794,9 +831,25 @@ void LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const Mo
         else
             success=(getOneSeed(100)<life.success);
         if(success)
-            applyCurrentLifeEffect(life.effect);
+        {
+            switch(life.effect.on)
+            {
+                case ApplyOn_AloneEnemy:
+                case ApplyOn_AllEnemy:
+                    enemyMonster.hpChange+=applyCurrentLifeEffect(life.effect);
+                break;
+                case ApplyOn_Themself:
+                case ApplyOn_AllAlly:
+                    currentMonster.hpChange+=applyCurrentLifeEffect(life.effect);
+                break;
+                default:
+                    qDebug() << "Not apply match, can't apply the buff";
+                break;
+            }
+        }
         index++;
     }
+    return QPair<LocalClientHandler::AttackReturn,LocalClientHandler::AttackReturn>(currentMonster,enemyMonster);
 }
 
 bool LocalClientHandler::isInFight()
@@ -804,44 +857,47 @@ bool LocalClientHandler::isInFight()
     return !wildMonsters.empty() || otherPlayerBattle!=NULL || battleIsValidated;
 }
 
-void LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
+qint32 LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
     qint32 quantity;
-    const Monster::Stat &stat=getStat(GlobalServerData::serverPrivateVariables.monsters[player_informations->public_and_private_informations.playerMonster[selectedMonster].monster],player_informations->public_and_private_informations.playerMonster[selectedMonster].level);
+    const Monster::Stat &stat=getStat(GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster],getSelectedMonster().level);
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
+        {
+            PlayerMonster &monster=getEnemyMonster();
             if(effect.type==QuantityType_Quantity)
             {
-                Monster::Stat otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
+                Monster::Stat otherStat=getStat(GlobalServerData::serverPrivateVariables.monsters[monster.monster],monster.level);
                 if(effect.quantity<0)
                 {
-                    quantity=-((-effect.quantity*stat.attack*player_informations->public_and_private_informations.playerMonster[selectedMonster].level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
+                    quantity=-((-effect.quantity*stat.attack*getSelectedMonster().level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
                     if(quantity==0)
                         quantity=-1;
                 }
                 else if(effect.quantity>0)//ignore the def for heal
                 {
-                    quantity=effect.quantity*player_informations->public_and_private_informations.playerMonster[selectedMonster].level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+                    quantity=effect.quantity*getSelectedMonster().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                     if(quantity==0)
                         quantity=1;
                 }
             }
             else
-                quantity=(wildMonsters.first().hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>wildMonsters.first().hp)
-                wildMonsters.first().hp=0;
-            else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
-                wildMonsters.first().hp=stat.hp;
+                quantity=(monster.hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>monster.hp)
+                monster.hp=0;
+            else if(quantity>0 && quantity>(stat.hp-monster.hp))
+                monster.hp=stat.hp;
             else
-                wildMonsters.first().hp+=quantity;
+                monster.hp+=quantity;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             if(effect.quantity<0)
                 emit message(QString("You do %1 of damage on the wild monster").arg(-quantity));
             if(effect.quantity>0)
                 emit message(QString("You heal the wild monster of %1").arg(quantity));
             #endif
+        }
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
@@ -849,29 +905,29 @@ void LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
             {
                 if(effect.quantity<0)
                 {
-                    quantity=-((-effect.quantity*stat.attack*player_informations->public_and_private_informations.playerMonster[selectedMonster].level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
+                    quantity=-((-effect.quantity*stat.attack*getSelectedMonster().level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
                     if(quantity==0)
                         quantity=-1;
                 }
                 else if(effect.quantity>0)//ignore the def for heal
                 {
-                    quantity=effect.quantity*player_informations->public_and_private_informations.playerMonster[selectedMonster].level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+                    quantity=effect.quantity*getSelectedMonster().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                     if(quantity==0)
                         quantity=1;
                 }
             }
             else
-                quantity=(player_informations->public_and_private_informations.playerMonster[selectedMonster].hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>player_informations->public_and_private_informations.playerMonster[selectedMonster].hp)
+                quantity=(getSelectedMonster().hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>getSelectedMonster().hp)
             {
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=0;
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs.clear();
+                getSelectedMonster().hp=0;
+                getSelectedMonster().buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(stat.hp-player_informations->public_and_private_informations.playerMonster[selectedMonster].hp))
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp=stat.hp;
+            else if(quantity>0 && quantity>(stat.hp-getSelectedMonster().hp))
+                getSelectedMonster().hp=stat.hp;
             else
-                player_informations->public_and_private_informations.playerMonster[selectedMonster].hp+=quantity;
+                getSelectedMonster().hp+=quantity;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             if(effect.quantity<0)
                 emit message(QString("You take you self %1 of damage").arg(-quantity));
@@ -883,6 +939,7 @@ void LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
             emit error("Not apply match, can't apply the life effect");
         break;
     }
+    return quantity;
 }
 
 void LocalClientHandler::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
@@ -894,11 +951,11 @@ void LocalClientHandler::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
-            wildMonsters.first().buffs << tempBuff;
+            getEnemyMonster().buffs << tempBuff;
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
-            player_informations->public_and_private_informations.playerMonster[selectedMonster].buffs << tempBuff;
+            getSelectedMonster().buffs << tempBuff;
         break;
         default:
             qDebug() << "Not apply match, can't apply the buff";

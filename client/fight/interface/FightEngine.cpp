@@ -2,6 +2,7 @@
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../../../general/base/GeneralVariable.h"
 #include "../../base/Api_client_real.h"
+#include "../../general/base/FacilityLib.h"
 
 #include <QDebug>
 
@@ -41,7 +42,7 @@ bool FightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &
 bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y)
 {
     bool ok;
-    if(!wildMonsters.empty())
+    if(!wildMonsters.empty() || !battleCurrentMonster.isEmpty() || !botMonsters.isEmpty())
     {
         qDebug() << QString("error: map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y);
         return false;
@@ -301,12 +302,31 @@ void FightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 
 bool FightEngine::wildMonsterIsKO()
 {
-    if(wildMonsters.empty())
+    if(wildMonsters.isEmpty() && battleCurrentMonster.isEmpty() && botMonsters.isEmpty())
         return true;
-    if(wildMonsters.first().hp==0)
+    if(!wildMonsters.isEmpty())
     {
-        wildMonsters.first().buffs.clear();
-        return true;
+        if(wildMonsters.first().hp==0)
+        {
+            wildMonsters.first().buffs.clear();
+            return true;
+        }
+    }
+    if(!battleCurrentMonster.isEmpty())
+    {
+        if(battleCurrentMonster.first().hp==0)
+        {
+            battleCurrentMonster.first().buffs.clear();
+            return true;
+        }
+    }
+    if(!botMonsters.isEmpty())
+    {
+        if(botMonsters.first().hp==0)
+        {
+            botMonsters.first().buffs.clear();
+            return true;
+        }
     }
     return false;
 }
@@ -330,6 +350,16 @@ bool FightEngine::dropKOCurrentMonster()
         return true;
     }
     return false;
+}
+
+void FightEngine::addBattleMonster(const PublicPlayerMonster &publicPlayerMonster)
+{
+    battleCurrentMonster << publicPlayerMonster;
+}
+
+bool FightEngine::haveWin()
+{
+    return wildMonsters.empty() && botMonsters.isEmpty() && battleCurrentMonster.isEmpty();
 }
 
 bool FightEngine::dropKOWildMonster()
@@ -572,9 +602,21 @@ PlayerMonster FightEngine::getFightMonster()
     return playerMonsterList.at(selectedMonster);
 }
 
-PlayerMonster FightEngine::getOtherMonster()
+PublicPlayerMonster FightEngine::getOtherMonster()
 {
-    return wildMonsters.first();
+    if(!wildMonsters.isEmpty())
+        return FacilityLib::playerMonsterToPublicPlayerMonster(wildMonsters.first());
+    if(!botMonsters.isEmpty())
+        return FacilityLib::playerMonsterToPublicPlayerMonster(botMonsters.first());
+    if(!battleCurrentMonster.isEmpty())
+        return battleCurrentMonster.first();
+    PublicPlayerMonster falseReturn;
+    falseReturn.captured_with=0;
+    falseReturn.gender=PlayerMonster::Unknown;
+    falseReturn.hp=0;
+    falseReturn.level=1;
+    falseReturn.monster=0;
+    return falseReturn;
 }
 
 bool FightEngine::haveOtherMonster()

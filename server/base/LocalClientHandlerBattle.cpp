@@ -1,6 +1,7 @@
 #include "LocalClientHandler.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "GlobalServerData.h"
+#include "../../general/base/FacilityLib.h"
 
 using namespace CatchChallenger;
 
@@ -54,6 +55,7 @@ void LocalClientHandler::battleFinished()
 void LocalClientHandler::resetTheBattle()
 {
     //reset out of battle
+    haveCurrentSkill=false;
     battleIsValidated=false;
     otherPlayerBattle=NULL;
     updateCanDoFight();
@@ -104,6 +106,7 @@ void LocalClientHandler::internalBattleCanceled(const bool &send)
             emit receiveSystemText(QString("Battle declined"));
     }
     battleIsValidated=false;
+    haveCurrentSkill=false;
 }
 
 void LocalClientHandler::internalBattleAccepted(const bool &send)
@@ -132,6 +135,7 @@ void LocalClientHandler::internalBattleAccepted(const bool &send)
     emit message("Battle accepted");
     #endif
     battleIsValidated=true;
+    haveCurrentSkill=false;
     if(send)
     {
         QList<PlayerMonster> playerMonstersPreview=otherPlayerBattle->player_informations->public_and_private_informations.playerMonster;
@@ -149,7 +153,7 @@ void LocalClientHandler::internalBattleAccepted(const bool &send)
                 out << (quint8)0x02;
             index++;
         }
-        PlayerMonster firstValidOtherPlayerMonster=otherPlayerBattle->getFirstValidMonster();
+        PublicPlayerMonster firstValidOtherPlayerMonster=FacilityLib::playerMonsterToPublicPlayerMonster(otherPlayerBattle->getSelectedMonster());
         out << (quint32)firstValidOtherPlayerMonster.monster;
         out << (quint8)firstValidOtherPlayerMonster.level;
         out << (quint32)firstValidOtherPlayerMonster.hp;
@@ -165,4 +169,166 @@ void LocalClientHandler::internalBattleAccepted(const bool &send)
         }
         emit sendPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData);
     }
+}
+
+bool LocalClientHandler::haveBattleSkill()
+{
+    return haveCurrentSkill;
+}
+
+void LocalClientHandler::haveUsedTheBattleSkill()
+{
+    haveCurrentSkill=false;
+}
+
+void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skillLevel)
+{
+    if(haveCurrentSkill)
+    {
+        emit error("Have already the current skill");
+        return;
+    }
+    if(battleIsValidated)
+    {
+        currentSkill=skill;
+        haveCurrentSkill=true;
+    }
+    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+    if(otherPlayerBattle==NULL)
+    {
+        emit error("Internal error: other player is not connected");
+        return;
+    }
+    #endif
+    if(!otherPlayerBattle->haveBattleSkill())
+    {
+        //in waiting of the other player skill
+        return;
+    }
+    //calculate the result
+    QPair<LocalClientHandler::AttackReturn,LocalClientHandler::AttackReturn> currentMonsterReturn,otherMonsterReturn;
+    currentMonsterReturn.first.hpChange=0;
+    currentMonsterReturn.second.hpChange=0;
+    otherMonsterReturn.first.hpChange=0;
+    otherMonsterReturn.second.hpChange=0;
+    Monster::Stat currentMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster],getSelectedMonster().level);
+    Monster::Stat otherMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[otherPlayerBattle->getSelectedMonster().monster],otherPlayerBattle->getSelectedMonster().level);
+    bool currentMonsterStatIsFirstToAttack;
+    if(currentMonsterStat.speed==otherMonsterStat.speed)
+        currentMonsterStatIsFirstToAttack=rand()%2;
+    else
+        currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
+    //do the current monster attack
+    bool isKO=false;
+    if(currentMonsterStatIsFirstToAttack)
+    {
+        currentMonsterReturn=doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+        if(checkKOMonsters())
+            isKO=true;
+    }
+    //do the other monster attack
+    if(!isKO)
+    {
+        otherMonsterReturn=otherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+        if(checkKOMonsters())
+            isKO=true;
+    }
+    //do the current monster attack
+    if(!isKO)
+        if(!currentMonsterStatIsFirstToAttack)
+        {
+            currentMonsterReturn=doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+            if(checkKOMonsters())
+                isKO=true;
+        }
+    //send to the return
+    sendBattleReturn(currentMonsterStatIsFirstToAttack,currentMonsterReturn,otherMonsterReturn);
+    otherPlayerBattle->sendBattleReturn(!currentMonsterStatIsFirstToAttack,otherMonsterReturn,currentMonsterReturn);
+    //reset all
+    haveUsedTheBattleSkill();
+    otherPlayerBattle->haveUsedTheBattleSkill();
+}
+
+void LocalClientHandler::sendBattleReturn(const bool currentMonsterStatIsFirstToAttack,const QPair<AttackReturn,AttackReturn> &currentMonsterReturn,const QPair<AttackReturn,AttackReturn> &otherMonsterReturn)
+{
+    int index;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)currentMonsterStatIsFirstToAttack;
+    //-----------------------------------
+    out << (qint32)currentMonsterReturn.first.hpChange;
+    out << (quint8)currentMonsterReturn.first.addBuff.size();
+    index=0;
+    while(index<currentMonsterReturn.first.addBuff.size())
+    {
+        out << (quint32)currentMonsterReturn.first.addBuff.at(index).buff;
+        out << (quint8)currentMonsterReturn.first.addBuff.at(index).level;
+        index++;
+    }
+    out << (quint8)currentMonsterReturn.first.removeBuff.size();
+    index=0;
+    while(index<currentMonsterReturn.first.removeBuff.size())
+    {
+        out << (quint32)currentMonsterReturn.first.removeBuff.at(index).buff;
+        out << (quint8)currentMonsterReturn.first.removeBuff.at(index).level;
+        index++;
+    }
+    //-----------------------------------
+    out << (qint32)currentMonsterReturn.second.hpChange;
+    out << (quint8)currentMonsterReturn.second.addBuff.size();
+    index=0;
+    while(index<currentMonsterReturn.second.addBuff.size())
+    {
+        out << (quint32)currentMonsterReturn.second.addBuff.at(index).buff;
+        out << (quint8)currentMonsterReturn.second.addBuff.at(index).level;
+        index++;
+    }
+    out << (quint8)currentMonsterReturn.second.removeBuff.size();
+    index=0;
+    while(index<currentMonsterReturn.second.removeBuff.size())
+    {
+        out << (quint32)currentMonsterReturn.second.removeBuff.at(index).buff;
+        out << (quint8)currentMonsterReturn.second.removeBuff.at(index).level;
+        index++;
+    }
+    //-----------------------------------
+    out << (qint32)otherMonsterReturn.first.hpChange;
+    out << (quint8)otherMonsterReturn.first.addBuff.size();
+    index=0;
+    while(index<otherMonsterReturn.first.addBuff.size())
+    {
+        out << (quint32)otherMonsterReturn.first.addBuff.at(index).buff;
+        out << (quint8)otherMonsterReturn.first.addBuff.at(index).level;
+        index++;
+    }
+    out << (quint8)otherMonsterReturn.first.removeBuff.size();
+    index=0;
+    while(index<otherMonsterReturn.first.removeBuff.size())
+    {
+        out << (quint32)otherMonsterReturn.first.removeBuff.at(index).buff;
+        out << (quint8)otherMonsterReturn.first.removeBuff.at(index).level;
+        index++;
+    }
+    //-----------------------------------
+    out << (qint32)otherMonsterReturn.second.hpChange;
+    out << (quint8)otherMonsterReturn.second.addBuff.size();
+    index=0;
+    while(index<otherMonsterReturn.second.addBuff.size())
+    {
+        out << (quint32)otherMonsterReturn.second.addBuff.at(index).buff;
+        out << (quint8)otherMonsterReturn.second.addBuff.at(index).level;
+        index++;
+    }
+    out << (quint8)otherMonsterReturn.second.removeBuff.size();
+    index=0;
+    while(index<otherMonsterReturn.second.removeBuff.size())
+    {
+        out << (quint32)otherMonsterReturn.second.removeBuff.at(index).buff;
+        out << (quint8)otherMonsterReturn.second.removeBuff.at(index).level;
+        index++;
+    }
+    //-----------------------------------
+
+    emit sendPacket(0xE0,0x0006,outputData);
 }
