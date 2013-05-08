@@ -163,7 +163,6 @@ struct PublicPlayerMonster
     quint32 hp;
     quint32 captured_with;
     PlayerMonster::Gender gender;
-    quint32 egg_step;
     QList<PlayerMonster::PlayerBuff> buffs;
 };
 
@@ -517,6 +516,18 @@ struct Bot
     QHash<quint8,QDomElement> step;
     QHash<QString,QString> properties;
     quint32 botId;
+};
+
+struct AttackReturn
+{
+    struct AttackReturnBuff
+    {
+        quint32 buff;
+        quint8 level;
+    };
+    QList<AttackReturnBuff> addBuff;
+    QList<AttackReturnBuff> removeBuff;
+    qint32 hpChange;
 };
 
 }
