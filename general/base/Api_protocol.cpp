@@ -8,6 +8,8 @@ using namespace CatchChallenger;
 #include <sys/stat.h>
 #endif
 
+#include "GeneralStructures.h"
+
 //need host + port here to have datapack base
 
 Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
@@ -1360,6 +1362,150 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
         {
             switch(subCodeType)
             {
+                //Result of the turn
+                case 0x0006:
+                {
+                    bool currentMonsterStatIsFirstToAttack;
+                    QPair<AttackReturn,AttackReturn> currentMonsterReturn,otherMonsterReturn;
+                    quint8 listSizeShort;
+                    AttackReturn::AttackReturnBuff tempAttackReturnBuff;
+                    int index;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint8 currentMonsterStatIsFirstToAttackInt;
+                    in >> currentMonsterStatIsFirstToAttackInt;
+                    currentMonsterStatIsFirstToAttack=(currentMonsterStatIsFirstToAttackInt!=0x00);
+                    // -------------------------
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> currentMonsterReturn.first.hpChange;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> listSizeShort;
+                    index=0;
+                    while(index<listSizeShort)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.buff;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.level;
+                        currentMonsterReturn.first.addBuff << tempAttackReturnBuff;
+                        index++;
+                    }
+                    // -------------------------
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> currentMonsterReturn.second.hpChange;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> listSizeShort;
+                    index=0;
+                    while(index<listSizeShort)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.buff;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.level;
+                        currentMonsterReturn.second.removeBuff << tempAttackReturnBuff;
+                        index++;
+                    }
+                    // -------------------------
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> otherMonsterReturn.first.hpChange;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> listSizeShort;
+                    index=0;
+                    while(index<listSizeShort)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.buff;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.level;
+                        otherMonsterReturn.first.addBuff << tempAttackReturnBuff;
+                        index++;
+                    }
+                    // -------------------------
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> otherMonsterReturn.second.hpChange;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    in >> listSizeShort;
+                    index=0;
+                    while(index<listSizeShort)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.buff;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> tempAttackReturnBuff.level;
+                        otherMonsterReturn.second.removeBuff << tempAttackReturnBuff;
+                        index++;
+                    }
+                    // -------------------------
+                    emit sendBattleReturn(currentMonsterStatIsFirstToAttack,currentMonsterReturn,otherMonsterReturn);
+                }
+                break;
                 //The other player have declined you battle request
                 case 0x0007:
                     emit battleCanceledByOther();

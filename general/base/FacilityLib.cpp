@@ -80,3 +80,15 @@ QString FacilityLib::secondsToString(const quint64 &seconds)
     else
         return QObject::tr("%n day(s)","",seconds/(60*60*24));
 }
+
+PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster)
+{
+    PublicPlayerMonster returnVar;
+    returnVar.buffs=playerMonster.buffs;
+    returnVar.captured_with=playerMonster.captured_with;
+    returnVar.gender=playerMonster.gender;
+    returnVar.hp=playerMonster.hp;
+    returnVar.level=playerMonster.level;
+    returnVar.monster=playerMonster.monster;
+    return returnVar;
+}
