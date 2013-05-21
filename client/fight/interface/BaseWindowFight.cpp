@@ -1,5 +1,6 @@
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/DatapackClientLoader.h"
+#include "../base/ClientVariable.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralStructures.h"
 #include "FightEngine.h"
@@ -142,12 +143,12 @@ void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, con
         ui->frameFightBackground->setStyleSheet("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}");
 }
 
-void BaseWindow::init_current_monster_display()
+void BaseWindow::init_other_monster_display()
 {
     updateOtherMonsterInformation();
 }
 
-void BaseWindow::init_other_monster_display()
+void BaseWindow::init_current_monster_display()
 {
     PlayerMonster fightMonster=CatchChallenger::FightEngine::fightEngine.getFightMonster();
     //current monster
@@ -593,8 +594,8 @@ void BaseWindow::doNextAction()
     if(ui->progressBarFightTopHP->value()==0)
     {
         updateOtherMonsterInformation();
-        CatchChallenger::FightEngine::fightEngine.wildMonsterIsKO();
-        QMessageBox::information(this,"Todo","Part todo");
+        CatchChallenger::FightEngine::fightEngine.dropKOWildMonster();
+        init_other_monster_display();
     }
     if(ui->progressBarFightBottomHP->value()==0)
     {
@@ -909,9 +910,30 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
     return false;
 }
 
-void BaseWindow::sendBattleReturn(const Skill::AttackReturn &firstAttackReturn, const Skill::AttackReturn &secondAttackReturn)
+void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn)
 {
-    CatchChallenger::FightEngine::fightEngine.attackReturnList << firstAttackReturn;
-    CatchChallenger::FightEngine::fightEngine.attackReturnList << secondAttackReturn;
+    #ifdef DEBUG_CLIENT_BATTLE
+    int index=0;
+    while(index<attackReturn.size())
+    {
+        const Skill::AttackReturn &attackReturnTemp=attackReturn.at(index);
+        qDebug() << QString("Do the attack: %1 with success: %2, and do by the current monster: %3").arg(attackReturnTemp.attack).arg(attackReturnTemp.success).arg(attackReturnTemp.doByTheCurrentMonster);
+        int sub_index=0;
+        while(sub_index<attackReturnTemp.lifeEffectMonster.size())
+        {
+            const Skill::LifeEffectReturn &lifeEffectReturn=attackReturnTemp.lifeEffectMonster.at(sub_index);
+            qDebug() << QString("Life effect for this attack: %1, apply on: %2").arg(lifeEffectReturn.quantity).arg(lifeEffectReturn.on);
+            sub_index++;
+        }
+        index++;
+    }
+    #endif
+    CatchChallenger::FightEngine::fightEngine.attackReturnList << attackReturn;
     doNextAction();
+}
+
+void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+{
+    CatchChallenger::FightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
+    sendBattleReturn(attackReturn);
 }

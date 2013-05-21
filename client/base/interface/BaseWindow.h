@@ -148,9 +148,10 @@ private slots:
     void tradeUpdateCurrentObject();
     //battle
     void battleRequested(const QString &pseudo, const quint8 &skinInt);
-    void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster);
+    void battleAcceptedByOther(const QString &pseudo, const quint8 &skinId, const QList<quint8> &stat, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
     void battleCanceledByOther();
-    void sendBattleReturn(const Skill::AttackReturn &firstAttackReturn, const Skill::AttackReturn &secondAttackReturn);
+    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
+    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);

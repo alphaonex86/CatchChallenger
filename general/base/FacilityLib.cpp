@@ -92,3 +92,24 @@ PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const Player
     returnVar.monster=playerMonster.monster;
     return returnVar;
 }
+
+QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)publicPlayerMonster.monster;
+    out << (quint8)publicPlayerMonster.level;
+    out << (quint32)publicPlayerMonster.hp;
+    out << (quint32)publicPlayerMonster.captured_with;
+    out << (quint8)publicPlayerMonster.gender;
+    out << (quint32)publicPlayerMonster.buffs.size();
+    int index=0;
+    while(index<publicPlayerMonster.buffs.size())
+    {
+        out << (quint32)publicPlayerMonster.buffs[index].buff;
+        out << (quint8)publicPlayerMonster.buffs[index].level;
+        index++;
+    }
+    return outputData;
+}

@@ -68,6 +68,8 @@ public:
     //current fight
     QList<PlayerMonster> wildMonsters,botMonsters;
     QList<PublicPlayerMonster> battleCurrentMonster;
+    QList<quint8> battleStat;
+    QList<quint8> battleMonsterPlace;
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
     void useSkill(const quint32 &skill);
@@ -78,7 +80,8 @@ public:
     bool currentMonsterIsKO();
     bool dropKOWildMonster();
     bool dropKOCurrentMonster();
-    void addBattleMonster(const PublicPlayerMonster &publicPlayerMonster);
+    void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    void addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
 private:
     int selectedMonster;
