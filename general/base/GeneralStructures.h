@@ -398,9 +398,9 @@ struct Skill
     {
         bool doByTheCurrentMonster;
         bool success;
+        quint32 attack;
         QList<BuffEffect> buffEffectMonster;
         QList<LifeEffectReturn> lifeEffectMonster;
-        quint32 attack;
     };
     struct Buff
     {
@@ -516,18 +516,6 @@ struct Bot
     QHash<quint8,QDomElement> step;
     QHash<QString,QString> properties;
     quint32 botId;
-};
-
-struct AttackReturn
-{
-    struct AttackReturnBuff
-    {
-        quint32 buff;
-        quint8 level;
-    };
-    QList<AttackReturnBuff> addBuff;
-    QList<AttackReturnBuff> removeBuff;
-    qint32 hpChange;
 };
 
 }

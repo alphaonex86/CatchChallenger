@@ -136,6 +136,8 @@ private slots:
     bool loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y);
     virtual void removeUnusedMap();
     void moveOtherPlayerStepSlot();
+    /// \warning all ObjectGroupItem destroyed into removeMap()
+    virtual void destroyMap(Map_full *map);
 protected slots:
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);

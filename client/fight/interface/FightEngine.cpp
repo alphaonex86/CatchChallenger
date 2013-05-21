@@ -733,7 +733,14 @@ bool FightEngine::canDoFightAction()
 void FightEngine::useSkill(const quint32 &skill)
 {
     CatchChallenger::Api_client_real::client->useSkill(skill);
+    if(wildMonsters.isEmpty() && botMonsters.isEmpty())
+        return;
     Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    if(wildMonsters.isEmpty())
+    {
+        qDebug() << "useSkill() with botMonsters is todo";
+        return;
+    }
     Monster::Stat otherMonsterStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     //do the current monster attack
