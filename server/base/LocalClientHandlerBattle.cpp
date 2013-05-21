@@ -157,21 +157,9 @@ void LocalClientHandler::internalBattleAccepted(const bool &send)
                 out << (quint8)0x02;
             index++;
         }
-        PublicPlayerMonster firstValidOtherPlayerMonster=FacilityLib::playerMonsterToPublicPlayerMonster(otherPlayerBattle->getSelectedMonster());
-        out << (quint32)firstValidOtherPlayerMonster.monster;
-        out << (quint8)firstValidOtherPlayerMonster.level;
-        out << (quint32)firstValidOtherPlayerMonster.hp;
-        out << (quint32)firstValidOtherPlayerMonster.captured_with;
-        out << (quint8)firstValidOtherPlayerMonster.gender;
-        out << (quint32)firstValidOtherPlayerMonster.buffs.size();
-        index=0;
-        while(index<firstValidOtherPlayerMonster.buffs.size())
-        {
-            out << (quint32)firstValidOtherPlayerMonster.buffs[index].buff;
-            out << (quint8)firstValidOtherPlayerMonster.buffs[index].level;
-            index++;
-        }
-        emit sendPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData);
+        out << (quint8)otherPlayerBattle->getSelectedMonsterNumber();
+        QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(otherPlayerBattle->getSelectedMonster()));
+        emit sendPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData+firstValidOtherPlayerMonster);
     }
 }
 
@@ -203,8 +191,9 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
         emit error("Internal error: other player is not connected");
         return;
     }
+    LocalClientHandler * tempOtherPlayerBattle=otherPlayerBattle;
     #endif
-    if(!otherPlayerBattle->haveBattleSkill())
+    if(!tempOtherPlayerBattle->haveBattleSkill())
     {
         //in waiting of the other player skill
         return;
@@ -212,7 +201,7 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
     //calculate the result
     QList<Skill::AttackReturn> monsterReturnList;
     Monster::Stat currentMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster],getSelectedMonster().level);
-    Monster::Stat otherMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[otherPlayerBattle->getSelectedMonster().monster],otherPlayerBattle->getSelectedMonster().level);
+    Monster::Stat otherMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[tempOtherPlayerBattle->getSelectedMonster().monster],tempOtherPlayerBattle->getSelectedMonster().level);
     bool currentMonsterStatIsFirstToAttack;
     if(currentMonsterStat.speed==otherMonsterStat.speed)
         currentMonsterStatIsFirstToAttack=rand()%2;
@@ -220,20 +209,34 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
         currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     //do the current monster attack
     bool isKO=false;
+    bool currentMonsterisKO=false,otherMonsterisKO=false;
+    bool currentPlayerLoose=false,otherPlayerLoose=false;
     if(currentMonsterStatIsFirstToAttack)
     {
         monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
         monsterReturnList.last().doByTheCurrentMonster=true;
-        if(checkKOMonsters())
+        currentMonsterisKO=checkKOCurrentMonsters();
+        if(currentMonsterisKO)
+        {
+            currentPlayerLoose=checkLoose();
             isKO=true;
+        }
+        else
+            checkKOOtherMonstersForGain();
     }
     //do the other monster attack
     if(!isKO)
     {
-        monsterReturnList << otherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+        monsterReturnList << tempOtherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
         monsterReturnList.last().doByTheCurrentMonster=false;
-        if(checkKOMonsters())
+        otherMonsterisKO=checkKOCurrentMonsters();
+        if(otherMonsterisKO)
+        {
+            otherPlayerLoose=checkLoose();
             isKO=true;
+        }
+        else
+            tempOtherPlayerBattle->checkKOOtherMonstersForGain();
     }
     //do the current monster attack
     if(!isKO)
@@ -241,68 +244,71 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
         {
             monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
             monsterReturnList.last().doByTheCurrentMonster=true;
-            if(checkKOMonsters())
+            currentMonsterisKO=checkKOCurrentMonsters();
+            if(currentMonsterisKO)
+            {
+                currentPlayerLoose=checkLoose();
                 isKO=true;
+            }
+            else
+                checkKOOtherMonstersForGain();
         }
     syncForEndOfTurn();
     //send to the return
-    sendBattleReturn(monsterReturnList.first(),monsterReturnList.last());
+    if(otherMonsterisKO && !otherPlayerLoose)
+        sendBattleReturn(monsterReturnList,tempOtherPlayerBattle->getSelectedMonsterNumber(),playerMonsterToPublicPlayerMonster(tempOtherPlayerBattle->getSelectedMonster()));
+    else
+        sendBattleReturn(monsterReturnList);
     monsterReturnList.first().doByTheCurrentMonster=!monsterReturnList.first().doByTheCurrentMonster;
     monsterReturnList.last().doByTheCurrentMonster=!monsterReturnList.last().doByTheCurrentMonster;
-    otherPlayerBattle->sendBattleReturn(monsterReturnList.first(),monsterReturnList.last());
+    if(currentMonsterisKO && !currentPlayerLoose)
+        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,getSelectedMonsterNumber(),playerMonsterToPublicPlayerMonster(getSelectedMonster()));
+    else
+        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
+    tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
     //reset all
     haveUsedTheBattleSkill();
-    otherPlayerBattle->haveUsedTheBattleSkill();
+    tempOtherPlayerBattle->haveUsedTheBattleSkill();
 }
 
-void LocalClientHandler::sendBattleReturn(const Skill::AttackReturn &firstAttackReturn,const Skill::AttackReturn &secondAttackReturn)
+void LocalClientHandler::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster)
 {
-    int index;
+    QByteArray binarypublicPlayerMonster;
+    int index,master_index;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
 
-    out << (quint8)firstAttackReturn.doByTheCurrentMonster;
-    out << (quint8)firstAttackReturn.success;
-    out << (quint32)firstAttackReturn.attack;
-    index=0;
-    out << (quint8)firstAttackReturn.buffEffectMonster.size();
-    while(index<firstAttackReturn.buffEffectMonster.size())
+    out << (quint8)attackReturn.size();
+    master_index=0;
+    while(master_index<attackReturn.size())
     {
-        out << (quint32)firstAttackReturn.buffEffectMonster.at(index).buff;
-        out << (quint8)firstAttackReturn.buffEffectMonster.at(index).on;
-        out << (quint8)firstAttackReturn.buffEffectMonster.at(index).level;
-        index++;
+        const Skill::AttackReturn &attackReturnTemp=attackReturn.at(master_index);
+        out << (quint8)attackReturnTemp.doByTheCurrentMonster;
+        out << (quint8)attackReturnTemp.success;
+        out << (quint32)attackReturnTemp.attack;
+        index=0;
+        out << (quint8)attackReturnTemp.buffEffectMonster.size();
+        while(index<attackReturnTemp.buffEffectMonster.size())
+        {
+            out << (quint32)attackReturnTemp.buffEffectMonster.at(index).buff;
+            out << (quint8)attackReturnTemp.buffEffectMonster.at(index).on;
+            out << (quint8)attackReturnTemp.buffEffectMonster.at(index).level;
+            index++;
+        }
+        index=0;
+        out << (quint8)attackReturnTemp.lifeEffectMonster.size();
+        while(index<attackReturnTemp.lifeEffectMonster.size())
+        {
+            out << (qint32)attackReturnTemp.lifeEffectMonster.at(index).quantity;
+            out << (quint8)attackReturnTemp.lifeEffectMonster.at(index).on;
+            index++;
+        }
+        master_index++;
     }
-    index=0;
-    out << (quint8)firstAttackReturn.lifeEffectMonster.size();
-    while(index<firstAttackReturn.lifeEffectMonster.size())
-    {
-        out << (qint32)firstAttackReturn.lifeEffectMonster.at(index).quantity;
-        out << (quint8)firstAttackReturn.lifeEffectMonster.at(index).on;
-        index++;
-    }
+    out << (quint8)monsterPlace;
+    if(monsterPlace!=0x00)
+        binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(publicPlayerMonster);
 
-    out << (quint8)secondAttackReturn.doByTheCurrentMonster;
-    out << (quint8)secondAttackReturn.success;
-    out << (quint32)secondAttackReturn.attack;
-    index=0;
-    out << (quint8)secondAttackReturn.buffEffectMonster.size();
-    while(index<secondAttackReturn.buffEffectMonster.size())
-    {
-        out << (quint32)secondAttackReturn.buffEffectMonster.at(index).buff;
-        out << (quint8)secondAttackReturn.buffEffectMonster.at(index).on;
-        out << (quint8)secondAttackReturn.buffEffectMonster.at(index).level;
-        index++;
-    }
-    index=0;
-    out << (quint8)secondAttackReturn.lifeEffectMonster.size();
-    while(index<secondAttackReturn.lifeEffectMonster.size())
-    {
-        out << (qint32)secondAttackReturn.lifeEffectMonster.at(index).quantity;
-        out << (quint8)secondAttackReturn.lifeEffectMonster.at(index).on;
-        index++;
-    }
-
-    emit sendPacket(0xE0,0x0006,outputData);
+    emit sendPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
 }
