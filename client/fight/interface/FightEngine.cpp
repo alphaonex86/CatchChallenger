@@ -352,9 +352,37 @@ bool FightEngine::dropKOCurrentMonster()
     return false;
 }
 
-void FightEngine::addBattleMonster(const PublicPlayerMonster &publicPlayerMonster)
+void FightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
+    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty())
+    {
+        qDebug() << "have already monster";
+        return;
+    }
+    if(monsterPlace<=0 || monsterPlace>=battleStat.size())
+    {
+        qDebug() << "monsterPlace greater than monster list";
+        return;
+    }
     battleCurrentMonster << publicPlayerMonster;
+    battleStat=stat;
+    battleMonsterPlace << monsterPlace;
+}
+
+void FightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+{
+    if(battleCurrentMonster.isEmpty() || battleStat.isEmpty())
+    {
+        qDebug() << "have already monster";
+        return;
+    }
+    if(monsterPlace<=0 || monsterPlace>=battleStat.size())
+    {
+        qDebug() << "monsterPlace greater than monster list";
+        return;
+    }
+    battleCurrentMonster << publicPlayerMonster;
+    battleMonsterPlace << monsterPlace;
 }
 
 bool FightEngine::haveWin()
@@ -366,8 +394,24 @@ bool FightEngine::dropKOWildMonster()
 {
     if(!wildMonsterIsKO())
         return false;
-    wildMonsters.removeFirst();
-    return true;
+    if(!wildMonsters.isEmpty())
+    {
+        wildMonsters.removeFirst();
+        return true;
+    }
+    if(!botMonsters.isEmpty())
+    {
+        botMonsters.removeFirst();
+        return true;
+    }
+    if(!battleCurrentMonster.isEmpty())
+    {
+        battleCurrentMonster.removeFirst();
+        battleStat[battleMonsterPlace.first()-1]=0x02;//not able to battle
+        battleMonsterPlace.removeFirst();
+        return true;
+    }
+    return false;
 }
 
 PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList,bool *ok)
@@ -637,6 +681,9 @@ void FightEngine::resetAll()
     monsterBuffsExtra.clear();
     monsterSkillsExtra.clear();
     attackReturnList.clear();
+
+    battleCurrentMonster.clear();
+    battleStat.clear();
 
     wildMonsters.clear();
 }
