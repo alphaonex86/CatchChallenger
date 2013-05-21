@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QHashIterator>
 #include <QSqlQuery>
+#include <QPair>
 
 #include "../../general/base/DebugClass.h"
 #include "ServerStructures.h"
@@ -84,7 +85,9 @@ private:
     bool tryEscapeInternal();
     bool checkKOMonsters();//true if one monster is KO
     void saveCurrentMonsterStat();
-    QPair<AttackReturn,AttackReturn> doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
+    Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
+    void syncForEndOfTurn();
+    void saveStat();
 
     //map move
     bool singleMove(const Direction &direction);
@@ -101,7 +104,7 @@ private:
     bool haveBattleSkill();
     void haveUsedTheBattleSkill();
     void useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
-    void sendBattleReturn(const bool currentMonsterStatIsFirstToAttack,const QPair<LocalClientHandler::AttackReturn,LocalClientHandler::AttackReturn> &currentMonsterReturn,const QPair<LocalClientHandler::AttackReturn,LocalClientHandler::AttackReturn> &otherMonsterReturn);
+    void sendBattleReturn(const Skill::AttackReturn &firstAttackReturn, const Skill::AttackReturn &secondAttackReturn);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);

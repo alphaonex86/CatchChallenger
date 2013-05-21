@@ -1074,3 +1074,20 @@ void MapControllerMP::moveOtherPlayerStepSlot()
     else
         timer->start();
 }
+
+/// \warning all ObjectGroupItem destroyed into removeMap()
+void MapControllerMP::destroyMap(Map_full *map)
+{
+    //remove the other player
+    QHash<quint16,OtherPlayer>::const_iterator i = otherPlayerList.constBegin();
+    while (i != otherPlayerList.constEnd()) {
+        if(i.value().presumed_map==map)
+        {
+            remove_player(i.key());
+            i = otherPlayerList.constBegin();
+        }
+        else
+            ++i;
+    }
+    MapVisualiser::destroyMap(map);
+}

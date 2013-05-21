@@ -32,7 +32,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<QHash<quint32,quint32> >("QHash<quint32,quint32>");
     qRegisterMetaType<QHash<quint32,quint32> >("CatchChallenger::Plant_collect");
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
-    qRegisterMetaType<QPair<AttackReturn,AttackReturn> >("QPair<AttackReturn,AttackReturn>");
+    qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
 
     socketState=QAbstractSocket::UnconnectedState;
 
@@ -40,6 +40,7 @@ BaseWindow::BaseWindow() :
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
     Chat::chat=new Chat(ui->page_map);
+    escape=false;
 
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
@@ -132,7 +133,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleRequested(QString,quint8)),this,SLOT(battleRequested(QString,quint8)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)),this,SLOT(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleCanceledByOther()),this,SLOT(battleCanceledByOther()));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(bool,QPair<AttackReturn,AttackReturn>,QPair<AttackReturn,AttackReturn>)),this,SLOT(sendBattleReturn(bool,QPair<AttackReturn,AttackReturn>,QPair<AttackReturn,AttackReturn>)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(Skill::AttackReturn,Skill::AttackReturn)),this,SLOT(sendBattleReturn(Skill::AttackReturn,Skill::AttackReturn)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),CatchChallenger::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));

@@ -125,21 +125,36 @@ void BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &
         qDebug() << "is in fight but without monster";
         return;
     }
+    battleType=BattleType_Wild;
+    init_environement_display(map,x,y);
+    init_current_monster_display();
+    init_other_monster_display();
+    PublicPlayerMonster otherMonster=CatchChallenger::FightEngine::fightEngine.getOtherMonster();
+    qDebug() << QString("You are in front of monster id: %1 level: %2").arg(otherMonster.monster).arg(otherMonster.level);
+    ui->labelFightEnter->setText(tr("A wild %1 is in front of you!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[otherMonster.monster].name));
+}
+
+void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, const quint8 &y)
+{
     if(MoveOnTheMap::isGrass(*map,x,y))
         ui->frameFightBackground->setStyleSheet("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}");
     else
         ui->frameFightBackground->setStyleSheet("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}");
-    PublicPlayerMonster otherMonster=CatchChallenger::FightEngine::fightEngine.getOtherMonster();
-    PlayerMonster fightMonster=CatchChallenger::FightEngine::fightEngine.getFightMonster();
-    qDebug() << QString("You are in front of monster id: %1 level: %2").arg(otherMonster.monster).arg(otherMonster.level);
-    ui->labelFightEnter->setText(tr("A wild %1 is in front of you!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[otherMonster.monster].name));
+}
+
+void BaseWindow::init_current_monster_display()
+{
     updateOtherMonsterInformation();
+}
+
+void BaseWindow::init_other_monster_display()
+{
+    PlayerMonster fightMonster=CatchChallenger::FightEngine::fightEngine.getFightMonster();
+    //current monster
     ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-    battleType=BattleType_Wild;
     ui->stackedWidget->setCurrentWidget(ui->page_battle);
     ui->pushButtonFightEnterNext->setVisible(true);
-    //current monster
     ui->frameFightBottom->setVisible(false);
     ui->labelFightBottomName->setText(CatchChallenger::FightEngine::fightEngine.monsterExtra[fightMonster.monster].name);
     ui->labelFightBottomLevel->setText(tr("Level: %1").arg(fightMonster.level));
@@ -355,13 +370,15 @@ void BaseWindow::moveFightMonsterBoth()
         {
             if(battleStep==BattleStep_Presentation)
             {
+                init_current_monster_display();
+                init_other_monster_display();
                 updateCurrentMonsterInformation();
                 updateOtherMonsterInformation();
                 battleStep=BattleStep_PresentationMonster;
                 moveType=MoveType_Enter;
                 moveFightMonsterBoth();
-                ui->frameFightTop->hide();
-                ui->frameFightBottom->hide();
+                ui->frameFightTop->show();
+                ui->frameFightBottom->show();
             }
             else
                 ui->pushButtonFightEnterNext->show();
@@ -892,7 +909,9 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
     return false;
 }
 
-void BaseWindow::sendBattleReturn(const bool currentMonsterStatIsFirstToAttack,const QPair<AttackReturn,AttackReturn> &currentMonsterReturn,const QPair<AttackReturn,AttackReturn> &otherMonsterReturn)
+void BaseWindow::sendBattleReturn(const Skill::AttackReturn &firstAttackReturn, const Skill::AttackReturn &secondAttackReturn)
 {
-    todo
+    CatchChallenger::FightEngine::fightEngine.attackReturnList << firstAttackReturn;
+    CatchChallenger::FightEngine::fightEngine.attackReturnList << secondAttackReturn;
+    doNextAction();
 }

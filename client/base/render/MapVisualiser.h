@@ -93,7 +93,7 @@ protected:
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
 
-    void destroyMap(Map_full *map);
+    virtual void destroyMap(Map_full *map);
 protected slots:
     virtual void resetAll();
 public slots:

@@ -150,7 +150,7 @@ private slots:
     void battleRequested(const QString &pseudo, const quint8 &skinInt);
     void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster);
     void battleCanceledByOther();
-    void sendBattleReturn(const bool currentMonsterStatIsFirstToAttack,const QPair<AttackReturn,AttackReturn> &currentMonsterReturn,const QPair<AttackReturn,AttackReturn> &otherMonsterReturn);
+    void sendBattleReturn(const Skill::AttackReturn &firstAttackReturn, const Skill::AttackReturn &secondAttackReturn);
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
@@ -191,6 +191,9 @@ private slots:
     void displayAttack();
     void displayText(const QString &text);
     void resetPosition(bool outOfScreen=false);
+    void init_environement_display(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void init_current_monster_display();
+    void init_other_monster_display();
 
     //learn
     bool showLearnSkill(const quint32 &monsterId);

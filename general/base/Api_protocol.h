@@ -168,7 +168,7 @@ signals:
     void battleRequested(const QString &pseudo,const quint8 &skinInt);
     void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster);
     void battleCanceledByOther();
-    void sendBattleReturn(const bool currentMonsterStatIsFirstToAttack,const QPair<AttackReturn,AttackReturn> &currentMonsterReturn,const QPair<AttackReturn,AttackReturn> &otherMonsterReturn);
+    void sendBattleReturn(const Skill::AttackReturn &firstAttackReturn, const Skill::AttackReturn &secondAttackReturn);
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
