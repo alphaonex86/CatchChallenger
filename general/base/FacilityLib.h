@@ -16,6 +16,7 @@ public:
     static QStringList skinIdList(const QString& skinPath);
     static QString secondsToString(const quint64 &seconds);
     static PublicPlayerMonster playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster);
+    static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
 private:
     static QByteArray UTF8EmptyData;
 };

@@ -131,9 +131,10 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(haveBuyObject(BuyStat,quint32)),this,SLOT(haveBuyObject(BuyStat,quint32)));
     //battle
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleRequested(QString,quint8)),this,SLOT(battleRequested(QString,quint8)));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)),this,SLOT(battleAcceptedByOther(QString,quint8,QList<quint8>,PublicPlayerMonster)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(battleAcceptedByOther(QString,quint8,QList<quint8>,quint8,PublicPlayerMonster)),this,SLOT(battleAcceptedByOther(QString,quint8,QList<quint8>,quint8,PublicPlayerMonster)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(battleCanceledByOther()),this,SLOT(battleCanceledByOther()));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(Skill::AttackReturn,Skill::AttackReturn)),this,SLOT(sendBattleReturn(Skill::AttackReturn,Skill::AttackReturn)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(QList<Skill::AttackReturn>)),this,SLOT(sendBattleReturn(QList<Skill::AttackReturn>)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(QList<Skill::AttackReturn>,quint8,PublicPlayerMonster)),this,SLOT(sendBattleReturn(QList<Skill::AttackReturn>,quint8,PublicPlayerMonster)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),CatchChallenger::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
@@ -343,7 +344,7 @@ void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
     CatchChallenger::Api_client_real::client->battleAccepted();
 }
 
-void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const PublicPlayerMonster &publicPlayerMonster)
+void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     if(!lastBattleQuery.isEmpty())
     {
@@ -391,7 +392,7 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
     moveType=MoveType_Enter;
     battleStep=BattleStep_Presentation;
     moveFightMonsterBoth();
-    CatchChallenger::FightEngine::fightEngine.addBattleMonster(publicPlayerMonster);
+    CatchChallenger::FightEngine::fightEngine.setBattleMonster(stat,monsterPlace,publicPlayerMonster);
 }
 
 void BaseWindow::battleCanceledByOther()

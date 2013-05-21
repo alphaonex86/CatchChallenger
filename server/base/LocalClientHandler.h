@@ -43,6 +43,7 @@ public:
     void addExistingMonster(QList<PlayerMonster> tradeMonster);
     bool getAbleToFight();
     PlayerMonster &getSelectedMonster();
+    quint8 getSelectedMonsterNumber();
     PlayerMonster& getEnemyMonster();
 private:
     bool checkCollision();
@@ -83,7 +84,9 @@ private:
     void generateOtherAttack();
     void updateCanDoFight();
     bool tryEscapeInternal();
-    bool checkKOMonsters();//true if one monster is KO
+    bool checkKOCurrentMonsters();
+    bool checkLoose();
+    bool checkKOOtherMonstersForGain();
     void saveCurrentMonsterStat();
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
     void syncForEndOfTurn();
@@ -104,7 +107,7 @@ private:
     bool haveBattleSkill();
     void haveUsedTheBattleSkill();
     void useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
-    void sendBattleReturn(const Skill::AttackReturn &firstAttackReturn, const Skill::AttackReturn &secondAttackReturn);
+    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace=0,const PublicPlayerMonster &publicPlayerMonster=PublicPlayerMonster());
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
