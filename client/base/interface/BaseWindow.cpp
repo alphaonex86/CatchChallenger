@@ -136,6 +136,9 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(QList<Skill::AttackReturn>)),this,SLOT(sendBattleReturn(QList<Skill::AttackReturn>)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(QList<Skill::AttackReturn>,quint8,PublicPlayerMonster)),this,SLOT(sendBattleReturn(QList<Skill::AttackReturn>,quint8,PublicPlayerMonster)));
 
+    connect(&CatchChallenger::FightEngine::fightEngine,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
+    connect(&CatchChallenger::FightEngine::fightEngine,SIGNAL(error(QString)),this,SLOT(error(QString)));
+
     connect(this,SIGNAL(destroyObject(quint32,quint32)),CatchChallenger::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
 
@@ -2023,6 +2026,10 @@ void BaseWindow::getTextEntryPoint()
     }
     qDebug() << "textEntryPoint:" << textEntryPoint;
     showQuestText(textEntryPoint);
+
+    Q_UNUSED(currentQuestStepVar);
+    Q_UNUSED(haveNextStepQuestRequirementsVar);
+    Q_UNUSED(finishOneTimeVar);
 }
 
 void BaseWindow::showQuestText(const quint32 &textId)
