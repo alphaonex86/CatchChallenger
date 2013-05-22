@@ -105,6 +105,9 @@ public slots:
     //fight
     void appendRandomSeeds(const QByteArray &data);
     static Monster::Stat getStat(const Monster &monster,const quint8 &level);
+signals:
+    void newError(QString error,QString detailedError);
+    void error(QString error);
 };
 }
 

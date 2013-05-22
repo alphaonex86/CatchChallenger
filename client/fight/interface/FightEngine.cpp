@@ -660,6 +660,7 @@ PublicPlayerMonster FightEngine::getOtherMonster()
     falseReturn.hp=0;
     falseReturn.level=1;
     falseReturn.monster=0;
+    qDebug() << "Can't have empty other monster here!";
     return falseReturn;
 }
 
