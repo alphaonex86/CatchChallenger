@@ -593,7 +593,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         }
         if(getInTrade())
         {
-            emit receiveSystemText(QString("you are already in trade"));
+            emit receiveSystemText(QString("You are already in trade"));
             return;
         }
         if(getInBattle())

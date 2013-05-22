@@ -1656,6 +1656,11 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         return;
                     }
                     in >> monsterPlace;
+                    if(monsterPlace<=0 || monsterPlace>=stat.size())
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("monster place wrong range with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));

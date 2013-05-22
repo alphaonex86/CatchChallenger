@@ -108,6 +108,7 @@ private:
     void haveUsedTheBattleSkill();
     void useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace=0,const PublicPlayerMonster &publicPlayerMonster=PublicPlayerMonster());
+    inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
