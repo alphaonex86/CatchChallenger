@@ -157,7 +157,7 @@ void LocalClientHandler::internalBattleAccepted(const bool &send)
                 out << (quint8)0x02;
             index++;
         }
-        out << (quint8)otherPlayerBattle->getSelectedMonsterNumber();
+        out << (quint8)selectedMonsterNumberToMonsterPlace(otherPlayerBattle->getSelectedMonsterNumber());
         QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(otherPlayerBattle->getSelectedMonster()));
         emit sendPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData+firstValidOtherPlayerMonster);
     }
@@ -256,19 +256,24 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
     syncForEndOfTurn();
     //send to the return
     if(otherMonsterisKO && !otherPlayerLoose)
-        sendBattleReturn(monsterReturnList,tempOtherPlayerBattle->getSelectedMonsterNumber(),playerMonsterToPublicPlayerMonster(tempOtherPlayerBattle->getSelectedMonster()));
+        sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(tempOtherPlayerBattle->getSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(tempOtherPlayerBattle->getSelectedMonster()));
     else
         sendBattleReturn(monsterReturnList);
     monsterReturnList.first().doByTheCurrentMonster=!monsterReturnList.first().doByTheCurrentMonster;
     monsterReturnList.last().doByTheCurrentMonster=!monsterReturnList.last().doByTheCurrentMonster;
     if(currentMonsterisKO && !currentPlayerLoose)
-        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,getSelectedMonsterNumber(),playerMonsterToPublicPlayerMonster(getSelectedMonster()));
+        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(getSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(getSelectedMonster()));
     else
         tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
     tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
     //reset all
     haveUsedTheBattleSkill();
     tempOtherPlayerBattle->haveUsedTheBattleSkill();
+}
+
+quint8 LocalClientHandler::selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber)
+{
+    return selectedMonsterNumber+1;
 }
 
 void LocalClientHandler::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster)

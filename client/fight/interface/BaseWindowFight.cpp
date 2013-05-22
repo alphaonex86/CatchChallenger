@@ -240,6 +240,11 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
 
 void BaseWindow::updateCurrentMonsterInformation()
 {
+    if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
+    {
+        newError(tr("Try update the monster when have not any ready monster"),error);
+        return;
+    }
     PlayerMonster monster=CatchChallenger::FightEngine::fightEngine.getFightMonster();
     QPoint p;
     p.setX(60);
@@ -389,6 +394,11 @@ void BaseWindow::moveFightMonsterBoth()
 
 void BaseWindow::updateOtherMonsterInformation()
 {
+    if(!CatchChallenger::FightEngine::fightEngine.haveOtherMonster())
+    {
+        newError(tr("Internal error"),"updateOtherMonsterInformation() but have not other monter");
+        return;
+    }
     QPoint p;
     p.setX(510);
     p.setY(90);
