@@ -1503,72 +1503,75 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         return;
                     }
                     in >> monsterPlace;
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    if(monsterPlace!=0)
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    in >> publicPlayerMonster.monster;
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    in >> publicPlayerMonster.level;
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    in >> publicPlayerMonster.hp;
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    in >> publicPlayerMonster.captured_with;
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    in >> genderInt;
-                    switch(genderInt)
-                    {
-                        case 0x01:
-                        case 0x02:
-                        case 0x03:
-                            publicPlayerMonster.gender=(PlayerMonster::Gender)genderInt;
-                        break;
-                        default:
-                            parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(genderInt));
-                            return;
-                        break;
-                    }
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    in >> buffListSize;
-                    index=0;
-                    while(index<buffListSize)
-                    {
-                        PlayerMonster::PlayerBuff buff;
                         if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                             return;
                         }
-                        in >> buff.buff;
+                        in >> publicPlayerMonster.monster;
                         if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                             return;
                         }
-                        in >> buff.level;
-                        publicPlayerMonster.buffs << buff;
-                        index++;
+                        in >> publicPlayerMonster.level;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> publicPlayerMonster.hp;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> publicPlayerMonster.captured_with;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> genderInt;
+                        switch(genderInt)
+                        {
+                            case 0x01:
+                            case 0x02:
+                            case 0x03:
+                                publicPlayerMonster.gender=(PlayerMonster::Gender)genderInt;
+                            break;
+                            default:
+                                parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(genderInt));
+                                return;
+                            break;
+                        }
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> buffListSize;
+                        index=0;
+                        while(index<buffListSize)
+                        {
+                            PlayerMonster::PlayerBuff buff;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> buff.buff;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> buff.level;
+                            publicPlayerMonster.buffs << buff;
+                            index++;
+                        }
                     }
 
 
@@ -1656,7 +1659,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         return;
                     }
                     in >> monsterPlace;
-                    if(monsterPlace<=0 || monsterPlace>=stat.size())
+                    if(monsterPlace<=0 || monsterPlace>stat.size())
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("monster place wrong range with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
