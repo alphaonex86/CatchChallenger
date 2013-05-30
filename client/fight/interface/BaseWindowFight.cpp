@@ -242,7 +242,7 @@ void BaseWindow::updateCurrentMonsterInformation()
 {
     if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
     {
-        newError(tr("Try update the monster when have not any ready monster"),error);
+        newError(tr("Internal error"),"Try update the monster when have not any ready monster");
         return;
     }
     PlayerMonster monster=CatchChallenger::FightEngine::fightEngine.getFightMonster();

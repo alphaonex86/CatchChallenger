@@ -359,7 +359,12 @@ void FightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monst
         qDebug() << "have already monster";
         return;
     }
-    if(monsterPlace<=0 || monsterPlace>=battleStat.size())
+    if(stat.isEmpty())
+    {
+        qDebug() << "monster list size can't be empty";
+        return;
+    }
+    if(monsterPlace<=0 || monsterPlace>stat.size())
     {
         qDebug() << "monsterPlace greater than monster list";
         return;
@@ -666,7 +671,7 @@ PublicPlayerMonster FightEngine::getOtherMonster()
 
 bool FightEngine::haveOtherMonster()
 {
-    return !wildMonsters.empty();
+    return !wildMonsters.empty() || !botMonsters.isEmpty() || !battleCurrentMonster.isEmpty();
 }
 
 void FightEngine::resetAll()
