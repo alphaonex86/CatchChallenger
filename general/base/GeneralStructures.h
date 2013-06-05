@@ -124,46 +124,43 @@ struct Player_public_informations
     SPEED_TYPE speed;
 };
 
-struct PlayerMonster
+enum Gender
 {
-    enum Gender
-    {
-        Male=0x01,
-        Female=0x02,
-        Unknown=0x03
-    };
-    struct PlayerBuff
-    {
-        quint32 buff;
-        quint8 level;
-    };
+    Gender_Male=0x01,
+    Gender_Female=0x02,
+    Gender_Unknown=0x03
+};
+struct PlayerBuff
+{
+    quint32 buff;
+    quint8 level;
+};
+
+class PublicPlayerMonster
+{
+    public:
+    quint32 monster;
+    quint8 level;
+    quint32 hp;
+    quint32 captured_with;
+    Gender gender;
+    QList<PlayerBuff> buffs;
+};
+
+class PlayerMonster : public PublicPlayerMonster
+{
+    public:
     struct PlayerSkill
     {
         quint32 skill;
         quint8 level;
     };
-    quint32 monster;
-    quint8 level;
     quint32 remaining_xp;
-    quint32 hp;
     quint32 sp;
-    quint32 captured_with;
-    Gender gender;
     quint32 egg_step;
     //in form of list to get random into the list
-    QList<PlayerBuff> buffs;
     QList<PlayerSkill> skills;
     quint32 id;
-};
-
-struct PublicPlayerMonster
-{
-    quint32 monster;
-    quint8 level;
-    quint32 hp;
-    quint32 captured_with;
-    PlayerMonster::Gender gender;
-    QList<PlayerMonster::PlayerBuff> buffs;
 };
 
 struct PlayerQuest

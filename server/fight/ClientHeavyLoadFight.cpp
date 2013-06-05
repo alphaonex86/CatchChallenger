@@ -92,11 +92,11 @@ void ClientHeavyLoad::loadMonsters()
         if(ok)
         {
             if(monstersQuery.value(7).toString()=="male")
-                playerMonster.gender=PlayerMonster::Male;
+                playerMonster.gender=Gender_Male;
             else if(monstersQuery.value(7).toString()=="female")
-                playerMonster.gender=PlayerMonster::Female;
+                playerMonster.gender=Gender_Female;
             else if(monstersQuery.value(7).toString()=="unknown")
-                playerMonster.gender=PlayerMonster::Unknown;
+                playerMonster.gender=Gender_Unknown;
             else
             {
                 emit message(QString("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
@@ -139,9 +139,9 @@ void ClientHeavyLoad::loadMonsters()
     }
 }
 
-QList<PlayerMonster::PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
+QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
 {
-    QList<PlayerMonster::PlayerBuff> buffs;
+    QList<PlayerBuff> buffs;
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -160,7 +160,7 @@ QList<PlayerMonster::PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32
         emit message(monsterBuffsQuery.lastQuery()+": "+monsterBuffsQuery.lastError().text());
     while(monsterBuffsQuery.next())
     {
-        PlayerMonster::PlayerBuff buff;
+        PlayerBuff buff;
         buff.buff=monsterBuffsQuery.value(0).toUInt(&ok);
         if(ok)
         {

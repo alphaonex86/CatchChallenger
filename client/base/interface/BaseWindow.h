@@ -329,7 +329,7 @@ private:
     enum DoNextActionStep
     {
         DoNextActionStep_Start,
-        DoNextActionStep_Lose,
+        DoNextActionStep_Loose,
         DoNextActionStep_Win
     };
     DoNextActionStep doNextActionStep;
