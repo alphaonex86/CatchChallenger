@@ -218,11 +218,17 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
         currentMonsterisKO=checkKOCurrentMonsters();
         if(currentMonsterisKO)
         {
+            emit message("current player is KO");
             currentPlayerLoose=checkLoose();
             isKO=true;
         }
         else
-            checkKOOtherMonstersForGain();
+        {
+            emit message("check other player monster");
+            otherMonsterisKO=checkKOOtherMonstersForGain();
+            if(otherMonsterisKO)
+                isKO=true;
+        }
     }
     //do the other monster attack
     if(!isKO)
@@ -232,11 +238,17 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
         otherMonsterisKO=checkKOCurrentMonsters();
         if(otherMonsterisKO)
         {
+            emit message("middle other player is KO");
             otherPlayerLoose=checkLoose();
             isKO=true;
         }
         else
-            tempOtherPlayerBattle->checkKOOtherMonstersForGain();
+        {
+            emit message("middle current player is KO");
+            currentMonsterisKO=tempOtherPlayerBattle->checkKOOtherMonstersForGain();
+            if(currentMonsterisKO)
+                isKO=true;
+        }
     }
     //do the current monster attack
     if(!isKO)
@@ -247,11 +259,17 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
             currentMonsterisKO=checkKOCurrentMonsters();
             if(currentMonsterisKO)
             {
+                emit message("current player is KO");
                 currentPlayerLoose=checkLoose();
                 isKO=true;
             }
             else
-                checkKOOtherMonstersForGain();
+            {
+                emit message("check other player monster");
+                otherMonsterisKO=checkKOOtherMonstersForGain();
+                if(otherMonsterisKO)
+                    isKO=true;
+            }
         }
     syncForEndOfTurn();
     //send to the return
@@ -265,7 +283,6 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
         tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(getSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(getSelectedMonster()));
     else
         tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
-    tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
     //reset all
     haveUsedTheBattleSkill();
     tempOtherPlayerBattle->haveUsedTheBattleSkill();

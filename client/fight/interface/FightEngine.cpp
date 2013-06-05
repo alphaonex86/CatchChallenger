@@ -281,7 +281,7 @@ Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffec
 
 void FightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::PlayerBuff tempBuff;
+    PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)
@@ -454,7 +454,7 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
         *ok=false;
         playerMonster.monster=0;
         playerMonster.level=0;
-        playerMonster.gender=PlayerMonster::Unknown;
+        playerMonster.gender=Gender_Unknown;
         return playerMonster;
     }
     Monster monsterDef=monsters[playerMonster.monster];
@@ -462,22 +462,22 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
     {
         qint8 temp_ratio=getOneSeed(101);
         if(temp_ratio<monsterDef.ratio_gender)
-            playerMonster.gender=PlayerMonster::Male;
+            playerMonster.gender=Gender_Male;
         else
-            playerMonster.gender=PlayerMonster::Female;
+            playerMonster.gender=Gender_Female;
     }
     else
     {
         switch(monsterDef.ratio_gender)
         {
             case 0:
-                playerMonster.gender=PlayerMonster::Male;
+                playerMonster.gender=Gender_Male;
             break;
             case 100:
-                playerMonster.gender=PlayerMonster::Female;
+                playerMonster.gender=Gender_Female;
             break;
             default:
-                playerMonster.gender=PlayerMonster::Unknown;
+                playerMonster.gender=Gender_Unknown;
             break;
         }
     }
@@ -661,7 +661,7 @@ PublicPlayerMonster FightEngine::getOtherMonster()
         return battleCurrentMonster.first();
     PublicPlayerMonster falseReturn;
     falseReturn.captured_with=0;
-    falseReturn.gender=PlayerMonster::Unknown;
+    falseReturn.gender=Gender_Unknown;
     falseReturn.hp=0;
     falseReturn.level=1;
     falseReturn.monster=0;
@@ -818,6 +818,9 @@ void FightEngine::useSkill(const quint32 &skill)
 
 void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
 {
+    #ifdef DEBUG_CLIENT_BATTLE
+    qDebug() << "doTheCurrentMonsterAttack: " << skill;
+    #endif
     int index=0;
     while(index<playerMonsterList.at(selectedMonster).skills.size())
     {
@@ -872,16 +875,35 @@ void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
 
 Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
+    #ifdef DEBUG_CLIENT_BATTLE
+    qDebug() << "applyCurrentLifeEffect on " << effect.on;
+    #endif
     qint32 quantity;
     Monster::Stat stat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
-    Monster::Stat otherStat;
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
+        {
+
+            PublicPlayerMonster *publicPlayerMonster;
+            if(!wildMonsters.isEmpty())
+                publicPlayerMonster=&wildMonsters.first();
+            else if(!botMonsters.isEmpty())
+                publicPlayerMonster=&botMonsters.first();
+            else if(!battleCurrentMonster.isEmpty())
+                publicPlayerMonster=&battleCurrentMonster.first();
+            else
+            {
+                emit error("unknown other monster type");
+                Skill::LifeEffectReturn effect_to_return;
+                effect_to_return.on=effect.on;
+                effect_to_return.quantity=0;
+                return effect_to_return;
+            }
             if(effect.type==QuantityType_Quantity)
             {
-                otherStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+                Monster::Stat otherStat=getStat(monsters[publicPlayerMonster->monster],publicPlayerMonster->level);
                 if(effect.quantity<0)
                 {
                     quantity=-((-effect.quantity*stat.attack*playerMonsterList.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
@@ -896,16 +918,17 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
                 }
             }
             else
-                quantity=(wildMonsters.first().hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>wildMonsters.first().hp)
+                quantity=(publicPlayerMonster->hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>publicPlayerMonster->hp)
             {
-                wildMonsters.first().hp=0;
+                publicPlayerMonster->hp=0;
                 addXPSP();
             }
-            else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
-                wildMonsters.first().hp=stat.hp;
+            else if(quantity>0 && quantity>(stat.hp-publicPlayerMonster->hp))
+                publicPlayerMonster->hp=stat.hp;
             else
-                wildMonsters.first().hp+=quantity;
+                publicPlayerMonster->hp+=quantity;
+        }
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
@@ -913,7 +936,7 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
             {
                 if(effect.quantity<0)
                 {
-                    quantity=-((-effect.quantity*stat.attack*playerMonsterList.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
+                    quantity=-((-effect.quantity*stat.attack*playerMonsterList.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
                     if(quantity==0)
                         quantity=-1;
                 }
@@ -949,14 +972,27 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
 
 void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::PlayerBuff tempBuff;
+    #ifdef DEBUG_CLIENT_BATTLE
+    qDebug() << "applyCurrentBuffEffect on " << effect.on;
+    #endif
+    PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
+        if(!wildMonsters.empty())
             wildMonsters.first().buffs << tempBuff;
+        else if(!battleCurrentMonster.isEmpty())
+            battleCurrentMonster.first().buffs << tempBuff;
+        else if(!botMonsters.isEmpty())
+            botMonsters.first().buffs << tempBuff;
+        else
+        {
+            emit error("unknown other monster type");
+            qDebug() << "no other monter type";
+        }
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
@@ -968,3 +1004,70 @@ void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
     }
 }
 
+ApplyOn FightEngine::invertApplyOn(const ApplyOn &applyOn)
+{
+    switch(applyOn)
+    {
+        case ApplyOn_AloneEnemy:
+            return ApplyOn_Themself;
+        case ApplyOn_AllEnemy:
+            return ApplyOn_AllAlly;
+        case ApplyOn_Themself:
+            return ApplyOn_AloneEnemy;
+        case ApplyOn_AllAlly:
+            return ApplyOn_AllEnemy;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+            return ApplyOn_Themself;
+        break;
+    }
+}
+
+void FightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList)
+{
+    int index=0;
+    int sub_index=0;
+    while(index<attackReturnList.size())
+    {
+        const Skill::AttackReturn &attackReturn=attackReturnList.at(index);
+        if(attackReturn.success)
+        {
+            sub_index=0;
+            while(sub_index<attackReturn.buffEffectMonster.size())
+            {
+                Skill::BuffEffect buff=attackReturn.buffEffectMonster.at(sub_index);
+                if(!attackReturn.doByTheCurrentMonster)
+                    buff.on=invertApplyOn(buff.on);
+                applyCurrentBuffEffect(buff);
+                sub_index++;
+            }
+            sub_index=0;
+            while(sub_index<attackReturn.lifeEffectMonster.size())
+            {
+                Skill::LifeEffectReturn lifeEffect=attackReturn.lifeEffectMonster.at(sub_index);
+                if(!attackReturn.doByTheCurrentMonster)
+                    lifeEffect.on=invertApplyOn(lifeEffect.on);
+                Skill::LifeEffect newEffect;
+                newEffect.on=lifeEffect.on;
+                newEffect.quantity=lifeEffect.quantity;
+                newEffect.type=QuantityType_Quantity;
+                lifeEffect=applyCurrentLifeEffect(newEffect);
+                sub_index++;
+            }
+        }
+        index++;
+    }
+    this->attackReturnList << attackReturnList;
+}
+
+const QList<Skill::AttackReturn> FightEngine::getAttackReturnList() const
+{
+    return attackReturnList;
+}
+
+void FightEngine::removeTheFirstLifeEffectAttackReturn()
+{
+    attackReturnList.first().lifeEffectMonster.removeFirst();
+    if(attackReturnList.first().lifeEffectMonster.isEmpty())
+        attackReturnList.removeFirst();
+}
