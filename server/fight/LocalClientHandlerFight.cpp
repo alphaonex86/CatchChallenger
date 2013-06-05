@@ -197,9 +197,11 @@ bool LocalClientHandler::checkKOOtherMonstersForGain()
     }
     else if(battleIsValidated)
     {
+        emit message("check the other monster is KO");
         PublicPlayerMonster firstValidOtherPlayerMonster=FacilityLib::playerMonsterToPublicPlayerMonster(otherPlayerBattle->getSelectedMonster());
         if(firstValidOtherPlayerMonster.hp==0)
         {
+            emit message("the other monster is KO");
             winTheTurn=true;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message(QString("The other player monster in battle is KO"));
@@ -211,6 +213,11 @@ bool LocalClientHandler::checkKOOtherMonstersForGain()
             if(!otherPlayerBattle->getAbleToFight())
                 battleFinished();
         }
+    }
+    else
+    {
+        emit message("unknown other monster type");
+        return false;
     }
     if(winTheTurn && give_xp>0)
     {
@@ -486,7 +493,7 @@ PlayerMonster LocalClientHandler::getRandomMonster(const QList<MapMonster> &mons
         *ok=false;
         playerMonster.monster=0;
         playerMonster.level=0;
-        playerMonster.gender=PlayerMonster::Unknown;
+        playerMonster.gender=Gender_Unknown;
         return playerMonster;
     }
     Monster monsterDef=GlobalServerData::serverPrivateVariables.monsters[playerMonster.monster];
@@ -494,22 +501,22 @@ PlayerMonster LocalClientHandler::getRandomMonster(const QList<MapMonster> &mons
     {
         qint8 temp_ratio=getOneSeed(101);
         if(temp_ratio<monsterDef.ratio_gender)
-            playerMonster.gender=PlayerMonster::Male;
+            playerMonster.gender=Gender_Male;
         else
-            playerMonster.gender=PlayerMonster::Female;
+            playerMonster.gender=Gender_Female;
     }
     else
     {
         switch(monsterDef.ratio_gender)
         {
             case 0:
-                playerMonster.gender=PlayerMonster::Male;
+                playerMonster.gender=Gender_Male;
             break;
             case 100:
-                playerMonster.gender=PlayerMonster::Female;
+                playerMonster.gender=Gender_Female;
             break;
             default:
-                playerMonster.gender=PlayerMonster::Unknown;
+                playerMonster.gender=Gender_Unknown;
             break;
         }
     }
@@ -765,7 +772,7 @@ void LocalClientHandler::applyOtherLifeEffect(const Skill::LifeEffect &effect)
 
 void LocalClientHandler::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::PlayerBuff tempBuff;
+    PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)
@@ -935,9 +942,9 @@ qint32 LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effec
                 monster.hp+=quantity;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             if(effect.quantity<0)
-                emit message(QString("You do %1 of damage on the wild monster").arg(-quantity));
+                emit message(QString("You do %1 of damage on the other monster").arg(-quantity));
             if(effect.quantity>0)
-                emit message(QString("You heal the wild monster of %1").arg(quantity));
+                emit message(QString("You heal the other monster of %1").arg(quantity));
             #endif
         }
         break;
@@ -986,7 +993,7 @@ qint32 LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effec
 
 void LocalClientHandler::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
-    PlayerMonster::PlayerBuff tempBuff;
+    PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
     switch(effect.on)

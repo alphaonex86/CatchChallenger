@@ -60,7 +60,7 @@ private:
     void loadReputation();
     void loadQuests();
     void sendInventory();
-    QList<PlayerMonster::PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
+    QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
     QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
 signals:
     //normal signals
