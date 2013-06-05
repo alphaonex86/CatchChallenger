@@ -1124,7 +1124,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         case 0x03:
                         {
                             PlayerMonster monster;
-                            PlayerMonster::PlayerBuff buff;
+                            PlayerBuff buff;
                             PlayerMonster::PlayerSkill skill;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
@@ -1180,7 +1180,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                                 case 0x01:
                                 case 0x02:
                                 case 0x03:
-                                    monster.gender=(PlayerMonster::Gender)gender;
+                                    monster.gender=(Gender)gender;
                                 break;
                                 default:
                                     parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(gender));
@@ -1540,7 +1540,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                             case 0x01:
                             case 0x02:
                             case 0x03:
-                                publicPlayerMonster.gender=(PlayerMonster::Gender)genderInt;
+                                publicPlayerMonster.gender=(Gender)genderInt;
                             break;
                             default:
                                 parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(genderInt));
@@ -1556,7 +1556,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         index=0;
                         while(index<buffListSize)
                         {
-                            PlayerMonster::PlayerBuff buff;
+                            PlayerBuff buff;
                             if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -1699,7 +1699,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         case 0x01:
                         case 0x02:
                         case 0x03:
-                            publicPlayerMonster.gender=(PlayerMonster::Gender)genderInt;
+                            publicPlayerMonster.gender=(Gender)genderInt;
                         break;
                         default:
                             parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(genderInt));
@@ -1715,7 +1715,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     index=0;
                     while(index<buffListSize)
                     {
-                        PlayerMonster::PlayerBuff buff;
+                        PlayerBuff buff;
                         if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -2150,7 +2150,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                         quint32 monster_list_size;
                         in >> monster_list_size;
                         PlayerMonster monster;
-                        PlayerMonster::PlayerBuff buff;
+                        PlayerBuff buff;
                         PlayerMonster::PlayerSkill skill;
                         index=0;
                         quint32 sub_size,sub_index;
@@ -2209,7 +2209,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                                 case 0x01:
                                 case 0x02:
                                 case 0x03:
-                                    monster.gender=(PlayerMonster::Gender)gender;
+                                    monster.gender=(Gender)gender;
                                 break;
                                 default:
                                     parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(gender));

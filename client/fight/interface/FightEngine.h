@@ -73,7 +73,6 @@ public:
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
     void useSkill(const quint32 &skill);
-    QList<Skill::AttackReturn> attackReturnList;
     QList<quint32> otherMonsterAttack;
     void generateOtherAttack();
     bool wildMonsterIsKO();
@@ -83,7 +82,11 @@ public:
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
+    void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList);
+    const QList<Skill::AttackReturn> getAttackReturnList() const;
+    void removeTheFirstLifeEffectAttackReturn();
 private:
+    QList<Skill::AttackReturn> attackReturnList;
     int selectedMonster;
     QByteArray m_randomSeeds;
     QList<PlayerMonster> playerMonsterList;
@@ -94,6 +97,7 @@ private:
     Skill::LifeEffectReturn applyOtherLifeEffect(const Skill::LifeEffect &effect);
     void doTheCurrentMonsterAttack(const quint32 &skill);
     void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
+    ApplyOn invertApplyOn(const ApplyOn &applyOn);
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     bool internalTryEscape();
     void addXPSP();
