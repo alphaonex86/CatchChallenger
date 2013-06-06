@@ -51,6 +51,14 @@ void LocalClientHandler::battleFinished()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message("Battle finished");
     #endif
+    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+    otherPlayerBattle->updateCanDoFight();
+    if(!otherPlayerBattle->getAbleToFight())
+        emit error(QString("Error: The other player monster in battle is KO into battleFinished()"));
+    updateCanDoFight();
+    if(!getAbleToFight())
+        emit error(QString("Error: Your monster is KO into battleFinished()"));
+    #endif
     otherPlayerBattle=NULL;
     battleIsValidated=false;
     haveCurrentSkill=false;

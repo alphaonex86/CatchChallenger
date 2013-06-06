@@ -392,7 +392,71 @@ void FightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayer
 
 bool FightEngine::haveWin()
 {
-    return wildMonsters.empty() && botMonsters.isEmpty() && battleCurrentMonster.isEmpty();
+    if(!wildMonsters.empty())
+    {
+        if(wildMonsters.size()==1)
+        {
+            if(wildMonsters.first().hp==0)
+            {
+                qDebug() << "remain one KO wild monsters";
+                return true;
+            }
+            else
+            {
+                qDebug() << "remain one wild monsters";
+                return false;
+            }
+        }
+        else
+        {
+            qDebug() << "remain " << wildMonsters.size() << " wild monsters";
+            return false;
+        }
+    }
+    if(!botMonsters.empty())
+    {
+        if(botMonsters.size()==1)
+        {
+            if(botMonsters.first().hp==0)
+            {
+                qDebug() << "remain one KO botMonsters monsters";
+                return true;
+            }
+            else
+            {
+                qDebug() << "remain one botMonsters monsters";
+                return false;
+            }
+        }
+        else
+        {
+            qDebug() << "remain " << botMonsters.size() << " botMonsters monsters";
+            return false;
+        }
+    }
+    if(!battleCurrentMonster.empty())
+    {
+        if(battleCurrentMonster.size()==1)
+        {
+            if(battleCurrentMonster.first().hp==0)
+            {
+                qDebug() << "remain one KO battleCurrentMonster monsters";
+                return true;
+            }
+            else
+            {
+                qDebug() << "remain one battleCurrentMonster monsters";
+                return false;
+            }
+        }
+        else
+        {
+            qDebug() << "remain " << battleCurrentMonster.size() << " battleCurrentMonster monsters";
+            return false;
+        }
+    }
+    qDebug() << "no remaining monsters";
+    return true;
 }
 
 bool FightEngine::dropKOWildMonster()
@@ -919,13 +983,18 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
             }
             else
                 quantity=(publicPlayerMonster->hp*effect.quantity)/100;
+            qDebug() << "applyCurrentLifeEffect() add hp on the ennemy " << quantity;
             if(quantity<0 && (-quantity)>publicPlayerMonster->hp)
             {
+                qDebug() << "applyCurrentLifeEffect() ennemy is KO";
                 publicPlayerMonster->hp=0;
                 addXPSP();
             }
             else if(quantity>0 && quantity>(stat.hp-publicPlayerMonster->hp))
+            {
+                qDebug() << "applyCurrentLifeEffect() ennemy is fully healled";
                 publicPlayerMonster->hp=stat.hp;
+            }
             else
                 publicPlayerMonster->hp+=quantity;
         }
@@ -970,7 +1039,70 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
     return effect_to_return;
 }
 
-void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
+bool FightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn)
+{
+    #ifdef DEBUG_CLIENT_BATTLE
+    qDebug() << "applyCurrentLifeEffectReturn on " << effectReturn.on;
+    #endif
+    qint32 quantity;
+    Monster::Stat stat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    switch(effectReturn.on)
+    {
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
+        {
+
+            PublicPlayerMonster *publicPlayerMonster;
+            if(!wildMonsters.isEmpty())
+                publicPlayerMonster=&wildMonsters.first();
+            else if(!botMonsters.isEmpty())
+                publicPlayerMonster=&botMonsters.first();
+            else if(!battleCurrentMonster.isEmpty())
+                publicPlayerMonster=&battleCurrentMonster.first();
+            else
+            {
+                emit newError(tr("Internal error"),"unknown other monster type");
+                return false;
+            }
+            quantity=effectReturn.quantity;
+            qDebug() << "applyCurrentLifeEffect() add hp on the ennemy " << quantity;
+            if(quantity<0 && (-quantity)>publicPlayerMonster->hp)
+            {
+                qDebug() << "applyCurrentLifeEffect() ennemy is KO";
+                publicPlayerMonster->hp=0;
+                addXPSP();
+            }
+            else if(quantity>0 && quantity>(stat.hp-publicPlayerMonster->hp))
+            {
+                qDebug() << "applyCurrentLifeEffect() ennemy is fully healled";
+                publicPlayerMonster->hp=stat.hp;
+            }
+            else
+                publicPlayerMonster->hp+=quantity;
+        }
+        break;
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
+            quantity=effectReturn.quantity;
+            if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
+            {
+                playerMonsterList[selectedMonster].hp=0;
+                playerMonsterList[selectedMonster].buffs.clear();
+                updateCanDoFight();
+            }
+            else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
+                playerMonsterList[selectedMonster].hp=stat.hp;
+            else
+                playerMonsterList[selectedMonster].hp+=quantity;
+        break;
+        default:
+            qDebug() << "Not apply match, can't apply the buff";
+        break;
+    }
+    return true;
+}
+
+bool FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
     #ifdef DEBUG_CLIENT_BATTLE
     qDebug() << "applyCurrentBuffEffect on " << effect.on;
@@ -978,6 +1110,12 @@ void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
+    if(effect.buff==0 || effect.level==0)
+    {
+        emit newError(tr("Internal error"),"is not a valid buff");
+        qDebug() << "is not a valid buff";
+        return false;
+    }
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
@@ -992,6 +1130,7 @@ void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
         {
             emit newError(tr("Internal error"),"unknown other monster type");
             qDebug() << "no other monter type";
+            return false;
         }
         break;
         case ApplyOn_Themself:
@@ -1002,6 +1141,7 @@ void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
             qDebug() << "Not apply match, can't apply the buff";
         break;
     }
+    return true;
 }
 
 ApplyOn FightEngine::invertApplyOn(const ApplyOn &applyOn)
@@ -1025,6 +1165,7 @@ ApplyOn FightEngine::invertApplyOn(const ApplyOn &applyOn)
 
 void FightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList)
 {
+    qDebug() << "addAndApplyAttackReturnList()";
     int index=0;
     int sub_index=0;
     while(index<attackReturnList.size())
@@ -1038,7 +1179,12 @@ void FightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &
                 Skill::BuffEffect buff=attackReturn.buffEffectMonster.at(sub_index);
                 if(!attackReturn.doByTheCurrentMonster)
                     buff.on=invertApplyOn(buff.on);
-                applyCurrentBuffEffect(buff);
+                qDebug() << "addAndApplyAttackReturnList() buff on " << buff.on << ", buff:" << buff.buff << ", buff level:" << buff.level;
+                if(!applyCurrentBuffEffect(buff))
+                {
+                    emit newError(tr("Internal error"),"Error applying the buff effect");
+                    return;
+                }
                 sub_index++;
             }
             sub_index=0;
@@ -1047,11 +1193,12 @@ void FightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &
                 Skill::LifeEffectReturn lifeEffect=attackReturn.lifeEffectMonster.at(sub_index);
                 if(!attackReturn.doByTheCurrentMonster)
                     lifeEffect.on=invertApplyOn(lifeEffect.on);
-                Skill::LifeEffect newEffect;
-                newEffect.on=lifeEffect.on;
-                newEffect.quantity=lifeEffect.quantity;
-                newEffect.type=QuantityType_Quantity;
-                lifeEffect=applyCurrentLifeEffect(newEffect);
+                qDebug() << "addAndApplyAttackReturnList() life effect on " << lifeEffect.on << ", quantity:" << lifeEffect.quantity;
+                if(!applyCurrentLifeEffectReturn(lifeEffect))
+                {
+                    emit newError(tr("Internal error"),"Error applying the life effect");
+                    return;
+                }
                 sub_index++;
             }
         }

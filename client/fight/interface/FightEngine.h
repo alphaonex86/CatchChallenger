@@ -97,9 +97,10 @@ private:
     void applyOtherBuffEffect(const Skill::BuffEffect &effect);
     Skill::LifeEffectReturn applyOtherLifeEffect(const Skill::LifeEffect &effect);
     void doTheCurrentMonsterAttack(const quint32 &skill);
-    void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
+    bool applyCurrentBuffEffect(const Skill::BuffEffect &effect);
     ApplyOn invertApplyOn(const ApplyOn &applyOn);
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
+    bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();
     void addXPSP();
 private:

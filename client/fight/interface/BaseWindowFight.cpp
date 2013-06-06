@@ -731,7 +731,6 @@ void BaseWindow::displayAttack()
     }
     else
     {
-        qDebug() << "displayAttack(): less than 3000ms";
         if(CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<0)
         {
             hp_to_change=-hp_to_change;
