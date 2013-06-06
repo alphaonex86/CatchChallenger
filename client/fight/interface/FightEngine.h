@@ -78,6 +78,7 @@ public:
     bool wildMonsterIsKO();
     bool currentMonsterIsKO();
     bool dropKOWildMonster();
+    void finishTheBattle();
     bool dropKOCurrentMonster();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
