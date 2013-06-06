@@ -370,136 +370,145 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                             levelDef[number].sp=sp;
                                             if(number>0)
                                             {
-                                                QDomElement life = level.firstChildElement("life");
-                                                while(!life.isNull())
                                                 {
-                                                    if(life.isElement())
+                                                    QDomElement life = level.firstChildElement("life");
+                                                    while(!life.isNull())
                                                     {
-                                                        Skill::Life effect;
-                                                        if(life.hasAttribute("applyOn"))
+                                                        if(life.isElement())
                                                         {
-                                                            if(life.attribute("applyOn")=="aloneEnemy")
-                                                                effect.effect.on=ApplyOn_AloneEnemy;
-                                                            else if(life.attribute("applyOn")=="themself")
-                                                                effect.effect.on=ApplyOn_Themself;
-                                                            else if(life.attribute("applyOn")=="allEnemy")
-                                                                effect.effect.on=ApplyOn_AllEnemy;
-                                                            else if(life.attribute("applyOn")=="allAlly")
-                                                                effect.effect.on=ApplyOn_AllAlly;
-                                                            else
+                                                            Skill::Life effect;
+                                                            if(life.hasAttribute("applyOn"))
                                                             {
-                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(life.attribute("applyOn")));
-                                                                effect.effect.on=ApplyOn_AloneEnemy;
-                                                            }
-                                                        }
-                                                        else
-                                                            effect.effect.on=ApplyOn_AloneEnemy;
-                                                        QString text;
-                                                        if(life.hasAttribute("quantity"))
-                                                            text=life.attribute("quantity");
-                                                        if(text.endsWith("%"))
-                                                            effect.effect.type=QuantityType_Percent;
-                                                        else
-                                                            effect.effect.type=QuantityType_Quantity;
-                                                        text.remove("%");
-                                                        text.remove("+");
-                                                        effect.effect.quantity=text.toInt(&ok);
-                                                        effect.success=100;
-                                                        if(life.hasAttribute("success"))
-                                                        {
-                                                            QString success=life.attribute("success");
-                                                            success.remove("%");
-                                                            effect.success=success.toUShort(&ok2);
-                                                            if(!ok2)
-                                                            {
-                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, success wrong corrected to 100%: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                                                effect.success=100;
-                                                            }
-                                                        }
-                                                        if(ok)
-                                                            levelDef[number].life << effect;
-                                                        else
-                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(text));
-                                                    }
-                                                    life = life.nextSiblingElement("life");
-                                                }
-                                                QDomElement buff = level.firstChildElement("buff");
-                                                while(!buff.isNull())
-                                                {
-                                                    if(buff.isElement())
-                                                    {
-                                                        if(buff.hasAttribute("id"))
-                                                        {
-                                                            quint32 idBuff=buff.attribute("id").toUInt(&ok);
-                                                            if(ok)
-                                                            {
-                                                                Skill::Buff effect;
-                                                                if(life.hasAttribute("applyOn"))
-                                                                {
-                                                                    if(life.attribute("applyOn")=="aloneEnemy")
-                                                                        effect.effect.on=ApplyOn_AloneEnemy;
-                                                                    else if(life.attribute("applyOn")=="themself")
-                                                                        effect.effect.on=ApplyOn_Themself;
-                                                                    else if(life.attribute("applyOn")=="allEnemy")
-                                                                        effect.effect.on=ApplyOn_AllEnemy;
-                                                                    else if(life.attribute("applyOn")=="allAlly")
-                                                                        effect.effect.on=ApplyOn_AllAlly;
-                                                                    else
-                                                                    {
-                                                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(life.attribute("applyOn")));
-                                                                        effect.effect.on=ApplyOn_AloneEnemy;
-                                                                    }
-                                                                }
-                                                                else
+                                                                if(life.attribute("applyOn")=="aloneEnemy")
                                                                     effect.effect.on=ApplyOn_AloneEnemy;
-                                                                if(!monsterBuffs.contains(idBuff))
-                                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, this buff id is not found: %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).at(idBuff));
+                                                                else if(life.attribute("applyOn")=="themself")
+                                                                    effect.effect.on=ApplyOn_Themself;
+                                                                else if(life.attribute("applyOn")=="allEnemy")
+                                                                    effect.effect.on=ApplyOn_AllEnemy;
+                                                                else if(life.attribute("applyOn")=="allAlly")
+                                                                    effect.effect.on=ApplyOn_AllAlly;
+                                                                else if(life.attribute("applyOn")=="nobody")
+                                                                    effect.effect.on=ApplyOn_Nobody;
                                                                 else
                                                                 {
-                                                                    effect.effect.level=1;
-                                                                    ok2=true;
-                                                                    if(life.hasAttribute("level"))
+                                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(life.attribute("applyOn")));
+                                                                    effect.effect.on=ApplyOn_AloneEnemy;
+                                                                }
+                                                            }
+                                                            else
+                                                                effect.effect.on=ApplyOn_AloneEnemy;
+                                                            QString text;
+                                                            if(life.hasAttribute("quantity"))
+                                                                text=life.attribute("quantity");
+                                                            if(text.endsWith("%"))
+                                                                effect.effect.type=QuantityType_Percent;
+                                                            else
+                                                                effect.effect.type=QuantityType_Quantity;
+                                                            text.remove("%");
+                                                            text.remove("+");
+                                                            effect.effect.quantity=text.toInt(&ok);
+                                                            effect.success=100;
+                                                            if(life.hasAttribute("success"))
+                                                            {
+                                                                QString success=life.attribute("success");
+                                                                success.remove("%");
+                                                                effect.success=success.toUShort(&ok2);
+                                                                if(!ok2)
+                                                                {
+                                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, success wrong corrected to 100%: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                                    effect.success=100;
+                                                                }
+                                                            }
+                                                            if(ok)
+                                                                levelDef[number].life << effect;
+                                                            else
+                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(text));
+                                                        }
+                                                        life = life.nextSiblingElement("life");
+                                                    }
+                                                }
+                                                {
+                                                    QDomElement buff = level.firstChildElement("buff");
+                                                    while(!buff.isNull())
+                                                    {
+                                                        if(buff.isElement())
+                                                        {
+                                                            if(buff.hasAttribute("id"))
+                                                            {
+                                                                quint32 idBuff=buff.attribute("id").toUInt(&ok);
+                                                                if(ok)
+                                                                {
+                                                                    Skill::Buff effect;
+                                                                    if(buff.hasAttribute("applyOn"))
                                                                     {
-                                                                        QString level=life.attribute("level");
-                                                                        effect.effect.level=level.toUShort(&ok2);
-                                                                        if(!ok2)
-                                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, level wrong: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(life.attribute("level")));
-                                                                        if(level<=0)
-                                                                        {
-                                                                            ok2=false;
-                                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                                                        }
-                                                                    }
-                                                                    if(ok2)
-                                                                    {
-                                                                        if(monsterBuffs[idBuff].level.size()<effect.effect.level)
-                                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, level needed: %4, level max found: %5: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(effect.effect.level).arg(monsterBuffs[idBuff].level.size()));
+                                                                        if(buff.attribute("applyOn")=="aloneEnemy")
+                                                                            effect.effect.on=ApplyOn_AloneEnemy;
+                                                                        else if(buff.attribute("applyOn")=="themself")
+                                                                            effect.effect.on=ApplyOn_Themself;
+                                                                        else if(buff.attribute("applyOn")=="allEnemy")
+                                                                            effect.effect.on=ApplyOn_AllEnemy;
+                                                                        else if(buff.attribute("applyOn")=="allAlly")
+                                                                            effect.effect.on=ApplyOn_AllAlly;
+                                                                        else if(buff.attribute("applyOn")=="nobody")
+                                                                            effect.effect.on=ApplyOn_Nobody;
                                                                         else
                                                                         {
-                                                                            effect.success=100;
-                                                                            if(life.hasAttribute("success"))
+                                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, applyOn tag wrong %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(buff.attribute("applyOn")));
+                                                                            effect.effect.on=ApplyOn_AloneEnemy;
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                        effect.effect.on=ApplyOn_AloneEnemy;
+                                                                    if(!monsterBuffs.contains(idBuff))
+                                                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, this buff id is not found: %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).at(idBuff));
+                                                                    else
+                                                                    {
+                                                                        effect.effect.level=1;
+                                                                        ok2=true;
+                                                                        if(buff.hasAttribute("level"))
+                                                                        {
+                                                                            QString level=buff.attribute("level");
+                                                                            effect.effect.level=level.toUShort(&ok2);
+                                                                            if(!ok2)
+                                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, level wrong: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(buff.attribute("level")));
+                                                                            if(level<=0)
                                                                             {
-                                                                                QString success=life.attribute("success");
-                                                                                success.remove("%");
-                                                                                effect.success=success.toUShort(&ok2);
-                                                                                if(!ok2)
-                                                                                {
-                                                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, success wrong corrected to 100%: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                                                                    effect.success=100;
-                                                                                }
+                                                                                ok2=false;
+                                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, level need be egal or greater than 1: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                                             }
-                                                                            levelDef[number].buff << effect;
+                                                                        }
+                                                                        if(ok2)
+                                                                        {
+                                                                            if(monsterBuffs[idBuff].level.size()<effect.effect.level)
+                                                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, level needed: %4, level max found: %5: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(effect.effect.level).arg(monsterBuffs[idBuff].level.size()));
+                                                                            else
+                                                                            {
+                                                                                effect.effect.buff=idBuff;
+                                                                                effect.success=100;
+                                                                                if(buff.hasAttribute("success"))
+                                                                                {
+                                                                                    QString success=buff.attribute("success");
+                                                                                    success.remove("%");
+                                                                                    effect.success=success.toUShort(&ok2);
+                                                                                    if(!ok2)
+                                                                                    {
+                                                                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, success wrong corrected to 100%: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                                                        effect.success=100;
+                                                                                    }
+                                                                                }
+                                                                                levelDef[number].buff << effect;
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
+                                                                else
+                                                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                             }
                                                             else
                                                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                         }
-                                                        else
-                                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not tag id: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                        buff = buff.nextSiblingElement("buff");
                                                     }
-                                                    buff = buff.nextSiblingElement("buff");
                                                 }
                                             }
                                             else

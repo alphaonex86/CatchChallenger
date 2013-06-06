@@ -79,6 +79,7 @@ private:
     void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
     qint32 applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     bool isInFight();
+    bool buffIsValid(const Skill::BuffEffect &buffEffect);
     bool remainMonstersToFight(const quint32 &monsterId);
     bool monsterIsKO(const PlayerMonster &playerMonter);
     void generateOtherAttack();
