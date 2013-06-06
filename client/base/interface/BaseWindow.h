@@ -354,7 +354,6 @@ private:
     QHash<quint32, PlayerQuest> quests;
 
     //battle
-    QList<QPair<QString,quint8> > lastBattleQuery;
     BattleStep battleStep;
 signals:
     //datapack
