@@ -85,6 +85,7 @@ public:
     void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList);
     const QList<Skill::AttackReturn> getAttackReturnList() const;
     void removeTheFirstLifeEffectAttackReturn();
+    bool firstLifeEffectQuantityChange(qint32 quantity);
 private:
     QList<Skill::AttackReturn> attackReturnList;
     int selectedMonster;

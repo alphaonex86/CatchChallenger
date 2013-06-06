@@ -895,7 +895,7 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
                 publicPlayerMonster=&battleCurrentMonster.first();
             else
             {
-                emit error("unknown other monster type");
+                emit newError(tr("Internal error"),"unknown other monster type");
                 Skill::LifeEffectReturn effect_to_return;
                 effect_to_return.on=effect.on;
                 effect_to_return.quantity=0;
@@ -990,7 +990,7 @@ void FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
             botMonsters.first().buffs << tempBuff;
         else
         {
-            emit error("unknown other monster type");
+            emit newError(tr("Internal error"),"unknown other monster type");
             qDebug() << "no other monter type";
         }
         break;
@@ -1070,4 +1070,20 @@ void FightEngine::removeTheFirstLifeEffectAttackReturn()
     attackReturnList.first().lifeEffectMonster.removeFirst();
     if(attackReturnList.first().lifeEffectMonster.isEmpty())
         attackReturnList.removeFirst();
+}
+
+bool FightEngine::firstLifeEffectQuantityChange(qint32 quantity)
+{
+    if(attackReturnList.isEmpty())
+    {
+        emit newError(tr("Internal error"),"try add quantity to non existant life effect");
+        return false;
+    }
+    if(attackReturnList.first().lifeEffectMonster.isEmpty())
+    {
+        emit newError(tr("Internal error"),"try add quantity to life effect list empty");
+        return false;
+    }
+    attackReturnList.first().lifeEffectMonster.first().quantity+=quantity;
+    return true;
 }
