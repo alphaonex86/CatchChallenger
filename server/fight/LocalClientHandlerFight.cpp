@@ -91,7 +91,7 @@ bool LocalClientHandler::checkLoose()
     if(!ableToFight)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("Player have lost, tp to %1 (%2,%3) and heal").arg(player_informations->rescue.map->map_file).arg(player_informations->rescue.x).arg(player_informations->rescue.y));
+        emit message(QString("You have lost, tp to %1 (%2,%3) and heal").arg(player_informations->rescue.map->map_file).arg(player_informations->rescue.x).arg(player_informations->rescue.y));
         #endif
         //teleport
         emit teleportTo(player_informations->rescue.map,player_informations->rescue.x,player_informations->rescue.y,player_informations->rescue.orientation);

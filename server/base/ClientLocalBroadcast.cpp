@@ -15,12 +15,15 @@ ClientLocalBroadcast::~ClientLocalBroadcast()
 
 void ClientLocalBroadcast::extraStop()
 {
+    player_informations=NULL;
     removeClient(map,true);
 }
 
 void ClientLocalBroadcast::sendLocalChatText(const QString &text)
 {
     if(map==NULL)
+        return;
+    if(this->player_informations==NULL)
         return;
     emit message(QString("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
@@ -74,6 +77,11 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
 
 void ClientLocalBroadcast::insertClient(Map *map)
 {
+    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+    if(static_cast<MapServer *>(map)->clientsForBroadcast.contains(this))
+        emit message(QString("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
+    else
+    #endif
     static_cast<MapServer *>(map)->clientsForBroadcast << this;
 
     sendNearPlant();
@@ -81,10 +89,15 @@ void ClientLocalBroadcast::insertClient(Map *map)
 
 void ClientLocalBroadcast::removeClient(Map *map, const bool &withDestroy)
 {
+    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+    if(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1)
+        emit message(QString("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: %1").arg(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)));
+    #endif
     static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
 
     if(!withDestroy)
         removeNearPlant();
+    map=NULL;
 }
 
 //map slots, transmited by the current ClientNetworkRead

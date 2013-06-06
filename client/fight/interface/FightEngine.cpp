@@ -483,6 +483,15 @@ bool FightEngine::dropKOWildMonster()
     return false;
 }
 
+void FightEngine::finishTheBattle()
+{
+    wildMonsters.clear();
+    botMonsters.clear();
+    battleCurrentMonster.clear();
+    battleStat.clear();
+    battleMonsterPlace.clear();
+}
+
 PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList,bool *ok)
 {
     PlayerMonster playerMonster;
