@@ -748,7 +748,7 @@ void BaseWindow::displayAttack()
             hp_to_change=0;
         if(hp_to_change!=0)
         {
-            CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity-=hp_to_change;
+            CatchChallenger::FightEngine::fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
             if(applyOnOtherMonster)
                 ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+hp_to_change);
             else
