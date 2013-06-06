@@ -211,7 +211,10 @@ bool LocalClientHandler::checkKOOtherMonstersForGain()
             otherPlayerBattle->saveStat();
             otherPlayerBattle->updateCanDoFight();
             if(!otherPlayerBattle->getAbleToFight())
+            {
+                otherPlayerBattle->checkLoose();
                 battleFinished();
+            }
         }
     }
     else
