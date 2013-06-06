@@ -59,6 +59,12 @@ void LocalClientHandler::battleFinished()
     if(!getAbleToFight())
         emit error(QString("Error: Your monster is KO into battleFinished()"));
     #endif
+    otherPlayerBattle->battleFinishedReset();
+    battleFinishedReset();
+}
+
+void LocalClientHandler::battleFinishedReset()
+{
     otherPlayerBattle=NULL;
     battleIsValidated=false;
     haveCurrentSkill=false;
@@ -298,6 +304,9 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
     //reset all
     haveUsedTheBattleSkill();
     tempOtherPlayerBattle->haveUsedTheBattleSkill();
+    //if the battle is finish
+    if(!currentPlayerLoose || !otherPlayerLoose)
+        battleFinished();
 }
 
 quint8 LocalClientHandler::selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber)
