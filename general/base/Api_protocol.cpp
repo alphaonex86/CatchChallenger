@@ -1442,6 +1442,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                                 case ApplyOn_AllEnemy:
                                 case ApplyOn_Themself:
                                 case ApplyOn_AllAlly:
+                                case ApplyOn_Nobody:
                                 break;
                                 default:
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -1485,6 +1486,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                                 case ApplyOn_AllEnemy:
                                 case ApplyOn_Themself:
                                 case ApplyOn_AllAlly:
+                                case ApplyOn_Nobody:
                                 break;
                                 default:
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));

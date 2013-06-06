@@ -285,8 +285,12 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
         sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(tempOtherPlayerBattle->getSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(tempOtherPlayerBattle->getSelectedMonster()));
     else
         sendBattleReturn(monsterReturnList);
-    monsterReturnList.first().doByTheCurrentMonster=!monsterReturnList.first().doByTheCurrentMonster;
-    monsterReturnList.last().doByTheCurrentMonster=!monsterReturnList.last().doByTheCurrentMonster;
+    int index=0;
+    while(index<monsterReturnList.size())
+    {
+        monsterReturnList[index].doByTheCurrentMonster=!monsterReturnList[index].doByTheCurrentMonster;
+        index++;
+    }
     if(currentMonsterisKO && !currentPlayerLoose)
         tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(getSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(getSelectedMonster()));
     else

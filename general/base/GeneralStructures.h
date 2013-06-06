@@ -366,10 +366,11 @@ struct Buff
 
 enum ApplyOn
 {
-    ApplyOn_AloneEnemy,
-    ApplyOn_AllEnemy,
-    ApplyOn_Themself,
-    ApplyOn_AllAlly
+    ApplyOn_AloneEnemy=0x01,
+    ApplyOn_AllEnemy=0x02,
+    ApplyOn_Themself=0x03,
+    ApplyOn_AllAlly=0x04,
+    ApplyOn_Nobody=0x05
 };
 
 struct Skill
