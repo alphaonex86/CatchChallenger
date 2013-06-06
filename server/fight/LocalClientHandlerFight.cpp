@@ -853,6 +853,30 @@ void LocalClientHandler::useSkill(const quint32 &skill)
     syncForEndOfTurn();
 }
 
+bool LocalClientHandler::buffIsValid(const Skill::BuffEffect &buffEffect)
+{
+    if(!GlobalServerData::serverPrivateVariables.monsterBuffs.contains(buffEffect.buff))
+        return false;
+    if(buffEffect.level<=0)
+        return false;
+    if(buffEffect.level<=0)
+        return false;
+    if(buffEffect.level>GlobalServerData::serverPrivateVariables.monsterBuffs[buffEffect.buff].level.size())
+        return false;
+    switch(buffEffect.on)
+    {
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
+        case ApplyOn_Nobody:
+        break;
+        default:
+        return false;
+    }
+    return true;
+}
+
 Skill::AttackReturn LocalClientHandler::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat)
 {
     /// \todo use the variable currentMonsterStat and otherMonsterStat to have better speed
@@ -869,13 +893,30 @@ Skill::AttackReturn LocalClientHandler::doTheCurrentMonsterAttack(const quint32 
     while(index<skillList.buff.size())
     {
         const Skill::Buff &buff=skillList.buff.at(index);
+        #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+        if(!buffIsValid(buff.effect))
+        {
+            emit error("Buff is not valid");
+            return tempReturnBuff;
+        }
+        #endif
         bool success;
         if(buff.success==100)
             success=true;
         else
+        {
             success=(getOneSeed(100)<buff.success);
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            if(success)
+                emit message(QString("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+            #endif
+        }
         if(success)
         {
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            if(success)
+                emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+            #endif
             tempReturnBuff.success=true;
             tempReturnBuff.buffEffectMonster << buff.effect;
             applyCurrentBuffEffect(buff.effect);
