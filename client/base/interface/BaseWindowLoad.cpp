@@ -45,7 +45,6 @@ void BaseWindow::resetAll()
     inSelection=false;
     isInQuest=false;
     queryList.clear();
-    lastBattleQuery.clear();
     ui->inventoryInformation->setVisible(false);
     ui->inventoryUse->setVisible(false);
     ui->inventoryDestroy->setVisible(false);
