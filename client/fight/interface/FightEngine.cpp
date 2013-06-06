@@ -819,6 +819,21 @@ bool FightEngine::internalTryEscape()
 
 void FightEngine::addXPSP()
 {
+    if(!botMonsters.isEmpty())
+    {
+        emit newError(tr("Todo"),"Add XP or SP with bot monster is todo");
+        return;
+    }
+    if(!battleCurrentMonster.isEmpty())
+    {
+        emit newError(tr("Internal error"),"Don't win directly XP/SP with battle with other player");
+        return;
+    }
+    if(wildMonsters.isEmpty())
+    {
+        emit newError(tr("Internal error"),"No wild monster to add XP/SP");
+        return;
+    }
     const Monster &wildmonster=monsters[wildMonsters.first().monster];
     const Monster &currentmonster=monsters[playerMonsterList[selectedMonster].monster];
     playerMonsterList[selectedMonster].sp+=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
@@ -1070,7 +1085,6 @@ bool FightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &ef
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is KO";
                 publicPlayerMonster->hp=0;
-                addXPSP();
             }
             else if(quantity>0 && quantity>(stat.hp-publicPlayerMonster->hp))
             {
@@ -1084,14 +1098,19 @@ bool FightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &ef
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
             quantity=effectReturn.quantity;
+            qDebug() << "applyCurrentLifeEffect() add hp " << quantity;
             if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
             {
+                qDebug() << "applyCurrentLifeEffect() current monster is KO";
                 playerMonsterList[selectedMonster].hp=0;
                 playerMonsterList[selectedMonster].buffs.clear();
                 updateCanDoFight();
             }
             else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
+            {
+                qDebug() << "applyCurrentLifeEffect() you are fully healled";
                 playerMonsterList[selectedMonster].hp=stat.hp;
+            }
             else
                 playerMonsterList[selectedMonster].hp+=quantity;
         break;
