@@ -550,6 +550,16 @@ void MapControllerMP::remove_player(const quint16 &id)
 
     otherPlayerListByTimer.remove(otherPlayerList[id].oneStepMore);
 
+    Tiled::ObjectGroup *currentGroup=otherPlayerList[id].playerMapObject->objectGroup();
+    if(currentGroup!=NULL)
+    {
+        if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
+            ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(otherPlayerList[id].playerMapObject);
+        if(currentGroup!=otherPlayerList[id].presumed_map->objectGroup)
+            qDebug() << QString("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+        currentGroup->removeObject(otherPlayerList[id].playerMapObject);
+    }
+
     delete otherPlayerList[id].playerMapObject;
     delete otherPlayerList[id].playerTileset;
     delete otherPlayerList[id].oneStepMore;
@@ -690,6 +700,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     qDebug() << QString("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+    qDebug() << QString("currently on: %1 (%2,%3)").arg(current_map->logicalMap.map_file).arg(this->x).arg(this->y);
     #endif
     if(current_map==NULL)
     {
@@ -1083,6 +1094,7 @@ void MapControllerMP::destroyMap(Map_full *map)
     while (i != otherPlayerList.constEnd()) {
         if(i.value().presumed_map==map)
         {
+            //unloadOtherPlayerFromMap(i.value());-> seam useless for the bug
             remove_player(i.key());
             i = otherPlayerList.constBegin();
         }
