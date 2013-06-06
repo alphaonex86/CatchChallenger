@@ -20,12 +20,6 @@ LocalClientHandler::LocalClientHandler()
 
 LocalClientHandler::~LocalClientHandler()
 {
-    if(otherPlayerBattle!=NULL)
-        otherPlayerBattle->internalBattleCanceled(false);
-    internalBattleCanceled(false);
-    if(otherPlayerTrade!=NULL)
-        otherPlayerTrade->internalTradeCanceled(false);
-    internalTradeCanceled(false);
 }
 
 bool LocalClientHandler::checkCollision()

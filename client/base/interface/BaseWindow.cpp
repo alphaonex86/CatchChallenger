@@ -338,6 +338,12 @@ void BaseWindow::tradeUpdateCurrentObject()
 void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
 {
     Q_UNUSED(skinInt);
+    if(CatchChallenger::FightEngine::fightEngine.isInFight())
+    {
+        qDebug() << "already in fight";
+        CatchChallenger::Api_client_real::client->battleRefused();
+        return;
+    }
     QMessageBox::StandardButton button=QMessageBox::question(this,tr("Battle request"),tr("Do you accept the battle with <b>%1</b>?").arg(pseudo),QMessageBox::Yes|QMessageBox::No);
     if(button!=QMessageBox::Yes)
     {
@@ -349,36 +355,31 @@ void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
 
 void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    if(!lastBattleQuery.isEmpty())
+    if(CatchChallenger::FightEngine::fightEngine.isInFight())
     {
-        qDebug() << "lastBattleQuery have size wrong: "+QString::number(lastBattleQuery.size());
-        lastBattleQuery.clear();
+        qDebug() << "already in fight";
         CatchChallenger::Api_client_real::client->battleRefused();
         return;
     }
-    QPair<QString,quint8> item;
-    item.first=pseudo;
-    item.second=skinId;
-    lastBattleQuery << item;
     battleType=BattleType_OtherPlayer;
     ui->stackedWidget->setCurrentWidget(ui->page_battle);
 
     skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
     QPixmap otherFrontImage;
     //front image
-    if(lastBattleQuery.first().second<skinFolderList.size())
+    if(skinId<skinFolderList.size())
     {
-        otherFrontImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(lastBattleQuery.first().second)+"/front.png");
+        otherFrontImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png");
         if(otherFrontImage.isNull())
         {
             otherFrontImage=QPixmap(":/images/player_default/front.png");
-            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(lastBattleQuery.first().second)+"/front.png";
+            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png";
         }
     }
     else
     {
         otherFrontImage=QPixmap(":/images/player_default/front.png");
-        qDebug() << "The skin id: "+QString::number(lastBattleQuery.first().second)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into battleRequested()";
+        qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into battleRequested()";
     }
 
     //reset the other player info
@@ -400,7 +401,6 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
 
 void BaseWindow::battleCanceledByOther()
 {
-    lastBattleQuery.clear();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     showTip(tr("The other player have canceled the battle"));
     load_monsters();
