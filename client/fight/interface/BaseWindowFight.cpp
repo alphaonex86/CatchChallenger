@@ -229,13 +229,17 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
     Q_UNUSED(x);
     Q_UNUSED(y);
     Q_UNUSED(direction);
-    if(CatchChallenger::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
+    if(!CatchChallenger::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
     {
+        doNextActionStep=DoNextActionStep_Loose;
+        qDebug() << "tp on loose";
         if(fightTimerFinish)
-            lose();
+            loose();
         else
             fightTimerFinish=true;
     }
+    else
+        qDebug() << "normal tp";
 }
 
 void BaseWindow::updateCurrentMonsterInformation()
@@ -494,9 +498,10 @@ void BaseWindow::finalFightTextQuit()
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void BaseWindow::lose()
+void BaseWindow::loose()
 {
     CatchChallenger::FightEngine::fightEngine.healAllMonsters();
+    CatchChallenger::FightEngine::fightEngine.finishTheBattle();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
@@ -505,6 +510,7 @@ void BaseWindow::lose()
 
 void BaseWindow::win()
 {
+    CatchChallenger::FightEngine::fightEngine.finishTheBattle();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
@@ -571,7 +577,7 @@ void BaseWindow::doNextAction()
         qDebug() << "doNextActionStep==DoNextActionStep_Loose, fightTimerFinish: " << fightTimerFinish;
         #endif
         if(fightTimerFinish)
-            lose();
+            loose();
         else
             fightTimerFinish=true;
         return;
@@ -579,13 +585,13 @@ void BaseWindow::doNextAction()
     //if lose
     if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
     {
-        qDebug() << "doNextAction(): you loose";
+        qDebug() << "doNextAction(): you lose";
         if(doNextActionStep<DoNextActionStep_Loose)
         {
             #ifdef DEBUG_CLIENT_BATTLE
-            qDebug() << "You loose";
+            qDebug() << "You lose";
             #endif
-            displayText(tr("You loose!"));
+            displayText(tr("You lose!"));
             doNextActionStep=DoNextActionStep_Loose;
             return;
         }

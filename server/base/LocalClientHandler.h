@@ -164,6 +164,7 @@ public slots:
     void battleCanceled();
     void battleAccepted();
     void battleFinished();
+    void battleFinishedReset();
 private slots:
     virtual void extraStop();
     void savePosition();

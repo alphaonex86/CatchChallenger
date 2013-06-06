@@ -333,7 +333,7 @@ private:
         DoNextActionStep_Win
     };
     DoNextActionStep doNextActionStep;
-    void lose();
+    void loose();
     void win();
     bool escape,escapeSuccess;
     bool haveDisplayCurrentAttackSuccess;
