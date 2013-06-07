@@ -511,12 +511,6 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                 emit reinsert_player(simplifiedId,x,y,direction);
                 index_sub_loop++;
             }
-            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-            {
-                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                return;
-            }
-
         }
         break;
         //Reinser player on other map

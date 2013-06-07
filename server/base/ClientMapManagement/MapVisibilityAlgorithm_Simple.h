@@ -20,7 +20,7 @@ protected:
     void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
-    void reinsertClientForOthers();
+    void reinsertClientForOthersOnSameMap();
 private:
     static int index;
     static int loop_size;
@@ -28,18 +28,16 @@ private:
     //overwrite
     //remove the move/remove
     void moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction);
-    #if defined(CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR) && defined(CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE)
-    QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>			to_send_over_move;
-    void send_reinsert();
-    #endif
     //for the purge buffer
     void send_insert();
     void send_move();
     void send_remove();
+    void send_reinsert();
     #ifdef CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR
     void insertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player);
     void removeAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id);
     #endif
+    void reinsertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player);
     //map load/unload and change
     virtual void			loadOnTheMap();
     virtual void			unloadFromTheMap();
@@ -75,6 +73,7 @@ private:
     QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>			to_send_insert;
     QHash<SIMPLIFIED_PLAYER_ID_TYPE, QList<map_management_movement> >	to_send_move;
     QSet<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
+    QHash<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_Simple *>			to_send_reinsert;
 public slots:
     virtual void purgeBuffer();
     //map slots, transmited by the current ClientNetworkRead

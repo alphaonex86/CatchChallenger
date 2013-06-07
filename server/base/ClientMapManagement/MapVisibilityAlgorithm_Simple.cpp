@@ -132,12 +132,12 @@ void MapVisibilityAlgorithm_Simple::dropAllClients()
     to_send_insert.clear();
     to_send_move.clear();
     to_send_remove.clear();
-    to_send_over_move.clear();
+    to_send_reinsert.clear();
 
     ClientMapManagement::dropAllClients();
 }
 
-void MapVisibilityAlgorithm_Simple::reinsertClientForOthers()
+void MapVisibilityAlgorithm_Simple::reinsertClientForOthersOnSameMap()
 {
     Map_server_MapVisibility_simple* map_temp=static_cast<Map_server_MapVisibility_simple*>(map);
     if(unlikely(map_temp->show==false))
@@ -155,7 +155,9 @@ void MapVisibilityAlgorithm_Simple::reinsertClientForOthers()
     index=0;
     while(index<loop_size)
     {
-        map_temp->clients.at(index)->insertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
+        current_client=map_temp->clients.at(index);
+        if(unlikely(current_client!=this))
+            current_client->reinsertAnotherClient(player_informations->public_and_private_informations.public_informations.simplifiedId,this);
         index++;
     }
 }
@@ -241,11 +243,21 @@ void MapVisibilityAlgorithm_Simple::insertAnotherClient(const SIMPLIFIED_PLAYER_
 }
 #endif
 
-void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player,const quint8 &movedUnit,const Direction &direction)
+
+//remove the move/remove
+void MapVisibilityAlgorithm_Simple::reinsertAnotherClient(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
+    emit message(QString("reinsertAnotherClient(%1,%2,%3,%4)").arg(player_id).arg(the_another_player->map->map_file).arg(the_another_player->x).arg(the_another_player->y));
+    #endif
+    to_send_reinsert[player_id]=the_another_player;
+}
+
+void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PLAYER_ID_TYPE &player_id,MapVisibilityAlgorithm_Simple *the_another_player, const quint8 &movedUnit, const Direction &direction)
 {
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
     //already into over move
-    if(to_send_insert.contains(player_id) || to_send_over_move.contains(player_id))
+    if(to_send_insert.contains(player_id) || to_send_reinsert.contains(player_id))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
         emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, already into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
@@ -265,7 +277,7 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
         emit message(QString("moveAnotherClientWithMap(%1,%2,%3) to the player: %4, go into over move").arg(player_id).arg(movedUnit).arg(MoveOnTheMap::directionToString(direction)).arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
         #endif
         to_send_move.remove(player_id);
-        to_send_over_move[player_id]=the_another_player;
+        to_send_reinsert[player_id]=the_another_player;
         return;
     }
     #endif
@@ -310,9 +322,7 @@ void MapVisibilityAlgorithm_Simple::removeAnotherClient(const SIMPLIFIED_PLAYER_
 
     to_send_insert.remove(player_id);
     to_send_move.remove(player_id);
-    #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE
-    to_send_over_move.remove(player_id);
-    #endif
+    to_send_reinsert.remove(player_id);
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
     emit message(QString("removeAnotherClient(%1)").arg(player_id));
@@ -342,9 +352,7 @@ void MapVisibilityAlgorithm_Simple::purgeBuffer()
     send_insert();
     send_move();
     send_remove();
-    #if defined(CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR) && defined(CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE)
     send_reinsert();
-    #endif
 }
 
 //for the purge buffer
@@ -505,10 +513,9 @@ void MapVisibilityAlgorithm_Simple::send_remove()
     emit sendPacket(0xC8,purgeBuffer_outputData);
 }
 
-#if defined(CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR) && defined(CATCHCHALLENGER_SERVER_MAP_DROP_OVER_MOVE)
 void MapVisibilityAlgorithm_Simple::send_reinsert()
 {
-    if(to_send_over_move.size()==0)
+    if(to_send_reinsert.size()==0)
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("send_reinsert() of player: %4").arg(player_informations->public_and_private_informations.public_informations.simplifiedId));
@@ -520,12 +527,12 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 
     //////////////////////////// re-insert //////////////////////////
     if(GlobalServerData::serverSettings.max_players<=255)
-        out << (quint8)to_send_over_move.size();
+        out << (quint8)to_send_reinsert.size();
     else
-        out << (quint16)to_send_over_move.size();
+        out << (quint16)to_send_reinsert.size();
 
-    i_insert = to_send_over_move.constBegin();
-    i_insert_end = to_send_over_move.constEnd();
+    i_insert = to_send_reinsert.constBegin();
+    i_insert_end = to_send_reinsert.constEnd();
     while (i_insert != i_insert_end)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE
@@ -548,8 +555,9 @@ void MapVisibilityAlgorithm_Simple::send_reinsert()
 
         ++i_insert;
     }
+    to_send_reinsert.clear();
+    emit sendPacket(0xC5,purgeBuffer_outputData);
 }
-#endif
 
 bool MapVisibilityAlgorithm_Simple::singleMove(const Direction &direction)
 {
@@ -716,5 +724,5 @@ void MapVisibilityAlgorithm_Simple::teleportValidatedTo(Map *map,const COORD_TYP
         loadOnTheMap();
     }
     else
-        reinsertClientForOthers();
+        reinsertClientForOthersOnSameMap();
 }
