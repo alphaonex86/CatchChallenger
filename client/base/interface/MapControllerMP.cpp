@@ -141,7 +141,6 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
     if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
     {
         /// \bug here pass after delete a party, create a new
-        QStringList maps=DatapackClientLoader::datapackLoader.maps;
         emit error("mapId greater than DatapackClientLoader::datapackLoader.maps.size(): "+QString::number(DatapackClientLoader::datapackLoader.maps.size()));
         return;
     }
@@ -152,7 +151,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
     {
         if(current_map!=NULL)
         {
-            qDebug() << "Current player already loaded on the map, todo: tp it";
+            qDebug() << "Current player already loaded on the map";
             return;
         }
         //the player skin
@@ -334,7 +333,10 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
         ObjectGroupItem::objectGroupLink[otherPlayer.presumed_map->objectGroup]->addObject(otherPlayer.playerMapObject);
     else
         qDebug() << QString("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
-    MapObjectItem::objectLink[otherPlayer.playerMapObject]->setZValue(otherPlayer.y);
+    if(!MapObjectItem::objectLink.contains(otherPlayer.playerMapObject))
+        qDebug() << QString("loadOtherPlayerFromMap(), MapObjectItem::objectLink don't have otherPlayer.playerMapObject");
+    else
+        MapObjectItem::objectLink[otherPlayer.playerMapObject]->setZValue(otherPlayer.y);
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -600,13 +602,13 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
     #endif
 
     CatchChallenger::Player_public_informations informations=otherPlayerList[id].informations;
-    qint32 mapIndex=DatapackClientLoader::datapackLoader.maps.indexOf(otherPlayerList[id].current_map);
-    if(mapIndex==-1)
+    /// \warning search by loop because otherPlayerList[id].current_map is the full path, DatapackClientLoader::datapackLoader.maps relative path
+    if(!all_map.contains(otherPlayerList[id].current_map))
     {
-        qDebug() << "internal problem, revert map index is wrong";
+        qDebug() << "internal problem, revert map (" << otherPlayerList[id].current_map << ") index is wrong (" << DatapackClientLoader::datapackLoader.maps.join(";") << ")";
         return;
     }
-    quint32 mapId=(quint32)mapIndex;
+    quint32 mapId=(quint32)all_map[otherPlayerList[id].current_map]->logicalMap.id;
     remove_player(id);
     insert_player(informations,mapId,x,y,direction);
 }
