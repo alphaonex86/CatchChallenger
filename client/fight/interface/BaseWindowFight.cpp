@@ -232,7 +232,7 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
     if(!CatchChallenger::FightEngine::fightEngine.canDoFight())//then is dead, is teleported to the last rescue point
     {
         doNextActionStep=DoNextActionStep_Loose;
-        qDebug() << "tp on loose";
+        qDebug() << "tp on loose" << fightTimerFinish;
         if(fightTimerFinish)
             loose();
         else
@@ -500,6 +500,7 @@ void BaseWindow::finalFightTextQuit()
 
 void BaseWindow::loose()
 {
+    qDebug() << "loose()";
     CatchChallenger::FightEngine::fightEngine.healAllMonsters();
     CatchChallenger::FightEngine::fightEngine.finishTheBattle();
     ui->stackedWidget->setCurrentWidget(ui->page_map);

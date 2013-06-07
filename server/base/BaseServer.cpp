@@ -102,6 +102,7 @@ void BaseServer::preload_the_data()
     check_monsters_map();
     preload_reputation();
     preload_quests();
+    preload_the_visibility_algorithm();
 }
 
 void BaseServer::preload_the_map()
@@ -753,6 +754,7 @@ void BaseServer::unload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
+    unload_the_visibility_algorithm();
     unload_quests();
     unload_reputation();
     unload_monsters_drops();

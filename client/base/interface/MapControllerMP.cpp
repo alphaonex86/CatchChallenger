@@ -152,7 +152,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
     {
         if(current_map!=NULL)
         {
-            qDebug() << "Current player already loaded on the map";
+            qDebug() << "Current player already loaded on the map, todo: tp it";
             return;
         }
         //the player skin

@@ -930,6 +930,7 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 
         {
             //teleportation
             case 0x0001:
+                emit message("emit teleportValidatedTo() from protocol");
                 emit teleportValidatedTo(lastTeleportation.first().map,lastTeleportation.first().x,lastTeleportation.first().y,lastTeleportation.first().orientation);
                 lastTeleportation.removeFirst();
             break;
