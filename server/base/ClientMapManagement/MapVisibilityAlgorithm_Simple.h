@@ -20,6 +20,7 @@ protected:
     void moveClient(const quint8 &previousMovedUnit,const Direction &direction);
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
+    void reinsertClientForOthers();
 private:
     static int index;
     static int loop_size;
