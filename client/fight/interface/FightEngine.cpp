@@ -588,6 +588,7 @@ void FightEngine::healAllMonsters()
                     playerMonsterList.at(index).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
         index++;
     }
+    updateCanDoFight();
 }
 
 bool FightEngine::isInFight()
