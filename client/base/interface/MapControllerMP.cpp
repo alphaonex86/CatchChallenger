@@ -209,10 +209,17 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         tempPlayer.inMove=false;
         tempPlayer.stepAlternance=false;
 
+        if(mapId==0)
+            qDebug() << QString("supected NULL map then error");
         QString current_map_fileName=loadOtherMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
         if(current_map_fileName.isEmpty())
         {
             qDebug() << QString("unable to insert player: %1 on map: %2").arg(player.pseudo).arg(DatapackClientLoader::datapackLoader.maps[mapId]);
+            return;
+        }
+        if(!all_map.contains(current_map_fileName))
+        {
+            qDebug() << "MapControllerMP::insert_player(): current map " << current_map_fileName << " not loaded";
             return;
         }
         //the player skin
@@ -330,13 +337,20 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
     centerOn(MapObjectItem::objectLink[playerMapObject]);
 
     if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.presumed_map->objectGroup))
+    {
         ObjectGroupItem::objectGroupLink[otherPlayer.presumed_map->objectGroup]->addObject(otherPlayer.playerMapObject);
+        if(!MapObjectItem::objectLink.contains(otherPlayer.playerMapObject))
+            qDebug() << QString("loadOtherPlayerFromMap(), MapObjectItem::objectLink don't have otherPlayer.playerMapObject");
+        else
+        {
+            if(MapObjectItem::objectLink[otherPlayer.playerMapObject]==NULL)
+                qDebug() << QString("loadOtherPlayerFromMap(), MapObjectItem::objectLink[otherPlayer.playerMapObject]==NULL");
+            else
+                MapObjectItem::objectLink[otherPlayer.playerMapObject]->setZValue(otherPlayer.y);
+        }
+    }
     else
         qDebug() << QString("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
-    if(!MapObjectItem::objectLink.contains(otherPlayer.playerMapObject))
-        qDebug() << QString("loadOtherPlayerFromMap(), MapObjectItem::objectLink don't have otherPlayer.playerMapObject");
-    else
-        MapObjectItem::objectLink[otherPlayer.playerMapObject]->setZValue(otherPlayer.y);
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -609,6 +623,8 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
         return;
     }
     quint32 mapId=(quint32)all_map[otherPlayerList[id].current_map]->logicalMap.id;
+    if(mapId==0)
+        qDebug() << QString("supected NULL map then error");
     remove_player(id);
     insert_player(informations,mapId,x,y,direction);
 }
@@ -1104,4 +1120,19 @@ void MapControllerMP::destroyMap(Map_full *map)
             ++i;
     }
     MapVisualiser::destroyMap(map);
+}
+
+QSet<QString> MapControllerMP::loadMap(Map_full *map,const bool &display)
+{
+    QSet<QString> tempReturn=MapVisualiser::loadMap(map,display);
+    //resolv here the mapId to allow the reinsert for other player
+    int index=0;
+    while(index<DatapackClientLoader::datapackLoader.maps.size())
+    {
+        QString resolvedFileName=QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps.at(index)).absoluteFilePath();
+        if(all_map.contains(resolvedFileName))
+            all_map[resolvedFileName]->logicalMap.id=index;
+        index++;
+    }
+    return tempReturn;
 }
