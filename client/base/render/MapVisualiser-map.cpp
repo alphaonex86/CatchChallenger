@@ -50,6 +50,8 @@ void MapVisualiser::resetAll()
 //open the file, and load it into the variables
 QString MapVisualiser::loadOtherMap(const QString &fileName)
 {
+    /// \warning put the id here for the reinsert
+
     QFileInfo fileInformations(fileName);
     QString resolvedFileName=fileInformations.absoluteFilePath();
     if(all_map.contains(resolvedFileName))

@@ -138,6 +138,7 @@ private slots:
     void moveOtherPlayerStepSlot();
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(Map_full *map);
+    virtual QSet<QString> loadMap(Map_full *map,const bool &display);
 protected slots:
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
