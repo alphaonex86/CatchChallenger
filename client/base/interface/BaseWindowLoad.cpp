@@ -369,44 +369,57 @@ void BaseWindow::show_reputation()
     ui->labelReputation->setText(html);
 }
 
+QPixmap BaseWindow::getFrontSkin(const quint32 &skinId)
+{
+    QPixmap skin;
+    skinFolderList=DatapackClientLoader::datapackLoader.skins;
+    //front image
+    if(skinId<(quint32)skinFolderList.size())
+    {
+        skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png");
+        if(skin.isNull())
+        {
+            skin=QPixmap(":/images/player_default/front.png");
+            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png";
+        }
+    }
+    else
+    {
+        skin=QPixmap(":/images/player_default/front.png");
+        qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
+    }
+    return skin;
+}
+
+QPixmap BaseWindow::getBackSkin(const quint32 &skinId)
+{
+    QPixmap skin;
+    skinFolderList=DatapackClientLoader::datapackLoader.skins;
+    //back image
+    if(skinId<(quint32)skinFolderList.size())
+    {
+        skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png");
+        if(skin.isNull())
+        {
+            skin=QPixmap(":/images/player_default/back.png");
+            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png";
+        }
+    }
+    else
+    {
+        skin=QPixmap(":/images/player_default/back.png");
+        qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
+    }
+    return skin;
+}
+
 void BaseWindow::updatePlayerImage()
 {
     if(havePlayerInformations && haveDatapack)
     {
         Player_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations().public_informations;
-        skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
-
-        //front image
-        if(informations.skinId<skinFolderList.size())
-        {
-            playerFrontImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png");
-            if(playerFrontImage.isNull())
-            {
-                playerFrontImage=QPixmap(":/images/player_default/front.png");
-                qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/front.png";
-            }
-        }
-        else
-        {
-            playerFrontImage=QPixmap(":/images/player_default/front.png");
-            qDebug() << "The skin id: "+QString::number(informations.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
-        }
-
-        //back image
-        if(informations.skinId<skinFolderList.size())
-        {
-            playerBackImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/back.png");
-            if(playerBackImage.isNull())
-            {
-                playerBackImage=QPixmap(":/images/player_default/back.png");
-                qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(informations.skinId)+"/back.png";
-            }
-        }
-        else
-        {
-            playerBackImage=QPixmap(":/images/player_default/back.png");
-            qDebug() << "The skin id: "+QString::number(informations.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
-        }
+        playerFrontImage=getFrontSkin(informations.skinId);
+        playerBackImage=getBackSkin(informations.skinId);
 
         //load into the UI
         ui->player_informations_front->setPixmap(playerFrontImage);

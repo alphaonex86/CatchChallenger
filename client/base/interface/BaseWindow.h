@@ -122,6 +122,8 @@ private slots:
     void show_reputation();
     void addCash(const quint32 &cash);
     void removeCash(const quint32 &cash);
+    QPixmap getFrontSkin(const quint32 &skinId);
+    QPixmap getBackSkin(const quint32 &skinId);
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
