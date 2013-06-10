@@ -62,7 +62,7 @@ public:
     QHash<quint32,QuestText> questsText;
     QHash<QString,quint32> questsPathToId;
     QMultiHash<quint32,quint32> botToQuestStart;
-    QStringList maps;
+    QStringList maps,skins;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
 protected:
@@ -93,6 +93,7 @@ private slots:
     void parseQuestsExtra();
     void parseQuestsText();
     void parseQuestsLink();
+    void parseSkins();
 };
 
 #endif // DATAPACKCLIENTLOADER_H
