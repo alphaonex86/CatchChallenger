@@ -54,6 +54,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     this->datapackPath=datapackPath;
     parseItems();
     parseMaps();
+    parseSkins();
     parsePlants();
     parseCraftingRecipes();
     parseBuff();
@@ -232,6 +233,13 @@ void DatapackClientLoader::parseMaps()
     qDebug() << QString("%1 map(s) loaded").arg(maps.size());
 }
 
+void DatapackClientLoader::parseSkins()
+{
+    skins=CatchChallenger::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);;
+
+    qDebug() << QString("%1 skin(s) loaded").arg(maps.size());
+}
+
 void DatapackClientLoader::resetAll()
 {
     if(mDefaultInventoryImage==NULL)
@@ -239,6 +247,7 @@ void DatapackClientLoader::resetAll()
     datapackPath.clear();
     items.clear();
     maps.clear();
+    skins.clear();
 
     QHashIterator<quint8,Plant> i(plants);
      while (i.hasNext()) {
