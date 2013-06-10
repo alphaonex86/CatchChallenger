@@ -6,6 +6,7 @@
 #include "DatapackClientLoader.h"
 #include "MapController.h"
 #include "Chat.h"
+#include "WithAnotherPlayer.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -181,8 +182,9 @@ BaseWindow::~BaseWindow()
 
 void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)
 {
-    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Trade request"),tr("Do you accept the trade with <b>%1</b>?").arg(pseudo),QMessageBox::Yes|QMessageBox::No);
-    if(button!=QMessageBox::Yes)
+    WithAnotherPlayer withAnotherPlayerDialog(this,WithAnotherPlayer::WithAnotherPlayerType_Trade,getFrontSkin(skinInt),pseudo);
+    withAnotherPlayerDialog.exec();
+    if(!withAnotherPlayerDialog.actionIsAccepted())
     {
         CatchChallenger::Api_client_real::client->tradeRefused();
         return;
@@ -207,23 +209,7 @@ void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const quint8 &skinIn
     ui->tradeAddMonster->setEnabled(true);
     ui->tradeValidate->setEnabled(true);
 
-    skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
-    QPixmap otherFrontImage;
-    //front image
-    if(skinInt<skinFolderList.size())
-    {
-        otherFrontImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinInt)+"/front.png");
-        if(otherFrontImage.isNull())
-        {
-            otherFrontImage=QPixmap(":/images/player_default/front.png");
-            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinInt)+"/front.png";
-        }
-    }
-    else
-    {
-        otherFrontImage=QPixmap(":/images/player_default/front.png");
-        qDebug() << "The skin id: "+QString::number(skinInt)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into tradeRequested()";
-    }
+    QPixmap otherFrontImage=getFrontSkin(skinInt);
 
     //reset the other player info
     ui->tradeOtherImage->setPixmap(otherFrontImage);
@@ -337,15 +323,15 @@ void BaseWindow::tradeUpdateCurrentObject()
 
 void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
 {
-    Q_UNUSED(skinInt);
     if(CatchChallenger::FightEngine::fightEngine.isInFight())
     {
         qDebug() << "already in fight";
         CatchChallenger::Api_client_real::client->battleRefused();
         return;
     }
-    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Battle request"),tr("Do you accept the battle with <b>%1</b>?").arg(pseudo),QMessageBox::Yes|QMessageBox::No);
-    if(button!=QMessageBox::Yes)
+    WithAnotherPlayer withAnotherPlayerDialog(this,WithAnotherPlayer::WithAnotherPlayerType_Battle,getFrontSkin(skinInt),pseudo);
+    withAnotherPlayerDialog.exec();
+    if(!withAnotherPlayerDialog.actionIsAccepted())
     {
         CatchChallenger::Api_client_real::client->battleRefused();
         return;
@@ -365,22 +351,7 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
     ui->stackedWidget->setCurrentWidget(ui->page_battle);
 
     skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
-    QPixmap otherFrontImage;
-    //front image
-    if(skinId<skinFolderList.size())
-    {
-        otherFrontImage=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png");
-        if(otherFrontImage.isNull())
-        {
-            otherFrontImage=QPixmap(":/images/player_default/front.png");
-            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png";
-        }
-    }
-    else
-    {
-        otherFrontImage=QPixmap(":/images/player_default/front.png");
-        qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into battleRequested()";
-    }
+    QPixmap otherFrontImage=getFrontSkin(skinId);
 
     //reset the other player info
     ui->labelFightMonsterTop->setPixmap(otherFrontImage);
