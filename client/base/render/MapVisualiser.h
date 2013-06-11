@@ -50,6 +50,7 @@ public:
     void setTargetFPS(int targetFPS);
 
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
+    QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::BotFight> > botFightFiles;
     struct Map_full
     {
         CatchChallenger::Map_client logicalMap;
@@ -99,7 +100,7 @@ protected slots:
 public slots:
     QString loadOtherMap(const QString &fileName);
     void loadOtherMapClientPart(Map_full *parsedMap);
-    virtual void loadBotOnTheMap(Map_full *parsedMap,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin);
+    virtual void loadBotOnTheMap(Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
     void loadBotFile(const QString &fileName);
     virtual QSet<QString> loadMap(Map_full *map, const bool &display);
     virtual void removeUnusedMap();

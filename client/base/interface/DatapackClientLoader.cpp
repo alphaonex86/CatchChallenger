@@ -119,7 +119,7 @@ void DatapackClientLoader::parseItems()
                             QPixmap image(datapackPath+DATAPACK_BASE_PATH_ITEM+item.attribute("image"));
                             if(image.isNull())
                             {
-                                qDebug() << QString("Unable to open the items image: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(datapackPath+DATAPACK_BASE_PATH_ITEM+item.attribute("image")).arg(item.tagName()).arg(item.lineNumber());
+                                qDebug() << QString("Unable to open the items image: %1: child.tagName(): %2 (at line: %3)").arg(datapackPath+DATAPACK_BASE_PATH_ITEM+item.attribute("image")).arg(item.tagName()).arg(item.lineNumber());
                                 DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
                             }
                             else
@@ -127,7 +127,7 @@ void DatapackClientLoader::parseItems()
                         }
                         else
                         {
-                            qDebug() << QString("No image, load the default, id number already set: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
+                            qDebug() << QString("For parse item: Have not image attribute: child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(itemsFile.fileName()).arg(item.lineNumber());
                             DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
                         }
                         //load the price
@@ -143,8 +143,9 @@ void DatapackClientLoader::parseItems()
                         }
                         else
                         {
-                            qDebug() << QString("No image, load the default, id number already set: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
-                            DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
+                            if(!item.hasAttribute("quest") || item.attribute("quest")!="yes")
+                                qDebug() << QString("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(itemsFile.fileName()).arg(item.lineNumber());
+                            DatapackClientLoader::items[id].price=0;
                         }
                         // base size: 24x24
                         DatapackClientLoader::items[id].image=DatapackClientLoader::items[id].image.scaled(72,72);//then zoom: 3x

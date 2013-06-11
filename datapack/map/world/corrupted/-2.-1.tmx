@@ -186,4 +186,14 @@
   </object>
   <object type="bot spawn" gid="2050" x="224" y="160"/>
  </objectgroup>
+ <objectgroup name="Object" width="30" height="30">
+  <object type="bot" gid="2051" x="224" y="96">
+   <properties>
+    <property name="file" value="../../bots.xml"/>
+    <property name="id" value="5"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="bandit"/>
+   </properties>
+  </object>
+ </objectgroup>
 </map>

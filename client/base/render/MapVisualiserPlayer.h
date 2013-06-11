@@ -23,7 +23,8 @@ public:
         BlockedOn_Grass,
         BlockedOn_Wather,
         BlockedOn_Cave,
-        BlockedOn_RandomNumber
+        BlockedOn_RandomNumber,
+        BlockedOn_Fight
     };
     enum LandFight
     {
