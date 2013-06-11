@@ -125,16 +125,20 @@ Orientation MoveOnTheMap::directionToOrientation(const Direction &direction)
     return Orientation_bottom;
 }
 
-bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision)
+bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport)
 {
     switch(direction)
     {
         case Direction_move_at_left:
             if(x>0)
             {
-                if(!checkCollision)
-                    return true;
-                return isWalkable(map,x-1,y);
+                if(checkCollision)
+                    if(!isWalkable(map,x-1,y))
+                        return false;
+                if(!allowTeleport)
+                    if(needBeTeleported(map,x-1,y))
+                        return false;
+                return true;
             }
             else if(map.border.left.map==NULL)
                 return false;
@@ -142,19 +146,25 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                 return false;
             else
             {
-                if(!checkCollision)
-                    return true;
-                if(map.border.left.map->parsed_layer.walkable==NULL)
-                    return false;
-                return isWalkable(*map.border.left.map,map.border.left.map->width-1,y+map.border.left.y_offset);
+                if(checkCollision)
+                    if(isWalkable(*map.border.left.map,map.border.left.map->width-1,y+map.border.left.y_offset))
+                        return false;
+                if(!allowTeleport)
+                    if(needBeTeleported(*map.border.left.map,map.border.left.map->width-1,y+map.border.left.y_offset))
+                        return false;
+                return true;
             }
         break;
         case Direction_move_at_right:
             if(x<(map.width-1))
             {
-                if(!checkCollision)
-                    return true;
-                return isWalkable(map,x+1,y);
+                if(checkCollision)
+                    if(!isWalkable(map,x+1,y))
+                        return false;
+                if(!allowTeleport)
+                    if(needBeTeleported(map,x+1,y))
+                        return false;
+                return true;
             }
             else if(map.border.right.map==NULL)
                 return false;
@@ -162,19 +172,25 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                 return false;
             else
             {
-                if(!checkCollision)
-                    return true;
-                if(map.border.right.map->parsed_layer.walkable==NULL)
-                    return false;
-                return isWalkable(*map.border.right.map,0,y+map.border.right.y_offset);
+                if(checkCollision)
+                    if(!isWalkable(*map.border.right.map,0,y+map.border.right.y_offset))
+                        return false;
+                if(!allowTeleport)
+                    if(needBeTeleported(*map.border.right.map,0,y+map.border.right.y_offset))
+                        return false;
+                return true;
             }
         break;
         case Direction_move_at_top:
             if(y>0)
             {
-                if(!checkCollision)
-                    return true;
-                return isWalkable(map,x,y-1);
+                if(checkCollision)
+                    if(!isWalkable(map,x,y-1))
+                        return false;
+                if(!allowTeleport)
+                    if(needBeTeleported(map,x,y-1))
+                        return false;
+                return true;
             }
             else if(map.border.top.map==NULL)
                 return false;
@@ -182,19 +198,25 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                 return false;
             else
             {
-                if(!checkCollision)
-                    return true;
-                if(map.border.top.map->parsed_layer.walkable==NULL)
-                    return false;
-                return isWalkable(*map.border.top.map,x+map.border.top.x_offset,map.border.top.map->height-1);
+                if(checkCollision)
+                    if(!isWalkable(*map.border.top.map,x+map.border.top.x_offset,map.border.top.map->height-1))
+                        return false;
+                if(!allowTeleport)
+                    if(needBeTeleported(*map.border.top.map,x+map.border.top.x_offset,map.border.top.map->height-1))
+                        return false;
+                return true;
             }
         break;
         case Direction_move_at_bottom:
             if(y<(map.height-1))
             {
-                if(!checkCollision)
-                    return true;
-                return isWalkable(map,x,y+1);
+                if(checkCollision)
+                    if(!isWalkable(map,x,y+1))
+                        return false;
+                if(!allowTeleport)
+                    if(needBeTeleported(map,x,y+1))
+                        return false;
+                return true;
             }
             else if(map.border.bottom.map==NULL)
                 return false;
@@ -202,11 +224,13 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
                 return false;
             else
             {
-                if(!checkCollision)
-                    return true;
-                if(map.border.bottom.map->parsed_layer.walkable==NULL)
-                    return false;
-                return isWalkable(*map.border.bottom.map,x+map.border.bottom.x_offset,0);
+                if(checkCollision)
+                    if(isWalkable(*map.border.bottom.map,x+map.border.bottom.x_offset,0))
+                        return true;
+                if(!allowTeleport)
+                    if(needBeTeleported(*map.border.bottom.map,x+map.border.bottom.x_offset,0))
+                        return false;
+                return false;
             }
         break;
         default:
@@ -244,6 +268,11 @@ bool MoveOnTheMap::teleport(Map ** map,COORD_TYPE *x,COORD_TYPE *y)
     return false;
 }
 
+bool MoveOnTheMap::needBeTeleported(const Map &map, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    return map.teleporter.contains(x+y*map.width);
+}
+
 bool MoveOnTheMap::isWalkable(const Map &map, const quint8 &x, const quint8 &y)
 {
     if(map.parsed_layer.walkable==NULL)
@@ -272,11 +301,11 @@ bool MoveOnTheMap::isGrass(const Map &map, const quint8 &x, const quint8 &y)
     return map.parsed_layer.grass[x+y*(map.width)];
 }
 
-bool MoveOnTheMap::move(Direction direction,Map ** map,COORD_TYPE *x,COORD_TYPE *y, const bool &checkCollision)
+bool MoveOnTheMap::move(Direction direction, Map ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
 {
     if(*map==NULL)
         return false;
-    if(!canGoTo(direction,**map,*x,*y,checkCollision))
+    if(!canGoTo(direction,**map,*x,*y,checkCollision,allowTeleport))
         return false;
     switch(direction)
     {
