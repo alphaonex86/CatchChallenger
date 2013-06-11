@@ -516,5 +516,21 @@ struct Bot
     quint32 botId;
 };
 
+struct BotFight
+{
+    struct BotFightAttack
+    {
+        quint32 id;
+        quint8 level;
+    };
+    struct BotFightMonster
+    {
+        quint32 id;
+        quint8 level;
+        QList<BotFightAttack> attacks;
+    };
+    QList<BotFightMonster> monsters;
+};
+
 }
 #endif // STRUCTURES_GENERAL_H

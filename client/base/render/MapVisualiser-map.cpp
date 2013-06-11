@@ -372,7 +372,7 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
                     {
                         quint32 x=bot.attribute("x").toUInt(&ok)/16;
                         quint32 y=(bot.attribute("y").toUInt(&ok2)/16)-1;
-                        if(ok && ok2 && bot.attribute("type")=="bot")
+                        if(ok && ok2 && (bot.attribute("type")=="bot" || bot.attribute("type")=="botfight"))
                         {
                             QDomElement properties = bot.firstChildElement("properties");
                             while(!properties.isNull())
@@ -403,17 +403,26 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
                                             QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+"/"+property_parsed["file"]).absoluteFilePath();
                                             if(!botFile.endsWith(".xml"))
                                                 botFile+=".xml";
-                                            loadBotFile(botFile);
-                                            if(botFiles.contains(botFile))
-                                                if(botFiles[botFile].contains(botId))
+                                            if(bot.attribute("type")=="bot")
+                                            {
+                                                loadBotFile(botFile);
+                                                if(botFiles.contains(botFile))
                                                 {
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
-                                                    parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
-                                                    property_parsed.remove("file");
-                                                    property_parsed.remove("id");
-                                                    parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].properties=property_parsed;
-                                                    parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].botId=botId;
+                                                    if(botFiles[botFile].contains(botId))
+                                                    {
+                                                        CatchChallenger::DebugClass::debugConsole(QString("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
+                                                        parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
+                                                        property_parsed.remove("file");
+                                                        property_parsed.remove("id");
+                                                        parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].properties=property_parsed;
+                                                        parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].botId=botId;
+                                                    }
+                                                    else
+                                                        CatchChallenger::DebugClass::debugConsole(QString("No botId %1 into %2: properties.tagName(): %3, name: %4 (at line: %5)").arg(botId).arg(botFile).arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
                                                 }
+                                                else
+                                                    CatchChallenger::DebugClass::debugConsole(QString("No file %1: properties.tagName(): %2, name: %3 (at line: %4)").arg(botFile).arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
+                                            }
                                         }
                                         else
                                             CatchChallenger::DebugClass::debugConsole(QString("Is not a number: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
@@ -431,8 +440,9 @@ void MapVisualiser::loadOtherMapClientPart(Map_full *parsedMap)
     }
 }
 
-void MapVisualiser::loadBotOnTheMap(Map_full *parsedMap,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
+void MapVisualiser::loadBotOnTheMap(Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
 {
+    Q_UNUSED(botId);
     Q_UNUSED(parsedMap);
     Q_UNUSED(x);
     Q_UNUSED(y);
@@ -481,7 +491,6 @@ void MapVisualiser::loadBotFile(const QString &fileName)
             quint32 id=child.attribute("id").toUInt(&ok);
             if(ok)
             {
-                botFiles[fileName][id];
                 QDomElement step = child.firstChildElement("step");
                 while(!step.isNull())
                 {
@@ -771,7 +780,7 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
                 qDebug() << QString("loadNearMap(): lookAt: missing, fixed to bottom").arg(fileName);
             direction="bottom";
         }
-        loadBotOnTheMap(tempMapObject,i.key().first,i.key().second,direction,skin);
+        loadBotOnTheMap(tempMapObject,i.value().botId,i.key().first,i.key().second,direction,skin);
     }
 
     return loadedNearMap;

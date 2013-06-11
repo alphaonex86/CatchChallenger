@@ -112,6 +112,7 @@ void BaseServer::preload_the_map()
     DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
     int shops_number=0;
+    int bots_number=0;
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
@@ -290,6 +291,7 @@ void BaseServer::preload_the_map()
         int sub_index=0;
         while(sub_index<semi_loaded_map[index].old_map.bots.size())
         {
+            bots_number++;
             Map_to_send::Bot_Semi bot_Semi=semi_loaded_map[index].old_map.bots.at(sub_index);
             loadBotFile(bot_Semi.file);
             if(botFiles.contains(bot_Semi.file))
@@ -474,6 +476,7 @@ void BaseServer::preload_the_map()
 
     DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
     DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
+    DebugClass::debugConsole(QString("%1 bots(s) on map loaded").arg(bots_number));
 
     botFiles.clear();
 }

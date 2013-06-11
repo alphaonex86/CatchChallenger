@@ -8,6 +8,20 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `bot_already_beaten`
+--
+
+CREATE TABLE IF NOT EXISTS `bot_already_beaten` (
+  `id` int(11) NOT NULL,
+  `player_id` int(11) NOT NULL,
+  `botfight_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `player_id` (`player_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `item`
 --
 
