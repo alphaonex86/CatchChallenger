@@ -965,6 +965,7 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
         case MapVisualiserPlayer::BlockedOn_Grass:
         case MapVisualiserPlayer::BlockedOn_Wather:
         case MapVisualiserPlayer::BlockedOn_Cave:
+        case MapVisualiserPlayer::BlockedOn_Fight:
             qDebug() << "You can't enter to the fight zone if you are not able to fight";
             showTip(tr("You can't enter to the fight zone if you are not able to fight"));
         break;

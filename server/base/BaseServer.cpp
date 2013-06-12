@@ -93,12 +93,13 @@ void BaseServer::preload_the_data()
     preload_the_players();
     preload_the_plant();
     preload_crafting_recipes();
-    preload_the_map();
-    preload_the_plant_on_map();
     preload_buff();
     preload_skills();
     preload_monsters();
     preload_monsters_drops();
+    preload_the_botfight();
+    preload_the_map();
+    preload_the_plant_on_map();
     check_monsters_map();
     preload_reputation();
     preload_quests();
@@ -111,8 +112,6 @@ void BaseServer::preload_the_map()
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
-    int shops_number=0;
-    int bots_number=0;
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
     QStringList map_name;
@@ -283,74 +282,7 @@ void BaseServer::preload_the_map()
         index++;
     }
 
-    //resolv the shops, learn
-    size=semi_loaded_map.size();
-    index=0;
-    while(index<size)
-    {
-        int sub_index=0;
-        while(sub_index<semi_loaded_map[index].old_map.bots.size())
-        {
-            bots_number++;
-            Map_to_send::Bot_Semi bot_Semi=semi_loaded_map[index].old_map.bots.at(sub_index);
-            loadBotFile(bot_Semi.file);
-            if(botFiles.contains(bot_Semi.file))
-                if(botFiles[bot_Semi.file].contains(bot_Semi.id))
-                {
-                    #ifdef DEBUG_MESSAGE_MAP_LOAD
-                    CatchChallenger::DebugClass::debugConsole(QString("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
-                    #endif
-                    QHashIterator<quint8,QDomElement> i(botFiles[bot_Semi.file][bot_Semi.id].step);
-                    while (i.hasNext()) {
-                        i.next();
-                        QDomElement step = i.value();
-                        if(step.attribute("type")=="shop")
-                        {
-                            if(!step.hasAttribute("shop"))
-                                CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                            else
-                            {
-                                bool ok;
-                                quint32 shop=step.attribute("shop").toUInt(&ok);
-                                if(!ok)
-                                    CatchChallenger::DebugClass::debugConsole(QString("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                                else if(!GlobalServerData::serverPrivateVariables.shops.contains(shop))
-                                    CatchChallenger::DebugClass::debugConsole(QString("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                                else
-                                {
-                                    #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                    CatchChallenger::DebugClass::debugConsole(QString("shop put at: %1 (%2,%3)")
-                                        .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
-                                    #endif
-                                    static_cast<MapServer *>(semi_loaded_map[index].map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
-                                    shops_number++;
-                                }
-                            }
-                        }
-                        if(step.attribute("type")=="learn")
-                        {
-                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(QString("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
-                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
-                            else
-                            {
-                                #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(QString("learn point put at: %1 (%2,%3)")
-                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
-                                #endif
-                                static_cast<MapServer *>(semi_loaded_map[index].map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
-                            }
-                        }
-                    }
-                }
-            sub_index++;
-        }
-        index++;
-    }
-
+    preload_the_bots(semi_loaded_map);
 
     //clean border balise without another oposite border
     size=semi_loaded_map.size();
@@ -475,8 +407,6 @@ void BaseServer::preload_the_map()
     }
 
     DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
-    DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
-    DebugClass::debugConsole(QString("%1 bots(s) on map loaded").arg(bots_number));
 
     botFiles.clear();
 }
@@ -635,6 +565,153 @@ void BaseServer::preload_quests()
     DebugClass::debugConsole(QString("%1 quest(s) loaded").arg(GlobalServerData::serverPrivateVariables.quests.size()));
 }
 
+void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
+{
+    int shops_number=0;
+    int bots_number=0;
+    int learnpoint_number=0;
+    int botfights_number=0;
+    int botfightstigger_number=0;
+    //resolv the shops, learn
+    int size=semi_loaded_map.size();
+    int index=0;
+    bool ok;
+    while(index<size)
+    {
+        int sub_index=0;
+        while(sub_index<semi_loaded_map[index].old_map.bots.size())
+        {
+            bots_number++;
+            Map_to_send::Bot_Semi bot_Semi=semi_loaded_map[index].old_map.bots.at(sub_index);
+            loadBotFile(bot_Semi.file);
+            if(botFiles.contains(bot_Semi.file))
+                if(botFiles[bot_Semi.file].contains(bot_Semi.id))
+                {
+                    #ifdef DEBUG_MESSAGE_MAP_LOAD
+                    CatchChallenger::DebugClass::debugConsole(QString("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                    #endif
+                    QHashIterator<quint8,QDomElement> i(botFiles[bot_Semi.file][bot_Semi.id].step);
+                    while (i.hasNext()) {
+                        i.next();
+                        QDomElement step = i.value();
+                        if(step.attribute("type")=="shop")
+                        {
+                            if(!step.hasAttribute("shop"))
+                                CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                quint32 shop=step.attribute("shop").toUInt(&ok);
+                                if(!ok)
+                                    CatchChallenger::DebugClass::debugConsole(QString("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                else if(!GlobalServerData::serverPrivateVariables.shops.contains(shop))
+                                    CatchChallenger::DebugClass::debugConsole(QString("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                        .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                                else
+                                {
+                                    #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                    CatchChallenger::DebugClass::debugConsole(QString("shop put at: %1 (%2,%3)")
+                                        .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    #endif
+                                    static_cast<MapServer *>(semi_loaded_map[index].map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
+                                    shops_number++;
+                                }
+                            }
+                        }
+                        if(step.attribute("type")=="learn")
+                        {
+                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                                CatchChallenger::DebugClass::debugConsole(QString("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                CatchChallenger::DebugClass::debugConsole(QString("learn point put at: %1 (%2,%3)")
+                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                #endif
+                                static_cast<MapServer *>(semi_loaded_map[index].map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                learnpoint_number++;
+                            }
+                        }
+                        if(step.attribute("type")=="fight")
+                        {
+                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                                CatchChallenger::DebugClass::debugConsole(QString("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                quint32 fightid=step.attribute("fightid").toUInt(&ok);
+                                if(ok)
+                                {
+                                    if(GlobalServerData::serverPrivateVariables.fights.contains(fightid))
+                                    {
+                                        if(bot_Semi.property_text.contains("lookAt"))
+                                        {
+                                            Direction direction;
+                                            if(bot_Semi.property_text["lookAt"]=="left")
+                                                direction=CatchChallenger::Direction_move_at_left;
+                                            else if(bot_Semi.property_text["lookAt"]=="right")
+                                                direction=CatchChallenger::Direction_move_at_right;
+                                            else if(bot_Semi.property_text["lookAt"]=="top")
+                                                direction=CatchChallenger::Direction_move_at_top;
+                                            else
+                                            {
+                                                if(bot_Semi.property_text["lookAt"]!="bottom")
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Wrong direction for the bot at %1 (%2,%3)")
+                                                        .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                                direction=CatchChallenger::Direction_move_at_bottom;
+                                            }
+                                            #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                            CatchChallenger::DebugClass::debugConsole(QString("botsFight point put at: %1 (%2,%3)")
+                                                .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                            #endif
+                                            static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),fightid);
+                                            botfights_number++;
+
+                                            //load the botsFightTrigger
+                                            CatchChallenger::DebugClass::debugConsole(QString("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
+                                            quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
+                                            int index=0;
+                                            CatchChallenger::Map *map=semi_loaded_map[index].map;
+                                            CatchChallenger::Map *old_map=map;
+                                            while(index<CATCHCHALLENGER_BOTFIGHT_RANGE)
+                                            {
+                                                if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
+                                                    break;
+                                                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&temp_x,&temp_y,true,false))
+                                                    break;
+                                                if(map!=old_map)
+                                                    break;
+                                                static_cast<MapServer *>(semi_loaded_map[index].map)->botsFightTrigger.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
+                                                index++;
+                                                botfightstigger_number++;
+                                            }
+                                        }
+                                        else
+                                            DebugClass::debugConsole(QString("lookAt not found at: %1 (%2,%3)").arg(shops_number));
+                                    }
+                                    else
+                                        DebugClass::debugConsole(QString("fightid not found into the list at: %1 (%2,%3)").arg(shops_number));
+                                }
+                                else
+                                    DebugClass::debugConsole(QString("botsFight point have wrong fightid at: %1 (%2,%3)").arg(shops_number));
+                            }
+                        }
+                    }
+                }
+            sub_index++;
+        }
+        index++;
+    }
+
+    DebugClass::debugConsole(QString("%1 learn point(s) on map loaded").arg(learnpoint_number));
+    DebugClass::debugConsole(QString("%1 bot fight(s) on map loaded").arg(botfights_number));
+    DebugClass::debugConsole(QString("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
+    DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
+    DebugClass::debugConsole(QString("%1 bots(s) on map loaded").arg(bots_number));
+}
+
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
 {
 }
@@ -760,12 +837,14 @@ void BaseServer::unload_the_data()
     unload_the_visibility_algorithm();
     unload_quests();
     unload_reputation();
+    unload_the_plant_on_map();
+    unload_the_map();
+    unload_the_bots();
+    unload_the_botfight();
     unload_monsters_drops();
     unload_monsters();
     unload_skills();
     unload_buff();
-    unload_the_plant_on_map();
-    unload_the_map();
     unload_crafting_recipes();
     unload_the_plant();
     unload_shop();
@@ -773,6 +852,10 @@ void BaseServer::unload_the_data()
     unload_the_skin();
     unload_the_datapack();
     unload_the_players();
+}
+
+void BaseServer::unload_the_bots()
+{
 }
 
 void BaseServer::unload_the_map()

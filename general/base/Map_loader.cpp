@@ -392,11 +392,17 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
+                                    if(property_text.contains("skin") && !property_text.contains("lookAt"))
+                                    {
+                                        property_text["lookAt"]="bottom";
+                                        DebugClass::debugConsole(QString("skin but not lookAt, fixed by bottom: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                                    }
                                     if(property_text.contains("file") && property_text.contains("id"))
                                     {
                                         Map_to_send::Bot_Semi bot_semi;
                                         bot_semi.file=QFileInfo(QFileInfo(fileName).absolutePath()+"/"+property_text["file"].toString()).absoluteFilePath();
                                         bot_semi.id=property_text["id"].toUInt(&ok);
+                                        bot_semi.property_text=property_text;
                                         if(ok)
                                         {
                                             bot_semi.point.x=object_x;
@@ -658,6 +664,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         while(index<map_to_send.teleport.size())
         {
             map_to_send.parsed_layer.walkable[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
+            index++;
+        }
+        index=0;
+        while(index<map_to_send.bots.size())
+        {
+            map_to_send.parsed_layer.walkable[map_to_send.bots.at(index).point.x+map_to_send.bots.at(index).point.y*map_to_send.width]=false;
             index++;
         }
     }
