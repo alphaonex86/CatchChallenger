@@ -18,6 +18,7 @@ public:
     QList<ClientLocalBroadcast *> clientsForBroadcast;//manipulated by thread of ClientLocalBroadcast(), frequent remove/insert due to map change
     QMultiHash<QPair<quint8,quint8>,quint32> shops;
     QSet<QPair<quint8,quint8> > learn;
+    QMultiHash<QPair<quint8,quint8>,quint32> botsFight,botsFightTrigger;
 };
 
 class Map_server_MapVisibility_simple : public MapServer
