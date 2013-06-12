@@ -21,6 +21,13 @@ void BaseServerFight::preload_monsters()
     DebugClass::debugConsole(QString("%1 monster(s) loaded").arg(GlobalServerData::serverPrivateVariables.monsters.size()));
 }
 
+void BaseServerFight::preload_the_botfight()
+{
+    GlobalServerData::serverPrivateVariables.fights=FightLoader::loadFight(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_FIGHT,GlobalServerData::serverPrivateVariables.monsters,GlobalServerData::serverPrivateVariables.monsterSkills);
+
+    DebugClass::debugConsole(QString("%1 fights(s) loaded").arg(GlobalServerData::serverPrivateVariables.fights.size()));
+}
+
 void BaseServerFight::preload_monsters_drops()
 {
     GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",GlobalServerData::serverPrivateVariables.items,GlobalServerData::serverPrivateVariables.monsters);
@@ -122,6 +129,10 @@ void BaseServerFight::unload_monsters_drops()
 void BaseServerFight::unload_monsters()
 {
     GlobalServerData::serverPrivateVariables.monsters.clear();
+}
+
+void BaseServerFight::unload_the_botfight()
+{
 }
 
 QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file, QHash<quint32,Item> items,const QHash<quint32,Monster> &monsters)

@@ -7,6 +7,7 @@
 #include <QDomDocument>
 #include <QDomElement>
 #include <QtCore/qmath.h>
+#include <QDir>
 
 using namespace CatchChallenger;
 
@@ -42,7 +43,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return monsters;
     }
 
@@ -298,6 +299,201 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
         item = item.nextSiblingElement("monster");
     }
     return monsters;
+}
+
+QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills)
+{
+    QHash<quint32,BotFight> botFightList;
+    QDir dir(folder);
+    QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
+    int index_file=0;
+    while(index_file<list.size())
+    {
+        if(list.at(index_file).isFile())
+        {
+            //open and quick check the file
+            QFile xmlFile(list.at(index_file).absoluteFilePath());
+            QByteArray xmlContent;
+            if(!xmlFile.open(QIODevice::ReadOnly))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+                index_file++;
+                continue;
+            }
+            xmlContent=xmlFile.readAll();
+            xmlFile.close();
+            QDomDocument domDocument;
+            QString errorStr;
+            int errorLine,errorColumn;
+            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+                index_file++;
+                continue;
+            }
+            QDomElement root = domDocument.documentElement();
+            if(root.tagName()!="fights")
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file").arg(xmlFile.fileName()));
+                index_file++;
+                continue;
+            }
+
+            //load the content
+            bool ok;
+            QDomElement item = root.firstChildElement("fight");
+            while(!item.isNull())
+            {
+                if(item.isElement())
+                {
+                    if(item.hasAttribute("id"))
+                    {
+                        quint32 id=item.attribute("id").toUInt(&ok);
+                        if(ok)
+                        {
+                            bool entryValid=true;
+                            CatchChallenger::BotFight botFight;
+                            botFight.cash=0;
+                            {
+                                QDomElement monster = item.firstChildElement("monster");
+                                while(entryValid && !monster.isNull())
+                                {
+                                    if(!monster.hasAttribute("id"))
+                                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(monster.tagName()).arg(monster.lineNumber()));
+                                    else if(!monster.isElement())
+                                        CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute("type")).arg(monster.lineNumber())));
+                                    else
+                                    {
+                                        CatchChallenger::BotFight::BotFightMonster botFightMonster;
+                                        botFightMonster.level=1;
+                                        botFightMonster.id=monster.attribute("id").toUInt(&ok);
+                                        if(ok)
+                                        {
+                                            if(!monsters.contains(botFightMonster.id))
+                                            {
+                                                entryValid=false;
+                                                break;
+                                            }
+                                            if(!monster.hasAttribute("level"))
+                                            {
+                                                botFightMonster.level=monster.attribute("level").toUShort(&ok);
+                                                if(!ok)
+                                                {
+                                                    CatchChallenger::DebugClass::debugConsole(QString("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute("type")).arg(monster.lineNumber())));
+                                                    botFightMonster.level=1;
+                                                }
+                                                if(botFightMonster.level<1)
+                                                {
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute("type")).arg(monster.lineNumber())));
+                                                    botFightMonster.level=1;
+                                                }
+                                            }
+                                            QDomElement attack = monster.firstChildElement("attack");
+                                            while(entryValid && !attack.isNull())
+                                            {
+                                                quint8 attackLevel=1;
+                                                if(!attack.hasAttribute("id"))
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(attack.tagName()).arg(attack.lineNumber()));
+                                                else if(!attack.isElement())
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName().arg(attack.attribute("type")).arg(attack.lineNumber())));
+                                                else
+                                                {
+                                                    quint32 attackId=attack.attribute("id").toUInt(&ok);
+                                                    if(ok)
+                                                    {
+                                                        if(!monsterSkills.contains(attackId))
+                                                        {
+                                                            entryValid=false;
+                                                            break;
+                                                        }
+                                                        if(attack.hasAttribute("level"))
+                                                        {
+                                                            attackLevel=attack.attribute("level").toUShort(&ok);
+                                                            if(!ok)
+                                                            {
+                                                                CatchChallenger::DebugClass::debugConsole(QString("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute("type")).arg(attack.lineNumber()));
+                                                                entryValid=false;
+                                                                break;
+                                                            }
+                                                            if(attackLevel<1)
+                                                            {
+                                                                CatchChallenger::DebugClass::debugConsole(QString("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute("type")).arg(attack.lineNumber()));
+                                                                entryValid=false;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if(attackLevel>monsterSkills[attackId].level.size())
+                                                        {
+                                                            CatchChallenger::DebugClass::debugConsole(QString("Level out of range: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute("type")).arg(attack.lineNumber()));
+                                                            entryValid=false;
+                                                            break;
+                                                        }
+                                                        CatchChallenger::BotFight::BotFightAttack botFightAttack;
+                                                        botFightAttack.id=attackId;
+                                                        botFightAttack.level=attackLevel;
+                                                        botFightMonster.attacks << botFightAttack;
+                                                    }
+                                                }
+                                                attack = attack.nextSiblingElement("attack");
+                                            }
+                                            if(botFightMonster.attacks.isEmpty())
+                                            {
+                                                CatchChallenger::DebugClass::debugConsole(QString("Empty attack list: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute("type")).arg(attack.lineNumber()));
+                                                entryValid=false;
+                                                break;
+                                            }
+                                            botFight.monsters << botFightMonster;
+                                        }
+                                    }
+                                    monster = monster.nextSiblingElement("monster");
+                                }
+                            }
+                            {
+                                QDomElement gain = item.firstChildElement("gain");
+                                while(entryValid && !gain.isNull())
+                                {
+                                    if(!gain.hasAttribute("cash"))
+                                        CatchChallenger::DebugClass::debugConsole(QString("unknown fight gain: bot.tagName(): %1 (at line: %2)").arg(gain.tagName()).arg(gain.lineNumber()));
+                                    else if(!gain.isElement())
+                                        CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(gain.tagName().arg(gain.attribute("type")).arg(gain.lineNumber())));
+                                    else
+                                    {
+                                        quint32 cash=gain.attribute("cash").toUInt(&ok);
+                                        if(ok)
+                                            botFight.cash+=cash;
+                                        else
+                                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, unknow cash text: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    }
+                                    gain = gain.nextSiblingElement("gain");
+                                }
+                            }
+                            if(entryValid)
+                            {
+                                if(!botFightList.contains(id))
+                                {
+                                    if(!botFight.monsters.isEmpty())
+                                    {
+                                        botFightList[id]=botFight;
+                                    }
+                                    else
+                                        DebugClass::debugConsole(QString("Monster list is empty to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                }
+                                else
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                            }
+                        }
+                        else
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    }
+                }
+                else
+                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                item = item.nextSiblingElement("fight");
+            }
+            index_file++;
+        }
+    }
+    return botFightList;
 }
 
 QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QHash<quint32, Buff> &monsterBuffs)

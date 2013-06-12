@@ -7,6 +7,7 @@
 #include <QStringList>
 #include <QString>
 #include <QHash>
+#include <QSet>
 #include <QVariant>
 #include <QDomElement>
 
@@ -187,9 +188,10 @@ struct Player_private_and_public_informations
     quint64 cash;
     QHash<quint32,quint32> items;
     //crafting
-    QList<quint32> recipes;
+    QSet<quint32> recipes;
     QHash<QString,PlayerReputation> reputation;
     //fight
+    QSet<quint32> bot_already_beaten;
     /// \todo put out of here to have mutalised engine
     QList<PlayerMonster> playerMonster;
     QHash<quint32, PlayerQuest> quests;
@@ -305,6 +307,7 @@ struct Map_to_send
         Map_Point point;
         QString file;
         quint32 id;
+        QHash<QString,QVariant> property_text;
     };
     QList<Bot_Semi> bots;
 
@@ -530,6 +533,7 @@ struct BotFight
         QList<BotFightAttack> attacks;
     };
     QList<BotFightMonster> monsters;
+    quint32 cash;
 };
 
 }

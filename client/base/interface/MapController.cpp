@@ -52,6 +52,7 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
 
 void MapController::loadBotOnTheMap(Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
 {
+    Q_UNUSED(botId);
     if(skin.isEmpty())
         return;
     if(!ObjectGroupItem::objectGroupLink.contains(parsedMap->objectGroup))
@@ -128,11 +129,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const quint32 &botId,con
                                 break;
                             if(map!=old_map)
                                 break;
-                            CatchChallenger::BotFightOnMap botFightOnMap;
-                            botFightOnMap.botId=botId;
-                            botFightOnMap.position=QPair<quint8,quint8>(x,y);
-                            botFightOnMap.step=1;
-                            parsedMap->logicalMap.botsFight.insert(QPair<quint8,quint8>(temp_x,temp_y),botFightOnMap);
+                            parsedMap->logicalMap.botsFight.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
                             index++;
                         }
                     }

@@ -98,30 +98,30 @@ void BaseWindow::load_crafting_inventory()
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-    int index=0;
-    while(index<informations.recipes.size())
+    QSetIterator<quint32> i(informations.recipes);
+    while (i.hasNext())
     {
+        quint32 recipe=i.next();
         //load the material item
-        if(DatapackClientLoader::datapackLoader.crafingRecipes.contains(informations.recipes.at(index)))
+        if(DatapackClientLoader::datapackLoader.crafingRecipes.contains(recipe))
         {
             QListWidgetItem *item=new QListWidgetItem();
-            if(DatapackClientLoader::datapackLoader.items.contains(DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId))
+            if(DatapackClientLoader::datapackLoader.items.contains(DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId))
             {
-                item->setIcon(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId].image);
-                item->setText(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId].name);
+                item->setIcon(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId].image);
+                item->setText(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId].name);
             }
             else
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-                item->setText(tr("Unknow item: %1").arg(informations.recipes.at(DatapackClientLoader::datapackLoader.crafingRecipes[informations.recipes.at(index)].doItemId)));
+                item->setText(tr("Unknow item: %1").arg(DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId));
             }
-            crafting_recipes_items_to_graphical[informations.recipes.at(index)]=item;
-            crafting_recipes_items_graphical[item]=informations.recipes.at(index);
+            crafting_recipes_items_to_graphical[recipe]=item;
+            crafting_recipes_items_graphical[item]=recipe;
             ui->listCraftingList->addItem(item);
         }
         else
-            qDebug() << QString("BaseWindow::load_crafting_inventory(), crafting id not found into crafting recipe").arg(informations.recipes.at(index));
-        index++;
+            qDebug() << QString("BaseWindow::load_crafting_inventory(), crafting id not found into crafting recipe").arg(recipe);
     }
     on_listCraftingList_itemSelectionChanged();
 }
