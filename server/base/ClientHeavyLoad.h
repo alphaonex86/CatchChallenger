@@ -59,6 +59,7 @@ private:
     void loadMonsters();
     void loadReputation();
     void loadQuests();
+    void loadBotAlreadyBeaten();
     void sendInventory();
     QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
     QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);

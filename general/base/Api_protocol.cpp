@@ -2343,6 +2343,26 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             player_informations.quests[playerQuestId]=playerQuest;
                             index++;
                         }
+                        //bot_already_beaten
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the reputation list size, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        quint32 bot_already_beaten,sub_size32;
+                        index=0;
+                        in >> sub_size32;
+                        while(index<sub_size32)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                                return;
+                            }
+                            in >> bot_already_beaten;
+                            player_informations.bot_already_beaten << bot_already_beaten;
+                            index++;
+                        }
 
                         is_logged=true;
                         emit logged();

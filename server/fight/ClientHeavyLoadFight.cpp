@@ -259,3 +259,41 @@ void ClientHeavyLoad::askedRandomNumber()
     emit newRandomNumber(randomData);
     emit sendPacket(0xD0,0x0009,randomData);
 }
+
+void ClientHeavyLoad::loadBotAlreadyBeaten()
+{
+    //do the query
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player=%1")
+                .arg(player_informations->id);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player=%1")
+                .arg(player_informations->id);
+        break;
+    }
+    bool ok;
+    QSqlQuery botAlreadyBeatenQuery;
+    if(!botAlreadyBeatenQuery.exec(queryText))
+        emit message(botAlreadyBeatenQuery.lastQuery()+": "+botAlreadyBeatenQuery.lastError().text());
+    //parse the result
+    while(botAlreadyBeatenQuery.next())
+    {
+        quint32 id=botAlreadyBeatenQuery.value(0).toUInt(&ok);
+        if(!ok)
+        {
+            emit message(QString("wrong value type for quest, skip: %1").arg(id));
+            continue;
+        }
+        if(!GlobalServerData::serverPrivateVariables.fights.contains(id))
+        {
+            emit message(QString("fights is not into the fights list, skip: %1").arg(id));
+            continue;
+        }
+        player_informations->public_and_private_informations.bot_already_beaten << id;
+    }
+}

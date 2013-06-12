@@ -303,13 +303,12 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint3
     quint32 size,sub_size;
 
     //send recipes
-    index=0;
-    size=player_informations->public_and_private_informations.recipes.size();
-    out << (quint32)size;
-    while(index<size)
     {
-        out << (quint32)player_informations->public_and_private_informations.recipes.at(index);
-        index++;
+        index=0;
+        out << (quint32)player_informations->public_and_private_informations.recipes.size();
+        QSetIterator<quint32> k(player_informations->public_and_private_informations.recipes);
+        while (k.hasNext())
+            out << k.next();
     }
 
     //send monster
@@ -351,24 +350,36 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint3
 
     /// \todo force to 255 max
     //send reputation
-    out << (quint8)player_informations->public_and_private_informations.reputation.size();
-    QHashIterator<QString,PlayerReputation> i(player_informations->public_and_private_informations.reputation);
-    while (i.hasNext()) {
-        i.next();
-        out << i.key();
-        out << i.value().level;
-        out << i.value().point;
+    {
+        out << (quint8)player_informations->public_and_private_informations.reputation.size();
+        QHashIterator<QString,PlayerReputation> i(player_informations->public_and_private_informations.reputation);
+        while (i.hasNext()) {
+            i.next();
+            out << i.key();
+            out << i.value().level;
+            out << i.value().point;
+        }
     }
 
     /// \todo force to 255 max
     //send quest
-    out << (quint8)player_informations->public_and_private_informations.quests.size();
-    QHashIterator<quint32,PlayerQuest> j(player_informations->public_and_private_informations.quests);
-    while (j.hasNext()) {
-        j.next();
-        out << j.key();
-        out << j.value().step;
-        out << j.value().finish_one_time;
+    {
+        out << (quint8)player_informations->public_and_private_informations.quests.size();
+        QHashIterator<quint32,PlayerQuest> j(player_informations->public_and_private_informations.quests);
+        while (j.hasNext()) {
+            j.next();
+            out << j.key();
+            out << j.value().step;
+            out << j.value().finish_one_time;
+        }
+    }
+
+    //send bot_already_beaten
+    {
+        out << (quint32)player_informations->public_and_private_informations.bot_already_beaten.size();
+        QSetIterator<quint32> k(player_informations->public_and_private_informations.bot_already_beaten);
+        while (k.hasNext())
+            out << k.next();
     }
 
     emit postReply(query_id,outputData);
@@ -415,6 +426,7 @@ void ClientHeavyLoad::loadLinkedData()
     loadMonsters();
     loadReputation();
     loadQuests();
+    loadBotAlreadyBeaten();
 }
 
 bool ClientHeavyLoad::loadTheRawUTF8String()

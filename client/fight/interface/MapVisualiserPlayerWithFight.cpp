@@ -7,9 +7,9 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
 {
 }
 
-void MapVisualiserPlayerWithFight::addBotAlreadyBeaten(const QList<quint32> &botAlreadyBeaten)
+void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint32> &botAlreadyBeaten)
 {
-    this->botAlreadyBeaten << botAlreadyBeaten;
+    this->botAlreadyBeaten=botAlreadyBeaten;
     resetAll();
 }
 
@@ -37,50 +37,21 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
-    QList<CatchChallenger::BotFightOnMap> botFightList=static_cast<CatchChallenger::Map_client *>(new_map)->botsFight.values(QPair<quint8,quint8>(x,y));
+    QList<quint32> botFightList=current_map->logicalMap.botsFight.values(QPair<quint8,quint8>(x,y));
     int index=0;
-    while(index<botFightList)
+    while(index<botFightList.size())
     {
-        const CatchChallenger::BotFightOnMap &botFightOnMap=botFightList.at(index);
-        if(static_cast<CatchChallenger::Map_client *>(new_map)->bots.contains(QPair<quint8,quint8>(botFightOnMap.position.first,botFightOnMap.position.second)))
+        if(!botAlreadyBeaten.contains(botFightList.at(index)))
         {
-            const CatchChallenger::Bot &bot=static_cast<CatchChallenger::Map_client *>(new_map)->bots[QPair<quint8,quint8>(botFightOnMap.position.first,botFightOnMap.position.second)];
-            //bot.step.contains(botFightOnMap.botId)
-            if(bot.botId==botFightOnMap.botId)
-            {
-                if(bot.step.contains(botFightOnMap.step))
-                {
-                    const QDomElement &step=bot.step[botFightOnMap.step];
-                    if(step.hasAttribute("type") && step.hasAttribute("fightid") && step.attribute("type")=="fight")
-                    {
-                        bool ok;
-                        quint32 fightid=step.attribute("fightid").toUInt(&ok);
-                        if(ok)
-                        {
-                            if(!botAlreadyBeaten.contains(fightid))
-                            {
-                                inMove=false;
-                                emit send_player_direction(direction);
-                                parseStop();
-                                emit fightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
-                                keyPressed.clear();
-                                return true;
-                            }
-                            else
-                                qDebug() << "Internal error: bot already beaten";
-                        }
-                        else
-                            qDebug() << "Internal error: fightid is not a number";
-                    }
-                }
-                else
-                    qDebug() << "Internal error: bot have not this step to fight";
-            }
-            else
-                qDebug() << "Internal error: bot id don't match";
+            inMove=false;
+            emit send_player_direction(direction);
+            parseStop();
+            emit fightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
+            keyPressed.clear();
+            return true;
         }
         else
-            qDebug() << "Internal error: have bot point listed but not linked with a bot";
+            qDebug() << "Internal error: bot already beaten";
         index++;
     }
     //check if is in fight collision
@@ -107,49 +78,20 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     }
     CatchChallenger::Map *new_map=&map;
     CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    QList<CatchChallenger::BotFightOnMap> botFightList=static_cast<CatchChallenger::Map_client *>(new_map)->botsFight.values(QPair<quint8,quint8>(x,y));
+    QList<quint32> botFightList=static_cast<CatchChallenger::Map_client *>(new_map)->botsFight.values(QPair<quint8,quint8>(x,y));
     int index=0;
-    while(index<botFightList)
+    while(index<botFightList.size())
     {
-        const CatchChallenger::BotFightOnMap &botFightOnMap=botFightList.at(index);
-        if(static_cast<CatchChallenger::Map_client *>(new_map)->bots.contains(QPair<quint8,quint8>(botFightOnMap.position.first,botFightOnMap.position.second)))
+        if(!botAlreadyBeaten.contains(botFightList.at(index)))
         {
-            const CatchChallenger::Bot &bot=static_cast<CatchChallenger::Map_client *>(new_map)->bots[QPair<quint8,quint8>(botFightOnMap.position.first,botFightOnMap.position.second)];
-            //bot.step.contains(botFightOnMap.botId)
-            if(bot.botId==botFightOnMap.botId)
+            if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
             {
-                if(bot.step.contains(botFightOnMap.step))
-                {
-                    const QDomElement &step=bot.step[botFightOnMap.step];
-                    if(step.hasAttribute("type") && step.hasAttribute("fightid") && step.attribute("type")=="fight")
-                    {
-                        bool ok;
-                        quint32 fightid=step.attribute("fightid").toUInt(&ok);
-                        if(ok)
-                        {
-                            if(!botAlreadyBeaten.contains(fightid))
-                            {
-                                if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
-                                {
-                                    emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
-                                    return false;
-                                }
-                            }
-                            else
-                                qDebug() << "Internal error: bot already beaten";
-                        }
-                        else
-                            qDebug() << "Internal error: fightid is not a number";
-                    }
-                }
-                else
-                    qDebug() << "Internal error: bot have not this step to fight";
+                emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
+                return false;
             }
-            else
-                qDebug() << "Internal error: bot id don't match";
         }
         else
-            qDebug() << "Internal error: have bot point listed but not linked with a bot";
+            qDebug() << "Internal error: bot already beaten";
         index++;
     }
     if(CatchChallenger::MoveOnTheMap::isGrass(*new_map,x,y) && !new_map->grassMonster.empty())

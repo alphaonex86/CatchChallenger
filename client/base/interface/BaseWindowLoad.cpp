@@ -239,6 +239,8 @@ void BaseWindow::updateConnectingStatus()
         waitedData << tr("opening the datapack");
     if(waitedData.isEmpty())
     {
+        Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
+        MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();

@@ -90,6 +90,8 @@ protected:
     virtual void preload_the_visibility_algorithm();
     virtual void preload_reputation();
     virtual void preload_quests();
+    virtual void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
+    virtual void unload_the_bots();
     virtual void unload_the_data();
     virtual void unload_the_map();
     virtual void unload_the_skin();
