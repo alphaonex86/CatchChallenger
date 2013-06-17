@@ -793,7 +793,8 @@ void MapControllerMP::have_current_player_info(const CatchChallenger::Player_pri
     this->player_informations=informations;
     player_informations_is_set=true;
 
-    reinject_signals();
+    if(mHaveTheDatapack)
+        reinject_signals();
 }
 
 //the datapack
@@ -827,7 +828,8 @@ void MapControllerMP::datapackParsed()
 
     setAnimationTilset(datapackPath+DATAPACK_BASE_PATH_ANIMATION+"animation.png");
 
-    reinject_signals();
+    if(player_informations_is_set)
+        reinject_signals();
 }
 
 void MapControllerMP::reinject_signals()
@@ -880,6 +882,8 @@ void MapControllerMP::reinject_signals()
         }
         delayedTeleportTo.clear();
     }
+    else
+        qDebug() << QString("MapControllerMP::reinject_signals(): should not pass here because all is not previously loaded");
 }
 
 void MapControllerMP::moveOtherPlayerStepSlot()

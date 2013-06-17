@@ -100,7 +100,8 @@ BaseWindow::BaseWindow() :
 
     //fight
     connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&FightEngine::fightEngine,SLOT(appendRandomSeeds(QByteArray)));
-    connect(MapController::mapController,SIGNAL(fightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(fightCollision(CatchChallenger::Map_client*,quint8,quint8)));
+    connect(MapController::mapController,SIGNAL(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)));
+    connect(MapController::mapController,SIGNAL(botFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(botFightCollision(CatchChallenger::Map_client*,quint8,quint8)));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
     connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
     connect(&moveFightMonsterBothTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBoth()));

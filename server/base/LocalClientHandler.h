@@ -69,7 +69,7 @@ private:
     //fight
     quint8 selectedMonster;
     bool ableToFight;
-    QList<PlayerMonster> wildMonsters;
+    QList<PlayerMonster> wildMonsters,botFightMonsters;
     quint8 stepFight_Grass,stepFight_Water,stepFight_Cave;
     inline quint8 getOneSeed(const quint8 &max=0);
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
@@ -92,6 +92,7 @@ private:
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
     void syncForEndOfTurn();
     void saveStat();
+    quint32 botFightCash;
 
     //map move
     bool singleMove(const Direction &direction);
@@ -108,6 +109,8 @@ private:
     bool haveBattleSkill();
     void haveUsedTheBattleSkill();
     void useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
+    void useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel);
+    void useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel);
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace=0,const PublicPlayerMonster &publicPlayerMonster=PublicPlayerMonster());
     inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
 public slots:
@@ -144,9 +147,11 @@ public slots:
     //fight
     void tryEscape();
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void useSkill(const quint32 &skill);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
+    bool botFightStart(const quint32 &botFightId);
     //trade
     void tradeCanceled();
     void tradeAccepted();

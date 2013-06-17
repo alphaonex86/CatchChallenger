@@ -23,9 +23,9 @@ void BaseServerFight::preload_monsters()
 
 void BaseServerFight::preload_the_botfight()
 {
-    GlobalServerData::serverPrivateVariables.fights=FightLoader::loadFight(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_FIGHT,GlobalServerData::serverPrivateVariables.monsters,GlobalServerData::serverPrivateVariables.monsterSkills);
+    GlobalServerData::serverPrivateVariables.botFights=FightLoader::loadFight(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_FIGHT,GlobalServerData::serverPrivateVariables.monsters,GlobalServerData::serverPrivateVariables.monsterSkills);
 
-    DebugClass::debugConsole(QString("%1 fights(s) loaded").arg(GlobalServerData::serverPrivateVariables.fights.size()));
+    DebugClass::debugConsole(QString("%1 fights(s) loaded").arg(GlobalServerData::serverPrivateVariables.botFights.size()));
 }
 
 void BaseServerFight::preload_monsters_drops()

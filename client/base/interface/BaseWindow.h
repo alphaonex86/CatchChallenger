@@ -175,7 +175,9 @@ private slots:
     QString parseHtmlToDisplay(const QString &htmlContent);
 
     //fight
-    void fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void botFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    bool fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void on_pushButtonFightEnterNext_clicked();
     void moveFightMonsterBottom();
     void updateCurrentMonsterInformation();
