@@ -236,7 +236,7 @@ void DatapackClientLoader::parseMaps()
 
 void DatapackClientLoader::parseSkins()
 {
-    skins=CatchChallenger::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);;
+    skins=CatchChallenger::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
     qDebug() << QString("%1 skin(s) loaded").arg(maps.size());
 }
@@ -263,6 +263,8 @@ void DatapackClientLoader::resetAll()
      questsExtra.clear();
      questsText.clear();
      botToQuestStart.clear();
+     botFights.clear();
+     botFightsExtra.clear();
 }
 
 void DatapackClientLoader::parseQuestsExtra()

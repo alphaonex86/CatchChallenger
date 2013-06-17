@@ -47,6 +47,11 @@ public:
         QString name;
         QStringList steps;
     };
+    struct BotFightExtra
+    {
+        QString start;
+        QString win;
+    };
     struct QuestText
     {
         QHash<quint32,QString> text;
@@ -62,6 +67,8 @@ public:
     QHash<quint32,QuestText> questsText;
     QHash<QString,quint32> questsPathToId;
     QMultiHash<quint32,quint32> botToQuestStart;
+    QHash<quint32,CatchChallenger::BotFight> botFights;
+    QHash<quint32,BotFightExtra> botFightsExtra;
     QStringList maps,skins;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
@@ -94,6 +101,8 @@ private slots:
     void parseQuestsText();
     void parseQuestsLink();
     void parseSkins();
+    void parseBotFights();
+    void parseBotFightsExtra();
 };
 
 #endif // DATAPACKCLIENTLOADER_H
