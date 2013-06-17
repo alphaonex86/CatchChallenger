@@ -1,4 +1,5 @@
 #include "MapController.h"
+#include "DatapackClientLoader.h"
 #include "../Api_client_real.h"
 
 MapController* MapController::mapController=NULL;
@@ -102,162 +103,34 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const quint32 &botId,con
     if(parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].step.contains(1))
     {
         QDomElement stepBot=parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].step[1];
-        if(stepBot.hasAttribute("type") && stepBot.attribute("type")=="fight" && stepBot.hasAttribute("fightid") && stepBot.hasAttribute("fightfile"))
+        if(stepBot.hasAttribute("type") && stepBot.attribute("type")=="fight" && stepBot.hasAttribute("fightid"))
         {
             bool ok;
             quint32 fightid=stepBot.attribute("fightid").toUInt(&ok);
             if(ok)
             {
-                QString botFightFile=QFileInfo(datapackMapPath+"/"+stepBot.attribute("fightfile")).absoluteFilePath();
-                if(!botFightFile.endsWith(".xml"))
-                    botFightFile+=".xml";
-                loadBotFightFile(botFightFile);
-                if(botFiles.contains(botFightFile))
+                if(DatapackClientLoader::datapackLoader.botFights.contains(fightid))
                 {
-                    if(botFightFiles[botFightFile].contains(fightid))
+                    CatchChallenger::DebugClass::debugConsole(QString("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
+                    quint8 temp_x=x,temp_y=y;
+                    int index_botfight_range=0;
+                    CatchChallenger::Map *map=&parsedMap->logicalMap;
+                    CatchChallenger::Map *old_map=map;
+                    while(index_botfight_range<CATCHCHALLENGER_BOTFIGHT_RANGE)
                     {
-                        CatchChallenger::DebugClass::debugConsole(QString("Put bot fight point %1 (%2) at %3 (%4,%5) in direction: %6").arg(botFightFile).arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
-                        quint8 temp_x=x,temp_y=y;
-                        int index=0;
-                        CatchChallenger::Map *map=&parsedMap->logicalMap;
-                        CatchChallenger::Map *old_map=map;
-                        while(index<CATCHCHALLENGER_BOTFIGHT_RANGE)
-                        {
-                            if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
-                                break;
-                            if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&temp_x,&temp_y,true,false))
-                                break;
-                            if(map!=old_map)
-                                break;
-                            parsedMap->logicalMap.botsFightTrigger.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
-                            index++;
-                        }
+                        if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
+                            break;
+                        if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&temp_x,&temp_y,true,false))
+                            break;
+                        if(map!=old_map)
+                            break;
+                        parsedMap->logicalMap.botsFightTrigger.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
+                        index_botfight_range++;
                     }
-                    else
-                        CatchChallenger::DebugClass::debugConsole(QString("No fightid %1 into %2 at MapController::loadBotOnTheMap").arg(fightid).arg(botFightFile));
                 }
                 else
-                    CatchChallenger::DebugClass::debugConsole(QString("No file %1 at MapController::loadBotOnTheMap").arg(botFightFile));
+                    CatchChallenger::DebugClass::debugConsole(QString("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid));
             }
         }
-    }
-}
-
-void MapController::loadBotFightFile(const QString &fileName)
-{
-    if(botFiles.contains(fileName))
-        return;
-    botFiles[fileName];//create the entry
-    QFile mapFile(fileName);
-    if(!mapFile.open(QIODevice::ReadOnly))
-    {
-        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
-        return;
-    }
-    QByteArray xmlContent=mapFile.readAll();
-    mapFile.close();
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-    {
-        qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-        return;
-    }
-    bool ok;
-    QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="fights")
-    {
-        qDebug() << QString("\"fights\" root balise not found for the xml file");
-        return;
-    }
-    //load the bots
-    QDomElement child = root.firstChildElement("fight");
-    while(!child.isNull())
-    {
-        if(!child.hasAttribute("id"))
-            CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
-        else if(!child.isElement())
-            CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
-        else
-        {
-            quint32 id=child.attribute("id").toUInt(&ok);
-            if(ok)
-            {
-                QDomElement monster = child.firstChildElement("monster");
-                while(!monster.isNull())
-                {
-                    if(!monster.hasAttribute("id"))
-                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(monster.tagName()).arg(monster.lineNumber()));
-                    else if(!monster.isElement())
-                        CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute("type")).arg(monster.lineNumber())));
-                    else
-                    {
-                        CatchChallenger::BotFight::BotFightMonster botFightMonster;
-                        botFightMonster.level=1;
-                        botFightMonster.id=monster.attribute("id").toUInt(&ok);
-                        if(ok)
-                        {
-                            if(!monster.hasAttribute("level"))
-                            {
-                                botFightMonster.level=monster.attribute("level").toUShort(&ok);
-                                if(!ok)
-                                {
-                                    CatchChallenger::DebugClass::debugConsole(QString("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute("type")).arg(monster.lineNumber())));
-                                    botFightMonster.level=1;
-                                }
-                                if(botFightMonster.level<1)
-                                {
-                                    CatchChallenger::DebugClass::debugConsole(QString("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute("type")).arg(monster.lineNumber())));
-                                    botFightMonster.level=1;
-                                }
-                            }
-                            QDomElement attack = monster.firstChildElement("attack");
-                            while(!attack.isNull())
-                            {
-                                quint8 attackLevel=1;
-                                if(!attack.hasAttribute("id"))
-                                    CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(attack.tagName()).arg(attack.lineNumber()));
-                                else if(!attack.isElement())
-                                    CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName().arg(attack.attribute("type")).arg(attack.lineNumber())));
-                                else
-                                {
-                                    quint32 attackId=attack.attribute("id").toUInt(&ok);
-                                    if(ok)
-                                    {
-                                        if(!attack.hasAttribute("level"))
-                                        {
-                                            attackLevel=attack.attribute("level").toUShort(&ok);
-                                            if(!ok)
-                                            {
-                                                CatchChallenger::DebugClass::debugConsole(QString("The level is not a number: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName().arg(attack.attribute("type")).arg(attack.lineNumber())));
-                                                attackLevel=1;
-                                            }
-                                            if(attackLevel<1)
-                                            {
-                                                CatchChallenger::DebugClass::debugConsole(QString("Can't be 0 or negative: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName().arg(attack.attribute("type")).arg(attack.lineNumber())));
-                                                attackLevel=1;
-                                            }
-                                        }
-                                        CatchChallenger::PlayerMonster::PlayerSkill botFightAttack;
-                                        botFightAttack.skill=attackId;
-                                        botFightAttack.level=attackLevel;
-                                        botFightMonster.attacks << botFightAttack;
-                                    }
-                                }
-                                attack = attack.nextSiblingElement("attack");
-                            }
-                            if(!botFightFiles[fileName].contains(id))
-                                botFightFiles[fileName].remove(id);
-                            botFightFiles[fileName][id].monsters << botFightMonster;
-                        }
-                    }
-                    monster = monster.nextSiblingElement("monster");
-                }
-            }
-            else
-                CatchChallenger::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
-        }
-        child = child.nextSiblingElement("fight");
     }
 }
