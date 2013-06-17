@@ -161,7 +161,7 @@ class PlayerMonster : public PublicPlayerMonster
     quint32 egg_step;
     //in form of list to get random into the list
     QList<PlayerSkill> skills;
-    quint32 id;
+    quint32 id;//id into the db
 };
 
 struct PlayerQuest
@@ -521,16 +521,11 @@ struct Bot
 
 struct BotFight
 {
-    struct BotFightAttack
-    {
-        quint32 id;
-        quint8 level;
-    };
     struct BotFightMonster
     {
         quint32 id;
         quint8 level;
-        QList<BotFightAttack> attacks;
+        QList<PlayerMonster::PlayerSkill> attacks;
     };
     QList<BotFightMonster> monsters;
     quint32 cash;
