@@ -428,8 +428,8 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                                             entryValid=false;
                                                             break;
                                                         }
-                                                        CatchChallenger::BotFight::BotFightAttack botFightAttack;
-                                                        botFightAttack.id=attackId;
+                                                        CatchChallenger::PlayerMonster::PlayerSkill botFightAttack;
+                                                        botFightAttack.skill=attackId;
                                                         botFightAttack.level=attackLevel;
                                                         botFightMonster.attacks << botFightAttack;
                                                     }

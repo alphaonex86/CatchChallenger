@@ -129,7 +129,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const quint32 &botId,con
                                 break;
                             if(map!=old_map)
                                 break;
-                            parsedMap->logicalMap.botsFight.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
+                            parsedMap->logicalMap.botsFightTrigger.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
                             index++;
                         }
                     }
@@ -239,8 +239,8 @@ void MapController::loadBotFightFile(const QString &fileName)
                                                 attackLevel=1;
                                             }
                                         }
-                                        CatchChallenger::BotFight::BotFightAttack botFightAttack;
-                                        botFightAttack.id=attackId;
+                                        CatchChallenger::PlayerMonster::PlayerSkill botFightAttack;
+                                        botFightAttack.skill=attackId;
                                         botFightAttack.level=attackLevel;
                                         botFightMonster.attacks << botFightAttack;
                                     }

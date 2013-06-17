@@ -12,6 +12,7 @@ LocalClientHandler::LocalClientHandler()
     stepFight_Grass=0;
     stepFight_Water=0;
     stepFight_Cave=0;
+    botFightCash=0;
     otherPlayerTrade=NULL;
     otherPlayerBattle=NULL;
     tradeIsValidated=false;
@@ -244,6 +245,8 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     this->map=static_cast<Map_server_MapVisibility_simple*>(map);
     this->x=x;
     this->y=y;
+    if(botFightCollision(map,x,y))
+        return true;
     checkFightCollision(map,x,y);
     return true;
 }

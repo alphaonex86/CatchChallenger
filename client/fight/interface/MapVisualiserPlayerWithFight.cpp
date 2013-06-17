@@ -10,7 +10,6 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
 void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint32> &botAlreadyBeaten)
 {
     this->botAlreadyBeaten=botAlreadyBeaten;
-    resetAll();
 }
 
 void MapVisualiserPlayerWithFight::resetAll()
@@ -37,7 +36,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
-    QList<quint32> botFightList=current_map->logicalMap.botsFight.values(QPair<quint8,quint8>(x,y));
+    QList<quint32> botFightList=current_map->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
     int index=0;
     while(index<botFightList.size())
     {
@@ -46,7 +45,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             inMove=false;
             emit send_player_direction(direction);
             parseStop();
-            emit fightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
+            emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
             keyPressed.clear();
             return true;
         }
@@ -60,7 +59,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         inMove=false;
         emit send_player_direction(direction);
         parseStop();
-        emit fightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
+        emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
         keyPressed.clear();
         return true;
     }
@@ -78,7 +77,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     }
     CatchChallenger::Map *new_map=&map;
     CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    QList<quint32> botFightList=static_cast<CatchChallenger::Map_client *>(new_map)->botsFight.values(QPair<quint8,quint8>(x,y));
+    QList<quint32> botFightList=static_cast<CatchChallenger::Map_client *>(new_map)->botsFightTrigger.values(QPair<quint8,quint8>(x,y));
     int index=0;
     while(index<botFightList.size())
     {
@@ -89,6 +88,8 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                 emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                 return false;
             }
+            else
+                qDebug() << "Todo: client bot fight collision";
         }
         else
             qDebug() << "Internal error: bot already beaten";
