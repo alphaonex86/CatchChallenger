@@ -289,7 +289,7 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
             emit message(QString("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
-        if(!GlobalServerData::serverPrivateVariables.fights.contains(id))
+        if(!GlobalServerData::serverPrivateVariables.botFights.contains(id))
         {
             emit message(QString("fights is not into the fights list, skip: %1").arg(id));
             continue;

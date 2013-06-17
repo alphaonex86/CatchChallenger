@@ -66,7 +66,7 @@ public:
     //last step
     QList<quint8> stepFight_Water,stepFight_Grass,stepFight_Cave;
     //current fight
-    QList<PlayerMonster> wildMonsters,botMonsters;
+    QList<PlayerMonster> wildMonsters,botFightMonsters;
     QList<PublicPlayerMonster> battleCurrentMonster;
     QList<quint8> battleStat;
     QList<quint8> battleMonsterPlace;
@@ -75,9 +75,9 @@ public:
     void useSkill(const quint32 &skill);
     QList<quint32> otherMonsterAttack;
     void generateOtherAttack();
-    bool wildMonsterIsKO();
+    bool otherMonsterIsKO();
     bool currentMonsterIsKO();
-    bool dropKOWildMonster();
+    bool dropKOOtherMonster();
     void finishTheBattle();
     bool dropKOCurrentMonster();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);

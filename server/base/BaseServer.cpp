@@ -644,7 +644,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 quint32 fightid=step.attribute("fightid").toUInt(&ok);
                                 if(ok)
                                 {
-                                    if(GlobalServerData::serverPrivateVariables.fights.contains(fightid))
+                                    if(GlobalServerData::serverPrivateVariables.botFights.contains(fightid))
                                     {
                                         if(bot_Semi.property_text.contains("lookAt"))
                                         {

@@ -89,7 +89,8 @@ signals:
     void stopped_in_front_of(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void actionOn(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
-    void fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void botFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void error(const QString &error);
 };
 

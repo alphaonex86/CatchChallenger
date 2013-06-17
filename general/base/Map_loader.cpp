@@ -392,10 +392,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.contains("skin") && !property_text.contains("lookAt"))
+                                    if(property_text.contains("skin") && property_text["skin"]!="" && !property_text.contains("lookAt"))
                                     {
                                         property_text["lookAt"]="bottom";
-                                        DebugClass::debugConsole(QString("skin but not lookAt, fixed by bottom: %1 (at line: %2)").arg(SubChild.tagName()).arg(SubChild.lineNumber()));
+                                        DebugClass::debugConsole(QString("skin but not lookAt, fixed by bottom: %1 (%2 at line: %3)").arg(SubChild.tagName()).arg(fileName).arg(SubChild.lineNumber()));
                                     }
                                     if(property_text.contains("file") && property_text.contains("id"))
                                     {

@@ -22,7 +22,7 @@ FightEngine::~FightEngine()
 //return is have random seed to do random step
 bool FightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y)
 {
-    if(!wildMonsters.empty())
+    if(isInFight())
     {
         qDebug() << QString("map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y);
         return false;
@@ -42,7 +42,7 @@ bool FightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &
 bool FightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y)
 {
     bool ok;
-    if(!wildMonsters.empty() || !battleCurrentMonster.isEmpty() || !botMonsters.isEmpty())
+    if(!wildMonsters.empty() || !battleCurrentMonster.isEmpty() || !botFightMonsters.isEmpty())
     {
         qDebug() << QString("error: map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y);
         return false;
@@ -156,7 +156,16 @@ void FightEngine::generateOtherAttack()
     Skill::AttackReturn attackReturn;
     attackReturn.doByTheCurrentMonster=false;
     attackReturn.success=false;
-    const PlayerMonster &otherMonster=wildMonsters.first();
+    PlayerMonster otherMonster;
+    if(!wildMonsters.isEmpty())
+        otherMonster=wildMonsters.first();
+    else if(!botFightMonsters.isEmpty())
+        otherMonster=botFightMonsters.first();
+    else
+    {
+        qDebug() << "no other monster found";
+        return;
+    }
     if(otherMonster.skills.empty())
         return;
     int position;
@@ -205,8 +214,21 @@ void FightEngine::generateOtherAttack()
 
 Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffect &effect)
 {
+    PlayerMonster *otherMonster;
+    if(wildMonsters.isEmpty())
+        otherMonster=&wildMonsters.first();
+    else if(botFightMonsters.isEmpty())
+        otherMonster=&botFightMonsters.first();
+    else
+    {
+        qDebug() << QString("Unable to locate the other monster to generate other attack");
+        Skill::LifeEffectReturn effect_to_return;
+        effect_to_return.on=effect.on;
+        effect_to_return.quantity=0;
+        return effect_to_return;
+    }
     qint32 quantity;
-    Monster::Stat stat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+    Monster::Stat stat=getStat(monsters[otherMonster->monster],otherMonster->level);
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
@@ -216,13 +238,13 @@ Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffec
                 Monster::Stat otherStat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
                 if(effect.quantity<0)
                 {
-                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
+                    quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
                     if(quantity==0)
                         quantity=-1;
                 }
                 else if(effect.quantity>0)//ignore the def for heal
                 {
-                    quantity=effect.quantity*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+                    quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                     if(quantity==0)
                         quantity=1;
                 }
@@ -246,28 +268,28 @@ Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffec
             {
                 if(effect.quantity<0)
                 {
-                    quantity=-((-effect.quantity*stat.attack*wildMonsters.first().level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
+                    quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
                     if(quantity==0)
                         quantity=-1;
                 }
                 else if(effect.quantity>0)//ignore the def for heal
                 {
-                    quantity=effect.quantity*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+                    quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                     if(quantity==0)
                         quantity=1;
                 }
             }
             else
-                quantity=(wildMonsters.first().hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>wildMonsters.first().hp)
+                quantity=(otherMonster->hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>otherMonster->hp)
             {
-                wildMonsters.first().hp=0;
+                otherMonster->hp=0;
                 addXPSP();
             }
-            else if(quantity>0 && quantity>(stat.hp-wildMonsters.first().hp))
-                wildMonsters.first().hp=stat.hp;
+            else if(quantity>0 && quantity>(stat.hp-otherMonster->hp))
+                otherMonster->hp=stat.hp;
             else
-                wildMonsters.first().hp+=quantity;
+                otherMonster->hp+=quantity;
         break;
         default:
             qDebug() << "Not apply match, can't apply the buff";
@@ -292,7 +314,15 @@ void FightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
-            wildMonsters.first().buffs << tempBuff;
+            if(wildMonsters.isEmpty())
+                wildMonsters.first().buffs << tempBuff;
+            else if(botFightMonsters.isEmpty())
+                botFightMonsters.first().buffs << tempBuff;
+            else
+            {
+                qDebug() << QString("Unable to locate the other monster to apply other buff effect");
+                return;
+            }
         break;
         default:
             qDebug() << "Not apply match, can't apply the buff";
@@ -300,9 +330,9 @@ void FightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
     }
 }
 
-bool FightEngine::wildMonsterIsKO()
+bool FightEngine::otherMonsterIsKO()
 {
-    if(wildMonsters.isEmpty() && battleCurrentMonster.isEmpty() && botMonsters.isEmpty())
+    if(wildMonsters.isEmpty() && battleCurrentMonster.isEmpty() && botFightMonsters.isEmpty())
         return true;
     if(!wildMonsters.isEmpty())
     {
@@ -320,11 +350,11 @@ bool FightEngine::wildMonsterIsKO()
             return true;
         }
     }
-    if(!botMonsters.isEmpty())
+    if(!botFightMonsters.isEmpty())
     {
-        if(botMonsters.first().hp==0)
+        if(botFightMonsters.first().hp==0)
         {
-            botMonsters.first().buffs.clear();
+            botFightMonsters.first().buffs.clear();
             return true;
         }
     }
@@ -413,11 +443,11 @@ bool FightEngine::haveWin()
             return false;
         }
     }
-    if(!botMonsters.empty())
+    if(!botFightMonsters.empty())
     {
-        if(botMonsters.size()==1)
+        if(botFightMonsters.size()==1)
         {
-            if(botMonsters.first().hp==0)
+            if(botFightMonsters.first().hp==0)
             {
                 qDebug() << "remain one KO botMonsters monsters";
                 return true;
@@ -430,7 +460,7 @@ bool FightEngine::haveWin()
         }
         else
         {
-            qDebug() << "remain " << botMonsters.size() << " botMonsters monsters";
+            qDebug() << "remain " << botFightMonsters.size() << " botMonsters monsters";
             return false;
         }
     }
@@ -459,18 +489,18 @@ bool FightEngine::haveWin()
     return true;
 }
 
-bool FightEngine::dropKOWildMonster()
+bool FightEngine::dropKOOtherMonster()
 {
-    if(!wildMonsterIsKO())
+    if(!otherMonsterIsKO())
         return false;
     if(!wildMonsters.isEmpty())
     {
         wildMonsters.removeFirst();
         return true;
     }
-    if(!botMonsters.isEmpty())
+    if(!botFightMonsters.isEmpty())
     {
-        botMonsters.removeFirst();
+        botFightMonsters.removeFirst();
         return true;
     }
     if(!battleCurrentMonster.isEmpty())
@@ -486,7 +516,7 @@ bool FightEngine::dropKOWildMonster()
 void FightEngine::finishTheBattle()
 {
     wildMonsters.clear();
-    botMonsters.clear();
+    botFightMonsters.clear();
     battleCurrentMonster.clear();
     battleStat.clear();
     battleMonsterPlace.clear();
@@ -594,6 +624,10 @@ void FightEngine::healAllMonsters()
 bool FightEngine::isInFight()
 {
     if(!wildMonsters.empty())
+        return true;
+    else if(!botFightMonsters.empty())
+        return true;
+    else if(!battleCurrentMonster.empty())
         return true;
     else
         return false;
@@ -729,8 +763,8 @@ PublicPlayerMonster FightEngine::getOtherMonster()
 {
     if(!wildMonsters.isEmpty())
         return FacilityLib::playerMonsterToPublicPlayerMonster(wildMonsters.first());
-    if(!botMonsters.isEmpty())
-        return FacilityLib::playerMonsterToPublicPlayerMonster(botMonsters.first());
+    if(!botFightMonsters.isEmpty())
+        return FacilityLib::playerMonsterToPublicPlayerMonster(botFightMonsters.first());
     if(!battleCurrentMonster.isEmpty())
         return battleCurrentMonster.first();
     PublicPlayerMonster falseReturn;
@@ -745,7 +779,7 @@ PublicPlayerMonster FightEngine::getOtherMonster()
 
 bool FightEngine::haveOtherMonster()
 {
-    return !wildMonsters.empty() || !botMonsters.isEmpty() || !battleCurrentMonster.isEmpty();
+    return !wildMonsters.empty() || !botFightMonsters.isEmpty() || !battleCurrentMonster.isEmpty();
 }
 
 void FightEngine::resetAll()
@@ -766,6 +800,7 @@ void FightEngine::resetAll()
     battleStat.clear();
 
     wildMonsters.clear();
+    botFightMonsters.clear();
 }
 
 void FightEngine::appendRandomSeeds(const QByteArray &data)
@@ -805,6 +840,11 @@ const QByteArray FightEngine::randomSeeds()
 
 bool FightEngine::tryEscape()
 {
+    if(wildMonsters.isEmpty())
+    {
+        qDebug() << "No wild monster to escape";
+        return false;
+    }
     if(internalTryEscape())
     {
         wildMonsters.clear();
@@ -816,6 +856,11 @@ bool FightEngine::tryEscape()
 
 bool FightEngine::internalTryEscape()
 {
+    if(wildMonsters.isEmpty())
+    {
+        qDebug() << "No wild monster to internal escape";
+        return false;
+    }
     CatchChallenger::Api_client_real::client->tryEscape();
     quint8 value=getOneSeed(101);
     if(wildMonsters.first().level<playerMonsterList.at(selectedMonster).level && value<75)
@@ -829,32 +874,32 @@ bool FightEngine::internalTryEscape()
 
 void FightEngine::addXPSP()
 {
-    if(!botMonsters.isEmpty())
-    {
-        emit newError(tr("Todo"),"Add XP or SP with bot monster is todo");
-        return;
-    }
     if(!battleCurrentMonster.isEmpty())
     {
         emit newError(tr("Internal error"),"Don't win directly XP/SP with battle with other player");
         return;
     }
-    if(wildMonsters.isEmpty())
+    if(wildMonsters.isEmpty() && botFightMonsters.isEmpty())
     {
         emit newError(tr("Internal error"),"No wild monster to add XP/SP");
         return;
     }
-    const Monster &wildmonster=monsters[wildMonsters.first().monster];
-    const Monster &currentmonster=monsters[playerMonsterList[selectedMonster].monster];
-    playerMonsterList[selectedMonster].sp+=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    quint32 give_xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    PlayerMonster publicOtherMonster;
+    if(!wildMonsters.isEmpty())
+        publicOtherMonster=wildMonsters.first();
+    else
+        publicOtherMonster=botFightMonsters.first();
+    const Monster &otherMonsterDef=monsters[publicOtherMonster.monster];
+    const Monster &currentMonster=monsters[playerMonsterList[selectedMonster].monster];
+    playerMonsterList[selectedMonster].sp+=otherMonsterDef.give_sp*publicOtherMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    quint32 give_xp=otherMonsterDef.give_xp*publicOtherMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     quint32 xp=playerMonsterList[selectedMonster].remaining_xp;
     quint32 level=playerMonsterList[selectedMonster].level;
-    while(currentmonster.level_to_xp.at(level-1)<(xp+give_xp))
+    while(currentMonster.level_to_xp.at(level-1)<(xp+give_xp))
     {
-        quint32 old_max_hp=currentmonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-        quint32 new_max_hp=currentmonster.stat.hp*(level+1)/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-        give_xp-=currentmonster.level_to_xp.at(level-1)-xp;
+        quint32 old_max_hp=currentMonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        quint32 new_max_hp=currentMonster.stat.hp*(level+1)/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        give_xp-=currentMonster.level_to_xp.at(level-1)-xp;
         xp=0;
         level++;
         playerMonsterList[selectedMonster].hp+=new_max_hp-old_max_hp;
@@ -875,32 +920,37 @@ bool FightEngine::canDoFightAction()
 void FightEngine::useSkill(const quint32 &skill)
 {
     CatchChallenger::Api_client_real::client->useSkill(skill);
-    if(wildMonsters.isEmpty() && botMonsters.isEmpty())
+    if(wildMonsters.isEmpty() && botFightMonsters.isEmpty())
         return;
     Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
-    if(wildMonsters.isEmpty())
+    if(wildMonsters.isEmpty() || botFightMonsters.isEmpty())
     {
         qDebug() << "useSkill() with botMonsters is todo";
         return;
     }
-    Monster::Stat otherMonsterStat=getStat(monsters[wildMonsters.first().monster],wildMonsters.first().level);
+    PlayerMonster publicOtherMonster;
+    if(!wildMonsters.isEmpty())
+        publicOtherMonster=wildMonsters.first();
+    else
+        publicOtherMonster=botFightMonsters.first();
+    Monster::Stat otherMonsterStat=getStat(monsters[publicOtherMonster.monster],publicOtherMonster.level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     //do the current monster attack
     if(currentMonsterStatIsFirstToAttack)
     {
         doTheCurrentMonsterAttack(skill);
-        if(!m_canDoFight || wildMonsterIsKO())
+        if(!m_canDoFight || otherMonsterIsKO())
             return;
     }
     //do the other monster attack
     generateOtherAttack();
-    if(!m_canDoFight || wildMonsterIsKO())
+    if(!m_canDoFight || otherMonsterIsKO())
         return;
     //do the current monster attack
     if(!currentMonsterStatIsFirstToAttack)
     {
         doTheCurrentMonsterAttack(skill);
-        if(!m_canDoFight || wildMonsterIsKO())
+        if(!m_canDoFight || otherMonsterIsKO())
             return;
     }
 }
@@ -978,8 +1028,8 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
             PublicPlayerMonster *publicPlayerMonster;
             if(!wildMonsters.isEmpty())
                 publicPlayerMonster=&wildMonsters.first();
-            else if(!botMonsters.isEmpty())
-                publicPlayerMonster=&botMonsters.first();
+            else if(!botFightMonsters.isEmpty())
+                publicPlayerMonster=&botFightMonsters.first();
             else if(!battleCurrentMonster.isEmpty())
                 publicPlayerMonster=&battleCurrentMonster.first();
             else
@@ -1080,8 +1130,8 @@ bool FightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &ef
             PublicPlayerMonster *publicPlayerMonster;
             if(!wildMonsters.isEmpty())
                 publicPlayerMonster=&wildMonsters.first();
-            else if(!botMonsters.isEmpty())
-                publicPlayerMonster=&botMonsters.first();
+            else if(!botFightMonsters.isEmpty())
+                publicPlayerMonster=&botFightMonsters.first();
             else if(!battleCurrentMonster.isEmpty())
                 publicPlayerMonster=&battleCurrentMonster.first();
             else
@@ -1153,8 +1203,8 @@ bool FightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
             wildMonsters.first().buffs << tempBuff;
         else if(!battleCurrentMonster.isEmpty())
             battleCurrentMonster.first().buffs << tempBuff;
-        else if(!botMonsters.isEmpty())
-            botMonsters.first().buffs << tempBuff;
+        else if(!botFightMonsters.isEmpty())
+            botFightMonsters.first().buffs << tempBuff;
         else
         {
             emit newError(tr("Internal error"),"unknown other monster type");

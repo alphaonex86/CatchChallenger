@@ -119,20 +119,35 @@ void BaseWindow::load_monsters()
     }
 }
 
-void BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+{
+    if(!fightCollision(map,x,y))
+        return;
+    battleType=BattleType_Wild;
+    ui->labelFightEnter->setText(tr("A other %1 is in front of you!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name));
+}
+
+void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+{
+    if(!fightCollision(map,x,y))
+        return;
+    battleType=BattleType_Bot;
+    ui->labelFightEnter->setText(tr("A bot %1 is in front of you!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name));
+}
+
+bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
 {
     if(!CatchChallenger::FightEngine::fightEngine.haveOtherMonster())
     {
         qDebug() << "is in fight but without monster";
-        return;
+        return false;
     }
-    battleType=BattleType_Wild;
     init_environement_display(map,x,y);
     init_current_monster_display();
     init_other_monster_display();
     PublicPlayerMonster otherMonster=CatchChallenger::FightEngine::fightEngine.getOtherMonster();
     qDebug() << QString("You are in front of monster id: %1 level: %2").arg(otherMonster.monster).arg(otherMonster.level);
-    ui->labelFightEnter->setText(tr("A wild %1 is in front of you!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[otherMonster.monster].name));
+    return true;
 }
 
 void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, const quint8 &y)
@@ -560,11 +575,11 @@ void BaseWindow::doNextAction()
         return;
     }
     //if the other monster is KO
-    if(CatchChallenger::FightEngine::fightEngine.isInFight() && CatchChallenger::FightEngine::fightEngine.wildMonsterIsKO())
+    if(CatchChallenger::FightEngine::fightEngine.isInFight() && CatchChallenger::FightEngine::fightEngine.otherMonsterIsKO())
     {
         qDebug() << "doNextAction(): other monster is KO";
-        ui->labelFightEnter->setText(tr("The wild %1 have lost!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name));
-        CatchChallenger::FightEngine::fightEngine.dropKOWildMonster();
+        ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name));
+        CatchChallenger::FightEngine::fightEngine.dropKOOtherMonster();
         doNextActionStep=DoNextActionStep_Start;
         //current player monster is KO
         moveType=MoveType_Dead;
@@ -637,7 +652,7 @@ void BaseWindow::doNextAction()
     {
         qDebug() << "doNextAction(): remplace KO other monster";
         updateOtherMonsterInformation();
-        CatchChallenger::FightEngine::fightEngine.dropKOWildMonster();
+        CatchChallenger::FightEngine::fightEngine.dropKOOtherMonster();
         init_other_monster_display();
     }
     if(ui->progressBarFightBottomHP->value()==0)
@@ -676,7 +691,7 @@ void BaseWindow::displayAttack()
                 .arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getFightMonster().monster].name)
                 .arg(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().attack].name);
         else
-            attackOwner=tr("The wild %1 do the attack %2")
+            attackOwner=tr("The other %1 do the attack %2")
                 .arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name)
                 .arg(CatchChallenger::FightEngine::fightEngine.monsterSkillsExtra[CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().attack].name);
         QString damage;
@@ -684,11 +699,11 @@ void BaseWindow::displayAttack()
         if(applyOnOtherMonster)
         {
             if(quantity>0)
-                damage=tr("The wild %1 is healed of %2")
+                damage=tr("The other %1 is healed of %2")
                     .arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name)
                     .arg(quantity);
             else
-                damage=tr("The wild %1 take %2 of damage")
+                damage=tr("The other %1 take %2 of damage")
                     .arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name)
                     .arg(-quantity);
         }
