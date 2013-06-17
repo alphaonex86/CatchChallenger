@@ -670,12 +670,14 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             botfights_number++;
 
                                             //load the botsFightTrigger
+                                            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
                                             CatchChallenger::DebugClass::debugConsole(QString("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
+                                            #endif
                                             quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
-                                            int index=0;
+                                            int index_botfight_range=0;
                                             CatchChallenger::Map *map=semi_loaded_map[index].map;
                                             CatchChallenger::Map *old_map=map;
-                                            while(index<CATCHCHALLENGER_BOTFIGHT_RANGE)
+                                            while(index_botfight_range<CATCHCHALLENGER_BOTFIGHT_RANGE)
                                             {
                                                 if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
                                                     break;
@@ -684,7 +686,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                                 if(map!=old_map)
                                                     break;
                                                 static_cast<MapServer *>(semi_loaded_map[index].map)->botsFightTrigger.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
-                                                index++;
+                                                index_botfight_range++;
                                                 botfightstigger_number++;
                                             }
                                         }

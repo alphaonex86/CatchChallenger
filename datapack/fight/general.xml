@@ -3,12 +3,8 @@ The id need be unique to save the already fight
 -->
 <fights>
 	<fight id="1">
-		<start>
-			<text lang="en"><![CDATA[Read for the fight?]]></text>
-		</start>
-		<win>
-			<text lang="en"><![CDATA[You are so strong for me!]]></text>
-		</win>
+		<start lang="en"><![CDATA[Read for the fight?]]></start>
+		<win lang="en"><![CDATA[You are so strong for me!]]></win>
 		<monster id="1" level="2">
 			<attack id="1" />
 		</monster>

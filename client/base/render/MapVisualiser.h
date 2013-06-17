@@ -50,7 +50,6 @@ public:
     void setTargetFPS(int targetFPS);
 
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
-    QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::BotFight> > botFightFiles;
     struct Map_full
     {
         CatchChallenger::Map_client logicalMap;
