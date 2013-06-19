@@ -45,7 +45,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             inMove=false;
             emit send_player_direction(direction);
             parseStop();
-            emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
+            emit botFightCollision(botFightList.at(index),static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
             keyPressed.clear();
             return true;
         }
@@ -88,8 +88,6 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                 emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                 return false;
             }
-            else
-                qDebug() << "Todo: client bot fight collision";
         }
         else
             qDebug() << "Internal error: bot already beaten";

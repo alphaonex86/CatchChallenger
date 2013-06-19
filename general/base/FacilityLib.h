@@ -17,6 +17,7 @@ public:
     static QString secondsToString(const quint64 &seconds);
     static PublicPlayerMonster playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster);
     static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
+    static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
 private:
     static QByteArray UTF8EmptyData;
 };

@@ -90,7 +90,7 @@ signals:
     void actionOn(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
-    void botFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void botFightCollision(const quint32 &fightId,CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void error(const QString &error);
 };
 

@@ -113,3 +113,19 @@ QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &p
     }
     return outputData;
 }
+
+PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster,const Monster::Stat &stat)
+{
+    PlayerMonster tempPlayerMonster;
+    tempPlayerMonster.captured_with=0;
+    tempPlayerMonster.egg_step=0;
+    tempPlayerMonster.gender=Gender_Unknown;
+    tempPlayerMonster.hp=stat.hp;
+    tempPlayerMonster.id=0;
+    tempPlayerMonster.level=botFightMonster.level;
+    tempPlayerMonster.monster=botFightMonster.id;
+    tempPlayerMonster.remaining_xp=0;
+    tempPlayerMonster.skills=botFightMonster.attacks;
+    tempPlayerMonster.sp=0;
+    return tempPlayerMonster;
+}

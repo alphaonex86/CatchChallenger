@@ -524,18 +524,7 @@ bool LocalClientHandler::botFightStart(const quint32 &botFightId)
     {
         const BotFight::BotFightMonster &monster=botFight.monsters.at(index);
         const Monster::Stat &stat=getStat(GlobalServerData::serverPrivateVariables.monsters[monster.id],monster.level);
-        PlayerMonster tempPlayerMonster;
-        tempPlayerMonster.captured_with=0;
-        tempPlayerMonster.egg_step=0;
-        tempPlayerMonster.gender=Gender_Unknown;
-        tempPlayerMonster.hp=stat.hp;
-        tempPlayerMonster.id=0;
-        tempPlayerMonster.level=monster.level;
-        tempPlayerMonster.monster=monster.id;
-        tempPlayerMonster.remaining_xp=0;
-        tempPlayerMonster.skills=monster.attacks;
-        tempPlayerMonster.sp=0;
-        botFightMonsters << tempPlayerMonster;
+        botFightMonsters << FacilityLib::botFightMonsterToPlayerMonster(monster,stat);
         index++;
     }
     return true;

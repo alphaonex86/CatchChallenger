@@ -384,7 +384,7 @@ bool FightEngine::dropKOCurrentMonster()
 
 void FightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty())
+    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.isEmpty())
     {
         qDebug() << "have already monster";
         return;
@@ -402,6 +402,27 @@ void FightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monst
     battleCurrentMonster << publicPlayerMonster;
     battleStat=stat;
     battleMonsterPlace << monsterPlace;
+}
+
+void FightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters)
+{
+    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.isEmpty())
+    {
+        qDebug() << "have already monster";
+        return;
+    }
+    if(botFightMonsters.isEmpty())
+    {
+        qDebug() << "monster list size can't be empty";
+        return;
+    }
+    this->botFightMonsters=botFightMonsters;
+    int index=0;
+    while(index<botFightMonsters.size())
+    {
+        botMonstersStat << 0x01;
+        index++;
+    }
 }
 
 void FightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
