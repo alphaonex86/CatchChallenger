@@ -68,6 +68,8 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseQuestsLink();
     parseQuestsExtra();
     parseQuestsText();
+    parseBotFights();
+    parseBotFightsExtra();
     inProgress=false;
     emit datapackParsed();
 }
