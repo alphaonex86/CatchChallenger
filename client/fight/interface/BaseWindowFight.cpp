@@ -127,19 +127,35 @@ void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quin
     ui->labelFightEnter->setText(tr("A other %1 is in front of you!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name));
 }
 
-void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+void BaseWindow::botFightCollision(const quint32 &fightId,CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
 {
+    if(!DatapackClientLoader::datapackLoader.botFights.contains(fightId))
+    {
+        emit error("fight id not found at collision");
+        return;
+    }
+    QList<PlayerMonster> botFightMonstersTransformed;
+    const QList<BotFight::BotFightMonster> &monsters=DatapackClientLoader::datapackLoader.botFights[fightId].monsters;
+    int index=0;
+    while(index<monsters.size())
+    {
+        botFightMonstersTransformed << FacilityLib::botFightMonsterToPlayerMonster(monsters.at(index),FightEngine::getStat(CatchChallenger::FightEngine::fightEngine.monsters[monsters.at(index).id],monsters.at(index).level));
+        index++;
+    }
+    CatchChallenger::FightEngine::fightEngine.setBotMonster(botFightMonstersTransformed);
+    this->fightId=fightId;
     if(!fightCollision(map,x,y))
         return;
     battleType=BattleType_Bot;
-    ui->labelFightEnter->setText(tr("A bot %1 is in front of you!").arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name));
+    ui->labelFightEnter->setText(DatapackClientLoader::datapackLoader.botFightsExtra[fightId].start);
+    qDebug() << QString("The bot %1 is a front of you").arg(fightId);
 }
 
 bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
 {
     if(!CatchChallenger::FightEngine::fightEngine.haveOtherMonster())
     {
-        qDebug() << "is in fight but without monster";
+        emit error("is in fight but without monster");
         return false;
     }
     init_environement_display(map,x,y);
