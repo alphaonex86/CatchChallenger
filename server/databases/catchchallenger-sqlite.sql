@@ -67,7 +67,6 @@ CREATE TABLE "quest" (
     "step" INTEGER
 );
 CREATE TABLE "bot_already_beaten" (
-    "id" INTEGER PRIMARY KEY,
     "player_id" INTEGER,
     "botfight_id" INTEGER
 );
@@ -84,6 +83,6 @@ CREATE UNIQUE INDEX "monster_buff_2" on monster_buff (monster ASC, buff ASC);
 CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
 CREATE UNIQUE INDEX "player_unique_quest" on quest (player ASC, quest ASC);
 CREATE INDEX "player_quest" on quest (player ASC);
-CREATE UNIQUE INDEX "bot_already_beaten_index" on bot_already_beaten (id ASC);
+CREATE UNIQUE INDEX "bot_already_beaten_index" on bot_already_beaten (player_id ASC, botfight_id ASC);
 CREATE INDEX "bot_already_beaten_by_player" on bot_already_beaten (player_id ASC);
 COMMIT;
