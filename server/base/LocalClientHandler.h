@@ -67,6 +67,7 @@ private:
     bool haveCurrentSkill;
 
     //fight
+    quint32 botFightId;
     quint8 selectedMonster;
     bool ableToFight;
     QList<PlayerMonster> wildMonsters,botFightMonsters;

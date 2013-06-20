@@ -547,6 +547,21 @@ void BaseWindow::win()
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
     load_monsters();
+    switch(battleType)
+    {
+        case BattleType_Bot:
+            if(!DatapackClientLoader::datapackLoader.botFights.contains(fightId))
+            {
+                emit error("fight id not found at collision");
+                return;
+            }
+            addCash(DatapackClientLoader::datapackLoader.botFights[fightId].cash);
+            MapController::mapController->addBeatenBotFight(fightId);
+            fightId=0;
+        break;
+        default:
+        break;
+    }
 }
 
 void BaseWindow::doNextAction()
@@ -685,6 +700,18 @@ void BaseWindow::doNextAction()
 
 void BaseWindow::displayAttack()
 {
+    if(CatchChallenger::FightEngine::fightEngine.getAttackReturnList().isEmpty())
+    {
+        qDebug() << "displayAttack(): crash: display an empty attack return";
+        doNextAction();
+        return;
+    }
+    if(CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+    {
+        qDebug() << "displayAttack(): crash: display an empty lifteEffect list into attack return";
+        doNextAction();
+        return;
+    }
     bool applyOnOtherMonster=(
                 CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
                 (CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_AloneEnemy ||

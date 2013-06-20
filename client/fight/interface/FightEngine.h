@@ -73,6 +73,8 @@ public:
     bool tryEscape();//return true if is escaped
     bool canDoFightAction();
     void useSkill(const quint32 &skill);
+    void useSkillAgainstWildMonster(const quint32 &skill);
+    void useSkillAgainstBotMonster(const quint32 &skill);
     QList<quint32> otherMonsterAttack;
     void generateOtherAttack();
     bool otherMonsterIsKO();
@@ -85,7 +87,7 @@ public:
     void addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
     void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList);
-    const QList<Skill::AttackReturn> getAttackReturnList() const;
+    QList<Skill::AttackReturn> getAttackReturnList() const;
     void removeTheFirstLifeEffectAttackReturn();
     bool firstLifeEffectQuantityChange(qint32 quantity);
 private:
