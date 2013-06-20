@@ -293,19 +293,35 @@ void MapVisualiserPlayer::moveStepSlot()
         switch(direction)
         {
             case CatchChallenger::Direction_move_at_left:
-                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
+                {
+                    qDebug() << "Bug at move";
+                    return;
+                }
                 direction=CatchChallenger::Direction_look_at_left;
             break;
             case CatchChallenger::Direction_move_at_right:
-                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
+                {
+                    qDebug() << "Bug at move";
+                    return;
+                }
                 direction=CatchChallenger::Direction_look_at_right;
             break;
             case CatchChallenger::Direction_move_at_top:
-                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
+                {
+                    qDebug() << "Bug at move";
+                    return;
+                }
                 direction=CatchChallenger::Direction_look_at_top;
             break;
             case CatchChallenger::Direction_move_at_bottom:
-                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
+                {
+                    qDebug() << "Bug at move";
+                    return;
+                }
                 direction=CatchChallenger::Direction_look_at_bottom;
             break;
             default:
