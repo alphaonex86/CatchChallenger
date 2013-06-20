@@ -472,9 +472,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                 if(!botFightList.contains(id))
                                 {
                                     if(!botFight.monsters.isEmpty())
-                                    {
                                         botFightList[id]=botFight;
-                                    }
                                     else
                                         DebugClass::debugConsole(QString("Monster list is empty to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 }

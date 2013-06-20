@@ -419,7 +419,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                         if(ok && botFights.contains(id) && !botFightsExtra.contains(id))
                         {
                             BotFightExtra botFightExtra;
-                            botFightExtra.start=tr("Read for the fight?");
+                            botFightExtra.start=tr("Ready for the fight?");
                             botFightExtra.win=tr("You are so strong for me!");
                             {
                                 QDomElement start = item.firstChildElement("start");
@@ -469,7 +469,7 @@ void DatapackClientLoader::parseBotFightsExtra()
         {
             CatchChallenger::DebugClass::debugConsole(QString("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
             BotFightExtra botFightExtra;
-            botFightExtra.start=tr("Read for the fight?");
+            botFightExtra.start=tr("Ready for the fight?");
             botFightExtra.win=tr("You are so strong for me!");
             botFightsExtra[i.key()]=botFightExtra;
         }

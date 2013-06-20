@@ -12,6 +12,11 @@ void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint32> &bot
     this->botAlreadyBeaten=botAlreadyBeaten;
 }
 
+void MapVisualiserPlayerWithFight::addBeatenBotFight(const quint32 &botFightId)
+{
+    botAlreadyBeaten << botFightId;
+}
+
 void MapVisualiserPlayerWithFight::resetAll()
 {
     botAlreadyBeaten.clear();
@@ -49,8 +54,6 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             keyPressed.clear();
             return true;
         }
-        else
-            qDebug() << "Internal error: bot already beaten";
         index++;
     }
     //check if is in fight collision
@@ -89,8 +92,6 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                 return false;
             }
         }
-        else
-            qDebug() << "Internal error: bot already beaten";
         index++;
     }
     if(CatchChallenger::MoveOnTheMap::isGrass(*new_map,x,y) && !new_map->grassMonster.empty())
