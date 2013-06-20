@@ -147,7 +147,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
             else
             {
                 if(checkCollision)
-                    if(isWalkable(*map.border.left.map,map.border.left.map->width-1,y+map.border.left.y_offset))
+                    if(!isWalkable(*map.border.left.map,map.border.left.map->width-1,y+map.border.left.y_offset))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(*map.border.left.map,map.border.left.map->width-1,y+map.border.left.y_offset))
@@ -225,12 +225,12 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD
             else
             {
                 if(checkCollision)
-                    if(isWalkable(*map.border.bottom.map,x+map.border.bottom.x_offset,0))
-                        return true;
+                    if(!isWalkable(*map.border.bottom.map,x+map.border.bottom.x_offset,0))
+                        return false;
                 if(!allowTeleport)
                     if(needBeTeleported(*map.border.bottom.map,x+map.border.bottom.x_offset,0))
                         return false;
-                return false;
+                return true;
             }
         break;
         default:
