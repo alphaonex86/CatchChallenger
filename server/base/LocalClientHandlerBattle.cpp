@@ -249,11 +249,11 @@ void LocalClientHandler::useBattleSkill(const quint32 &skill,const quint8 &skill
     {
         monsterReturnList << tempOtherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
         monsterReturnList.last().doByTheCurrentMonster=false;
-        otherMonsterisKO=checkKOCurrentMonsters();
+        otherMonsterisKO=tempOtherPlayerBattle->checkKOCurrentMonsters();
         if(otherMonsterisKO)
         {
             emit message("middle other player is KO");
-            otherPlayerLoose=checkLoose();
+            otherPlayerLoose=tempOtherPlayerBattle->checkLoose();
             isKO=true;
         }
         else

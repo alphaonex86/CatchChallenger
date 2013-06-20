@@ -527,6 +527,14 @@ bool LocalClientHandler::botFightStart(const quint32 &botFightId)
         botFightMonsters << FacilityLib::botFightMonsterToPlayerMonster(monster,stat);
         index++;
     }
+    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+    if(botFightMonsters.isEmpty())
+    {
+        emit error(QString("error: after the bot add, remaing empty").arg(botFightId));
+        return false;
+    }
+    #endif
+    this->botFightId=botFightId;
     return true;
 }
 
@@ -743,18 +751,18 @@ bool LocalClientHandler::monsterIsKO(const PlayerMonster &playerMonter)
 void LocalClientHandler::generateOtherAttack()
 {
     PlayerMonster otherMonster;
-    if(wildMonsters.isEmpty())
+    if(!wildMonsters.isEmpty())
         otherMonster=wildMonsters.first();
-    else if(botFightMonsters.isEmpty())
-        otherMonster=wildMonsters.first();
+    else if(!botFightMonsters.isEmpty())
+        otherMonster=botFightMonsters.first();
     else
     {
-        emit message(QString("Unable to locate the other monster to generate other attack"));
+        emit error(QString("Unable to locate the other monster to generate other attack"));
         return;
     }
     if(otherMonster.skills.empty())
     {
-        emit message(QString("Unable to fight because the other monster (%1, level: %2) have no skill").arg(otherMonster.monster).arg(otherMonster.level));
+        emit error(QString("Unable to fight because the other monster (%1, level: %2) have no skill").arg(otherMonster.monster).arg(otherMonster.level));
         return;
     }
     int position;
@@ -798,9 +806,9 @@ void LocalClientHandler::generateOtherAttack()
 void LocalClientHandler::applyOtherLifeEffect(const Skill::LifeEffect &effect)
 {
     PlayerMonster *otherMonster;
-    if(wildMonsters.isEmpty())
+    if(!wildMonsters.isEmpty())
         otherMonster=&wildMonsters.first();
-    else if(botFightMonsters.isEmpty())
+    else if(!botFightMonsters.isEmpty())
         otherMonster=&botFightMonsters.first();
     else
     {
@@ -914,7 +922,7 @@ void LocalClientHandler::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 
 void LocalClientHandler::useSkill(const quint32 &skill)
 {
-    if(isInFight())
+    if(!isInFight())
     {
         emit error("Try use skill when not in fight");
         return;
@@ -955,40 +963,74 @@ void LocalClientHandler::useSkillAgainstWildMonster(const quint32 &skill,const q
     Monster::Stat currentMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster],getSelectedMonster().level);
     Monster::Stat otherMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[wildMonsters.first().monster],wildMonsters.first().level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
-    //do the current monster attack
+    QList<Skill::AttackReturn> monsterReturnList;
+    bool isKO=false;
+    bool currentMonsterisKO=false,otherMonsterisKO=false;
+    bool currentPlayerLoose=false,otherPlayerLoose=false;
     if(currentMonsterStatIsFirstToAttack)
     {
-        doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        if(checkKOCurrentMonsters())
+        monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+        monsterReturnList.last().doByTheCurrentMonster=true;
+        currentMonsterisKO=checkKOCurrentMonsters();
+        if(currentMonsterisKO)
         {
-            checkLoose();
-            return;
+            emit message("current player is KO");
+            currentPlayerLoose=checkLoose();
+            isKO=true;
         }
         else
-            checkKOOtherMonstersForGain();
+        {
+            emit message("check other player monster");
+            otherMonsterisKO=checkKOOtherMonstersForGain();
+            if(otherMonsterisKO)
+                isKO=true;
+        }
     }
     //do the other monster attack
-    generateOtherAttack();
-    if(checkKOCurrentMonsters())
+    if(!isKO)
     {
-        checkLoose();
-        return;
-    }
-    else
-        checkKOOtherMonstersForGain();
-    //do the current monster attack
-    if(!currentMonsterStatIsFirstToAttack)
-    {
-        doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        if(checkKOCurrentMonsters())
+        generateOtherAttack();
+        otherMonsterisKO=checkKOOtherMonstersForGain();
+        if(otherMonsterisKO)
         {
-            checkLoose();
-            return;
+            emit message("middle other player is KO");
+            otherPlayerLoose=checkLoose();
+            isKO=true;
         }
         else
-            checkKOOtherMonstersForGain();
+        {
+            emit message("middle current player is KO");
+            currentMonsterisKO=!ableToFight;
+            if(currentMonsterisKO)
+                isKO=true;
+        }
     }
+    //do the current monster attack
+    if(!isKO)
+        if(!currentMonsterStatIsFirstToAttack)
+        {
+            monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+            monsterReturnList.last().doByTheCurrentMonster=true;
+            currentMonsterisKO=checkKOCurrentMonsters();
+            if(currentMonsterisKO)
+            {
+                emit message("current player is KO");
+                currentPlayerLoose=checkLoose();
+                isKO=true;
+            }
+            else
+            {
+                emit message("check other player monster");
+                otherMonsterisKO=checkKOOtherMonstersForGain();
+                if(otherMonsterisKO)
+                    isKO=true;
+            }
+        }
     syncForEndOfTurn();
+    if(currentPlayerLoose)
+        emit message("The wild monster put all your monster KO");
+    if(otherPlayerLoose)
+        emit message("You have put KO the wild monster");
 }
 
 void LocalClientHandler::useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel)
@@ -996,40 +1038,100 @@ void LocalClientHandler::useSkillAgainstBotMonster(const quint32 &skill,const qu
     Monster::Stat currentMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[getSelectedMonster().monster],getSelectedMonster().level);
     Monster::Stat otherMonsterStat=getStat(GlobalServerData::serverPrivateVariables.monsters[botFightMonsters.first().monster],botFightMonsters.first().level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
-    //do the current monster attack
+    QList<Skill::AttackReturn> monsterReturnList;
+    bool isKO=false;
+    bool currentMonsterisKO=false,otherMonsterisKO=false;
+    bool currentPlayerLoose=false,otherPlayerLoose=false;
     if(currentMonsterStatIsFirstToAttack)
     {
-        doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        if(checkKOCurrentMonsters())
+        monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+        monsterReturnList.last().doByTheCurrentMonster=true;
+        currentMonsterisKO=checkKOCurrentMonsters();
+        if(currentMonsterisKO)
         {
-            checkLoose();
-            return;
+            emit message("current player is KO");
+            currentPlayerLoose=checkLoose();
+            isKO=true;
         }
         else
-            checkKOOtherMonstersForGain();
+        {
+            emit message("check other player monster");
+            otherMonsterisKO=checkKOOtherMonstersForGain();
+            if(otherMonsterisKO)
+                isKO=true;
+        }
     }
     //do the other monster attack
-    generateOtherAttack();
-    if(checkKOCurrentMonsters())
+    if(!isKO)
     {
-        checkLoose();
-        return;
-    }
-    else
-        checkKOOtherMonstersForGain();
-    //do the current monster attack
-    if(!currentMonsterStatIsFirstToAttack)
-    {
-        doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        if(checkKOCurrentMonsters())
+        generateOtherAttack();
+        otherMonsterisKO=checkKOOtherMonstersForGain();
+        if(otherMonsterisKO)
         {
-            checkLoose();
-            return;
+            emit message("middle other player is KO");
+            otherPlayerLoose=checkLoose();
+            isKO=true;
         }
         else
-            checkKOOtherMonstersForGain();
+        {
+            emit message("middle current player is KO");
+            currentMonsterisKO=!ableToFight;
+            if(currentMonsterisKO)
+                isKO=true;
+        }
     }
+    //do the current monster attack
+    if(!isKO)
+        if(!currentMonsterStatIsFirstToAttack)
+        {
+            monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
+            monsterReturnList.last().doByTheCurrentMonster=true;
+            currentMonsterisKO=checkKOCurrentMonsters();
+            if(currentMonsterisKO)
+            {
+                emit message("current player is KO");
+                currentPlayerLoose=checkLoose();
+                isKO=true;
+            }
+            else
+            {
+                emit message("check other player monster");
+                otherMonsterisKO=checkKOOtherMonstersForGain();
+                if(otherMonsterisKO)
+                    isKO=true;
+            }
+        }
     syncForEndOfTurn();
+    otherPlayerLoose=otherMonsterisKO;//workaround, bug on multiple monster
+    if(currentPlayerLoose)
+        emit message("The bot fight put all your monster KO");
+    if(otherPlayerLoose)
+        emit message("You have put KO the bot fight");
+    if(!isInFight())
+    {
+        if(otherPlayerLoose)
+        {
+            emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
+            addCash(GlobalServerData::serverPrivateVariables.botFights[botFightId].cash);
+            player_informations->public_and_private_informations.bot_already_beaten << botFightId;
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                 .arg(player_informations->id)
+                                 .arg(botFightId)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                 .arg(player_informations->id)
+                                 .arg(botFightId)
+                                 );
+                break;
+            }
+        }
+    }
 }
 
 bool LocalClientHandler::buffIsValid(const Skill::BuffEffect &buffEffect)

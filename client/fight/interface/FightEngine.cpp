@@ -386,7 +386,7 @@ void FightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monst
 {
     if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.isEmpty())
     {
-        qDebug() << "have already monster";
+        qDebug() << "have already monster to set battle monster";
         return;
     }
     if(stat.isEmpty())
@@ -406,9 +406,9 @@ void FightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monst
 
 void FightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters)
 {
-    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.isEmpty())
+    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !this->botFightMonsters.isEmpty())
     {
-        qDebug() << "have already monster";
+        qDebug() << "have already monster to set bot monster";
         return;
     }
     if(botFightMonsters.isEmpty())
@@ -943,37 +943,162 @@ void FightEngine::useSkill(const quint32 &skill)
     CatchChallenger::Api_client_real::client->useSkill(skill);
     if(wildMonsters.isEmpty() && botFightMonsters.isEmpty())
         return;
-    Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
-    if(wildMonsters.isEmpty() || botFightMonsters.isEmpty())
+    if(!wildMonsters.isEmpty())
     {
-        qDebug() << "useSkill() with botMonsters is todo";
+        useSkillAgainstWildMonster(skill);
         return;
     }
-    PlayerMonster publicOtherMonster;
-    if(!wildMonsters.isEmpty())
-        publicOtherMonster=wildMonsters.first();
-    else
-        publicOtherMonster=botFightMonsters.first();
+    if(!botFightMonsters.isEmpty())
+    {
+        useSkillAgainstBotMonster(skill);
+        return;
+    }
+}
+
+void FightEngine::useSkillAgainstWildMonster(const quint32 &skill)
+{
+    Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    const PlayerMonster &publicOtherMonster=wildMonsters.first();
     Monster::Stat otherMonsterStat=getStat(monsters[publicOtherMonster.monster],publicOtherMonster.level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
-    //do the current monster attack
+    bool isKO=false;
+    bool currentMonsterisKO=false,otherMonsterisKO=false;
+    bool currentPlayerLoose=false,otherPlayerLoose=false;
     if(currentMonsterStatIsFirstToAttack)
     {
         doTheCurrentMonsterAttack(skill);
-        if(!m_canDoFight || otherMonsterIsKO())
-            return;
+        currentMonsterisKO=(getFightMonster().hp==0);
+        if(currentMonsterisKO)
+        {
+            qDebug() << "current player is KO";
+            currentPlayerLoose=!m_canDoFight;
+            isKO=true;
+        }
+        else
+        {
+            qDebug() << "check other player monster";
+            otherMonsterisKO=otherMonsterIsKO();
+            if(otherMonsterisKO)
+                isKO=true;
+        }
     }
     //do the other monster attack
-    generateOtherAttack();
-    if(!m_canDoFight || otherMonsterIsKO())
-        return;
+    if(!isKO)
+    {
+        generateOtherAttack();
+        otherMonsterisKO=(getOtherMonster().hp==0);
+        if(otherMonsterisKO)
+        {
+            qDebug() << "middle other player is KO";
+            dropKOOtherMonster();
+            otherPlayerLoose=haveOtherMonster();
+            isKO=true;
+        }
+        else
+        {
+            qDebug() << "middle current player is KO";
+            currentMonsterisKO=(getFightMonster().hp==0);
+            if(currentMonsterisKO)
+                isKO=true;
+        }
+    }
     //do the current monster attack
-    if(!currentMonsterStatIsFirstToAttack)
+    if(!isKO)
+        if(!currentMonsterStatIsFirstToAttack)
+        {
+            doTheCurrentMonsterAttack(skill);
+            currentMonsterisKO=(getFightMonster().hp==0);
+            if(currentMonsterisKO)
+            {
+                qDebug() << "current player is KO";
+                currentPlayerLoose=!m_canDoFight;
+                isKO=true;
+            }
+            else
+            {
+                qDebug() << "check other player monster";
+                otherMonsterisKO=otherMonsterIsKO();
+                if(otherMonsterisKO)
+                    isKO=true;
+            }
+        }
+    if(currentPlayerLoose)
+        qDebug() << "The wild monster put all your monster KO";
+    if(otherPlayerLoose)
+        qDebug() << "You have put KO the wild monster";
+}
+
+void FightEngine::useSkillAgainstBotMonster(const quint32 &skill)
+{
+    Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    const PlayerMonster &publicOtherMonster=botFightMonsters.first();
+    Monster::Stat otherMonsterStat=getStat(monsters[publicOtherMonster.monster],publicOtherMonster.level);
+    bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
+    bool isKO=false;
+    bool currentMonsterisKO=false,otherMonsterisKO=false;
+    bool currentPlayerLoose=false,otherPlayerLoose=false;
+    if(currentMonsterStatIsFirstToAttack)
     {
         doTheCurrentMonsterAttack(skill);
-        if(!m_canDoFight || otherMonsterIsKO())
-            return;
+        currentMonsterisKO=(getFightMonster().hp==0);
+        if(currentMonsterisKO)
+        {
+            qDebug() << "current player is KO";
+            currentPlayerLoose=!m_canDoFight;
+            isKO=true;
+        }
+        else
+        {
+            qDebug() << "check other player monster";
+            otherMonsterisKO=otherMonsterIsKO();
+            if(otherMonsterisKO)
+                isKO=true;
+        }
     }
+    //do the other monster attack
+    if(!isKO)
+    {
+        generateOtherAttack();
+        otherMonsterisKO=(getOtherMonster().hp==0);
+        if(otherMonsterisKO)
+        {
+            qDebug() << "middle other player is KO";
+            dropKOOtherMonster();
+            otherPlayerLoose=haveOtherMonster();
+            isKO=true;
+        }
+        else
+        {
+            qDebug() << "middle current player is KO";
+            currentMonsterisKO=(getFightMonster().hp==0);
+            if(currentMonsterisKO)
+                isKO=true;
+        }
+    }
+    //do the current monster attack
+    if(!isKO)
+        if(!currentMonsterStatIsFirstToAttack)
+        {
+            doTheCurrentMonsterAttack(skill);
+            currentMonsterisKO=(getFightMonster().hp==0);
+            if(currentMonsterisKO)
+            {
+                qDebug() << "current player is KO";
+                currentPlayerLoose=!m_canDoFight;
+                isKO=true;
+            }
+            else
+            {
+                qDebug() << "check other player monster";
+                otherMonsterisKO=otherMonsterIsKO();
+                if(otherMonsterisKO)
+                    isKO=true;
+            }
+        }
+    if(currentPlayerLoose)
+        qDebug() << "The bot fight put all your monster KO";
+    if(otherPlayerLoose)
+        qDebug() << "You have put KO the bot fight";
 }
 
 void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
@@ -1307,7 +1432,7 @@ void FightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &
     this->attackReturnList << attackReturnList;
 }
 
-const QList<Skill::AttackReturn> FightEngine::getAttackReturnList() const
+QList<Skill::AttackReturn> FightEngine::getAttackReturnList() const
 {
     return attackReturnList;
 }
