@@ -40,7 +40,7 @@ public slots:
     virtual void datapackParsed();
     virtual void reinject_signals();
 private slots:
-    void loadBotOnTheMap(Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
+    void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
 };
 
 #endif // MAPCONTROLLER_H
