@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
+#include <QRect>
 #include "GeneralStructures.h"
 
 namespace CatchChallenger {
@@ -18,6 +19,7 @@ public:
     static PublicPlayerMonster playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster);
     static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
+    static bool rectTouch(QRect r1,QRect r2);
 private:
     static QByteArray UTF8EmptyData;
 };

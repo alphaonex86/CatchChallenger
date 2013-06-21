@@ -106,7 +106,7 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
 void MapControllerMP::removeUnusedMap()
 {
     ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
-    QHash<QString,Map_full *>::const_iterator i = all_map.constBegin();
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
         if(!mapUsed.contains((*i)->logicalMap.map_file) && !mapUsedByOtherPlayer.contains((*i)->logicalMap.map_file))
         {
@@ -1109,7 +1109,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
 }
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
-void MapControllerMP::destroyMap(Map_full *map)
+void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
 {
     //remove the other player
     QHash<quint16,OtherPlayer>::const_iterator i = otherPlayerList.constBegin();
@@ -1126,7 +1126,7 @@ void MapControllerMP::destroyMap(Map_full *map)
     MapVisualiser::destroyMap(map);
 }
 
-QSet<QString> MapControllerMP::loadMap(Map_full *map,const bool &display)
+QSet<QString> MapControllerMP::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
 {
     QSet<QString> tempReturn=MapVisualiser::loadMap(map,display);
     //resolv here the mapId to allow the reinsert for other player
