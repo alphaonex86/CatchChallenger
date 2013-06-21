@@ -52,7 +52,7 @@ private:
         CatchChallenger::Player_public_informations informations;
 
         //presumed map
-        Map_full *presumed_map;
+        MapVisualiserThread::Map_full *presumed_map;
         quint8 presumed_x,presumed_y;
         CatchChallenger::Direction presumed_direction;
         QTimer *oneStepMore;
@@ -137,8 +137,8 @@ private slots:
     virtual void removeUnusedMap();
     void moveOtherPlayerStepSlot();
     /// \warning all ObjectGroupItem destroyed into removeMap()
-    virtual void destroyMap(Map_full *map);
-    virtual QSet<QString> loadMap(Map_full *map,const bool &display);
+    virtual void destroyMap(MapVisualiserThread::Map_full *map);
+    virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
 protected slots:
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);

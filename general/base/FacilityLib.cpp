@@ -129,3 +129,21 @@ PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFig
     tempPlayerMonster.sp=0;
     return tempPlayerMonster;
 }
+
+bool FacilityLib::rectTouch(QRect r1,QRect r2)
+{
+    if (r1.isNull() || r2.isNull())
+        return false;
+
+    if((r1.x()+r1.width())<r2.x())
+        return false;
+    if((r2.x()+r2.width())<r1.x())
+        return false;
+
+    if((r1.y()+r1.height())<r2.y())
+        return false;
+    if((r2.y()+r2.height())<r1.y())
+        return false;
+
+    return true;
+}

@@ -19,6 +19,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setRenderHint(QPainter::TextAntialiasing,false);
     setCacheMode(QGraphicsView::CacheBackground);
 
+    mapVisualiserThread.debugTags=debugTags;
     this->debugTags=debugTags;
 
     timerUpdateFPS.setSingleShot(true);
@@ -69,6 +70,8 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     tagTilesetIndex=0;
     tagTileset = new Tiled::Tileset("tags",16,16);
     tagTileset->loadFromImage(QImage(":/tags.png"),":/tags.png");
+    mapVisualiserThread.tagTilesetIndex=tagTilesetIndex;
+    mapVisualiserThread.tagTileset=tagTileset;
 
     mScene->addItem(mapItem);
     //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
@@ -90,7 +93,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
 MapVisualiser::~MapVisualiser()
 {
     //remove the not used map
-    QHash<QString,Map_full *>::const_iterator i = all_map.constBegin();
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
         destroyMap(*i);
         i = all_map.constBegin();//needed
@@ -101,25 +104,7 @@ MapVisualiser::~MapVisualiser()
     delete tagTileset;
 }
 
-bool MapVisualiser::RectTouch(QRect r1,QRect r2)
-{
-    if (r1.isNull() || r2.isNull())
-        return false;
-
-    if((r1.x()+r1.width())<r2.x())
-        return false;
-    if((r2.x()+r2.width())<r1.x())
-        return false;
-
-    if((r1.y()+r1.height())<r2.y())
-        return false;
-    if((r2.y()+r2.height())<r1.y())
-        return false;
-
-    return true;
-}
-
-MapVisualiser::Map_full * MapVisualiser::getMap(QString map)
+MapVisualiserThread::Map_full * MapVisualiser::getMap(QString map)
 {
     if(all_map.contains(map))
         return all_map[map];

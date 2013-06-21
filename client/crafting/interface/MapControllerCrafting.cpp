@@ -37,7 +37,7 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
     if(!all_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
         QStringList map_list;
-        QHashIterator<QString, Map_full *> i(all_map);
+        QHashIterator<QString, MapVisualiserThread::Map_full *> i(all_map);
         while (i.hasNext()) {
             i.next();
             map_list << i.key();
@@ -45,7 +45,7 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
         return;
     }
-    Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
+    MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
     int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {
@@ -116,7 +116,7 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
     if(!all_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
         QStringList map_list;
-        QHashIterator<QString, Map_full *> i(all_map);
+        QHashIterator<QString, MapVisualiserThread::Map_full *> i(all_map);
         while (i.hasNext()) {
             i.next();
             map_list << i.key();
@@ -126,7 +126,7 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
     }
     if(!displayed_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
     {
-        Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
+        MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
         int index=0;
         while(index<all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->logicalMap.plantList.size())
         {
@@ -141,7 +141,7 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "map not show, don't remove from the display";
         return;
     }
-    Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
+    MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
     int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {

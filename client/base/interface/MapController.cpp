@@ -51,7 +51,7 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
     return true;
 }
 
-void MapController::loadBotOnTheMap(Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
+void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
 {
     Q_UNUSED(botId);
     if(skin.isEmpty())
