@@ -24,7 +24,7 @@
 #include <QString>
 #include <QMultiMap>
 #include <QHash>
-#include <QGLWidget>
+//#include <QGLWidget>
 
 #include "MapVisualiserThread.h"
 
@@ -42,7 +42,7 @@ public:
 
     MapVisualiserThread::Map_full * getMap(QString map);
 
-    MapVisualiserThread::Map_full *current_map;
+    QString current_map;
     QHash<QString,MapVisualiserThread::Map_full *> all_map;
 protected:
     Tiled::MapReader reader;
@@ -77,20 +77,27 @@ protected:
     MapVisualiserThread mapVisualiserThread;
 
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
+private:
+    QStringList asyncMap;
 protected slots:
     virtual void resetAll();
 public slots:
-    QString loadOtherMap(const QString &fileName);
+    QString loadOtherMap(const QString &resolvedFileName);
     virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
     virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
 private slots:
     QSet<QString> loadTeleporter(MapVisualiserThread::Map_full *map);
-    QSet<QString> loadNearMap(const QString &fileName, const bool &display, const qint32 &x=0, const qint32 &y=0, const qint32 &x_pixel=0, const qint32 &y_pixel=0,const QSet<QString> &previousLoadedNearMap=QSet<QString>());
+    QSet<QString> loadNearMap(const QString &fileName, const bool &display, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel,const QSet<QString> &previousLoadedNearMap);
     void paintEvent(QPaintEvent * event);
     void updateFPS();
+    void asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject);
+    void asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject);
 protected slots:
     void render();
+signals:
+    void loadOtherMapAsync(const QString &fileName);
+    void mapDisplayed(const QString &fileName);
 };
 
 #endif

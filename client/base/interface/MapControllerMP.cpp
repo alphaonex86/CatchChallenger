@@ -45,7 +45,7 @@ void MapControllerMP::resetAll()
         qDebug() << "Unable the load the default player tileset";
 
     unloadPlayerFromCurrentMap();
-    current_map=NULL;
+    current_map.clear();
 
     delayedActions.clear();
     skinFolderList.clear();
@@ -77,14 +77,30 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
     //position
     this->x=x;
     this->y=y;
+    QFileInfo fileInformations(fileName);
+    current_map=fileInformations.absoluteFilePath();
+    loadOtherMap(current_map);
+    return true;
 
     QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
     {
-        QMessageBox::critical(NULL,"Error",mLastError);
+        //map not loaded or async
+        QMessageBox::critical(NULL,"Error",QString("Map not loaded for %1: %2").arg(fileName).arg(mLastError));
         return false;
     }
+    /*if(!all_map.contains(current_map_fileName))
+    {
+        qDebug() << "Map is empty, can't load more at MapControllerMP::loadPlayerMap()";
+        return true;
+    }
     current_map=all_map[current_map_fileName];
+
+    if(current_map==NULL)
+    {
+        qDebug() << "Map is NULL, can't load more at MapControllerMP::loadPlayerMap()";
+        return false;
+    }
 
     render();
 
@@ -98,7 +114,7 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
         map_list << i.next();
     qDebug() << QString("MapControllerMP::loadPlayerMap(): displayed_map: %1").arg(map_list.join(";"));
 
-    show();
+    show();*/
 
     return true;
 }
@@ -718,7 +734,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     qDebug() << QString("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
-    qDebug() << QString("currently on: %1 (%2,%3)").arg(current_map->logicalMap.map_file).arg(this->x).arg(this->y);
+    qDebug() << QString("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
     #endif
     if(current_map==NULL)
     {
@@ -763,9 +779,10 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
         QMessageBox::critical(NULL,"Error",mLastError);
         return;
     }
-    current_map=all_map[current_map_fileName];
+    qDebug() << "tp todo: MapControllerMP::teleportTo";
+/*    current_map=all_map[current_map_fileName];
 
-    mapUsed=loadMap(current_map,true);
+    mapUsed=loadMap(all_map[current_map],true);
     removeUnusedMap();
     loadPlayerFromCurrentMap();
 
@@ -775,7 +792,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
         map_list << i.next();
     qDebug() << QString("MapControllerMP::teleportTo(): displayed_map: %1").arg(map_list.join(";"));
 
-    CatchChallenger::Api_client_real::client->teleportDone();
+    CatchChallenger::Api_client_real::client->teleportDone();*/
 }
 
 //player info
@@ -1128,6 +1145,12 @@ void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
 
 QSet<QString> MapControllerMP::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
 {
+    if(map==NULL)
+    {
+        qDebug() << "Map is NULL, can't load more at MapControllerMP::loadMap()";
+        return QSet<QString>();
+    }
+
     QSet<QString> tempReturn=MapVisualiser::loadMap(map,display);
     //resolv here the mapId to allow the reinsert for other player
     int index=0;

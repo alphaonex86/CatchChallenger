@@ -259,6 +259,8 @@ private slots:
     void on_close_IG_dialog_clicked();
     void on_questsList_itemSelectionChanged();
 
+    void on_pushButton_clicked();
+
 protected slots:
     //datapack
     void datapackParsed();
