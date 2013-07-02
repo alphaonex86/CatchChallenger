@@ -15,6 +15,12 @@
 MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     mScene(new QGraphicsScene(this))
 {
+    Q_UNUSED(OpenGL);
+    qRegisterMetaType<MapVisualiserThread::Map_full *>("MapVisualiserThread::Map_full *");
+
+    connect(this,SIGNAL(loadOtherMapAsync(QString)),&mapVisualiserThread,SLOT(loadOtherMapAsync(QString)),Qt::QueuedConnection);
+    connect(&mapVisualiserThread,SIGNAL(asyncMapLoaded(MapVisualiserThread::Map_full *)),this,SLOT(asyncMapLoaded(MapVisualiserThread::Map_full *)),Qt::QueuedConnection);
+
     setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
     setCacheMode(QGraphicsView::CacheBackground);
@@ -35,7 +41,6 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     FPSText=NULL;
     mShowFPS=false;
 
-    current_map=NULL;
     mapItem=new MapItem(NULL,useCache);
 
     grass=NULL;
@@ -53,7 +58,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     viewport()->setAttribute(Qt::WA_TranslucentBackground);
     viewport()->setAttribute(Qt::WA_NoSystemBackground);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
-    if(OpenGL)
+/*    if(OpenGL)
     {
         QGLFormat format(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
         //setSampleBuffers
@@ -65,7 +70,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
             QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers: create widget");
         else
             setViewport(widgetOpenGL);
-    }
+    }*/
 
     tagTilesetIndex=0;
     tagTileset = new Tiled::Tileset("tags",16,16);

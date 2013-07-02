@@ -2364,3 +2364,8 @@ void CatchChallenger::BaseWindow::on_close_IG_dialog_clicked()
 {
     isInQuest=false;
 }
+
+void CatchChallenger::BaseWindow::on_pushButton_clicked()
+{
+
+}

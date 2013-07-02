@@ -8,6 +8,8 @@ using namespace CatchChallenger;
 #include <sys/stat.h>
 #endif
 
+#include <QApplication>
+
 //need host + port here to have datapack base
 
 Api_protocol* Api_client_real::client=NULL;
