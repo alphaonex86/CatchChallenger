@@ -6,8 +6,14 @@
 
 MapVisualiserThread::MapVisualiserThread()
 {
-    moveToThread(this);
+    //moveToThread(this);
     start();
+}
+
+MapVisualiserThread::~MapVisualiserThread()
+{
+    quit();
+    wait();
 }
 
 void MapVisualiserThread::loadOtherMapAsync(const QString &fileName)

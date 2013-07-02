@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QImage>
 #include <QDebug>
+#include <QLabel>
 
 MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     : QGraphicsItem(parent)
@@ -53,6 +54,11 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
                 QPixmap tempPixmap;
                 if(tempPixmap.convertFromImage(image))
                 {
+                    #ifdef DEBUG_RENDER_DISPLAY_INDIVIDUAL_LAYER
+                    QLabel *temp=new QLabel();
+                    temp->setPixmap(tempPixmap);
+                    temp->show();
+                    #endif
                     graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
                     graphicsItem->setZValue(index-1);
                     displayed_layer.insert(map,graphicsItem);
@@ -79,6 +85,11 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
         QPixmap tempPixmap;
         if(tempPixmap.convertFromImage(image))
         {
+            #ifdef DEBUG_RENDER_DISPLAY_INDIVIDUAL_LAYER
+            QLabel *temp=new QLabel();
+            temp->setPixmap(tempPixmap);
+            temp->show();
+            #endif
             graphicsItem=new QGraphicsPixmapItem(tempPixmap,this);
             graphicsItem->setZValue(index);
             displayed_layer.insert(map,graphicsItem);

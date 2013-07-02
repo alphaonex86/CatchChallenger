@@ -37,6 +37,7 @@ public:
         int x_pixel,y_pixel;
     };
     explicit MapVisualiserThread();
+    ~MapVisualiserThread();
     QString mLastError;
     bool debugTags;
     Tiled::Tileset * tagTileset;

@@ -87,10 +87,12 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         if(!displayed_map.contains(tempMapObject->logicalMap.map_file))
         {
             mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
+            mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
             displayed_map << tempMapObject->logicalMap.map_file;
             emit mapDisplayed(tempMapObject->logicalMap.map_file);
         }
-        mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
+        else
+            mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
         if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
             if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.bottom.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
             {
