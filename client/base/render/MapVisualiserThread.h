@@ -33,15 +33,19 @@ public:
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
         int objectGroupIndex;
+        int x,y;//needed for the async load
+        int x_pixel,y_pixel;
     };
     explicit MapVisualiserThread();
     QString mLastError;
     bool debugTags;
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
+    QString error();
 signals:
-    void mapLoaded();
+    void asyncMapLoaded(MapVisualiserThread::Map_full *parsedMap);
 public slots:
+    void loadOtherMapAsync(const QString &fileName);
     Map_full * loadOtherMap(const QString &fileName);
     //drop and remplace by Map_loader info
     void loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap);

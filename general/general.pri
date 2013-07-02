@@ -1,7 +1,7 @@
 QMAKE_CFLAGS += -O0
 QMAKE_CXXFLAGS += -O0
 
-QT       += core gui network opengl xml
+QT       += core gui network xml
 
 TEMPLATE = app
 

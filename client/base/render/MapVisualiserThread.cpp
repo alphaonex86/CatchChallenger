@@ -2,10 +2,23 @@
 #include "MapItem.h"
 #include "../../general/base/FacilityLib.h"
 #include <QFileInfo>
+#include "../ClientVariable.h"
 
 MapVisualiserThread::MapVisualiserThread()
 {
+    moveToThread(this);
     start();
+}
+
+void MapVisualiserThread::loadOtherMapAsync(const QString &fileName)
+{
+    MapVisualiserThread::Map_full *tempMapObject=loadOtherMap(fileName);
+    emit asyncMapLoaded(tempMapObject);
+}
+
+QString MapVisualiserThread::error()
+{
+    return mLastError;
 }
 
 //open the file, and load it into the variables
@@ -53,6 +66,15 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     tempMapObject->logicalMap.grassMonster                          = map_loader.map_to_send.grassMonster;
     tempMapObject->logicalMap.waterMonster                          = map_loader.map_to_send.waterMonster;
     tempMapObject->logicalMap.caveMonster                           = map_loader.map_to_send.caveMonster;
+
+    if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
+    {
+        mLastError=QString("Map tile size not multiple of %1").arg(CLIENT_BASE_TILE_SIZE);
+        qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(mLastError);
+        delete tempMapObject->tiledMap;
+        delete tempMapObject;
+        return NULL;
+    }
 
     //load the string
     tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
@@ -326,8 +348,8 @@ void MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                         CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(bot.tagName().arg(bot.attribute("type")).arg(bot.lineNumber())));
                     else
                     {
-                        quint32 x=bot.attribute("x").toUInt(&ok)/16;
-                        quint32 y=(bot.attribute("y").toUInt(&ok2)/16)-1;
+                        quint32 x=bot.attribute("x").toUInt(&ok)/CLIENT_BASE_TILE_SIZE;
+                        quint32 y=(bot.attribute("y").toUInt(&ok2)/CLIENT_BASE_TILE_SIZE)-1;
                         if(ok && ok2 && (bot.attribute("type")=="bot" || bot.attribute("type")=="botfight"))
                         {
                             QDomElement properties = bot.firstChildElement("properties");

@@ -23,6 +23,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QWidget>
 #include <QSet>
+#include <QPair>
 #include <QMultiMap>
 #include <QHash>
 

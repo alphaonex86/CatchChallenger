@@ -50,24 +50,168 @@ void MapVisualiser::resetAll()
 }
 
 //open the file, and load it into the variables
-QString MapVisualiser::loadOtherMap(const QString &fileName)
+QString MapVisualiser::loadOtherMap(const QString &resolvedFileName)
 {
-    QFileInfo fileInformations(fileName);
-    QString resolvedFileName=fileInformations.absoluteFilePath();
     if(all_map.contains(resolvedFileName))
         return resolvedFileName;
 
-    if(current_map!=NULL && resolvedFileName!=current_map->logicalMap.map_file)
-    {
-        async that's
-        CatchChallenger::DebugClass::debugConsole(QString("need async this load: %1").arg(fileName));
-    }
-    MapVisualiserThread::Map_full * tempMapObject=mapVisualiserThread.loadOtherMap(resolvedFileName);
+    if(asyncMap.contains(resolvedFileName))
+        return resolvedFileName;
+    CatchChallenger::DebugClass::debugConsole(QString("need async this load: %1").arg(resolvedFileName));
+    asyncMap << resolvedFileName;
+    emit loadOtherMapAsync(resolvedFileName);
+    return resolvedFileName;
+}
 
-    if(tempMapObject!=NULL)
-        return tempMapObject->logicalMap.map_file;
+void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject)
+{
+    if(tempMapObject==NULL)
+    {
+        qDebug() << "Map is NULL, can't load more at MapVisualiser::asyncDetectBorder()";
+        return;
+    }
+    all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
+    QRect current_map_rect;
+    if(current_map!=NULL)
+        current_map_rect=QRect(0,0,all_map[current_map]->logicalMap.width,all_map[current_map]->logicalMap.height);
     else
-        return QString();
+    {
+        qDebug() << "The current map is not set, crash prevented";
+        return;
+    }
+    QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+    //if the new map touch the current map
+    if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
+    {
+        //display a new map now visible
+        if(!displayed_map.contains(tempMapObject->logicalMap.map_file))
+        {
+            mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
+            displayed_map << tempMapObject->logicalMap.map_file;
+            emit mapDisplayed(tempMapObject->logicalMap.map_file);
+        }
+        mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
+        if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
+            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.bottom.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
+            {
+                asyncMap << tempMapObject->logicalMap.border_semi.bottom.fileName;
+                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.bottom.fileName);
+            }
+        if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
+            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.top.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
+            {
+                asyncMap << tempMapObject->logicalMap.border_semi.top.fileName;
+                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.top.fileName);
+            }
+        if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
+            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.left.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
+            {
+                asyncMap << tempMapObject->logicalMap.border_semi.left.fileName;
+                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.left.fileName);
+            }
+        if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
+            if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.right.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
+            {
+                asyncMap << tempMapObject->logicalMap.border_semi.right.fileName;
+                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.right.fileName);
+            }
+    }
+}
+
+void MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject)
+{
+    asyncMap.removeOne(tempMapObject->logicalMap.map_file);
+    if(all_map.contains(tempMapObject->logicalMap.map_file))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, then skip: %1").arg(tempMapObject->logicalMap.map_file));
+        return;
+    }
+    //CatchChallenger::DebugClass::debugConsole(QString("todo, place the loaded map: %1").arg(tempMapObject->logicalMap.map_file));
+    //destroyMap(tempMapObject);
+    //try locate and place it
+    if(tempMapObject->logicalMap.map_file==current_map)
+    {
+        tempMapObject->x=0;
+        tempMapObject->y=0;
+        tempMapObject->x_pixel=0;
+        tempMapObject->y_pixel=0;
+        asyncDetectBorder(tempMapObject);
+    }
+    else if(all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
+    {
+        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.top.fileName];
+        //if both border match
+        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
+        {
+            int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
+            tempMapObject->x=border_map->x+offset;
+            tempMapObject->y=border_map->y+border_map->logicalMap.height;
+            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
+            tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height;
+            asyncDetectBorder(tempMapObject);
+        }
+        else
+            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+    }
+    else if(all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
+    {
+        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.bottom.fileName];
+        //if both border match
+        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
+        {
+            int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
+            tempMapObject->x=border_map->x+offset;
+            tempMapObject->y=border_map->y-tempMapObject->logicalMap.height;
+            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
+            tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height;
+            asyncDetectBorder(tempMapObject);
+        }
+        else
+            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+    }
+    else if(all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
+    {
+        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.right.fileName];
+        //if both border match
+        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
+        {
+            int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileWidth();
+            tempMapObject->x=border_map->x+border_map->logicalMap.width;
+            tempMapObject->y=border_map->y+offset;
+            tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width;
+            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+            asyncDetectBorder(tempMapObject);
+        }
+        else
+            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+    }
+    else if(all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
+    {
+        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.left.fileName];
+        //if both border match
+        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
+        {
+            int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileWidth();
+            tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
+            tempMapObject->y=border_map->y+offset;
+            tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width;
+            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+            asyncDetectBorder(tempMapObject);
+        }
+        else
+            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+    }
+    else
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("map not located to place it then skip: %1").arg(tempMapObject->logicalMap.map_file));
+        destroyMap(tempMapObject);
+        return;
+    }
+    //drop the old map (not loaded into this cycle)
 }
 
 void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
@@ -82,7 +226,13 @@ void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 
 QSet<QString> MapVisualiser::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
 {
-    QSet<QString> loadedNearMap=loadNearMap(map->logicalMap.map_file,true);
+    if(map==NULL)
+    {
+        qDebug() << "Map is NULL, can't load more at MapVisualiser::loadMap()";
+        return QSet<QString>();
+    }
+    QSet<QString> loadedNearMap;
+    loadedNearMap=loadNearMap(map->logicalMap.map_file,true,0,0,0,0,loadedNearMap);
     QSet<QString> loadedTeleporter=loadTeleporter(map);
 
     //add the new map visible directly done into loadNearMap() to have position in pixel
@@ -168,7 +318,7 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
     QString mapIndex;
     QRect current_map_rect;
     if(current_map!=NULL)
-        current_map_rect=QRect(0,0,current_map->logicalMap.width,current_map->logicalMap.height);
+        current_map_rect=QRect(0,0,all_map[current_map]->logicalMap.width,all_map[current_map]->logicalMap.height);
     else
         qDebug() << "The current map is not set, crash prevented";
 
@@ -178,6 +328,10 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
     tempMapObject->logicalMap.border.top.map=NULL;
     tempMapObject->logicalMap.border.left.map=NULL;
     tempMapObject->logicalMap.border.right.map=NULL;
+    tempMapObject->x=x;
+    tempMapObject->y=y;
+    tempMapObject->x_pixel=x_pixel;
+    tempMapObject->y_pixel=y_pixel;
 
     //display a new map now visible
     if(display && !displayed_map.contains(fileName))
@@ -191,7 +345,7 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
     if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
     {
         //if the position is good to have border in range
-        if((y+tempMapObject->logicalMap.height)<=current_map->logicalMap.height)
+        if((y+tempMapObject->logicalMap.height)<=all_map[current_map]->logicalMap.height)
         {
             mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
             //if is correctly loaded
@@ -259,7 +413,7 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
     if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
     {
         //if the position is good to have border in range
-        if((x+tempMapObject->logicalMap.width)<=current_map->logicalMap.width)
+        if((x+tempMapObject->logicalMap.width)<=all_map[current_map]->logicalMap.width)
         {
             mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
             //if is correctly loaded

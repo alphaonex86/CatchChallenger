@@ -22,6 +22,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     lookToMove.setInterval(200);
     lookToMove.setSingleShot(true);
     connect(&lookToMove,SIGNAL(timeout()),this,SLOT(transformLookToMove()));
+    connect(this,SIGNAL(mapDisplayed(QString)),this,SLOT(mapDisplayedSlot(QString)));
 
     moveTimer.setInterval(250/5);
     moveTimer.setSingleShot(true);
@@ -44,8 +45,6 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
 
     playerMapObject = new Tiled::MapObject();
     playerTileset = new Tiled::Tileset("player",16,24);
-
-    current_map=NULL;
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -98,7 +97,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_left)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_left,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
                 return;//Can't do at the left!
             //the first step
             direction=CatchChallenger::Direction_move_at_left;
@@ -123,7 +122,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_right)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_right,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
                 return;//Can't do at the right!
             //the first step
             direction=CatchChallenger::Direction_move_at_right;
@@ -148,7 +147,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_top)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
                 return;//Can't do at the top!
             //the first step
             direction=CatchChallenger::Direction_move_at_top;
@@ -173,7 +172,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_bottom)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=CatchChallenger::Direction_move_at_bottom;
@@ -287,8 +286,8 @@ void MapVisualiserPlayer::moveStepSlot()
     //if have finish the step
     if(moveStep>5)
     {
-        CatchChallenger::Map * old_map=&current_map->logicalMap;
-        CatchChallenger::Map * map=&current_map->logicalMap;
+        CatchChallenger::Map * old_map=&all_map[current_map]->logicalMap;
+        CatchChallenger::Map * map=&all_map[current_map]->logicalMap;
         //set the final value (direction, position, ...)
         switch(direction)
         {
@@ -331,17 +330,24 @@ void MapVisualiserPlayer::moveStepSlot()
         //if the map have changed
         if(old_map!=map)
         {
+            if(current_map==NULL)
+            {
+                qDebug() << "Map is NULL, can't load more at MapControllerPlayer::moveStepSlot()";
+                return;
+            }
             loadOtherMap(map->map_file);
             if(!all_map.contains(map->map_file))
                 qDebug() << QString("map changed not located: %1").arg(map->map_file);
             else
             {
-                unloadPlayerFromCurrentMap();
+                qDebug() << QString("toto: map switch todo").arg(map->map_file);
+                emit inWaitingOfMap();
+                /*unloadPlayerFromCurrentMap();
                 all_map[current_map->logicalMap.map_file]=current_map;
                 current_map=all_map[map->map_file];
                 mapUsed=loadMap(current_map,true);
                 removeUnusedMap();
-                loadPlayerFromCurrentMap();
+                loadPlayerFromCurrentMap();*/
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -387,7 +393,7 @@ void MapVisualiserPlayer::moveStepSlot()
         if(keyPressed.contains(Qt::Key_Left))
         {
             //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_left,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
             {
                 keyPressed.remove(Qt::Key_Left);
                 direction=CatchChallenger::Direction_look_at_left;
@@ -409,7 +415,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(Qt::Key_Right))
         {
             //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_right,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
             {
                 keyPressed.remove(Qt::Key_Right);
                 direction=CatchChallenger::Direction_look_at_right;
@@ -431,7 +437,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(Qt::Key_Up))
         {
             //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
             {
                 keyPressed.remove(Qt::Key_Up);
                 direction=CatchChallenger::Direction_look_at_top;
@@ -453,7 +459,7 @@ void MapVisualiserPlayer::moveStepSlot()
         else if(keyPressed.contains(Qt::Key_Down))
         {
             //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
             {
                 keyPressed.remove(Qt::Key_Down);
                 direction=CatchChallenger::Direction_look_at_bottom;
@@ -491,7 +497,7 @@ bool MapVisualiserPlayer::haveStopTileAction()
 
 void MapVisualiserPlayer::parseStop()
 {
-    CatchChallenger::Map * map=&current_map->logicalMap;
+    CatchChallenger::Map * map=&all_map[current_map]->logicalMap;
     quint8 x=this->x;
     quint8 y=this->y;
     switch(direction)
@@ -539,7 +545,7 @@ void MapVisualiserPlayer::parseStop()
 
 void MapVisualiserPlayer::parseAction()
 {
-    CatchChallenger::Map * map=&current_map->logicalMap;
+    CatchChallenger::Map * map=&all_map[current_map]->logicalMap;
     quint8 x=this->x;
     quint8 y=this->y;
     switch(direction)
@@ -594,7 +600,7 @@ void MapVisualiserPlayer::transformLookToMove()
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
-        if(keyPressed.contains(Qt::Key_Left) && canGoTo(CatchChallenger::Direction_move_at_left,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Left) && canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_left;
             inMove=true;
@@ -605,7 +611,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_right:
-        if(keyPressed.contains(Qt::Key_Right) && canGoTo(CatchChallenger::Direction_move_at_right,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Right) && canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_right;
             inMove=true;
@@ -616,7 +622,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_top:
-        if(keyPressed.contains(Qt::Key_Up) && canGoTo(CatchChallenger::Direction_move_at_top,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Up) && canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_top;
             inMove=true;
@@ -627,7 +633,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
-        if(keyPressed.contains(Qt::Key_Down) && canGoTo(CatchChallenger::Direction_move_at_bottom,current_map->logicalMap,x,y,true))
+        if(keyPressed.contains(Qt::Key_Down) && canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_bottom;
             inMove=true;
@@ -748,14 +754,14 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
         //currentGroup->removeObject(playerMapObject);
-        if(currentGroup!=current_map->objectGroup)
+        if(currentGroup!=all_map[current_map]->objectGroup)
             qDebug() << QString("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
-    if(ObjectGroupItem::objectGroupLink.contains(current_map->objectGroup))
-        ObjectGroupItem::objectGroupLink[current_map->objectGroup]->addObject(playerMapObject);
+    if(ObjectGroupItem::objectGroupLink.contains(all_map[current_map]->objectGroup))
+        ObjectGroupItem::objectGroupLink[all_map[current_map]->objectGroup]->addObject(playerMapObject);
     else
         qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
-    mLastLocation=current_map->logicalMap.map_file;
+    mLastLocation=all_map[current_map]->logicalMap.map_file;
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
@@ -792,10 +798,10 @@ void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &
 
     if(!haveGrassCurrentObject)
     {
-        haveGrassCurrentObject=CatchChallenger::MoveOnTheMap::haveGrass(current_map->logicalMap,x,y);
+        haveGrassCurrentObject=CatchChallenger::MoveOnTheMap::haveGrass(all_map[current_map]->logicalMap,x,y);
         if(haveGrassCurrentObject)
         {
-            ObjectGroupItem::objectGroupLink[current_map->objectGroup]->addObject(grassCurrentObject);
+            ObjectGroupItem::objectGroupLink[all_map[current_map]->objectGroup]->addObject(grassCurrentObject);
             grassCurrentObject->setPosition(QPoint(x,y+1));
             MapObjectItem::objectLink[playerMapObject]->setZValue(y);
             grassCurrentObject->setTile(animationTileset->tileAt(2));
@@ -807,7 +813,7 @@ void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &
     if(!haveNextCurrentObject)
     {
         haveNextCurrentObject=false;
-        CatchChallenger::Map * map_destination=&current_map->logicalMap;
+        CatchChallenger::Map * map_destination=&all_map[current_map]->logicalMap;
         COORD_TYPE x_destination=x;
         COORD_TYPE y_destination=y;
         if(CatchChallenger::MoveOnTheMap::move(direction,&map_destination,&x_destination,&y_destination))
@@ -864,5 +870,14 @@ void MapVisualiserPlayer::loadGrassTile()
                 nextCurrentObject->setTile(animationTileset->tileAt(2));
             break;
         }
+    }
+}
+
+void MapVisualiserPlayer::mapDisplayedSlot(const QString &fileName)
+{
+    if(current_map==fileName)
+    {
+        emit currentMapLoaded();
+        loadPlayerFromCurrentMap();
     }
 }
