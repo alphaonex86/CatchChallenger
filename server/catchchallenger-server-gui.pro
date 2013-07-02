@@ -1,6 +1,7 @@
 include(catchchallenger-server-normal.pri)
 
-QT       += gui widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += gui
 
 QMAKE_CFLAGS += -O0
 QMAKE_CXXFLAGS += -O0

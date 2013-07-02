@@ -84,6 +84,7 @@ protected slots:
     virtual void resetAll();
     void setSpeed(const SPEED_TYPE &speed);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
+    void mapDisplayedSlot(const QString &fileName);
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void stopped_in_front_of(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
@@ -92,6 +93,8 @@ signals:
     void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void botFightCollision(const quint32 &fightId,CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void error(const QString &error);
+    void inWaitingOfMap();
+    void currentMapLoaded();
 };
 
 #endif

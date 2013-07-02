@@ -41,7 +41,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
-    QList<quint32> botFightList=current_map->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+    QList<quint32> botFightList=all_map[current_map]->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
     int index=0;
     while(index<botFightList.size())
     {
@@ -50,19 +50,19 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             inMove=false;
             emit send_player_direction(direction);
             parseStop();
-            emit botFightCollision(botFightList.at(index),static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
+            emit botFightCollision(botFightList.at(index),static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
             keyPressed.clear();
             return true;
         }
         index++;
     }
     //check if is in fight collision
-    if(CatchChallenger::FightEngine::fightEngine.haveRandomFight(current_map->logicalMap,x,y))
+    if(CatchChallenger::FightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
     {
         inMove=false;
         emit send_player_direction(direction);
         parseStop();
-        emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&current_map->logicalMap),x,y);
+        emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
         keyPressed.clear();
         return true;
     }
