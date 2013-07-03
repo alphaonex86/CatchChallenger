@@ -267,10 +267,10 @@ void MapVisibilityAlgorithm_Simple::moveAnotherClientWithMap(const SIMPLIFIED_PL
     }
     //go into over move
     else if(unlikely(
-                (to_send_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
+                ((quint32)to_send_move[player_id].size()*(sizeof(quint8)+sizeof(quint8))+sizeof(quint8))//the size of one move
                 >=
                     //size of on insert
-                    GlobalServerData::serverPrivateVariables.sizeofInsertRequest+player_informations->rawPseudo.size()
+                    (quint32)GlobalServerData::serverPrivateVariables.sizeofInsertRequest+player_informations->rawPseudo.size()
                 ))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_SQUARE

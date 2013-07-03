@@ -5,6 +5,8 @@ LIBS *= -ltiled
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QT       += script
 
+win32:CONFIG   += console
+
 SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/ObjectGroupItem.cpp \

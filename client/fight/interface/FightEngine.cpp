@@ -251,13 +251,13 @@ Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffec
             }
             else
                 quantity=(playerMonsterList[selectedMonster].hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
+            if(quantity<0 && (-quantity)>(qint32)playerMonsterList[selectedMonster].hp)
             {
                 playerMonsterList[selectedMonster].hp=0;
                 playerMonsterList[selectedMonster].buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-playerMonsterList[selectedMonster].hp))
                 playerMonsterList[selectedMonster].hp=stat.hp;
             else
                 playerMonsterList[selectedMonster].hp+=quantity;
@@ -281,12 +281,12 @@ Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffec
             }
             else
                 quantity=(otherMonster->hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>otherMonster->hp)
+            if(quantity<0 && (-quantity)>(qint32)otherMonster->hp)
             {
                 otherMonster->hp=0;
                 addXPSP();
             }
-            else if(quantity>0 && quantity>(stat.hp-otherMonster->hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-otherMonster->hp))
                 otherMonster->hp=stat.hp;
             else
                 otherMonster->hp+=quantity;
@@ -1205,13 +1205,13 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
             else
                 quantity=(publicPlayerMonster->hp*effect.quantity)/100;
             qDebug() << "applyCurrentLifeEffect() add hp on the ennemy " << quantity;
-            if(quantity<0 && (-quantity)>publicPlayerMonster->hp)
+            if(quantity<0 && (-quantity)>(qint32)publicPlayerMonster->hp)
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is KO";
                 publicPlayerMonster->hp=0;
                 addXPSP();
             }
-            else if(quantity>0 && quantity>(stat.hp-publicPlayerMonster->hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-publicPlayerMonster->hp))
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is fully healled";
                 publicPlayerMonster->hp=stat.hp;
@@ -1239,13 +1239,13 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
             }
             else
                 quantity=(playerMonsterList[selectedMonster].hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
+            if(quantity<0 && (-quantity)>(qint32)playerMonsterList[selectedMonster].hp)
             {
                 playerMonsterList[selectedMonster].hp=0;
                 playerMonsterList[selectedMonster].buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-playerMonsterList[selectedMonster].hp))
                 playerMonsterList[selectedMonster].hp=stat.hp;
             else
                 playerMonsterList[selectedMonster].hp+=quantity;
@@ -1287,12 +1287,12 @@ bool FightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &ef
             }
             quantity=effectReturn.quantity;
             qDebug() << "applyCurrentLifeEffect() add hp on the ennemy " << quantity;
-            if(quantity<0 && (-quantity)>publicPlayerMonster->hp)
+            if(quantity<0 && (-quantity)>(qint32)publicPlayerMonster->hp)
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is KO";
                 publicPlayerMonster->hp=0;
             }
-            else if(quantity>0 && quantity>(stat.hp-publicPlayerMonster->hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-publicPlayerMonster->hp))
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is fully healled";
                 publicPlayerMonster->hp=stat.hp;
@@ -1305,14 +1305,14 @@ bool FightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &ef
         case ApplyOn_AllAlly:
             quantity=effectReturn.quantity;
             qDebug() << "applyCurrentLifeEffect() add hp " << quantity;
-            if(quantity<0 && (-quantity)>playerMonsterList[selectedMonster].hp)
+            if(quantity<0 && (-quantity)>(qint32)playerMonsterList[selectedMonster].hp)
             {
                 qDebug() << "applyCurrentLifeEffect() current monster is KO";
                 playerMonsterList[selectedMonster].hp=0;
                 playerMonsterList[selectedMonster].buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(stat.hp-playerMonsterList[selectedMonster].hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-playerMonsterList[selectedMonster].hp))
             {
                 qDebug() << "applyCurrentLifeEffect() you are fully healled";
                 playerMonsterList[selectedMonster].hp=stat.hp;

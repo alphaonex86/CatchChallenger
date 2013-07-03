@@ -41,6 +41,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 {
     error="";
     Map_to_send map_to_send;
+    map_to_send.border.bottom.x_offset=0;
+    map_to_send.border.top.x_offset=0;
+    map_to_send.border.left.y_offset=0;
+    map_to_send.border.right.y_offset=0;
 
     QFile mapFile(fileName);
     QByteArray xmlContent,Walkable,Collisions,Water,Grass,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
