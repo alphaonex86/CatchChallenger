@@ -84,11 +84,10 @@ protected slots:
 public slots:
     QString loadOtherMap(const QString &resolvedFileName);
     virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
-    virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
+    //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
 private slots:
     QSet<QString> loadTeleporter(MapVisualiserThread::Map_full *map);
-    QSet<QString> loadNearMap(const QString &fileName, const bool &display, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel,const QSet<QString> &previousLoadedNearMap);
     void paintEvent(QPaintEvent * event);
     void updateFPS();
     void asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject);
