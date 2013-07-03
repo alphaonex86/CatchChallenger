@@ -87,12 +87,30 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         if(!displayed_map.contains(tempMapObject->logicalMap.map_file))
         {
             mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
-            mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
             displayed_map << tempMapObject->logicalMap.map_file;
             emit mapDisplayed(tempMapObject->logicalMap.map_file);
         }
-        else
-            mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
+        mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
+        //display the bot
+        QHashIterator<QPair<quint8,quint8>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
+        while (i.hasNext()) {
+            i.next();
+            QString skin;
+            if(i.value().properties.contains("skin"))
+                skin=i.value().properties["skin"];
+            else
+                skin="empty";
+            QString direction;
+            if(i.value().properties.contains("lookAt"))
+                direction=i.value().properties["lookAt"];
+            else
+            {
+                if(!skin.isEmpty())
+                    qDebug() << QString("loadNearMap(): lookAt: missing, fixed to bottom").arg(tempMapObject->logicalMap.map_file);
+                direction="bottom";
+            }
+            loadBotOnTheMap(tempMapObject,i.value().botId,i.key().first,i.key().second,direction,skin);
+        }
         if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
             if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.bottom.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
             {
@@ -145,12 +163,16 @@ void MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
         //if both border match
         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
         {
-            int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
+            int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
             tempMapObject->x=border_map->x+offset;
             tempMapObject->y=border_map->y+border_map->logicalMap.height;
             tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-            tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height;
+            tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
+            tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
+            tempMapObject->logicalMap.border.top.x_offset=offset;
+            border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
+            border_map->logicalMap.border.bottom.x_offset=-offset;
             asyncDetectBorder(tempMapObject);
         }
         else
@@ -162,12 +184,16 @@ void MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
         //if both border match
         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
         {
-            int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
+            int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
             tempMapObject->x=border_map->x+offset;
             tempMapObject->y=border_map->y-tempMapObject->logicalMap.height;
             tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-            tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height;
+            tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
+            tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
+            tempMapObject->logicalMap.border.bottom.x_offset=offset;
+            border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
+            border_map->logicalMap.border.top.x_offset=-offset;
             asyncDetectBorder(tempMapObject);
         }
         else
@@ -179,12 +205,16 @@ void MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
         //if both border match
         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
         {
-            int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileWidth();
-            tempMapObject->x=border_map->x+border_map->logicalMap.width;
+            int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight();
+            tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
             tempMapObject->y=border_map->y+offset;
-            tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width;
+            tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
             tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+            tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
+            tempMapObject->logicalMap.border.right.y_offset=offset;
+            border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
+            border_map->logicalMap.border.left.y_offset=-offset;
             asyncDetectBorder(tempMapObject);
         }
         else
@@ -196,12 +226,16 @@ void MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
         //if both border match
         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
         {
-            int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileWidth();
-            tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
+            int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
+            int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight();
+            tempMapObject->x=border_map->x+border_map->logicalMap.width;
             tempMapObject->y=border_map->y+offset;
-            tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width;
+            tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
             tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+            tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
+            tempMapObject->logicalMap.border.left.y_offset=offset;
+            border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
+            border_map->logicalMap.border.right.y_offset=-offset;
             asyncDetectBorder(tempMapObject);
         }
         else
@@ -226,7 +260,7 @@ void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     Q_UNUSED(skin);
 }
 
-QSet<QString> MapVisualiser::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
+/*QSet<QString> MapVisualiser::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
 {
     if(map==NULL)
     {
@@ -254,7 +288,7 @@ QSet<QString> MapVisualiser::loadMap(MapVisualiserThread::Map_full *map,const bo
         }
     }
     return loadedTeleporter+loadedNearMap;
-}
+}*/
 
 void MapVisualiser::removeUnusedMap()
 {
@@ -300,7 +334,7 @@ QSet<QString> MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
     return mapUsed;
 }
 
-QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &display, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel,const QSet<QString> &previousLoadedNearMap)
+/*QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &display, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel,const QSet<QString> &previousLoadedNearMap)
 {
     if(previousLoadedNearMap.contains(fileName))
         return QSet<QString>();
@@ -502,4 +536,4 @@ QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &di
     }
 
     return loadedNearMap;
-}
+}*/

@@ -839,13 +839,13 @@ void LocalClientHandler::applyOtherLifeEffect(const Skill::LifeEffect &effect)
             }
             else
                 quantity=(getSelectedMonster().hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>getSelectedMonster().hp)
+            if(quantity<0 && (-quantity)>(qint32)getSelectedMonster().hp)
             {
                 getSelectedMonster().hp=0;
                 getSelectedMonster().buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(stat.hp-getSelectedMonster().hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-getSelectedMonster().hp))
                 getSelectedMonster().hp=stat.hp;
             else
                 getSelectedMonster().hp+=quantity;
@@ -875,9 +875,9 @@ void LocalClientHandler::applyOtherLifeEffect(const Skill::LifeEffect &effect)
             }
             else
                 quantity=(otherMonster->hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>otherMonster->hp)
+            if(quantity<0 && (-quantity)>(qint32)otherMonster->hp)
                 otherMonster->hp=0;
-            else if(quantity>0 && quantity>(stat.hp-otherMonster->hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-otherMonster->hp))
                 otherMonster->hp=stat.hp;
             else
                 otherMonster->hp+=quantity;
@@ -1259,9 +1259,9 @@ qint32 LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effec
             }
             else
                 quantity=(monster.hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>monster.hp)
+            if(quantity<0 && (-quantity)>(qint32)monster.hp)
                 monster.hp=0;
-            else if(quantity>0 && quantity>(stat.hp-monster.hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-monster.hp))
                 monster.hp=stat.hp;
             else
                 monster.hp+=quantity;
@@ -1292,13 +1292,13 @@ qint32 LocalClientHandler::applyCurrentLifeEffect(const Skill::LifeEffect &effec
             }
             else
                 quantity=(getSelectedMonster().hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>getSelectedMonster().hp)
+            if(quantity<0 && (-quantity)>(qint32)getSelectedMonster().hp)
             {
                 getSelectedMonster().hp=0;
                 getSelectedMonster().buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(stat.hp-getSelectedMonster().hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-getSelectedMonster().hp))
                 getSelectedMonster().hp=stat.hp;
             else
                 getSelectedMonster().hp+=quantity;
