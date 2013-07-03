@@ -335,7 +335,7 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.x,otherPlayer.y+1));
 
-    if(display)
+    /*if(display)
     {
         QSet<QString> mapUsed=loadMap(otherPlayer.presumed_map,display);
         QSetIterator<QString> i(mapUsed);
@@ -348,7 +348,7 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
                 mapUsedByOtherPlayer[map]=1;
         }
         removeUnusedMap();
-    }
+    }*/
     /// \todo temp fix, do a better fix
     centerOn(MapObjectItem::objectLink[playerMapObject]);
 
@@ -1143,7 +1143,7 @@ void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
     MapVisualiser::destroyMap(map);
 }
 
-QSet<QString> MapControllerMP::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
+/*QSet<QString> MapControllerMP::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
 {
     if(map==NULL)
     {
@@ -1162,4 +1162,4 @@ QSet<QString> MapControllerMP::loadMap(MapVisualiserThread::Map_full *map,const 
         index++;
     }
     return tempReturn;
-}
+}*/
