@@ -277,6 +277,7 @@ struct ParsedLayer
     bool *water;
     bool *grass;
     bool *dirt;
+    //not stored as ParsedLayerLedges to prevent memory space unused
     quint8 *ledges;
 };
 

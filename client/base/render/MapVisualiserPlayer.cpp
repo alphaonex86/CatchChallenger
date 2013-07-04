@@ -330,164 +330,183 @@ void MapVisualiserPlayer::moveStepSlot()
         //if the map have changed
         if(old_map!=map)
         {
-            if(current_map==NULL)
-            {
-                qDebug() << "Map is NULL, can't load more at MapControllerPlayer::moveStepSlot()";
-                return;
-            }
-            loadOtherMap(map->map_file);
-            if(!all_map.contains(map->map_file))
-                qDebug() << QString("map changed not located: %1").arg(map->map_file);
+            unloadPlayerFromCurrentMap();
+            if(old_all_map.isEmpty())
+                old_all_map=all_map;
             else
             {
-                qDebug() << QString("toto: map switch todo").arg(map->map_file);
+                QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+                while (i != all_map.constEnd()) {
+                    old_all_map[i.key()]=i.value();
+                    ++i;
+                }
+            }
+            all_map.clear();
+            if(!old_all_map.contains(map->map_file))
                 emit inWaitingOfMap();
-                /*unloadPlayerFromCurrentMap();
-                all_map[current_map->logicalMap.map_file]=current_map;
-                current_map=all_map[map->map_file];
-                mapUsed=loadMap(current_map,true);
-                removeUnusedMap();
-                loadPlayerFromCurrentMap();*/
-            }
-        }
-        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        playerMapObject->setPosition(QPoint(x,y+1));
-        MapObjectItem::objectLink[playerMapObject]->setZValue(y);
-        if(centerOnPlayer)
-        {
-            //playerMapObject->set
-            centerOn(MapObjectItem::objectLink[playerMapObject]);
-        }
-        stopGrassAnimation();
-
-        if(haveStopTileAction())
-            return;
-
-        if(CatchChallenger::MoveOnTheMap::getLedge(*map,x,y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
-        {
-            switch(direction)
-            {
-                case CatchChallenger::Direction_look_at_left:
-                    direction=CatchChallenger::Direction_move_at_left;
-                break;
-                case CatchChallenger::Direction_look_at_right:
-                    direction=CatchChallenger::Direction_move_at_right;
-                break;
-                case CatchChallenger::Direction_look_at_top:
-                    direction=CatchChallenger::Direction_move_at_top;
-                break;
-                case CatchChallenger::Direction_look_at_bottom:
-                    direction=CatchChallenger::Direction_move_at_bottom;
-                break;
-                default:
-                    qDebug() << QString("moveStepSlot(): direction: %1, wrong direction").arg(direction);
-                return;
-            }
-            moveStep=0;
-            moveTimer.start();
-            startGrassAnimation(direction);
+            loadOtherMap(map->map_file);
             return;
         }
-
-        //check if one arrow key is pressed to continue to move into this direction
-        if(keyPressed.contains(Qt::Key_Left))
-        {
-            //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
-            {
-                keyPressed.remove(Qt::Key_Left);
-                direction=CatchChallenger::Direction_look_at_left;
-                playerMapObject->setTile(playerTileset->tileAt(10));
-                inMove=false;
-                emit send_player_direction(direction);//see the top note
-                parseStop();
-            }
-            //if can go, then do the move
-            else
-            {
-                direction=CatchChallenger::Direction_move_at_left;
-                moveStep=0;
-                moveStepSlot();
-                emit send_player_direction(direction);
-                startGrassAnimation(direction);
-            }
-        }
-        else if(keyPressed.contains(Qt::Key_Right))
-        {
-            //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
-            {
-                keyPressed.remove(Qt::Key_Right);
-                direction=CatchChallenger::Direction_look_at_right;
-                playerMapObject->setTile(playerTileset->tileAt(4));
-                inMove=false;
-                emit send_player_direction(direction);//see the top note
-                parseStop();
-            }
-            //if can go, then do the move
-            else
-            {
-                direction=CatchChallenger::Direction_move_at_right;
-                moveStep=0;
-                moveStepSlot();
-                emit send_player_direction(direction);
-                startGrassAnimation(direction);
-            }
-        }
-        else if(keyPressed.contains(Qt::Key_Up))
-        {
-            //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
-            {
-                keyPressed.remove(Qt::Key_Up);
-                direction=CatchChallenger::Direction_look_at_top;
-                playerMapObject->setTile(playerTileset->tileAt(1));
-                inMove=false;
-                emit send_player_direction(direction);//see the top note
-                parseStop();
-            }
-            //if can go, then do the move
-            else
-            {
-                direction=CatchChallenger::Direction_move_at_top;
-                moveStep=0;
-                moveStepSlot();
-                emit send_player_direction(direction);
-                startGrassAnimation(direction);
-            }
-        }
-        else if(keyPressed.contains(Qt::Key_Down))
-        {
-            //can't go into this direction, then just look into this direction
-            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
-            {
-                keyPressed.remove(Qt::Key_Down);
-                direction=CatchChallenger::Direction_look_at_bottom;
-                playerMapObject->setTile(playerTileset->tileAt(7));
-                inMove=false;
-                emit send_player_direction(direction);//see the top note
-                parseStop();
-            }
-            //if can go, then do the move
-            else
-            {
-                direction=CatchChallenger::Direction_move_at_bottom;
-                moveStep=0;
-                moveStepSlot();
-                emit send_player_direction(direction);
-                startGrassAnimation(direction);
-            }
-        }
-        //now stop walking, no more arrow key is pressed
         else
-        {
-            inMove=false;
-            emit send_player_direction(direction);
-            parseStop();
-        }
+            finalPlayerStep();
     }
     else
         moveTimer.start();
+}
+
+bool MapVisualiserPlayer::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject)
+{
+    if(MapVisualiser::asyncMapLoaded(tempMapObject))
+    {
+       finalPlayerStep();
+       return true;
+    }
+    else
+        return false;
+}
+
+void MapVisualiserPlayer::finalPlayerStep()
+{
+    if(!all_map.contains(current_map))
+    {
+        qDebug() << "current map not loaded, unable to do finalPlayerStep()";
+        return;
+    }
+    //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+    playerMapObject->setPosition(QPoint(x,y+1));
+    MapObjectItem::objectLink[playerMapObject]->setZValue(y);
+    if(centerOnPlayer)
+    {
+        //playerMapObject->set
+        centerOn(MapObjectItem::objectLink[playerMapObject]);
+    }
+    stopGrassAnimation();
+
+    if(haveStopTileAction())
+        return;
+
+    if(CatchChallenger::MoveOnTheMap::getLedge(all_map[current_map]->logicalMap,x,y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
+    {
+        switch(direction)
+        {
+            case CatchChallenger::Direction_look_at_left:
+                direction=CatchChallenger::Direction_move_at_left;
+            break;
+            case CatchChallenger::Direction_look_at_right:
+                direction=CatchChallenger::Direction_move_at_right;
+            break;
+            case CatchChallenger::Direction_look_at_top:
+                direction=CatchChallenger::Direction_move_at_top;
+            break;
+            case CatchChallenger::Direction_look_at_bottom:
+                direction=CatchChallenger::Direction_move_at_bottom;
+            break;
+            default:
+                qDebug() << QString("moveStepSlot(): direction: %1, wrong direction").arg(direction);
+            return;
+        }
+        moveStep=0;
+        moveTimer.start();
+        startGrassAnimation(direction);
+        return;
+    }
+
+    //check if one arrow key is pressed to continue to move into this direction
+    if(keyPressed.contains(Qt::Key_Left))
+    {
+        //can't go into this direction, then just look into this direction
+        if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
+        {
+            keyPressed.remove(Qt::Key_Left);
+            direction=CatchChallenger::Direction_look_at_left;
+            playerMapObject->setTile(playerTileset->tileAt(10));
+            inMove=false;
+            emit send_player_direction(direction);//see the top note
+            parseStop();
+        }
+        //if can go, then do the move
+        else
+        {
+            direction=CatchChallenger::Direction_move_at_left;
+            moveStep=0;
+            moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
+        }
+    }
+    else if(keyPressed.contains(Qt::Key_Right))
+    {
+        //can't go into this direction, then just look into this direction
+        if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
+        {
+            keyPressed.remove(Qt::Key_Right);
+            direction=CatchChallenger::Direction_look_at_right;
+            playerMapObject->setTile(playerTileset->tileAt(4));
+            inMove=false;
+            emit send_player_direction(direction);//see the top note
+            parseStop();
+        }
+        //if can go, then do the move
+        else
+        {
+            direction=CatchChallenger::Direction_move_at_right;
+            moveStep=0;
+            moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
+        }
+    }
+    else if(keyPressed.contains(Qt::Key_Up))
+    {
+        //can't go into this direction, then just look into this direction
+        if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
+        {
+            keyPressed.remove(Qt::Key_Up);
+            direction=CatchChallenger::Direction_look_at_top;
+            playerMapObject->setTile(playerTileset->tileAt(1));
+            inMove=false;
+            emit send_player_direction(direction);//see the top note
+            parseStop();
+        }
+        //if can go, then do the move
+        else
+        {
+            direction=CatchChallenger::Direction_move_at_top;
+            moveStep=0;
+            moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
+        }
+    }
+    else if(keyPressed.contains(Qt::Key_Down))
+    {
+        //can't go into this direction, then just look into this direction
+        if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
+        {
+            keyPressed.remove(Qt::Key_Down);
+            direction=CatchChallenger::Direction_look_at_bottom;
+            playerMapObject->setTile(playerTileset->tileAt(7));
+            inMove=false;
+            emit send_player_direction(direction);//see the top note
+            parseStop();
+        }
+        //if can go, then do the move
+        else
+        {
+            direction=CatchChallenger::Direction_move_at_bottom;
+            moveStep=0;
+            moveStepSlot();
+            emit send_player_direction(direction);
+            startGrassAnimation(direction);
+        }
+    }
+    //now stop walking, no more arrow key is pressed
+    else
+    {
+        inMove=false;
+        emit send_player_direction(direction);
+        parseStop();
+    }
 }
 
 bool MapVisualiserPlayer::haveStopTileAction()

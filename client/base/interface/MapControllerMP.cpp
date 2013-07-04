@@ -82,14 +82,14 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
     loadOtherMap(current_map);
     return true;
 
-    QString current_map_fileName=loadOtherMap(fileName);
+    /*QString current_map_fileName=loadOtherMap(fileName);
     if(current_map_fileName.isEmpty())
     {
         //map not loaded or async
         QMessageBox::critical(NULL,"Error",QString("Map not loaded for %1: %2").arg(fileName).arg(mLastError));
         return false;
     }
-    /*if(!all_map.contains(current_map_fileName))
+    if(!all_map.contains(current_map_fileName))
     {
         qDebug() << "Map is empty, can't load more at MapControllerMP::loadPlayerMap()";
         return true;
@@ -122,7 +122,7 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
 void MapControllerMP::removeUnusedMap()
 {
     ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+    /*QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
         if(!mapUsed.contains((*i)->logicalMap.map_file) && !mapUsedByOtherPlayer.contains((*i)->logicalMap.map_file))
         {
@@ -131,7 +131,7 @@ void MapControllerMP::removeUnusedMap()
         }
         else
             ++i;
-    }
+    }*/
 }
 
 //map move
@@ -225,17 +225,10 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         tempPlayer.inMove=false;
         tempPlayer.stepAlternance=false;
 
-        if(mapId==0)
-            qDebug() << QString("supected NULL map then error");
-        QString current_map_fileName=loadOtherMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
-        if(current_map_fileName.isEmpty())
+        QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
+        if(!all_map.contains(mapPath))
         {
-            qDebug() << QString("unable to insert player: %1 on map: %2").arg(player.pseudo).arg(DatapackClientLoader::datapackLoader.maps[mapId]);
-            return;
-        }
-        if(!all_map.contains(current_map_fileName))
-        {
-            qDebug() << "MapControllerMP::insert_player(): current map " << current_map_fileName << " not loaded";
+            qDebug() << "MapControllerMP::insert_player(): current map " << mapPath << " not loaded";
             return;
         }
         //the player skin
@@ -259,8 +252,8 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapControllerMP::insert_player()";
             return;
         }
-        tempPlayer.current_map=current_map_fileName;
-        tempPlayer.presumed_map=all_map[current_map_fileName];
+        tempPlayer.current_map=mapPath;
+        tempPlayer.presumed_map=all_map[mapPath];
         tempPlayer.presumed_x=x;
         tempPlayer.presumed_y=y;
         switch(direction)
@@ -322,6 +315,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
 //call after enter on new map
 void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool &display)
 {
+    Q_UNUSED(display);
     //remove the player tile if needed
     Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
     if(currentGroup!=NULL)
@@ -437,13 +431,15 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     if(otherPlayerList[id].current_map!=otherPlayerList[id].presumed_map->logicalMap.map_file)
     {
         unloadOtherPlayerFromMap(otherPlayerList[id]);
-        QString current_map_fileName=loadOtherMap(otherPlayerList[id].current_map);
-        if(current_map_fileName.isEmpty())
+        QString mapPath=otherPlayerList[id].current_map;
+        if(!all_map.contains(mapPath) && !old_all_map.contains(mapPath))
         {
-            qDebug() << QString("move_player(%1), unable to load the map: %2").arg(id).arg(otherPlayerList[id].current_map);
+            /// \todo this case
+            qDebug() << QString("move_player(%1), map not already loaded").arg(id).arg(otherPlayerList[id].current_map);
             return;
         }
-        otherPlayerList[id].presumed_map=all_map[current_map_fileName];
+        loadOtherMap(mapPath);
+        otherPlayerList[id].presumed_map=all_map[mapPath];
         loadOtherPlayerFromMap(otherPlayerList[id]);
     }
     quint8 x=otherPlayerList[id].x;
@@ -772,14 +768,10 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     this->y=y;
 
     unloadPlayerFromCurrentMap();
-    QString current_map_fileName=loadOtherMap(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
-    if(current_map_fileName.isEmpty())
-    {
-        qDebug() << QString("Unable to open: %1").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
-        QMessageBox::critical(NULL,"Error",mLastError);
-        return;
-    }
-    qDebug() << "tp todo: MapControllerMP::teleportTo";
+    QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
+    if(!all_map.contains(mapPath) && !old_all_map.contains(mapPath))
+        emit inWaitingOfMap();
+    loadOtherMap(mapPath);
 /*    current_map=all_map[current_map_fileName];
 
     mapUsed=loadMap(all_map[current_map],true);

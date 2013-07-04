@@ -102,6 +102,11 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
     #endif
 }
 
+bool MapItem::haveMap(Tiled::Map *map)
+{
+    return displayed_layer.contains(map);
+}
+
 void MapItem::removeMap(Tiled::Map *map)
 {
     QList<QGraphicsItem *> values = displayed_layer.values(map);
