@@ -18,6 +18,11 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
 
 void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
+    if(displayed_layer.contains(map))
+    {
+        qDebug() << "Map already displayed";
+        return;
+    }
     //align zIndex to "Dyna management" Layer
     int index=-playerLayerIndex;
     QList<Tiled::Layer *> layers=map->layers();
