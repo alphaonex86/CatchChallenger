@@ -32,35 +32,45 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
 
 void MapVisualiser::resetAll()
 {
-    QSet<QString>::const_iterator i = displayed_map.constBegin();
-    while (i != displayed_map.constEnd()) {
-        mapItem->removeMap(all_map[*i]->tiledMap);
-        displayed_map.remove(*i);
-        i = displayed_map.constBegin();
-    }
     ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = old_all_map.constBegin();
+    while (i != old_all_map.constEnd()) {
+        destroyMap(i.value());
+        old_all_map.remove(i.key());
+        i = old_all_map.constBegin();//needed
+    }
+
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator j = all_map.constBegin();
     while (j != all_map.constEnd()) {
-        destroyMap(*j);
+        destroyMap(j.value());
+        all_map.remove(j.key());
         j = all_map.constBegin();//needed
     }
-    displayed_map.clear();
+    old_all_map.clear();
     all_map.clear();
     mapVisualiserThread.resetAll();
 }
 
 //open the file, and load it into the variables
-QString MapVisualiser::loadOtherMap(const QString &resolvedFileName)
+void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
 {
+    //already loaded
     if(all_map.contains(resolvedFileName))
-        return resolvedFileName;
-
+        return;
+    //already in progress
     if(asyncMap.contains(resolvedFileName))
-        return resolvedFileName;
-    CatchChallenger::DebugClass::debugConsole(QString("need async this load: %1").arg(resolvedFileName));
+        return;
+    //previously loaded
+    if(old_all_map.contains(resolvedFileName))
+    {
+        all_map[resolvedFileName]=old_all_map[resolvedFileName];
+        old_all_map.remove(resolvedFileName);
+        asyncMapLoaded(all_map[resolvedFileName]);
+        return;
+    }
+    CatchChallenger::DebugClass::debugConsole(QString("async this load: %1").arg(resolvedFileName));
     asyncMap << resolvedFileName;
     emit loadOtherMapAsync(resolvedFileName);
-    return resolvedFileName;
 }
 
 void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject)
@@ -84,13 +94,9 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
     if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
     {
         //display a new map now visible
-        if(!displayed_map.contains(tempMapObject->logicalMap.map_file))
-        {
-            mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
-            displayed_map << tempMapObject->logicalMap.map_file;
-            emit mapDisplayed(tempMapObject->logicalMap.map_file);
-        }
+        mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
+        emit mapDisplayed(tempMapObject->logicalMap.map_file);
         //display the bot
         QHashIterator<QPair<quint8,quint8>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
         while (i.hasNext()) {
@@ -106,7 +112,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
             else
             {
                 if(!skin.isEmpty())
-                    qDebug() << QString("loadNearMap(): lookAt: missing, fixed to bottom").arg(tempMapObject->logicalMap.map_file);
+                    qDebug() << QString("asyncDetectBorder(): lookAt: missing, fixed to bottom: %1").arg(tempMapObject->logicalMap.map_file);
                 direction="bottom";
             }
             loadBotOnTheMap(tempMapObject,i.value().botId,i.key().first,i.key().second,direction,skin);
@@ -136,15 +142,18 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
                 emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.right.fileName);
             }
     }
+    if(asyncMap.isEmpty())
+        removeUnusedMap();
+
 }
 
-void MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject)
+bool MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject)
 {
     asyncMap.removeOne(tempMapObject->logicalMap.map_file);
     if(all_map.contains(tempMapObject->logicalMap.map_file))
     {
         CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, then skip: %1").arg(tempMapObject->logicalMap.map_file));
-        return;
+        return false;
     }
     //CatchChallenger::DebugClass::debugConsole(QString("todo, place the loaded map: %1").arg(tempMapObject->logicalMap.map_file));
     //destroyMap(tempMapObject);
@@ -245,9 +254,9 @@ void MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
     {
         CatchChallenger::DebugClass::debugConsole(QString("map not located to place it then skip: %1").arg(tempMapObject->logicalMap.map_file));
         destroyMap(tempMapObject);
-        return;
+        return false;
     }
-    //drop the old map (not loaded into this cycle)
+    return true;
 }
 
 void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
@@ -292,22 +301,12 @@ void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 
 void MapVisualiser::removeUnusedMap()
 {
-    ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
-    while (i != all_map.constEnd()) {
-        if(!mapUsed.contains((*i)->logicalMap.map_file))
-        {
-            destroyMap(*i);
-            i = all_map.constBegin();//needed
-        }
-        else
-            ++i;
-    }
+    qDebug() << QString("removeUnusedMap(): all the needed map is loaded, todo: clean the useless");
 }
 
 QSet<QString> MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
 {
-    QSet<QString> mapUsed;
+/*    QSet<QString> mapUsed;
     //load the teleporter
     int index=0;
     while(index<map->logicalMap.teleport_semi.size())
@@ -331,7 +330,7 @@ QSet<QString> MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
         }
         index++;
     }
-    return mapUsed;
+    return mapUsed;*/
 }
 
 /*QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &display, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel,const QSet<QString> &previousLoadedNearMap)
