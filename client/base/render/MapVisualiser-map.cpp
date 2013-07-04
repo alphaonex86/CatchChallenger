@@ -21,6 +21,7 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
     //remove from the list
+    mapItem->removeMap(map->tiledMap);
     all_map.remove(map->logicalMap.map_file);
     //delete common variables
     CatchChallenger::Map::removeParsedLayer(map->logicalMap.parsed_layer);
@@ -63,9 +64,10 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
     //previously loaded
     if(old_all_map.contains(resolvedFileName))
     {
-        all_map[resolvedFileName]=old_all_map[resolvedFileName];
+        MapVisualiserThread::Map_full * tempMapObject=old_all_map[resolvedFileName];
+        tempMapObject->displayed=false;
         old_all_map.remove(resolvedFileName);
-        asyncMapLoaded(all_map[resolvedFileName]);
+        asyncMapLoaded(tempMapObject);
         return;
     }
     CatchChallenger::DebugClass::debugConsole(QString("async this load: %1").arg(resolvedFileName));
@@ -94,7 +96,8 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
     if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
     {
         //display a new map now visible
-        mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
+        if(!mapItem->haveMap(tempMapObject->tiledMap))
+            mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
         emit mapDisplayed(tempMapObject->logicalMap.map_file);
         //display the bot
@@ -119,40 +122,28 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         }
         if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
             if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.bottom.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
-            {
-                asyncMap << tempMapObject->logicalMap.border_semi.bottom.fileName;
-                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.bottom.fileName);
-            }
+                loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
         if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
             if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.top.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
-            {
-                asyncMap << tempMapObject->logicalMap.border_semi.top.fileName;
-                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.top.fileName);
-            }
+                loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
         if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
             if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.left.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
-            {
-                asyncMap << tempMapObject->logicalMap.border_semi.left.fileName;
-                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.left.fileName);
-            }
+                loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
         if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
             if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.right.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
-            {
-                asyncMap << tempMapObject->logicalMap.border_semi.right.fileName;
-                emit loadOtherMapAsync(tempMapObject->logicalMap.border_semi.right.fileName);
-            }
+                loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
     }
     if(asyncMap.isEmpty())
         removeUnusedMap();
-
 }
 
 bool MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject)
 {
+    tempMapObject->displayed=false;
     asyncMap.removeOne(tempMapObject->logicalMap.map_file);
     if(all_map.contains(tempMapObject->logicalMap.map_file))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, then skip: %1").arg(tempMapObject->logicalMap.map_file));
+        CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, internal bug on: %1").arg(tempMapObject->logicalMap.map_file));
         return false;
     }
     //CatchChallenger::DebugClass::debugConsole(QString("todo, place the loaded map: %1").arg(tempMapObject->logicalMap.map_file));
@@ -160,6 +151,7 @@ bool MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
     //try locate and place it
     if(tempMapObject->logicalMap.map_file==current_map)
     {
+        tempMapObject->displayed=true;
         tempMapObject->x=0;
         tempMapObject->y=0;
         tempMapObject->x_pixel=0;
@@ -168,87 +160,103 @@ bool MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
     }
     else if(all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
     {
-        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.top.fileName];
-        //if both border match
-        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
+        if(all_map[tempMapObject->logicalMap.border_semi.top.fileName]->displayed)
         {
-            int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
-            tempMapObject->x=border_map->x+offset;
-            tempMapObject->y=border_map->y+border_map->logicalMap.height;
-            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-            tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
-            tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
-            tempMapObject->logicalMap.border.top.x_offset=offset;
-            border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
-            border_map->logicalMap.border.bottom.x_offset=-offset;
-            asyncDetectBorder(tempMapObject);
+            MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.top.fileName];
+            //if both border match
+            if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
+            {
+                int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
+                int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
+                tempMapObject->x=border_map->x+offset;
+                tempMapObject->y=border_map->y+border_map->logicalMap.height;
+                tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
+                tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
+                tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
+                tempMapObject->logicalMap.border.top.x_offset=offset;
+                border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
+                border_map->logicalMap.border.bottom.x_offset=-offset;
+                tempMapObject->displayed=true;
+                asyncDetectBorder(tempMapObject);
+            }
+            else
+                qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
         }
-        else
-            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
     }
     else if(all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
     {
-        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.bottom.fileName];
-        //if both border match
-        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
+        if(all_map[tempMapObject->logicalMap.border_semi.bottom.fileName]->displayed)
         {
-            int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
-            tempMapObject->x=border_map->x+offset;
-            tempMapObject->y=border_map->y-tempMapObject->logicalMap.height;
-            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-            tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
-            tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
-            tempMapObject->logicalMap.border.bottom.x_offset=offset;
-            border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
-            border_map->logicalMap.border.top.x_offset=-offset;
-            asyncDetectBorder(tempMapObject);
+            MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.bottom.fileName];
+            //if both border match
+            if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
+            {
+                int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
+                int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
+                tempMapObject->x=border_map->x+offset;
+                tempMapObject->y=border_map->y-tempMapObject->logicalMap.height;
+                tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
+                tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
+                tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
+                tempMapObject->logicalMap.border.bottom.x_offset=offset;
+                border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
+                border_map->logicalMap.border.top.x_offset=-offset;
+                tempMapObject->displayed=true;
+                asyncDetectBorder(tempMapObject);
+            }
+            else
+                qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
         }
-        else
-            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
     }
     else if(all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
     {
-        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.right.fileName];
-        //if both border match
-        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
+        if(all_map[tempMapObject->logicalMap.border_semi.right.fileName]->displayed)
         {
-            int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight();
-            tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
-            tempMapObject->y=border_map->y+offset;
-            tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
-            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
-            tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
-            tempMapObject->logicalMap.border.right.y_offset=offset;
-            border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
-            border_map->logicalMap.border.left.y_offset=-offset;
-            asyncDetectBorder(tempMapObject);
+            MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.right.fileName];
+            //if both border match
+            if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
+            {
+                int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
+                int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight();
+                tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
+                tempMapObject->y=border_map->y+offset;
+                tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
+                tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+                tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
+                tempMapObject->logicalMap.border.right.y_offset=offset;
+                border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
+                border_map->logicalMap.border.left.y_offset=-offset;
+                tempMapObject->displayed=true;
+                asyncDetectBorder(tempMapObject);
+            }
+            else
+                qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
         }
-        else
-            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
     }
     else if(all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
     {
-        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.left.fileName];
-        //if both border match
-        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
+        if(all_map[tempMapObject->logicalMap.border_semi.left.fileName]->displayed)
         {
-            int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
-            int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight();
-            tempMapObject->x=border_map->x+border_map->logicalMap.width;
-            tempMapObject->y=border_map->y+offset;
-            tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
-            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
-            tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
-            tempMapObject->logicalMap.border.left.y_offset=offset;
-            border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
-            border_map->logicalMap.border.right.y_offset=-offset;
-            asyncDetectBorder(tempMapObject);
+            MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.left.fileName];
+            //if both border match
+            if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
+            {
+                int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
+                int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight();
+                tempMapObject->x=border_map->x+border_map->logicalMap.width;
+                tempMapObject->y=border_map->y+offset;
+                tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
+                tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+                tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
+                tempMapObject->logicalMap.border.left.y_offset=offset;
+                border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
+                border_map->logicalMap.border.right.y_offset=-offset;
+                tempMapObject->displayed=true;
+                asyncDetectBorder(tempMapObject);
+            }
+            else
+                qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
         }
-        else
-            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
     }
     else
     {
@@ -302,6 +310,22 @@ void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 void MapVisualiser::removeUnusedMap()
 {
     qDebug() << QString("removeUnusedMap(): all the needed map is loaded, todo: clean the useless");
+    //undisplay the unused map
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = old_all_map.constBegin();
+    while (i != old_all_map.constEnd()) {
+        destroyMap(i.value());
+        ++i;
+    }
+    //undisplay the map not in dirrect contact with the current_map
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator j = all_map.constBegin();
+    while (j != all_map.constEnd()) {
+        if(j.value()->logicalMap.map_file!=current_map)
+        {
+            if(!j.value()->displayed)
+                mapItem->removeMap(j.value()->tiledMap);
+        }
+        ++j;
+    }
 }
 
 QSet<QString> MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)

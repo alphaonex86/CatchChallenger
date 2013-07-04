@@ -331,6 +331,7 @@ void MapVisualiserPlayer::moveStepSlot()
         if(old_map!=map)
         {
             unloadPlayerFromCurrentMap();
+            current_map=map->map_file;
             if(old_all_map.isEmpty())
                 old_all_map=all_map;
             else
@@ -358,8 +359,9 @@ bool MapVisualiserPlayer::asyncMapLoaded(MapVisualiserThread::Map_full * tempMap
 {
     if(MapVisualiser::asyncMapLoaded(tempMapObject))
     {
-       finalPlayerStep();
-       return true;
+        if(tempMapObject->logicalMap.map_file==current_map)
+            finalPlayerStep();
+        return true;
     }
     else
         return false;
