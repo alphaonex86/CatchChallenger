@@ -43,7 +43,7 @@ public:
     MapVisualiserThread::Map_full * getMap(QString map);
 
     QString current_map;
-    QHash<QString,MapVisualiserThread::Map_full *> all_map;
+    QHash<QString,MapVisualiserThread::Map_full *> all_map,old_all_map;
 protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
@@ -51,13 +51,6 @@ protected:
 
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
-
-    /** map loaded (displayed or not), because it's in immediate range
-     * The current map is resolved on it, and the current player can go on it (teleporter or border) */
-    QSet<QString> mapUsed;
-    /** \brief to have only the near/displayed map
-     * Then only for the current player */
-    QSet<QString> displayed_map;
 
     bool debugTags;
     QString mLastError;
@@ -82,7 +75,7 @@ private:
 protected slots:
     virtual void resetAll();
 public slots:
-    QString loadOtherMap(const QString &resolvedFileName);
+    void loadOtherMap(const QString &resolvedFileName);
     virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
@@ -90,10 +83,10 @@ private slots:
     QSet<QString> loadTeleporter(MapVisualiserThread::Map_full *map);
     void paintEvent(QPaintEvent * event);
     void updateFPS();
-    void asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject);
     void asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject);
 protected slots:
     void render();
+    virtual bool asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject);
 signals:
     void loadOtherMapAsync(const QString &fileName);
     void mapDisplayed(const QString &fileName);

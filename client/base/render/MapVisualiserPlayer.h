@@ -65,6 +65,7 @@ protected slots:
     virtual void keyPressParse();
 
     void moveStepSlot();
+    void finalPlayerStep();
     virtual bool haveStopTileAction();
     //have look into another direction, if the key remain pressed, apply like move
     void transformLookToMove();
@@ -85,6 +86,7 @@ protected slots:
     void setSpeed(const SPEED_TYPE &speed);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     void mapDisplayedSlot(const QString &fileName);
+    virtual bool asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject);
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void stopped_in_front_of(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
