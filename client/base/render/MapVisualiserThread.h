@@ -35,6 +35,7 @@ public:
         int objectGroupIndex;
         int x,y;//needed for the async load
         int x_pixel,y_pixel;
+        bool displayed;
     };
     explicit MapVisualiserThread();
     ~MapVisualiserThread();
