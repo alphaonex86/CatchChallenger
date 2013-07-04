@@ -25,16 +25,8 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "plant_id don't exists";
         return;
     }
-    if(!displayed_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
-    {
-        QStringList map_list;
-        QSetIterator<QString> i(displayed_map);
-         while (i.hasNext())
-             map_list << i.next();
-        qDebug() << QString("map (%1) not show (into map list: %2), ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
-        return;
-    }
-    if(!all_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
+    QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
+    if(!all_map.contains(mapPath))
     {
         QStringList map_list;
         QHashIterator<QString, MapVisualiserThread::Map_full *> i(all_map);
@@ -43,6 +35,11 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
             map_list << i.key();
         }
         qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
+        return;
+    }
+    if(!mapItem->haveMap(all_map[mapPath]->tiledMap))
+    {
+        qDebug() << QString("map (%1) not show, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
         return;
     }
     MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
@@ -113,7 +110,8 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
     #ifdef DEBUG_CLIENT_PLANTS
     qDebug() << QString("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
     #endif
-    if(!all_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
+    QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
+    if(!all_map.contains(mapPath))
     {
         QStringList map_list;
         QHashIterator<QString, MapVisualiserThread::Map_full *> i(all_map);
@@ -124,21 +122,9 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
         return;
     }
-    if(!displayed_map.contains(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]))
+    if(!mapItem->haveMap(all_map[mapPath]->tiledMap))
     {
-        MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
-        int index=0;
-        while(index<all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->logicalMap.plantList.size())
-        {
-            if(map_full->logicalMap.plantList.at(index).x==x && map_full->logicalMap.plantList.at(index).y==y)
-            {
-                delete map_full->logicalMap.plantList.at(index).mapObject;
-                map_full->logicalMap.plantList.removeAt(index);
-            }
-            else
-                index++;
-        }
-        qDebug() << "map not show, don't remove from the display";
+        qDebug() << QString("map (%1) not show, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
         return;
     }
     MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
