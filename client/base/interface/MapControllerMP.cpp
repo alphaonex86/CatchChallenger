@@ -711,6 +711,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     this->y=y;
 
     unloadPlayerFromCurrentMap();
+    passMapIntoOld();
     QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
     current_map=mapPath;
     if(!haveMapInMemory(mapPath))
@@ -736,8 +737,8 @@ void MapControllerMP::finalPlayerStep()
         if(current_teleport.source_x==x && current_teleport.source_y==y)
         {
             unloadPlayerFromCurrentMap();
-            QString mapPath=QFileInfo(datapackMapPath+current_teleport.map).absoluteFilePath();
-            current_map=mapPath;
+            passMapIntoOld();
+            current_map=current_teleport.map;
             x=current_teleport.destination_x;
             y=current_teleport.destination_y;
             if(!haveMapInMemory(current_map))

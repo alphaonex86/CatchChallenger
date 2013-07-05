@@ -9,6 +9,7 @@
 #include <QFileInfo>
 #include <QPointer>
 
+#include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/DebugClass.h"
@@ -76,9 +77,16 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
         MapVisualiserThread::Map_full * tempMapObject=old_all_map[resolvedFileName];
         tempMapObject->displayed=false;
         old_all_map.remove(resolvedFileName);
-        asyncMapLoaded(tempMapObject);
+        asyncMapLoaded(resolvedFileName,tempMapObject);
         return;
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!QFileInfo(resolvedFileName).exists())
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("file not found to async: %1").arg(resolvedFileName));
+        return;
+    }
+    #endif
     CatchChallenger::DebugClass::debugConsole(QString("async this load: %1").arg(resolvedFileName));
     asyncMap << resolvedFileName;
     emit loadOtherMapAsync(resolvedFileName);
@@ -91,7 +99,6 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         qDebug() << "Map is NULL, can't load more at MapVisualiser::asyncDetectBorder()";
         return;
     }
-    all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
     QRect current_map_rect;
     if(current_map!=NULL)
         current_map_rect=QRect(0,0,all_map[current_map]->logicalMap.width,all_map[current_map]->logicalMap.height);
@@ -142,19 +149,18 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
             if(!asyncMap.contains(tempMapObject->logicalMap.border_semi.right.fileName) && !all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
                 loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
     }
-    if(asyncMap.isEmpty())
-        removeUnusedMap();
 }
 
-bool MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject)
+bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread::Map_full * tempMapObject)
 {
     tempMapObject->displayed=false;
-    asyncMap.removeOne(tempMapObject->logicalMap.map_file);
     if(all_map.contains(tempMapObject->logicalMap.map_file))
     {
+        asyncMap.removeOne(fileName);
         CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, internal bug on: %1").arg(tempMapObject->logicalMap.map_file));
         return false;
     }
+    all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
     //CatchChallenger::DebugClass::debugConsole(QString("todo, place the loaded map: %1").arg(tempMapObject->logicalMap.map_file));
     //destroyMap(tempMapObject);
     //try locate and place it
@@ -270,10 +276,11 @@ bool MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
     }
     else
     {
-        CatchChallenger::DebugClass::debugConsole(QString("map not located to place it then skip: %1").arg(tempMapObject->logicalMap.map_file));
-        destroyMap(tempMapObject);
-        return false;
+        //map not displayer like not visible room
     }
+    asyncMap.removeOne(fileName);
+    if(asyncMap.isEmpty())
+        removeUnusedMap();
     return true;
 }
 
@@ -306,6 +313,21 @@ void MapVisualiser::removeUnusedMap()
         }
         ++j;
     }
+}
+
+void MapVisualiser::passMapIntoOld()
+{
+    if(old_all_map.isEmpty())
+        old_all_map=all_map;
+    else
+    {
+        QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+        while (i != all_map.constEnd()) {
+            old_all_map[i.key()]=i.value();
+            ++i;
+        }
+    }
+    all_map.clear();
 }
 
 void MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)

@@ -337,18 +337,8 @@ void MapVisualiserPlayer::moveStepSlot()
         if(old_map!=map)
         {
             unloadPlayerFromCurrentMap();
+            passMapIntoOld();
             current_map=map->map_file;
-            if(old_all_map.isEmpty())
-                old_all_map=all_map;
-            else
-            {
-                QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
-                while (i != all_map.constEnd()) {
-                    old_all_map[i.key()]=i.value();
-                    ++i;
-                }
-            }
-            all_map.clear();
             if(!old_all_map.contains(map->map_file))
                 emit inWaitingOfMap();
             loadOtherMap(map->map_file);
@@ -362,9 +352,15 @@ void MapVisualiserPlayer::moveStepSlot()
         moveTimer.start();
 }
 
-bool MapVisualiserPlayer::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject)
+bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject)
 {
-    if(MapVisualiser::asyncMapLoaded(tempMapObject))
+    if(tempMapObject==NULL)
+    {
+        qDebug() << QString("Unable to load the map: %1").arg(fileName);
+        asyncMap.removeOne(fileName);
+        return false;
+    }
+    if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
     {
         if(tempMapObject->logicalMap.map_file==current_map)
             finalPlayerStep();

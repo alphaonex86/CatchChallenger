@@ -19,7 +19,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     qRegisterMetaType<MapVisualiserThread::Map_full *>("MapVisualiserThread::Map_full *");
 
     connect(this,SIGNAL(loadOtherMapAsync(QString)),&mapVisualiserThread,SLOT(loadOtherMapAsync(QString)),Qt::QueuedConnection);
-    connect(&mapVisualiserThread,SIGNAL(asyncMapLoaded(MapVisualiserThread::Map_full *)),this,SLOT(asyncMapLoaded(MapVisualiserThread::Map_full *)),Qt::QueuedConnection);
+    connect(&mapVisualiserThread,SIGNAL(asyncMapLoaded(QString,MapVisualiserThread::Map_full *)),this,SLOT(asyncMapLoaded(QString,MapVisualiserThread::Map_full *)),Qt::QueuedConnection);
 
     setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
