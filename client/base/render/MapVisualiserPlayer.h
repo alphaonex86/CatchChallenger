@@ -14,6 +14,7 @@ class MapVisualiserPlayer : public MapVisualiser
 public:
     explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
     ~MapVisualiserPlayer();
+    virtual bool haveMapInMemory(const QString &mapPath);
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
     QString lastLocation() const;
@@ -65,7 +66,7 @@ protected slots:
     virtual void keyPressParse();
 
     void moveStepSlot();
-    void finalPlayerStep();
+    virtual void finalPlayerStep();
     virtual bool haveStopTileAction();
     //have look into another direction, if the key remain pressed, apply like move
     void transformLookToMove();

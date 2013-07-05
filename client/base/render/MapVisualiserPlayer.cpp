@@ -4,6 +4,7 @@
 #include "../interface/DatapackClientLoader.h"
 
 #include <qmath.h>
+#include <QFileInfo>
 
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
@@ -54,6 +55,11 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
     delete grassCurrentObject;
     delete playerMapObject;
     delete playerTileset;
+}
+
+bool MapVisualiserPlayer::haveMapInMemory(const QString &mapPath)
+{
+    return all_map.contains(mapPath) || old_all_map.contains(mapPath);
 }
 
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
@@ -346,6 +352,7 @@ void MapVisualiserPlayer::moveStepSlot()
             if(!old_all_map.contains(map->map_file))
                 emit inWaitingOfMap();
             loadOtherMap(map->map_file);
+
             return;
         }
         else
@@ -374,6 +381,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return;
     }
+    const MapVisualiserThread::Map_full * current_map_pointer=all_map[current_map];
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink[playerMapObject]->setZValue(y);
@@ -387,7 +395,7 @@ void MapVisualiserPlayer::finalPlayerStep()
     if(haveStopTileAction())
         return;
 
-    if(CatchChallenger::MoveOnTheMap::getLedge(all_map[current_map]->logicalMap,x,y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
+    if(CatchChallenger::MoveOnTheMap::getLedge(current_map_pointer->logicalMap,x,y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
     {
         switch(direction)
         {
@@ -417,7 +425,7 @@ void MapVisualiserPlayer::finalPlayerStep()
     if(keyPressed.contains(Qt::Key_Left))
     {
         //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map[current_map]->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_left,current_map_pointer->logicalMap,x,y,true))
         {
             keyPressed.remove(Qt::Key_Left);
             direction=CatchChallenger::Direction_look_at_left;
@@ -439,7 +447,7 @@ void MapVisualiserPlayer::finalPlayerStep()
     else if(keyPressed.contains(Qt::Key_Right))
     {
         //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map[current_map]->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_right,current_map_pointer->logicalMap,x,y,true))
         {
             keyPressed.remove(Qt::Key_Right);
             direction=CatchChallenger::Direction_look_at_right;
@@ -461,7 +469,7 @@ void MapVisualiserPlayer::finalPlayerStep()
     else if(keyPressed.contains(Qt::Key_Up))
     {
         //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map[current_map]->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map_pointer->logicalMap,x,y,true))
         {
             keyPressed.remove(Qt::Key_Up);
             direction=CatchChallenger::Direction_look_at_top;
@@ -483,7 +491,7 @@ void MapVisualiserPlayer::finalPlayerStep()
     else if(keyPressed.contains(Qt::Key_Down))
     {
         //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[current_map]->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_bottom,current_map_pointer->logicalMap,x,y,true))
         {
             keyPressed.remove(Qt::Key_Down);
             direction=CatchChallenger::Direction_look_at_bottom;
