@@ -80,7 +80,7 @@ public slots:
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
 private slots:
-    QSet<QString> loadTeleporter(MapVisualiserThread::Map_full *map);
+    void loadTeleporter(MapVisualiserThread::Map_full *map);
     void paintEvent(QPaintEvent * event);
     void updateFPS();
     void asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject);
