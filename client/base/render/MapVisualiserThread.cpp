@@ -19,7 +19,7 @@ MapVisualiserThread::~MapVisualiserThread()
 void MapVisualiserThread::loadOtherMapAsync(const QString &fileName)
 {
     MapVisualiserThread::Map_full *tempMapObject=loadOtherMap(fileName);
-    emit asyncMapLoaded(tempMapObject);
+    emit asyncMapLoaded(fileName,tempMapObject);
 }
 
 QString MapVisualiserThread::error()
