@@ -432,7 +432,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     {
         unloadOtherPlayerFromMap(otherPlayerList[id]);
         QString mapPath=otherPlayerList[id].current_map;
-        if(!all_map.contains(mapPath) && !old_all_map.contains(mapPath))
+        if(!haveMapInMemory(mapPath))
         {
             /// \todo this case
             qDebug() << QString("move_player(%1), map not already loaded").arg(id).arg(otherPlayerList[id].current_map);
@@ -732,12 +732,6 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     qDebug() << QString("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     qDebug() << QString("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
     #endif
-    if(current_map==NULL)
-    {
-        qDebug() << "Current player not loaded on the map";
-        return;
-    }
-
     //the direction
     this->direction=direction;
     switch(direction)
@@ -769,22 +763,42 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
 
     unloadPlayerFromCurrentMap();
     QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
-    if(!all_map.contains(mapPath) && !old_all_map.contains(mapPath))
+    current_map=mapPath;
+    if(!haveMapInMemory(mapPath))
         emit inWaitingOfMap();
     loadOtherMap(mapPath);
-/*    current_map=all_map[current_map_fileName];
+    CatchChallenger::Api_client_real::client->teleportDone();
+}
 
-    mapUsed=loadMap(all_map[current_map],true);
-    removeUnusedMap();
-    loadPlayerFromCurrentMap();
-
-    QStringList map_list;
-    QSetIterator<QString> i(displayed_map);
-    while (i.hasNext())
-        map_list << i.next();
-    qDebug() << QString("MapControllerMP::teleportTo(): displayed_map: %1").arg(map_list.join(";"));
-
-    CatchChallenger::Api_client_real::client->teleportDone();*/
+void MapControllerMP::finalPlayerStep()
+{
+    if(!all_map.contains(current_map))
+    {
+        qDebug() << "current map not loaded, unable to do finalPlayerStep()";
+        return;
+    }
+    const MapVisualiserThread::Map_full * current_map_pointer=all_map[current_map];
+    int index=0;
+    const int size=current_map_pointer->logicalMap.teleport_semi.size();
+    while(index<size)
+    {
+        const CatchChallenger::Map_semi_teleport &current_teleport=current_map_pointer->logicalMap.teleport_semi.at(index);
+        //if need be teleported
+        if(current_teleport.source_x==x && current_teleport.source_y==y)
+        {
+            unloadPlayerFromCurrentMap();
+            QString mapPath=QFileInfo(datapackMapPath+current_teleport.map).absoluteFilePath();
+            current_map=mapPath;
+            x=current_teleport.destination_x;
+            y=current_teleport.destination_y;
+            if(!haveMapInMemory(current_map))
+                emit inWaitingOfMap();
+            loadOtherMap(current_map);
+            return;
+        }
+        index++;
+    }
+    MapVisualiserPlayer::finalPlayerStep();
 }
 
 //player info

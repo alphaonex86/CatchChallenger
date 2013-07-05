@@ -156,6 +156,7 @@ bool MapVisualiser::asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject
         tempMapObject->y=0;
         tempMapObject->x_pixel=0;
         tempMapObject->y_pixel=0;
+        loadTeleporter(tempMapObject);
         asyncDetectBorder(tempMapObject);
     }
     else if(all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
@@ -328,33 +329,15 @@ void MapVisualiser::removeUnusedMap()
     }
 }
 
-QSet<QString> MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
+void MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
 {
-/*    QSet<QString> mapUsed;
     //load the teleporter
     int index=0;
     while(index<map->logicalMap.teleport_semi.size())
     {
-        QString mapIndex=loadOtherMap(map->logicalMap.teleport_semi[index].map);
-        //if is correctly loaded
-        if(!mapIndex.isEmpty())
-        {
-            //if the teleporter is in range
-            if(map->logicalMap.teleport_semi[index].destination_x<all_map[mapIndex]->logicalMap.width && map->logicalMap.teleport_semi[index].destination_y<all_map[mapIndex]->logicalMap.height)
-            {
-                int virtual_position=map->logicalMap.teleport_semi[index].source_x+map->logicalMap.teleport_semi[index].source_y*map->logicalMap.width;
-                map->logicalMap.teleporter[virtual_position].map=&all_map[mapIndex]->logicalMap;
-                map->logicalMap.teleporter[virtual_position].x=map->logicalMap.teleport_semi[index].destination_x;
-                map->logicalMap.teleporter[virtual_position].y=map->logicalMap.teleport_semi[index].destination_y;
-
-                mapUsed << mapIndex;
-            }
-            else
-                qDebug() << QString("The teleporter is out of range: %1").arg(mapIndex);
-        }
+        loadOtherMap(map->logicalMap.teleport_semi[index].map);
         index++;
     }
-    return mapUsed;*/
 }
 
 /*QSet<QString> MapVisualiser::loadNearMap(const QString &fileName, const bool &display, const qint32 &x, const qint32 &y, const qint32 &x_pixel, const qint32 &y_pixel,const QSet<QString> &previousLoadedNearMap)

@@ -140,6 +140,7 @@ private slots:
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
 protected slots:
+    virtual void finalPlayerStep();
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
