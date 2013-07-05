@@ -45,7 +45,7 @@ public:
     int tagTilesetIndex;
     QString error();
 signals:
-    void asyncMapLoaded(MapVisualiserThread::Map_full *parsedMap);
+    void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);
 public slots:
     void loadOtherMapAsync(const QString &fileName);
     Map_full * loadOtherMap(const QString &fileName);

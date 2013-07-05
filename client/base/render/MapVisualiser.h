@@ -68,10 +68,9 @@ protected:
     Tiled::Layer *grassOver;
 
     MapVisualiserThread mapVisualiserThread;
+    QStringList asyncMap;
 
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
-private:
-    QStringList asyncMap;
 protected slots:
     virtual void resetAll();
 public slots:
@@ -86,7 +85,8 @@ private slots:
     void asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject);
 protected slots:
     void render();
-    virtual bool asyncMapLoaded(MapVisualiserThread::Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
+    void passMapIntoOld();
 signals:
     void loadOtherMapAsync(const QString &fileName);
     void mapDisplayed(const QString &fileName);
