@@ -268,11 +268,11 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player=%1")
+        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player=%1")
+        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
     }
