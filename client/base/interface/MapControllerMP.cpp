@@ -81,57 +81,6 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
     current_map=fileInformations.absoluteFilePath();
     loadOtherMap(current_map);
     return true;
-
-    /*QString current_map_fileName=loadOtherMap(fileName);
-    if(current_map_fileName.isEmpty())
-    {
-        //map not loaded or async
-        QMessageBox::critical(NULL,"Error",QString("Map not loaded for %1: %2").arg(fileName).arg(mLastError));
-        return false;
-    }
-    if(!all_map.contains(current_map_fileName))
-    {
-        qDebug() << "Map is empty, can't load more at MapControllerMP::loadPlayerMap()";
-        return true;
-    }
-    current_map=all_map[current_map_fileName];
-
-    if(current_map==NULL)
-    {
-        qDebug() << "Map is NULL, can't load more at MapControllerMP::loadPlayerMap()";
-        return false;
-    }
-
-    render();
-
-    mapUsed=loadMap(current_map,true);
-    removeUnusedMap();
-    loadPlayerFromCurrentMap();
-
-    QStringList map_list;
-    QSetIterator<QString> i(displayed_map);
-    while (i.hasNext())
-        map_list << i.next();
-    qDebug() << QString("MapControllerMP::loadPlayerMap(): displayed_map: %1").arg(map_list.join(";"));
-
-    show();*/
-
-    return true;
-}
-
-void MapControllerMP::removeUnusedMap()
-{
-    ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
-    /*QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
-    while (i != all_map.constEnd()) {
-        if(!mapUsed.contains((*i)->logicalMap.map_file) && !mapUsedByOtherPlayer.contains((*i)->logicalMap.map_file))
-        {
-            destroyMap(*i);
-            i = all_map.constBegin();//needed
-        }
-        else
-            ++i;
-    }*/
 }
 
 //map move
@@ -1148,24 +1097,3 @@ void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
     }
     MapVisualiser::destroyMap(map);
 }
-
-/*QSet<QString> MapControllerMP::loadMap(MapVisualiserThread::Map_full *map,const bool &display)
-{
-    if(map==NULL)
-    {
-        qDebug() << "Map is NULL, can't load more at MapControllerMP::loadMap()";
-        return QSet<QString>();
-    }
-
-    QSet<QString> tempReturn=MapVisualiser::loadMap(map,display);
-    //resolv here the mapId to allow the reinsert for other player
-    int index=0;
-    while(index<DatapackClientLoader::datapackLoader.maps.size())
-    {
-        QString resolvedFileName=QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP+DatapackClientLoader::datapackLoader.maps.at(index)).absoluteFilePath();
-        if(all_map.contains(resolvedFileName))
-            all_map[resolvedFileName]->logicalMap.id=index;
-        index++;
-    }
-    return tempReturn;
-}*/

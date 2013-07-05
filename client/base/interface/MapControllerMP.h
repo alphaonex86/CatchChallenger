@@ -134,7 +134,6 @@ protected:
     QString datapackMapPath;
 private slots:
     bool loadPlayerMap(const QString &fileName,const quint8 &x,const quint8 &y);
-    virtual void removeUnusedMap();
     void moveOtherPlayerStepSlot();
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
