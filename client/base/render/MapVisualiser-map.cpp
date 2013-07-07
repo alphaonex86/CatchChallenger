@@ -77,6 +77,11 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
         MapVisualiserThread::Map_full * tempMapObject=old_all_map[resolvedFileName];
         tempMapObject->displayed=false;
         old_all_map.remove(resolvedFileName);
+        tempMapObject->logicalMap.border.bottom.map=NULL;
+        tempMapObject->logicalMap.border.top.map=NULL;
+        tempMapObject->logicalMap.border.left.map=NULL;
+        tempMapObject->logicalMap.border.right.map=NULL;
+        tempMapObject->logicalMap.teleporter.clear();
         asyncMapLoaded(resolvedFileName,tempMapObject);
         return;
     }
