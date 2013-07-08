@@ -41,6 +41,7 @@ protected:
     CatchChallenger::Direction direction;
     quint8 x,y;
     bool inMove;
+    bool teleportedOnPush;
     bool stepAlternance;
     QString mLastLocation;
 

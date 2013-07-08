@@ -15,6 +15,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     MapVisualiser(debugTags,useCache,OpenGL)
 {
     inMove=false;
+    teleportedOnPush=false;
     x=0;
     y=0;
 
@@ -298,36 +299,15 @@ void MapVisualiserPlayer::moveStepSlot()
         switch(direction)
         {
             case CatchChallenger::Direction_move_at_left:
-                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
-                {
-                    qDebug() << "Bug at move";
-                    return;
-                }
-                direction=CatchChallenger::Direction_look_at_left;
-            break;
             case CatchChallenger::Direction_move_at_right:
-                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
-                {
-                    qDebug() << "Bug at move";
-                    return;
-                }
-                direction=CatchChallenger::Direction_look_at_right;
-            break;
             case CatchChallenger::Direction_move_at_top:
-                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
-                {
-                    qDebug() << "Bug at move";
-                    return;
-                }
-                direction=CatchChallenger::Direction_look_at_top;
-            break;
             case CatchChallenger::Direction_move_at_bottom:
                 if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
                 {
                     qDebug() << "Bug at move";
                     return;
                 }
-                direction=CatchChallenger::Direction_look_at_bottom;
+                direction=CatchChallenger::MoveOnTheMap::directionToDirectionLook(direction);
             break;
             default:
                 qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(moveStep).arg(direction);
@@ -342,7 +322,6 @@ void MapVisualiserPlayer::moveStepSlot()
             if(!old_all_map.contains(map->map_file))
                 emit inWaitingOfMap();
             loadOtherMap(map->map_file);
-
             return;
         }
         else

@@ -32,6 +32,7 @@ public:
         Tiled::Map * tiledMap;
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
+        QHash<quint16,QMultiHash<quint8,Tiled::MapObject *> > animatedObject;
         int objectGroupIndex;
         int x,y;//needed for the async load
         int x_pixel,y_pixel;
