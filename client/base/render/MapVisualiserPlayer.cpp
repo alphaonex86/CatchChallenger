@@ -64,7 +64,7 @@ bool MapVisualiserPlayer::haveMapInMemory(const QString &mapPath)
 
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 {
-    if(current_map==NULL)
+    if(current_map.isEmpty() || !all_map.contains(current_map))
         return;
 
     //ignore the no arrow key
@@ -676,7 +676,7 @@ void MapVisualiserPlayer::transformLookToMove()
 
 void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
 {
-    if(current_map==NULL)
+    if(current_map.isEmpty() || !all_map.contains(current_map))
         return;
 
     //ignore the no arrow key
