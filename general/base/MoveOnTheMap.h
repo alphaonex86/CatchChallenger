@@ -23,11 +23,13 @@ public:
     //debug function
     static QString directionToString(const Direction &direction);
     static Orientation directionToOrientation(const Direction &direction);
+    static Direction directionToDirectionLook(const Direction &direction);
 
     static bool canGoTo(const Direction &direction, const Map &map, const quint8 &x, const quint8 &y, const bool &checkCollision, const bool &allowTeleport=true);
     static ParsedLayerLedges getLedge(const Map &map, const quint8 &x, const quint8 &y);
     static bool haveGrass(const Map &map,const COORD_TYPE &x,const COORD_TYPE &y);
     static bool move(Direction direction, Map ** map, quint8 *x, quint8 *y, const bool &checkCollision=false, const bool &allowTeleport=true);
+    static bool moveWithoutTeleport(Direction direction, Map ** map, quint8 *x, quint8 *y, const bool &checkCollision=false, const bool &allowTeleport=true);
     static bool teleport(Map ** map, quint8 *x, quint8 *y);
     static bool needBeTeleported(const Map &map, const COORD_TYPE &x, const COORD_TYPE &y);
 
