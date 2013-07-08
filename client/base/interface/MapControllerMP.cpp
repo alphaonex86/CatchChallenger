@@ -114,7 +114,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
     #endif
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
-        if(current_map!=NULL)
+        if(!current_map.isEmpty())
         {
             qDebug() << "Current player already loaded on the map";
             return;

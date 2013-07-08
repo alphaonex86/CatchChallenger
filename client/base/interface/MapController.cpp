@@ -12,6 +12,7 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     connect(CatchChallenger::Api_client_real::client,SIGNAL(remove_plant(quint32,quint16,quint16)),this,SLOT(remove_plant(quint32,quint16,quint16)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(plant_collected(CatchChallenger::Plant_collect)),this,SLOT(plant_collected(CatchChallenger::Plant_collect)));
+    connect(this,SIGNAL(mapDisplayed(QString)),this,SLOT(tryLoadPlantOnMapDisplayed(QString)),Qt::QueuedConnection);
 }
 
 MapController::~MapController()
