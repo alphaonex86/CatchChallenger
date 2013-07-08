@@ -26,21 +26,11 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         return;
     }
     QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
-    if(!all_map.contains(mapPath))
-    {
-        QStringList map_list;
-        QHashIterator<QString, MapVisualiserThread::Map_full *> i(all_map);
-        while (i.hasNext()) {
-            i.next();
-            map_list << i.key();
-        }
-        qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
-        return;
-    }
     if(!haveMapInMemory(mapPath) || !mapItem->haveMap(all_map[mapPath]->tiledMap))
     {
         qDebug() << QString("map (%1) not show or not loaded, delay it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
         DelayedPlantInsert tempItem;
+        tempItem.mapId=mapId;
         tempItem.x=x;
         tempItem.y=y;
         tempItem.plant_id=plant_id;
