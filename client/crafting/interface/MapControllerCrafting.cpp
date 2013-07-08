@@ -37,9 +37,15 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
         return;
     }
-    if(!mapItem->haveMap(all_map[mapPath]->tiledMap))
+    if(!haveMapInMemory(mapPath) || !mapItem->haveMap(all_map[mapPath]->tiledMap))
     {
-        qDebug() << QString("map (%1) not show, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
+        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
+        DelayedPlantInsert tempItem;
+        tempItem.x=x;
+        tempItem.y=y;
+        tempItem.plant_id=plant_id;
+        tempItem.seconds_to_mature=seconds_to_mature;
+        delayedPlantInsertOnMap.insert(mapPath,tempItem);
         return;
     }
     MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
@@ -169,9 +175,7 @@ void MapController::plant_collected(const CatchChallenger::Plant_collect &stat)
 void MapController::reinject_signals()
 {
     MapControllerMP::reinject_signals();
-
     int index;
-
     if(mHaveTheDatapack && player_informations_is_set)
     {
         index=0;
@@ -183,3 +187,16 @@ void MapController::reinject_signals()
         delayedPlantInsert.clear();
     }
 }
+
+void MapController::tryLoadPlantOnMapDisplayed(const QString &fileName)
+{
+    int index=0;
+    QList<DelayedPlantInsert> values=delayedPlantInsertOnMap.values(fileName);
+    while(index<values.size())
+    {
+        insert_plant(values.at(index).mapId,values.at(index).x,values.at(index).y,values.at(index).plant_id,values.at(index).seconds_to_mature);
+        index++;
+    }
+    delayedPlantInsertOnMap.remove(fileName);
+}
+
