@@ -125,6 +125,34 @@ Orientation MoveOnTheMap::directionToOrientation(const Direction &direction)
     return Orientation_bottom;
 }
 
+Direction MoveOnTheMap::directionToDirectionLook(const Direction &direction)
+{
+    switch(direction)
+    {
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+            return direction;
+        break;
+        case Direction_move_at_top:
+            return Direction_look_at_top;
+        break;
+        case Direction_move_at_right:
+            return Direction_look_at_right;
+        break;
+        case Direction_move_at_bottom:
+            return Direction_look_at_bottom;
+        break;
+        case Direction_move_at_left:
+            return Direction_look_at_left;
+        break;
+        default:
+        break;
+    }
+    return Direction_look_at_bottom;
+}
+
 bool MoveOnTheMap::canGoTo(const Direction &direction,const Map &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport)
 {
     switch(direction)
@@ -303,6 +331,14 @@ bool MoveOnTheMap::isGrass(const Map &map, const quint8 &x, const quint8 &y)
 
 bool MoveOnTheMap::move(Direction direction, Map ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
 {
+    if(!moveWithoutTeleport(direction,map,x,y,checkCollision,allowTeleport))
+        return false;
+    teleport(map,x,y);
+    return true;
+}
+
+bool MoveOnTheMap::moveWithoutTeleport(Direction direction, Map ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
+{
     if(*map==NULL)
         return false;
     if(!canGoTo(direction,**map,*x,*y,checkCollision,allowTeleport))
@@ -318,7 +354,6 @@ bool MoveOnTheMap::move(Direction direction, Map ** map, COORD_TYPE *x, COORD_TY
                 *y+=(*map)->border.left.y_offset;
                 *map=(*map)->border.left.map;
             }
-            teleport(map,x,y);
             return true;
         break;
         case Direction_move_at_right:
@@ -330,7 +365,6 @@ bool MoveOnTheMap::move(Direction direction, Map ** map, COORD_TYPE *x, COORD_TY
                 *y+=(*map)->border.right.y_offset;
                 *map=(*map)->border.right.map;
             }
-            teleport(map,x,y);
             return true;
         break;
         case Direction_move_at_top:
@@ -342,7 +376,6 @@ bool MoveOnTheMap::move(Direction direction, Map ** map, COORD_TYPE *x, COORD_TY
                 *x+=(*map)->border.top.x_offset;
                 *map=(*map)->border.top.map;
             }
-            teleport(map,x,y);
             return true;
         break;
         case Direction_move_at_bottom:
@@ -354,7 +387,6 @@ bool MoveOnTheMap::move(Direction direction, Map ** map, COORD_TYPE *x, COORD_TY
                 *x+=(*map)->border.bottom.x_offset;
                 *map=(*map)->border.bottom.map;
             }
-            teleport(map,x,y);
             return true;
         break;
         default:

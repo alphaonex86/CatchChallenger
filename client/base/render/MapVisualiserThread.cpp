@@ -306,6 +306,75 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         }
         index++;
     }
+    //load the animation into tile layer
+    index=0;
+    while(index<tempMapObject->tiledMap->layerCount())
+    {
+        if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
+        {
+            int x=0,y;
+            while(x<tileLayer->width())
+            {
+                y=0;
+                while(y<tileLayer->height())
+                {
+                    Tiled::Cell cell=tileLayer->cellAt(x,y);
+                    Tiled::Tile *tile=cell.tile;
+                    if(tile!=NULL)
+                    {
+                        QString animation=tile->property("animation");
+                        if(!animation.isEmpty())
+                        {
+                            QStringList animationList=animation.split(";");
+                            if(animationList.size()==2)
+                            {
+                                if(animationList.at(0).contains(QRegExp("^[0-9]{1,5}ms$")) && animationList.at(1).contains(QRegExp("^[0-9]{1,3}frames$")))
+                                {
+                                    QString msString=animationList.at(0);
+                                    QString framesString=animationList.at(1);
+                                    msString.remove("ms");
+                                    framesString.remove("frames");
+                                    quint16 ms=msString.toUShort();
+                                    quint8 frames=framesString.toUShort();
+                                    if(ms>0 && frames>1)
+                                    {
+                                        {
+                                            Tiled::Cell cell;
+                                            cell.tile=NULL;
+                                            tileLayer->setCell(x,y,cell);
+                                        }
+                                        Tiled::ObjectGroup *objectGroup=NULL;
+                                        if(index<(tempMapObject->tiledMap->layerCount()))
+                                            if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
+                                                objectGroup=objectGroupTemp;
+                                        if(objectGroup==NULL)
+                                        {
+                                            objectGroup=new Tiled::ObjectGroup;
+                                            tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
+                                        }
+                                        Tiled::MapObject *object=new Tiled::MapObject();
+                                        objectGroup->addObject(object);
+                                        object->setPosition(QPointF(x,y+1));
+                                        object->setTile(tile);
+                                        tempMapObject->animatedObject[ms].insert(frames,object);
+                                    }
+                                    else
+                                        qDebug() << "ms is 0 or frame is <=1";
+                                }
+                                else
+                                    qDebug() << "Wrong animation tile args regex match";
+                            }
+                            else
+                                qDebug() << "Wrong animation tile args count";
+                        }
+                    }
+                    y++;
+                }
+                x++;
+            }
+        }
+        index++;
+    }
 
     loadOtherMapClientPart(tempMapObject);
 
