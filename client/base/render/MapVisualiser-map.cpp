@@ -167,8 +167,19 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
         return false;
     }
     all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
-    //CatchChallenger::DebugClass::debugConsole(QString("todo, place the loaded map: %1").arg(tempMapObject->logicalMap.map_file));
-    //destroyMap(tempMapObject);
+    QHash<quint16,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
+    while (i != tempMapObject->animatedObject.constEnd()) {
+        if(!animationTimer.contains(i.key()))
+        {
+            QTimer *newTimer=new QTimer();
+            newTimer->setInterval(i.key());
+            animationTimer[i.key()]=newTimer;
+            connect(newTimer,SIGNAL(timeout()),this,SLOT(applyTheAnimationTimer()));
+            /// \todo syncro all the timer start, with frame offset to align with the other timer
+            newTimer->start();
+        }
+        ++i;
+    }
     //try locate and place it
     if(tempMapObject->logicalMap.map_file==current_map)
     {
@@ -310,6 +321,51 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
         if(asyncMap.isEmpty())
             removeUnusedMap();
     return true;
+}
+
+void MapVisualiser::applyTheAnimationTimer()
+{
+    QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
+    quint16 interval=timer->interval();
+    bool isUsed=false;
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+    while (i != all_map.constEnd()) {
+        MapVisualiserThread::Map_full * tempMap=i.value();
+        if(tempMap->displayed)
+        {
+            if(tempMap->animatedObject.contains(interval))
+            {
+                if(tempMap->animatedObject[interval].frames>1)
+                {
+                    isUsed=true;
+                    tempMap->animatedObject[interval].count++;
+                    qint8 frameOffset=1;
+                    if(tempMap->animatedObject[interval].count>=tempMap->animatedObject[interval].frames)
+                    {
+                        frameOffset+=-tempMap->animatedObject[interval].frames;
+                        tempMap->animatedObject[interval].count=0;
+                    }
+                    QList<Tiled::MapObject *> animatedObject=tempMap->animatedObject[interval].animatedObject;
+                    int index=0;
+                    while(index<animatedObject.size())
+                    {
+                        Tiled::MapObject * mapObject=animatedObject.at(index);
+                        Tiled::Tile *tile=mapObject->tile();
+                        Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+frameOffset);
+                        mapObject->setTile(newTile);
+                        index++;
+                    }
+                }
+            }
+        }
+        ++i;
+    }
+    if(!isUsed)
+    {
+        animationTimer.remove(interval);
+        timer->stop();
+        delete timer;
+    }
 }
 
 void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const quint32 &botId,const quint8 &x,const quint8 &y,const QString &lookAt,const QString &skin)
