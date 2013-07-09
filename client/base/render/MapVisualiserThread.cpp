@@ -356,7 +356,14 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                         objectGroup->addObject(object);
                                         object->setPosition(QPointF(x,y+1));
                                         object->setTile(tile);
-                                        tempMapObject->animatedObject[ms].insert(frames,object);
+                                        if(!tempMapObject->animatedObject.contains(ms))
+                                        {
+                                            Map_animation tempAnimationDescriptor;
+                                            tempAnimationDescriptor.count=0;
+                                            tempAnimationDescriptor.frames=frames;
+                                            tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
+                                        }
+                                        tempMapObject->animatedObject[ms].animatedObject << object;
                                     }
                                     else
                                         qDebug() << "ms is 0 or frame is <=1";

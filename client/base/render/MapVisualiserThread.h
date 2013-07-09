@@ -26,13 +26,19 @@ class MapVisualiserThread : public QThread
 {
     Q_OBJECT
 public:
+    struct Map_animation
+    {
+        quint8 frames;
+        quint8 count;
+        QList<Tiled::MapObject *> animatedObject;
+    };
     struct Map_full
     {
         CatchChallenger::Map_client logicalMap;
         Tiled::Map * tiledMap;
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
-        QHash<quint16,QMultiHash<quint8,Tiled::MapObject *> > animatedObject;
+        QHash<quint16,Map_animation> animatedObject;
         int objectGroupIndex;
         int x,y;//needed for the async load
         int x_pixel,y_pixel;
