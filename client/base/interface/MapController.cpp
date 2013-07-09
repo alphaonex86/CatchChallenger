@@ -112,7 +112,9 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             {
                 if(DatapackClientLoader::datapackLoader.botFights.contains(fightid))
                 {
+                    #ifdef DEBUG_CLIENT_BOT
                     CatchChallenger::DebugClass::debugConsole(QString("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
+                    #endif
                     quint8 temp_x=x,temp_y=y;
                     int index_botfight_range=0;
                     CatchChallenger::Map *map=&parsedMap->logicalMap;
