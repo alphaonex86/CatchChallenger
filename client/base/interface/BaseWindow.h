@@ -12,6 +12,7 @@
 #include <QHBoxLayout>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QMovie>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -346,6 +347,7 @@ private:
     bool haveDisplayCurrentAttackSuccess;
     bool haveDisplayOtherAttackSuccess;
     BattleType battleType;
+    QMovie *movie;
 
     //trade
     TradeOtherStat tradeOtherStat;

@@ -42,6 +42,7 @@ BaseWindow::BaseWindow() :
     ui->setupUi(this);
     Chat::chat=new Chat(ui->page_map);
     escape=false;
+    movie=NULL;
 
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
@@ -176,6 +177,8 @@ BaseWindow::BaseWindow() :
 
 BaseWindow::~BaseWindow()
 {
+    if(movie!=NULL)
+        delete movie;
     delete ui;
     delete MapController::mapController;
     delete Chat::chat;

@@ -206,6 +206,10 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
         connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
 
     updateCanDoFight();
+    if(ableToFight)
+        botFightCollision(map,x,y);
+    else
+        checkLoose();
 }
 
 bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
