@@ -74,6 +74,11 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     emit datapackParsed();
 }
 
+QString DatapackClientLoader::getDatapackPath()
+{
+    return datapackPath;
+}
+
 void DatapackClientLoader::parseItems()
 {
     //open and quick check the file

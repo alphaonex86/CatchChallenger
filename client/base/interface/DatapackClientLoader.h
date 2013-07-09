@@ -72,6 +72,7 @@ public:
     QStringList maps,skins;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
+    QString getDatapackPath();
 protected:
     void run();
 public slots:

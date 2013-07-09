@@ -1119,6 +1119,7 @@ void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
         return;
     }
     Skill::AttackReturn attackReturn;
+    attackReturn.attack=skill;
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.success=false;
     const Skill::SkillList &skillList=monsterSkills[playerMonsterList.at(selectedMonster).skills.at(index).skill].level.at(playerMonsterList.at(selectedMonster).skills.at(index).level-1);
