@@ -14,6 +14,7 @@
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>
 #include <QTimer>
+#include <QList>
 #include <QKeyEvent>
 #include <QGraphicsItem>
 #include <QRectF>
@@ -69,6 +70,7 @@ protected:
 
     MapVisualiserThread mapVisualiserThread;
     QStringList asyncMap;
+    QHash<quint8,QTimer *> animationTimer;
 
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
 protected slots:
@@ -83,6 +85,7 @@ private slots:
     void paintEvent(QPaintEvent * event);
     void updateFPS();
     void asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject);
+    void applyTheAnimationTimer();
 protected slots:
     void render();
     virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
