@@ -57,6 +57,7 @@ signals:
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     virtual void connect_the_last_client(Client * client);
+    void closeDB();
     //starting function
     virtual bool check_if_now_stopped();//return true if can be stopped
     virtual void loadAndFixSettings();

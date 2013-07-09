@@ -481,7 +481,9 @@ void MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                 {
                                                     if(botFiles[botFile].contains(botId))
                                                     {
+                                                        #ifdef DEBUG_CLIENT_BOT
                                                         CatchChallenger::DebugClass::debugConsole(QString("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
+                                                        #endif
                                                         parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
                                                         property_parsed.remove("file");
                                                         property_parsed.remove("id");

@@ -1003,6 +1003,7 @@ void BaseWindow::updateRXTX()
         ui->labelOutput->setText(QString("%1KB/s").arg(TXSpeed/1024,0,'g',1));
     else
         ui->labelOutput->setText(QString("%1KB/s").arg(TXSpeed/1024,0,'g',0));
+    #ifdef DEBUG_CLIENT_NETWORK_USAGE
     if(RXSpeed>0 && TXSpeed>0)
         qDebug() << QString("received: %1B/s, transmited: %2B/s").arg(RXSpeed).arg(TXSpeed);
     else
@@ -1012,6 +1013,7 @@ void BaseWindow::updateRXTX()
         if(TXSpeed>0)
             qDebug() << QString("transmited: %1B/s").arg(TXSpeed);
     }
+    #endif
     updateRXTXTime.restart();
     previousRXSize=RXSize;
     previousTXSize=TXSize;
@@ -2366,9 +2368,4 @@ void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *
 void CatchChallenger::BaseWindow::on_close_IG_dialog_clicked()
 {
     isInQuest=false;
-}
-
-void CatchChallenger::BaseWindow::on_pushButton_clicked()
-{
-
 }
