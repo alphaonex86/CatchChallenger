@@ -65,9 +65,18 @@ BaseServer::~BaseServer()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
     GlobalServerData::serverPrivateVariables.eventThreaderList.clear();
+    closeDB();
+}
+
+void BaseServer::closeDB()
+{
     if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
+        GlobalServerData::serverPrivateVariables.db->removeDatabase(GlobalServerData::serverPrivateVariables.db->connectionName());
+        GlobalServerData::serverPrivateVariables.db->removeDatabase(GlobalServerData::serverPrivateVariables.db->databaseName());
         GlobalServerData::serverPrivateVariables.db->close();
+        if(GlobalServerData::serverPrivateVariables.db->isOpen())
+            qDebug() << "db is closed but remain open: " << GlobalServerData::serverPrivateVariables.db->lastError().databaseText() << GlobalServerData::serverPrivateVariables.db->lastError().driverText();
         delete GlobalServerData::serverPrivateVariables.db;
         GlobalServerData::serverPrivateVariables.db=NULL;
     }
@@ -722,9 +731,11 @@ bool BaseServer::initialize_the_database()
 {
     if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
-        GlobalServerData::serverPrivateVariables.db->close();
-        delete GlobalServerData::serverPrivateVariables.db;
-        GlobalServerData::serverPrivateVariables.db=NULL;
+        DebugClass::debugConsole(QString("Disconnected to %1 at %2 (%3)")
+                                 .arg(GlobalServerData::serverPrivateVariables.db_type_string)
+                                 .arg(GlobalServerData::serverSettings.database.mysql.host)
+                                 .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
+        closeDB();
     }
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -917,7 +928,13 @@ bool BaseServer::check_if_now_stopped()
 
     DebugClass::debugConsole("Fully stopped");
     if(GlobalServerData::serverPrivateVariables.db!=NULL)
-        GlobalServerData::serverPrivateVariables.db->close();
+    {
+        DebugClass::debugConsole(QString("Disconnected to %1 at %2 (%3)")
+                                 .arg(GlobalServerData::serverPrivateVariables.db_type_string)
+                                 .arg(GlobalServerData::serverSettings.database.mysql.host)
+                                 .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
+        closeDB();
+    }
     stat=Down;
     emit is_started(false);
 

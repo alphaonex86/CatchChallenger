@@ -431,7 +431,11 @@ void MainWindow::on_SaveGame_New_clicked()
         }
         index++;
     }
+    db.removeDatabase(db.connectionName());
+    db.removeDatabase(db.databaseName());
     db.close();
+    if(db.isOpen())
+        qDebug() << "db is closed but remain open: " << db.lastError().databaseText() << db.lastError().driverText();
 
     updateSavegameList();
 

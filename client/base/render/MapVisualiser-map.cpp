@@ -93,7 +93,6 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
         return;
     }
     #endif
-    CatchChallenger::DebugClass::debugConsole(QString("async this load: %1").arg(resolvedFileName));
     asyncMap << resolvedFileName;
     emit loadOtherMapAsync(resolvedFileName);
 }
@@ -380,11 +379,9 @@ void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 
 void MapVisualiser::removeUnusedMap()
 {
-    qDebug() << QString("removeUnusedMap(): all the needed map is loaded, clean the useless");
     //undisplay the unused map
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = old_all_map.constBegin();
     while (i != old_all_map.constEnd()) {
-        qDebug() << QString("removeUnusedMap(): map %1 is no more needed").arg(i.key());
         destroyMap(i.value());
         i = old_all_map.constBegin();
     }
@@ -392,13 +389,8 @@ void MapVisualiser::removeUnusedMap()
     QHash<QString,MapVisualiserThread::Map_full *>::const_iterator j = all_map.constBegin();
     while (j != all_map.constEnd()) {
         if(j.value()->logicalMap.map_file!=current_map)
-        {
             if(!j.value()->displayed)
-            {
-                qDebug() << QString("removeUnusedMap(): map %1 needed but not displayed").arg(j.key());
                 mapItem->removeMap(j.value()->tiledMap);
-            }
-        }
         ++j;
     }
 }
