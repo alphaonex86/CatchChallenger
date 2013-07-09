@@ -724,6 +724,14 @@ void BaseWindow::displayAttack()
     //if start, display text
     if(displayAttackProgression==0)
     {
+        if(movie!=NULL)
+        {
+            movie->stop();
+            delete movie;
+        }
+        movie=NULL;
+        ui->labelFightMonsterAttackTop->setMovie(NULL);
+        ui->labelFightMonsterAttackBottom->setMovie(NULL);
         qDebug() << "displayAttack(): displayAttackProgression==0";
         updateAttackTime.restart();
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
@@ -749,6 +757,23 @@ void BaseWindow::displayAttack()
                 damage=tr("The other %1 take %2 of damage")
                     .arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getOtherMonster().monster].name)
                     .arg(-quantity);
+            if(CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().success)
+            {
+                quint32 attackId=CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().attack;
+                QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_SKILLANIMATION;
+                QString fileAnimation=skillAnimation+QString("%1.mng").arg(attackId);
+                if(QFile(fileAnimation).exists())
+                {
+                    movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightMonsterAttackTop);
+                    if(movie->isValid())
+                    {
+                        ui->labelFightMonsterAttackTop->setMovie(movie);
+                        movie->start();
+                    }
+                    else
+                        qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+                }
+            }
         }
         else
         {
@@ -760,6 +785,23 @@ void BaseWindow::displayAttack()
                 damage=tr("Your %1 take %2 of damage")
                     .arg(CatchChallenger::FightEngine::fightEngine.monsterExtra[CatchChallenger::FightEngine::fightEngine.getFightMonster().monster].name)
                     .arg(-quantity);
+            if(CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().success)
+            {
+                quint32 attackId=CatchChallenger::FightEngine::fightEngine.getAttackReturnList().first().attack;
+                QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_SKILLANIMATION;
+                QString fileAnimation=skillAnimation+QString("%1.mng").arg(attackId);
+                if(QFile(fileAnimation).exists())
+                {
+                    movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightMonsterAttackBottom);
+                    if(movie->isValid())
+                    {
+                        ui->labelFightMonsterAttackBottom->setMovie(movie);
+                        movie->start();
+                    }
+                    else
+                        qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+                }
+            }
         }
         ui->labelFightEnter->setText(QString("%1<br />%2").arg(attackOwner).arg(damage));
     }
@@ -769,16 +811,25 @@ void BaseWindow::displayAttack()
         {
             if(updateAttackTime.elapsed()<2000 /* 2000ms */)
                 ui->labelFightMonsterTop->setVisible(!ui->labelFightMonsterTop->isVisible());
-            else
-                ui->labelFightMonsterTop->setVisible(true);
         }
         else
         {
             if(updateAttackTime.elapsed()<2000 /* 2000ms */)
                 ui->labelFightMonsterBottom->setVisible(!ui->labelFightMonsterBottom->isVisible());
-            else
-                ui->labelFightMonsterBottom->setVisible(true);
         }
+    }
+    if(updateAttackTime.elapsed()>2000)
+    {
+        ui->labelFightMonsterBottom->setVisible(true);
+        ui->labelFightMonsterTop->setVisible(true);
+        if(movie!=NULL)
+        {
+            movie->stop();
+            delete movie;
+        }
+        movie=NULL;
+        ui->labelFightMonsterAttackTop->setMovie(NULL);
+        ui->labelFightMonsterAttackBottom->setMovie(NULL);
     }
     int hp_to_change;
     if(applyOnOtherMonster)

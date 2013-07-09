@@ -41,6 +41,7 @@
 #define DATAPACK_BASE_PATH_ITEM "items/"
 #define DATAPACK_BASE_PATH_PLANTS "plants/"
 #define DATAPACK_BASE_PATH_MONSTERS "monsters/"
+#define DATAPACK_BASE_PATH_SKILLANIMATION "monsters/skill-animation/"
 #define DATAPACK_BASE_PATH_FIGHT "fight/"
 #define DATAPACK_BASE_PATH_PLAYER "player/"
 #define DATAPACK_BASE_PATH_QUESTS "quests/"

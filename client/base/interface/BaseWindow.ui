@@ -2912,13 +2912,6 @@ padding-bottom:3px;
             <widget class="QLabel" name="labelFightEnter"/>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton">
-             <property name="text">
-              <string>PushButton</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <spacer name="horizontalSpacer_23">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -3448,6 +3441,56 @@ padding:6px 6px 6px 14px;
             </spacer>
            </item>
           </layout>
+         </widget>
+         <widget class="QLabel" name="labelFightMonsterAttackTop">
+          <property name="geometry">
+           <rect>
+            <x>510</x>
+            <y>90</y>
+            <width>160</width>
+            <height>160</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelFightMonsterAttackBottom">
+          <property name="geometry">
+           <rect>
+            <x>60</x>
+            <y>280</y>
+            <width>160</width>
+            <height>160</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
          </widget>
         </widget>
        </widget>
