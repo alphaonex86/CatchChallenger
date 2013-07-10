@@ -21,7 +21,7 @@ void ClientHeavyLoad::loadMonsters()
     }
 
     bool ok;
-    QSqlQuery monstersQuery;
+    QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monstersQuery.exec(queryText))
         emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
     while(monstersQuery.next())
@@ -155,7 +155,7 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
     }
 
     bool ok;
-    QSqlQuery monsterBuffsQuery;
+    QSqlQuery monsterBuffsQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monsterBuffsQuery.exec(queryText))
         emit message(monsterBuffsQuery.lastQuery()+": "+monsterBuffsQuery.lastError().text());
     while(monsterBuffsQuery.next())
@@ -208,7 +208,7 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
     }
 
     bool ok;
-    QSqlQuery monsterSkillsQuery;
+    QSqlQuery monsterSkillsQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monsterSkillsQuery.exec(queryText))
         emit message(monsterSkillsQuery.lastQuery()+": "+monsterSkillsQuery.lastError().text());
     while(monsterSkillsQuery.next())
@@ -277,7 +277,7 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
         break;
     }
     bool ok;
-    QSqlQuery botAlreadyBeatenQuery;
+    QSqlQuery botAlreadyBeatenQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!botAlreadyBeatenQuery.exec(queryText))
         emit message(botAlreadyBeatenQuery.lastQuery()+": "+botAlreadyBeatenQuery.lastError().text());
     //parse the result

@@ -39,7 +39,7 @@ void DatapackClientLoader::parseMonstersExtra()
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml monster extra file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return;
     }
     xmlContent=xmlFile.readAll();

@@ -22,7 +22,7 @@ void ClientHeavyLoad::loadRecipes()
     }
     bool ok;
     quint32 recipeId;
-    QSqlQuery recipesQuery;
+    QSqlQuery recipesQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!recipesQuery.exec(queryText))
         emit message(recipesQuery.lastQuery()+": "+recipesQuery.lastError().text());
     while(recipesQuery.next())
@@ -57,7 +57,7 @@ void ClientHeavyLoad::loadItems()
         break;
     }
     bool ok;
-    QSqlQuery itemQuery;
+    QSqlQuery itemQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!itemQuery.exec(queryText))
         emit message(itemQuery.lastQuery()+": "+itemQuery.lastError().text());
     //parse the result
@@ -92,7 +92,6 @@ void ClientHeavyLoad::loadItems()
                                      .arg(id);
                 break;
             }
-            QSqlQuery loginQuery(queryText);
             emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }

@@ -23,7 +23,7 @@ void BaseServerCrafting::preload_the_plant()
     QByteArray xmlContent;
     if(!plantsFile.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(plantsFile.fileName()).arg(plantsFile.errorString()));
+        DebugClass::debugConsole(QString("Unable to open the xml plant file: %1, error: %2").arg(plantsFile.fileName()).arg(plantsFile.errorString()));
         return;
     }
     xmlContent=plantsFile.readAll();
@@ -156,7 +156,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             queryText=QString("SELECT map,x,y,plant,player_id,plant_timestamps FROM plant");
         break;
     }
-    QSqlQuery plantOnMapQuery;
+    QSqlQuery plantOnMapQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!plantOnMapQuery.exec(queryText))
         DebugClass::debugConsole(plantOnMapQuery.lastQuery()+": "+plantOnMapQuery.lastError().text());
     if(plantOnMapQuery.isValid())
@@ -520,7 +520,7 @@ void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,
             .arg(y);
         break;
     }
-    QSqlQuery removePlantOnMapQuery(queryText);
+    QSqlQuery removePlantOnMapQuery(queryText,*GlobalServerData::serverPrivateVariables.db);
     Q_UNUSED(removePlantOnMapQuery);
 }
 

@@ -260,7 +260,7 @@ void MainWindow::on_SaveGame_New_clicked()
             if(metaData.status()==QSettings::NoError)
             {
                 metaData.setValue("title",nameGame.gameName());
-                metaData.setValue("location","Starting city");
+                metaData.setValue("location","");
                 metaData.setValue("time_played",0);
                 metaData.setValue("pass",pass);
                 settingOk=true;
@@ -277,48 +277,55 @@ void MainWindow::on_SaveGame_New_clicked()
         rmpath(savegamesPath);
         return;
     }
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(savegamesPath+"catchchallenger.db.sqlite");
-    if(!db.open())
+
+    /// \warning in pointer to remove the object and don't keep open the file
+    QSqlDatabase *db = new QSqlDatabase();
+    *db=QSqlDatabase::addDatabase("QSQLITE","init");
+    db->setDatabaseName(savegamesPath+"catchchallenger.db.sqlite");
+    if(!db->open())
     {
-        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nError: open database: %1").arg(db.lastError().text()));
+        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nError: open database: %1").arg(db->lastError().text()));
         rmpath(savegamesPath);
         return;
     }
 
-
     //empty the player db and put the new player into it
-    QSqlQuery sqlQuery;
     int player_id,size;
     do
     {
+        QSqlQuery sqlQuery(*db);
         player_id=rand();
         if(!sqlQuery.exec(QString("SELECT * FROM \"player\" WHERE id=%1").arg(player_id)))
         {
-            db.close();
+            closeDb(db);
+            db=NULL;
             QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
             rmpath(savegamesPath);
             return;
         }
         size=sqlQuery.size();
     } while(size>0);
-    if(!sqlQuery.exec(
-           QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9);")
-           .arg(player_id)
-           .arg(QString(passHash.toHex()))
-           .arg(nameGame.pseudo())
-           .arg(nameGame.skin())
-           .arg(profile.x)
-           .arg(profile.y)
-           .arg(profile.map)
-           .arg(profile.cash)
-           .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
-                ))
     {
-        db.close();
-        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-        rmpath(savegamesPath);
-        return;
+        QSqlQuery sqlQuery(*db);
+        if(!sqlQuery.exec(
+               QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9);")
+               .arg(player_id)
+               .arg(QString(passHash.toHex()))
+               .arg(nameGame.pseudo())
+               .arg(nameGame.skin())
+               .arg(profile.x)
+               .arg(profile.y)
+               .arg(profile.map)
+               .arg(profile.cash)
+               .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
+                    ))
+        {
+            closeDb(db);
+            db=NULL;
+            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+            rmpath(savegamesPath);
+            return;
+        }
     }
     index=0;
     while(index<profile.monsters.size())
@@ -327,9 +334,11 @@ void MainWindow::on_SaveGame_New_clicked()
         do
         {
             monster_id=rand();
+            QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(QString("SELECT * FROM \"monster\" WHERE id=%1").arg(monster_id)))
             {
-                db.close();
+                closeDb(db);
+                db=NULL;
                 QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
                 rmpath(savegamesPath);
                 return;
@@ -361,25 +370,30 @@ void MainWindow::on_SaveGame_New_clicked()
         }
         while(skills.size()>4)
             skills.removeFirst();
-        if(!sqlQuery.exec(
-               QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3);")
-               .arg(monster_id)
-               .arg(stat.hp)
-               .arg(player_id)
-               .arg(profile.monsters.at(index).id)
-               .arg(profile.monsters.at(index).level)
-               .arg(profile.monsters.at(index).captured_with)
-               .arg(gender)
-                    ))
         {
-            db.close();
-            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-            rmpath(savegamesPath);
-            return;
+            QSqlQuery sqlQuery(*db);
+            if(!sqlQuery.exec(
+                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3);")
+                   .arg(monster_id)
+                   .arg(stat.hp)
+                   .arg(player_id)
+                   .arg(profile.monsters.at(index).id)
+                   .arg(profile.monsters.at(index).level)
+                   .arg(profile.monsters.at(index).captured_with)
+                   .arg(gender)
+                        ))
+            {
+                closeDb(db);
+                db=NULL;
+                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+                rmpath(savegamesPath);
+                return;
+            }
         }
         sub_index=0;
         while(sub_index<skills.size())
         {
+            QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(
                    QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\") VALUES(%1,%2,%3);")
                    .arg(monster_id)
@@ -387,7 +401,8 @@ void MainWindow::on_SaveGame_New_clicked()
                    .arg(skills[sub_index].level)
                         ))
             {
-                db.close();
+                closeDb(db);
+                db=NULL;
                 QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
                 rmpath(savegamesPath);
                 return;
@@ -399,6 +414,7 @@ void MainWindow::on_SaveGame_New_clicked()
     index=0;
     while(index<profile.reputation.size())
     {
+        QSqlQuery sqlQuery(*db);
         if(!sqlQuery.exec(
                QString("INSERT INTO \"reputation\"(\"player\",\"type\",\"point\",\"level\") VALUES(%1,\"%2\",%3,%4);")
                .arg(player_id)
@@ -407,7 +423,8 @@ void MainWindow::on_SaveGame_New_clicked()
                .arg(profile.reputation.at(index).level)
                     ))
         {
-            db.close();
+            closeDb(db);
+            db=NULL;
             QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
             rmpath(savegamesPath);
             return;
@@ -417,6 +434,7 @@ void MainWindow::on_SaveGame_New_clicked()
     index=0;
     while(index<profile.items.size())
     {
+        QSqlQuery sqlQuery(*db);
         if(!sqlQuery.exec(
                QString("INSERT INTO \"item\"(\"item_id\",\"player_id\",\"quantity\") VALUES(%1,%2,%3);")
                .arg(profile.items.at(index).id)
@@ -424,22 +442,30 @@ void MainWindow::on_SaveGame_New_clicked()
                .arg(profile.items.at(index).quantity)
                     ))
         {
-            db.close();
+            closeDb(db);
+            db=NULL;
             QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
             rmpath(savegamesPath);
             return;
         }
         index++;
     }
-    db.removeDatabase(db.connectionName());
-    db.removeDatabase(db.databaseName());
-    db.close();
-    if(db.isOpen())
-        qDebug() << "db is closed but remain open: " << db.lastError().databaseText() << db.lastError().driverText();
+
+    closeDb(db);
+    db=NULL;
 
     updateSavegameList();
 
     play(savegamesPath);
+}
+
+void MainWindow::closeDb(QSqlDatabase *db)
+{
+    db->commit();
+    db->close();
+    QString connectionName=db->connectionName();
+    delete db;
+    QSqlDatabase::removeDatabase(connectionName);
 }
 
 void MainWindow::savegameLabelClicked()
@@ -573,17 +599,20 @@ void MainWindow::updateSavegameList()
                             time_played=QObject::tr("%n minute(s) and %1 played","",time_played_number/60).arg(QObject::tr("%n second(s)","",time_played_number%60));
 
                         //load the map name
-                        QString map=metaData.value("location").toString();
-                        map.replace(".tmx",".xml");
                         QString mapName;
-                        if(QFile(datapackPath+DATAPACK_BASE_PATH_MAP+map).exists())
-                            mapName=getMapName(datapackPath+DATAPACK_BASE_PATH_MAP+map);
-                        if(mapName.isEmpty())
+                        QString map=metaData.value("location").toString();
+                        if(!map.isEmpty())
                         {
-                            QString zone=getMapZone(datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
-                            //try load the zone
-                            if(!zone.isEmpty())
-                                mapName=getZoneName(zone);
+                            map.replace(".tmx",".xml");
+                            if(QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP+map).isFile())
+                                mapName=getMapName(datapackPath+DATAPACK_BASE_PATH_MAP+map);
+                            if(mapName.isEmpty())
+                            {
+                                QString zone=getMapZone(datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
+                                //try load the zone
+                                if(!zone.isEmpty())
+                                    mapName=getZoneName(zone);
+                            }
                         }
                         QString lastLine;
                         if(mapName.isEmpty())
@@ -629,7 +658,7 @@ QString MainWindow::getMapName(const QString &file)
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file to get map name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return QString();
     }
     xmlContent=xmlFile.readAll();
@@ -667,7 +696,7 @@ QString MainWindow::getMapZone(const QString &file)
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file to get map zone: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return QString();
     }
     xmlContent=xmlFile.readAll();
@@ -713,7 +742,7 @@ QString MainWindow::getZoneName(const QString &zone)
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file to get zone name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return QString();
     }
     xmlContent=xmlFile.readAll();
@@ -908,7 +937,7 @@ void MainWindow::play(const QString &savegamesPath)
 
 void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
 {
-    CatchChallenger::ServerSettings formatedServerSettings;
+    CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
     formatedServerSettings.max_players=1;
     formatedServerSettings.tolerantMode=false;
