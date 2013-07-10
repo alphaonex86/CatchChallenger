@@ -50,7 +50,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
     }
-    QSqlQuery loginQuery;
+    QSqlQuery loginQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!loginQuery.exec(queryText))
         emit message(loginQuery.lastQuery()+": "+loginQuery.lastError().text());
     if(loginQuery.size()==0)
@@ -549,7 +549,7 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     emit message("Do mysql query: "+queryText);
     #endif
-    QSqlQuery sqlQuery;
+    QSqlQuery sqlQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!sqlQuery.exec(queryText))
         emit message(sqlQuery.lastQuery()+": "+sqlQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.db->commit();//to have data coerancy and prevent data lost on crash
@@ -572,7 +572,7 @@ void ClientHeavyLoad::loadReputation()
         break;
     }
     bool ok;
-    QSqlQuery reputationQuery;
+    QSqlQuery reputationQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!reputationQuery.exec(queryText))
         emit message(reputationQuery.lastQuery()+": "+reputationQuery.lastError().text());
     //parse the result
@@ -665,7 +665,7 @@ void ClientHeavyLoad::loadQuests()
         break;
     }
     bool ok,ok2;
-    QSqlQuery questsQuery;
+    QSqlQuery questsQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!questsQuery.exec(queryText))
         emit message(questsQuery.lastQuery()+": "+questsQuery.lastError().text());
     //parse the result

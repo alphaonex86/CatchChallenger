@@ -34,6 +34,7 @@ public:
     explicit BaseServer();
     virtual ~BaseServer();
     void setSettings(ServerSettings settings);
+    ServerSettings getSettings();
     //stat function
     virtual bool isListen();
     virtual bool isStopped();

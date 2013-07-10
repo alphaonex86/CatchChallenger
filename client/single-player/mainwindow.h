@@ -60,6 +60,7 @@ private:
     QString getMapName(const QString &file);
     QString getMapZone(const QString &file);
     QString getZoneName(const QString &zone);
+    void closeDb(QSqlDatabase *db);
     QSettings settings;
     QString lastMessageSend;
     QStringList server_list;
