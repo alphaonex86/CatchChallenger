@@ -25,7 +25,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file to have new profile: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return;
     }
     xmlContent=xmlFile.readAll();

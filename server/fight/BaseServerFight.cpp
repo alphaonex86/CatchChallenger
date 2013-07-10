@@ -143,7 +143,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        DebugClass::debugConsole(QString("Unable to open the xml monsters drop file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return monsterDrops;
     }
     xmlContent=xmlFile.readAll();
