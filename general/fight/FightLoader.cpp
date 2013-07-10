@@ -27,7 +27,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        DebugClass::debugConsole(QString("Unable to open the xml monster file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return monsters;
     }
     xmlContent=xmlFile.readAll();
@@ -316,7 +316,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
             QByteArray xmlContent;
             if(!xmlFile.open(QIODevice::ReadOnly))
             {
-                DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+                DebugClass::debugConsole(QString("Unable to open the xml fight file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
                 index_file++;
                 continue;
             }
@@ -502,7 +502,7 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        DebugClass::debugConsole(QString("Unable to open the xml skill monster file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return monsterSkills;
     }
     xmlContent=xmlFile.readAll();
@@ -762,7 +762,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        DebugClass::debugConsole(QString("Unable to open the xml buff monster file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
         return monsterBuffs;
     }
     xmlContent=xmlFile.readAll();

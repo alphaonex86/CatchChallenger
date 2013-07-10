@@ -4,8 +4,6 @@ include(../../general/general.pri)
 
 QT       += sql
 
-VPATH += ../../server/
-
 TARGET = catchchallenger-single-player
 
 SOURCES += main.cpp\
@@ -32,4 +30,3 @@ RESOURCES += \
 win32:RESOURCES += ../../server/base/resources/resources-windows-qt-plugin.qrc
 
 DEFINES += NOREMOTE
-

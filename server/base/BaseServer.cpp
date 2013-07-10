@@ -38,15 +38,39 @@ BaseServer::BaseServer()
     GlobalServerData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegExp(DATAPACK_FILE_REGEX);
 
-    GlobalServerData::serverSettings.database.type=ServerSettings::Database::DatabaseType_Mysql;
-    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
-    GlobalServerData::serverSettings.mapVisibility.simple.max		= 30;
-    GlobalServerData::serverSettings.mapVisibility.simple.reshow		= 20;
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
+    GlobalServerData::serverSettings.max_players=1;
+    GlobalServerData::serverSettings.tolerantMode=false;
+    GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber = false;
+
+    GlobalServerData::serverSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+    GlobalServerData::serverSettings.database.sqlite.file="";
+    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
+
+    //to do a bug
+    GlobalServerData::serverSettings.rates_gold_premium=1;
+    GlobalServerData::serverSettings.rates_shiny_premium=1;
+    GlobalServerData::serverSettings.rates_xp_premium=1;
+    GlobalServerData::serverSettings.server_ip="";
+    GlobalServerData::serverSettings.server_port=42489;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_aliance=true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_clan=true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_local=true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_all=true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_private=true;
+    GlobalServerData::serverSettings.commmonServerSettings.pvp=true;
+    GlobalServerData::serverSettings.commmonServerSettings.rates_gold=1;
+    GlobalServerData::serverSettings.commmonServerSettings.rates_shiny=1;
+    GlobalServerData::serverSettings.commmonServerSettings.rates_xp=1;
+    GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber=true;
+    GlobalServerData::serverSettings.database.type=ServerSettings::Database::DatabaseType_Mysql;
     GlobalServerData::serverSettings.database.fightSync=ServerSettings::Database::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.database.positionTeleportSync=true;
     GlobalServerData::serverSettings.database.secondToPositionSync=0;
+    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
+    GlobalServerData::serverSettings.mapVisibility.simple.max		= 30;
+    GlobalServerData::serverSettings.mapVisibility.simple.reshow		= 20;
 
     stat=Down;
 
@@ -72,13 +96,12 @@ void BaseServer::closeDB()
 {
     if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
-        GlobalServerData::serverPrivateVariables.db->removeDatabase(GlobalServerData::serverPrivateVariables.db->connectionName());
-        GlobalServerData::serverPrivateVariables.db->removeDatabase(GlobalServerData::serverPrivateVariables.db->databaseName());
+        GlobalServerData::serverPrivateVariables.db->commit();
         GlobalServerData::serverPrivateVariables.db->close();
-        if(GlobalServerData::serverPrivateVariables.db->isOpen())
-            qDebug() << "db is closed but remain open: " << GlobalServerData::serverPrivateVariables.db->lastError().databaseText() << GlobalServerData::serverPrivateVariables.db->lastError().driverText();
+        QString connectionName=GlobalServerData::serverPrivateVariables.db->connectionName();
         delete GlobalServerData::serverPrivateVariables.db;
         GlobalServerData::serverPrivateVariables.db=NULL;
+        QSqlDatabase::removeDatabase(connectionName);
     }
 }
 
@@ -731,10 +754,12 @@ bool BaseServer::initialize_the_database()
 {
     if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
-        DebugClass::debugConsole(QString("Disconnected to %1 at %2 (%3)")
+        DebugClass::debugConsole(QString("Disconnected to %1 at %2 (%3), previous connection: %4")
                                  .arg(GlobalServerData::serverPrivateVariables.db_type_string)
                                  .arg(GlobalServerData::serverSettings.database.mysql.host)
-                                 .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
+                                 .arg(GlobalServerData::serverPrivateVariables.db->isOpen())
+                                 .arg(QSqlDatabase::connectionNames().join(";"))
+                                 );
         closeDB();
     }
     switch(GlobalServerData::serverSettings.database.type)
@@ -744,7 +769,7 @@ bool BaseServer::initialize_the_database()
         return false;
         case ServerSettings::Database::DatabaseType_Mysql:
         GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL");
+        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QMYSQL","server");
         GlobalServerData::serverPrivateVariables.db->setConnectOptions("MYSQL_OPT_RECONNECT=1");
         GlobalServerData::serverPrivateVariables.db->setHostName(GlobalServerData::serverSettings.database.mysql.host);
         GlobalServerData::serverPrivateVariables.db->setDatabaseName(GlobalServerData::serverSettings.database.mysql.db);
@@ -754,7 +779,7 @@ bool BaseServer::initialize_the_database()
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
         GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
-        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE");
+        *GlobalServerData::serverPrivateVariables.db = QSqlDatabase::addDatabase("QSQLITE","server");
         GlobalServerData::serverPrivateVariables.db->setDatabaseName(GlobalServerData::serverSettings.database.sqlite.file);
         GlobalServerData::serverPrivateVariables.db_type_string="sqlite";
         break;
@@ -950,6 +975,11 @@ void BaseServer::setSettings(ServerSettings settings)
     loadAndFixSettings();
 }
 
+ServerSettings BaseServer::getSettings()
+{
+    return GlobalServerData::serverSettings;
+}
+
 void BaseServer::loadAndFixSettings()
 {
     //check the settings here
@@ -982,6 +1012,25 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverPrivateVariables.positionSync.stop();
     else
         GlobalServerData::serverPrivateVariables.positionSync.start(GlobalServerData::serverSettings.database.secondToPositionSync*1000);
+
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        case CatchChallenger::ServerSettings::Database::DatabaseType_SQLite:
+        case CatchChallenger::ServerSettings::Database::DatabaseType_Mysql:
+        break;
+        default:
+            qDebug() << "Wrong db type";
+        break;
+    }
+    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    {
+        case CatchChallenger::MapVisibilityAlgorithm_none:
+        case CatchChallenger::MapVisibilityAlgorithm_simple:
+        break;
+        default:
+            qDebug() << "Wrong visibility algorithm";
+        break;
+    }
 }
 
 //call by normal stop
