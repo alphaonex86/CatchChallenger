@@ -58,7 +58,8 @@ HEADERS += \
     $$PWD/crafting/MapServerCrafting.h \
     $$PWD/fight/ServerStructuresFight.h \
     $$PWD/base/Api_client_virtual.h \
-    $$PWD/fight/BaseServerFight.h
+    $$PWD/fight/BaseServerFight.h \
+    $$PWD/fight/LocalClientHandlerFight.h
 
 RESOURCES += \
     $$PWD/all-server-resources.qrc \

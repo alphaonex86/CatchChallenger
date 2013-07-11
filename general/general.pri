@@ -1,5 +1,7 @@
 QMAKE_CFLAGS += -O0
 QMAKE_CXXFLAGS += -O0
+QMAKE_CFLAGS -= -O2
+QMAKE_CXXFLAGS -= -O2
 
 QT       += core gui network xml
 
@@ -17,7 +19,9 @@ SOURCES += $$PWD/base/Api_protocol.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/ConnectedSocket.cpp \
     $$PWD/fight/FightLoader.cpp \
-    $$PWD/base/DatapackGeneralLoader.cpp
+    $$PWD/base/DatapackGeneralLoader.cpp \
+    $$PWD/base/CommonDatapack.cpp \
+    $$PWD/fight/CommonFightEngine.cpp
 
 HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/DebugClass.h \
@@ -34,4 +38,6 @@ HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/FacilityLib.h \
     $$PWD/base/ConnectedSocket.h \
     $$PWD/fight/FightLoader.h \
-    $$PWD/base/DatapackGeneralLoader.h
+    $$PWD/base/DatapackGeneralLoader.h \
+    $$PWD/base/CommonDatapack.h \
+    $$PWD/fight/CommonFightEngine.h

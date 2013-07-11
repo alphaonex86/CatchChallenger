@@ -2,6 +2,7 @@
 #include "GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/Map.h"
 #include "SqlFunction.h"
@@ -596,50 +597,50 @@ void ClientHeavyLoad::loadReputation()
             emit message(QString("level is <100 or >100, skip: %1").arg(type));
             continue;
         }
-        if(!GlobalServerData::serverPrivateVariables.reputation.contains(type))
+        if(!CommonDatapack::commonDatapack.reputation.contains(type))
         {
             emit message(QString("The reputation: %1 don't exist").arg(type));
             continue;
         }
         if(level>=0)
         {
-            if(level>=GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.size())
+            if(level>=CommonDatapack::commonDatapack.reputation[type].reputation_positive.size())
             {
-                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.size()));
+                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.size()));
                 continue;
             }
         }
         else
         {
-            if((-level)>GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size())
+            if((-level)>CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
             {
-                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size()));
+                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.size()));
                 continue;
             }
         }
         if(point>0)
         {
-            if(GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.size()==(level+1))//start at level 0 in positive
+            if(CommonDatapack::commonDatapack.reputation[type].reputation_positive.size()==(level+1))//start at level 0 in positive
             {
                 emit message(QString("The reputation level is already at max, drop point"));
                 point=0;
             }
-            if(point>=GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.at(level+1))//start at level 0 in positive
+            if(point>=CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(level+1))//start at level 0 in positive
             {
-                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.at(level)));
+                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(level)));
                 continue;
             }
         }
         else if(point<0)
         {
-            if(GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size()==-level)//start at level -1 in negative
+            if(CommonDatapack::commonDatapack.reputation[type].reputation_negative.size()==-level)//start at level -1 in negative
             {
                 emit message(QString("The reputation level is already at min, drop point"));
                 point=0;
             }
-            if(point<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-level))//start at level -1 in negative
+            if(point<CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-level))//start at level -1 in negative
             {
-                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(level)));
+                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(level)));
                 continue;
             }
         }
@@ -680,12 +681,12 @@ void ClientHeavyLoad::loadQuests()
             emit message(QString("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
-        if(!GlobalServerData::serverPrivateVariables.quests.contains(id))
+        if(!CommonDatapack::commonDatapack.quests.contains(id))
         {
             emit message(QString("quest is not into the quests list, skip: %1").arg(id));
             continue;
         }
-        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>GlobalServerData::serverPrivateVariables.quests[id].steps.size())
+        if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapack::commonDatapack.quests[id].steps.size())
         {
             emit message(QString("step out of quest range, skip: %1").arg(id));
             continue;

@@ -2,6 +2,7 @@
 #include "../base/interface/DatapackClientLoader.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "ui_BaseWindow.h"
 
 #include <QListWidgetItem>
@@ -74,10 +75,10 @@ void BaseWindow::load_plant_inventory()
             item=new QListWidgetItem();
             plants_items_to_graphical[DatapackClientLoader::datapackLoader.itemToPlants[i.key()]]=item;
             plants_items_graphical[item]=DatapackClientLoader::datapackLoader.itemToPlants[i.key()];
-            if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
             {
-                item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
-                item->setText(DatapackClientLoader::datapackLoader.items[i.key()].name+"\n"+tr("Quantity: %1").arg(i.value()));
+                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
+                item->setText(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name+"\n"+tr("Quantity: %1").arg(i.value()));
             }
             else
             {
@@ -103,18 +104,18 @@ void BaseWindow::load_crafting_inventory()
     {
         quint32 recipe=i.next();
         //load the material item
-        if(DatapackClientLoader::datapackLoader.crafingRecipes.contains(recipe))
+        if(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.contains(recipe))
         {
             QListWidgetItem *item=new QListWidgetItem();
-            if(DatapackClientLoader::datapackLoader.items.contains(DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId))
+            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId))
             {
-                item->setIcon(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId].image);
-                item->setText(DatapackClientLoader::datapackLoader.items[DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId].name);
+                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId].image);
+                item->setText(DatapackClientLoader::datapackLoader.itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId].name);
             }
             else
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-                item->setText(tr("Unknow item: %1").arg(DatapackClientLoader::datapackLoader.crafingRecipes[recipe].doItemId));
+                item->setText(tr("Unknow item: %1").arg(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId));
             }
             crafting_recipes_items_to_graphical[recipe]=item;
             crafting_recipes_items_graphical[item]=recipe;
@@ -153,14 +154,15 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         return;
     }
     QListWidgetItem *item=items.first();
-    const DatapackClientLoader::Plant &content=DatapackClientLoader::datapackLoader.plants[plants_items_graphical[item]];
+    const DatapackClientLoader::PlantExtra &contentExtra=DatapackClientLoader::datapackLoader.plantExtra[plants_items_graphical[item]];
+    const CatchChallenger::Plant &content=CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]];
 
-    if(DatapackClientLoader::datapackLoader.items.contains(content.itemUsed))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.itemUsed))
     {
-        ui->labelPlantImage->setPixmap(DatapackClientLoader::datapackLoader.items[content.itemUsed].image);
-        ui->labelPlantName->setText(DatapackClientLoader::datapackLoader.items[content.itemUsed].name);
-        ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.items[content.itemUsed].image);
-        ui->labelPlantDescription->setText(DatapackClientLoader::datapackLoader.items[content.itemUsed].description);
+        ui->labelPlantImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].image);
+        ui->labelPlantName->setText(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].name);
+        ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].image);
+        ui->labelPlantDescription->setText(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].description);
     }
     else
     {
@@ -170,18 +172,18 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantDescription->setText(tr("This plant and these effects are unknown"));
     }
 
-    ui->labelPlantedImage->setPixmap(content.tileset->tileAt(0)->image().scaled(32,64));
-    ui->labelSproutedImage->setPixmap(content.tileset->tileAt(1)->image().scaled(32,64));
-    ui->labelTallerImage->setPixmap(content.tileset->tileAt(2)->image().scaled(32,64));
-    ui->labelFloweringImage->setPixmap(content.tileset->tileAt(3)->image().scaled(32,64));
-    ui->labelFruitsImage->setPixmap(content.tileset->tileAt(4)->image().scaled(32,64));
+    ui->labelPlantedImage->setPixmap(contentExtra.tileset->tileAt(0)->image().scaled(32,64));
+    ui->labelSproutedImage->setPixmap(contentExtra.tileset->tileAt(1)->image().scaled(32,64));
+    ui->labelTallerImage->setPixmap(contentExtra.tileset->tileAt(2)->image().scaled(32,64));
+    ui->labelFloweringImage->setPixmap(contentExtra.tileset->tileAt(3)->image().scaled(32,64));
+    ui->labelFruitsImage->setPixmap(contentExtra.tileset->tileAt(4)->image().scaled(32,64));
 
     ui->labelPlantedText->setText(FacilityLib::secondsToString(0));
     ui->labelSproutedText->setText(FacilityLib::secondsToString(content.sprouted_seconds));
     ui->labelTallerText->setText(FacilityLib::secondsToString(content.taller_seconds));
     ui->labelFloweringText->setText(FacilityLib::secondsToString(content.flowering_seconds));
     ui->labelFruitsText->setText(FacilityLib::secondsToString(content.fruits_seconds));
-    ui->labelPlantFruitText->setText(tr("Quantity: %1").arg(content.quantity));
+    ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((float)content.fix_quantity+((float)content.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
 
     ui->plantUse->setVisible(inSelection);
 }
@@ -219,7 +221,7 @@ void BaseWindow::on_listPlantList_itemActivated(QListWidgetItem *item)
         qDebug() << "BaseWindow::on_inventory_itemActivated(): not in selection, use is not done actually";
         return;
     }
-    objectSelection(true,DatapackClientLoader::datapackLoader.plants[plants_items_graphical[item]].itemUsed);
+    objectSelection(true,CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]].itemUsed);
 }
 
 void BaseWindow::on_pushButton_interface_crafting_clicked()
@@ -246,15 +248,15 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         return;
     }
     QListWidgetItem *itemMaterials=displayedItems.first();
-    const CatchChallenger::CrafingRecipe &content=DatapackClientLoader::datapackLoader.crafingRecipes[crafting_recipes_items_graphical[itemMaterials]];
+    const CatchChallenger::CrafingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[crafting_recipes_items_graphical[itemMaterials]];
 
     qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
     //load the name
     QString name;
-    if(DatapackClientLoader::datapackLoader.items.contains(content.doItemId))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.doItemId))
     {
-        name=DatapackClientLoader::datapackLoader.items[content.doItemId].name;
-        ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.items[content.doItemId].image);
+        name=DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].name;
+        ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].image);
     }
     else
     {
@@ -275,10 +277,10 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     {
         //load the material item
         item=new QListWidgetItem();
-        if(DatapackClientLoader::datapackLoader.items.contains(content.materials.at(index).itemId))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.materials.at(index).itemId))
         {
-            nameMaterials=DatapackClientLoader::datapackLoader.items[content.materials.at(index).itemId].name;
-            item->setIcon(DatapackClientLoader::datapackLoader.items[content.materials.at(index).itemId].image);
+            nameMaterials=DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).itemId].name;
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).itemId].image);
         }
         else
         {
@@ -315,7 +317,7 @@ void BaseWindow::on_craftingUse_clicked()
     if(displayedItems.size()!=1)
         return;
     QListWidgetItem *selectedItem=displayedItems.first();
-    const CatchChallenger::CrafingRecipe &content=DatapackClientLoader::datapackLoader.crafingRecipes[crafting_recipes_items_graphical[selectedItem]];
+    const CatchChallenger::CrafingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[crafting_recipes_items_graphical[selectedItem]];
 
     //load the materials
     int index=0;

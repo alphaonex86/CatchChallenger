@@ -146,20 +146,6 @@ struct ServerSettings
     MapVisibility mapVisibility;
 };
 
-struct Plant
-{
-    quint32 itemUsed;
-    quint32 mature_seconds;
-    //float quantity;//splited into 2 integer
-    quint16 fix_quantity;
-    quint16 random_quantity;
-};
-
-struct Item
-{
-    quint32 price;
-};
-
 struct ServerPrivateVariables
 {
     //bd
@@ -170,26 +156,16 @@ struct ServerPrivateVariables
     QString datapack_basePath;
     QString datapack_mapPath;
     QRegExp datapack_rightFileName;
-    QHash<quint32,Item> items;
     QHash<QString,quint64> filesList;
-    QHash<quint8,Plant> plants;
-    QHash<quint32,CrafingRecipe> crafingRecipes;
     QHash<quint32,Shop> shops;
-    QHash<quint32,quint32> itemToCrafingRecipes;
 
     //fight
-    QHash<quint32,Monster> monsters;
     QMultiHash<quint32,MonsterDrops> monsterDrops;
-    QHash<quint32,Skill> monsterSkills;
-    QHash<quint32,Buff> monsterBuffs;
-    QHash<quint32,BotFight> botFights;
 
     //general data
     QList<EventThreader *> eventThreaderList;
     QTimer *timer_player_map;
     bool stopIt;
-    QHash<QString, Reputation> reputation;
-    QHash<quint32, Quest> quests;
 
     //interconnected thread
     //QMutex clientBroadCastListMutex;

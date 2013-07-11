@@ -27,7 +27,6 @@
 #define CATCHCHALLENGER_SERVER_NORMAL_SPEED 250 //then 250ms, see the protocol
 
 #define CATCHCHALLENGER_SERVER_OWNER_TIMEOUT 60*60*24
-#define RANDOM_FLOAT_PART_DIVIDER 10000
 
 /** map visibility bandwith optimisation
  Do in define to not drop cpu performance, due to heavy call **/

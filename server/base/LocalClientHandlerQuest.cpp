@@ -1,5 +1,6 @@
 #include "LocalClientHandler.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/CommonDatapack.h"
 #include "GlobalServerData.h"
 
 using namespace CatchChallenger;
@@ -7,12 +8,12 @@ using namespace CatchChallenger;
 //quest
 void LocalClientHandler::newQuestAction(const QuestAction &action,const quint32 &questId)
 {
-    if(!GlobalServerData::serverPrivateVariables.quests.contains(questId))
+    if(!CommonDatapack::commonDatapack.quests.contains(questId))
     {
         emit error(QString("unknow questId: %1").arg(questId));
         return;
     }
-    const Quest &quest=GlobalServerData::serverPrivateVariables.quests[questId];
+    const Quest &quest=CommonDatapack::commonDatapack.quests[questId];
     switch(action)
     {
         case QuestAction_Start:
@@ -61,9 +62,9 @@ void LocalClientHandler::removeQuestStepDrop(const quint32 &questId,const quint8
 bool LocalClientHandler::addQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step)
 {
 
-    if(!GlobalServerData::serverPrivateVariables.quests.contains(questId))
+    if(!CommonDatapack::commonDatapack.quests.contains(questId))
         return false;
-    const CatchChallenger::Quest &quest=GlobalServerData::serverPrivateVariables.quests[questId];
+    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests[questId];
     if(step<=0 || step>quest.steps.size())
         return false;
     Quest::Step stepFull=quest.steps[step-1];
@@ -86,9 +87,9 @@ bool LocalClientHandler::addQuestStepDrop(Player_internal_informations *player_i
 
 bool LocalClientHandler::removeQuestStepDrop(Player_internal_informations *player_informations, const quint32 &questId, const quint8 &step)
 {
-    if(!GlobalServerData::serverPrivateVariables.quests.contains(questId))
+    if(!CommonDatapack::commonDatapack.quests.contains(questId))
         return false;
-    const CatchChallenger::Quest &quest=GlobalServerData::serverPrivateVariables.quests[questId];
+    const CatchChallenger::Quest &quest=CommonDatapack::commonDatapack.quests[questId];
     if(step<=0 || step>quest.steps.size())
         return false;
     Quest::Step stepFull=quest.steps[step-1];
