@@ -1,5 +1,6 @@
 #include "LocalClientHandler.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/CommonDatapack.h"
 #include "GlobalServerData.h"
 
 using namespace CatchChallenger;
@@ -9,18 +10,19 @@ QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
 
 LocalClientHandler::LocalClientHandler()
 {
-    stepFight_Grass=0;
-    stepFight_Water=0;
-    stepFight_Cave=0;
-    botFightCash=0;
     otherPlayerTrade=NULL;
     otherPlayerBattle=NULL;
     tradeIsValidated=false;
-    battleIsValidated=false;
 }
 
 LocalClientHandler::~LocalClientHandler()
 {
+}
+
+void LocalClientHandler::setVariable(Player_internal_informations *player_informations)
+{
+    MapBasicMove::setVariable(player_informations);
+    localClientHandlerFight.setVariable(player_informations);
 }
 
 bool LocalClientHandler::checkCollision()
@@ -39,15 +41,15 @@ bool LocalClientHandler::checkCollision()
 void LocalClientHandler::extraStop()
 {
     tradeCanceled();
-    battleCanceled();
+    localClientHandlerFight.battleCanceled();
     if(player_informations->is_logged)
         playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
 
     if(!player_informations->is_logged || player_informations->isFake)
         return;
     //save the monster
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && !wildMonsters.empty())
-        saveCurrentMonsterStat();
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && !localClientHandlerFight.isInFight())
+        localClientHandlerFight.saveCurrentMonsterStat();
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
     {
         int index=0;
@@ -199,17 +201,17 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     emit sendPacket(0xC0,outputData);
 
     //load the first time the random number list
-    getRandomNumberIfNeeded();
+    localClientHandlerFight.getRandomNumberIfNeeded();
 
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
-        connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
+        QObject::connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
 
-    updateCanDoFight();
-    if(ableToFight)
-        botFightCollision(map,x,y);
+    localClientHandlerFight.updateCanDoFight();
+    if(localClientHandlerFight.getAbleToFight())
+        localClientHandlerFight.botFightCollision(map,x,y);
     else
-        checkLoose();
+        localClientHandlerFight.checkLoose();
 }
 
 bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
@@ -229,7 +231,7 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
 
 bool LocalClientHandler::singleMove(const Direction &direction)
 {
-    if(!wildMonsters.empty())//check if is in fight
+    if(!localClientHandlerFight.isInFight())//check if is in fight
     {
         emit error(QString("error: try move when is in fight"));
         return false;
@@ -249,9 +251,9 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     this->map=static_cast<Map_server_MapVisibility_simple*>(map);
     this->x=x;
     this->y=y;
-    if(botFightCollision(map,x,y))
+    if(localClientHandlerFight.botFightCollision(map,x,y))
         return true;
-    checkFightCollision(map,x,y);
+    localClientHandlerFight.checkFightCollision(map,x,y);
     return true;
 }
 
@@ -499,7 +501,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
             return;
         }
-        if(!GlobalServerData::serverPrivateVariables.items.contains(objectId))
+        if(!CommonDatapack::commonDatapack.items.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
             return;
@@ -535,7 +537,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(!GlobalServerData::serverPrivateVariables.items.contains(objectId))
+        if(!CommonDatapack::commonDatapack.items.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;
@@ -604,7 +606,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("You are already in trade"));
             return;
         }
-        if(getInBattle())
+        if(localClientHandlerFight.getInBattle())
         {
             emit receiveSystemText(QString("you are already in battle"));
             return;
@@ -614,7 +616,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("%1 is already in trade").arg(extraText));
             return;
         }
-        if(playerByPseudo[extraText]->getInBattle())
+        if(playerByPseudo[extraText]->localClientHandlerFight.getInBattle())
         {
             emit receiveSystemText(QString("%1 is already in battle").arg(extraText));
             return;
@@ -647,7 +649,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("You can't battle with yourself").arg(extraText));
             return;
         }
-        if(getInBattle())
+        if(localClientHandlerFight.getInBattle())
         {
             emit receiveSystemText(QString("you are already in battle"));
             return;
@@ -657,7 +659,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("you are already in trade"));
             return;
         }
-        if(playerByPseudo[extraText]->getInBattle())
+        if(playerByPseudo[extraText]->localClientHandlerFight.getInBattle())
         {
             emit receiveSystemText(QString("%1 is already in battle").arg(extraText));
             return;
@@ -672,22 +674,22 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("%1 is not in range").arg(extraText));
             return;
         }
-        if(!playerByPseudo[extraText]->getAbleToFight())
+        if(!playerByPseudo[extraText]->localClientHandlerFight.getAbleToFight())
         {
             emit receiveSystemText("The other player can't fight");
             return;
         }
-        if(!getAbleToFight())
+        if(!localClientHandlerFight.getAbleToFight())
         {
             emit receiveSystemText("You can't fight");
             return;
         }
-        if(playerByPseudo[extraText]->isInFight())
+        if(playerByPseudo[extraText]->localClientHandlerFight.isInFight())
         {
             emit receiveSystemText("The other player is in fight");
             return;
         }
-        if(isInFight())
+        if(localClientHandlerFight.isInFight())
         {
             emit receiveSystemText("You are in fight");
             return;
@@ -696,8 +698,76 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         emit message("Battle requested");
         #endif
         otherPlayerBattle=playerByPseudo[extraText];
-        otherPlayerBattle->registerBattleRequest(this);
+        otherPlayerBattle->localClientHandlerFight.registerBattleRequest(&localClientHandlerFight);
     }
+}
+
+bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skill)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("learnSkill(%1,%2)").arg(monsterId).arg(skill));
+    #endif
+    Map *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    Direction direction=getLastDirection();
+    switch(getLastDirection())
+    {
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+            direction=lookToMove(direction);
+            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return false;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return false;
+            }
+        break;
+        default:
+        emit error("Wrong direction to use a learn skill");
+        return false;
+    }
+    if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
+    {
+        switch(direction)
+        {
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
+                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+                {
+                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                    {
+                        emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        return false;
+                    }
+                }
+                else
+                {
+                    emit error("No valid map in this direction");
+                    return false;
+                }
+            break;
+            default:
+            break;
+        }
+        if(!static_cast<MapServer*>(this->map)->learn.contains(QPair<quint8,quint8>(x,y)))
+        {
+            emit error("not learn skill into this direction");
+            return false;
+        }
+    }
+    return localClientHandlerFight.learnSkillInternal(monsterId,skill);
 }
 
 bool LocalClientHandler::otherPlayerIsInRange(LocalClientHandler * otherPlayer)
@@ -721,9 +791,9 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
     if(player_informations->public_and_private_informations.items.contains(itemId))
     {
         //if is crafting recipe
-        if(GlobalServerData::serverPrivateVariables.itemToCrafingRecipes.contains(itemId))
+        if(CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
         {
-            quint32 recipeId=GlobalServerData::serverPrivateVariables.itemToCrafingRecipes[itemId];
+            quint32 recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes[itemId];
             if(player_informations->public_and_private_informations.recipes.contains(recipeId))
             {
                 emit error(QString("can't use the object: %1 because recipe already registred").arg(itemId));
@@ -893,10 +963,10 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     int objectCount=0;
     while(index<items.size())
     {
-        if(GlobalServerData::serverPrivateVariables.items[items.at(index)].price>0)
+        if(CommonDatapack::commonDatapack.items[items.at(index)].price>0)
         {
             out2 << (quint32)items.at(index);
-            out2 << (quint32)GlobalServerData::serverPrivateVariables.items[items.at(index)].price;
+            out2 << (quint32)CommonDatapack::commonDatapack.items[items.at(index)].price;
             out2 << (quint32)0;
             objectCount++;
         }
@@ -1085,27 +1155,27 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         emit postReply(query_id,outputData);
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.items[objectId].price==0)
+    if(CommonDatapack::commonDatapack.items[objectId].price==0)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
         emit postReply(query_id,outputData);
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.items[objectId].price>price)
+    if(CommonDatapack::commonDatapack.items[objectId].price>price)
     {
         out << (quint8)BuyStat_PriceHaveChanged;
         emit postReply(query_id,outputData);
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.items[objectId].price<price)
+    if(CommonDatapack::commonDatapack.items[objectId].price<price)
     {
         out << (quint8)BuyStat_BetterPrice;
-        out << (quint32)GlobalServerData::serverPrivateVariables.items[objectId].price;
+        out << (quint32)CommonDatapack::commonDatapack.items[objectId].price;
     }
     else
         out << (quint8)BuyStat_Done;
-    if(player_informations->public_and_private_informations.cash>=(GlobalServerData::serverPrivateVariables.items[objectId].price*quantity))
-        removeCash(GlobalServerData::serverPrivateVariables.items[objectId].price*quantity);
+    if(player_informations->public_and_private_informations.cash>=(CommonDatapack::commonDatapack.items[objectId].price*quantity))
+        removeCash(CommonDatapack::commonDatapack.items[objectId].price*quantity);
     else
     {
         emit error(QString("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));
@@ -1287,7 +1357,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    if(!GlobalServerData::serverPrivateVariables.items.contains(objectId))
+    if(!CommonDatapack::commonDatapack.items.contains(objectId))
     {
         emit error("this item don't exists");
         return;
@@ -1297,7 +1367,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
         emit error("you have not this quantity to sell");
         return;
     }
-    quint32 realPrice=GlobalServerData::serverPrivateVariables.items[objectId].price/2;
+    quint32 realPrice=CommonDatapack::commonDatapack.items[objectId].price/2;
     if(realPrice<price)
     {
         out << (quint8)SoldStat_PriceHaveChanged;
@@ -1334,7 +1404,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
 {
     if(point==0)
         return;
-    if(!GlobalServerData::serverPrivateVariables.reputation.contains(type))
+    if(!CommonDatapack::commonDatapack.reputation.contains(type))
     {
         emit error(QString("Unknow reputation: %1").arg(type));
         return;
@@ -1353,20 +1423,20 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         if(playerReputation.level<0 && playerReputation.point>0)
         {
             playerReputation.level++;
-            playerReputation.point+=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level);
+            playerReputation.point+=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
             continue;
         }
         if(playerReputation.level>0 && playerReputation.point<0)
         {
             playerReputation.level--;
-            playerReputation.point+=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(playerReputation.level);
+            playerReputation.point+=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
             continue;
         }
-        if(playerReputation.level<=0 && playerReputation.point<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level))
+        if(playerReputation.level<=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level))
         {
-            if((-playerReputation.level)<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size())
+            if((-playerReputation.level)<CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
             {
-                playerReputation.point-=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.point-=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
                 playerReputation.level--;
             }
             else
@@ -1374,15 +1444,15 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
                 emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
-                playerReputation.point=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.point=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
             }
             continue;
         }
-        if(playerReputation.level>=0 && playerReputation.point<GlobalServerData::serverPrivateVariables.reputation[type].reputation_positive.at(playerReputation.level))
+        if(playerReputation.level>=0 && playerReputation.point<CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(playerReputation.level))
         {
-            if(playerReputation.level<GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.size())
+            if(playerReputation.level<CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
             {
-                playerReputation.point-=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.point-=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
                 playerReputation.level++;
             }
             else
@@ -1390,7 +1460,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
                 emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
-                playerReputation.point=GlobalServerData::serverPrivateVariables.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.point=CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
             }
             continue;
         }

@@ -1,4 +1,5 @@
 #include "../../base/interface/MapController.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "../base/interface/DatapackClientLoader.h"
 
 //plant
@@ -20,7 +21,7 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    if(!DatapackClientLoader::datapackLoader.plants.contains(plant_id))
+    if(!CatchChallenger::CommonDatapack::commonDatapack.plants.contains(plant_id))
     {
         qDebug() << "plant_id don't exists";
         return;
@@ -54,15 +55,15 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
     CatchChallenger::Map_client::Plant plant;
     plant.mapObject=new Tiled::MapObject();
     if(seconds_to_mature==0)
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(4));
-    else if(seconds_to_mature<(DatapackClientLoader::datapackLoader.plants[plant_id].fruits_seconds-DatapackClientLoader::datapackLoader.plants[plant_id].flowering_seconds))
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(3));
-    else if(seconds_to_mature<(DatapackClientLoader::datapackLoader.plants[plant_id].fruits_seconds-DatapackClientLoader::datapackLoader.plants[plant_id].taller_seconds))
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(2));
-    else if(seconds_to_mature<(DatapackClientLoader::datapackLoader.plants[plant_id].fruits_seconds-DatapackClientLoader::datapackLoader.plants[plant_id].sprouted_seconds))
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(1));
+        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(4));
+    else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].flowering_seconds))
+        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(3));
+    else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].taller_seconds))
+        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(2));
+    else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].sprouted_seconds))
+        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(1));
     else
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plants[plant_id].tileset->tileAt(0));
+        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(0));
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     plant.mapObject->setPosition(QPoint(x,y+1));
     plant.x=x;

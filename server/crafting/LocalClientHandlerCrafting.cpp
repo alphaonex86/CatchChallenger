@@ -1,19 +1,20 @@
 #include "../base/LocalClientHandler.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../base/GlobalServerData.h"
 
 using namespace CatchChallenger;
 
 void LocalClientHandler::useSeed(const quint8 &plant_id)
 {
-    if(objectQuantity(GlobalServerData::serverPrivateVariables.plants[plant_id].itemUsed)==0)
+    if(objectQuantity(CommonDatapack::commonDatapack.plants[plant_id].itemUsed)==0)
     {
-        emit error(QString("The player have not the item id: %1 to plant as seed").arg(GlobalServerData::serverPrivateVariables.plants[plant_id].itemUsed));
+        emit error(QString("The player have not the item id: %1 to plant as seed").arg(CommonDatapack::commonDatapack.plants[plant_id].itemUsed));
         return;
     }
     else
     {
-        removeObject(GlobalServerData::serverPrivateVariables.plants[plant_id].itemUsed);
+        removeObject(CommonDatapack::commonDatapack.plants[plant_id].itemUsed);
         emit seedValidated();
     }
 }
@@ -26,7 +27,7 @@ void LocalClientHandler::useRecipe(const quint8 &query_id,const quint32 &recipe_
         emit error(QString("The player have not this recipe as know: %1").arg(recipe_id));
         return;
     }
-    const CrafingRecipe &recipe=GlobalServerData::serverPrivateVariables.crafingRecipes[recipe_id];
+    const CrafingRecipe &recipe=CommonDatapack::commonDatapack.crafingRecipes[recipe_id];
     //check if have material
     int index=0;
     int materials_size=recipe.materials.size();

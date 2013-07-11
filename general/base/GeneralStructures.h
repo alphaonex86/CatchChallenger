@@ -72,6 +72,24 @@ enum Plant_collect
     Plant_collect_impossible=0x04
 };
 
+struct Plant
+{
+    quint32 itemUsed;
+    quint32 fruits_seconds;
+    //float quantity;//splited into 2 integer
+    quint16 fix_quantity;
+    quint16 random_quantity;
+    //minimal memory impact at exchange of drop dual xml parse
+    quint16 sprouted_seconds;
+    quint16 taller_seconds;
+    quint16 flowering_seconds;
+};
+
+struct Item
+{
+    quint32 price;
+};
+
 enum ObjectUsage
 {
     ObjectUsage_correctlyUsed=0x01,//is correctly used

@@ -1,6 +1,7 @@
 #include "BaseServer.h"
 #include "GlobalServerData.h"
 #include "../../general/base/FacilityLib.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../../general/base/DatapackGeneralLoader.h"
 
 #include <QFile>
@@ -118,23 +119,15 @@ void BaseServer::preload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=false;
 
+    CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverPrivateVariables.datapack_basePath);
     preload_the_datapack();
     preload_the_skin();
-    preload_the_items();
     preload_shop();
     preload_the_players();
-    preload_the_plant();
-    preload_crafting_recipes();
-    preload_buff();
-    preload_skills();
-    preload_monsters();
     preload_monsters_drops();
-    preload_the_botfight();
     preload_the_map();
     preload_the_plant_on_map();
     check_monsters_map();
-    preload_reputation();
-    preload_quests();
     preload_the_visibility_algorithm();
 }
 
@@ -456,78 +449,6 @@ void BaseServer::preload_the_skin()
     DebugClass::debugConsole(QString("%1 skin(s) loaded").arg(GlobalServerData::serverPrivateVariables.skinList.size()));
 }
 
-void BaseServer::preload_the_items()
-{
-    //open and quick check the file
-    QFile itemsFile(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_ITEM+"items.xml");
-    QByteArray xmlContent;
-    if(!itemsFile.open(QIODevice::ReadOnly))
-    {
-        DebugClass::debugConsole(QString("Unable to open the items file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString()));
-        return;
-    }
-    xmlContent=itemsFile.readAll();
-    itemsFile.close();
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-    {
-        DebugClass::debugConsole(QString("Unable to open the items file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
-        return;
-    }
-    QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="items")
-    {
-        DebugClass::debugConsole(QString("Unable to open the items file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName()));
-        return;
-    }
-
-    //load the content
-    bool ok;
-    QDomElement item = root.firstChildElement("item");
-    while(!item.isNull())
-    {
-        if(item.isElement())
-        {
-            if(item.hasAttribute("id"))
-            {
-                quint32 id=item.attribute("id").toULongLong(&ok);
-                if(ok)
-                {
-                    if(!GlobalServerData::serverPrivateVariables.items.contains(id))
-                    {
-                        quint32 price=0;
-                        if(item.hasAttribute("price"))
-                        {
-                            price=item.attribute("price").toUInt(&ok);
-                            if(!ok)
-                            {
-                                DebugClass::debugConsole(QString("Unable to open the items file: %1, price is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                price=0;
-                            }
-                        }
-                        Item item;
-                        item.price=price;
-                        GlobalServerData::serverPrivateVariables.items[id]=item;
-                    }
-                    else
-                        DebugClass::debugConsole(QString("Unable to open the items file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                }
-                else
-                    DebugClass::debugConsole(QString("Unable to open the items file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-            }
-            else
-                DebugClass::debugConsole(QString("Unable to open the items file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-        }
-        else
-            DebugClass::debugConsole(QString("Unable to open the items file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement("item");
-    }
-
-    DebugClass::debugConsole(QString("%1 item(s) loaded").arg(GlobalServerData::serverPrivateVariables.items.size()));
-}
-
 void BaseServer::preload_the_datapack()
 {
     QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverPrivateVariables.datapack_basePath);
@@ -583,18 +504,6 @@ void BaseServer::preload_the_visibility_algorithm()
         default:
         break;
     }
-}
-
-void BaseServer::preload_reputation()
-{
-    GlobalServerData::serverPrivateVariables.reputation=DatapackGeneralLoader::loadReputation(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_PLAYER+"reputation.xml");
-    DebugClass::debugConsole(QString("%1 reputation(s) loaded").arg(GlobalServerData::serverPrivateVariables.reputation.size()));
-}
-
-void BaseServer::preload_quests()
-{
-    GlobalServerData::serverPrivateVariables.quests=DatapackGeneralLoader::loadQuests(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_QUESTS);
-    DebugClass::debugConsole(QString("%1 quest(s) loaded").arg(GlobalServerData::serverPrivateVariables.quests.size()));
 }
 
 void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
@@ -676,7 +585,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 quint32 fightid=step.attribute("fightid").toUInt(&ok);
                                 if(ok)
                                 {
-                                    if(GlobalServerData::serverPrivateVariables.botFights.contains(fightid))
+                                    if(CommonDatapack::commonDatapack.botFights.contains(fightid))
                                     {
                                         if(bot_Semi.property_text.contains("lookAt"))
                                         {
@@ -873,23 +782,16 @@ void BaseServer::unload_the_data()
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
     unload_the_visibility_algorithm();
-    unload_quests();
-    unload_reputation();
     unload_the_plant_on_map();
     unload_the_map();
     unload_the_bots();
-    unload_the_botfight();
     unload_monsters_drops();
-    unload_monsters();
-    unload_skills();
-    unload_buff();
-    unload_crafting_recipes();
-    unload_the_plant();
     unload_shop();
-    unload_the_items();
     unload_the_skin();
     unload_the_datapack();
     unload_the_players();
+
+    CommonDatapack::commonDatapack.unload();
 }
 
 void BaseServer::unload_the_bots()
@@ -917,21 +819,6 @@ void BaseServer::unload_the_skin()
 
 void BaseServer::unload_the_visibility_algorithm()
 {
-}
-
-void BaseServer::unload_reputation()
-{
-    GlobalServerData::serverPrivateVariables.reputation.clear();
-}
-
-void BaseServer::unload_quests()
-{
-    GlobalServerData::serverPrivateVariables.quests.clear();
-}
-
-void BaseServer::unload_the_items()
-{
-    GlobalServerData::serverPrivateVariables.items.clear();
 }
 
 void BaseServer::unload_the_datapack()
