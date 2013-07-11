@@ -123,7 +123,7 @@ void LocalClientHandler::resetTheTrade()
     tradeCash=0;
     tradeObjects.clear();
     tradeMonster.clear();
-    updateCanDoFight();
+    localClientHandlerFight.updateCanDoFight();
 }
 
 void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
@@ -245,7 +245,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
         emit error("Unable to trade your last monster");
         return;
     }
-    if(isInFight())
+    if(localClientHandlerFight.isInFight())
     {
         emit error("You can't trade monster because you are in fight");
         return;
@@ -258,14 +258,14 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
     {
         if(player_informations->public_and_private_informations.playerMonster.at(index).id==monsterId)
         {
-            if(!remainMonstersToFight(monsterId))
+            if(!localClientHandlerFight.remainMonstersToFight(monsterId))
             {
                 emit error("You can't trade monster because you are in fight");
                 return;
             }
             tradeMonster << player_informations->public_and_private_informations.playerMonster.at(index);
             player_informations->public_and_private_informations.playerMonster.removeAt(index);
-            updateCanDoFight();
+            localClientHandlerFight.updateCanDoFight();
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);
@@ -331,7 +331,7 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
         tradeObjects.clear();
         player_informations->public_and_private_informations.playerMonster << tradeMonster;
         tradeMonster.clear();
-        updateCanDoFight();
+        localClientHandlerFight.updateCanDoFight();
     }
     otherPlayerTrade=NULL;
     if(send)

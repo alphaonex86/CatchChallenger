@@ -1,6 +1,7 @@
 #include "../base/ClientLocalBroadcast.h"
 #include "../base/BroadCastWithoutSender.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../base/GlobalServerData.h"
 
 #include <QDateTime>
@@ -12,7 +13,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
     #endif
-    if(!GlobalServerData::serverPrivateVariables.plants.contains(plant_id))
+    if(!CommonDatapack::commonDatapack.plants.contains(plant_id))
     {
         emit error(QString("plant_id not found: %1").arg(plant_id));
         return;
@@ -140,7 +141,7 @@ void ClientLocalBroadcast::seedValidated()
     {
         if(x==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).x && y==static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants.at(index).y)
         {
-            emit addObjectAndSend(GlobalServerData::serverPrivateVariables.plants[plant_list_in_waiting.first().plant_id].itemUsed);
+            emit addObjectAndSend(CommonDatapack::commonDatapack.plants[plant_list_in_waiting.first().plant_id].itemUsed);
             QByteArray data;
             data[0]=0x02;
             emit postReply(plant_list_in_waiting.first().query_id,data);
@@ -159,8 +160,8 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
     plantOnMap.player_id=player_informations->id;
-    plantOnMap.mature_at=current_time+GlobalServerData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds;
-    plantOnMap.player_owned_expire_at=current_time+GlobalServerData::serverPrivateVariables.plants[plantOnMap.plant].mature_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
+    plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants[plantOnMap.plant].fruits_seconds;
+    plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants[plantOnMap.plant].fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -455,14 +456,14 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 }
 
                 //add into the inventory
-                float quantity=GlobalServerData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].fix_quantity;
-                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=GlobalServerData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity)
+                float quantity=CommonDatapack::commonDatapack.plants[static_cast<MapServer *>(map)->plants.at(index).plant].fix_quantity;
+                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity)
                     quantity++;
 
                 QByteArray data;
                 data[0]=Plant_collect_correctly_collected;
                 emit postReply(query_id,data);
-                emit addObjectAndSend(GlobalServerData::serverPrivateVariables.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
+                emit addObjectAndSend(CommonDatapack::commonDatapack.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
 
                 static_cast<MapServer *>(map)->plants.removeAt(index);
                 return;

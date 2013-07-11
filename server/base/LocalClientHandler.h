@@ -17,6 +17,7 @@
 #include "../VariableServer.h"
 #include "MapServer.h"
 #include "SqlFunction.h"
+#include "../fight/LocalClientHandlerFight.h"
 
 /** \brief Do here only the calcule local to the client
  * That's mean map collision, monster event into grass, fight, object usage, ...
@@ -30,8 +31,8 @@ class LocalClientHandler : public MapBasicMove
 public:
     explicit LocalClientHandler();
     virtual ~LocalClientHandler();
+    virtual void setVariable(Player_internal_informations *player_informations);
     bool getInTrade();
-    bool getInBattle();
     void registerTradeRequest(LocalClientHandler * otherPlayerTrade);
     void registerBattleRequest(LocalClientHandler * otherPlayerTrade);
     bool getIsFreezed();
@@ -39,20 +40,20 @@ public:
     QHash<quint32,quint32> getTradeObjects();
     QList<PlayerMonster> getTradeMonster();
     void resetTheTrade();
-    void resetTheBattle();
     void addExistingMonster(QList<PlayerMonster> tradeMonster);
     bool getAbleToFight();
     PlayerMonster &getSelectedMonster();
     quint8 getSelectedMonsterNumber();
     PlayerMonster& getEnemyMonster();
+    LocalClientHandlerFight localClientHandlerFight;
 private:
     bool checkCollision();
-    void getRandomNumberIfNeeded();
 
     //info linked
     static Direction	temp_direction;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
-    QByteArray randomSeeds;
+    //battle
+    LocalClientHandler * otherPlayerBattle;
     //trade
     LocalClientHandler * otherPlayerTrade;
     bool tradeIsValidated;
@@ -60,40 +61,6 @@ private:
     quint64 tradeCash;
     QHash<quint32,quint32> tradeObjects;
     QList<PlayerMonster> tradeMonster;
-    //battle
-    LocalClientHandler * otherPlayerBattle;
-    bool battleIsValidated;
-    quint32 currentSkill;
-    bool haveCurrentSkill;
-
-    //fight
-    quint32 botFightId;
-    quint8 selectedMonster;
-    bool ableToFight;
-    QList<PlayerMonster> wildMonsters,botFightMonsters;
-    quint8 stepFight_Grass,stepFight_Water,stepFight_Cave;
-    inline quint8 getOneSeed(const quint8 &max=0);
-    PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
-    Monster::Stat getStat(const Monster &monster, const quint8 &level);
-    void applyOtherBuffEffect(const Skill::BuffEffect &effect);
-    void applyOtherLifeEffect(const Skill::LifeEffect &effect);
-    void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
-    qint32 applyCurrentLifeEffect(const Skill::LifeEffect &effect);
-    bool isInFight();
-    bool buffIsValid(const Skill::BuffEffect &buffEffect);
-    bool remainMonstersToFight(const quint32 &monsterId);
-    bool monsterIsKO(const PlayerMonster &playerMonter);
-    void generateOtherAttack();
-    void updateCanDoFight();
-    bool tryEscapeInternal();
-    bool checkKOCurrentMonsters();
-    bool checkLoose();
-    bool checkKOOtherMonstersForGain();
-    void saveCurrentMonsterStat();
-    Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
-    void syncForEndOfTurn();
-    void saveStat();
-    quint32 botFightCash;
 
     //map move
     bool singleMove(const Direction &direction);
@@ -103,23 +70,10 @@ private:
     //other
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
     bool otherPlayerIsInRange(LocalClientHandler * otherPlayer);
-    //trade
-    void internalBattleCanceled(const bool &send);
-    void internalBattleAccepted(const bool &send);
-    //battle
-    bool haveBattleSkill();
-    void haveUsedTheBattleSkill();
-    void useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
-    void useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel);
-    void useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel);
-    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace=0,const PublicPlayerMonster &publicPlayerMonster=PublicPlayerMonster());
-    inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     Direction lookToMove(const Direction &direction);
-    //random linked signals
-    void newRandomNumber(const QByteArray &randomData);
     //seed
     void useSeed(const quint8 &plant_id);
     //crafting
@@ -145,14 +99,6 @@ public slots:
     void getShopList(const quint32 &query_id,const quint32 &shopId);
     void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    //fight
-    void tryEscape();
-    bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
-    bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
-    void useSkill(const quint32 &skill);
-    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
-    bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
-    bool botFightStart(const quint32 &botFightId);
     //trade
     void tradeCanceled();
     void tradeAccepted();
@@ -166,11 +112,6 @@ public slots:
     static bool removeQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step);
     //reputation
     void appendReputationPoint(const QString &type,const qint32 &point);
-    //battle
-    void battleCanceled();
-    void battleAccepted();
-    void battleFinished();
-    void battleFinishedReset();
 private slots:
     virtual void extraStop();
     void savePosition();
@@ -181,6 +122,8 @@ private slots:
     bool startQuest(const Quest &quest);
     void addQuestStepDrop(const quint32 &questId,const quint8 &questStep);
     void removeQuestStepDrop(const quint32 &questId,const quint8 &questStep);
+    //battle
+    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
 signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
@@ -191,7 +134,6 @@ signals:
 
     void seedValidated();
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-
 };
 }
 
