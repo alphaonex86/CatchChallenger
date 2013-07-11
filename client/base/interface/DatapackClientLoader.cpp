@@ -1,5 +1,6 @@
 #include "../interface/DatapackClientLoader.h"
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/DatapackGeneralLoader.h"
 
@@ -52,24 +53,18 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     }
     inProgress=true;
     this->datapackPath=datapackPath;
-    parseItems();
+    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
+    parseItemsExtra();
     parseMaps();
     parseSkins();
-    parsePlants();
-    parseCraftingRecipes();
-    parseBuff();
-    parseSkills();
-    parseMonsters();
-    parseReputation();
     parseMonstersExtra();
     parseBuffExtra();
     parseSkillsExtra();
-    parseQuests();
     parseQuestsLink();
     parseQuestsExtra();
     parseQuestsText();
-    parseBotFights();
     parseBotFightsExtra();
+    parsePlantsExtra();
     inProgress=false;
     emit datapackParsed();
 }
@@ -79,7 +74,7 @@ QString DatapackClientLoader::getDatapackPath()
     return datapackPath;
 }
 
-void DatapackClientLoader::parseItems()
+void DatapackClientLoader::parseItemsExtra()
 {
     //open and quick check the file
     QFile itemsFile(datapackPath+DATAPACK_BASE_PATH_ITEM+"items.xml");
@@ -118,7 +113,7 @@ void DatapackClientLoader::parseItems()
                 quint32 id=item.attribute("id").toULongLong(&ok);
                 if(ok)
                 {
-                    if(!DatapackClientLoader::items.contains(id))
+                    if(!DatapackClientLoader::itemsExtra.contains(id))
                     {
                         //load the image
                         if(item.hasAttribute("image"))
@@ -127,38 +122,21 @@ void DatapackClientLoader::parseItems()
                             if(image.isNull())
                             {
                                 qDebug() << QString("Unable to open the items image: %1: child.tagName(): %2 (at line: %3)").arg(datapackPath+DATAPACK_BASE_PATH_ITEM+item.attribute("image")).arg(item.tagName()).arg(item.lineNumber());
-                                DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
+                                DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
                             }
                             else
-                                DatapackClientLoader::items[id].image=image;
+                                DatapackClientLoader::itemsExtra[id].image=image;
                         }
                         else
                         {
                             qDebug() << QString("For parse item: Have not image attribute: child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(itemsFile.fileName()).arg(item.lineNumber());
-                            DatapackClientLoader::items[id].image=*mDefaultInventoryImage;
-                        }
-                        //load the price
-                        if(item.hasAttribute("price"))
-                        {
-                            bool ok;
-                            DatapackClientLoader::items[id].price=item.attribute("price").toUInt(&ok);
-                            if(!ok)
-                            {
-                                qDebug() << QString("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
-                                DatapackClientLoader::items[id].price=0;
-                            }
-                        }
-                        else
-                        {
-                            if(!item.hasAttribute("quest") || item.attribute("quest")!="yes")
-                                qDebug() << QString("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(itemsFile.fileName()).arg(item.lineNumber());
-                            DatapackClientLoader::items[id].price=0;
+                            DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
                         }
                         // base size: 24x24
-                        DatapackClientLoader::items[id].image=DatapackClientLoader::items[id].image.scaled(72,72);//then zoom: 3x
+                        DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra[id].image.scaled(72,72);//then zoom: 3x
 
                         //load the name
-                        DatapackClientLoader::items[id].name=tr("Unknow object");
+                        DatapackClientLoader::itemsExtra[id].name=tr("Unknow object");
                         QDomElement name = item.firstChildElement("name");
                         while(!name.isNull())
                         {
@@ -168,7 +146,7 @@ void DatapackClientLoader::parseItems()
                                 {
                                     if(name.attribute("lang")=="en")
                                     {
-                                        DatapackClientLoader::items[id].name=name.text();
+                                        DatapackClientLoader::itemsExtra[id].name=name.text();
                                         break;
                                     }
                                 }
@@ -177,7 +155,7 @@ void DatapackClientLoader::parseItems()
                         }
 
                         //load the description
-                        DatapackClientLoader::items[id].description=tr("This object is not listed as know object. The information can't be found.");
+                        DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
                         QDomElement description = item.firstChildElement("description");
                         while(!description.isNull())
                         {
@@ -185,7 +163,7 @@ void DatapackClientLoader::parseItems()
                             {
                                 if(!description.hasAttribute("lang"))
                                 {
-                                    DatapackClientLoader::items[id].description=description.text();
+                                    DatapackClientLoader::itemsExtra[id].description=description.text();
                                     break;
                                 }
                             }
@@ -206,19 +184,7 @@ void DatapackClientLoader::parseItems()
         item = item.nextSiblingElement("item");
     }
 
-    qDebug() << QString("%1 item(s) loaded").arg(DatapackClientLoader::items.size());
-}
-
-void DatapackClientLoader::parseQuests()
-{
-    quests=CatchChallenger::DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS);
-    qDebug() << QString("%1 quest(s) loaded").arg(quests.size());
-}
-
-void DatapackClientLoader::parseReputation()
-{
-    reputation=CatchChallenger::DatapackGeneralLoader::loadReputation(datapackPath+DATAPACK_BASE_PATH_PLAYER+"reputation.xml");
-    qDebug() << QString("%1 reputation(s) loaded").arg(reputation.size());
+    qDebug() << QString("%1 item(s) loaded").arg(DatapackClientLoader::itemsExtra.size());
 }
 
 void DatapackClientLoader::parseMaps()
@@ -250,28 +216,28 @@ void DatapackClientLoader::parseSkins()
 
 void DatapackClientLoader::resetAll()
 {
+    CatchChallenger::CommonDatapack::commonDatapack.unload();
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(":/images/inventory/unknow-object.png");
     datapackPath.clear();
-    items.clear();
+    itemsExtra.clear();
     maps.clear();
     skins.clear();
 
-    QHashIterator<quint8,Plant> i(plants);
+    QHashIterator<quint8,PlantExtra> i(plantExtra);
      while (i.hasNext()) {
          i.next();
          delete i.value().tileset;
      }
-     plants.clear();
+     plantExtra.clear();
      itemToPlants.clear();
-     itemToCrafingRecipes.clear();
-     crafingRecipes.clear();
-     quests.clear();
      questsExtra.clear();
      questsText.clear();
      botToQuestStart.clear();
-     botFights.clear();
      botFightsExtra.clear();
+     monsterExtra.clear();
+     monsterBuffsExtra.clear();
+     monsterSkillsExtra.clear();
 }
 
 void DatapackClientLoader::parseQuestsExtra()
@@ -513,7 +479,7 @@ void DatapackClientLoader::parseQuestsText()
 
 void DatapackClientLoader::parseQuestsLink()
 {
-    QHashIterator<quint32,CatchChallenger::Quest> i(quests);
+    QHashIterator<quint32,CatchChallenger::Quest> i(CatchChallenger::CommonDatapack::commonDatapack.quests);
     while(i.hasNext()) {
         i.next();
         QList<quint32> bots=i.value().steps.first().bots;
