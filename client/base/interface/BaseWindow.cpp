@@ -3,6 +3,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
 #include "../fight/interface/FightEngine.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "DatapackClientLoader.h"
 #include "MapController.h"
 #include "Chat.h"
@@ -280,12 +281,12 @@ void BaseWindow::tradeAddTradeObject(const quint32 &item,const quint32 &quantity
     while (i.hasNext()) {
         i.next();
         QListWidgetItem *item=new QListWidgetItem();
-        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
             if(i.value()>1)
                 item->setText(QString::number(i.value()));
-            item->setToolTip(DatapackClientLoader::datapackLoader.items[i.key()].name);
+            item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name);
         }
         else
         {
@@ -306,12 +307,12 @@ void BaseWindow::tradeUpdateCurrentObject()
     while (i.hasNext()) {
         i.next();
         QListWidgetItem *item=new QListWidgetItem();
-        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
             if(i.value()>1)
                 item->setText(QString::number(i.value()));
-            item->setToolTip(DatapackClientLoader::datapackLoader.items[i.key()].name);
+            item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name);
         }
         else
         {
@@ -481,7 +482,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             ItemToSellOrBuy tempItem;
             tempItem.object=itemId;
             tempItem.quantity=quantity;
-            tempItem.price=DatapackClientLoader::datapackLoader.items[itemId].price/2;
+            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items[itemId].price/2;
             itemsToSell << tempItem;
             CatchChallenger::Api_client_real::client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
@@ -561,9 +562,9 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                     FightEngine::fightEngine.removeMonster(itemId);
                     CatchChallenger::Api_client_real::client->addMonster(itemId);
                     QListWidgetItem *item=new QListWidgetItem();
-                    item->setText(CatchChallenger::FightEngine::fightEngine.monsterExtra[tradeCurrentMonsters.last().monster].name);
+                    item->setText(DatapackClientLoader::datapackLoader.monsterExtra[tradeCurrentMonsters.last().monster].name);
                     item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.last().level));
-                    item->setIcon(CatchChallenger::FightEngine::fightEngine.monsterExtra[tradeCurrentMonsters.last().monster].front);
+                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[tradeCurrentMonsters.last().monster].front);
                     ui->tradePlayerMonsters->addItem(item);
                     break;
                 }
@@ -624,10 +625,10 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool
 
             QPixmap image;
             QString name;
-            if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
             {
-                image=DatapackClientLoader::datapackLoader.items[i.key()].image;
-                name=DatapackClientLoader::datapackLoader.items[i.key()].name;
+                image=DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image;
+                name=DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name;
             }
             else
             {
@@ -725,7 +726,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         return;
     }
     QListWidgetItem *item=items.first();
-    if(!DatapackClientLoader::datapackLoader.items.contains(items_graphical[item]))
+    if(!DatapackClientLoader::datapackLoader.itemsExtra.contains(items_graphical[item]))
     {
         ui->inventoryInformation->setVisible(false);
         ui->inventoryUse->setVisible(false);
@@ -736,14 +737,14 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         return;
     }
 
-    const DatapackClientLoader::Item &content=DatapackClientLoader::datapackLoader.items[items_graphical[item]];
+    const DatapackClientLoader::ItemExtra &content=DatapackClientLoader::datapackLoader.itemsExtra[items_graphical[item]];
     ui->inventoryInformation->setVisible(!inSelection &&
                                          /* is a plant */
                                          DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical[item])
                                          );
     ui->inventoryUse->setVisible(inSelection ||
                                          /* is a recipe */
-                                         DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(items_graphical[item])
+                                         CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(items_graphical[item])
                                          );
     ui->inventoryDestroy->setVisible(!inSelection);
     ui->inventory_image->setPixmap(content.image);
@@ -1188,7 +1189,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
 {
     if(point==0)
         return;
-    if(!DatapackClientLoader::datapackLoader.reputation.contains(type))
+    if(!CatchChallenger::CommonDatapack::commonDatapack.reputation.contains(type))
     {
         emit error(QString("Unknow reputation: %1").arg(type));
         return;
@@ -1207,20 +1208,20 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
         if(playerReputation.level<0 && playerReputation.point>0)
         {
             playerReputation.level++;
-            playerReputation.point+=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level);
+            playerReputation.point+=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
             continue;
         }
         if(playerReputation.level>0 && playerReputation.point<0)
         {
             playerReputation.level--;
-            playerReputation.point+=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(playerReputation.level);
+            playerReputation.point+=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
             continue;
         }
-        if(playerReputation.level<=0 && playerReputation.point<DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level))
+        if(playerReputation.level<=0 && playerReputation.point<CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level))
         {
-            if((-playerReputation.level)<DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.size())
+            if((-playerReputation.level)<CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
             {
-                playerReputation.point-=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.point-=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
                 playerReputation.level--;
             }
             else
@@ -1228,15 +1229,15 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
                 emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
-                playerReputation.point=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(-playerReputation.level);
+                playerReputation.point=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
             }
             continue;
         }
-        if(playerReputation.level>=0 && playerReputation.point<DatapackClientLoader::datapackLoader.reputation[type].reputation_positive.at(playerReputation.level))
+        if(playerReputation.level>=0 && playerReputation.point<CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(playerReputation.level))
         {
-            if(playerReputation.level<DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.size())
+            if(playerReputation.level<CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
             {
-                playerReputation.point-=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.point-=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
                 playerReputation.level++;
             }
             else
@@ -1244,7 +1245,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
                 emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
-                playerReputation.point=DatapackClientLoader::datapackLoader.reputation[type].reputation_negative.at(playerReputation.level);
+                playerReputation.point=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
             }
             continue;
         }
@@ -1278,7 +1279,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
     while(index<botQuests.size())
     {
         const quint8 &questId=botQuests.at(index);
-        const CatchChallenger::Quest &currentQuest=DatapackClientLoader::datapackLoader.quests[questId];
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests[questId];
         if(!quests.contains(botQuests.at(index)))
         {
             //quest not started
@@ -1289,7 +1290,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         }
         else
         {
-            if(!DatapackClientLoader::datapackLoader.quests.contains(botQuests.at(index)))
+            if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(botQuests.at(index)))
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -1329,7 +1330,7 @@ bool BaseWindow::botHaveQuest(const quint32 &botId)
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
-            CatchChallenger::Quest currentQuest=DatapackClientLoader::datapackLoader.quests[i.key()];
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests[i.key()];
             QList<quint32> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
                 return true;//in progress, but not the starting bot
@@ -1351,7 +1352,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
     while(index<botQuests.size())
     {
         const quint8 &questId=botQuests.at(index);
-        const CatchChallenger::Quest &currentQuest=DatapackClientLoader::datapackLoader.quests[questId];
+        const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests[questId];
         if(!informations.quests.contains(botQuests.at(index)))
         {
             //quest not started
@@ -1372,7 +1373,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
         }
         else
         {
-            if(!DatapackClientLoader::datapackLoader.quests.contains(botQuests.at(index)))
+            if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(botQuests.at(index)))
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
@@ -1432,7 +1433,7 @@ QList<QPair<quint32,QString> > BaseWindow::getQuestList(const quint32 &botId)
         i.next();
         if(!botQuests.contains(i.key()) && i.value().step>0)
         {
-            CatchChallenger::Quest currentQuest=DatapackClientLoader::datapackLoader.quests[i.key()];
+            CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapack::commonDatapack.quests[i.key()];
             QList<quint32> bots=currentQuest.steps.at(i.value().step-1).bots;
             if(bots.contains(botId))
             {
@@ -1642,10 +1643,10 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     }
 
     //is crafting recipe
-    if(DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(items_graphical[item]))
+    if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(items_graphical[item]))
     {
         Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-        if(informations.recipes.contains(DatapackClientLoader::datapackLoader.itemToCrafingRecipes[items_graphical[item]]))
+        if(informations.recipes.contains(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes[items_graphical[item]]))
         {
             QMessageBox::information(this,tr("Information"),tr("You already know this recipe"));
             return;
@@ -1667,9 +1668,9 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
     {
         case ObjectUsage_correctlyUsed:
         //is crafting recipe
-        if(DatapackClientLoader::datapackLoader.itemToCrafingRecipes.contains(objectInUsing.first()))
+        if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(objectInUsing.first()))
         {
-            CatchChallenger::Api_client_real::client->addRecipe(DatapackClientLoader::datapackLoader.itemToCrafingRecipes[objectInUsing.first()]);
+            CatchChallenger::Api_client_real::client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes[objectInUsing.first()]);
             load_crafting_inventory();
         }
         else
@@ -1709,8 +1710,8 @@ void BaseWindow::on_inventoryDestroy_clicked()
         quantity=quantity_temp;
     }
     QMessageBox::StandardButton button;
-    if(DatapackClientLoader::datapackLoader.items.contains(itemId))
-        button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 %2?").arg(quantity).arg(DatapackClientLoader::datapackLoader.items[itemId].name),QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemId))
+        button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 %2?").arg(quantity).arg(DatapackClientLoader::datapackLoader.itemsExtra[itemId].name),QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
     else
         button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 unknow item (id: %2)?").arg(quantity).arg(itemId),QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
     if(button!=QMessageBox::Yes)
@@ -1809,7 +1810,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
                 index++;
                 continue;
             }
-            if(!DatapackClientLoader::datapackLoader.quests.contains(questId))
+            if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(questId))
             {
                 showTip(tr("Quest not found"));
                 index++;
@@ -1849,7 +1850,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
 
 void BaseWindow::nextQuestStep()
 {
-    if(!DatapackClientLoader::datapackLoader.quests.contains(questId))
+    if(!CatchChallenger::CommonDatapack::commonDatapack.quests.contains(questId))
     {
         showTip(tr("Quest not found"));
         return;
@@ -1857,10 +1858,10 @@ void BaseWindow::nextQuestStep()
 
     if(!quests.contains(questId))
     {
-        if(haveStartQuestRequirement(DatapackClientLoader::datapackLoader.quests[questId]))
+        if(haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(DatapackClientLoader::datapackLoader.quests[questId]);
+            startQuest(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]);
             updateDisplayedQuests();
         }
         else
@@ -1869,30 +1870,30 @@ void BaseWindow::nextQuestStep()
     }
     else if(quests[questId].step==0)
     {
-        if(haveStartQuestRequirement(DatapackClientLoader::datapackLoader.quests[questId]))
+        if(haveStartQuestRequirement(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
-            startQuest(DatapackClientLoader::datapackLoader.quests[questId]);
+            startQuest(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]);
             updateDisplayedQuests();
         }
         else
             showTip(tr("You don't have the requirement to start this quest"));
         return;
     }
-    if(!haveNextStepQuestRequirements(DatapackClientLoader::datapackLoader.quests[questId]))
+    if(!haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]))
     {
         showTip(tr("You don't have the requirement to continue this quest"));
         return;
     }
-    if(quests[questId].step>=(DatapackClientLoader::datapackLoader.quests[questId].steps.size()))
+    if(quests[questId].step>=(CatchChallenger::CommonDatapack::commonDatapack.quests[questId].steps.size()))
     {
         CatchChallenger::Api_client_real::client->finishQuest(questId);
-        nextStepQuest(DatapackClientLoader::datapackLoader.quests[questId]);
+        nextStepQuest(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]);
         updateDisplayedQuests();
         return;
     }
     CatchChallenger::Api_client_real::client->nextQuestStep(questId);
-    nextStepQuest(DatapackClientLoader::datapackLoader.quests[questId]);
+    nextStepQuest(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]);
     updateDisplayedQuests();
 }
 
@@ -1945,7 +1946,7 @@ void BaseWindow::getTextEntryPoint()
             contents.replace("haveQuestStepRequirements()","false");
             haveNextStepQuestRequirementsVar=false;
         }
-        else if(haveNextStepQuestRequirements(DatapackClientLoader::datapackLoader.quests[questId]))
+        else if(haveNextStepQuestRequirements(CatchChallenger::CommonDatapack::commonDatapack.quests[questId]))
         {
             contents.replace("haveQuestStepRequirements()","true");
             haveNextStepQuestRequirementsVar=true;
@@ -2096,14 +2097,14 @@ void BaseWindow::on_shopItemList_itemSelectionChanged()
     }
     ui->shopBuy->setVisible(true);
     QListWidgetItem *item=items.first();
-    if(!DatapackClientLoader::datapackLoader.items.contains(shop_items_graphical[item]))
+    if(!DatapackClientLoader::datapackLoader.itemsExtra.contains(shop_items_graphical[item]))
     {
         ui->shopImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->shopName->setText(tr("Unknow name"));
         ui->shopDescription->setText(tr("Unknow description"));
         return;
     }
-    const DatapackClientLoader::Item &content=DatapackClientLoader::datapackLoader.items[shop_items_graphical[item]];
+    const DatapackClientLoader::ItemExtra &content=DatapackClientLoader::datapackLoader.itemsExtra[shop_items_graphical[item]];
 
     ui->shopImage->setPixmap(content.image);
     ui->shopName->setText(content.name);
@@ -2139,13 +2140,13 @@ void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
         QListWidgetItem *item=new QListWidgetItem();
         shop_items_to_graphical[items.at(index).object]=item;
         shop_items_graphical[item]=items.at(index).object;
-        if(DatapackClientLoader::datapackLoader.items.contains(items.at(index).object))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).object))
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.items[items.at(index).object].image);
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).object].image);
             if(items.at(index).quantity==0)
-                item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.items[items.at(index).object].name).arg(items.at(index).price));
+                item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).object].name).arg(items.at(index).price));
             else
-                item->setText(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.items[items.at(index).object].name).arg(items.at(index).price).arg(items.at(index).quantity));
+                item->setText(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).object].name).arg(items.at(index).price).arg(items.at(index).quantity));
         }
         else
         {
@@ -2179,16 +2180,23 @@ void BaseWindow::displaySellList()
     QHashIterator<quint32,quint32> i(items);
     while (i.hasNext()) {
         i.next();
-        if(DatapackClientLoader::datapackLoader.items.contains(i.key()))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
         {
             QListWidgetItem *item=new QListWidgetItem();
             shop_items_to_graphical[i.key()]=item;
             shop_items_graphical[item]=i.key();
-            item->setIcon(DatapackClientLoader::datapackLoader.items[i.key()].image);
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].image);
             if(i.value()>1)
-                item->setText(tr("%1\nPrice: %2$, quantity: %3").arg(DatapackClientLoader::datapackLoader.items[i.key()].name).arg(DatapackClientLoader::datapackLoader.items[i.key()].price/2).arg(i.value()));
+                item->setText(tr("%1\nPrice: %2$, quantity: %3")
+                        .arg(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items[i.key()].price/2)
+                        .arg(i.value())
+                        );
             else
-                item->setText(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.items[i.key()].name).arg(DatapackClientLoader::datapackLoader.items[i.key()].price/2));
+                item->setText(tr("%1\nPrice: %2$")
+                        .arg(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items[i.key()].price/2)
+                        );
             ui->shopItemList->addItem(item);
         }
     }

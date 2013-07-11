@@ -11,6 +11,7 @@
 #include "../base/interface/DatapackClientLoader.h"
 #include "../fight/interface/FightEngine.h"
 #include "../base/DebugClass.h"
+#include "../base/CommonDatapack.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -346,16 +347,16 @@ void MainWindow::on_SaveGame_New_clicked()
             size=sqlQuery.size();
         } while(size>0);
         QString gender="unknown";
-        if(CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].ratio_gender!=-1)
+        if(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender!=-1)
         {
-            if(rand()%101<CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].ratio_gender)
+            if(rand()%101<CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender)
                 gender="female";
             else
                 gender="male";
         }
-        CatchChallenger::Monster::Stat stat=CatchChallenger::FightEngine::fightEngine.getStat(CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
+        CatchChallenger::Monster::Stat stat=CatchChallenger::FightEngine::fightEngine.getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
         QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
-        QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::FightEngine::fightEngine.monsters[profile.monsters.at(index).id].learn;
+        QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].learn;
         int sub_index=0;
         while(sub_index<attack.size())
         {
@@ -608,10 +609,14 @@ void MainWindow::updateSavegameList()
                                 mapName=getMapName(datapackPath+DATAPACK_BASE_PATH_MAP+map);
                             if(mapName.isEmpty())
                             {
-                                QString zone=getMapZone(datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString());
-                                //try load the zone
-                                if(!zone.isEmpty())
-                                    mapName=getZoneName(zone);
+                                QString tmxFile=datapackPath+DATAPACK_BASE_PATH_MAP+metaData.value("location").toString();
+                                if(QFileInfo(tmxFile).isFile())
+                                {
+                                    QString zone=getMapZone(tmxFile);
+                                    //try load the zone
+                                    if(!zone.isEmpty())
+                                        mapName=getZoneName(zone);
+                                }
                             }
                         }
                         QString lastLine;

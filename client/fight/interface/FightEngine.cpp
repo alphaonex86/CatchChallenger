@@ -1,6 +1,7 @@
 #include "FightEngine.h"
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/CommonDatapack.h"
 #include "../../base/Api_client_real.h"
 #include "../../general/base/FacilityLib.h"
 
@@ -175,7 +176,7 @@ void FightEngine::generateOtherAttack()
         position=getOneSeed(otherMonster.skills.size());
     const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster.skills.at(position);
     attackReturn.attack=otherMonsterSkill.skill;
-    const Skill::SkillList &skillList=monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
+    const Skill::SkillList &skillList=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index=0;
     while(index<skillList.buff.size())
     {
@@ -228,14 +229,14 @@ Skill::LifeEffectReturn FightEngine::applyOtherLifeEffect(const Skill::LifeEffec
         return effect_to_return;
     }
     qint32 quantity;
-    Monster::Stat stat=getStat(monsters[otherMonster->monster],otherMonster->level);
+    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
             if(effect.type==QuantityType_Quantity)
             {
-                Monster::Stat otherStat=getStat(monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
+                Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList[selectedMonster].monster],playerMonsterList[selectedMonster].level);
                 if(effect.quantity<0)
                 {
                     quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
@@ -581,7 +582,7 @@ PlayerMonster FightEngine::getRandomMonster(const QList<MapMonster> &monsterList
         playerMonster.gender=Gender_Unknown;
         return playerMonster;
     }
-    Monster monsterDef=monsters[playerMonster.monster];
+    Monster monsterDef=CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster.monster];
     if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
     {
         qint8 temp_ratio=getOneSeed(101);
@@ -635,7 +636,7 @@ void FightEngine::healAllMonsters()
     {
         if(playerMonsterList.at(index).egg_step==0)
             playerMonsterList[index].hp=
-                    monsters[playerMonsterList.at(index).monster].stat.hp*
+                    CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(index).monster].stat.hp*
                     playerMonsterList.at(index).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
         index++;
     }
@@ -670,14 +671,14 @@ bool FightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill)
                 sub_index2++;
             }
             int sub_index=0;
-            while(sub_index<CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.size())
+            while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.size())
             {
-                const Monster::AttackToLearn &learn=CatchChallenger::FightEngine::fightEngine.monsters[monster.monster].learn.at(sub_index);
+                const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.at(sub_index);
                 if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
                 {
                     if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
                     {
-                        quint32 sp=CatchChallenger::FightEngine::fightEngine.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
+                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
                         if(sp>monster.sp)
                             return false;
                         playerMonsterList[index].sp-=sp;
@@ -805,16 +806,10 @@ bool FightEngine::haveOtherMonster()
 
 void FightEngine::resetAll()
 {
-    monsters.clear();
-    monsterSkills.clear();
-    monsterBuffs.clear();
     m_randomSeeds.clear();
     playerMonsterList.clear();
     m_canDoFight=false;
 
-    monsterExtra.clear();
-    monsterBuffsExtra.clear();
-    monsterSkillsExtra.clear();
     attackReturnList.clear();
 
     battleCurrentMonster.clear();
@@ -910,8 +905,8 @@ void FightEngine::addXPSP()
         publicOtherMonster=wildMonsters.first();
     else
         publicOtherMonster=botFightMonsters.first();
-    const Monster &otherMonsterDef=monsters[publicOtherMonster.monster];
-    const Monster &currentMonster=monsters[playerMonsterList[selectedMonster].monster];
+    const Monster &otherMonsterDef=CatchChallenger::CommonDatapack::commonDatapack.monsters[publicOtherMonster.monster];
+    const Monster &currentMonster=CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList[selectedMonster].monster];
     playerMonsterList[selectedMonster].sp+=otherMonsterDef.give_sp*publicOtherMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     quint32 give_xp=otherMonsterDef.give_xp*publicOtherMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     quint32 xp=playerMonsterList[selectedMonster].remaining_xp;
@@ -957,9 +952,9 @@ void FightEngine::useSkill(const quint32 &skill)
 
 void FightEngine::useSkillAgainstWildMonster(const quint32 &skill)
 {
-    Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
     const PlayerMonster &publicOtherMonster=wildMonsters.first();
-    Monster::Stat otherMonsterStat=getStat(monsters[publicOtherMonster.monster],publicOtherMonster.level);
+    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicOtherMonster.monster],publicOtherMonster.level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     bool isKO=false;
     bool currentMonsterisKO=false,otherMonsterisKO=false;
@@ -1030,9 +1025,9 @@ void FightEngine::useSkillAgainstWildMonster(const quint32 &skill)
 
 void FightEngine::useSkillAgainstBotMonster(const quint32 &skill)
 {
-    Monster::Stat currentMonsterStat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
     const PlayerMonster &publicOtherMonster=botFightMonsters.first();
-    Monster::Stat otherMonsterStat=getStat(monsters[publicOtherMonster.monster],publicOtherMonster.level);
+    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicOtherMonster.monster],publicOtherMonster.level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     bool isKO=false;
     bool currentMonsterisKO=false,otherMonsterisKO=false;
@@ -1122,7 +1117,7 @@ void FightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
     attackReturn.attack=skill;
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.success=false;
-    const Skill::SkillList &skillList=monsterSkills[playerMonsterList.at(selectedMonster).skills.at(index).skill].level.at(playerMonsterList.at(selectedMonster).skills.at(index).level-1);
+    const Skill::SkillList &skillList=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerMonsterList.at(selectedMonster).skills.at(index).skill].level.at(playerMonsterList.at(selectedMonster).skills.at(index).level-1);
     index=0;
     while(index<skillList.buff.size())
     {
@@ -1165,7 +1160,7 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
     qDebug() << "applyCurrentLifeEffect on " << effect.on;
     #endif
     qint32 quantity;
-    Monster::Stat stat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
@@ -1189,7 +1184,7 @@ Skill::LifeEffectReturn FightEngine::applyCurrentLifeEffect(const Skill::LifeEff
             }
             if(effect.type==QuantityType_Quantity)
             {
-                Monster::Stat otherStat=getStat(monsters[publicPlayerMonster->monster],publicPlayerMonster->level);
+                Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicPlayerMonster->monster],publicPlayerMonster->level);
                 if(effect.quantity<0)
                 {
                     quantity=-((-effect.quantity*stat.attack*playerMonsterList.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
@@ -1267,7 +1262,7 @@ bool FightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &ef
     qDebug() << "applyCurrentLifeEffectReturn on " << effectReturn.on;
     #endif
     qint32 quantity;
-    Monster::Stat stat=getStat(monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
     switch(effectReturn.on)
     {
         case ApplyOn_AloneEnemy:
