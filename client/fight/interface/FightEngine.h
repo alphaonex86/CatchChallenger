@@ -17,6 +17,10 @@ class FightEngine : public QObject
 {
     Q_OBJECT
 public:
+    struct MonsterSkillEffect
+    {
+        quint32 skill;
+    };
     static FightEngine fightEngine;
     void resetAll();
     const QByteArray randomSeeds();
@@ -26,35 +30,6 @@ public:
     void healAllMonsters();
     bool isInFight();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
-    struct MonsterExtra
-    {
-        QString name;
-        QString description;
-        QPixmap front;
-        QPixmap back;
-        QPixmap thumb;
-        struct Buff
-        {
-            QString name;
-            QString description;
-        };
-        struct Skill
-        {
-            QString name;
-            QString description;
-        };
-    };
-    struct MonsterSkillEffect
-    {
-        quint32 skill;
-    };
-    //fight
-    QHash<quint32,Monster> monsters;
-    QHash<quint32,Skill> monsterSkills;
-    QHash<quint32,Buff> monsterBuffs;
-    QHash<quint32,MonsterExtra> monsterExtra;
-    QHash<quint32,MonsterExtra::Buff> monsterBuffsExtra;
-    QHash<quint32,MonsterExtra::Skill> monsterSkillsExtra;
     void setPlayerMonster(const QList<PlayerMonster> &playerMonsterList);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     QList<PlayerMonster> getPlayerMonster();
