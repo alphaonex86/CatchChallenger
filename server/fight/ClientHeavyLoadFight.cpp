@@ -2,6 +2,7 @@
 #include "../base/GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 
 using namespace CatchChallenger;
@@ -35,7 +36,7 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.monster=monstersQuery.value(2).toUInt(&ok);
             if(ok)
             {
-                if(!GlobalServerData::serverPrivateVariables.monsters.contains(playerMonster.monster))
+                if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
                 {
                     ok=false;
                     emit message(QString("monster: %1 is not into monster list").arg(playerMonster.monster));
@@ -63,9 +64,9 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.remaining_xp=monstersQuery.value(4).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.remaining_xp>GlobalServerData::serverPrivateVariables.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1))
+                if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1))
                 {
-                    emit message(QString("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(GlobalServerData::serverPrivateVariables.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
+                    emit message(QString("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
                     playerMonster.remaining_xp=0;
                 }
             }
@@ -83,7 +84,7 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.captured_with=monstersQuery.value(6).toUInt(&ok);
             if(ok)
             {
-                if(!GlobalServerData::serverPrivateVariables.items.contains(playerMonster.captured_with))
+                if(!CommonDatapack::commonDatapack.items.contains(playerMonster.captured_with))
                     emit message(QString("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
             }
             else
@@ -115,15 +116,15 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.hp>((GlobalServerData::serverPrivateVariables.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX))
+                if(playerMonster.hp>((CommonDatapack::commonDatapack.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX))
                 {
                     emit message(QString("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
                                  .arg(playerMonster.hp)
-                                 .arg(((GlobalServerData::serverPrivateVariables.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX))
+                                 .arg(((CommonDatapack::commonDatapack.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX))
                                  .arg(playerMonster.level)
                                  .arg(playerMonster.monster)
                                  );
-                    playerMonster.hp=((GlobalServerData::serverPrivateVariables.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX);
+                    playerMonster.hp=((CommonDatapack::commonDatapack.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX);
                 }
             }
             else
@@ -164,7 +165,7 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
         buff.buff=monsterBuffsQuery.value(0).toUInt(&ok);
         if(ok)
         {
-            if(!GlobalServerData::serverPrivateVariables.monsterBuffs.contains(buff.buff))
+            if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
             {
                 ok=false;
                 emit message(QString("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
@@ -177,7 +178,7 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
             buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(buff.level>GlobalServerData::serverPrivateVariables.monsterBuffs[buff.buff].level.size())
+                if(buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
                 {
                     ok=false;
                     emit message(QString("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
@@ -217,7 +218,7 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
         skill.skill=monsterSkillsQuery.value(0).toUInt(&ok);
         if(ok)
         {
-            if(!GlobalServerData::serverPrivateVariables.monsterSkills.contains(skill.skill))
+            if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
             {
                 ok=false;
                 emit message(QString("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
@@ -230,7 +231,7 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
             skill.level=monsterSkillsQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(skill.level>GlobalServerData::serverPrivateVariables.monsterSkills[skill.skill].level.size())
+                if(skill.level>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.size())
                 {
                     ok=false;
                     emit message(QString("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
@@ -289,7 +290,7 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
             emit message(QString("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
-        if(!GlobalServerData::serverPrivateVariables.botFights.contains(id))
+        if(!CommonDatapack::commonDatapack.botFights.contains(id))
         {
             emit message(QString("fights is not into the fights list, skip: %1").arg(id));
             continue;

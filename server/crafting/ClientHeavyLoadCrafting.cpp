@@ -2,6 +2,7 @@
 #include "../base/GlobalServerData.h"
 
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 
 using namespace CatchChallenger;
@@ -30,7 +31,7 @@ void ClientHeavyLoad::loadRecipes()
         recipeId=recipesQuery.value(0).toUInt(&ok);
         if(ok)
         {
-            if(GlobalServerData::serverPrivateVariables.crafingRecipes.contains(recipeId))
+            if(CommonDatapack::commonDatapack.crafingRecipes.contains(recipeId))
                 player_informations->public_and_private_informations.recipes << recipeId;
             else
                 emit message(QString("recipeId: %1 is not into recipe list").arg(recipeId));
@@ -95,7 +96,7 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }
-        if(!GlobalServerData::serverPrivateVariables.items.contains(id))
+        if(!CommonDatapack::commonDatapack.items.contains(id))
         {
             emit message(QString("The item %1 is ignored because it's not into the items list").arg(id));
             continue;
