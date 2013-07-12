@@ -2,7 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
-#include "../fight/interface/FightEngine.h"
+#include "../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "DatapackClientLoader.h"
 #include "MapController.h"
@@ -101,7 +101,7 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,SIGNAL(error(QString)),this,SLOT(error(QString)));
 
     //fight
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&FightEngine::fightEngine,SLOT(appendRandomSeeds(QByteArray)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&ClientFightEngine::fightEngine,SLOT(appendRandomSeeds(QByteArray)));
     connect(MapController::mapController,SIGNAL(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)));
     connect(MapController::mapController,SIGNAL(botFightCollision(quint32,CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(botFightCollision(quint32,CatchChallenger::Map_client*,quint8,quint8)));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
@@ -140,8 +140,8 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(QList<Skill::AttackReturn>)),this,SLOT(sendBattleReturn(QList<Skill::AttackReturn>)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(sendBattleReturn(QList<Skill::AttackReturn>,quint8,PublicPlayerMonster)),this,SLOT(sendBattleReturn(QList<Skill::AttackReturn>,quint8,PublicPlayerMonster)));
 
-    connect(&CatchChallenger::FightEngine::fightEngine,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
-    connect(&CatchChallenger::FightEngine::fightEngine,SIGNAL(error(QString)),this,SLOT(error(QString)));
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,SIGNAL(error(QString)),this,SLOT(error(QString)));
 
     connect(this,SIGNAL(destroyObject(quint32,quint32)),CatchChallenger::Api_client_real::client,SLOT(destroyObject(quint32,quint32)));
     connect(&updateRXTXTimer,SIGNAL(timeout()),this,SLOT(updateRXTX()));
@@ -233,7 +233,7 @@ void BaseWindow::tradeCanceledByOther()
     showTip(tr("The other player have canceled your trade request"));
     addCash(ui->tradePlayerCash->value());
     add_to_inventory(tradeCurrentObjects,false);
-    CatchChallenger::FightEngine::fightEngine.addPlayerMonster(tradeCurrentMonsters);
+    CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeCurrentMonsters);
     load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();
@@ -257,7 +257,7 @@ void BaseWindow::tradeValidatedByTheServer()
     showTip(tr("Your trade is successfull"));
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
-    CatchChallenger::FightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
+    CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
     load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();
@@ -328,7 +328,7 @@ void BaseWindow::tradeUpdateCurrentObject()
 
 void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
 {
-    if(CatchChallenger::FightEngine::fightEngine.isInFight())
+    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
         qDebug() << "already in fight";
         CatchChallenger::Api_client_real::client->battleRefused();
@@ -346,7 +346,7 @@ void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
 
 void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    if(CatchChallenger::FightEngine::fightEngine.isInFight())
+    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
         qDebug() << "already in fight";
         CatchChallenger::Api_client_real::client->battleRefused();
@@ -372,7 +372,7 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
     moveType=MoveType_Enter;
     battleStep=BattleStep_Presentation;
     moveFightMonsterBoth();
-    CatchChallenger::FightEngine::fightEngine.setBattleMonster(stat,monsterPlace,publicPlayerMonster);
+    CatchChallenger::ClientFightEngine::fightEngine.setBattleMonster(stat,monsterPlace,publicPlayerMonster);
 }
 
 void BaseWindow::battleCanceledByOther()
@@ -541,13 +541,13 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;
-            QList<PlayerMonster> playerMonster=FightEngine::fightEngine.getPlayerMonster();
+            QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
             if(playerMonster.size()<=1)
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
                 break;
             }
-            if(!FightEngine::fightEngine.remainMonstersToFight(itemId))
+            if(!ClientFightEngine::fightEngine.remainMonstersToFight(itemId))
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
@@ -559,7 +559,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 if(playerMonster.at(index).id==itemId)
                 {
                     tradeCurrentMonsters << playerMonster.at(index);
-                    FightEngine::fightEngine.removeMonster(itemId);
+                    ClientFightEngine::fightEngine.removeMonster(itemId);
                     CatchChallenger::Api_client_real::client->addMonster(itemId);
                     QListWidgetItem *item=new QListWidgetItem();
                     item->setText(DatapackClientLoader::datapackLoader.monsterExtra[tradeCurrentMonsters.last().monster].name);
