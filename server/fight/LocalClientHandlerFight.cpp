@@ -40,7 +40,7 @@ bool LocalClientHandlerFight::tryEscape()
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("escape is failed"));
         #endif
-        generateOtherAttack();
+        Skill::AttackReturn attackReturn=CommonFightEngine::generateOtherAttack();
         if(checkKOCurrentMonsters())
             checkLoose();
     }
@@ -62,20 +62,20 @@ void LocalClientHandlerFight::saveCurrentMonsterStat()
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                             .arg(getSelectedMonster().id)
-                             .arg(getSelectedMonster().hp)
-                             .arg(getSelectedMonster().remaining_xp)
-                             .arg(getSelectedMonster().level)
-                             .arg(getSelectedMonster().sp)
+                             .arg(getCurrentMonster()->id)
+                             .arg(getCurrentMonster()->hp)
+                             .arg(getCurrentMonster()->remaining_xp)
+                             .arg(getCurrentMonster()->level)
+                             .arg(getCurrentMonster()->sp)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                             .arg(getSelectedMonster().id)
-                             .arg(getSelectedMonster().hp)
-                             .arg(getSelectedMonster().remaining_xp)
-                             .arg(getSelectedMonster().level)
-                             .arg(getSelectedMonster().sp)
+                             .arg(getCurrentMonster()->id)
+                             .arg(getCurrentMonster()->hp)
+                             .arg(getCurrentMonster()->remaining_xp)
+                             .arg(getCurrentMonster()->level)
+                             .arg(getCurrentMonster()->sp)
                              );
             break;
         }
@@ -84,10 +84,10 @@ void LocalClientHandlerFight::saveCurrentMonsterStat()
 
 bool LocalClientHandlerFight::checkKOCurrentMonsters()
 {
-    if(getSelectedMonster().hp==0)
+    if(getCurrentMonster()->hp==0)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("You current monster (%1) is KO").arg(getSelectedMonster().monster));
+        emit message(QString("You current monster (%1) is KO").arg(getCurrentMonster()->monster));
         #endif
         saveStat();
         return true;
@@ -203,7 +203,7 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
             }
             //give xp/sp here
             const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster];
-            getSelectedMonster().sp+=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            getCurrentMonster()->sp+=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             give_xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
@@ -222,7 +222,7 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
             //don't drop item because it's not a wild fight
             //give xp/sp here
             const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[botFightMonsters.first().monster];
-            getSelectedMonster().sp+=wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            getCurrentMonster()->sp+=wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             give_xp=wildmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
@@ -233,7 +233,7 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
     else if(battleIsValidated)
     {
         emit message("check the other monster is KO");
-        PublicPlayerMonster firstValidOtherPlayerMonster=FacilityLib::playerMonsterToPublicPlayerMonster(otherPlayerBattle->getSelectedMonster());
+        PublicPlayerMonster firstValidOtherPlayerMonster=FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster());
         if(firstValidOtherPlayerMonster.hp==0)
         {
             emit message("the other monster is KO");
@@ -260,9 +260,9 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
     if(winTheTurn && give_xp>0)
     {
         bool haveChangeOfLevel=false;
-        const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[getSelectedMonster().monster];
-        quint32 xp=getSelectedMonster().remaining_xp;
-        quint32 level=getSelectedMonster().level;
+        const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster];
+        quint32 xp=getCurrentMonster()->remaining_xp;
+        quint32 level=getCurrentMonster()->level;
         while(currentmonster.level_to_xp.at(level-1)<(xp+give_xp))
         {
             quint32 old_max_hp=currentmonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
@@ -271,15 +271,15 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
             xp=0;
             level++;
             haveChangeOfLevel=true;
-            getSelectedMonster().hp+=new_max_hp-old_max_hp;
+            getCurrentMonster()->hp+=new_max_hp-old_max_hp;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message(QString("You pass to the level %1").arg(level));
             #endif
         }
         xp+=give_xp;
-        getSelectedMonster().remaining_xp=xp;
+        getCurrentMonster()->remaining_xp=xp;
         if(haveChangeOfLevel)
-            getSelectedMonster().level=level;
+            getCurrentMonster()->level=level;
 
         //save into db here
         if(!isInFight() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
@@ -290,16 +290,16 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
                     emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                 .arg(getSelectedMonster().id)
-                                 .arg(getSelectedMonster().remaining_xp)
-                                 .arg(getSelectedMonster().sp)
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(getCurrentMonster()->remaining_xp)
+                                 .arg(getCurrentMonster()->sp)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
                     emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                 .arg(getSelectedMonster().id)
-                                 .arg(getSelectedMonster().remaining_xp)
-                                 .arg(getSelectedMonster().sp)
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(getCurrentMonster()->remaining_xp)
+                                 .arg(getCurrentMonster()->sp)
                                  );
                 break;
             }
@@ -311,16 +311,16 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
-                                     .arg(getSelectedMonster().id)
-                                     .arg(getSelectedMonster().level)
-                                     .arg(getSelectedMonster().hp)
+                                     .arg(getCurrentMonster()->id)
+                                     .arg(getCurrentMonster()->level)
+                                     .arg(getCurrentMonster()->hp)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
-                                     .arg(getSelectedMonster().id)
-                                     .arg(getSelectedMonster().level)
-                                     .arg(getSelectedMonster().hp)
+                                     .arg(getCurrentMonster()->id)
+                                     .arg(getCurrentMonster()->level)
+                                     .arg(getCurrentMonster()->hp)
                                      );
                     break;
                 }
@@ -348,14 +348,14 @@ void LocalClientHandlerFight::saveStat()
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
             emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                         .arg(getSelectedMonster().hp)
-                         .arg(getSelectedMonster().id)
+                         .arg(getCurrentMonster()->hp)
+                         .arg(getCurrentMonster()->id)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                         .arg(getSelectedMonster().hp)
-                         .arg(getSelectedMonster().id)
+                         .arg(getCurrentMonster()->hp)
+                         .arg(getCurrentMonster()->id)
                          );
         break;
     }
@@ -549,123 +549,6 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
     return true;
 }
 
-quint8 LocalClientHandlerFight::getOneSeed(const quint8 &max)
-{
-    quint16 number=static_cast<quint8>(randomSeeds.at(0));
-    if(max!=0)
-    {
-        number*=max;
-        number/=255;
-    }
-    randomSeeds.remove(0,1);
-    return number;
-}
-
-PlayerMonster LocalClientHandlerFight::getRandomMonster(const QList<MapMonster> &monsterList,bool *ok)
-{
-    PlayerMonster playerMonster;
-    playerMonster.captured_with=0;
-    playerMonster.egg_step=0;
-    playerMonster.remaining_xp=0;
-    playerMonster.sp=0;
-    quint8 randomMonsterInt=getOneSeed(100);
-    bool monsterFound=false;
-    int index=0;
-    while(index<monsterList.size())
-    {
-        int luck=monsterList.at(index).luck;
-        if(randomMonsterInt<luck)
-        {
-            //it's this monster
-            playerMonster.monster=monsterList.at(index).id;
-            //select the level
-            if(monsterList.at(index).maxLevel==monsterList.at(index).minLevel)
-                playerMonster.level=monsterList.at(index).minLevel;
-            else
-                playerMonster.level=getOneSeed(monsterList.at(index).maxLevel-monsterList.at(index).minLevel+1)+monsterList.at(index).minLevel;
-            monsterFound=true;
-            break;
-        }
-        else
-            randomMonsterInt-=luck;
-        index++;
-    }
-    if(!monsterFound)
-    {
-        emit error(QString("error: no wild monster selected"));
-        *ok=false;
-        playerMonster.monster=0;
-        playerMonster.level=0;
-        playerMonster.gender=Gender_Unknown;
-        return playerMonster;
-    }
-    Monster monsterDef=CommonDatapack::commonDatapack.monsters[playerMonster.monster];
-    if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
-    {
-        qint8 temp_ratio=getOneSeed(101);
-        if(temp_ratio<monsterDef.ratio_gender)
-            playerMonster.gender=Gender_Male;
-        else
-            playerMonster.gender=Gender_Female;
-    }
-    else
-    {
-        switch(monsterDef.ratio_gender)
-        {
-            case 0:
-                playerMonster.gender=Gender_Male;
-            break;
-            case 100:
-                playerMonster.gender=Gender_Female;
-            break;
-            default:
-                playerMonster.gender=Gender_Unknown;
-            break;
-        }
-    }
-    Monster::Stat monsterStat=getStat(monsterDef,playerMonster.level);
-    playerMonster.hp=monsterStat.hp;
-    index=monsterDef.learn.size()-1;
-    while(index>=0 && playerMonster.skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
-    {
-        if(monsterDef.learn.at(index).learnAtLevel<=playerMonster.level)
-        {
-            PlayerMonster::PlayerSkill temp;
-            temp.level=monsterDef.learn.at(index).learnSkillLevel;
-            temp.skill=monsterDef.learn.at(index).learnSkill;
-            playerMonster.skills << temp;
-        }
-        index--;
-    }
-    *ok=true;
-    return playerMonster;
-}
-
-/** \warning you need check before the input data */
-Monster::Stat LocalClientHandlerFight::getStat(const Monster &monster, const quint8 &level)
-{
-    Monster::Stat stat=monster.stat;
-    stat.attack=stat.attack*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    if(stat.attack==0)
-        stat.attack=1;
-    stat.defense=stat.defense*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    if(stat.defense==0)
-        stat.defense=1;
-    stat.hp=stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    if(stat.hp==0)
-        stat.hp=1;
-    stat.special_attack=stat.special_attack*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    if(stat.special_attack==0)
-        stat.special_attack=1;
-    stat.special_defense=stat.special_defense*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    if(stat.special_defense==0)
-        stat.special_defense=1;
-    stat.speed=stat.speed*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    if(stat.speed==0)
-        stat.speed=1;
-    return stat;
-}
-
 bool LocalClientHandlerFight::tryEscapeInternal()
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
@@ -685,247 +568,6 @@ bool LocalClientHandlerFight::tryEscapeInternal()
     return false;
 }
 
-void LocalClientHandlerFight::updateCanDoFight()
-{
-    ableToFight=false;
-    int index=0;
-    while(index<player_informations->public_and_private_informations.playerMonster.size())
-    {
-        const PlayerMonster &playerMonsterEntry=player_informations->public_and_private_informations.playerMonster.at(index);
-        if(!monsterIsKO(playerMonsterEntry))
-        {
-            selectedMonster=index;
-            ableToFight=true;
-            return;
-        }
-        index++;
-    }
-}
-
-PlayerMonster& LocalClientHandlerFight::getSelectedMonster()
-{
-    return player_informations->public_and_private_informations.playerMonster[selectedMonster];
-}
-
-quint8 LocalClientHandlerFight::getSelectedMonsterNumber()
-{
-    return selectedMonster;
-}
-
-PlayerMonster& LocalClientHandlerFight::getEnemyMonster()
-{
-    if(battleIsValidated)
-        return otherPlayerBattle->getSelectedMonster();
-    if(!wildMonsters.isEmpty())
-        return wildMonsters.first();
-    if(!botFightMonsters.isEmpty())
-        return botFightMonsters.first();
-    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    emit error("Enemy monster not located, or you are not in battle");
-    return getSelectedMonster();
-    #endif
-}
-
-bool LocalClientHandlerFight::remainMonstersToFight(const quint32 &monsterId)
-{
-    int index=0;
-    while(index<player_informations->public_and_private_informations.playerMonster.size())
-    {
-        const PlayerMonster &playerMonsterEntry=player_informations->public_and_private_informations.playerMonster.at(index);
-        if(playerMonsterEntry.id==monsterId)
-        {
-            //the current monster can't fight, echange it will do nothing
-            if(monsterIsKO(playerMonsterEntry))
-                return true;
-        }
-        else
-        {
-            //other monster can fight, can continue to fight
-            if(!monsterIsKO(playerMonsterEntry))
-                return true;
-        }
-        index++;
-    }
-    return false;
-}
-
-bool LocalClientHandlerFight::monsterIsKO(const PlayerMonster &playerMonter)
-{
-    return playerMonter.hp<=0 || playerMonter.egg_step>0;
-}
-
-void LocalClientHandlerFight::generateOtherAttack()
-{
-    PlayerMonster otherMonster;
-    if(!wildMonsters.isEmpty())
-        otherMonster=wildMonsters.first();
-    else if(!botFightMonsters.isEmpty())
-        otherMonster=botFightMonsters.first();
-    else
-    {
-        emit error(QString("Unable to locate the other monster to generate other attack"));
-        return;
-    }
-    if(otherMonster.skills.empty())
-    {
-        emit error(QString("Unable to fight because the other monster (%1, level: %2) have no skill").arg(otherMonster.monster).arg(otherMonster.level));
-        return;
-    }
-    int position;
-    if(otherMonster.skills.size()==1)
-        position=0;
-    else
-        position=getOneSeed(otherMonster.skills.size());
-    const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster.skills.at(position);
-    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-    emit message(QString("The wild monster use skill %1 at level %2").arg(otherMonsterSkill.skill).arg(otherMonsterSkill.level));
-    #endif
-    const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
-    int index=0;
-    while(index<skillList.buff.size())
-    {
-        const Skill::Buff &buff=skillList.buff.at(index);
-        bool success;
-        if(buff.success==100)
-            success=true;
-        else
-            success=(getOneSeed(100)<buff.success);
-        if(success)
-            applyOtherBuffEffect(buff.effect);
-        index++;
-    }
-    index=0;
-    while(index<skillList.life.size())
-    {
-        const Skill::Life &life=skillList.life.at(index);
-        bool success;
-        if(life.success==100)
-            success=true;
-        else
-            success=(getOneSeed(100)<life.success);
-        if(success)
-            applyOtherLifeEffect(life.effect);
-        index++;
-    }
-}
-
-void LocalClientHandlerFight::applyOtherLifeEffect(const Skill::LifeEffect &effect)
-{
-    PlayerMonster *otherMonster;
-    if(!wildMonsters.isEmpty())
-        otherMonster=&wildMonsters.first();
-    else if(!botFightMonsters.isEmpty())
-        otherMonster=&botFightMonsters.first();
-    else
-    {
-        emit message(QString("Unable to locate the other monster to generate other attack"));
-        return;
-    }
-    qint32 quantity;
-    const Monster::Stat &stat=getStat(CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
-    switch(effect.on)
-    {
-        case ApplyOn_AloneEnemy:
-        case ApplyOn_AllEnemy:
-            if(effect.type==QuantityType_Quantity)
-            {
-                Monster::Stat otherStat=getStat(CommonDatapack::commonDatapack.monsters[getSelectedMonster().monster],getSelectedMonster().level);
-                if(effect.quantity<0)
-                {
-                    quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
-                else if(effect.quantity>0)//ignore the def for heal
-                {
-                    quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
-            }
-            else
-                quantity=(getSelectedMonster().hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)getSelectedMonster().hp)
-            {
-                getSelectedMonster().hp=0;
-                getSelectedMonster().buffs.clear();
-                updateCanDoFight();
-            }
-            else if(quantity>0 && quantity>(qint32)(stat.hp-getSelectedMonster().hp))
-                getSelectedMonster().hp=stat.hp;
-            else
-                getSelectedMonster().hp+=quantity;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(effect.quantity<0)
-                emit message(QString("The wild monster give to you %1 of damage").arg(-quantity));
-            if(effect.quantity>0)
-                emit message(QString("The wild monster heal you of %1").arg(quantity));
-            #endif
-        break;
-        case ApplyOn_Themself:
-        case ApplyOn_AllAlly:
-            if(effect.type==QuantityType_Quantity)
-            {
-                if(effect.quantity<0)
-                {
-                    quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
-                else if(effect.quantity>0)//ignore the def for heal
-                {
-                    quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
-            }
-            else
-                quantity=(otherMonster->hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)otherMonster->hp)
-                otherMonster->hp=0;
-            else if(quantity>0 && quantity>(qint32)(stat.hp-otherMonster->hp))
-                otherMonster->hp=stat.hp;
-            else
-                otherMonster->hp+=quantity;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(effect.quantity<0)
-                emit message(QString("The wild monster take %1 of damage on them self").arg(-quantity));
-            if(effect.quantity>0)
-                emit message(QString("The wild monster heal them self of %1").arg(quantity));
-            #endif
-        break;
-        default:
-            emit error("Not apply match, can't apply the buff");
-        break;
-    }
-}
-
-void LocalClientHandlerFight::applyOtherBuffEffect(const Skill::BuffEffect &effect)
-{
-    PlayerBuff tempBuff;
-    tempBuff.buff=effect.buff;
-    tempBuff.level=effect.level;
-    switch(effect.on)
-    {
-        case ApplyOn_AloneEnemy:
-        case ApplyOn_AllEnemy:
-            getSelectedMonster().buffs << tempBuff;
-        break;
-        case ApplyOn_Themself:
-        case ApplyOn_AllAlly:
-            if(!wildMonsters.isEmpty())
-                wildMonsters.first().buffs << tempBuff;
-            else if(!botFightMonsters.isEmpty())
-                botFightMonsters.first().buffs << tempBuff;
-            else
-                emit error("Monster not located to apply the buff");
-        break;
-        default:
-            emit error("Not apply match, can't apply the buff");
-        break;
-    }
-}
-
 void LocalClientHandlerFight::useSkill(const quint32 &skill)
 {
     if(!isInFight())
@@ -934,18 +576,18 @@ void LocalClientHandlerFight::useSkill(const quint32 &skill)
         return;
     }
     int index=0;
-    while(index<getSelectedMonster().skills.size())
+    while(index<getCurrentMonster()->skills.size())
     {
-        if(getSelectedMonster().skills.at(index).skill==skill)
+        if(getCurrentMonster()->skills.at(index).skill==skill)
             break;
         index++;
     }
-    if(index==getSelectedMonster().skills.size())
+    if(index==getCurrentMonster()->skills.size())
     {
-        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(getSelectedMonster().monster).arg(getSelectedMonster().level).arg(skill));
+        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(getCurrentMonster()->monster).arg(getCurrentMonster()->level).arg(skill));
         return;
     }
-    quint8 skillLevel=getSelectedMonster().skills.at(index).level;
+    quint8 skillLevel=getCurrentMonster()->skills.at(index).level;
     if(battleIsValidated)
     {
         useBattleSkill(skill,skillLevel);
@@ -966,7 +608,7 @@ void LocalClientHandlerFight::useSkill(const quint32 &skill)
 
 void LocalClientHandlerFight::useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel)
 {
-    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getSelectedMonster().monster],getSelectedMonster().level);
+    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster],getCurrentMonster()->level);
     Monster::Stat otherMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster],wildMonsters.first().level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     QList<Skill::AttackReturn> monsterReturnList;
@@ -995,7 +637,7 @@ void LocalClientHandlerFight::useSkillAgainstWildMonster(const quint32 &skill,co
     //do the other monster attack
     if(!isKO)
     {
-        generateOtherAttack();
+        Skill::AttackReturn attackReturn=CommonFightEngine::generateOtherAttack();
         otherMonsterisKO=checkKOOtherMonstersForGain();
         if(otherMonsterisKO)
         {
@@ -1039,9 +681,16 @@ void LocalClientHandlerFight::useSkillAgainstWildMonster(const quint32 &skill,co
         emit message("You have put KO the wild monster");
 }
 
+PublicPlayerMonster * LocalClientHandlerFight::getOtherMonster()
+{
+    if(!botFightMonsters.isEmpty())
+        return &botFightMonsters.first();
+    return CommonFightEngine::getOtherMonster();
+}
+
 void LocalClientHandlerFight::useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel)
 {
-    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getSelectedMonster().monster],getSelectedMonster().level);
+    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster],getCurrentMonster()->level);
     Monster::Stat otherMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[botFightMonsters.first().monster],botFightMonsters.first().level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
     QList<Skill::AttackReturn> monsterReturnList;
@@ -1070,7 +719,7 @@ void LocalClientHandlerFight::useSkillAgainstBotMonster(const quint32 &skill,con
     //do the other monster attack
     if(!isKO)
     {
-        generateOtherAttack();
+        Skill::AttackReturn attackReturn=CommonFightEngine::generateOtherAttack();
         otherMonsterisKO=checkKOOtherMonstersForGain();
         if(otherMonsterisKO)
         {
@@ -1224,7 +873,7 @@ Skill::AttackReturn LocalClientHandlerFight::doTheCurrentMonsterAttack(const qui
         {
             Skill::LifeEffectReturn lifeEffectReturn;
             lifeEffectReturn.on=life.effect.on;
-            lifeEffectReturn.quantity=applyCurrentLifeEffect(life.effect);
+            lifeEffectReturn.quantity=applyCurrentLifeEffect(life.effect).quantity;
             tempReturnBuff.lifeEffectMonster << lifeEffectReturn;
         }
         index++;
@@ -1237,112 +886,6 @@ bool LocalClientHandlerFight::isInFight()
     if(CommonFightEngine::isInFight())
         return true;
     return otherPlayerBattle!=NULL || battleIsValidated;
-}
-
-qint32 LocalClientHandlerFight::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
-{
-    qint32 quantity;
-    const Monster::Stat &stat=getStat(CommonDatapack::commonDatapack.monsters[getSelectedMonster().monster],getSelectedMonster().level);
-    switch(effect.on)
-    {
-        case ApplyOn_AloneEnemy:
-        case ApplyOn_AllEnemy:
-        {
-            PlayerMonster &monster=getEnemyMonster();
-            if(effect.type==QuantityType_Quantity)
-            {
-                Monster::Stat otherStat=getStat(CommonDatapack::commonDatapack.monsters[monster.monster],monster.level);
-                if(effect.quantity<0)
-                {
-                    quantity=-((-effect.quantity*stat.attack*getSelectedMonster().level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
-                else if(effect.quantity>0)//ignore the def for heal
-                {
-                    quantity=effect.quantity*getSelectedMonster().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
-            }
-            else
-                quantity=(monster.hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)monster.hp)
-                monster.hp=0;
-            else if(quantity>0 && quantity>(qint32)(stat.hp-monster.hp))
-                monster.hp=stat.hp;
-            else
-                monster.hp+=quantity;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(effect.quantity<0)
-                emit message(QString("You do %1 of damage on the other monster").arg(-quantity));
-            if(effect.quantity>0)
-                emit message(QString("You heal the other monster of %1").arg(quantity));
-            #endif
-        }
-        break;
-        case ApplyOn_Themself:
-        case ApplyOn_AllAlly:
-            if(effect.type==QuantityType_Quantity)
-            {
-                if(effect.quantity<0)
-                {
-                    quantity=-((-effect.quantity*stat.attack*getSelectedMonster().level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
-                else if(effect.quantity>0)//ignore the def for heal
-                {
-                    quantity=effect.quantity*getSelectedMonster().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
-            }
-            else
-                quantity=(getSelectedMonster().hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)getSelectedMonster().hp)
-            {
-                getSelectedMonster().hp=0;
-                getSelectedMonster().buffs.clear();
-                updateCanDoFight();
-            }
-            else if(quantity>0 && quantity>(qint32)(stat.hp-getSelectedMonster().hp))
-                getSelectedMonster().hp=stat.hp;
-            else
-                getSelectedMonster().hp+=quantity;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(effect.quantity<0)
-                emit message(QString("You take you self %1 of damage").arg(-quantity));
-            if(effect.quantity>0)
-                emit message(QString("You heal your self of %1").arg(quantity));
-            #endif
-        break;
-        default:
-            emit error("Not apply match, can't apply the life effect");
-        break;
-    }
-    return quantity;
-}
-
-void LocalClientHandlerFight::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
-{
-    PlayerBuff tempBuff;
-    tempBuff.buff=effect.buff;
-    tempBuff.level=effect.level;
-    switch(effect.on)
-    {
-        case ApplyOn_AloneEnemy:
-        case ApplyOn_AllEnemy:
-            getEnemyMonster().buffs << tempBuff;
-        break;
-        case ApplyOn_Themself:
-        case ApplyOn_AllAlly:
-            getSelectedMonster().buffs << tempBuff;
-        break;
-        default:
-            qDebug() << "Not apply match, can't apply the buff";
-        break;
-    }
 }
 
 bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const quint32 &skill)
@@ -1616,8 +1159,8 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
                 out << (quint8)0x02;
             index++;
         }
-        out << (quint8)selectedMonsterNumberToMonsterPlace(otherPlayerBattle->getSelectedMonsterNumber());
-        QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(otherPlayerBattle->getSelectedMonster()));
+        out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
+        QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
         emit sendPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData+firstValidOtherPlayerMonster);
     }
 }
@@ -1659,8 +1202,8 @@ void LocalClientHandlerFight::useBattleSkill(const quint32 &skill,const quint8 &
     }
     //calculate the result
     QList<Skill::AttackReturn> monsterReturnList;
-    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getSelectedMonster().monster],getSelectedMonster().level);
-    Monster::Stat otherMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[tempOtherPlayerBattle->getSelectedMonster().monster],tempOtherPlayerBattle->getSelectedMonster().level);
+    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster],getCurrentMonster()->level);
+    Monster::Stat otherMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getOtherMonster()->monster],getOtherMonster()->level);
     bool currentMonsterStatIsFirstToAttack;
     if(currentMonsterStat.speed==otherMonsterStat.speed)
         currentMonsterStatIsFirstToAttack=rand()%2;
@@ -1733,7 +1276,7 @@ void LocalClientHandlerFight::useBattleSkill(const quint32 &skill,const quint8 &
     syncForEndOfTurn();
     //send to the return
     if(otherMonsterisKO && !otherPlayerLoose)
-        sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(tempOtherPlayerBattle->getSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(tempOtherPlayerBattle->getSelectedMonster()));
+        sendBattleReturn(monsterReturnList,getOtherSelectedMonsterNumber(),*getOtherMonster());
     else
         sendBattleReturn(monsterReturnList);
     int index=0;
@@ -1743,7 +1286,7 @@ void LocalClientHandlerFight::useBattleSkill(const quint32 &skill,const quint8 &
         index++;
     }
     if(currentMonsterisKO && !currentPlayerLoose)
-        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(getSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(getSelectedMonster()));
+        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(getCurrentSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(*getCurrentMonster()));
     else
         tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
     //reset all

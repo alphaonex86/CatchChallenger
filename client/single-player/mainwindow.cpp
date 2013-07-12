@@ -9,7 +9,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/FacilityLib.h"
 #include "../base/interface/DatapackClientLoader.h"
-#include "../fight/interface/FightEngine.h"
+#include "../fight/interface/ClientFightEngine.h"
 #include "../base/DebugClass.h"
 #include "../base/CommonDatapack.h"
 
@@ -354,7 +354,7 @@ void MainWindow::on_SaveGame_New_clicked()
             else
                 gender="male";
         }
-        CatchChallenger::Monster::Stat stat=CatchChallenger::FightEngine::fightEngine.getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
+        CatchChallenger::Monster::Stat stat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
         QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
         QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].learn;
         int sub_index=0;

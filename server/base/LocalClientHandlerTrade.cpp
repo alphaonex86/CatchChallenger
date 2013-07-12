@@ -258,7 +258,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
     {
         if(player_informations->public_and_private_informations.playerMonster.at(index).id==monsterId)
         {
-            if(!localClientHandlerFight.remainMonstersToFight(monsterId))
+            if(localClientHandlerFight.isInFight())
             {
                 emit error("You can't trade monster because you are in fight");
                 return;
