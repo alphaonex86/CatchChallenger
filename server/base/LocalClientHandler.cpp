@@ -13,6 +13,17 @@ LocalClientHandler::LocalClientHandler()
     otherPlayerTrade=NULL;
     otherPlayerBattle=NULL;
     tradeIsValidated=false;
+
+    connect(&localClientHandlerFight,SIGNAL(dbQuery(QString)),                          this,SIGNAL(dbQuery(QString)));
+    connect(&localClientHandlerFight,SIGNAL(askRandomNumber()),                         this,SIGNAL(askRandomNumber()));
+    connect(&localClientHandlerFight,SIGNAL(receiveSystemText(QString,bool)),           this,SIGNAL(receiveSystemText(QString,bool)));
+    connect(&localClientHandlerFight,SIGNAL(postReply(quint8,QByteArray)),              this,SIGNAL(postReply(quint8,QByteArray)));
+    connect(&localClientHandlerFight,SIGNAL(sendBattleRequest(QByteArray)),             this,SIGNAL(sendBattleRequest(QByteArray)));
+    connect(&localClientHandlerFight,SIGNAL(sendPacket(quint8,QByteArray)),             this,SIGNAL(sendPacket(quint8,QByteArray)));
+    connect(&localClientHandlerFight,SIGNAL(sendPacket(quint8,quint16,QByteArray)),     this,SIGNAL(sendPacket(quint8,quint16,QByteArray)));
+    connect(&localClientHandlerFight,SIGNAL(teleportTo(Map*,quint8,quint8,Orientation)),this,SIGNAL(teleportTo(Map*,quint8,quint8,Orientation)));
+    connect(&localClientHandlerFight,SIGNAL(addObjectAndSend(quint32,quint32)),         this,SLOT(addObjectAndSend(quint32,quint32)));
+    connect(&localClientHandlerFight,SIGNAL(addCash(quint64,bool)),                     this,SLOT(addCash(quint64,bool)));
 }
 
 LocalClientHandler::~LocalClientHandler()
