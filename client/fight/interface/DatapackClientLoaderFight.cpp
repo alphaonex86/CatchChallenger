@@ -4,7 +4,7 @@
 #include "../../general/base/DebugClass.h"
 #include "../../general/fight/FightLoader.h"
 #include "../../general/base/CommonDatapack.h"
-#include "../fight/interface/FightEngine.h"
+#include "../fight/interface/ClientFightEngine.h"
 
 #include <QDomElement>
 #include <QDomDocument>

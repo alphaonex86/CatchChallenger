@@ -1,6 +1,6 @@
 #include "MapVisualiserPlayerWithFight.h"
 
-#include "../../fight/interface/FightEngine.h"
+#include "../../fight/interface/ClientFightEngine.h"
 
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
@@ -25,7 +25,7 @@ void MapVisualiserPlayerWithFight::resetAll()
 
 void MapVisualiserPlayerWithFight::keyPressParse()
 {
-    if(CatchChallenger::FightEngine::fightEngine.isInFight())
+    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
         qDebug() << "Strange, try move when is in fight at keyPressParse()";
         return;
@@ -36,7 +36,7 @@ void MapVisualiserPlayerWithFight::keyPressParse()
 
 bool MapVisualiserPlayerWithFight::haveStopTileAction()
 {
-    if(CatchChallenger::FightEngine::fightEngine.isInFight())
+    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
@@ -57,7 +57,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         index++;
     }
     //check if is in fight collision
-    if(CatchChallenger::FightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
+    if(CatchChallenger::ClientFightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
     {
         inMove=false;
         emit send_player_direction(direction);
@@ -73,7 +73,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
 {
     if(!MapVisualiserPlayer::canGoTo(direction,map,x,y,checkCollision))
         return false;
-    if(CatchChallenger::FightEngine::fightEngine.isInFight())
+    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
         qDebug() << "Strange, try move when is in fight";
         return false;
@@ -86,7 +86,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     {
         if(!botAlreadyBeaten.contains(botFightList.at(index)))
         {
-            if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
+            if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
             {
                 emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                 return false;
@@ -96,12 +96,12 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     }
     if(CatchChallenger::MoveOnTheMap::isGrass(*new_map,x,y) && !new_map->grassMonster.empty())
     {
-        if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
+        if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_Grass);
             return false;
         }
-        if(!CatchChallenger::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
+        if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
             return false;
@@ -109,12 +109,12 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     }
     if(CatchChallenger::MoveOnTheMap::isWater(*new_map,x,y) && !new_map->waterMonster.empty())
     {
-        if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
+        if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_Wather);
             return false;
         }
-        if(!CatchChallenger::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
+        if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
             return false;
@@ -122,12 +122,12 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     }
     if(!new_map->caveMonster.empty())
     {
-        if(!CatchChallenger::FightEngine::fightEngine.canDoFight())
+        if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_Cave);
             return false;
         }
-        if(!CatchChallenger::FightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
+        if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
         {
             emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
             return false;

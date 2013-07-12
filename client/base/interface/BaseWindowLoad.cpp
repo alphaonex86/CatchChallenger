@@ -5,7 +5,7 @@
 #include "../ClientVariable.h"
 #include "DatapackClientLoader.h"
 #include "Chat.h"
-#include "../fight/interface/FightEngine.h"
+#include "../fight/interface/ClientFightEngine.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -57,7 +57,7 @@ void BaseWindow::resetAll()
     ui->tabWidgetTrainerCard->setCurrentWidget(ui->tabWidgetTrainerCardPage1);
     ui->selectMonster->setVisible(false);
 
-    CatchChallenger::FightEngine::fightEngine.resetAll();
+    CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }
 
 void BaseWindow::serverIsLoading()
