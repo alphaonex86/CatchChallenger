@@ -221,7 +221,7 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     localClientHandlerFight.updateCanDoFight();
     if(localClientHandlerFight.getAbleToFight())
         localClientHandlerFight.botFightCollision(map,x,y);
-    else
+    else if(localClientHandlerFight.haveMonsters())
         localClientHandlerFight.checkLoose();
 }
 
@@ -242,7 +242,7 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
 
 bool LocalClientHandler::singleMove(const Direction &direction)
 {
-    if(!localClientHandlerFight.isInFight())//check if is in fight
+    if(localClientHandlerFight.isInFight())//check if is in fight
     {
         emit error(QString("error: try move when is in fight"));
         return false;
@@ -1545,7 +1545,7 @@ void LocalClientHandler::newRandomNumber(const QByteArray &randomData)
 
 bool LocalClientHandler::tryEscape()
 {
-    localClientHandlerFight.tryEscape();
+    return localClientHandlerFight.tryEscape();
 }
 
 void LocalClientHandler::useSkill(const quint32 &skill)
