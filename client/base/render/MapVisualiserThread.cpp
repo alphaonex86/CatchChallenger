@@ -491,7 +491,14 @@ void MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                         parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].botId=botId;
                                                     }
                                                     else
-                                                        CatchChallenger::DebugClass::debugConsole(QString("No botId %1 into %2: properties.tagName(): %3, name: %4 (at line: %5)").arg(botId).arg(botFile).arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
+                                                        CatchChallenger::DebugClass::debugConsole(
+                                                                    QString("No botId %1 into %2: properties.tagName(): %3, name: %4 (at line: %5)")
+                                                                    .arg(botId)
+                                                                    .arg(botFile)
+                                                                    .arg(property.tagName())
+                                                                    .arg(property.attribute("name"))
+                                                                    .arg(property.lineNumber())
+                                                                    );
                                                 }
                                                 else
                                                     CatchChallenger::DebugClass::debugConsole(QString("No file %1: properties.tagName(): %2, name: %3 (at line: %4)").arg(botFile).arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
