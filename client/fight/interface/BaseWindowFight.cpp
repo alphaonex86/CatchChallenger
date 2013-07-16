@@ -82,7 +82,7 @@ bool BaseWindow::check_monsters()
         }
         index++;
     }
-    CatchChallenger::ClientFightEngine::fightEngine.setPlayerMonster(CatchChallenger::Api_client_real::client->player_informations.playerMonster);
+    //CatchChallenger::ClientFightEngine::fightEngine.setPlayerMonster(CatchChallenger::Api_client_real::client->player_informations.playerMonster);
     return true;
 }
 
@@ -183,20 +183,25 @@ void BaseWindow::init_other_monster_display()
 void BaseWindow::init_current_monster_display()
 {
     PlayerMonster *fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-    //current monster
-    ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
-    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-    ui->stackedWidget->setCurrentWidget(ui->page_battle);
-    ui->pushButtonFightEnterNext->setVisible(true);
-    ui->frameFightBottom->setVisible(false);
-    ui->labelFightBottomName->setText(DatapackClientLoader::datapackLoader.monsterExtra[fightMonster->monster].name);
-    ui->labelFightBottomLevel->setText(tr("Level: %1").arg(fightMonster->level));
-    Monster::Stat fightStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster],fightMonster->level);
-    ui->progressBarFightBottomHP->setMaximum(fightStat.hp);
-    ui->progressBarFightBottomHP->setValue(fightMonster->hp);
-    ui->labelFightBottomHP->setText(QString("%1/%2").arg(fightMonster->hp).arg(fightStat.hp));
-    ui->progressBarFightBottopExp->setMaximum(CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster].level_to_xp.at(fightMonster->level-1));
-    ui->progressBarFightBottopExp->setValue(fightMonster->remaining_xp);
+    if(fightMonster!=NULL)
+    {
+        //current monster
+        ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
+        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+        ui->stackedWidget->setCurrentWidget(ui->page_battle);
+        ui->pushButtonFightEnterNext->setVisible(true);
+        ui->frameFightBottom->setVisible(false);
+        ui->labelFightBottomName->setText(DatapackClientLoader::datapackLoader.monsterExtra[fightMonster->monster].name);
+        ui->labelFightBottomLevel->setText(tr("Level: %1").arg(fightMonster->level));
+        Monster::Stat fightStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster],fightMonster->level);
+        ui->progressBarFightBottomHP->setMaximum(fightStat.hp);
+        ui->progressBarFightBottomHP->setValue(fightMonster->hp);
+        ui->labelFightBottomHP->setText(QString("%1/%2").arg(fightMonster->hp).arg(fightStat.hp));
+        ui->progressBarFightBottopExp->setMaximum(CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster].level_to_xp.at(fightMonster->level-1));
+        ui->progressBarFightBottopExp->setValue(fightMonster->remaining_xp);
+    }
+    else
+        emit error("Try fight without monster");
     battleStep=BattleStep_PresentationMonster;
 }
 
@@ -443,15 +448,23 @@ void BaseWindow::updateOtherMonsterInformation()
     p.setY(90);
     ui->labelFightMonsterTop->move(p);
     PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-    ui->labelFightMonsterTop->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].front.scaled(160,160));
-    //other monster
-    ui->frameFightTop->setVisible(true);
-    ui->frameFightTop->show();
-    ui->labelFightTopName->setText(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name);
-    ui->labelFightTopLevel->setText(tr("Level: %1").arg(otherMonster->level));
-    Monster::Stat otherStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
-    ui->progressBarFightTopHP->setMaximum(otherStat.hp);
-    ui->progressBarFightTopHP->setValue(otherMonster->hp);
+    if(otherMonster!=NULL)
+    {
+        ui->labelFightMonsterTop->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].front.scaled(160,160));
+        //other monster
+        ui->frameFightTop->setVisible(true);
+        ui->frameFightTop->show();
+        ui->labelFightTopName->setText(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name);
+        ui->labelFightTopLevel->setText(tr("Level: %1").arg(otherMonster->level));
+        Monster::Stat otherStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        ui->progressBarFightTopHP->setMaximum(otherStat.hp);
+        ui->progressBarFightTopHP->setValue(otherMonster->hp);
+    }
+    else
+    {
+        newError(tr("Internal error"),"Unable to load the other monster");
+        return;
+    }
 }
 
 void BaseWindow::on_toolButtonFightQuit_clicked()
