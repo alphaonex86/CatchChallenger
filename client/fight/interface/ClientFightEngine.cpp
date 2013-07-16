@@ -14,63 +14,11 @@ ClientFightEngine ClientFightEngine::fightEngine;
 ClientFightEngine::ClientFightEngine()
 {
     resetAll();
-    CommonFightEngine::setVariable(&player_informations);
+    CommonFightEngine::setVariable(&this->player_informations_local);
 }
 
 ClientFightEngine::~ClientFightEngine()
 {
-}
-
-bool ClientFightEngine::otherMonsterIsKO()
-{
-    if(wildMonsters.isEmpty() && battleCurrentMonster.isEmpty() && botFightMonsters.isEmpty())
-        return true;
-    if(!wildMonsters.isEmpty())
-    {
-        if(wildMonsters.first().hp==0)
-        {
-            wildMonsters.first().buffs.clear();
-            return true;
-        }
-    }
-    if(!battleCurrentMonster.isEmpty())
-    {
-        if(battleCurrentMonster.first().hp==0)
-        {
-            battleCurrentMonster.first().buffs.clear();
-            return true;
-        }
-    }
-    if(!botFightMonsters.isEmpty())
-    {
-        if(botFightMonsters.first().hp==0)
-        {
-            botFightMonsters.first().buffs.clear();
-            return true;
-        }
-    }
-    return false;
-}
-
-bool ClientFightEngine::currentMonsterIsKO()
-{
-    if(playerMonsterList[selectedMonster].hp==0)
-    {
-        playerMonsterList[selectedMonster].buffs.clear();
-        return true;
-    }
-    return false;
-}
-
-bool ClientFightEngine::dropKOCurrentMonster()
-{
-    if(playerMonsterList[selectedMonster].hp==0)
-    {
-        playerMonsterList[selectedMonster].buffs.clear();
-        updateCanDoFight();
-        return true;
-    }
-    return false;
 }
 
 void ClientFightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
@@ -234,20 +182,6 @@ void ClientFightEngine::finishTheBattle()
     battleMonsterPlace.clear();
 }
 
-void ClientFightEngine::healAllMonsters()
-{
-    int index=0;
-    while(index<playerMonsterList.size())
-    {
-        if(playerMonsterList.at(index).egg_step==0)
-            playerMonsterList[index].hp=
-                    CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(index).monster].stat.hp*
-                    playerMonsterList.at(index).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-        index++;
-    }
-    updateCanDoFight();
-}
-
 bool ClientFightEngine::isInFight()
 {
     if(!wildMonsters.empty())
@@ -260,91 +194,10 @@ bool ClientFightEngine::isInFight()
         return false;
 }
 
-bool ClientFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill)
-{
-    int index=0;
-    while(index<playerMonsterList.size())
-    {
-        const PlayerMonster &monster=playerMonsterList.at(index);
-        if(monster.id==monsterId)
-        {
-            int sub_index2=0;
-            while(sub_index2<monster.skills.size())
-            {
-                if(monster.skills.at(sub_index2).skill==skill)
-                    break;
-                sub_index2++;
-            }
-            int sub_index=0;
-            while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.size())
-            {
-                const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.at(sub_index);
-                if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
-                {
-                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
-                    {
-                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
-                        if(sp>monster.sp)
-                            return false;
-                        playerMonsterList[index].sp-=sp;
-                        if(learn.learnSkillLevel==1)
-                        {
-                            PlayerMonster::PlayerSkill temp;
-                            temp.skill=skill;
-                            temp.level=1;
-                            playerMonsterList[index].skills << temp;
-                        }
-                        else
-                            playerMonsterList[index].skills[sub_index2].level++;
-                        return true;
-                    }
-                }
-                sub_index++;
-            }
-            return false;
-        }
-        index++;
-    }
-    return false;
-}
-
-void ClientFightEngine::setPlayerMonster(const QList<PlayerMonster> &playerMonster)
-{
-    this->playerMonsterList=playerMonster;
-    updateCanDoFight();
-}
-
-void ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
-{
-    playerMonsterList << playerMonster;
-    updateCanDoFight();
-}
-
-QList<PlayerMonster> ClientFightEngine::getPlayerMonster()
-{
-    return playerMonsterList;
-}
-
-bool ClientFightEngine::removeMonster(const quint32 &monsterId)
-{
-    int index=0;
-    while(index<playerMonsterList.size())
-    {
-        if(playerMonsterList.at(index).id==monsterId)
-        {
-            playerMonsterList.removeAt(index);
-            updateCanDoFight();
-            return true;
-        }
-        index++;
-    }
-    return false;
-}
-
 void ClientFightEngine::resetAll()
 {
     randomSeeds.clear();
-    playerMonsterList.clear();
+    player_informations_local.playerMonster.clear();
     ableToFight=false;
 
     attackReturnList.clear();
@@ -383,11 +236,17 @@ bool ClientFightEngine::internalTryEscape()
     }
     CatchChallenger::Api_client_real::client->tryEscape();
     quint8 value=getOneSeed(101);
-    if(wildMonsters.first().level<playerMonsterList.at(selectedMonster).level && value<75)
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        qDebug() << "No current monster to try escape";
+        return false;
+    }
+    if(wildMonsters.first().level<playerMonster->level && value<75)
         return true;
-    if(wildMonsters.first().level==playerMonsterList.at(selectedMonster).level && value<50)
+    if(wildMonsters.first().level==playerMonster->level && value<50)
         return true;
-    if(wildMonsters.first().level>playerMonsterList.at(selectedMonster).level && value<25)
+    if(wildMonsters.first().level>playerMonster->level && value<25)
         return true;
     return false;
 }
@@ -404,17 +263,23 @@ void ClientFightEngine::addXPSP()
         emit newError(tr("Internal error"),"No wild monster to add XP/SP");
         return;
     }
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        qDebug() << "No current monster to add xp";
+        return;
+    }
     PlayerMonster publicOtherMonster;
     if(!wildMonsters.isEmpty())
         publicOtherMonster=wildMonsters.first();
     else
         publicOtherMonster=botFightMonsters.first();
     const Monster &otherMonsterDef=CatchChallenger::CommonDatapack::commonDatapack.monsters[publicOtherMonster.monster];
-    const Monster &currentMonster=CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList[selectedMonster].monster];
-    playerMonsterList[selectedMonster].sp+=otherMonsterDef.give_sp*publicOtherMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    const Monster &currentMonster=CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster];
+    playerMonster->sp+=otherMonsterDef.give_sp*publicOtherMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     quint32 give_xp=otherMonsterDef.give_xp*publicOtherMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-    quint32 xp=playerMonsterList[selectedMonster].remaining_xp;
-    quint32 level=playerMonsterList[selectedMonster].level;
+    quint32 xp=playerMonster->remaining_xp;
+    quint32 level=playerMonster->level;
     while(currentMonster.level_to_xp.at(level-1)<(xp+give_xp))
     {
         quint32 old_max_hp=currentMonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
@@ -422,11 +287,11 @@ void ClientFightEngine::addXPSP()
         give_xp-=currentMonster.level_to_xp.at(level-1)-xp;
         xp=0;
         level++;
-        playerMonsterList[selectedMonster].hp+=new_max_hp-old_max_hp;
-        playerMonsterList[selectedMonster].level=level;
+        playerMonster->hp+=new_max_hp-old_max_hp;
+        playerMonster->level=level;
     }
     xp+=give_xp;
-    playerMonsterList[selectedMonster].remaining_xp=xp;
+    playerMonster->remaining_xp=xp;
 }
 
 bool ClientFightEngine::canDoFightAction()
@@ -456,7 +321,13 @@ void ClientFightEngine::useSkill(const quint32 &skill)
 
 void ClientFightEngine::useSkillAgainstWildMonster(const quint32 &skill)
 {
-    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        qDebug() << "No current monster to useSkillAgainstWildMonster";
+        return;
+    }
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
     const PlayerMonster &publicOtherMonster=wildMonsters.first();
     Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicOtherMonster.monster],publicOtherMonster.level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
@@ -529,7 +400,13 @@ void ClientFightEngine::useSkillAgainstWildMonster(const quint32 &skill)
 
 void ClientFightEngine::useSkillAgainstBotMonster(const quint32 &skill)
 {
-    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        qDebug() << "No current monster for useSkillAgainstBotMonster";
+        return;
+    }
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
     const PlayerMonster &publicOtherMonster=botFightMonsters.first();
     Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicOtherMonster.monster],publicOtherMonster.level);
     bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
@@ -602,26 +479,32 @@ void ClientFightEngine::useSkillAgainstBotMonster(const quint32 &skill)
 
 void ClientFightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
 {
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        qDebug() << "No current monster to doTheCurrentMonsterAttack";
+        return;
+    }
     #ifdef DEBUG_CLIENT_BATTLE
     qDebug() << "doTheCurrentMonsterAttack: " << skill;
     #endif
     int index=0;
-    while(index<playerMonsterList.at(selectedMonster).skills.size())
+    while(index<playerMonster->skills.size())
     {
-        if(playerMonsterList.at(selectedMonster).skills.at(index).skill==skill)
+        if(playerMonster->skills.at(index).skill==skill)
             break;
         index++;
     }
-    if(index==playerMonsterList.at(selectedMonster).skills.size())
+    if(index==playerMonster->skills.size())
     {
-        qDebug() << QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(playerMonsterList.at(selectedMonster).monster).arg(playerMonsterList.at(selectedMonster).level).arg(skill);
+        qDebug() << QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(playerMonster->monster).arg(playerMonster->level).arg(skill);
         return;
     }
     Skill::AttackReturn attackReturn;
     attackReturn.attack=skill;
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.success=false;
-    const Skill::SkillList &skillList=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerMonsterList.at(selectedMonster).skills.at(index).skill].level.at(playerMonsterList.at(selectedMonster).skills.at(index).level-1);
+    const Skill::SkillList &skillList=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerMonster->skills.at(index).skill].level.at(playerMonster->skills.at(index).level-1);
     index=0;
     while(index<skillList.buff.size())
     {
@@ -662,11 +545,17 @@ void ClientFightEngine::doTheCurrentMonsterAttack(const quint32 &skill)
 
 bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn)
 {
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        qDebug() << "No current monster at apply current life effect";
+        return false;
+    }
     #ifdef DEBUG_CLIENT_BATTLE
     qDebug() << "applyCurrentLifeEffectReturn on " << effectReturn.on;
     #endif
     qint32 quantity;
-    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonsterList.at(selectedMonster).monster],playerMonsterList.at(selectedMonster).level);
+    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
     switch(effectReturn.on)
     {
         case ApplyOn_AloneEnemy:
@@ -705,20 +594,20 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
         case ApplyOn_AllAlly:
             quantity=effectReturn.quantity;
             qDebug() << "applyCurrentLifeEffect() add hp " << quantity;
-            if(quantity<0 && (-quantity)>(qint32)playerMonsterList[selectedMonster].hp)
+            if(quantity<0 && (-quantity)>(qint32)playerMonster->hp)
             {
                 qDebug() << "applyCurrentLifeEffect() current monster is KO";
-                playerMonsterList[selectedMonster].hp=0;
-                playerMonsterList[selectedMonster].buffs.clear();
+                playerMonster->hp=0;
+                playerMonster->buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(qint32)(stat.hp-playerMonsterList[selectedMonster].hp))
+            else if(quantity>0 && quantity>(qint32)(stat.hp-playerMonster->hp))
             {
                 qDebug() << "applyCurrentLifeEffect() you are fully healled";
-                playerMonsterList[selectedMonster].hp=stat.hp;
+                playerMonster->hp=stat.hp;
             }
             else
-                playerMonsterList[selectedMonster].hp+=quantity;
+                playerMonster->hp+=quantity;
         break;
         default:
             qDebug() << "Not apply match, can't apply the buff";
@@ -807,7 +696,9 @@ bool ClientFightEngine::firstLifeEffectQuantityChange(qint32 quantity)
     return true;
 }
 
-void ClientFightEngine::setVariable(Player_private_and_public_informations player_informations)
+void ClientFightEngine::setVariable(Player_private_and_public_informations player_informations_local)
 {
-    this->player_informations=player_informations;
+    this->player_informations_local=player_informations_local;
+    //CommonFightEngine::setVariable(&this->player_informations_local);
+    CommonFightEngine::updateCanDoFight();
 }

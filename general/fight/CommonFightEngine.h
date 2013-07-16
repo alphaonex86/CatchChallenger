@@ -32,6 +32,14 @@ public:
     virtual bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool haveRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     void updateCanDoFight();
+    bool otherMonsterIsKO();
+    bool currentMonsterIsKO();
+    bool dropKOCurrentMonster();
+    void healAllMonsters();
+    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+    void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
+    QList<PlayerMonster> getPlayerMonster();
+    bool removeMonster(const quint32 &monsterId);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
