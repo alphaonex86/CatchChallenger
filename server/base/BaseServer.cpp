@@ -261,40 +261,49 @@ void BaseServer::preload_the_map()
         int sub_index=0;
         while(sub_index<semi_loaded_map[index].old_map.teleport.size())
         {
-            if(GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
-                    && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->width
-                    && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->height
-                )
+            if(GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map[index].old_map.teleport.at(sub_index).map))
             {
-                int virtual_position=semi_loaded_map[index].old_map.teleport.at(sub_index).source_x+semi_loaded_map[index].old_map.teleport.at(sub_index).source_y*semi_loaded_map[index].map->width;
-                if(semi_loaded_map[index].map->teleporter.contains(virtual_position))
+                if(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->width
+                        && semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y<GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map]->height)
                 {
-                    DebugClass::debugConsole(QString("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                    int virtual_position=semi_loaded_map[index].old_map.teleport.at(sub_index).source_x+semi_loaded_map[index].old_map.teleport.at(sub_index).source_y*semi_loaded_map[index].map->width;
+                    if(semi_loaded_map[index].map->teleporter.contains(virtual_position))
+                    {
+                        DebugClass::debugConsole(QString("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                             .arg(semi_loaded_map[index].map->map_file)
+                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
+                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
+                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
+                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
+                             .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+                    }
+                    else
+                    {
+                        #ifdef DEBUG_MESSAGE_MAP_LOAD
+                        DebugClass::debugConsole(QString("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                                     .arg(semi_loaded_map[index].map->map_file)
+                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
+                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
+                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
+                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
+                                     .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
+                        #endif
+                        semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
+                        semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
+                        semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
+                    }
+                }
+                else
+                    DebugClass::debugConsole(QString("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the tp is out of range")
                          .arg(semi_loaded_map[index].map->map_file)
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
-                }
-                else
-                {
-                    #ifdef DEBUG_MESSAGE_MAP_LOAD
-                    DebugClass::debugConsole(QString("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
-                                 .arg(semi_loaded_map[index].map->map_file)
-                                 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
-                                 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
-                                 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).map)
-                                 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x)
-                                 .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
-                    #endif
-                    semi_loaded_map[index].map->teleporter[virtual_position].map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map[index].old_map.teleport.at(sub_index).map];
-                    semi_loaded_map[index].map->teleporter[virtual_position].x=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_x;
-                    semi_loaded_map[index].map->teleporter[virtual_position].y=semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y;
-                }
             }
             else
-                DebugClass::debugConsole(QString("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                DebugClass::debugConsole(QString("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the map is not found")
                      .arg(semi_loaded_map[index].map->map_file)
                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)

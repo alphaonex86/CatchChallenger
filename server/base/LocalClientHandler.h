@@ -112,6 +112,13 @@ public slots:
     static bool removeQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step);
     //reputation
     void appendReputationPoint(const QString &type,const qint32 &point);
+    //battle
+    void battleCanceled();
+    void battleAccepted();
+    void newRandomNumber(const QByteArray &randomData);
+    bool tryEscape();
+    void useSkill(const quint32 &skill);
+    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
 private slots:
     virtual void extraStop();
     void savePosition();
@@ -122,8 +129,6 @@ private slots:
     bool startQuest(const Quest &quest);
     void addQuestStepDrop(const quint32 &questId,const quint8 &questStep);
     void removeQuestStepDrop(const quint32 &questId,const quint8 &questStep);
-    //battle
-    bool learnSkill(const quint32 &monsterId,const quint32 &skill);
 signals:
     void dbQuery(const QString &sqlQuery);
     void askRandomNumber();
