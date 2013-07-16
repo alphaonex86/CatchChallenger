@@ -1020,6 +1020,7 @@ void LocalClientHandlerFight::registerBattleRequest(LocalClientHandlerFight * ot
     emit message(QString("%1 have requested battle with you").arg(otherPlayerBattle->player_informations->public_and_private_informations.public_informations.pseudo));
     #endif
     this->otherPlayerBattle=otherPlayerBattle;
+    otherPlayerBattle->otherPlayerBattle=this;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);

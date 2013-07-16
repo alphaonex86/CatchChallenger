@@ -11,7 +11,6 @@ QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
 LocalClientHandler::LocalClientHandler()
 {
     otherPlayerTrade=NULL;
-    otherPlayerBattle=NULL;
     tradeIsValidated=false;
 
     connect(&localClientHandlerFight,SIGNAL(dbQuery(QString)),                          this,SIGNAL(dbQuery(QString)));
@@ -708,8 +707,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message("Battle requested");
         #endif
-        otherPlayerBattle=playerByPseudo[extraText];
-        otherPlayerBattle->localClientHandlerFight.registerBattleRequest(&localClientHandlerFight);
+        playerByPseudo[extraText]->localClientHandlerFight.registerBattleRequest(&localClientHandlerFight);
     }
 }
 

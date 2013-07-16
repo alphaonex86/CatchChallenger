@@ -52,8 +52,6 @@ private:
     //info linked
     static Direction	temp_direction;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
-    //battle
-    LocalClientHandler * otherPlayerBattle;
     //trade
     LocalClientHandler * otherPlayerTrade;
     bool tradeIsValidated;
