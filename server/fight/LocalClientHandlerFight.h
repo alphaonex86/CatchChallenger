@@ -39,11 +39,11 @@ public:
     void registerBattleRequest(LocalClientHandlerFight * otherPlayerBattle);
     //random linked signals
     //void newRandomNumber(const QByteArray &randomData);
-public slots:
     void battleCanceled();
     void battleAccepted();
     void battleFinished();
     void battleFinishedReset();
+    void useSkill(const quint32 &skill);
 protected:
     bool checkKOCurrentMonsters();
     bool checkKOOtherMonstersForGain();
@@ -51,7 +51,6 @@ protected:
     void saveStat();
     bool botFightStart(const quint32 &botFightId);
     bool tryEscapeInternal();
-    void useSkill(const quint32 &skill);
     void useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel);
     void useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel);
     bool buffIsValid(const Skill::BuffEffect &buffEffect);

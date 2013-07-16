@@ -1527,3 +1527,28 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
     emit message(QString("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
 }
+
+void LocalClientHandler::battleCanceled()
+{
+    localClientHandlerFight.battleCanceled();
+}
+
+void LocalClientHandler::battleAccepted()
+{
+    localClientHandlerFight.battleAccepted();
+}
+
+void LocalClientHandler::newRandomNumber(const QByteArray &randomData)
+{
+    localClientHandlerFight.newRandomNumber(randomData);
+}
+
+bool LocalClientHandler::tryEscape()
+{
+    localClientHandlerFight.tryEscape();
+}
+
+void LocalClientHandler::useSkill(const quint32 &skill)
+{
+    localClientHandlerFight.useSkill(skill);
+}

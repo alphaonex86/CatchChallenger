@@ -5,9 +5,7 @@ using namespace CatchChallenger;
 
 CommonFightEngine::CommonFightEngine()
 {
-    stepFight_Grass=0;
-    stepFight_Water=0;
-    stepFight_Cave=0;
+    resetAll();
 }
 
 bool CommonFightEngine::tryEscape()
@@ -23,6 +21,19 @@ bool CommonFightEngine::tryEscape()
         return false;
     }
     return true;
+}
+
+void CommonFightEngine::resetAll()
+{
+    stepFight_Grass=0;
+    stepFight_Water=0;
+    stepFight_Cave=0;
+    player_informations=NULL;
+    ableToFight=false;
+    wildMonsters.clear();
+    botFightMonsters.clear();
+    randomSeeds.clear();
+    selectedMonster=0;
 }
 
 bool CommonFightEngine::isInFight()
@@ -173,6 +184,11 @@ Monster::Stat CommonFightEngine::getStat(const Monster &monster, const quint8 &l
 void CommonFightEngine::updateCanDoFight()
 {
     ableToFight=false;
+    if(player_informations==NULL)
+    {
+        emit error(QString("player_informations is NULL"));
+        return;
+    }
     int index=0;
     while(index<player_informations->playerMonster.size())
     {
@@ -189,7 +205,18 @@ void CommonFightEngine::updateCanDoFight()
 
 PlayerMonster * CommonFightEngine::getCurrentMonster()
 {
-    return &player_informations->playerMonster[selectedMonster];
+    if(player_informations==NULL)
+    {
+        emit error(QString("player_informations is NULL"));
+        return NULL;
+    }
+    if(selectedMonster>0 && selectedMonster<player_informations->playerMonster.size())
+        return &player_informations->playerMonster[selectedMonster];
+    else
+    {
+        emit error(QString("selectedMonster is out of range"));
+        return NULL;
+    }
 }
 
 quint8 CommonFightEngine::getCurrentSelectedMonsterNumber()
@@ -214,6 +241,11 @@ PublicPlayerMonster * CommonFightEngine::getOtherMonster()
 
 bool CommonFightEngine::remainMonstersToFight(const quint32 &monsterId) const
 {
+    if(player_informations==NULL)
+    {
+        qDebug() << "player_informations is NULL";
+        return false;
+    }
     int index=0;
     while(index<player_informations->playerMonster.size())
     {
@@ -304,9 +336,17 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
 Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::LifeEffect &effect)
 {
     PlayerMonster *otherMonster;
-    if(wildMonsters.isEmpty())
+    if(player_informations==NULL)
+    {
+        emit error(QString("player_informations is NULL"));
+        Skill::LifeEffectReturn effect_to_return;
+        effect_to_return.on=effect.on;
+        effect_to_return.quantity=0;
+        return effect_to_return;
+    }
+    if(!wildMonsters.isEmpty())
         otherMonster=&wildMonsters.first();
-    else if(botFightMonsters.isEmpty())
+    else if(!botFightMonsters.isEmpty())
         otherMonster=&botFightMonsters.first();
     else
     {
@@ -389,6 +429,11 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
 
 void CommonFightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 {
+    if(player_informations==NULL)
+    {
+        emit error(QString("player_informations is NULL"));
+        return;
+    }
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
@@ -418,6 +463,14 @@ void CommonFightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 
 Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
+    if(player_informations==NULL)
+    {
+        emit error(QString("player_informations is NULL"));
+        Skill::LifeEffectReturn effect_to_return;
+        effect_to_return.on=effect.on;
+        effect_to_return.quantity=0;
+        return effect_to_return;
+    }
     qint32 quantity;
     Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(selectedMonster).monster],player_informations->playerMonster.at(selectedMonster).level);
     switch(effect.on)
