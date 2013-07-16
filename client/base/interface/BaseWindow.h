@@ -93,6 +93,7 @@ private slots:
     void protocol_is_good();
     void newError(QString error,QString detailedError);
     void error(QString error);
+    void errorWithTheCurrentMap();
 
     //player UI
     void on_pushButton_interface_bag_clicked();

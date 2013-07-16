@@ -56,6 +56,11 @@ bool CommonFightEngine::getAbleToFight()
     return ableToFight;
 }
 
+bool CommonFightEngine::haveMonsters()
+{
+    return !player_informations->playerMonster.isEmpty();
+}
+
 //return is have random seed to do random step
 bool CommonFightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y)
 {

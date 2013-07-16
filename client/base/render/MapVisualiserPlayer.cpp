@@ -5,6 +5,7 @@
 
 #include <qmath.h>
 #include <QFileInfo>
+#include <QMessageBox>
 
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
@@ -333,16 +334,18 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject)
 {
-    if(tempMapObject==NULL)
-    {
-        qDebug() << QString("Unable to load the map: %1").arg(fileName);
-        asyncMap.removeOne(fileName);
-        return false;
-    }
     if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
     {
-        if(tempMapObject->logicalMap.map_file==current_map)
-            finalPlayerStep();
+        if(fileName==current_map)
+        {
+            if(tempMapObject!=NULL)
+                finalPlayerStep();
+            else
+            {
+                emit errorWithTheCurrentMap();
+                return false;
+            }
+        }
         return true;
     }
     else
@@ -488,9 +491,12 @@ void MapVisualiserPlayer::finalPlayerStep()
     //now stop walking, no more arrow key is pressed
     else
     {
-        inMove=false;
-        emit send_player_direction(direction);
-        parseStop();
+        if(inMove)
+        {
+            inMove=false;
+            emit send_player_direction(direction);
+            parseStop();
+        }
     }
 }
 

@@ -47,24 +47,30 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     {
         if(!botAlreadyBeaten.contains(botFightList.at(index)))
         {
-            inMove=false;
-            emit send_player_direction(direction);
+            if(inMove)
+            {
+                inMove=false;
+                emit send_player_direction(direction);
+                keyPressed.clear();
+            }
             parseStop();
             emit botFightCollision(botFightList.at(index),static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
-            keyPressed.clear();
             return true;
         }
         index++;
     }
-    //check if is in fight collision
-    if(CatchChallenger::ClientFightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
+    //check if is in fight collision, but only if is move
+    if(inMove)
     {
-        inMove=false;
-        emit send_player_direction(direction);
-        parseStop();
-        emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
-        keyPressed.clear();
-        return true;
+        if(CatchChallenger::ClientFightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
+        {
+            inMove=false;
+            emit send_player_direction(direction);
+            keyPressed.clear();
+            parseStop();
+            emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
+            return true;
+        }
     }
     return false;
 }

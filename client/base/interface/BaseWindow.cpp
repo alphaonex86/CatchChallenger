@@ -99,6 +99,7 @@ BaseWindow::BaseWindow() :
     connect(MapController::mapController,SIGNAL(actionOn(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(actionOn(CatchChallenger::Map_client*,quint8,quint8)));
     connect(MapController::mapController,SIGNAL(blockedOn(MapVisualiserPlayer::BlockedOn)),this,SLOT(blockedOn(MapVisualiserPlayer::BlockedOn)));
     connect(MapController::mapController,SIGNAL(error(QString)),this,SLOT(error(QString)));
+    connect(MapController::mapController,SIGNAL(errorWithTheCurrentMap()),this,SLOT(errorWithTheCurrentMap()));
 
     //fight
     connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&ClientFightEngine::fightEngine,SLOT(newRandomNumber(QByteArray)));
@@ -691,6 +692,15 @@ void BaseWindow::newError(QString error,QString detailedError)
 void BaseWindow::error(QString error)
 {
     newError(tr("Error with the protocol"),error);
+}
+
+void BaseWindow::errorWithTheCurrentMap()
+{
+    if(socketState!=QAbstractSocket::ConnectedState)
+        return;
+    CatchChallenger::Api_client_real::client->tryDisconnect();
+    resetAll();
+    QMessageBox::critical(this,tr("Map error"),tr("The current map into the datapack is in error (not found, read failed, wrong format, corrupted, ...)\nReport the bug to the datapack maintainer."));
 }
 
 void BaseWindow::on_pushButton_interface_bag_clicked()
