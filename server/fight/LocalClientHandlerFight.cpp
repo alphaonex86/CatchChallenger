@@ -11,7 +11,9 @@ LocalClientHandlerFight::LocalClientHandlerFight()
 {
     otherPlayerBattle=NULL;
     battleIsValidated=false;
+    player_informations=NULL;
     botFightCash=0;
+    haveCurrentSkill=false;
 }
 
 LocalClientHandlerFight::~LocalClientHandlerFight()
@@ -110,6 +112,8 @@ void LocalClientHandlerFight::setVariable(Player_internal_informations *player_i
 
 bool LocalClientHandlerFight::checkLoose()
 {
+    if(!haveMonsters())
+        return false;
     updateCanDoFight();
     if(!ableToFight)
     {

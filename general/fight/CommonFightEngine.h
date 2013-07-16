@@ -21,6 +21,7 @@ public:
     virtual void setVariable(Player_private_and_public_informations *player_informations);
     virtual bool isInFight();
     virtual bool getAbleToFight();
+    bool haveMonsters();
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
     PlayerMonster *getCurrentMonster();
     virtual PublicPlayerMonster * getOtherMonster();

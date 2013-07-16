@@ -29,7 +29,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
     connect(CatchChallenger::Api_client_real::client,SIGNAL(move_player(quint16,QList<QPair<quint8,CatchChallenger::Direction> >)),this,SLOT(move_player(quint16,QList<QPair<quint8,CatchChallenger::Direction> >)),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(reinsert_player(quint16,quint8,quint8,CatchChallenger::Direction)),this,SLOT(reinsert_player(quint16,quint8,quint8,CatchChallenger::Direction)),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(reinsert_player(quint16,quint32,quint8,quint8,CatchChallenger::Direction)),this,SLOT(reinsert_player(quint16,quint32,quint8,quint8,CatchChallenger::Direction)),Qt::QueuedConnection);
-    connect(this,SIGNAL(send_player_direction(CatchChallenger::Direction)),CatchChallenger::Api_client_real::client,SLOT(send_player_direction(CatchChallenger::Direction)),Qt::QueuedConnection);
+    connect(this,SIGNAL(send_player_direction(CatchChallenger::Direction)),CatchChallenger::Api_client_real::client,SLOT(send_player_direction(CatchChallenger::Direction)));//,Qt::QueuedConnection
     connect(CatchChallenger::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),Qt::QueuedConnection);
 
     scaleSize=1;

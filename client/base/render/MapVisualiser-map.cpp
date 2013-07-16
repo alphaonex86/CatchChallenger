@@ -88,10 +88,7 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!QFileInfo(resolvedFileName).exists())
-    {
         CatchChallenger::DebugClass::debugConsole(QString("file not found to async: %1").arg(resolvedFileName));
-        return;
-    }
     #endif
     asyncMap << resolvedFileName;
     emit loadOtherMapAsync(resolvedFileName);
@@ -158,163 +155,166 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
 
 bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread::Map_full * tempMapObject)
 {
-    tempMapObject->displayed=false;
-    if(all_map.contains(tempMapObject->logicalMap.map_file))
+    if(all_map.contains(fileName))
     {
         asyncMap.removeOne(fileName);
-        CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, internal bug on: %1").arg(tempMapObject->logicalMap.map_file));
+        CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, internal bug on: %1").arg(fileName));
         return false;
     }
-    all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
-    QHash<quint16,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
-    while (i != tempMapObject->animatedObject.constEnd()) {
-        if(!animationTimer.contains(i.key()))
-        {
-            QTimer *newTimer=new QTimer();
-            newTimer->setInterval(i.key());
-            animationTimer[i.key()]=newTimer;
-            connect(newTimer,SIGNAL(timeout()),this,SLOT(applyTheAnimationTimer()));
-            /// \todo syncro all the timer start, with frame offset to align with the other timer
-            newTimer->start();
+    if(tempMapObject!=NULL)
+    {
+        tempMapObject->displayed=false;
+        all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
+        QHash<quint16,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
+        while (i != tempMapObject->animatedObject.constEnd()) {
+            if(!animationTimer.contains(i.key()))
+            {
+                QTimer *newTimer=new QTimer();
+                newTimer->setInterval(i.key());
+                animationTimer[i.key()]=newTimer;
+                connect(newTimer,SIGNAL(timeout()),this,SLOT(applyTheAnimationTimer()));
+                /// \todo syncro all the timer start, with frame offset to align with the other timer
+                newTimer->start();
+            }
+            ++i;
         }
-        ++i;
-    }
-    //try locate and place it
-    if(tempMapObject->logicalMap.map_file==current_map)
-    {
-        tempMapObject->displayed=true;
-        tempMapObject->x=0;
-        tempMapObject->y=0;
-        tempMapObject->x_pixel=0;
-        tempMapObject->y_pixel=0;
-        loadTeleporter(tempMapObject);
-        asyncDetectBorder(tempMapObject);
-    }
-    else
-    {
-        QRect current_map_rect;
-        if(!current_map.isEmpty() && all_map.contains(current_map))
+        //try locate and place it
+        if(tempMapObject->logicalMap.map_file==current_map)
         {
-            current_map_rect=QRect(0,0,all_map[current_map]->logicalMap.width,all_map[current_map]->logicalMap.height);
-            if(all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
-            {
-                if(all_map[tempMapObject->logicalMap.border_semi.top.fileName]->displayed)
-                {
-                    MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.top.fileName];
-                    //if both border match
-                    if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
-                    {
-                        int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
-                        int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
-                        tempMapObject->x=border_map->x+offset;
-                        tempMapObject->y=border_map->y+border_map->logicalMap.height;
-                        tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-                        tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
-                        tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
-                        tempMapObject->logicalMap.border.top.x_offset=offset;
-                        border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
-                        border_map->logicalMap.border.bottom.x_offset=-offset;
-                        QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                        if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
-                        {
-                            tempMapObject->displayed=true;
-                            asyncDetectBorder(tempMapObject);
-                        }
-                    }
-                    else
-                        qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
-                }
-            }
-            if(all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
-            {
-                if(all_map[tempMapObject->logicalMap.border_semi.bottom.fileName]->displayed)
-                {
-                    MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.bottom.fileName];
-                    //if both border match
-                    if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
-                    {
-                        int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
-                        int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
-                        tempMapObject->x=border_map->x+offset;
-                        tempMapObject->y=border_map->y-tempMapObject->logicalMap.height;
-                        tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-                        tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
-                        tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
-                        tempMapObject->logicalMap.border.bottom.x_offset=offset;
-                        border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
-                        border_map->logicalMap.border.top.x_offset=-offset;
-                        QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                        if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
-                        {
-                            tempMapObject->displayed=true;
-                            asyncDetectBorder(tempMapObject);
-                        }
-                    }
-                    else
-                        qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
-                }
-            }
-            if(all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
-            {
-                if(all_map[tempMapObject->logicalMap.border_semi.right.fileName]->displayed)
-                {
-                    MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.right.fileName];
-                    //if both border match
-                    if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
-                    {
-                        int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
-                        int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight();
-                        tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
-                        tempMapObject->y=border_map->y+offset;
-                        tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
-                        tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
-                        tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
-                        tempMapObject->logicalMap.border.right.y_offset=offset;
-                        border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
-                        border_map->logicalMap.border.left.y_offset=-offset;
-                        QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                        if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
-                        {
-                            tempMapObject->displayed=true;
-                            asyncDetectBorder(tempMapObject);
-                        }
-                    }
-                    else
-                        qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
-                }
-            }
-            if(all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
-            {
-                if(all_map[tempMapObject->logicalMap.border_semi.left.fileName]->displayed)
-                {
-                    MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.left.fileName];
-                    //if both border match
-                    if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
-                    {
-                        int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
-                        int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight();
-                        tempMapObject->x=border_map->x+border_map->logicalMap.width;
-                        tempMapObject->y=border_map->y+offset;
-                        tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
-                        tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
-                        tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
-                        tempMapObject->logicalMap.border.left.y_offset=offset;
-                        border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
-                        border_map->logicalMap.border.right.y_offset=-offset;
-                        QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
-                        if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
-                        {
-                            tempMapObject->displayed=true;
-                            asyncDetectBorder(tempMapObject);
-                        }
-                    }
-                    else
-                        qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
-                }
-            }
+            tempMapObject->displayed=true;
+            tempMapObject->x=0;
+            tempMapObject->y=0;
+            tempMapObject->x_pixel=0;
+            tempMapObject->y_pixel=0;
+            loadTeleporter(tempMapObject);
+            asyncDetectBorder(tempMapObject);
         }
         else
-            qDebug() << "The current map is not set, crash prevented";
+        {
+            QRect current_map_rect;
+            if(!current_map.isEmpty() && all_map.contains(current_map))
+            {
+                current_map_rect=QRect(0,0,all_map[current_map]->logicalMap.width,all_map[current_map]->logicalMap.height);
+                if(all_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
+                {
+                    if(all_map[tempMapObject->logicalMap.border_semi.top.fileName]->displayed)
+                    {
+                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.top.fileName];
+                        //if both border match
+                        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
+                        {
+                            int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
+                            int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
+                            tempMapObject->x=border_map->x+offset;
+                            tempMapObject->y=border_map->y+border_map->logicalMap.height;
+                            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
+                            tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
+                            tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
+                            tempMapObject->logicalMap.border.top.x_offset=offset;
+                            border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
+                            border_map->logicalMap.border.bottom.x_offset=-offset;
+                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
+                            {
+                                tempMapObject->displayed=true;
+                                asyncDetectBorder(tempMapObject);
+                            }
+                        }
+                        else
+                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                    }
+                }
+                if(all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
+                {
+                    if(all_map[tempMapObject->logicalMap.border_semi.bottom.fileName]->displayed)
+                    {
+                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.bottom.fileName];
+                        //if both border match
+                        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
+                        {
+                            int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
+                            int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
+                            tempMapObject->x=border_map->x+offset;
+                            tempMapObject->y=border_map->y-tempMapObject->logicalMap.height;
+                            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
+                            tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
+                            tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
+                            tempMapObject->logicalMap.border.bottom.x_offset=offset;
+                            border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
+                            border_map->logicalMap.border.top.x_offset=-offset;
+                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
+                            {
+                                tempMapObject->displayed=true;
+                                asyncDetectBorder(tempMapObject);
+                            }
+                        }
+                        else
+                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                    }
+                }
+                if(all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
+                {
+                    if(all_map[tempMapObject->logicalMap.border_semi.right.fileName]->displayed)
+                    {
+                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.right.fileName];
+                        //if both border match
+                        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
+                        {
+                            int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
+                            int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight();
+                            tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
+                            tempMapObject->y=border_map->y+offset;
+                            tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
+                            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+                            tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
+                            tempMapObject->logicalMap.border.right.y_offset=offset;
+                            border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
+                            border_map->logicalMap.border.left.y_offset=-offset;
+                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
+                            {
+                                tempMapObject->displayed=true;
+                                asyncDetectBorder(tempMapObject);
+                            }
+                        }
+                        else
+                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                    }
+                }
+                if(all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
+                {
+                    if(all_map[tempMapObject->logicalMap.border_semi.left.fileName]->displayed)
+                    {
+                        MapVisualiserThread::Map_full *border_map=all_map[tempMapObject->logicalMap.border_semi.left.fileName];
+                        //if both border match
+                        if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
+                        {
+                            int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
+                            int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight();
+                            tempMapObject->x=border_map->x+border_map->logicalMap.width;
+                            tempMapObject->y=border_map->y+offset;
+                            tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
+                            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+                            tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
+                            tempMapObject->logicalMap.border.left.y_offset=offset;
+                            border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
+                            border_map->logicalMap.border.right.y_offset=-offset;
+                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
+                            {
+                                tempMapObject->displayed=true;
+                                asyncDetectBorder(tempMapObject);
+                            }
+                        }
+                        else
+                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                    }
+                }
+            }
+            else
+                qDebug() << "The current map is not set, crash prevented";
+        }
     }
     if(asyncMap.removeOne(fileName))
         if(asyncMap.isEmpty())
