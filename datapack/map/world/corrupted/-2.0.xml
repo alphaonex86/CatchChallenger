@@ -1,0 +1,8 @@
+<map>
+       <name lang="en">English name</name>
+       <name lang="fr">Nom français</name>
+       <grass>
+              <monster id="1" minLevel="3" maxLevel="4" luck="20" />
+              <monster id="2" minLevel="3" maxLevel="5" luck="80" />
+       </grass>
+</map>
