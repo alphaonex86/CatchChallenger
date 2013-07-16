@@ -6,6 +6,7 @@ using namespace CatchChallenger;
 CommonFightEngine::CommonFightEngine()
 {
     resetAll();
+    player_informations=NULL;
 }
 
 bool CommonFightEngine::tryEscape()
@@ -28,12 +29,113 @@ void CommonFightEngine::resetAll()
     stepFight_Grass=0;
     stepFight_Water=0;
     stepFight_Cave=0;
-    player_informations=NULL;
     ableToFight=false;
     wildMonsters.clear();
     botFightMonsters.clear();
     randomSeeds.clear();
     selectedMonster=0;
+}
+
+bool CommonFightEngine::otherMonsterIsKO()
+{
+    PublicPlayerMonster * publicPlayerMonster=getOtherMonster();
+    if(publicPlayerMonster==NULL)
+        return true;
+    if(publicPlayerMonster->hp==0)
+    {
+        publicPlayerMonster->buffs.clear();
+        return true;
+    }
+    return false;
+}
+
+bool CommonFightEngine::currentMonsterIsKO()
+{
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+        return true;
+    if(playerMonster->hp==0)
+    {
+        playerMonster->buffs.clear();
+        return true;
+    }
+    return false;
+}
+
+bool CommonFightEngine::dropKOCurrentMonster()
+{
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+        return true;
+    if(playerMonster->hp==0)
+    {
+        playerMonster->buffs.clear();
+        updateCanDoFight();
+        return true;
+    }
+    return false;
+}
+
+void CommonFightEngine::healAllMonsters()
+{
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        if(player_informations->playerMonster.at(index).egg_step==0)
+            player_informations->playerMonster[index].hp=
+                    CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(index).monster].stat.hp*
+                    player_informations->playerMonster.at(index).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        index++;
+    }
+    updateCanDoFight();
+}
+
+bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill)
+{
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        const PlayerMonster &monster=player_informations->playerMonster.at(index);
+        if(monster.id==monsterId)
+        {
+            int sub_index2=0;
+            while(sub_index2<monster.skills.size())
+            {
+                if(monster.skills.at(sub_index2).skill==skill)
+                    break;
+                sub_index2++;
+            }
+            int sub_index=0;
+            while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.size())
+            {
+                const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.at(sub_index);
+                if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
+                {
+                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
+                    {
+                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
+                        if(sp>monster.sp)
+                            return false;
+                        player_informations->playerMonster[index].sp-=sp;
+                        if(learn.learnSkillLevel==1)
+                        {
+                            PlayerMonster::PlayerSkill temp;
+                            temp.skill=skill;
+                            temp.level=1;
+                            player_informations->playerMonster[index].skills << temp;
+                        }
+                        else
+                            player_informations->playerMonster[index].skills[sub_index2].level++;
+                        return true;
+                    }
+                }
+                sub_index++;
+            }
+            return false;
+        }
+        index++;
+    }
+    return false;
 }
 
 bool CommonFightEngine::isInFight()
@@ -215,11 +317,12 @@ PlayerMonster * CommonFightEngine::getCurrentMonster()
         emit error(QString("player_informations is NULL"));
         return NULL;
     }
-    if(selectedMonster>0 && selectedMonster<player_informations->playerMonster.size())
+    int playerMonsterSize=player_informations->playerMonster.size();
+    if(selectedMonster>=0 && selectedMonster<playerMonsterSize)
         return &player_informations->playerMonster[selectedMonster];
     else
     {
-        emit error(QString("selectedMonster is out of range"));
+        emit error(QString("selectedMonster is out of range, max: %1").arg(playerMonsterSize));
         return NULL;
     }
 }
@@ -236,12 +339,12 @@ quint8 CommonFightEngine::getOtherSelectedMonsterNumber()
 
 PublicPlayerMonster * CommonFightEngine::getOtherMonster()
 {
-    PublicPlayerMonster *publicPlayerMonster;
     if(!wildMonsters.isEmpty())
-        publicPlayerMonster=&wildMonsters.first();
+        return &wildMonsters.first();
     else if(!botFightMonsters.isEmpty())
-        publicPlayerMonster=&botFightMonsters.first();
-    return publicPlayerMonster;
+        return &botFightMonsters.first();
+    else
+        return NULL;
 }
 
 bool CommonFightEngine::remainMonstersToFight(const quint32 &monsterId) const
@@ -661,4 +764,31 @@ quint8 CommonFightEngine::getOneSeed(const quint8 &max)
     }
     randomSeeds.remove(0,1);
     return number;
+}
+
+void CommonFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
+{
+    player_informations->playerMonster << playerMonster;
+    updateCanDoFight();
+}
+
+QList<PlayerMonster> CommonFightEngine::getPlayerMonster()
+{
+    return player_informations->playerMonster;
+}
+
+bool CommonFightEngine::removeMonster(const quint32 &monsterId)
+{
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        if(player_informations->playerMonster.at(index).id==monsterId)
+        {
+            player_informations->playerMonster.removeAt(index);
+            updateCanDoFight();
+            return true;
+        }
+        index++;
+    }
+    return false;
 }
