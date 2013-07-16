@@ -17,8 +17,8 @@ class CommonFightEngine : public QObject
     Q_OBJECT
 public:
     CommonFightEngine();
-    void newRandomNumber(const QByteArray &randomData);
-    void setVariable(Player_private_and_public_informations *player_informations);
+    virtual void resetAll();
+    virtual void setVariable(Player_private_and_public_informations *player_informations);
     virtual bool isInFight();
     virtual bool getAbleToFight();
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
@@ -31,6 +31,8 @@ public:
     virtual bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     bool haveRandomFight(const Map &map,const quint8 &x,const quint8 &y);
     void updateCanDoFight();
+public slots:
+    void newRandomNumber(const QByteArray &randomData);
 protected:
     virtual bool tryEscape();
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);

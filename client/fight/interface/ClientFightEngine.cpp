@@ -14,6 +14,7 @@ ClientFightEngine ClientFightEngine::fightEngine;
 ClientFightEngine::ClientFightEngine()
 {
     resetAll();
+    CommonFightEngine::setVariable(&player_informations);
 }
 
 ClientFightEngine::~ClientFightEngine()
@@ -353,6 +354,8 @@ void ClientFightEngine::resetAll()
 
     wildMonsters.clear();
     botFightMonsters.clear();
+
+    CommonFightEngine::resetAll();
 }
 
 bool ClientFightEngine::tryEscape()
@@ -802,4 +805,9 @@ bool ClientFightEngine::firstLifeEffectQuantityChange(qint32 quantity)
     }
     attackReturnList.first().lifeEffectMonster.first().quantity+=quantity;
     return true;
+}
+
+void ClientFightEngine::setVariable(Player_private_and_public_informations player_informations)
+{
+    this->player_informations=player_informations;
 }

@@ -23,7 +23,7 @@ public:
         quint32 skill;
     };
     static ClientFightEngine fightEngine;
-    void resetAll();
+    virtual void resetAll();
     void healAllMonsters();
     bool isInFight();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
@@ -59,9 +59,11 @@ public:
     bool firstLifeEffectQuantityChange(qint32 quantity);
     virtual PublicPlayerMonster *getOtherMonster();
     quint8 getOtherSelectedMonsterNumber();
+    void setVariable(Player_private_and_public_informations player_informations);
 private:
     QList<Skill::AttackReturn> attackReturnList;
     QList<PlayerMonster> playerMonsterList;
+    Player_private_and_public_informations player_informations;
     void doTheCurrentMonsterAttack(const quint32 &skill);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();

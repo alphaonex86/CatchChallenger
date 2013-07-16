@@ -9,6 +9,7 @@ using namespace CatchChallenger;
 
 LocalClientHandlerFight::LocalClientHandlerFight()
 {
+    otherPlayerBattle=NULL;
     battleIsValidated=false;
     botFightCash=0;
 }
@@ -54,6 +55,12 @@ bool LocalClientHandlerFight::getBattleIsValidated()
 
 void LocalClientHandlerFight::saveCurrentMonsterStat()
 {
+    PlayerMonster * monster=getCurrentMonster();
+    if(monster==NULL)
+    {
+        //no monsters
+        return;
+    }
     //save into the db
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
     {

@@ -286,10 +286,10 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                                                 #endif
                                             }
                                             else
-                                                DebugClass::debugConsole(QString("Bad convertion to int for y, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
+                                                DebugClass::debugConsole(QString("Bad convertion to int for y, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text["y"].toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
                                         }
                                         else
-                                            DebugClass::debugConsole(QString("Bad convertion to int for x, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
+                                            DebugClass::debugConsole(QString("Bad convertion to int for x, type: %1, value: %2 (%3 at line: %4)").arg(type).arg(property_text["x"].toString()).arg(mapFile.fileName()).arg(SubChild.lineNumber()));
                                     }
                                     else
                                         DebugClass::debugConsole(QString("Missing map,x or y, type: %1 (at line: %2)").arg(type).arg(SubChild.lineNumber()));
