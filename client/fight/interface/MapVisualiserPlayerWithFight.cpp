@@ -41,37 +41,43 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
-    QList<quint32> botFightList=all_map[current_map]->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
-    int index=0;
-    while(index<botFightList.size())
+    CatchChallenger::PlayerMonster *fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(fightMonster!=NULL)
     {
-        if(!botAlreadyBeaten.contains(botFightList.at(index)))
+        QList<quint32> botFightList=all_map[current_map]->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+        int index=0;
+        while(index<botFightList.size())
         {
-            if(inMove)
+            if(!botAlreadyBeaten.contains(botFightList.at(index)))
+            {
+                if(inMove)
+                {
+                    inMove=false;
+                    emit send_player_direction(direction);
+                    keyPressed.clear();
+                }
+                parseStop();
+                emit botFightCollision(botFightList.at(index),static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
+                return true;
+            }
+            index++;
+        }
+        //check if is in fight collision, but only if is move
+        if(inMove)
+        {
+            if(CatchChallenger::ClientFightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
             {
                 inMove=false;
                 emit send_player_direction(direction);
                 keyPressed.clear();
+                parseStop();
+                emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
+                return true;
             }
-            parseStop();
-            emit botFightCollision(botFightList.at(index),static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
-            return true;
-        }
-        index++;
-    }
-    //check if is in fight collision, but only if is move
-    if(inMove)
-    {
-        if(CatchChallenger::ClientFightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
-        {
-            inMove=false;
-            emit send_player_direction(direction);
-            keyPressed.clear();
-            parseStop();
-            emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
-            return true;
         }
     }
+    else
+        qDebug() << "Strange, not monster, skip all the fight type";
     return false;
 }
 
