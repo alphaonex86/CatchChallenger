@@ -1543,7 +1543,13 @@ void LocalClientHandler::newRandomNumber(const QByteArray &randomData)
 
 bool LocalClientHandler::tryEscape()
 {
-    return localClientHandlerFight.tryEscape();
+    if(localClientHandlerFight.canEscape())
+        return localClientHandlerFight.tryEscape();
+    else
+    {
+        emit error("Try escape when not allowed");
+        return false;
+    }
 }
 
 void LocalClientHandler::useSkill(const quint32 &skill)
