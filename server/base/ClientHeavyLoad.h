@@ -65,20 +65,20 @@ private:
     QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
 signals:
     //normal signals
-    void error(const QString &error);
-    void message(const QString &message);
-    void isReadyToStop();
+    void error(const QString &error) const;
+    void message(const QString &message) const;
+    void isReadyToStop() const;
     //send packet on network
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
-    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
+    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
+    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
     //send reply
-    void postReply(const quint8 &queryNumber,const QByteArray &data);
+    void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     //login linked signals
-    void send_player_informations();
-    void isLogged();
-    void put_on_the_map(Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
+    void send_player_informations() const;
+    void isLogged() const;
+    void put_on_the_map(Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation) const;
     //random linked signals
-    void newRandomNumber(const QByteArray &randomData);
+    void newRandomNumber(const QByteArray &randomData) const;
 };
 }
 

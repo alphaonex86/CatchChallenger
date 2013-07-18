@@ -31,7 +31,7 @@ private:
     ConnectedSocket * socket;
     Player_internal_informations *player_informations;
 signals:
-    void isReadyToStop();
+    void isReadyToStop() const;
 };
 }
 
