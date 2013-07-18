@@ -19,13 +19,13 @@ public:
     CommonFightEngine();
     virtual void resetAll();
     virtual void setVariable(Player_private_and_public_informations *player_informations);
-    virtual bool isInFight();
-    virtual bool getAbleToFight();
-    bool haveMonsters();
+    virtual bool isInFight() const;
+    virtual bool getAbleToFight() const;
+    bool haveMonsters() const;
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
     PlayerMonster *getCurrentMonster() const;
     virtual PublicPlayerMonster *getOtherMonster() const;
-    Skill::AttackReturn generateOtherAttack();
+    virtual Skill::AttackReturn generateOtherAttack();
     quint8 getCurrentSelectedMonsterNumber();
     virtual quint8 getOtherSelectedMonsterNumber();
     bool remainMonstersToFight(const quint32 &monsterId) const;
@@ -40,10 +40,10 @@ public:
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     QList<PlayerMonster> getPlayerMonster();
     bool removeMonster(const quint32 &monsterId);
+    bool canEscape() const;
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
-    virtual bool tryEscape();
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
     static bool monsterIsKO(const PlayerMonster &playerMonter);
@@ -52,6 +52,8 @@ protected:
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
     quint8 getOneSeed(const quint8 &max);
+    virtual bool internalTryEscape();
+    virtual void fightFinished();
 signals:
     void error(const QString &error) const;
     void message(const QString &message) const;

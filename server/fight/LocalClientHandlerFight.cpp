@@ -28,9 +28,9 @@ void LocalClientHandlerFight::getRandomNumberIfNeeded()
 
 bool LocalClientHandlerFight::tryEscape()
 {
-    if(!CommonFightEngine::tryEscape())//check if is in fight
+    if(!CommonFightEngine::canEscape())//check if is in fight
         return false;
-    if(tryEscapeInternal())
+    if(internalTryEscape())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("escape is successful"));
@@ -43,9 +43,11 @@ bool LocalClientHandlerFight::tryEscape()
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("escape is failed"));
         #endif
-        Skill::AttackReturn attackReturn=CommonFightEngine::generateOtherAttack();
+        CommonFightEngine::generateOtherAttack();//Skill::AttackReturn attackReturn=
         if(checkKOCurrentMonsters())
             checkLoose();
+        else
+            checkKOOtherMonstersForGain();
     }
     return true;
 }
@@ -108,6 +110,7 @@ void LocalClientHandlerFight::setVariable(Player_internal_informations *player_i
 {
     this->player_informations=player_informations;
     CommonFightEngine::setVariable(&player_informations->public_and_private_informations);
+    updateCanDoFight();
 }
 
 bool LocalClientHandlerFight::checkLoose()
@@ -155,7 +158,7 @@ bool LocalClientHandlerFight::checkLoose()
             index++;
         }
         updateCanDoFight();
-        battleFinished();
+        fightFinished();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         emit message("You lost the battle");
         if(!ableToFight)
@@ -167,6 +170,12 @@ bool LocalClientHandlerFight::checkLoose()
         return true;
     }
     return false;
+}
+
+void LocalClientHandlerFight::fightFinished()
+{
+    battleFinished();
+    CommonFightEngine::fightFinished();
 }
 
 bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
@@ -257,10 +266,7 @@ bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
             otherPlayerBattle->saveStat();
             otherPlayerBattle->updateCanDoFight();
             if(!otherPlayerBattle->getAbleToFight())
-            {
                 otherPlayerBattle->checkLoose();
-                battleFinished();
-            }
         }
     }
     else
@@ -560,25 +566,6 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
     return true;
 }
 
-bool LocalClientHandlerFight::tryEscapeInternal()
-{
-    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(wildMonsters.isEmpty())
-    {
-        emit error("Can't try escape if your are not against wild monster");
-        return false;
-    }
-    #endif
-    quint8 value=getOneSeed(101);
-    if(wildMonsters.first().level<player_informations->public_and_private_informations.playerMonster.at(selectedMonster).level && value<75)
-        return true;
-    if(wildMonsters.first().level==player_informations->public_and_private_informations.playerMonster.at(selectedMonster).level && value<50)
-        return true;
-    if(wildMonsters.first().level>player_informations->public_and_private_informations.playerMonster.at(selectedMonster).level && value<25)
-        return true;
-    return false;
-}
-
 void LocalClientHandlerFight::useSkill(const quint32 &skill)
 {
     if(!isInFight())
@@ -665,7 +652,7 @@ void LocalClientHandlerFight::useSkillAgainstWildMonster(const quint32 &skill,co
     //do the other monster attack
     if(!isKO)
     {
-        Skill::AttackReturn attackReturn=CommonFightEngine::generateOtherAttack();
+        /*Skill::AttackReturn attackReturn=*/CommonFightEngine::generateOtherAttack();
         otherMonsterisKO=checkKOOtherMonstersForGain();
         if(otherMonsterisKO)
         {
@@ -753,7 +740,7 @@ void LocalClientHandlerFight::useSkillAgainstBotMonster(const quint32 &skill,con
     //do the other monster attack
     if(!isKO)
     {
-        Skill::AttackReturn attackReturn=CommonFightEngine::generateOtherAttack();
+        /*Skill::AttackReturn attackReturn=*/CommonFightEngine::generateOtherAttack();
         otherMonsterisKO=checkKOOtherMonstersForGain();
         if(otherMonsterisKO)
         {
@@ -915,7 +902,7 @@ Skill::AttackReturn LocalClientHandlerFight::doTheCurrentMonsterAttack(const qui
     return tempReturnBuff;
 }
 
-bool LocalClientHandlerFight::isInFight()
+bool LocalClientHandlerFight::isInFight() const
 {
     if(CommonFightEngine::isInFight())
         return true;
@@ -1027,7 +1014,7 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
     return false;
 }
 
-bool LocalClientHandlerFight::getInBattle()
+bool LocalClientHandlerFight::getInBattle() const
 {
     return (otherPlayerBattle!=NULL);
 }

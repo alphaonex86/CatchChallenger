@@ -173,20 +173,17 @@ bool ClientFightEngine::dropKOOtherMonster()
     return false;
 }
 
-void ClientFightEngine::finishTheBattle()
+void ClientFightEngine::fightFinished()
 {
-    wildMonsters.clear();
-    botFightMonsters.clear();
     battleCurrentMonster.clear();
     battleStat.clear();
     battleMonsterPlace.clear();
+    CommonFightEngine::fightFinished();
 }
 
-bool ClientFightEngine::isInFight()
+bool ClientFightEngine::isInFight() const
 {
-    if(!wildMonsters.empty())
-        return true;
-    else if(!botFightMonsters.empty())
+    if(CommonFightEngine::isInFight())
         return true;
     else if(!battleCurrentMonster.empty())
         return true;
@@ -196,17 +193,11 @@ bool ClientFightEngine::isInFight()
 
 void ClientFightEngine::resetAll()
 {
-    randomSeeds.clear();
     player_informations_local.playerMonster.clear();
-    ableToFight=false;
-
     attackReturnList.clear();
 
     battleCurrentMonster.clear();
     battleStat.clear();
-
-    wildMonsters.clear();
-    botFightMonsters.clear();
 
     CommonFightEngine::resetAll();
 }
@@ -234,21 +225,9 @@ bool ClientFightEngine::internalTryEscape()
         qDebug() << "No wild monster to internal escape";
         return false;
     }
+    qDebug() << "BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()";
     CatchChallenger::Api_client_real::client->tryEscape();
-    quint8 value=getOneSeed(101);
-    PlayerMonster * playerMonster=getCurrentMonster();
-    if(playerMonster==NULL)
-    {
-        qDebug() << "No current monster to try escape";
-        return false;
-    }
-    if(wildMonsters.first().level<playerMonster->level && value<75)
-        return true;
-    if(wildMonsters.first().level==playerMonster->level && value<50)
-        return true;
-    if(wildMonsters.first().level>playerMonster->level && value<25)
-        return true;
-    return false;
+    return CommonFightEngine::internalTryEscape();
 }
 
 void ClientFightEngine::addXPSP()
@@ -673,6 +652,12 @@ QList<Skill::AttackReturn> ClientFightEngine::getAttackReturnList() const
     return attackReturnList;
 }
 
+Skill::AttackReturn ClientFightEngine::generateOtherAttack()
+{
+    attackReturnList << CommonFightEngine::generateOtherAttack();
+    return attackReturnList.last();
+}
+
 void ClientFightEngine::removeTheFirstLifeEffectAttackReturn()
 {
     attackReturnList.first().lifeEffectMonster.removeFirst();
@@ -700,5 +685,5 @@ void ClientFightEngine::setVariable(Player_private_and_public_informations playe
 {
     this->player_informations_local=player_informations_local;
     //CommonFightEngine::setVariable(&this->player_informations_local);
-    CommonFightEngine::updateCanDoFight();
+    updateCanDoFight();
 }

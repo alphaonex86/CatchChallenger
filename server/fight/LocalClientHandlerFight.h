@@ -26,11 +26,11 @@ public:
     virtual ~LocalClientHandlerFight();
     bool tryEscape();
     bool getBattleIsValidated();
-    bool isInFight();
+    bool isInFight() const;
     void setVariable(Player_internal_informations *player_informations);
     void saveCurrentMonsterStat();
     bool checkLoose();
-    bool getInBattle();
+    bool getInBattle() const;
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
     void getRandomNumberIfNeeded();
     bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
@@ -50,7 +50,6 @@ protected:
     void syncForEndOfTurn();
     void saveStat();
     bool botFightStart(const quint32 &botFightId);
-    bool tryEscapeInternal();
     void useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel);
     void useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel);
     bool buffIsValid(const Skill::BuffEffect &buffEffect);
@@ -64,6 +63,7 @@ protected:
     void internalBattleAccepted(const bool &send);
     void resetTheBattle();
     virtual PublicPlayerMonster *getOtherMonster() const;
+    virtual void fightFinished();
 private:
     LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;
