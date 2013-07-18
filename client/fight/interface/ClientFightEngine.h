@@ -24,7 +24,7 @@ public:
     };
     static ClientFightEngine fightEngine;
     virtual void resetAll();
-    bool isInFight();
+    bool isInFight() const;
     //current fight
     QList<PublicPlayerMonster> battleCurrentMonster;
     QList<quint8> battleStat,botMonstersStat;
@@ -36,7 +36,7 @@ public:
     void useSkillAgainstBotMonster(const quint32 &skill);
     QList<quint32> otherMonsterAttack;
     bool dropKOOtherMonster();
-    void finishTheBattle();
+    void fightFinished();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
     void addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
@@ -48,6 +48,7 @@ public:
     virtual PublicPlayerMonster *getOtherMonster() const;
     quint8 getOtherSelectedMonsterNumber() const;
     void setVariable(Player_private_and_public_informations player_informations_local);
+    Skill::AttackReturn generateOtherAttack();
 private:
     QList<Skill::AttackReturn> attackReturnList;
     Player_private_and_public_informations player_informations_local;
@@ -59,8 +60,7 @@ private:
     explicit ClientFightEngine();
     ~ClientFightEngine();
 signals:
-    void newError(QString error,QString detailedError);
-    void error(QString error);
+    void newError(QString error,QString detailedError) const;
 };
 }
 

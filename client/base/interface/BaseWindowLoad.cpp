@@ -45,6 +45,8 @@ void BaseWindow::resetAll()
     collectWait=false;
     inSelection=false;
     isInQuest=false;
+    displayAttackProgression=0;
+    fightTimerFinish=false;
     queryList.clear();
     ui->inventoryInformation->setVisible(false);
     ui->inventoryUse->setVisible(false);
@@ -54,8 +56,10 @@ void BaseWindow::resetAll()
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);
     waitToSell=false;
+    fightTimerFinish=false;
     ui->tabWidgetTrainerCard->setCurrentWidget(ui->tabWidgetTrainerCardPage1);
     ui->selectMonster->setVisible(false);
+    doNextActionStep=DoNextActionStep_Start;
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }
