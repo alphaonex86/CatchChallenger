@@ -63,14 +63,14 @@ private slots:
     void disconnectNextStep();
 signals:
     //remove and stop related
-    void askIfIsReadyToStop();
-    void isReadyToDelete();
+    void askIfIsReadyToStop() const;
+    void isReadyToDelete() const;
 
     //to async the message
-    void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_server_MapVisibility_simple *map,Orientation orientation,QString skin);
-    void fake_send_data(const QByteArray &data);
-    void fake_send_received_data(const QByteArray &data);
-    void try_ask_stop();
+    void send_fakeLogin(quint32 last_fake_player_id,quint16 x,quint16 y,Map_server_MapVisibility_simple *map,Orientation orientation,QString skin) const;
+    void fake_send_data(const QByteArray &data) const;
+    void fake_send_received_data(const QByteArray &data) const;
+    void try_ask_stop() const;
 public slots:
     void disconnectClient();
     /// \warning it need be complete protocol trame

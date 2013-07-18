@@ -49,13 +49,13 @@ public slots:
     void sendSystemMessage(const QString &text,const bool &important=false);
 signals:
     //normal signals
-    void error(const QString &error);
-    void kicked();
-    void message(const QString &message);
-    void isReadyToStop();
+    void error(const QString &error) const;
+    void kicked() const;
+    void message(const QString &message) const;
+    void isReadyToStop() const;
     //send packet on network
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
-    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
+    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
+    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
 private:
     //local data
     qint32 connected_players;//it's th last number of connected player send

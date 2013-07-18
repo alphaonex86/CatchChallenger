@@ -45,8 +45,8 @@ public:
     QList<Skill::AttackReturn> getAttackReturnList() const;
     void removeTheFirstLifeEffectAttackReturn();
     bool firstLifeEffectQuantityChange(qint32 quantity);
-    virtual PublicPlayerMonster *getOtherMonster();
-    quint8 getOtherSelectedMonsterNumber();
+    virtual PublicPlayerMonster *getOtherMonster() const;
+    quint8 getOtherSelectedMonsterNumber() const;
     void setVariable(Player_private_and_public_informations player_informations_local);
 private:
     QList<Skill::AttackReturn> attackReturnList;

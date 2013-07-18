@@ -128,15 +128,15 @@ private slots:
     void addQuestStepDrop(const quint32 &questId,const quint8 &questStep);
     void removeQuestStepDrop(const quint32 &questId,const quint8 &questStep);
 signals:
-    void dbQuery(const QString &sqlQuery);
-    void askRandomNumber();
-    void receiveSystemText(const QString &text,const bool &important=false);
-    void postReply(const quint8 &queryNumber,const QByteArray &data);
-    void sendTradeRequest(const QByteArray &data);
-    void sendBattleRequest(const QByteArray &data);
+    void dbQuery(const QString &sqlQuery) const;
+    void askRandomNumber() const;
+    void receiveSystemText(const QString &text,const bool &important=false) const;
+    void postReply(const quint8 &queryNumber,const QByteArray &data) const;
+    void sendTradeRequest(const QByteArray &data) const;
+    void sendBattleRequest(const QByteArray &data) const;
 
-    void seedValidated();
-    void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void seedValidated() const;
+    void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
 };
 }
 

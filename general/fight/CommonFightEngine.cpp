@@ -310,7 +310,7 @@ void CommonFightEngine::updateCanDoFight()
     }
 }
 
-PlayerMonster * CommonFightEngine::getCurrentMonster()
+PlayerMonster * CommonFightEngine::getCurrentMonster() const
 {
     if(player_informations==NULL)
     {
@@ -337,12 +337,12 @@ quint8 CommonFightEngine::getOtherSelectedMonsterNumber()
     return 0;
 }
 
-PublicPlayerMonster * CommonFightEngine::getOtherMonster()
+PublicPlayerMonster *CommonFightEngine::getOtherMonster() const
 {
     if(!wildMonsters.isEmpty())
-        return &wildMonsters.first();
+        return (PublicPlayerMonster *)&wildMonsters.first();
     else if(!botFightMonsters.isEmpty())
-        return &botFightMonsters.first();
+        return (PublicPlayerMonster *)&botFightMonsters.first();
     else
         return NULL;
 }

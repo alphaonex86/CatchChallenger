@@ -49,12 +49,12 @@ protected slots:
     //new connection
     virtual void newConnection();
 signals:
-    void error(const QString &error);
-    void try_initAll();
-    void try_stop_server();
-    void need_be_started();
+    void error(const QString &error) const;
+    void try_initAll() const;
+    void try_stop_server() const;
+    void need_be_started() const;
     //stat
-    void is_started(bool);
+    void is_started(bool) const;
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     virtual void connect_the_last_client(Client * client);
