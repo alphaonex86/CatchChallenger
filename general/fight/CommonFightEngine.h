@@ -23,8 +23,8 @@ public:
     virtual bool getAbleToFight();
     bool haveMonsters();
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
-    PlayerMonster *getCurrentMonster();
-    virtual PublicPlayerMonster * getOtherMonster();
+    PlayerMonster *getCurrentMonster() const;
+    virtual PublicPlayerMonster *getOtherMonster() const;
     Skill::AttackReturn generateOtherAttack();
     quint8 getCurrentSelectedMonsterNumber();
     virtual quint8 getOtherSelectedMonsterNumber();
@@ -53,8 +53,8 @@ protected:
     void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
     quint8 getOneSeed(const quint8 &max);
 signals:
-    void error(const QString &error);
-    void message(const QString &message);
+    void error(const QString &error) const;
+    void message(const QString &message) const;
 protected:
     Player_private_and_public_informations *player_informations;
     bool ableToFight;

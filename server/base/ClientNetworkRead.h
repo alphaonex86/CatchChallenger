@@ -54,53 +54,53 @@ private:
     void receiveSystemText(const QString &text);
 signals:
     //normal signals
-    void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray());
-    void sendPacket(const quint8 &mainCodeType,const QByteArray &data=QByteArray());
-    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data);
+    void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray()) const;
+    void sendPacket(const quint8 &mainCodeType,const QByteArray &data=QByteArray()) const;
+    void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data) const;
     //send reply
-    void postReply(const quint8 &queryNumber,const QByteArray &data);
+    void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     //normal signals
-    void isReadyToStop();
+    void isReadyToStop() const;
     //packet parsed (heavy)
-    void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
-    void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps);
+    void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash) const;
+    void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps) const;
     //packet parsed (map management)
-    void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
-    void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
+    void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction) const;
+    void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
     //trade
-    void tradeCanceled();
-    void tradeAccepted();
-    void tradeFinished();
-    void tradeAddTradeCash(const quint64 &cash);
-    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
-    void tradeAddTradeMonster(const quint32 &monsterId);
+    void tradeCanceled() const;
+    void tradeAccepted() const;
+    void tradeFinished() const;
+    void tradeAddTradeCash(const quint64 &cash) const;
+    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity) const;
+    void tradeAddTradeMonster(const quint32 &monsterId) const;
     //packet parsed (broadcast)
-    void sendPM(const QString &text,const QString &pseudo);
-    void sendChatText(const Chat_type &chatType,const QString &text);
-    void sendLocalChatText(const QString &text);
-    void sendBroadCastCommand(const QString &command,const QString &extraText);
-    void sendHandlerCommand(const QString &command,const QString &extraText);
+    void sendPM(const QString &text,const QString &pseudo) const;
+    void sendChatText(const Chat_type &chatType,const QString &text) const;
+    void sendLocalChatText(const QString &text) const;
+    void sendBroadCastCommand(const QString &command,const QString &extraText) const;
+    void sendHandlerCommand(const QString &command,const QString &extraText) const;
     //plant
-    void plantSeed(const quint8 &query_id,const quint8 &plant_id);
-    void collectPlant(const quint8 &query_id);
+    void plantSeed(const quint8 &query_id,const quint8 &plant_id) const;
+    void collectPlant(const quint8 &query_id) const;
     //crafting
-    void useRecipe(const quint8 &query_id,const quint32 &recipe_id);
+    void useRecipe(const quint8 &query_id,const quint32 &recipe_id) const;
     //inventory
-    void destroyObject(const quint32 &itemId,const quint32 &quantity);
-    void useObject(const quint8 &query_id,const quint32 &itemId);
+    void destroyObject(const quint32 &itemId,const quint32 &quantity) const;
+    void useObject(const quint8 &query_id,const quint32 &itemId) const;
     //shop
-    void getShopList(const quint32 &query_id,const quint32 &shopId);
-    void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void getShopList(const quint32 &query_id,const quint32 &shopId) const;
+    void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const;
+    void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const;
     //fight
-    void tryEscape();
-    void useSkill(const quint32 &skill);
-    void learnSkill(const quint32 &monsterId,const quint32 &skill);
+    void tryEscape() const;
+    void useSkill(const quint32 &skill) const;
+    void learnSkill(const quint32 &monsterId,const quint32 &skill) const;
     //quest
-    void newQuestAction(const QuestAction &action,const quint32 &questId);
+    void newQuestAction(const QuestAction &action,const quint32 &questId) const;
     //battle
-    void battleCanceled();
-    void battleAccepted();
+    void battleCanceled() const;
+    void battleAccepted() const;
 private:
     // for status
     bool have_send_protocol;

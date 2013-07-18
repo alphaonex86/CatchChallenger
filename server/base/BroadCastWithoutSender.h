@@ -14,10 +14,10 @@ private:
 public:
     static BroadCastWithoutSender broadCastWithoutSender;
 signals:
-    void serverCommand(const QString &command,const QString &extraText);
-    void new_player_is_connected(const Player_internal_informations &newPlayer);
-    void player_is_disconnected(const QString &oldPlayer);
-    void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text);
+    void serverCommand(const QString &command,const QString &extraText) const;
+    void new_player_is_connected(const Player_internal_informations &newPlayer) const;
+    void player_is_disconnected(const QString &oldPlayer) const;
+    void new_chat_message(const QString &pseudo,const Chat_type &type,const QString &text) const;
 public slots:
     void emit_serverCommand(const QString &command,const QString &extraText);
     void emit_new_player_is_connected(const Player_internal_informations &newPlayer);

@@ -656,14 +656,14 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
     this->attackReturnList << attackReturnList;
 }
 
-PublicPlayerMonster * ClientFightEngine::getOtherMonster()
+PublicPlayerMonster * ClientFightEngine::getOtherMonster() const
 {
     if(!battleCurrentMonster.isEmpty())
-        return &battleCurrentMonster.first();
+        return (PublicPlayerMonster *)&battleCurrentMonster.first();
     return CommonFightEngine::getOtherMonster();
 }
 
-quint8 ClientFightEngine::getOtherSelectedMonsterNumber()
+quint8 ClientFightEngine::getOtherSelectedMonsterNumber() const
 {
     return 0;
 }

@@ -42,11 +42,11 @@ protected:
     virtual void extraStop();
 signals:
     //normal signals
-    void error(const QString &error);
-    void message(const QString &message);
-    void isReadyToStop();
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
-    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
+    void error(const QString &error) const;
+    void message(const QString &message) const;
+    void isReadyToStop() const;
+    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
+    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
 public slots:
     //map slots, transmited by the current ClientNetworkRead
     virtual void put_on_the_map(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);

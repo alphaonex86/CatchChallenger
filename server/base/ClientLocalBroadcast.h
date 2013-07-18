@@ -59,12 +59,12 @@ protected:
     QList<PlantInWaiting> plant_list_in_waiting;
 signals:
     //send reply
-    void postReply(const quint8 &queryNumber,const QByteArray &data);
+    void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     //seed
-    void useSeed(const quint8 &plant_id);
-    void addObjectAndSend(const quint32 &item,const quint32 &quantity=1);
+    void useSeed(const quint8 &plant_id) const;
+    void addObjectAndSend(const quint32 &item,const quint32 &quantity=1) const;
     //db
-    void dbQuery(const QString &sqlQuery);
+    void dbQuery(const QString &sqlQuery) const;
 };
 }
 
