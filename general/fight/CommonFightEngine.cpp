@@ -774,7 +774,6 @@ quint8 CommonFightEngine::getOneSeed(const quint8 &max)
 
 bool CommonFightEngine::internalTryEscape()
 {
-    return false;
     quint8 value=getOneSeed(101);
     PlayerMonster * playerMonster=getCurrentMonster();
     if(playerMonster==NULL)
