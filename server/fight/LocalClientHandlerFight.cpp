@@ -586,6 +586,12 @@ void LocalClientHandlerFight::useSkill(const quint32 &skill)
         emit error("Try use skill when not in fight");
         return;
     }
+    PlayerMonster * currentMonster=CommonFightEngine::getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        emit error("Unable to locate the current monster");
+        return;
+    }
     int index=0;
     while(index<getCurrentMonster()->skills.size())
     {
@@ -596,6 +602,12 @@ void LocalClientHandlerFight::useSkill(const quint32 &skill)
     if(index==getCurrentMonster()->skills.size())
     {
         emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(getCurrentMonster()->monster).arg(getCurrentMonster()->level).arg(skill));
+        return;
+    }
+    const PublicPlayerMonster * otherMonster=LocalClientHandlerFight::getOtherMonster();
+    if(otherMonster==NULL)
+    {
+        emit error("Unable to locate the other monster");
         return;
     }
     quint8 skillLevel=getCurrentMonster()->skills.at(index).level;
@@ -615,6 +627,11 @@ void LocalClientHandlerFight::useSkill(const quint32 &skill)
         return;
     }
     emit error("Unable to locate the battle monster or is not in battle to use a skill");
+}
+
+LocalClientHandlerFight * LocalClientHandlerFight::getOtherPlayerBattle() const
+{
+    return otherPlayerBattle;
 }
 
 void LocalClientHandlerFight::useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel)
@@ -692,10 +709,16 @@ void LocalClientHandlerFight::useSkillAgainstWildMonster(const quint32 &skill,co
         emit message("You have put KO the wild monster");
 }
 
-PublicPlayerMonster * LocalClientHandlerFight::getOtherMonster()
+PublicPlayerMonster *LocalClientHandlerFight::getOtherMonster() const
 {
-    if(!botFightMonsters.isEmpty())
-        return &botFightMonsters.first();
+    if(otherPlayerBattle!=NULL)
+    {
+        PlayerMonster * otherPlayerBattleCurrentMonster=otherPlayerBattle->getCurrentMonster();
+        if(otherPlayerBattleCurrentMonster!=NULL)
+            return otherPlayerBattleCurrentMonster;
+        else
+            emit error("Is in battle but the other monster is null");
+    }
     return CommonFightEngine::getOtherMonster();
 }
 

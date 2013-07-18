@@ -6,16 +6,16 @@
 namespace CatchChallenger {
 class EventThreader : public QThread
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	explicit EventThreader();
-	~EventThreader();
+    explicit EventThreader();
+    ~EventThreader();
 private:
-	void run();
+    void run();
 public slots:
-	void probe_latency();
+    void probe_latency();
 signals:
-	void return_latency();
+    void return_latency() const;
 };
 }
 

@@ -28,7 +28,6 @@ public:
     bool getBattleIsValidated();
     bool isInFight();
     void setVariable(Player_internal_informations *player_informations);
-    LocalClientHandlerFight *otherPlayerBattle;
     void saveCurrentMonsterStat();
     bool checkLoose();
     bool getInBattle();
@@ -44,6 +43,7 @@ public:
     void battleFinished();
     void battleFinishedReset();
     void useSkill(const quint32 &skill);
+    LocalClientHandlerFight * getOtherPlayerBattle() const;
 protected:
     bool checkKOCurrentMonsters();
     bool checkKOOtherMonstersForGain();
@@ -63,8 +63,9 @@ protected:
     void internalBattleCanceled(const bool &send);
     void internalBattleAccepted(const bool &send);
     void resetTheBattle();
-    virtual PublicPlayerMonster * getOtherMonster();
+    virtual PublicPlayerMonster *getOtherMonster() const;
 private:
+    LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;
     quint32 currentSkill;
     bool haveCurrentSkill;
@@ -72,16 +73,16 @@ private:
     quint32 botFightCash;
     quint32 botFightId;
 signals:
-    void dbQuery(const QString &sqlQuery);
-    void askRandomNumber();
-    void receiveSystemText(const QString &text,const bool &important=false);
-    void postReply(const quint8 &queryNumber,const QByteArray &data);
-    void sendBattleRequest(const QByteArray &data);
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray());
-    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray());
-    void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
-    void addObjectAndSend(const quint32 &item,const quint32 &quantity=1);
-    void addCash(const quint64 &cash,const bool &forceSave=false);
+    void dbQuery(const QString &sqlQuery) const;
+    void askRandomNumber() const;
+    void receiveSystemText(const QString &text,const bool &important=false) const;
+    void postReply(const quint8 &queryNumber,const QByteArray &data) const;
+    void sendBattleRequest(const QByteArray &data) const;
+    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
+    void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
+    void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
+    void addObjectAndSend(const quint32 &item,const quint32 &quantity=1) const;
+    void addCash(const quint64 &cash,const bool &forceSave=false) const;
 };
 }
 
