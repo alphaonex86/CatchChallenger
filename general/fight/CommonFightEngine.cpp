@@ -9,7 +9,7 @@ CommonFightEngine::CommonFightEngine()
     player_informations=NULL;
 }
 
-bool CommonFightEngine::tryEscape()
+bool CommonFightEngine::canEscape() const
 {
     if(!isInFight())//check if is in fight
     {
@@ -138,7 +138,7 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill
     return false;
 }
 
-bool CommonFightEngine::isInFight()
+bool CommonFightEngine::isInFight() const
 {
     return !wildMonsters.empty() || !botFightMonsters.isEmpty();
 }
@@ -153,12 +153,12 @@ void CommonFightEngine::setVariable(Player_private_and_public_informations *play
     this->player_informations=player_informations;
 }
 
-bool CommonFightEngine::getAbleToFight()
+bool CommonFightEngine::getAbleToFight() const
 {
     return ableToFight;
 }
 
-bool CommonFightEngine::haveMonsters()
+bool CommonFightEngine::haveMonsters() const
 {
     return !player_informations->playerMonster.isEmpty();
 }
@@ -488,14 +488,17 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
             }
             else
                 quantity=(player_informations->playerMonster[selectedMonster].hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)player_informations->playerMonster[selectedMonster].hp)
+            //kill
+            if(quantity<0 && (-quantity)>=(qint32)player_informations->playerMonster[selectedMonster].hp)
             {
                 player_informations->playerMonster[selectedMonster].hp=0;
                 player_informations->playerMonster[selectedMonster].buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp))
+            //full heal
+            else if(quantity>0 && quantity>=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp))
                 player_informations->playerMonster[selectedMonster].hp=stat.hp;
+            //other life change
             else
                 player_informations->playerMonster[selectedMonster].hp+=quantity;
         break;
@@ -518,10 +521,13 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
             }
             else
                 quantity=(otherMonster->hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)otherMonster->hp)
+            //kill
+            if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
                 otherMonster->hp=0;
-            else if(quantity>0 && quantity>(qint32)(stat.hp-otherMonster->hp))
+            //full heal
+            else if(quantity>0 && quantity>=(qint32)(stat.hp-otherMonster->hp))
                 otherMonster->hp=stat.hp;
+            //other life change
             else
                 otherMonster->hp+=quantity;
         break;
@@ -764,6 +770,36 @@ quint8 CommonFightEngine::getOneSeed(const quint8 &max)
     }
     randomSeeds.remove(0,1);
     return number;
+}
+
+bool CommonFightEngine::internalTryEscape()
+{
+    return false;
+    quint8 value=getOneSeed(101);
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        emit error("No current monster to try escape");
+        return false;
+    }
+    if(wildMonsters.isEmpty())
+    {
+        emit error("Not againts wild monster");
+        return false;
+    }
+    if(wildMonsters.first().level<playerMonster->level && value<75)
+        return true;
+    if(wildMonsters.first().level==playerMonster->level && value<50)
+        return true;
+    if(wildMonsters.first().level>playerMonster->level && value<25)
+        return true;
+    return false;
+}
+
+void CommonFightEngine::fightFinished()
+{
+    wildMonsters.clear();
+    botFightMonsters.clear();
 }
 
 void CommonFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)

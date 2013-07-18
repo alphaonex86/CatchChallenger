@@ -125,7 +125,13 @@ void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quin
     if(!fightCollision(map,x,y))
         return;
     battleType=BattleType_Wild;
-    ui->labelFightEnter->setText(tr("A other %1 is in front of you!").arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster()->monster].name));
+    PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+    if(otherMonster==NULL)
+    {
+        emit error("NULL pointer for other monster at wildFightCollision()");
+        return;
+    }
+    ui->labelFightEnter->setText(tr("A other %1 is in front of you!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
 }
 
 void BaseWindow::botFightCollision(const quint32 &fightId,CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
@@ -163,6 +169,11 @@ bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &
     init_current_monster_display();
     init_other_monster_display();
     PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+    if(otherMonster==NULL)
+    {
+        emit error("NULL pointer for other monster at fightCollision()");
+        return false;
+    }
     qDebug() << QString("You are in front of monster id: %1 level: %2").arg(otherMonster->monster).arg(otherMonster->level);
     return true;
 }
@@ -221,7 +232,13 @@ void BaseWindow::on_pushButtonFightEnterNext_clicked()
             moveType=MoveType_Enter;
             moveFightMonsterBottom();
             PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-            ui->labelFightEnter->setText(tr("Protect me %1!").arg(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].name));
+            if(monster!=NULL)
+                ui->labelFightEnter->setText(tr("Protect me %1!").arg(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].name));
+            else
+            {
+                qDebug() << "on_pushButtonFightEnterNext_clicked(): NULL pointer for current monster";
+                ui->labelFightEnter->setText(tr("Protect me %1!").arg("(Unknow monster)"));
+            }
         break;
     }
 }
@@ -268,8 +285,7 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
     Q_UNUSED(direction);
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())//then is dead, is teleported to the last rescue point
     {
-        doNextActionStep=DoNextActionStep_Loose;
-        qDebug() << "tp on loose" << fightTimerFinish;
+        qDebug() << "tp on loose: " << fightTimerFinish;
         if(fightTimerFinish)
             loose();
         else
@@ -287,6 +303,11 @@ void BaseWindow::updateCurrentMonsterInformation()
         return;
     }
     PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(monster==NULL)
+    {
+        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        return;
+    }
     QPoint p;
     p.setX(60);
     p.setY(280);
@@ -476,6 +497,7 @@ void BaseWindow::on_toolButtonFightQuit_clicked()
     }
     doNextActionStep=DoNextActionStep_Start;
     escape=true;
+    qDebug() << "BaseWindow::on_toolButtonFightQuit_clicked(): fight engine tryEscape()";
     if(CatchChallenger::ClientFightEngine::fightEngine.tryEscape())
         escapeSuccess=true;
     else
@@ -550,7 +572,7 @@ void BaseWindow::loose()
 {
     qDebug() << "loose()";
     CatchChallenger::ClientFightEngine::fightEngine.healAllMonsters();
-    CatchChallenger::ClientFightEngine::fightEngine.finishTheBattle();
+    CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
@@ -559,7 +581,7 @@ void BaseWindow::loose()
 
 void BaseWindow::win()
 {
-    CatchChallenger::ClientFightEngine::fightEngine.finishTheBattle();
+    CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
@@ -583,25 +605,41 @@ void BaseWindow::win()
 
 void BaseWindow::doNextAction()
 {
+    PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+    if(otherMonster==NULL)
+    {
+        emit error("NULL pointer for other monster at fightCollision()");
+        return;
+    }
     qDebug() << "doNextAction()";
     ui->toolButtonFightQuit->setVisible(battleType==BattleType_Wild);
     if(escape)
     {
-        qDebug() << "doNextAction(): escape";
+        doNextActionStep=DoNextActionStep_Start;
         if(!escapeSuccess)
         {//the other attack
             escape=false;
+            fightTimerFinish=false;
             CatchChallenger::ClientFightEngine::fightEngine.generateOtherAttack();
             if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
-                displayText(tr("You have failed!"));
+            {
+                qDebug() << "doNextAction(): escape failed: you take damage";
+                displayText(tr("You have failed to escape!"));
+                return;
+            }
             else
-                displayText(tr("The wild %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster()->monster].name));
+            {
+                qDebug() << "doNextAction(): escape fail but the wild monster can't attack";
+                displayText(tr("The wild %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+                return;
+            }
         }
-    }
-    if(doNextActionStep==DoNextActionStep_Start || !CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
-    {
-        fightTimerFinish=false;
-        displayAttackProgression=0;
+        else
+        {
+            qDebug() << "doNextAction(): escape success";
+            win();
+        }
+        return;//useful to quit correctly
     }
     //apply the effect
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
@@ -619,14 +657,21 @@ void BaseWindow::doNextAction()
         //current player monster is KO
         moveType=MoveType_Dead;
         moveFightMonsterBottom();
-        ui->labelFightEnter->setText(tr("%1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster()->monster].name));
+        PlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+        if(currentMonster!=NULL)
+            ui->labelFightEnter->setText(tr("%1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name));
+        else
+        {
+            qDebug() << "doNextAction(): NULL pointer for the current monster";
+            ui->labelFightEnter->setText(tr("%1 have lost!").arg("(Unknown monster)"));
+        }
         return;
     }
     //if the other monster is KO
     if(CatchChallenger::ClientFightEngine::fightEngine.isInFight() && CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
     {
         qDebug() << "doNextAction(): other monster is KO";
-        ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster()->monster].name));
+        ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
         CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
         doNextActionStep=DoNextActionStep_Start;
         //current player monster is KO
@@ -717,6 +762,20 @@ void BaseWindow::doNextAction()
 
 void BaseWindow::displayAttack()
 {
+    PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+    PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(otherMonster==NULL)
+    {
+        qDebug() << "displayAttack(): crash: unable to get the other monster";
+        doNextAction();
+        return;
+    }
+    if(currentMonster==NULL)
+    {
+        qDebug() << "displayAttack(): crash: unable to get the current monster";
+        doNextAction();
+        return;
+    }
     if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
     {
         qDebug() << "displayAttack(): crash: display an empty attack return";
@@ -756,11 +815,11 @@ void BaseWindow::displayAttack()
         QString attackOwner;
         if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
             attackOwner=tr("Your %1 do the attack %2")
-                .arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster()->monster].name)
+                .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                 .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack].name);
         else
             attackOwner=tr("The other %1 do the attack %2")
-                .arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster()->monster].name)
+                .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
                 .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack].name);
         QString damage;
         qint32 quantity=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
@@ -768,11 +827,11 @@ void BaseWindow::displayAttack()
         {
             if(quantity>0)
                 damage=tr("The other %1 is healed of %2")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster()->monster].name)
+                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
                     .arg(quantity);
             else
                 damage=tr("The other %1 take %2 of damage")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster()->monster].name)
+                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
                     .arg(-quantity);
             if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success)
             {
@@ -796,11 +855,11 @@ void BaseWindow::displayAttack()
         {
             if(quantity>0)
                 damage=tr("Your %1 is healed of %2")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster()->monster].name)
+                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                     .arg(quantity);
             else
                 damage=tr("Your %1 take %2 of damage")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster()->monster].name)
+                    .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                     .arg(-quantity);
             if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success)
             {
@@ -857,6 +916,7 @@ void BaseWindow::displayAttack()
         hp_to_change=1;
     if(updateAttackTime.elapsed()>3000 /*3000ms*/)
     {
+        displayAttackProgression=0;
         qDebug() << "displayAttack(): more than 3000ms";
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         //attack is finish
@@ -890,8 +950,8 @@ void BaseWindow::displayAttack()
             }
         }
         displayAttackTimer.start();
+        displayAttackProgression++;
     }
-    displayAttackProgression++;
 }
 
 void BaseWindow::displayText(const QString &text)
