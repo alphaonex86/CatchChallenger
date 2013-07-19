@@ -31,6 +31,13 @@ bool LocalClientHandlerFight::tryEscape()
     bool escapeSuccess=CommonFightEngine::tryEscape();
     if(escapeSuccess)//check if is in fight
         saveCurrentMonsterStat();
+    else
+    {
+        if(checkKOCurrentMonsters())
+            checkLoose();
+        else
+            checkKOOtherMonstersForGain();
+    }
     return escapeSuccess;
 }
 
@@ -186,129 +193,6 @@ void LocalClientHandlerFight::saveStat()
     }
 }
 
-/*bool LocalClientHandlerFight::checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
-{
-    bool ok;
-    if(isInFight())
-    {
-        emit error(QString("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
-        return false;
-    }
-    if(player_informations->isFake)
-        return false;
-    if(CatchChallenger::MoveOnTheMap::isGrass(*map,x,y) && !map->grassMonster.empty())
-    {
-        if(!ableToFight)
-        {
-            emit error(QString("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
-            return false;
-        }
-        if(stepFight_Grass==0)
-        {
-            if(randomSeeds.size()==0)
-            {
-                emit error(QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
-                return false;
-            }
-            else
-                stepFight_Grass=getOneSeed(16);
-        }
-        else
-            stepFight_Grass--;
-        if(stepFight_Grass==0)
-        {
-            PlayerMonster monster=getRandomMonster(map->grassMonster,&ok);
-            if(ok)
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QString("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
-                #endif
-                wildMonsters << monster;
-            }
-            else
-                emit error(QString("error: no more random seed here to have the get"));
-            return ok;
-        }
-        else
-            return false;
-    }
-    if(CatchChallenger::MoveOnTheMap::isWater(*map,x,y) && !map->waterMonster.empty())
-    {
-        if(!ableToFight)
-        {
-            emit error(QString("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
-            return false;
-        }
-        if(stepFight_Water==0)
-        {
-            if(randomSeeds.size()==0)
-            {
-                emit error(QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
-                return false;
-            }
-            else
-                stepFight_Water=getOneSeed(16);
-        }
-        else
-            stepFight_Water--;
-        if(stepFight_Water==0)
-        {
-            PlayerMonster monster=getRandomMonster(map->waterMonster,&ok);
-            if(ok)
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QString("Start water fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
-                #endif
-                wildMonsters << monster;
-            }
-            else
-                emit error(QString("error: no more random seed here to have the get"));
-            return ok;
-        }
-        else
-            return false;
-    }
-    if(!map->caveMonster.empty())
-    {
-        if(!ableToFight)
-        {
-            emit error(QString("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
-            return false;
-        }
-        if(stepFight_Cave==0)
-        {
-            if(randomSeeds.size()==0)
-            {
-                emit error(QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
-                return false;
-            }
-            else
-                stepFight_Cave=getOneSeed(16);
-        }
-        else
-            stepFight_Cave--;
-        if(stepFight_Cave==0)
-        {
-            PlayerMonster monster=getRandomMonster(map->caveMonster,&ok);
-            if(ok)
-            {
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QString("Start cave fight with monseter id: %1 level %2").arg(monster.monster).arg(monster.level));
-                #endif
-                wildMonsters << monster;
-            }
-            else
-                emit error(QString("error: no more random seed here to have the get"));
-            return ok;
-        }
-        else
-            return false;
-    }
-
-    /// no fight in this zone
-    return false;
-}*/
-
 bool LocalClientHandlerFight::botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
@@ -374,11 +258,6 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
     return true;
 }
 
-void LocalClientHandlerFight::useSkill(const quint32 &skill)
-{
-    CommonFightEngine::useSkill(skill);
-}
-
 LocalClientHandlerFight * LocalClientHandlerFight::getOtherPlayerBattle() const
 {
     return otherPlayerBattle;
@@ -395,44 +274,6 @@ PublicPlayerMonster *LocalClientHandlerFight::getOtherMonster() const
             emit error("Is in battle but the other monster is null");
     }
     return CommonFightEngine::getOtherMonster();
-}
-
-//return true if win
-bool LocalClientHandlerFight::useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel)
-{
-    if(!botFightMonsters.isEmpty())
-    {
-        bool win=CommonFightEngine::useSkillAgainstBotMonster(skill,skillLevel);
-        syncForEndOfTurn();
-        if(!isInFight())
-        {
-            if(win)
-            {
-                emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
-                addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
-                player_informations->public_and_private_informations.bot_already_beaten << botFightId;
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                     .arg(player_informations->id)
-                                     .arg(botFightId)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                     .arg(player_informations->id)
-                                     .arg(botFightId)
-                                     );
-                    break;
-                }
-            }
-        }
-        return win;
-    }
-    else
-        return CommonFightEngine::useSkillAgainstBotMonster(skill,skillLevel);
 }
 
 void LocalClientHandlerFight::wildDrop(const quint32 &monster)
@@ -581,14 +422,14 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
     return false;
 }
 
-bool LocalClientHandlerFight::getInBattle() const
+bool LocalClientHandlerFight::isInBattle() const
 {
     return (otherPlayerBattle!=NULL);
 }
 
 void LocalClientHandlerFight::registerBattleRequest(LocalClientHandlerFight * otherPlayerBattle)
 {
-    if(getInBattle())
+    if(isInBattle())
     {
         emit message("Already in battle, internal error");
         return;
@@ -764,126 +605,21 @@ void LocalClientHandlerFight::haveUsedTheBattleSkill()
     haveCurrentSkill=false;
 }
 
-void LocalClientHandlerFight::useBattleSkill(const quint32 &skill,const quint8 &skillLevel)
+bool LocalClientHandlerFight::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster)
 {
-    if(haveCurrentSkill)
+    if(isInBattle())
     {
-        emit error("Have already the current skill");
-        return;
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        bool currentMonsterStatIsFirstToAttack=false;
+        if(currentMonsterStat.speed>otherMonsterStat.speed)
+            currentMonsterStatIsFirstToAttack=true;
+        if(currentMonsterStat.speed==otherMonsterStat.speed)
+            currentMonsterStatIsFirstToAttack=rand()%2;
+        return currentMonsterStatIsFirstToAttack;
     }
-    if(battleIsValidated)
-    {
-        currentSkill=skill;
-        haveCurrentSkill=true;
-    }
-    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(otherPlayerBattle==NULL)
-    {
-        emit error("Internal error: other player is not connected");
-        return;
-    }
-    LocalClientHandlerFight * tempOtherPlayerBattle=otherPlayerBattle;
-    #endif
-    if(!tempOtherPlayerBattle->haveBattleSkill())
-    {
-        //in waiting of the other player skill
-        return;
-    }
-    //calculate the result
-    QList<Skill::AttackReturn> monsterReturnList;
-    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster],getCurrentMonster()->level);
-    Monster::Stat otherMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getOtherMonster()->monster],getOtherMonster()->level);
-    bool currentMonsterStatIsFirstToAttack;
-    if(currentMonsterStat.speed==otherMonsterStat.speed)
-        currentMonsterStatIsFirstToAttack=rand()%2;
     else
-        currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
-    //do the current monster attack
-    bool isKO=false;
-    bool currentMonsterisKO=false,otherMonsterisKO=false;
-    bool currentPlayerLoose=false,otherPlayerLoose=false;
-    if(currentMonsterStatIsFirstToAttack)
-    {
-        monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        monsterReturnList.last().doByTheCurrentMonster=true;
-        currentMonsterisKO=checkKOCurrentMonsters();
-        if(currentMonsterisKO)
-        {
-            emit message("current player is KO");
-            currentPlayerLoose=checkLoose();
-            isKO=true;
-        }
-        else
-        {
-            emit message("check other player monster");
-            otherMonsterisKO=checkKOOtherMonstersForGain();
-            if(otherMonsterisKO)
-                isKO=true;
-        }
-    }
-    //do the other monster attack
-    if(!isKO)
-    {
-        monsterReturnList << tempOtherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        monsterReturnList.last().doByTheCurrentMonster=false;
-        otherMonsterisKO=tempOtherPlayerBattle->checkKOCurrentMonsters();
-        if(otherMonsterisKO)
-        {
-            emit message("middle other player is KO");
-            otherPlayerLoose=tempOtherPlayerBattle->checkLoose();
-            isKO=true;
-        }
-        else
-        {
-            emit message("middle current player is KO");
-            currentMonsterisKO=tempOtherPlayerBattle->checkKOOtherMonstersForGain();
-            if(currentMonsterisKO)
-                isKO=true;
-        }
-    }
-    //do the current monster attack
-    if(!isKO)
-        if(!currentMonsterStatIsFirstToAttack)
-        {
-            monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-            monsterReturnList.last().doByTheCurrentMonster=true;
-            currentMonsterisKO=checkKOCurrentMonsters();
-            if(currentMonsterisKO)
-            {
-                emit message("current player is KO");
-                currentPlayerLoose=checkLoose();
-                isKO=true;
-            }
-            else
-            {
-                emit message("check other player monster");
-                otherMonsterisKO=checkKOOtherMonstersForGain();
-                if(otherMonsterisKO)
-                    isKO=true;
-            }
-        }
-    syncForEndOfTurn();
-    //send to the return
-    if(otherMonsterisKO && !otherPlayerLoose)
-        sendBattleReturn(monsterReturnList,getOtherSelectedMonsterNumber(),*getOtherMonster());
-    else
-        sendBattleReturn(monsterReturnList);
-    int index=0;
-    while(index<monsterReturnList.size())
-    {
-        monsterReturnList[index].doByTheCurrentMonster=!monsterReturnList[index].doByTheCurrentMonster;
-        index++;
-    }
-    if(currentMonsterisKO && !currentPlayerLoose)
-        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList,selectedMonsterNumberToMonsterPlace(getCurrentSelectedMonsterNumber()),FacilityLib::playerMonsterToPublicPlayerMonster(*getCurrentMonster()));
-    else
-        tempOtherPlayerBattle->sendBattleReturn(monsterReturnList);
-    //reset all
-    haveUsedTheBattleSkill();
-    tempOtherPlayerBattle->haveUsedTheBattleSkill();
-    //if the battle is finish
-    if(!currentPlayerLoose || !otherPlayerLoose)
-        battleFinished();
+        return currentMonsterAttackFirst(currentMonster,otherMonster);
 }
 
 quint8 LocalClientHandlerFight::selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber)
@@ -988,4 +724,41 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
             saveCurrentMonsterStat();
     }
     return haveChangeOfLevel;
+}
+
+bool LocalClientHandlerFight::useSkill(const quint32 &skill)
+{
+    if(!isInBattle())
+    {
+        bool win=CommonFightEngine::useSkill(skill);
+        syncForEndOfTurn();
+        if(!isInFight())
+        {
+            if(win)
+            {
+                emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
+                addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
+                player_informations->public_and_private_informations.bot_already_beaten << botFightId;
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                     .arg(player_informations->id)
+                                     .arg(botFightId)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                     .arg(player_informations->id)
+                                     .arg(botFightId)
+                                     );
+                    break;
+                }
+            }
+        }
+        return win;
+    }
+    else
+        return CommonFightEngine::useSkill(skill);
 }

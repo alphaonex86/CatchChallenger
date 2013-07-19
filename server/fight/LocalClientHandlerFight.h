@@ -29,7 +29,7 @@ public:
     void setVariable(Player_internal_informations *player_informations);
     void saveCurrentMonsterStat();
     bool checkLoose();
-    bool getInBattle() const;
+    bool isInBattle() const;
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
     void getRandomNumberIfNeeded();
     bool tryEscape();
@@ -42,11 +42,11 @@ public:
     void battleAccepted();
     void battleFinished();
     void battleFinishedReset();
-    void useSkill(const quint32 &skill);
     LocalClientHandlerFight * getOtherPlayerBattle() const;
+    virtual bool useSkill(const quint32 &skill);
+    virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster);
 protected:
     bool checkKOCurrentMonsters();
-    bool checkKOOtherMonstersForGain();
     void syncForEndOfTurn();
     void saveStat();
     bool botFightStart(const quint32 &botFightId);
@@ -54,7 +54,6 @@ protected:
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
     bool haveBattleSkill();
     void haveUsedTheBattleSkill();
-    void useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace=0,const PublicPlayerMonster &publicPlayerMonster=PublicPlayerMonster());
     inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
     void internalBattleCanceled(const bool &send);
