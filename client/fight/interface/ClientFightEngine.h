@@ -29,11 +29,7 @@ public:
     QList<PublicPlayerMonster> battleCurrentMonster;
     QList<quint8> battleStat,botMonstersStat;
     QList<quint8> battleMonsterPlace;
-    bool tryEscape();//return true if is escaped
-    bool canDoFightAction();
     void useSkill(const quint32 &skill);
-    void useSkillAgainstWildMonster(const quint32 &skill);
-    void useSkillAgainstBotMonster(const quint32 &skill);
     QList<quint32> otherMonsterAttack;
     bool dropKOOtherMonster();
     void fightFinished();
@@ -52,7 +48,7 @@ public:
 private:
     QList<Skill::AttackReturn> attackReturnList;
     Player_private_and_public_informations player_informations_local;
-    void doTheCurrentMonsterAttack(const quint32 &skill);
+    Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();
     void addXPSP();

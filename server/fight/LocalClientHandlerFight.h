@@ -24,7 +24,6 @@ class LocalClientHandlerFight : public CommonFightEngine
 public:
     explicit LocalClientHandlerFight();
     virtual ~LocalClientHandlerFight();
-    bool tryEscape();
     bool getBattleIsValidated();
     bool isInFight() const;
     void setVariable(Player_internal_informations *player_informations);
@@ -33,6 +32,7 @@ public:
     bool getInBattle() const;
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
     void getRandomNumberIfNeeded();
+    bool tryEscape();
     bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(LocalClientHandlerFight * otherPlayerBattle);
@@ -50,8 +50,6 @@ protected:
     void syncForEndOfTurn();
     void saveStat();
     bool botFightStart(const quint32 &botFightId);
-    void useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel);
-    void useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel);
     bool buffIsValid(const Skill::BuffEffect &buffEffect);
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
     bool haveBattleSkill();
@@ -64,6 +62,9 @@ protected:
     void resetTheBattle();
     virtual PublicPlayerMonster *getOtherMonster() const;
     virtual void fightFinished();
+    virtual bool giveXPSP(int xp,int sp);
+    bool useSkillAgainstBotMonster(const quint32 &skill, const quint8 &skillLevel);
+    virtual void wildDrop(const quint32 &monster);
 private:
     LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;
