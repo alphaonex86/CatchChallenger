@@ -41,6 +41,10 @@ public:
     QList<PlayerMonster> getPlayerMonster();
     bool removeMonster(const quint32 &monsterId);
     bool canEscape() const;
+    virtual bool tryEscape();
+    bool canDoFightAction();
+    virtual void useSkill(const quint32 &skill);
+    static bool buffIsValid(const Skill::BuffEffect &buffEffect);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
@@ -54,6 +58,11 @@ protected:
     quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
     virtual void fightFinished();
+    virtual void wildDrop(const quint32 &monster);
+    virtual bool checkKOOtherMonstersForGain();
+    virtual bool giveXPSP(int xp,int sp);
+    virtual bool useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel);
+    virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
 signals:
     void error(const QString &error) const;
     void message(const QString &message) const;

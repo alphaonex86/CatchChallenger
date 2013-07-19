@@ -62,7 +62,7 @@ BaseWindow::BaseWindow() :
     displayAttackTimer.setSingleShot(true);
     displayAttackTimer.setInterval(50);
     doNextActionTimer.setSingleShot(true);
-    doNextActionTimer.setInterval(3000);
+    doNextActionTimer.setInterval(1500);
 
     connect(CatchChallenger::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
@@ -856,32 +856,35 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x,
     }
     else
     {
-        //check bot with border
-        CatchChallenger::Map * current_map=map;
-        switch(MapController::mapController->getDirection())
+        if(!CatchChallenger::MoveOnTheMap::isWalkable(*map,x,y))
         {
-            case CatchChallenger::Direction_look_at_left:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&current_map,&x,&y,false))
-                    stopped_in_front_of_check_bot(map,x,y);
-            break;
-            case CatchChallenger::Direction_look_at_right:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&current_map,&x,&y,false))
-                    stopped_in_front_of_check_bot(map,x,y);
-            break;
-            case CatchChallenger::Direction_look_at_top:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&current_map,&x,&y,false))
-                    stopped_in_front_of_check_bot(map,x,y);
-            break;
-            case CatchChallenger::Direction_look_at_bottom:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&current_map,&x,&y,false))
-                    stopped_in_front_of_check_bot(map,x,y);
-            break;
-            default:
-            break;
+            //check bot with border
+            CatchChallenger::Map * current_map=map;
+            switch(MapController::mapController->getDirection())
+            {
+                case CatchChallenger::Direction_look_at_left:
+                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
+                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&current_map,&x,&y,false))
+                        stopped_in_front_of_check_bot(map,x,y);
+                break;
+                case CatchChallenger::Direction_look_at_right:
+                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
+                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&current_map,&x,&y,false))
+                        stopped_in_front_of_check_bot(map,x,y);
+                break;
+                case CatchChallenger::Direction_look_at_top:
+                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
+                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&current_map,&x,&y,false))
+                        stopped_in_front_of_check_bot(map,x,y);
+                break;
+                case CatchChallenger::Direction_look_at_bottom:
+                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
+                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&current_map,&x,&y,false))
+                        stopped_in_front_of_check_bot(map,x,y);
+                break;
+                default:
+                break;
+            }
         }
     }
 }

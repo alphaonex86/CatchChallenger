@@ -28,28 +28,10 @@ void LocalClientHandlerFight::getRandomNumberIfNeeded()
 
 bool LocalClientHandlerFight::tryEscape()
 {
-    if(!CommonFightEngine::canEscape())//check if is in fight
-        return false;
-    if(internalTryEscape())
-    {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("escape is successful"));
-        #endif
-        wildMonsters.clear();
+    bool escapeSuccess=CommonFightEngine::tryEscape();
+    if(escapeSuccess)//check if is in fight
         saveCurrentMonsterStat();
-    }
-    else
-    {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("escape is failed"));
-        #endif
-        CommonFightEngine::generateOtherAttack();//Skill::AttackReturn attackReturn=
-        if(checkKOCurrentMonsters())
-            checkLoose();
-        else
-            checkKOOtherMonstersForGain();
-    }
-    return true;
+    return escapeSuccess;
 }
 
 bool LocalClientHandlerFight::getBattleIsValidated()
@@ -178,180 +160,6 @@ void LocalClientHandlerFight::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
-bool LocalClientHandlerFight::checkKOOtherMonstersForGain()
-{
-    bool winTheTurn=false;
-    quint32 give_xp=0;
-    if(!wildMonsters.isEmpty())
-    {
-        if(wildMonsters.first().hp==0)
-        {
-            winTheTurn=true;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
-            #endif
-            //drop the drop item here
-            QList<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.values(wildMonsters.first().monster);
-            if(player_informations->questsDrop.contains(wildMonsters.first().monster))
-                drops+=player_informations->questsDrop.values(wildMonsters.first().monster);
-            int index=0;
-            bool success;
-            quint32 quantity;
-            while(index<drops.size())
-            {
-                if(drops.at(index).luck==100)
-                    success=true;
-                else
-                {
-                    if(rand()%100<(qint8)drops.at(index).luck)
-                        success=true;
-                    else
-                        success=false;
-                }
-                if(success)
-                {
-                    if(drops.at(index).quantity_max==1)
-                        quantity=1;
-                    else
-                        quantity=rand()%(drops.at(index).quantity_max-drops.at(index).quantity_min+1)+drops.at(index).quantity_min;
-                    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                    emit message(QString("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
-                    #endif
-                    emit addObjectAndSend(drops.at(index).item,quantity);
-                }
-                index++;
-            }
-            //give xp/sp here
-            const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster];
-            getCurrentMonster()->sp+=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            give_xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
-            #endif
-            wildMonsters.removeFirst();
-        }
-    }
-    if(!botFightMonsters.isEmpty())
-    {
-        if(botFightMonsters.first().hp==0)
-        {
-            winTheTurn=true;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("The wild monster (%1) is KO").arg(botFightMonsters.first().monster));
-            #endif
-            //don't drop item because it's not a wild fight
-            //give xp/sp here
-            const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[botFightMonsters.first().monster];
-            getCurrentMonster()->sp+=wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            give_xp=wildmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
-            #endif
-            botFightMonsters.removeFirst();
-        }
-    }
-    else if(battleIsValidated)
-    {
-        emit message("check the other monster is KO");
-        PublicPlayerMonster firstValidOtherPlayerMonster=FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster());
-        if(firstValidOtherPlayerMonster.hp==0)
-        {
-            emit message("the other monster is KO");
-            winTheTurn=true;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("The other player monster in battle is KO"));
-            #endif
-            //no item
-            //no xp to prevent cheatings (hight level do only bad attack)
-            otherPlayerBattle->saveStat();
-            otherPlayerBattle->updateCanDoFight();
-            if(!otherPlayerBattle->getAbleToFight())
-                otherPlayerBattle->checkLoose();
-        }
-    }
-    else
-    {
-        emit message("unknown other monster type");
-        return false;
-    }
-    if(winTheTurn && give_xp>0)
-    {
-        bool haveChangeOfLevel=false;
-        const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster];
-        quint32 xp=getCurrentMonster()->remaining_xp;
-        quint32 level=getCurrentMonster()->level;
-        while(currentmonster.level_to_xp.at(level-1)<(xp+give_xp))
-        {
-            quint32 old_max_hp=currentmonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            quint32 new_max_hp=currentmonster.stat.hp*(level+1)/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            give_xp-=currentmonster.level_to_xp.at(level-1)-xp;
-            xp=0;
-            level++;
-            haveChangeOfLevel=true;
-            getCurrentMonster()->hp+=new_max_hp-old_max_hp;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("You pass to the level %1").arg(level));
-            #endif
-        }
-        xp+=give_xp;
-        getCurrentMonster()->remaining_xp=xp;
-        if(haveChangeOfLevel)
-            getCurrentMonster()->level=level;
-
-        //save into db here
-        if(!isInFight() && GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
-            saveCurrentMonsterStat();
-        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                 .arg(getCurrentMonster()->id)
-                                 .arg(getCurrentMonster()->remaining_xp)
-                                 .arg(getCurrentMonster()->sp)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
-                                 .arg(getCurrentMonster()->id)
-                                 .arg(getCurrentMonster()->remaining_xp)
-                                 .arg(getCurrentMonster()->sp)
-                                 );
-                break;
-            }
-        if(haveChangeOfLevel)
-        {
-            if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
-                switch(GlobalServerData::serverSettings.database.type)
-                {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3 WHERE id=%1;")
-                                     .arg(getCurrentMonster()->id)
-                                     .arg(getCurrentMonster()->level)
-                                     .arg(getCurrentMonster()->hp)
-                                     );
-                    break;
-                }
-        }
-        if(!isInFight())
-        {
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message("You win the battle");
-            #endif
-        }
-    }
-    return winTheTurn;
-}
-
 void LocalClientHandlerFight::syncForEndOfTurn()
 {
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
@@ -378,7 +186,7 @@ void LocalClientHandlerFight::saveStat()
     }
 }
 
-bool LocalClientHandlerFight::checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
+/*bool LocalClientHandlerFight::checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     bool ok;
     if(isInFight())
@@ -499,7 +307,7 @@ bool LocalClientHandlerFight::checkFightCollision(Map *map,const COORD_TYPE &x,c
 
     /// no fight in this zone
     return false;
-}
+}*/
 
 bool LocalClientHandlerFight::botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
@@ -568,132 +376,12 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
 
 void LocalClientHandlerFight::useSkill(const quint32 &skill)
 {
-    if(!isInFight())
-    {
-        emit error("Try use skill when not in fight");
-        return;
-    }
-    PlayerMonster * currentMonster=CommonFightEngine::getCurrentMonster();
-    if(currentMonster==NULL)
-    {
-        emit error("Unable to locate the current monster");
-        return;
-    }
-    int index=0;
-    while(index<getCurrentMonster()->skills.size())
-    {
-        if(getCurrentMonster()->skills.at(index).skill==skill)
-            break;
-        index++;
-    }
-    if(index==getCurrentMonster()->skills.size())
-    {
-        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(getCurrentMonster()->monster).arg(getCurrentMonster()->level).arg(skill));
-        return;
-    }
-    const PublicPlayerMonster * otherMonster=LocalClientHandlerFight::getOtherMonster();
-    if(otherMonster==NULL)
-    {
-        emit error("Unable to locate the other monster");
-        return;
-    }
-    quint8 skillLevel=getCurrentMonster()->skills.at(index).level;
-    if(battleIsValidated)
-    {
-        useBattleSkill(skill,skillLevel);
-        return;
-    }
-    if(!wildMonsters.isEmpty())
-    {
-        useSkillAgainstWildMonster(skill,skillLevel);
-        return;
-    }
-    if(!botFightMonsters.isEmpty())
-    {
-        useSkillAgainstBotMonster(skill,skillLevel);
-        return;
-    }
-    emit error("Unable to locate the battle monster or is not in battle to use a skill");
+    CommonFightEngine::useSkill(skill);
 }
 
 LocalClientHandlerFight * LocalClientHandlerFight::getOtherPlayerBattle() const
 {
     return otherPlayerBattle;
-}
-
-void LocalClientHandlerFight::useSkillAgainstWildMonster(const quint32 &skill,const quint8 &skillLevel)
-{
-    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster],getCurrentMonster()->level);
-    Monster::Stat otherMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster],wildMonsters.first().level);
-    bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
-    QList<Skill::AttackReturn> monsterReturnList;
-    bool isKO=false;
-    bool currentMonsterisKO=false,otherMonsterisKO=false;
-    bool currentPlayerLoose=false,otherPlayerLoose=false;
-    if(currentMonsterStatIsFirstToAttack)
-    {
-        monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        monsterReturnList.last().doByTheCurrentMonster=true;
-        currentMonsterisKO=checkKOCurrentMonsters();
-        if(currentMonsterisKO)
-        {
-            emit message("current player is KO");
-            currentPlayerLoose=checkLoose();
-            isKO=true;
-        }
-        else
-        {
-            emit message("check other player monster");
-            otherMonsterisKO=checkKOOtherMonstersForGain();
-            if(otherMonsterisKO)
-                isKO=true;
-        }
-    }
-    //do the other monster attack
-    if(!isKO)
-    {
-        /*Skill::AttackReturn attackReturn=*/CommonFightEngine::generateOtherAttack();
-        otherMonsterisKO=checkKOOtherMonstersForGain();
-        if(otherMonsterisKO)
-        {
-            emit message("middle other player is KO");
-            otherPlayerLoose=checkLoose();
-            isKO=true;
-        }
-        else
-        {
-            emit message("middle current player is KO");
-            currentMonsterisKO=!ableToFight;
-            if(currentMonsterisKO)
-                isKO=true;
-        }
-    }
-    //do the current monster attack
-    if(!isKO)
-        if(!currentMonsterStatIsFirstToAttack)
-        {
-            monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-            monsterReturnList.last().doByTheCurrentMonster=true;
-            currentMonsterisKO=checkKOCurrentMonsters();
-            if(currentMonsterisKO)
-            {
-                emit message("current player is KO");
-                currentPlayerLoose=checkLoose();
-                isKO=true;
-            }
-            else
-            {
-                emit message("check other player monster");
-                otherMonsterisKO=checkKOOtherMonstersForGain();
-                if(otherMonsterisKO)
-                    isKO=true;
-            }
-        }
-    syncForEndOfTurn();
-    if(currentPlayerLoose)
-        emit message("The wild monster put all your monster KO");
-    if(otherPlayerLoose)
-        emit message("You have put KO the wild monster");
 }
 
 PublicPlayerMonster *LocalClientHandlerFight::getOtherMonster() const
@@ -709,197 +397,76 @@ PublicPlayerMonster *LocalClientHandlerFight::getOtherMonster() const
     return CommonFightEngine::getOtherMonster();
 }
 
-void LocalClientHandlerFight::useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel)
+//return true if win
+bool LocalClientHandlerFight::useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel)
 {
-    Monster::Stat currentMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster],getCurrentMonster()->level);
-    Monster::Stat otherMonsterStat=getStat(CommonDatapack::commonDatapack.monsters[botFightMonsters.first().monster],botFightMonsters.first().level);
-    bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
-    QList<Skill::AttackReturn> monsterReturnList;
-    bool isKO=false;
-    bool currentMonsterisKO=false,otherMonsterisKO=false;
-    bool currentPlayerLoose=false,otherPlayerLoose=false;
-    if(currentMonsterStatIsFirstToAttack)
+    if(!botFightMonsters.isEmpty())
     {
-        monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-        monsterReturnList.last().doByTheCurrentMonster=true;
-        currentMonsterisKO=checkKOCurrentMonsters();
-        if(currentMonsterisKO)
+        bool win=CommonFightEngine::useSkillAgainstBotMonster(skill,skillLevel);
+        syncForEndOfTurn();
+        if(!isInFight())
         {
-            emit message("current player is KO");
-            currentPlayerLoose=checkLoose();
-            isKO=true;
-        }
-        else
-        {
-            emit message("check other player monster");
-            otherMonsterisKO=checkKOOtherMonstersForGain();
-            if(otherMonsterisKO)
-                isKO=true;
-        }
-    }
-    //do the other monster attack
-    if(!isKO)
-    {
-        /*Skill::AttackReturn attackReturn=*/CommonFightEngine::generateOtherAttack();
-        otherMonsterisKO=checkKOOtherMonstersForGain();
-        if(otherMonsterisKO)
-        {
-            emit message("middle other player is KO");
-            otherPlayerLoose=checkLoose();
-            isKO=true;
-        }
-        else
-        {
-            emit message("middle current player is KO");
-            currentMonsterisKO=!ableToFight;
-            if(currentMonsterisKO)
-                isKO=true;
-        }
-    }
-    //do the current monster attack
-    if(!isKO)
-        if(!currentMonsterStatIsFirstToAttack)
-        {
-            monsterReturnList << doTheCurrentMonsterAttack(skill,skillLevel,currentMonsterStat,otherMonsterStat);
-            monsterReturnList.last().doByTheCurrentMonster=true;
-            currentMonsterisKO=checkKOCurrentMonsters();
-            if(currentMonsterisKO)
+            if(win)
             {
-                emit message("current player is KO");
-                currentPlayerLoose=checkLoose();
-                isKO=true;
-            }
-            else
-            {
-                emit message("check other player monster");
-                otherMonsterisKO=checkKOOtherMonstersForGain();
-                if(otherMonsterisKO)
-                    isKO=true;
+                emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
+                addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
+                player_informations->public_and_private_informations.bot_already_beaten << botFightId;
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                     .arg(player_informations->id)
+                                     .arg(botFightId)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                     .arg(player_informations->id)
+                                     .arg(botFightId)
+                                     );
+                    break;
+                }
             }
         }
-    syncForEndOfTurn();
-    otherPlayerLoose=otherMonsterisKO;//workaround, bug on multiple monster
-    if(currentPlayerLoose)
-        emit message("The bot fight put all your monster KO");
-    if(otherPlayerLoose)
-        emit message("You have put KO the bot fight");
-    if(!isInFight())
-    {
-        if(otherPlayerLoose)
-        {
-            emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
-            addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
-            player_informations->public_and_private_informations.bot_already_beaten << botFightId;
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                 .arg(player_informations->id)
-                                 .arg(botFightId)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                 .arg(player_informations->id)
-                                 .arg(botFightId)
-                                 );
-                break;
-            }
-        }
+        return win;
     }
+    else
+        return CommonFightEngine::useSkillAgainstBotMonster(skill,skillLevel);
 }
 
-bool LocalClientHandlerFight::buffIsValid(const Skill::BuffEffect &buffEffect)
+void LocalClientHandlerFight::wildDrop(const quint32 &monster)
 {
-    if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buffEffect.buff))
-        return false;
-    if(buffEffect.level<=0)
-        return false;
-    if(buffEffect.level<=0)
-        return false;
-    if(buffEffect.level>CommonDatapack::commonDatapack.monsterBuffs[buffEffect.buff].level.size())
-        return false;
-    switch(buffEffect.on)
-    {
-        case ApplyOn_AloneEnemy:
-        case ApplyOn_AllEnemy:
-        case ApplyOn_Themself:
-        case ApplyOn_AllAlly:
-        case ApplyOn_Nobody:
-        break;
-        default:
-        return false;
-    }
-    return true;
-}
-
-Skill::AttackReturn LocalClientHandlerFight::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat)
-{
-    /// \todo use the variable currentMonsterStat and otherMonsterStat to have better speed
-    Q_UNUSED(currentMonsterStat);
-    Q_UNUSED(otherMonsterStat);
-    Skill::AttackReturn tempReturnBuff;
-    tempReturnBuff.doByTheCurrentMonster=true;
-    tempReturnBuff.attack=skill;
-    const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[skill].level.at(skillLevel-1);
-    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-    emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
-    #endif
+    QList<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.values(monster);
+    if(player_informations->questsDrop.contains(monster))
+        drops+=player_informations->questsDrop.values(monster);
     int index=0;
-    while(index<skillList.buff.size())
+    bool success;
+    quint32 quantity;
+    while(index<drops.size())
     {
-        const Skill::Buff &buff=skillList.buff.at(index);
-        #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-        if(!buffIsValid(buff.effect))
-        {
-            emit error("Buff is not valid");
-            return tempReturnBuff;
-        }
-        #endif
-        bool success;
-        if(buff.success==100)
+        if(drops.at(index).luck==100)
             success=true;
         else
         {
-            success=(getOneSeed(100)<buff.success);
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(success)
-                emit message(QString("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
-            #endif
+            if(rand()%100<(qint8)drops.at(index).luck)
+                success=true;
+            else
+                success=false;
         }
         if(success)
         {
+            if(drops.at(index).quantity_max==1)
+                quantity=1;
+            else
+                quantity=rand()%(drops.at(index).quantity_max-drops.at(index).quantity_min+1)+drops.at(index).quantity_min;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(success)
-                emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+            emit message(QString("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
             #endif
-            tempReturnBuff.success=true;
-            tempReturnBuff.buffEffectMonster << buff.effect;
-            applyCurrentBuffEffect(buff.effect);
+            emit addObjectAndSend(drops.at(index).item,quantity);
         }
         index++;
     }
-    index=0;
-    while(index<skillList.life.size())
-    {
-        tempReturnBuff.success=true;
-        const Skill::Life &life=skillList.life.at(index);
-        bool success;
-        if(life.success==100)
-            success=true;
-        else
-            success=(getOneSeed(100)<life.success);
-        if(success)
-        {
-            Skill::LifeEffectReturn lifeEffectReturn;
-            lifeEffectReturn.on=life.effect.on;
-            lifeEffectReturn.quantity=applyCurrentLifeEffect(life.effect).quantity;
-            tempReturnBuff.lifeEffectMonster << lifeEffectReturn;
-        }
-        index++;
-    }
-    return tempReturnBuff;
 }
 
 bool LocalClientHandlerFight::isInFight() const
@@ -1366,3 +933,59 @@ void LocalClientHandlerFight::sendBattleReturn(const QList<Skill::AttackReturn> 
     emit sendPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
 }
 
+//return true if change level
+bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
+{
+    bool haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
+    {
+        if(haveChangeOfLevel)
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3,xp=%2,sp=%3 WHERE id=%1;")
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(getCurrentMonster()->level)
+                                 .arg(getCurrentMonster()->hp)
+                                 .arg(getCurrentMonster()->remaining_xp)
+                                 .arg(getCurrentMonster()->sp)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3,xp=%2,sp=%3 WHERE id=%1;")
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(getCurrentMonster()->level)
+                                 .arg(getCurrentMonster()->hp)
+                                 .arg(getCurrentMonster()->remaining_xp)
+                                 .arg(getCurrentMonster()->sp)
+                                 );
+                break;
+            }
+        else
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(getCurrentMonster()->remaining_xp)
+                                 .arg(getCurrentMonster()->sp)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(getCurrentMonster()->remaining_xp)
+                                 .arg(getCurrentMonster()->sp)
+                                 );
+                break;
+            }
+    }
+    else if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+    {
+        if(!isInFight())
+            saveCurrentMonsterStat();
+    }
+    return haveChangeOfLevel;
+}

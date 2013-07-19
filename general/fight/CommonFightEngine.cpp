@@ -827,3 +827,354 @@ bool CommonFightEngine::removeMonster(const quint32 &monsterId)
     }
     return false;
 }
+
+void CommonFightEngine::wildDrop(const quint32 &monster)
+{
+}
+
+bool CommonFightEngine::checkKOOtherMonstersForGain()
+{
+    bool winTheTurn=false;
+    if(!wildMonsters.isEmpty())
+    {
+        if(wildMonsters.first().hp==0)
+        {
+            winTheTurn=true;
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            emit message(QString("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
+            #endif
+            //drop the drop item here
+            wildDrop(wildMonsters.first().monster);
+            //give xp/sp here
+            const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster];
+            int sp=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            int xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            giveXPSP(xp,sp);
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            #endif
+            wildMonsters.removeFirst();
+        }
+    }
+    if(!botFightMonsters.isEmpty())
+    {
+        if(botFightMonsters.first().hp==0)
+        {
+            winTheTurn=true;
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            emit message(QString("The wild monster (%1) is KO").arg(botFightMonsters.first().monster));
+            #endif
+            //don't drop item because it's not a wild fight
+            //give xp/sp here
+            const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[botFightMonsters.first().monster];
+            int sp=wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            int xp=wildmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            giveXPSP(xp,sp);
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            #endif
+            botFightMonsters.removeFirst();
+        }
+    }
+    else
+    {
+        emit message("unknown other monster type");
+        return false;
+    }
+    return winTheTurn;
+}
+
+//return true if change level
+bool CommonFightEngine::giveXPSP(int xp,int sp)
+{
+    bool haveChangeOfLevel=false;
+    const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster];
+    quint32 remaining_xp=getCurrentMonster()->remaining_xp;
+    quint32 level=getCurrentMonster()->level;
+    if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+    {
+        remaining_xp=0;
+        xp=0;
+    }
+    while(currentmonster.level_to_xp.at(level-1)<(remaining_xp+xp))
+    {
+        quint32 old_max_hp=currentmonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        quint32 new_max_hp=currentmonster.stat.hp*(level+1)/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        xp-=currentmonster.level_to_xp.at(level-1)-remaining_xp;
+        remaining_xp=0;
+        level++;
+        haveChangeOfLevel=true;
+        getCurrentMonster()->hp+=new_max_hp-old_max_hp;
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("You pass to the level %1").arg(level));
+        #endif
+        if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+        {
+            remaining_xp=0;
+            xp=0;
+        }
+    }
+    remaining_xp+=xp;
+    getCurrentMonster()->remaining_xp=remaining_xp;
+    if(haveChangeOfLevel)
+        getCurrentMonster()->level=level;
+    getCurrentMonster()->sp+=sp;
+
+    if(!isInFight())
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message("You win the battle");
+        #endif
+    }
+    return haveChangeOfLevel;
+}
+
+bool CommonFightEngine::tryEscape()
+{
+    if(!canEscape())//check if is in fight
+        return false;
+    if(internalTryEscape())
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("escape is successful"));
+        #endif
+        wildMonsters.clear();
+        return true;
+    }
+    else
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("escape is failed"));
+        #endif
+        generateOtherAttack();//Skill::AttackReturn attackReturn=
+        if(checkKOCurrentMonsters())
+            checkLoose();
+        else
+            checkKOOtherMonstersForGain();
+        return false;
+    }
+}
+
+bool CommonFightEngine::canDoFightAction()
+{
+    if(randomSeeds.size()>5)
+        return true;
+    else
+        return false;
+}
+
+//return true if win
+bool CommonFightEngine::useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel)
+{
+    PlayerMonster * playerMonster=getCurrentMonster();
+    if(playerMonster==NULL)
+    {
+        qDebug() << "No current monster for useSkillAgainstBotMonster";
+        return false;
+    }
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
+    const PlayerMonster &publicOtherMonster=botFightMonsters.first();
+    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicOtherMonster.monster],publicOtherMonster.level);
+    bool currentMonsterStatIsFirstToAttack=(currentMonsterStat.speed>=otherMonsterStat.speed);
+    bool isKO=false;
+    bool currentMonsterisKO=false,otherMonsterisKO=false;
+    bool currentPlayerLoose=false,otherPlayerLoose=false;
+    if(currentMonsterStatIsFirstToAttack)
+    {
+        doTheCurrentMonsterAttack(skill,skillLevel);
+        currentMonsterisKO=(getCurrentMonster()->hp==0);
+        if(currentMonsterisKO)
+        {
+            qDebug() << "current player is KO";
+            currentPlayerLoose=!ableToFight;
+            isKO=true;
+        }
+        else
+        {
+            qDebug() << "check other player monster";
+            otherMonsterisKO=checkKOOtherMonstersForGain();
+            if(otherMonsterisKO)
+                isKO=true;
+        }
+    }
+    //do the other monster attack
+    if(!isKO)
+    {
+        attackReturnList << CommonFightEngine::generateOtherAttack();
+        otherMonsterisKO=(getOtherMonster()->hp==0);
+        if(otherMonsterisKO)
+        {
+            qDebug() << "middle other player is KO";
+            dropKOOtherMonster();
+            otherPlayerLoose=isInFight();
+            isKO=true;
+        }
+        else
+        {
+            qDebug() << "middle current player is KO";
+            currentMonsterisKO=(getCurrentMonster()->hp==0);
+            if(currentMonsterisKO)
+                isKO=true;
+        }
+    }
+    //do the current monster attack
+    if(!isKO)
+        if(!currentMonsterStatIsFirstToAttack)
+        {
+            doTheCurrentMonsterAttack(skill,skillLevel);
+            currentMonsterisKO=(getCurrentMonster()->hp==0);
+            if(currentMonsterisKO)
+            {
+                qDebug() << "current player is KO";
+                currentPlayerLoose=!ableToFight;
+                isKO=true;
+            }
+            else
+            {
+                qDebug() << "check other player monster";
+                otherMonsterisKO=checkKOOtherMonstersForGain();
+                if(otherMonsterisKO)
+                    isKO=true;
+            }
+        }
+    if(currentPlayerLoose)
+        emit message("The bot fight put all your monster KO");
+    if(otherPlayerLoose)
+        emit message("You have put KO the bot fight");
+    return !currentPlayerLoose && otherPlayerLoose;
+}
+
+bool CommonFightEngine::buffIsValid(const Skill::BuffEffect &buffEffect)
+{
+    if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buffEffect.buff))
+        return false;
+    if(buffEffect.level<=0)
+        return false;
+    if(buffEffect.level<=0)
+        return false;
+    if(buffEffect.level>CommonDatapack::commonDatapack.monsterBuffs[buffEffect.buff].level.size())
+        return false;
+    switch(buffEffect.on)
+    {
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
+        case ApplyOn_Nobody:
+        break;
+        default:
+        return false;
+    }
+    return true;
+}
+
+Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)
+{
+    /// \todo use the variable currentMonsterStat and otherMonsterStat to have better speed
+    Skill::AttackReturn tempReturnBuff;
+    tempReturnBuff.doByTheCurrentMonster=true;
+    tempReturnBuff.attack=skill;
+    const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[skill].level.at(skillLevel-1);
+    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+    emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
+    #endif
+    int index=0;
+    while(index<skillList.buff.size())
+    {
+        const Skill::Buff &buff=skillList.buff.at(index);
+        #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+        if(!buffIsValid(buff.effect))
+        {
+            emit error("Buff is not valid");
+            return tempReturnBuff;
+        }
+        #endif
+        bool success;
+        if(buff.success==100)
+            success=true;
+        else
+        {
+            success=(getOneSeed(100)<buff.success);
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            if(success)
+                emit message(QString("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+            #endif
+        }
+        if(success)
+        {
+            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            if(success)
+                emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+            #endif
+            tempReturnBuff.success=true;
+            tempReturnBuff.buffEffectMonster << buff.effect;
+            applyCurrentBuffEffect(buff.effect);
+        }
+        index++;
+    }
+    index=0;
+    while(index<skillList.life.size())
+    {
+        tempReturnBuff.success=true;
+        const Skill::Life &life=skillList.life.at(index);
+        bool success;
+        if(life.success==100)
+            success=true;
+        else
+            success=(getOneSeed(100)<life.success);
+        if(success)
+        {
+            Skill::LifeEffectReturn lifeEffectReturn;
+            lifeEffectReturn.on=life.effect.on;
+            lifeEffectReturn.quantity=applyCurrentLifeEffect(life.effect).quantity;
+            tempReturnBuff.lifeEffectMonster << lifeEffectReturn;
+        }
+        index++;
+    }
+    return tempReturnBuff;
+}
+
+void CommonFightEngine::useSkill(const quint32 &skill)
+{
+    if(!isInFight())
+    {
+        emit error("Try use skill when not in fight");
+        return;
+    }
+    PlayerMonster * currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        emit error("Unable to locate the current monster");
+        return;
+    }
+    int index=0;
+    while(index<getCurrentMonster()->skills.size())
+    {
+        if(getCurrentMonster()->skills.at(index).skill==skill)
+            break;
+        index++;
+    }
+    if(index==getCurrentMonster()->skills.size())
+    {
+        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(getCurrentMonster()->monster).arg(getCurrentMonster()->level).arg(skill));
+        return;
+    }
+    const PublicPlayerMonster * otherMonster=getOtherMonster();
+    if(otherMonster==NULL)
+    {
+        emit error("Unable to locate the other monster");
+        return;
+    }
+    quint8 skillLevel=getCurrentMonster()->skills.at(index).level;
+    if(battleIsValidated)
+    {
+        useBattleSkill(skill,skillLevel);
+        return;
+    }
+    if(!wildMonsters.isEmpty() || !botFightMonsters.isEmpty())
+    {
+        useSkillAgainstBotMonster(skill,skillLevel);
+        return;
+    }
+    emit error("Unable to locate the battle monster or is not in battle to use a skill");
+}
