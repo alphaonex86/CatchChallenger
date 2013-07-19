@@ -385,3 +385,15 @@ void ClientFightEngine::setVariable(Player_private_and_public_informations playe
     //CommonFightEngine::setVariable(&this->player_informations_local);
     updateCanDoFight();
 }
+
+bool ClientFightEngine::useBattleSkill(const quint32 &skill,const quint8 &skillLevel)
+{
+    Q_UNUSED(skill);
+    Q_UNUSED(skillLevel);
+    return true;
+}
+
+bool ClientFightEngine::isInBattle() const
+{
+    return !battleCurrentMonster.isEmpty();
+}

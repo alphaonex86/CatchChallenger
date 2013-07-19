@@ -43,8 +43,13 @@ public:
     bool canEscape() const;
     virtual bool tryEscape();
     bool canDoFightAction();
-    virtual void useSkill(const quint32 &skill);
+    virtual bool useSkill(const quint32 &skill);
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
+    virtual bool isInBattle() const = 0;
+    //return true if now have wild monter to fight
+    bool generateWildFightIfCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
+    virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
@@ -61,7 +66,6 @@ protected:
     virtual void wildDrop(const quint32 &monster);
     virtual bool checkKOOtherMonstersForGain();
     virtual bool giveXPSP(int xp,int sp);
-    virtual bool useSkillAgainstBotMonster(const quint32 &skill,const quint8 &skillLevel);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
 signals:
     void error(const QString &error) const;
