@@ -605,12 +605,6 @@ void BaseWindow::win()
 
 void BaseWindow::doNextAction()
 {
-    PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-    if(otherMonster==NULL)
-    {
-        emit error("NULL pointer for other monster at fightCollision()");
-        return;
-    }
     qDebug() << "doNextAction()";
     ui->toolButtonFightQuit->setVisible(battleType==BattleType_Wild);
     if(escape)
@@ -629,6 +623,12 @@ void BaseWindow::doNextAction()
             }
             else
             {
+                PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+                if(otherMonster==NULL)
+                {
+                    emit error("NULL pointer for other monster at doNextAction()");
+                    return;
+                }
                 qDebug() << "doNextAction(): escape fail but the wild monster can't attack";
                 displayText(tr("The wild %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
                 return;
@@ -671,6 +671,12 @@ void BaseWindow::doNextAction()
     if(CatchChallenger::ClientFightEngine::fightEngine.isInFight() && CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
     {
         qDebug() << "doNextAction(): other monster is KO";
+        PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("NULL pointer for other monster at doNextAction()");
+            return;
+        }
         ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
         CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
         doNextActionStep=DoNextActionStep_Start;

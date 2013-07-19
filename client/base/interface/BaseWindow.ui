@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>8</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -849,7 +849,7 @@ border-radius: 5px;
 }</string>
              </property>
              <property name="currentIndex">
-              <number>2</number>
+              <number>0</number>
              </property>
              <widget class="QWidget" name="tabWidgetTrainerCardPage1">
               <property name="styleSheet">
@@ -918,7 +918,7 @@ border-radius: 5px;
 border: 1px solid rgb(64, 136, 192);</string>
                       </property>
                       <property name="text">
-                       <string>Trainer card</string>
+                       <string>Player identity card</string>
                       </property>
                      </widget>
                     </item>
@@ -1108,52 +1108,6 @@ background-position:center; </string>
                        <set>Qt::AlignCenter</set>
                       </property>
                      </widget>
-                    </item>
-                   </layout>
-                  </item>
-                  <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_4">
-                    <item>
-                     <widget class="QLabel" name="label_4">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>16</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">background-image: url(:/images/empty.png);</string>
-                      </property>
-                      <property name="text">
-                       <string>Badges:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label_badges">
-                      <property name="text">
-                       <string>&lt;span style=&quot; color:#a0a0a0;&quot;&gt;None&lt;/span&gt;</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_5">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>345</width>
-                        <height>14</height>
-                       </size>
-                      </property>
-                     </spacer>
                     </item>
                    </layout>
                   </item>
