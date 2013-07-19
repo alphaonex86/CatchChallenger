@@ -263,7 +263,6 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     this->y=y;
     if(localClientHandlerFight.botFightCollision(map,x,y))
         return true;
-    localClientHandlerFight.checkFightCollision(map,x,y);
     return true;
 }
 
@@ -616,7 +615,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("You are already in trade"));
             return;
         }
-        if(localClientHandlerFight.getInBattle())
+        if(localClientHandlerFight.isInBattle())
         {
             emit receiveSystemText(QString("you are already in battle"));
             return;
@@ -626,7 +625,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("%1 is already in trade").arg(extraText));
             return;
         }
-        if(playerByPseudo[extraText]->localClientHandlerFight.getInBattle())
+        if(playerByPseudo[extraText]->localClientHandlerFight.isInBattle())
         {
             emit receiveSystemText(QString("%1 is already in battle").arg(extraText));
             return;
@@ -659,7 +658,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("You can't battle with yourself").arg(extraText));
             return;
         }
-        if(localClientHandlerFight.getInBattle())
+        if(localClientHandlerFight.isInBattle())
         {
             emit receiveSystemText(QString("you are already in battle"));
             return;
@@ -669,7 +668,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText(QString("you are already in trade"));
             return;
         }
-        if(playerByPseudo[extraText]->localClientHandlerFight.getInBattle())
+        if(playerByPseudo[extraText]->localClientHandlerFight.isInBattle())
         {
             emit receiveSystemText(QString("%1 is already in battle").arg(extraText));
             return;
