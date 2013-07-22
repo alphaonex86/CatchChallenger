@@ -33,8 +33,8 @@ public:
     void updateCanDoFight();
     bool otherMonsterIsKO();
     bool currentMonsterIsKO();
-    bool dropKOCurrentMonster();
-    void healAllMonsters();
+    virtual bool dropKOMonster();
+    virtual void healAllMonsters();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     QList<PlayerMonster> getPlayerMonster() const;
