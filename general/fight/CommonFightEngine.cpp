@@ -62,18 +62,38 @@ bool CommonFightEngine::currentMonsterIsKO()
     return false;
 }
 
-bool CommonFightEngine::dropKOCurrentMonster()
+bool CommonFightEngine::dropKOMonster()
 {
     PlayerMonster * playerMonster=getCurrentMonster();
+    bool currentPlayerReturn=false;
     if(playerMonster==NULL)
-        return true;
-    if(playerMonster->hp==0)
+        currentPlayerReturn=true;
+    else if(playerMonster->hp==0)
     {
         playerMonster->buffs.clear();
         updateCanDoFight();
-        return true;
+        currentPlayerReturn=true;
     }
-    return false;
+
+    bool otherMonsterReturn=false;
+    if(!wildMonsters.isEmpty())
+    {
+        if(wildMonsters.first().hp==0)
+        {
+            wildMonsters.removeFirst();
+            otherMonsterReturn=true;
+        }
+    }
+    if(!botFightMonsters.isEmpty())
+    {
+        if(botFightMonsters.first().hp==0)
+        {
+            botFightMonsters.removeFirst();
+            otherMonsterReturn=true;
+        }
+    }
+
+    return currentPlayerReturn || otherMonsterReturn;
 }
 
 void CommonFightEngine::healAllMonsters()

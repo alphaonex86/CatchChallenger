@@ -652,7 +652,7 @@ void BaseWindow::doNextAction()
     if(CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight() && CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO())
     {
         qDebug() << "doNextAction(): current monster is KO";
-        CatchChallenger::ClientFightEngine::fightEngine.dropKOCurrentMonster();
+        CatchChallenger::ClientFightEngine::fightEngine.dropKOMonster();
         doNextActionStep=DoNextActionStep_Start;
         //current player monster is KO
         moveType=MoveType_Dead;
@@ -678,7 +678,7 @@ void BaseWindow::doNextAction()
             return;
         }
         ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
-        CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
+        CatchChallenger::ClientFightEngine::fightEngine.dropKOMonster();
         doNextActionStep=DoNextActionStep_Start;
         //current player monster is KO
         moveType=MoveType_Dead;
@@ -751,7 +751,7 @@ void BaseWindow::doNextAction()
     {
         qDebug() << "doNextAction(): remplace KO other monster";
         updateOtherMonsterInformation();
-        CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
+        CatchChallenger::ClientFightEngine::fightEngine.dropKOMonster();
         init_other_monster_display();
     }
     if(ui->progressBarFightBottomHP->value()==0)
