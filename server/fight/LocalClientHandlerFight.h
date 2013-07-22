@@ -66,6 +66,7 @@ protected:
     bool useSkillAgainstBotMonster(const quint32 &skill, const quint8 &skillLevel);
     virtual void wildDrop(const quint32 &monster);
     virtual quint8 getOneSeed(const quint8 &max);
+    bool dropKOMonster();
 private:
     LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;

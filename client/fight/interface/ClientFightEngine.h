@@ -30,7 +30,6 @@ public:
     QList<quint8> battleStat,botMonstersStat;
     QList<quint8> battleMonsterPlace;
     QList<quint32> otherMonsterAttack;
-    bool dropKOOtherMonster();
     void fightFinished();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
@@ -44,8 +43,9 @@ public:
     quint8 getOtherSelectedMonsterNumber() const;
     void setVariable(Player_private_and_public_informations player_informations_local);
     Skill::AttackReturn generateOtherAttack();
-    bool useBattleSkill(const quint32 &skill,const quint8 &skillLevel);
     bool isInBattle() const;
+    virtual bool useSkill(const quint32 &skill);
+    bool dropKOMonster();
 private:
     QList<Skill::AttackReturn> attackReturnList;
     Player_private_and_public_informations player_informations_local;

@@ -115,15 +115,13 @@ bool LocalClientHandlerFight::checkLoose()
         //teleport
         emit teleportTo(player_informations->rescue.map,player_informations->rescue.x,player_informations->rescue.y,player_informations->rescue.orientation);
         //regen all the monsters
+        healAllMonsters();
         int index=0;
         int size=player_informations->public_and_private_informations.playerMonster.size();
         while(index<size)
         {
             if(player_informations->public_and_private_informations.playerMonster[index].egg_step==0)
             {
-                player_informations->public_and_private_informations.playerMonster[index].hp=
-                        CommonDatapack::commonDatapack.monsters[player_informations->public_and_private_informations.playerMonster[index].monster].stat.hp*
-                        player_informations->public_and_private_informations.playerMonster[index].level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                 if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn || GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
                 {
                     switch(GlobalServerData::serverSettings.database.type)
@@ -608,7 +606,7 @@ bool LocalClientHandlerFight::currentMonsterAttackFirst(const PlayerMonster * cu
         return currentMonsterStatIsFirstToAttack;
     }
     else
-        return currentMonsterAttackFirst(currentMonster,otherMonster);
+        return CommonFightEngine::currentMonsterAttackFirst(currentMonster,otherMonster);
 }
 
 quint8 LocalClientHandlerFight::selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber)
@@ -717,13 +715,20 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
 
 bool LocalClientHandlerFight::useSkill(const quint32 &skill)
 {
-    if(!isInBattle())
+    emit message(QString("use the skill: %1").arg(skill));
+    if(!isInBattle())//wild or bot
     {
+        bool isBot=!botFightMonsters.isEmpty();
         bool win=CommonFightEngine::useSkill(skill);
+        if(dropKOMonster())
+        {
+            emit message(QString("One or all of the monster is KO for this turn"));
+            checkLoose();
+        }
         syncForEndOfTurn();
         if(!isInFight())
         {
-            if(win)
+            if(isBot)
             {
                 emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
                 addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
@@ -745,9 +750,44 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
                     break;
                 }
             }
+            else
+                emit message(QString("Have win agains a wild monster"));
         }
         return win;
     }
     else
-        return CommonFightEngine::useSkill(skill);
+    {
+        bool win=CommonFightEngine::useSkill(skill);
+        if(dropKOMonster())
+        {
+            bool currentLoose=checkLoose();
+            bool otherLoose=otherPlayerBattle->checkLoose();
+            if(currentLoose || otherLoose)
+                emit message(QString("Have win agains the current monster"));
+            else
+                emit message(QString("Have win the battle"));
+        }
+        return win;
+    }
+}
+
+bool LocalClientHandlerFight::dropKOMonster()
+{
+    bool commonReturn=CommonFightEngine::dropKOMonster();
+
+    bool battleReturn=false;
+    if(isInBattle())
+    {
+        PlayerMonster * playerMonster=otherPlayerBattle->getCurrentMonster();
+        if(playerMonster==NULL)
+            battleReturn=true;
+        else if(playerMonster->hp==0)
+        {
+            playerMonster->buffs.clear();
+            otherPlayerBattle->updateCanDoFight();
+            battleReturn=true;
+        }
+    }
+
+    return commonReturn || battleReturn;
 }
