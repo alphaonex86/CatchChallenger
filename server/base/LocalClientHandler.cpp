@@ -13,6 +13,8 @@ LocalClientHandler::LocalClientHandler()
     otherPlayerTrade=NULL;
     tradeIsValidated=false;
 
+    connect(&localClientHandlerFight,SIGNAL(message(QString)),                          this,SIGNAL(message(QString)));
+    connect(&localClientHandlerFight,SIGNAL(error(QString)),                            this,SIGNAL(error(QString)));
     connect(&localClientHandlerFight,SIGNAL(dbQuery(QString)),                          this,SIGNAL(dbQuery(QString)));
     connect(&localClientHandlerFight,SIGNAL(askRandomNumber()),                         this,SIGNAL(askRandomNumber()));
     connect(&localClientHandlerFight,SIGNAL(receiveSystemText(QString,bool)),           this,SIGNAL(receiveSystemText(QString,bool)));
@@ -263,6 +265,11 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     this->y=y;
     if(localClientHandlerFight.botFightCollision(map,x,y))
         return true;
+    if(localClientHandlerFight.generateWildFightIfCollision(map,x,y))
+    {
+        emit message(QString("LocalClientHandler::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+        return true;
+    }
     return true;
 }
 

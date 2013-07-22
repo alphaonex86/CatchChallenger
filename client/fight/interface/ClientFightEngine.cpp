@@ -149,28 +149,20 @@ bool ClientFightEngine::haveWin()
     return true;
 }
 
-bool ClientFightEngine::dropKOOtherMonster()
+bool ClientFightEngine::dropKOMonster()
 {
-    if(!otherMonsterIsKO())
-        return false;
-    if(!wildMonsters.isEmpty())
-    {
-        wildMonsters.removeFirst();
-        return true;
-    }
-    if(!botFightMonsters.isEmpty())
-    {
-        botFightMonsters.removeFirst();
-        return true;
-    }
+    bool commonReturn=CommonFightEngine::dropKOMonster();
+
+    bool battleReturn=false;
     if(!battleCurrentMonster.isEmpty())
     {
         battleCurrentMonster.removeFirst();
         battleStat[battleMonsterPlace.first()-1]=0x02;//not able to battle
         battleMonsterPlace.removeFirst();
-        return true;
+        battleReturn=true;
     }
-    return false;
+
+    return commonReturn || battleReturn;
 }
 
 void ClientFightEngine::fightFinished()
@@ -386,14 +378,13 @@ void ClientFightEngine::setVariable(Player_private_and_public_informations playe
     updateCanDoFight();
 }
 
-bool ClientFightEngine::useBattleSkill(const quint32 &skill,const quint8 &skillLevel)
-{
-    Q_UNUSED(skill);
-    Q_UNUSED(skillLevel);
-    return true;
-}
-
 bool ClientFightEngine::isInBattle() const
 {
     return !battleCurrentMonster.isEmpty();
+}
+
+bool ClientFightEngine::useSkill(const quint32 &skill)
+{
+    Api_client_real::client->useSkill(skill);
+    return CommonFightEngine::useSkill(skill);
 }
