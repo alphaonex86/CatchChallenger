@@ -31,7 +31,7 @@ public:
     bool checkLoose();
     bool isInBattle() const;
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
-    void getRandomNumberIfNeeded();
+    void getRandomNumberIfNeeded() const;
     bool tryEscape();
     bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
@@ -44,7 +44,7 @@ public:
     void battleFinishedReset();
     LocalClientHandlerFight * getOtherPlayerBattle() const;
     virtual bool useSkill(const quint32 &skill);
-    virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster);
+    virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
@@ -52,7 +52,8 @@ protected:
     bool botFightStart(const quint32 &botFightId);
     bool buffIsValid(const Skill::BuffEffect &buffEffect);
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
-    bool haveBattleSkill();
+    bool haveBattleSkill() const;
+    quint8 getOtherSelectedMonsterNumber() const;
     void haveUsedTheBattleSkill();
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace=0,const PublicPlayerMonster &publicPlayerMonster=PublicPlayerMonster());
     inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
@@ -64,6 +65,7 @@ protected:
     virtual bool giveXPSP(int xp,int sp);
     bool useSkillAgainstBotMonster(const quint32 &skill, const quint8 &skillLevel);
     virtual void wildDrop(const quint32 &monster);
+    virtual quint8 getOneSeed(const quint8 &max);
 private:
     LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;
