@@ -93,19 +93,20 @@ void CommonFightEngine::healAllMonsters()
 bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill)
 {
     int index=0;
+    int sub_index2,sub_index;
     while(index<player_informations->playerMonster.size())
     {
         const PlayerMonster &monster=player_informations->playerMonster.at(index);
         if(monster.id==monsterId)
         {
-            int sub_index2=0;
+            sub_index2=0;
             while(sub_index2<monster.skills.size())
             {
                 if(monster.skills.at(sub_index2).skill==skill)
                     break;
                 sub_index2++;
             }
-            int sub_index=0;
+            sub_index=0;
             while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.size())
             {
                 const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.at(sub_index);
@@ -164,7 +165,7 @@ bool CommonFightEngine::haveMonsters() const
 }
 
 //return is have random seed to do random step
-bool CommonFightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y)
+bool CommonFightEngine::canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y) const
 {
     if(isInFight())
     {
@@ -327,12 +328,12 @@ PlayerMonster * CommonFightEngine::getCurrentMonster() const
     }
 }
 
-quint8 CommonFightEngine::getCurrentSelectedMonsterNumber()
+quint8 CommonFightEngine::getCurrentSelectedMonsterNumber() const
 {
     return selectedMonster;
 }
 
-quint8 CommonFightEngine::getOtherSelectedMonsterNumber()
+quint8 CommonFightEngine::getOtherSelectedMonsterNumber() const
 {
     return 0;
 }
@@ -351,7 +352,7 @@ bool CommonFightEngine::remainMonstersToFight(const quint32 &monsterId) const
 {
     if(player_informations==NULL)
     {
-        qDebug() << "player_informations is NULL";
+        emit error("player_informations is NULL");
         return false;
     }
     int index=0;
@@ -699,67 +700,6 @@ ApplyOn CommonFightEngine::invertApplyOn(const ApplyOn &applyOn)
     }
 }
 
-bool CommonFightEngine::haveRandomFight(const Map &map,const quint8 &x,const quint8 &y)
-{
-    bool ok;
-    if(isInFight())
-    {
-        emit error(QString("error: map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y));
-        return false;
-    }
-    if(CatchChallenger::MoveOnTheMap::isGrass(map,x,y) && !map.grassMonster.empty())
-    {
-        if(stepFight_Grass<=0)
-            stepFight_Grass=getOneSeed(16);
-        else
-            stepFight_Grass--;
-        if(stepFight_Grass<=0)
-        {
-            PlayerMonster monster=getRandomMonster(map.grassMonster,&ok);
-            if(ok)
-                wildMonsters << monster;
-            return ok;
-        }
-        else
-            return false;
-    }
-    if(CatchChallenger::MoveOnTheMap::isWater(map,x,y) && !map.waterMonster.empty())
-    {
-        if(stepFight_Water<=0)
-            stepFight_Water=getOneSeed(16);
-        else
-            stepFight_Water--;
-        if(stepFight_Water<=0)
-        {
-            PlayerMonster monster=getRandomMonster(map.waterMonster,&ok);
-            if(ok)
-                wildMonsters << monster;
-            return ok;
-        }
-        else
-            return false;
-    }
-    if(!map.caveMonster.empty())
-    {
-        if(stepFight_Cave<=0)
-            stepFight_Cave=getOneSeed(16);
-        else
-            stepFight_Cave--;
-        if(stepFight_Cave<=0)
-        {
-            PlayerMonster monster=getRandomMonster(map.caveMonster,&ok);
-            if(ok)
-                wildMonsters << monster;
-            return ok;
-        }
-        else
-            return false;
-    }
-
-    /// no fight in this zone
-    return false;
-}
-
 quint8 CommonFightEngine::getOneSeed(const quint8 &max)
 {
     quint16 number=static_cast<quint8>(randomSeeds.at(0));
@@ -807,7 +747,7 @@ void CommonFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonst
     updateCanDoFight();
 }
 
-QList<PlayerMonster> CommonFightEngine::getPlayerMonster()
+QList<PlayerMonster> CommonFightEngine::getPlayerMonster() const
 {
     return player_informations->playerMonster;
 }
@@ -1133,7 +1073,7 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     return true;
 }
 
-bool CommonFightEngine::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster)
+bool CommonFightEngine::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const
 {
     Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
     Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);

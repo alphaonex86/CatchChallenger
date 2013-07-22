@@ -65,7 +65,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         //check if is in fight collision, but only if is move
         if(inMove)
         {
-            if(CatchChallenger::ClientFightEngine::fightEngine.haveRandomFight(all_map[current_map]->logicalMap,x,y))
+            if(CatchChallenger::ClientFightEngine::fightEngine.generateWildFightIfCollision(&all_map[current_map]->logicalMap,x,y))
             {
                 inMove=false;
                 emit send_player_direction(direction);

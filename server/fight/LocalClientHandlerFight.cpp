@@ -20,7 +20,7 @@ LocalClientHandlerFight::~LocalClientHandlerFight()
 {
 }
 
-void LocalClientHandlerFight::getRandomNumberIfNeeded()
+void LocalClientHandlerFight::getRandomNumberIfNeeded() const
 {
     if(randomSeeds.size()<=CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE)
         emit askRandomNumber();
@@ -276,6 +276,13 @@ PublicPlayerMonster *LocalClientHandlerFight::getOtherMonster() const
     return CommonFightEngine::getOtherMonster();
 }
 
+quint8 LocalClientHandlerFight::getOneSeed(const quint8 &max)
+{
+    quint8 seed=CommonFightEngine::getOneSeed(max);
+    getRandomNumberIfNeeded();
+    return seed;
+}
+
 void LocalClientHandlerFight::wildDrop(const quint32 &monster)
 {
     QList<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.values(monster);
@@ -497,32 +504,6 @@ void LocalClientHandlerFight::resetTheBattle()
     updateCanDoFight();
 }
 
-/*void LocalClientHandlerFight::battleAddBattleMonster(const quint32 &monsterId)
-{
-    if(!battleIsValidated)
-    {
-        emit error("Battle not valid");
-        return;
-    }
-    if(battleIsFreezed)
-    {
-        emit error("Battle is freezed, unable to change something");
-        return;
-    }
-    if(player_informations->public_and_private_informations.playerMonster.size()<=1)
-    {
-        emit error("Unable to battle your last monster");
-        return;
-    }
-    if(isInFight())
-    {
-        emit error("You can't battle monster because you are in fight");
-        return;
-    }
-
-    emit error("Battle monster not found");
-}*/
-
 void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
 {
     if(otherPlayerBattle==NULL)
@@ -595,9 +576,17 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
     }
 }
 
-bool LocalClientHandlerFight::haveBattleSkill()
+bool LocalClientHandlerFight::haveBattleSkill() const
 {
     return haveCurrentSkill;
+}
+
+quint8 LocalClientHandlerFight::getOtherSelectedMonsterNumber() const
+{
+    if(!isInBattle())
+        return 0;
+    else
+        return otherPlayerBattle->getCurrentSelectedMonsterNumber();
 }
 
 void LocalClientHandlerFight::haveUsedTheBattleSkill()
@@ -605,7 +594,7 @@ void LocalClientHandlerFight::haveUsedTheBattleSkill()
     haveCurrentSkill=false;
 }
 
-bool LocalClientHandlerFight::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster)
+bool LocalClientHandlerFight::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const
 {
     if(isInBattle())
     {

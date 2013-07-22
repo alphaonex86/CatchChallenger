@@ -26,11 +26,10 @@ public:
     PlayerMonster *getCurrentMonster() const;
     virtual PublicPlayerMonster *getOtherMonster() const;
     virtual Skill::AttackReturn generateOtherAttack();
-    quint8 getCurrentSelectedMonsterNumber();
-    virtual quint8 getOtherSelectedMonsterNumber();
+    quint8 getCurrentSelectedMonsterNumber() const;
+    virtual quint8 getOtherSelectedMonsterNumber() const;
     bool remainMonstersToFight(const quint32 &monsterId) const;
-    virtual bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y);
-    bool haveRandomFight(const Map &map,const quint8 &x,const quint8 &y);
+    virtual bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y) const;
     void updateCanDoFight();
     bool otherMonsterIsKO();
     bool currentMonsterIsKO();
@@ -38,7 +37,7 @@ public:
     void healAllMonsters();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
-    QList<PlayerMonster> getPlayerMonster();
+    QList<PlayerMonster> getPlayerMonster() const;
     bool removeMonster(const quint32 &monsterId);
     bool canEscape() const;
     virtual bool tryEscape();
@@ -49,7 +48,7 @@ public:
     //return true if now have wild monter to fight
     bool generateWildFightIfCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
-    virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster);
+    virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
@@ -60,7 +59,7 @@ protected:
     void applyOtherBuffEffect(const Skill::BuffEffect &effect);
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
-    quint8 getOneSeed(const quint8 &max);
+    virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
     virtual void fightFinished();
     virtual void wildDrop(const quint32 &monster);
