@@ -1,0 +1,8 @@
+*.pro.user
+*build-desktop*
+*.qm
+*build-Desktop-Debug*
+*build-Desktop*
+*Desktop-Debug*
+*Desktop*
+*build*
