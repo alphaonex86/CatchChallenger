@@ -121,6 +121,10 @@ CREATE TABLE IF NOT EXISTS `player` (
   `rescue_x` int(11) NOT NULL,
   `rescue_y` int(11) NOT NULL,
   `rescue_orientation` enum('top','bottom','left','right') NOT NULL,
+  `unvalidated_rescue_map` text NOT NULL,
+  `unvalidated_rescue_x` int(11) NOT NULL,
+  `unvalidated_rescue_y` int(11) NOT NULL,
+  `unvalidated_rescue_orientation` text NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;

@@ -3,8 +3,7 @@ DEPENDPATH += $$PWD/../../general/libtiled/
 LIBS *= -ltiled
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT       += script multimedia
-LIBS += -lvorbis -lvorbisfile
+QT       += script
 
 win32:CONFIG   += console
 
