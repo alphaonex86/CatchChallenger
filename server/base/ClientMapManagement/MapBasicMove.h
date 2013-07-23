@@ -23,10 +23,10 @@ public:
     virtual void setVariable(Player_internal_informations *player_informations);
     //info linked
 
-    Direction getLastDirection();
-    Map* getMap();
-    inline COORD_TYPE getX();
-    inline COORD_TYPE getY();
+    Direction getLastDirection() const;
+    Map* getMap() const;
+    inline COORD_TYPE getX() const;
+    inline COORD_TYPE getY() const;
 
     //internal var
     Player_internal_informations *player_informations;

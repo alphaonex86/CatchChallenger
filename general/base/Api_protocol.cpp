@@ -2835,6 +2835,11 @@ void Api_protocol::tryEscape()
     output->packOutcommingData(0x60,0x0002,QByteArray());
 }
 
+void Api_protocol::heal()
+{
+    output->packOutcommingData(0x60,0x0006,QByteArray());
+}
+
 void Api_protocol::useSkill(const quint32 &skill)
 {
     QByteArray outputData;
