@@ -687,6 +687,20 @@ QString MapVisualiserPlayer::lastLocation() const
     return mLastLocation;
 }
 
+QString MapVisualiserPlayer::currentMap() const
+{
+    return current_map;
+}
+
+QString MapVisualiserPlayer::currentMapType() const
+{
+    if(!all_map.contains(current_map))
+        return QString();
+    if(!all_map[current_map]->tiledMap->properties().contains("type"))
+        return QString();
+    return all_map[current_map]->tiledMap->properties().value("type");
+}
+
 CatchChallenger::Direction MapVisualiserPlayer::getDirection()
 {
     return direction;

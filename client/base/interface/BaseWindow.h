@@ -18,6 +18,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../base/Api_client_real.h"
 #include "../base/Api_protocol.h"
+#include "../audio/QOggSimplePlayer.h"
 #include "MapController.h"
 #include "Chat.h"
 
@@ -132,6 +133,7 @@ private slots:
     void actionOn(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
+    void currentMapLoaded();
 
     //datapack
     void haveTheDatapack();
@@ -362,6 +364,9 @@ private:
 
     //battle
     BattleStep battleStep;
+
+    QList<QOggSimplePlayer*> ambiance;
+    QThread audioReadThread;
 signals:
     //datapack
     void parseDatapack(const QString &datapackPath);

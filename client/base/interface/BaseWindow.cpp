@@ -105,6 +105,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&ClientFightEngine::fightEngine,SLOT(newRandomNumber(QByteArray)));
     connect(MapController::mapController,SIGNAL(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)));
     connect(MapController::mapController,SIGNAL(botFightCollision(quint32,CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(botFightCollision(quint32,CatchChallenger::Map_client*,quint8,quint8)));
+    connect(MapController::mapController,SIGNAL(currentMapLoaded()),this,SLOT(currentMapLoaded()));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
     connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
     connect(&moveFightMonsterBothTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBoth()));
@@ -175,10 +176,19 @@ BaseWindow::BaseWindow() :
     CatchChallenger::Api_client_real::client->startReadData();
     /// \todo able to cancel quest
     ui->cancelQuest->hide();
+
+    audioReadThread.start(QThread::IdlePriority);
 }
 
 BaseWindow::~BaseWindow()
 {
+    while(!ambiance.isEmpty())
+    {
+        delete ambiance.first();
+        ambiance.removeFirst();
+    }
+    audioReadThread.quit();
+    audioReadThread.wait();
     if(movie!=NULL)
         delete movie;
     delete ui;
@@ -992,6 +1002,33 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
             showTip(tr("You can't enter to the fight zone, because have not random number"));
         break;
     }
+}
+
+void BaseWindow::currentMapLoaded()
+{
+    qDebug() << "BaseWindow::currentMapLoaded(): map: " << MapController::mapController->currentMap() << " with type: " << MapController::mapController->currentMapType();
+    QString type=MapController::mapController->currentMapType();
+    if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
+    {
+        while(!ambiance.isEmpty())
+        {
+            ambiance.first()->stop();
+            delete ambiance.first();
+            ambiance.removeFirst();
+        }
+        return;
+    }
+    QString file=DatapackClientLoader::datapackLoader.audioAmbiance[type];
+    while(!ambiance.isEmpty())
+    {
+        if(ambiance.first()->getFilePath()==file)
+            return;
+        ambiance.first()->stop();
+        delete ambiance.first();
+        ambiance.removeFirst();
+    }
+    ambiance << new QOggSimplePlayer(file,&audioReadThread);
+    ambiance.last()->start();
 }
 
 //network

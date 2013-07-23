@@ -65,6 +65,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseQuestsText();
     parseBotFightsExtra();
     parsePlantsExtra();
+    parseAudioAmbiance();
     inProgress=false;
     emit datapackParsed();
 }
@@ -238,6 +239,7 @@ void DatapackClientLoader::resetAll()
      monsterExtra.clear();
      monsterBuffsExtra.clear();
      monsterSkillsExtra.clear();
+     audioAmbiance.clear();
 }
 
 void DatapackClientLoader::parseQuestsExtra()
@@ -475,6 +477,58 @@ void DatapackClientLoader::parseQuestsText()
     }
 
     qDebug() << QString("%1 quest(s) text loaded").arg(questsExtra.size());
+}
+
+void DatapackClientLoader::parseAudioAmbiance()
+{
+    //open and quick check the file
+    QFile itemsFile(datapackPath+DATAPACK_BASE_PATH_MAP+"music.xml");
+    QByteArray xmlContent;
+    if(!itemsFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        return;
+    }
+    xmlContent=itemsFile.readAll();
+    itemsFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="list")
+    {
+        qDebug() << QString("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
+        return;
+    }
+
+    //load the content
+    QDomElement item = root.firstChildElement("map");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+        {
+            if(item.hasAttribute("type"))
+            {
+                QString type=item.attribute("type");
+                if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
+                    audioAmbiance[type]=datapackPath+DATAPACK_BASE_PATH_MAP+item.text();
+                else
+                    qDebug() << QString("Unable to open the file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+            }
+            else
+                qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+        }
+        else
+            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+        item = item.nextSiblingElement("map");
+    }
+
+    qDebug() << QString("%1 audio ambiance(s) link loaded").arg(audioAmbiance.size());
 }
 
 void DatapackClientLoader::parseQuestsLink()
