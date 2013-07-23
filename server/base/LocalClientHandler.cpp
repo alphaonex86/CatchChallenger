@@ -98,43 +98,60 @@ void LocalClientHandler::extraStop()
     savePosition();
 }
 
+QString LocalClientHandler::directionToStringToSave(const Direction &direction)
+{
+    switch(direction)
+    {
+        case Direction_look_at_top:
+        case Direction_move_at_top:
+            return "top";
+        break;
+        case Direction_look_at_right:
+        case Direction_move_at_right:
+            return "right";
+        break;
+        case Direction_look_at_bottom:
+        case Direction_move_at_bottom:
+            return "bottom";
+        break;
+        case Direction_look_at_left:
+        case Direction_move_at_left:
+            return "left";
+        break;
+        default:
+        break;
+    }
+    return "bottom";
+}
+
+QString LocalClientHandler::orientationToStringToSave(const Orientation &orientation)
+{
+    switch(orientation)
+    {
+        case Orientation_top:
+            return "top";
+        break;
+        case Orientation_bottom:
+            return "bottom";
+        break;
+        case Orientation_right:
+            return "right";
+        break;
+        case Orientation_left:
+            return "left";
+        break;
+        default:
+        break;
+    }
+    return "bottom";
+}
+
 void LocalClientHandler::savePosition()
 {
     if(player_informations->isFake)
         return;
     //virtual stop the player
     //Orientation orientation;
-    QString orientationString;
-    switch(getLastDirection())
-    {
-        case Direction_look_at_bottom:
-        case Direction_move_at_bottom:
-            orientationString="bottom";
-            //orientation=Orientation_bottom;
-        break;
-        case Direction_look_at_top:
-        case Direction_move_at_top:
-            orientationString="top";
-            //orientation=Orientation_top;
-        break;
-        case Direction_look_at_left:
-        case Direction_move_at_left:
-            orientationString="left";
-            //orientation=Orientation_left;
-        break;
-        case Direction_look_at_right:
-        case Direction_move_at_right:
-            orientationString="right";
-            //orientation=Orientation_right;
-        break;
-        default:
-            #ifdef DEBUG_MESSAGE_CLIENT_MOVE
-            emit message("direction wrong and fixed before save");
-            #endif
-            orientationString="bottom";
-            //orientation=Orientation_bottom;
-        break;
-    }
     #ifdef DEBUG_MESSAGE_CLIENT_MOVE
     emit message(
                 QString("map->map_file: %1,x: %2,y: %3, orientation: %4")
@@ -151,19 +168,41 @@ void LocalClientHandler::savePosition()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
+            updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\",%5 WHERE id=%6")
                 .arg(SqlFunction::quoteSqlVariable(map->map_file))
                 .arg(x)
                 .arg(y)
-                .arg(orientationString)
+                .arg(directionToStringToSave(getLastDirection()))
+                .arg(
+                        QString("rescue_map=\"%1\",rescue_x=%2,rescue_y=%3,rescue_orientation=\"%4\",unvalidated_rescue_map=\"%5\",unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=\"%8\"")
+                        .arg(player_informations->rescue.map->map_file)
+                        .arg(player_informations->rescue.x)
+                        .arg(player_informations->rescue.y)
+                        .arg(orientationToStringToSave(player_informations->rescue.orientation))
+                        .arg(player_informations->unvalidated_rescue.map->map_file)
+                        .arg(player_informations->unvalidated_rescue.x)
+                        .arg(player_informations->unvalidated_rescue.y)
+                        .arg(orientationToStringToSave(player_informations->unvalidated_rescue.orientation))
+                )
                 .arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\" WHERE id=%5")
+            updateMapPositionQuery=QString("UPDATE player SET map_name=\"%1\",position_x=%2,position_y=%3,orientation=\"%4\",%5 WHERE id=%6")
                 .arg(SqlFunction::quoteSqlVariable(map->map_file))
                 .arg(x)
                 .arg(y)
-                .arg(orientationString)
+                .arg(directionToStringToSave(getLastDirection()))
+                .arg(
+                        QString("rescue_map=\"%1\",rescue_x=%2,rescue_y=%3,rescue_orientation=\"%4\",unvalidated_rescue_map=\"%5\",unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=\"%8\"")
+                        .arg(player_informations->rescue.map->map_file)
+                        .arg(player_informations->rescue.x)
+                        .arg(player_informations->rescue.y)
+                        .arg(orientationToStringToSave(player_informations->rescue.orientation))
+                        .arg(player_informations->unvalidated_rescue.map->map_file)
+                        .arg(player_informations->unvalidated_rescue.x)
+                        .arg(player_informations->unvalidated_rescue.y)
+                        .arg(orientationToStringToSave(player_informations->unvalidated_rescue.orientation))
+                )
                 .arg(player_informations->id);
         break;
     }
@@ -263,6 +302,13 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     this->map=static_cast<Map_server_MapVisibility_simple*>(map);
     this->x=x;
     this->y=y;
+    if(static_cast<Map_server_MapVisibility_simple*>(map)->rescue.contains(QPair<quint8,quint8>(x,y)))
+    {
+        player_informations->unvalidated_rescue.map=map;
+        player_informations->unvalidated_rescue.x=x;
+        player_informations->unvalidated_rescue.y=y;
+        player_informations->unvalidated_rescue.orientation=static_cast<Map_server_MapVisibility_simple*>(map)->rescue[QPair<quint8,quint8>(x,y)];
+    }
     if(localClientHandlerFight.botFightCollision(map,x,y))
         return true;
     if(localClientHandlerFight.generateWildFightIfCollision(map,x,y))

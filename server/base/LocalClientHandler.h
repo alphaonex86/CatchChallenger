@@ -120,6 +120,8 @@ public slots:
 private slots:
     virtual void extraStop();
     void savePosition();
+    static QString directionToStringToSave(const Direction &direction);
+    static QString orientationToStringToSave(const Orientation &orientation);
     //quest
     bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest);
     bool haveStartQuestRequirement(const CatchChallenger::Quest &quest);
