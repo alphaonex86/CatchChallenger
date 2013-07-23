@@ -115,6 +115,7 @@ public slots:
     void battleAccepted();
     void newRandomNumber(const QByteArray &randomData);
     bool tryEscape();
+    void heal();
     void useSkill(const quint32 &skill);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
 private slots:

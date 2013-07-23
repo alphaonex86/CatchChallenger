@@ -155,6 +155,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	SIGNAL(tryEscape()),                                localClientHandler,	SLOT(tryEscape()),                         Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(useSkill(quint32)),                          localClientHandler,	SLOT(useSkill(quint32)),                   Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(learnSkill(quint32,quint32)),                localClientHandler,	SLOT(learnSkill(quint32,quint32)),         Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(heal()),                                     localClientHandler,	SLOT(heal()),                              Qt::QueuedConnection);
 
     //connect the message
     connect(clientBroadCast,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);

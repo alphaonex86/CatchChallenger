@@ -40,22 +40,22 @@ void MapBasicMove::askIfIsReadyToStop()
     emit isReadyToStop();
 }
 
-Direction MapBasicMove::getLastDirection()
+Direction MapBasicMove::getLastDirection() const
 {
     return last_direction;
 }
 
-Map* MapBasicMove::getMap()
+Map* MapBasicMove::getMap() const
 {
     return map;
 }
 
-COORD_TYPE MapBasicMove::getX()
+COORD_TYPE MapBasicMove::getX() const
 {
     return x;
 }
 
-COORD_TYPE MapBasicMove::getY()
+COORD_TYPE MapBasicMove::getY() const
 {
     return y;
 }
