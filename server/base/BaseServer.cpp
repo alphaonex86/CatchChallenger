@@ -318,24 +318,6 @@ void BaseServer::preload_the_map()
 
     preload_the_bots(semi_loaded_map);
 
-    //load the rescue
-    size=semi_loaded_map.size();
-    index=0;
-    while(index<size)
-    {
-        sub_index=0;
-        while(sub_index<semi_loaded_map[index].old_map.rescue_points.size())
-        {
-            const Map_to_send::Map_Point &point=semi_loaded_map[index].old_map.rescue_points.at(index);
-            QPair<quint8,quint8> coord;
-            coord.first=point.x;
-            coord.second=point.y;
-            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])->rescue[coord]=Orientation_bottom;
-            sub_index++;
-        }
-        index++;
-    }
-
     //clean border balise without another oposite border
     size=semi_loaded_map.size();
     index=0;
@@ -443,6 +425,24 @@ void BaseServer::preload_the_map()
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=semi_loaded_map.at(index).border.right.y_offset-semi_loaded_map.at(map_name.indexOf(semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset;
         else
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.y_offset=0;
+        index++;
+    }
+
+    //load the rescue
+    size=semi_loaded_map.size();
+    index=0;
+    while(index<size)
+    {
+        sub_index=0;
+        while(sub_index<semi_loaded_map[index].old_map.rescue_points.size())
+        {
+            const Map_to_send::Map_Point &point=semi_loaded_map[index].old_map.rescue_points.at(sub_index);
+            QPair<quint8,quint8> coord;
+            coord.first=point.x;
+            coord.second=point.y;
+            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])->rescue[coord]=Orientation_bottom;
+            sub_index++;
+        }
         index++;
     }
 

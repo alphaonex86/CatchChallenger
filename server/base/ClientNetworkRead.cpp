@@ -567,6 +567,10 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                     emit learnSkill(monsterId,skill);
                 }
                 break;
+                //Heal all the monster
+                case 0x0006:
+                    emit heal();
+                break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;

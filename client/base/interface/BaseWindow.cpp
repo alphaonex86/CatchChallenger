@@ -1615,6 +1615,13 @@ void BaseWindow::goToBotStep(const quint8 &step)
         selectObject(ObjectType_MonsterToLearn);
         return;
     }
+    else if(actualBot.step[step].attribute("type")=="heal")
+    {
+        ClientFightEngine::fightEngine.healAllMonsters();
+        CatchChallenger::Api_client_real::client->heal();
+        showTip(tr("You are healed"));
+        return;
+    }
     else if(actualBot.step[step].attribute("type")=="quests")
     {
         QString textToShow;
