@@ -74,6 +74,7 @@ struct Player_internal_informations
         Orientation orientation;
     };
     Rescue rescue;
+    Rescue unvalidated_rescue;
     QMultiHash<quint32,MonsterDrops> questsDrop;
 };
 

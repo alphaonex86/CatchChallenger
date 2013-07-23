@@ -146,6 +146,7 @@ void BaseServer::preload_the_map()
     //load the map
     int size=returnList.size();
     int index=0;
+    int sub_index;
     QRegExp mapFilter("\\.tmx$");
     while(index<size)
     {
@@ -178,7 +179,6 @@ void BaseServer::preload_the_map()
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->waterMonster     = map_temp.map_to_send.waterMonster;
                 GlobalServerData::serverPrivateVariables.map_list[fileName]->caveMonster     = map_temp.map_to_send.caveMonster;
 
-                GlobalServerData::serverPrivateVariables.map_list[fileName];
                 map_name << fileName;
 
                 parseJustLoadedMap(map_temp.map_to_send,fileName);
@@ -207,7 +207,7 @@ void BaseServer::preload_the_map()
                     map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
                 }
 
-                int sub_index=0;
+                sub_index=0;
                 while(sub_index<map_temp.map_to_send.teleport.size())
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
@@ -317,6 +317,24 @@ void BaseServer::preload_the_map()
     }
 
     preload_the_bots(semi_loaded_map);
+
+    //load the rescue
+    size=semi_loaded_map.size();
+    index=0;
+    while(index<size)
+    {
+        sub_index=0;
+        while(sub_index<semi_loaded_map[index].old_map.rescue_points.size())
+        {
+            const Map_to_send::Map_Point &point=semi_loaded_map[index].old_map.rescue_points.at(index);
+            QPair<quint8,quint8> coord;
+            coord.first=point.x;
+            coord.second=point.y;
+            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])->rescue[coord]=Orientation_bottom;
+            sub_index++;
+        }
+        index++;
+    }
 
     //clean border balise without another oposite border
     size=semi_loaded_map.size();
@@ -520,9 +538,10 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     int shops_number=0;
     int bots_number=0;
     int learnpoint_number=0;
+    int healpoint_number=0;
     int botfights_number=0;
     int botfightstigger_number=0;
-    //resolv the shops, learn
+    //resolv the shops, learn, heal
     int size=semi_loaded_map.size();
     int index=0;
     bool ok;
@@ -569,7 +588,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        if(step.attribute("type")=="learn")
+                        else if(step.attribute("type")=="learn")
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QString("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -584,7 +603,22 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        if(step.attribute("type")=="fight")
+                        else if(step.attribute("type")=="heal")
+                        {
+                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                                CatchChallenger::DebugClass::debugConsole(QString("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                CatchChallenger::DebugClass::debugConsole(QString("heal point put at: %1 (%2,%3)")
+                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                #endif
+                                static_cast<MapServer *>(semi_loaded_map[index].map)->heal.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                healpoint_number++;
+                            }
+                        }
+                        else if(step.attribute("type")=="fight")
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QString("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -658,6 +692,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     }
 
     DebugClass::debugConsole(QString("%1 learn point(s) on map loaded").arg(learnpoint_number));
+    DebugClass::debugConsole(QString("%1 heal point(s) on map loaded").arg(healpoint_number));
     DebugClass::debugConsole(QString("%1 bot fight(s) on map loaded").arg(botfights_number));
     DebugClass::debugConsole(QString("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
     DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));

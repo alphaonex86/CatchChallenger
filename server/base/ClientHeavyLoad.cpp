@@ -130,7 +130,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 orentation=Orientation_bottom;
                 emit message(QString("Wrong orientation corrected with bottom"));
             }
-            //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8),cash(9),rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13)
+            //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8),cash(9)
+            //rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13),unvalidated_rescue_map(14),unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17)
             //all is rights
             if(GlobalServerData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
             {
@@ -162,10 +163,14 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                     x,
                     y,
                     (Orientation)orentation,
-                    loginQuery.value(10),
-                    loginQuery.value(11),
-                    loginQuery.value(12),
-                    loginQuery.value(13)
+                        loginQuery.value(10),
+                        loginQuery.value(11),
+                        loginQuery.value(12),
+                        loginQuery.value(13),
+                        loginQuery.value(14),
+                        loginQuery.value(15),
+                        loginQuery.value(16),
+                        loginQuery.value(17)
                 );
             }
             else
@@ -216,8 +221,10 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
     }
 }
 
-void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
-                  const QVariant &rescue_map,const QVariant &rescue_x,const QVariant &rescue_y,const QVariant &rescue_orientation)
+void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 id, Map* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
+                  const QVariant &rescue_map, const QVariant &rescue_x, const QVariant &rescue_y, const QVariant &rescue_orientation,
+                  const QVariant &unvalidated_rescue_map, const QVariant &unvalidated_rescue_x, const QVariant &unvalidated_rescue_y, const QVariant &unvalidated_rescue_orientation
+                                             )
 {
     if(!GlobalServerData::serverPrivateVariables.map_list.contains(rescue_map.toString()))
     {
@@ -267,16 +274,68 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id,quint32 id,M
         rescue_new_orientation=Orientation_bottom;
         emit message(QString("Wrong rescue orientation corrected with bottom"));
     }
-    loginIsRightWithParsedRescue(query_id,id,map,x,y,orientation,GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()],rescue_new_x,rescue_new_y,rescue_new_orientation);
+    if(!GlobalServerData::serverPrivateVariables.map_list.contains(unvalidated_rescue_map.toString()))
+    {
+        emit message(QString("unvalidated rescue map ,not found"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    quint8 unvalidated_rescue_new_x=unvalidated_rescue_x.toUInt(&ok);
+    if(!ok)
+    {
+        emit message(QString("unvalidated rescue x coord is not a number"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    quint8 unvalidated_rescue_new_y=unvalidated_rescue_y.toUInt(&ok);
+    if(!ok)
+    {
+        emit message(QString("unvalidated rescue y coord is not a number"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    if(unvalidated_rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->width)
+    {
+        emit message(QString("unvalidated rescue x to out of map"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    if(unvalidated_rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->height)
+    {
+        emit message(QString("unvalidated rescue y to out of map"));
+        loginIsRight(query_id,id,map,x,y,orientation);
+        return;
+    }
+    QString unvalidated_orientationString=unvalidated_rescue_orientation.toString();
+    Orientation unvalidated_rescue_new_orientation;
+    if(unvalidated_orientationString=="top")
+        unvalidated_rescue_new_orientation=Orientation_top;
+    else if(unvalidated_orientationString=="bottom")
+        unvalidated_rescue_new_orientation=Orientation_bottom;
+    else if(unvalidated_orientationString=="left")
+        unvalidated_rescue_new_orientation=Orientation_left;
+    else if(unvalidated_orientationString=="right")
+        unvalidated_rescue_new_orientation=Orientation_right;
+    else
+    {
+        unvalidated_rescue_new_orientation=Orientation_bottom;
+        emit message(QString("Wrong unvalidated rescue orientation corrected with bottom"));
+    }
+    loginIsRightWithParsedRescue(query_id,id,map,x,y,orientation,
+                                 GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()],rescue_new_x,rescue_new_y,rescue_new_orientation,
+                                 GlobalServerData::serverPrivateVariables.map_list[unvalidated_rescue_map.toString()],unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
+            );
 }
 
 void ClientHeavyLoad::loginIsRight(const quint8 &query_id,quint32 id, Map *map, const quint8 &x, const quint8 &y, const Orientation &orientation)
 {
-    loginIsRightWithParsedRescue(query_id,id,map,x,y,orientation,map,x,y,orientation);
+    loginIsRightWithParsedRescue(query_id,id,map,x,y,orientation,map,x,y,orientation,map,x,y,orientation);
 }
 
-void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
-                  Map* rescue_map,const /*COORD_TYPE*/ quint8 &rescue_x,const /*COORD_TYPE*/ quint8 &rescue_y,const Orientation &rescue_orientation)
+void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint32 id, Map* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
+                  Map* rescue_map, const /*COORD_TYPE*/ quint8 &rescue_x, const /*COORD_TYPE*/ quint8 &rescue_y, const Orientation &rescue_orientation,
+                  Map *unvalidated_rescue_map, const quint8 &unvalidated_rescue_x, const quint8 &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
+                  )
 {
     loadLinkedData();
 
@@ -390,6 +449,10 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id,quint3
     player_informations->rescue.x=rescue_x;
     player_informations->rescue.y=rescue_y;
     player_informations->rescue.orientation=rescue_orientation;
+    player_informations->unvalidated_rescue.map=unvalidated_rescue_map;
+    player_informations->unvalidated_rescue.x=unvalidated_rescue_x;
+    player_informations->unvalidated_rescue.y=unvalidated_rescue_y;
+    player_informations->unvalidated_rescue.orientation=unvalidated_rescue_orientation;
 
     //send signals into the server
     emit message(QString("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
