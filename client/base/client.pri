@@ -3,13 +3,16 @@ DEPENDPATH += $$PWD/../../general/libtiled/
 LIBS *= -ltiled
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT       += script
+QT       += script multimedia
+LIBS += -lvorbis -lvorbisfile
 
 win32:CONFIG   += console
 
 SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/ObjectGroupItem.cpp \
+    $$PWD/audio/QOggAudioBuffer.cpp \
+    $$PWD/audio/QOggSimplePlayer.cpp \
     $$PWD/render/MapVisualiserPlayer.cpp \
     $$PWD/render/MapVisualiser.cpp \
     $$PWD/render/MapVisualiser-map.cpp \
@@ -35,6 +38,8 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/MapVisualiserThread.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
+    $$PWD/audio/QOggAudioBuffer.h \
+    $$PWD/audio/QOggSimplePlayer.h \
     $$PWD/ClientStructures.h \
     $$PWD/Api_client_real.h \
     $$PWD/render/TileLayerItem.h \

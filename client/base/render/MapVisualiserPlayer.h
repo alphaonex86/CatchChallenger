@@ -18,6 +18,8 @@ public:
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
     QString lastLocation() const;
+    QString currentMap() const;
+    QString currentMapType() const;
     CatchChallenger::Direction getDirection();
     enum BlockedOn
     {

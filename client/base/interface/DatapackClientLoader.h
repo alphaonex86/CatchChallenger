@@ -78,6 +78,7 @@ public:
     QHash<QString,quint32> questsPathToId;
     QMultiHash<quint32,quint32> botToQuestStart;
     QHash<quint32,BotFightExtra> botFightsExtra;
+    QHash<QString,QString> audioAmbiance;
     QStringList maps,skins;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
@@ -106,6 +107,7 @@ private slots:
     void parseQuestsLink();
     void parseSkins();
     void parseBotFightsExtra();
+    void parseAudioAmbiance();
 };
 
 #endif // DATAPACKCLIENTLOADER_H
