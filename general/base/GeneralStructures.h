@@ -535,7 +535,7 @@ struct Bot
 {
     QHash<quint8,QDomElement> step;
     QHash<QString,QString> properties;
-    quint32 botId;
+    quint8 botId;//id into the file
 };
 
 struct BotFight

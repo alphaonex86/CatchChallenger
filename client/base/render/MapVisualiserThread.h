@@ -50,6 +50,7 @@ public:
     bool debugTags;
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
+    volatile bool stopIt;
     QString error();
 signals:
     void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);
@@ -57,7 +58,7 @@ public slots:
     void loadOtherMapAsync(const QString &fileName);
     Map_full * loadOtherMap(const QString &fileName);
     //drop and remplace by Map_loader info
-    void loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap);
+    bool loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap);
     void loadBotFile(const QString &fileName);
 public slots:
     virtual void resetAll();
