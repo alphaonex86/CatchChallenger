@@ -41,7 +41,11 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
-    CatchChallenger::PlayerMonster *fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    CatchChallenger::PlayerMonster *fightMonster;
+    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+        fightMonster=NULL;
+    else
+        fightMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(fightMonster!=NULL)
     {
         QList<quint32> botFightList=all_map[current_map]->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));

@@ -48,12 +48,11 @@ bool LocalClientHandlerFight::getBattleIsValidated()
 
 void LocalClientHandlerFight::saveCurrentMonsterStat()
 {
+    if(player_informations->public_and_private_informations.playerMonster.isEmpty())
+        return;//no monsters
     PlayerMonster * monster=getCurrentMonster();
     if(monster==NULL)
-    {
-        //no monsters
-        return;
-    }
+        return;//problem with the selection
     //save into the db
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
     {

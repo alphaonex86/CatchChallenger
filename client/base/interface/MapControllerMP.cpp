@@ -79,6 +79,7 @@ bool MapControllerMP::loadPlayerMap(const QString &fileName,const quint8 &x,cons
     this->y=y;
     QFileInfo fileInformations(fileName);
     current_map=fileInformations.absoluteFilePath();
+    mapVisualiserThread.stopIt=false;
     loadOtherMap(current_map);
     return true;
 }
@@ -728,6 +729,11 @@ void MapControllerMP::finalPlayerStep()
         return;
     }
     const MapVisualiserThread::Map_full * current_map_pointer=all_map[current_map];
+    if(current_map_pointer==NULL)
+    {
+        qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
+        return;
+    }
     int index=0;
     const int size=current_map_pointer->logicalMap.teleport_semi.size();
     while(index<size)
