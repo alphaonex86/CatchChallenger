@@ -49,11 +49,11 @@ void ClientHeavyLoad::loadItems()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1")
+            queryText=QString("SELECT item_id,quantity,warehouse FROM item WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1")
+            queryText=QString("SELECT item_id,quantity,warehouse FROM item WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
     }
@@ -76,6 +76,7 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("quantity is not a number, skip"));
             continue;
         }
+        quint32 warehouse=itemQuery.value(2).toBool();
         if(quantity==0)
         {
             QString queryText;
@@ -83,14 +84,16 @@ void ClientHeavyLoad::loadItems()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
+                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND warehouse=%3")
                                          .arg(player_informations->id)
-                                         .arg(id);
+                                         .arg(id)
+                                         .arg(warehouse);
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2")
+                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND warehouse=%3")
                                      .arg(player_informations->id)
-                                     .arg(id);
+                                     .arg(id)
+                                     .arg(warehouse);
                 break;
             }
             emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
@@ -101,7 +104,10 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("The item %1 is ignored because it's not into the items list").arg(id));
             continue;
         }
-        player_informations->public_and_private_informations.items[id]=quantity;
+        if(!warehouse)
+            player_informations->public_and_private_informations.items[id]=quantity;
+        else
+            player_informations->public_and_private_informations.warehouse_items[id]=quantity;
     }
 }
 
@@ -118,6 +124,13 @@ void ClientHeavyLoad::sendInventory()
         i.next();
         out << (quint32)i.key();
         out << (quint32)i.value();
+    }
+    out << (quint32)player_informations->public_and_private_informations.warehouse_items.size();
+    QHashIterator<quint32,quint32> j(player_informations->public_and_private_informations.warehouse_items);
+    while (j.hasNext()) {
+        j.next();
+        out << (quint32)j.key();
+        out << (quint32)j.value();
     }
 
     //send the items
