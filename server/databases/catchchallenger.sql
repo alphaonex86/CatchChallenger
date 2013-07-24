@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS `item` (
   `item_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
-  PRIMARY KEY (`item_id`,`player_id`),
+  `warehouse` tinyint(1) NOT NULL COMMENT 'true if into warehouse',
+  PRIMARY KEY (`item_id`,`player_id`,`warehouse`),
   KEY `player_id` (`player_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -50,6 +51,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `gender` enum('unknown','male','female') NOT NULL,
   `egg_step` int(11) NOT NULL,
   `player_origin` int(11) NOT NULL,
+  `warehouse` tinyint(1) NOT NULL COMMENT 'true if into warehouse',
   PRIMARY KEY (`id`),
   KEY `player` (`player`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
@@ -116,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `player` (
   `map_name` text NOT NULL,
   `type` enum('normal','premium','gm','dev') NOT NULL,
   `clan` int(11) NOT NULL,
-  `cash` int(11) NOT NULL,
+  `cash` bigint(20) NOT NULL,
   `rescue_map` text NOT NULL,
   `rescue_x` int(11) NOT NULL,
   `rescue_y` int(11) NOT NULL,
@@ -125,6 +127,7 @@ CREATE TABLE IF NOT EXISTS `player` (
   `unvalidated_rescue_x` int(11) NOT NULL,
   `unvalidated_rescue_y` int(11) NOT NULL,
   `unvalidated_rescue_orientation` text NOT NULL,
+  `warehouse_cash` bigint(20) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;

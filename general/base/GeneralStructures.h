@@ -203,15 +203,15 @@ struct Reputation
 struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
-    quint64 cash;
-    QHash<quint32,quint32> items;
+    quint64 cash,warehouse_cash;
+    QHash<quint32,quint32> items,warehouse_items;
     //crafting
     QSet<quint32> recipes;
     QHash<QString,PlayerReputation> reputation;
     //fight
     QSet<quint32> bot_already_beaten;
     /// \todo put out of here to have mutalised engine
-    QList<PlayerMonster> playerMonster;
+    QList<PlayerMonster> playerMonster,warehouse_playerMonster;
     QHash<quint32, PlayerQuest> quests;
 };
 

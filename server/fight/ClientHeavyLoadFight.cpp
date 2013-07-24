@@ -14,13 +14,14 @@ void ClientHeavyLoad::loadMonsters()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step FROM monster WHERE player=%1").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1").arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step FROM monster WHERE player=%1").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1").arg(player_informations->id);
         break;
     }
 
+    bool warehouse;
     bool ok;
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!monstersQuery.exec(queryText))
@@ -110,6 +111,8 @@ void ClientHeavyLoad::loadMonsters()
             if(!ok)
                 emit message(QString("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
         }
+        if(ok)
+            warehouse=monstersQuery.value(9).toBool();
         //stats
         if(ok)
         {
@@ -135,7 +138,10 @@ void ClientHeavyLoad::loadMonsters()
         {
             playerMonster.buffs=loadMonsterBuffs(playerMonster.id);
             playerMonster.skills=loadMonsterSkills(playerMonster.id);
-            player_informations->public_and_private_informations.playerMonster << playerMonster;
+            if(!warehouse)
+                player_informations->public_and_private_informations.playerMonster << playerMonster;
+            else
+                player_informations->public_and_private_informations.warehouse_playerMonster << playerMonster;
         }
     }
 }

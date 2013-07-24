@@ -309,7 +309,7 @@ void MainWindow::on_SaveGame_New_clicked()
     {
         QSqlQuery sqlQuery(*db);
         if(!sqlQuery.exec(
-               QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9);")
+               QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9,%9);")
                .arg(player_id)
                .arg(QString(passHash.toHex()))
                .arg(nameGame.pseudo())

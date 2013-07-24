@@ -158,12 +158,13 @@ void BaseWindow::haveTheDatapack()
     emit parseDatapack(CatchChallenger::Api_client_real::client->get_datapack_base_name());
 }
 
-void BaseWindow::have_inventory(const QHash<quint32,quint32> &items)
+void BaseWindow::have_inventory(const QHash<quint32,quint32> &items, const QHash<quint32, quint32> &warehouse_items)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
     #endif
     this->items=items;
+    this->warehouse_items=warehouse_items;
     haveInventory=true;
     updateConnectingStatus();
 }
