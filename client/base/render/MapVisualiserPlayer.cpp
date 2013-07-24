@@ -334,6 +334,8 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject)
 {
+    if(current_map.isEmpty())
+        return false;
     if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
     {
         if(fileName==current_map)
@@ -360,6 +362,11 @@ void MapVisualiserPlayer::finalPlayerStep()
         return;
     }
     const MapVisualiserThread::Map_full * current_map_pointer=all_map[current_map];
+    if(current_map_pointer==NULL)
+    {
+        qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
+        return;
+    }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink[playerMapObject]->setZValue(y);
@@ -724,6 +731,10 @@ void MapVisualiserPlayer::resetAll()
     keyPressed.clear();
     inMove=false;
     MapVisualiser::resetAll();
+    mapVisualiserThread.stopIt=true;
+    mapVisualiserThread.quit();
+    mapVisualiserThread.wait();
+    mapVisualiserThread.start(QThread::IdlePriority);
 }
 
 void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
