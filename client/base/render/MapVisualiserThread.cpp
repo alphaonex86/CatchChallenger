@@ -7,7 +7,7 @@
 MapVisualiserThread::MapVisualiserThread()
 {
     //moveToThread(this);
-    start();
+    start(QThread::IdlePriority);
 }
 
 MapVisualiserThread::~MapVisualiserThread()
@@ -30,6 +30,8 @@ QString MapVisualiserThread::error()
 //open the file, and load it into the variables
 MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &resolvedFileName)
 {
+    if(stopIt)
+        return NULL;
     MapVisualiserThread::Map_full *tempMapObject=new MapVisualiserThread::Map_full();
 
     tempMapObject->displayed=false;
@@ -54,6 +56,12 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         delete tempMapObject;
         return NULL;
     }
+    if(stopIt)
+    {
+        delete tempMapObject->tiledMap;
+        delete tempMapObject;
+        return NULL;
+    }
     CatchChallenger::Map_loader map_loader;
     if(!map_loader.tryLoadMap(resolvedFileName))
     {
@@ -65,6 +73,12 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
             delete tempMapObject->tiledMap->tilesets().at(index);
             index++;
         }
+        delete tempMapObject->tiledMap;
+        delete tempMapObject;
+        return NULL;
+    }
+    if(stopIt)
+    {
         delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
@@ -384,36 +398,50 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         index++;
     }
 
-    loadOtherMapClientPart(tempMapObject);
+    if(stopIt)
+    {
+        delete tempMapObject->tiledMap;
+        delete tempMapObject;
+        return NULL;
+    }
+
+    if(!loadOtherMapClientPart(tempMapObject))
+    {
+        delete tempMapObject->tiledMap;
+        delete tempMapObject;
+        return NULL;
+    }
 
     return tempMapObject;
 }
 
 //drop and remplace by Map_loader info
-void MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap)
+bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap)
 {
     QString fileName=parsedMap->logicalMap.map_file;
     QFile mapFile(fileName);
     if(!mapFile.open(QIODevice::ReadOnly))
     {
         qDebug() << mapFile.fileName()+": "+mapFile.errorString();
-        return;
+        return false;
     }
     QByteArray xmlContent=mapFile.readAll();
     mapFile.close();
+    if(stopIt)
+            return false;
     QDomDocument domDocument;
     QString errorStr;
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
         qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-        return;
+        return false;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="map")
     {
         qDebug() << QString("\"map\" root balise not found for the xml file");
-        return;
+        return false;
     }
     bool ok,ok2;
     //load the bots (map->bots)
@@ -476,7 +504,11 @@ void MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                 botFile+=".xml";
                                             if(bot.attribute("type")=="bot")
                                             {
+                                                if(stopIt)
+                                                        return false;
                                                 loadBotFile(botFile);
+                                                if(stopIt)
+                                                        return false;
                                                 if(botFiles.contains(botFile))
                                                 {
                                                     if(botFiles[botFile].contains(botId))
@@ -518,6 +550,7 @@ void MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
         }
         child = child.nextSiblingElement("objectgroup");
     }
+    return true;
 }
 
 void MapVisualiserThread::loadBotFile(const QString &fileName)
@@ -558,7 +591,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
             CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
-            quint32 id=child.attribute("id").toUInt(&ok);
+            quint8 id=child.attribute("id").toUShort(&ok);
             if(ok)
             {
                 QDomElement step = child.firstChildElement("step");
@@ -572,7 +605,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
                         CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber())));
                     else
                     {
-                        quint32 stepId=step.attribute("id").toUInt(&ok);
+                        quint8 stepId=step.attribute("id").toUShort(&ok);
                         if(ok)
                             botFiles[fileName][id].step[stepId]=step;
                     }

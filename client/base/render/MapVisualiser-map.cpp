@@ -155,6 +155,8 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
 
 bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread::Map_full * tempMapObject)
 {
+    if(current_map.isEmpty())
+        return false;
     if(all_map.contains(fileName))
     {
         asyncMap.removeOne(fileName);
