@@ -56,6 +56,7 @@ private:
                       const QVariant &unvalidated_rescue_map,const QVariant &unvalidated_rescue_x,const QVariant &unvalidated_rescue_y,const QVariant &unvalidated_rescue_orientation
                       );
     void loginIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage);
+    static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
     //load linked data (like item, quests, ...)
     void loadLinkedData();
     void loadItems();
