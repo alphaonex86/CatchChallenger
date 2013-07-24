@@ -77,7 +77,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
 
     //inventory
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(have_inventory(QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(have_inventory(QHash<quint32,quint32>,QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>,QHash<quint32,quint32>)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(remove_to_inventory(QHash<quint32,quint32>)));
 

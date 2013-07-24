@@ -140,7 +140,7 @@ signals:
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-    void have_inventory(const QHash<quint32,quint32> &items);
+    void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
     void add_to_inventory(const QHash<quint32,quint32> &items);
     void remove_to_inventory(const QHash<quint32,quint32> &items);
 

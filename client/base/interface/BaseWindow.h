@@ -113,7 +113,7 @@ private slots:
     void logged();
     void updatePlayerImage();
     void have_current_player_info();
-    void have_inventory(const QHash<quint32,quint32> &items);
+    void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
     void add_to_inventory(const QHash<quint32,quint32> &items, const bool &showGain=true);
     void remove_to_inventory(const QHash<quint32,quint32> &items);
     void load_inventory();
@@ -300,6 +300,7 @@ private:
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
 
     //player items
+    QHash<quint32,quint32> warehouse_items;
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
     QHash<quint32,QListWidgetItem *> items_to_graphical;
