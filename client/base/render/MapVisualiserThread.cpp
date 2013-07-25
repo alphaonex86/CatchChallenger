@@ -8,6 +8,7 @@ MapVisualiserThread::MapVisualiserThread()
 {
     //moveToThread(this);
     start(QThread::IdlePriority);
+    hideTheDoors=true;
 }
 
 MapVisualiserThread::~MapVisualiserThread()
@@ -171,7 +172,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                     while(index2<objects.size())
                     {
                         //remove the unknow object
-                        if(objects.at(index2)->type()!="door")
+                        if(objects.at(index2)->type()!="door" || hideTheDoors)
                         {
                             objectGroup->removeObject(objects.at(index2));
                             delete objects.at(index2);

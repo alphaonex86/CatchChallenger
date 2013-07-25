@@ -27,13 +27,13 @@ bool StepType::validated()
 
 void StepType::on_cancel_clicked()
 {
-    mValidated=false;
     close();
 }
 
 void StepType::on_ok_clicked()
 {
     mValidated=true;
+    close();
 }
 
 QString StepType::type()

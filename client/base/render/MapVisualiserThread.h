@@ -51,6 +51,7 @@ public:
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
     volatile bool stopIt;
+    bool hideTheDoors;
     QString error();
 signals:
     void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);

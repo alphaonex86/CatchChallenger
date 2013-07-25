@@ -5,7 +5,7 @@ LIBS *= -ltiled
 TEMPLATE = app
 TARGET = map-visualiser
 
-QT += xml opengl
+QT += xml opengl network
 
 win32:RC_FILE += resources-windows.rc
 
@@ -28,7 +28,8 @@ SOURCES += main.cpp \
     ../../client/base/render/MapItem.cpp \
     Options.cpp \
     MapController.cpp \
-    ../../client/base/render/MapVisualiserPlayer.cpp
+    ../../client/base/render/MapVisualiserPlayer.cpp \
+    ../../client/base/render/MapVisualiserThread.cpp
 
 HEADERS += \
     ../../general/base/Map_loader.h \
@@ -47,7 +48,8 @@ HEADERS += \
     ../../client/base/render/MapItem.h \
     Options.h \
     MapController.h \
-    ../../client/base/render/MapVisualiserPlayer.h
+    ../../client/base/render/MapVisualiserPlayer.h \
+    ../../client/base/render/MapVisualiserThread.h
 
 RESOURCES += \
     resources.qrc

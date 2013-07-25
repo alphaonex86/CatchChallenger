@@ -324,7 +324,7 @@ void MapController::botManagement()
     }
     else
     {
-        qDebug() << "Bot spawn list is empty";
+        //qDebug() << "Bot spawn list is empty";
     }
 }
 
@@ -338,7 +338,7 @@ void MapController::loadPlayerFromCurrentMap()
     {
         QSet<QString>::const_iterator i = displayed_map.constBegin();
         while (i != displayed_map.constEnd()) {
-            MapVisualiser::Map_full * map=getMap(*i);
+            MapVisualiserThread::Map_full * map=getMap(*i);
             if(map!=NULL)
             {
                 int index=0;
