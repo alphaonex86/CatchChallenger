@@ -54,8 +54,68 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
     {
         if(item.isElement())
         {
-            if(item.hasAttribute("id") && item.hasAttribute("egg_step") && item.hasAttribute("xp_for_max_level") && item.hasAttribute("hp") && item.hasAttribute("attack") && item.hasAttribute("defense")
-                    && item.hasAttribute("special_attack") && item.hasAttribute("special_defense") && item.hasAttribute("speed") && item.hasAttribute("give_sp") && item.hasAttribute("give_xp"))
+            bool attributeIsOk=true;
+            if(!item.hasAttribute("id"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"id\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("egg_step"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"egg_step\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("xp_for_max_level") && !item.hasAttribute("xp_max"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"xp_for_max_level\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            else
+            {
+                if(!item.hasAttribute("xp_for_max_level"))
+                    item.setAttribute("xp_for_max_level",item.attribute("xp_max"));
+            }
+            if(!item.hasAttribute("hp"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"hp\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("attack"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"attack\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("defense"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"defense\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("special_attack"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"special_attack\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("special_defense"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"special_defense\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("speed"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"speed\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("give_sp"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"give_sp\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(!item.hasAttribute("give_xp"))
+            {
+                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster attribute \"give_xp\": child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                attributeIsOk=false;
+            }
+            if(attributeIsOk)
             {
                 Monster monster;
                 quint32 id=item.attribute("id").toUInt(&ok);
