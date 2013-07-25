@@ -28,7 +28,7 @@ private:
     QList<Bot> botList;
     struct BotSpawnPoint
     {
-        MapVisualiser::Map_full * map;
+        MapVisualiserThread::Map_full * map;
         quint8 x,y;
     };
     QList<BotSpawnPoint> botSpawnPointList;
