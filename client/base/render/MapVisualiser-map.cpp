@@ -351,9 +351,11 @@ void MapVisualiser::applyTheAnimationTimer()
                     while(index<animatedObject.size())
                     {
                         Tiled::MapObject * mapObject=animatedObject.at(index);
-                        Tiled::Tile *tile=mapObject->tile();
+                        Tiled::Cell cell=mapObject->cell();
+                        Tiled::Tile *tile=mapObject->cell().tile;
                         Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+frameOffset);
-                        mapObject->setTile(newTile);
+                        cell.tile=newTile;
+                        mapObject->setCell(cell);
                         index++;
                     }
                 }
