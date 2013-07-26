@@ -19,36 +19,7 @@ macx {
     QMAKE_LFLAGS_SONAME = -Wl,-install_name,@executable_path/../Frameworks/
 }
 
-win32 {
-    # With Qt 4 it was enough to include zlib, since the symbols were available
-    # in Qt. Qt 5 no longer exposes zlib symbols, so it needs to be linked.
-    # Get the installer at:
-    #
-    #   http://gnuwin32.sourceforge.net/packages/zlib.htm
-    #
-    greaterThan(QT_MAJOR_VERSION, 4) {
-        # If there is an environment variable, take that
-        isEmpty(ZLIB_PATH):ZLIB_PATH = "$$(ZLIB_PATH)"
-
-        # When the variable is not set, check for common install locations
-        isEmpty(ZLIB_PATH):exists("C:/Program Files (x86)/GnuWin32/include/zlib.h") {
-            ZLIB_PATH = "C:/Program Files (x86)/GnuWin32"
-        }
-        isEmpty(ZLIB_PATH):exists("C:/Program Files/GnuWin32/include/zlib.h") {
-            ZLIB_PATH = "C:/Program Files/GnuWin32"
-        }
-
-        isEmpty(ZLIB_PATH) {
-            error("ZLIB_PATH not defined and could not be auto-detected")
-        }
-
-        INCLUDEPATH += $${ZLIB_PATH}/include
-        win32-g++*:LIBS += $${ZLIB_PATH}/lib/libz.a
-        win32-msvc*:LIBS += $${ZLIB_PATH}/lib/zlib.lib
-    } else {
-        INCLUDEPATH += ../zlib
-    }
-} else {
+!win32 {
     # On other platforms it is necessary to link to zlib explicitly
     LIBS += -lz
 }
