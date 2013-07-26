@@ -389,12 +389,21 @@ void MapVisualiser::removeUnusedMap()
         destroyMap(i.value());
         i = old_all_map.constBegin();
     }
+}
+
+void MapVisualiser::hideNotloadedMap()
+{
     //undisplay the map not in dirrect contact with the current_map
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator j = all_map.constBegin();
-    while (j != all_map.constEnd()) {
-        if(j.value()->logicalMap.map_file!=current_map)
-            if(!j.value()->displayed)
-                mapItem->removeMap(j.value()->tiledMap);
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+    while (i != all_map.constEnd()) {
+        if(i.value()->logicalMap.map_file!=current_map)
+            if(!i.value()->displayed)
+                mapItem->removeMap(i.value()->tiledMap);
+        ++i;
+    }
+    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator j = old_all_map.constBegin();
+    while (j != old_all_map.constEnd()) {
+        mapItem->removeMap(j.value()->tiledMap);
         ++j;
     }
 }
