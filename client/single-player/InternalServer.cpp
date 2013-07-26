@@ -43,6 +43,7 @@ void InternalServer::start_internal_server()
         DebugClass::debugConsole(QString("Unable to listen the internal server"));
         stat=Down;
         emit error(QString("Unable to listen the internal server"));
+        emit is_started(false);
         return;
     }
 
@@ -50,6 +51,7 @@ void InternalServer::start_internal_server()
     {
         QFakeServer::server.close();
         stat=Down;
+        emit is_started(false);
         return;
     }
 

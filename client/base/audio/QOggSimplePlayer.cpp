@@ -37,8 +37,8 @@ QString QOggSimplePlayer::getFilePath() const
 void QOggSimplePlayer::open()
 {
     QAudioFormat format;
-    format.setFrequency(48000);
-    format.setChannels(1);
+    format.setSampleRate(48000);
+    format.setChannelCount(1);
     format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
@@ -71,8 +71,7 @@ void QOggSimplePlayer::open()
         }
         qDebug() << QString("Bitstream is %1 channel, %2Hz").arg(vi->channels).arg(vi->rate);
         qDebug() << QString("Encoded by: %1").arg(ov_comment(&vf,-1)->vendor);
-        format.setChannels(vi->channels);
-        format.setFrequency(vi->rate);
+        format.setChannelCount(vi->channels);
         format.setSampleRate(vi->rate);
     }
 

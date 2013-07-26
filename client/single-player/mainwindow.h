@@ -51,6 +51,7 @@ private slots:
     void saveTime();
     void is_started(bool started);
     void play(const QString &savegamesPath);
+    void serverError(const QString &error);
     void sendSettings(CatchChallenger::InternalServer * internalServer, const QString &savegamesPath);
 private:
     Ui::MainWindow *ui;

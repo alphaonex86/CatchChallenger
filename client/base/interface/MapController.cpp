@@ -2,13 +2,14 @@
 #include "DatapackClientLoader.h"
 #include "../Api_client_real.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/GeneralStructures.h"
 
 MapController* MapController::mapController=NULL;
 
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapControllerMP(centerOnPlayer,debugTags,useCache,OpenGL)
 {
-    qRegisterMetaType<CatchChallenger::Plant_collect>("CatchChallenger::Plant_collect");
+//    qRegisterMetaType<CatchChallenger::Plant_collect>("CatchChallenger::Plant_collect");
     connect(CatchChallenger::Api_client_real::client,SIGNAL(insert_plant(quint32,quint16,quint16,quint8,quint16)),this,SLOT(insert_plant(quint32,quint16,quint16,quint8,quint16)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(remove_plant(quint32,quint16,quint16)),this,SLOT(remove_plant(quint32,quint16,quint16)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(seed_planted(bool)),this,SLOT(seed_planted(bool)));

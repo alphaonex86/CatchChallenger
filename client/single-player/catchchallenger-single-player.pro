@@ -2,8 +2,7 @@ include(../base/client.pri)
 include(../../server/catchchallenger-server.pri)
 include(../../general/general.pri)
 
-QT       += sql multimedia
-LIBS += -lvorbis -lvorbisfile
+QT       += sql
 
 TARGET = catchchallenger-single-player
 

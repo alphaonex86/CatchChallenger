@@ -141,7 +141,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         tempMapObject->tiledRender = new Tiled::OrthogonalRenderer(tempMapObject->tiledMap);
         break;
     }
-    tempMapObject->tiledRender->setObjectBorder(false);
+    //tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
     tempMapObject->objectGroup = new Tiled::ObjectGroup("Dyna management",0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
