@@ -80,6 +80,7 @@ public slots:
     virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const quint32 &botId, const quint8 &x, const quint8 &y, const QString &lookAt, const QString &skin);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
+    virtual void hideNotloadedMap();
 private slots:
     void loadTeleporter(MapVisualiserThread::Map_full *map);
     void paintEvent(QPaintEvent * event);
