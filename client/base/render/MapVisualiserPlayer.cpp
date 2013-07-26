@@ -323,6 +323,7 @@ void MapVisualiserPlayer::moveStepSlot()
             if(!old_all_map.contains(map->map_file))
                 emit inWaitingOfMap();
             loadOtherMap(map->map_file);
+            hideNotloadedMap();
             return;
         }
         else
