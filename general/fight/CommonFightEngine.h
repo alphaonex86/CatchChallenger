@@ -31,8 +31,8 @@ public:
     bool remainMonstersToFight(const quint32 &monsterId) const;
     virtual bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y) const;
     void updateCanDoFight();
-    bool otherMonsterIsKO();
-    bool currentMonsterIsKO();
+    bool otherMonsterIsKO() const;
+    bool currentMonsterIsKO() const;
     virtual bool dropKOMonster();
     virtual void healAllMonsters();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);

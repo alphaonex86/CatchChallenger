@@ -719,10 +719,13 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
     {
         bool isBot=!botFightMonsters.isEmpty();
         bool win=CommonFightEngine::useSkill(skill);
-        if(dropKOMonster())
+        if(currentMonsterIsKO() || otherMonsterIsKO())
         {
-            emit message(QString("One or all of the monster is KO for this turn"));
-            checkLoose();
+            if(dropKOMonster())
+            {
+                emit message(QString("One or all of the monster is KO for this turn"));
+                checkLoose();
+            }
         }
         syncForEndOfTurn();
         if(!isInFight())
@@ -757,14 +760,17 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
     else
     {
         bool win=CommonFightEngine::useSkill(skill);
-        if(dropKOMonster())
+        if(currentMonsterIsKO() || otherMonsterIsKO())
         {
-            bool currentLoose=checkLoose();
-            bool otherLoose=otherPlayerBattle->checkLoose();
-            if(currentLoose || otherLoose)
-                emit message(QString("Have win agains the current monster"));
-            else
-                emit message(QString("Have win the battle"));
+            if(dropKOMonster())
+            {
+                bool currentLoose=checkLoose();
+                bool otherLoose=otherPlayerBattle->checkLoose();
+                if(currentLoose || otherLoose)
+                    emit message(QString("Have win agains the current monster"));
+                else
+                    emit message(QString("Have win the battle"));
+            }
         }
         return win;
     }
