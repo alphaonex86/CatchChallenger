@@ -605,7 +605,6 @@ void BaseWindow::win()
 
 void BaseWindow::doNextAction()
 {
-    qDebug() << "doNextAction()";
     ui->toolButtonFightQuit->setVisible(battleType==BattleType_Wild);
     if(escape)
     {
@@ -644,7 +643,46 @@ void BaseWindow::doNextAction()
     //apply the effect
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
     {
-        qDebug() << "doNextAction(): apply the effect";
+        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success==false)
+        {
+            qDebug() << "doNextAction(): attack have failed";
+            PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("NULL pointer for other monster at doNextAction()");
+                return;
+            }
+            PublicPlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("NULL pointer for other monster at doNextAction()");
+                return;
+            }
+            quint32 attackId=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack;
+            if(attackId==0)
+            {
+                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
+                    displayText(tr("The wild %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+                else
+                    displayText(tr("Your %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name));
+            }
+            else
+            {
+                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
+                    displayText(tr("The wild %1 have failed their attack %2")
+                                .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
+                                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[attackId].name)
+                            );
+                else
+                    displayText(tr("Your %1 have failed their attack %2")
+                                .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
+                                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[attackId].name)
+                            );
+            }
+            CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
+            return;
+        }
+        qDebug() << "doNextAction(): apply the effect and display it";
         displayAttack();
         return;
     }
@@ -772,25 +810,26 @@ void BaseWindow::displayAttack()
     PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(otherMonster==NULL)
     {
-        qDebug() << "displayAttack(): crash: unable to get the other monster";
+        error("displayAttack(): crash: unable to get the other monster");
         doNextAction();
         return;
     }
     if(currentMonster==NULL)
     {
-        qDebug() << "displayAttack(): crash: unable to get the current monster";
+        newError(tr("Internal error"),"displayAttack(): crash: unable to get the current monster");
         doNextAction();
         return;
     }
     if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
     {
-        qDebug() << "displayAttack(): crash: display an empty attack return";
+        newError(tr("Internal error"),"displayAttack(): crash: display an empty attack return");
         doNextAction();
         return;
     }
     if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
     {
-        qDebug() << "displayAttack(): crash: display an empty lifteEffect list into attack return";
+        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
+        newError(tr("Internal error"),"displayAttack(): crash: display an empty lifeEffect list into attack return");
         doNextAction();
         return;
     }
@@ -814,7 +853,6 @@ void BaseWindow::displayAttack()
         movie=NULL;
         ui->labelFightMonsterAttackTop->setMovie(NULL);
         ui->labelFightMonsterAttackBottom->setMovie(NULL);
-        qDebug() << "displayAttack(): displayAttackProgression==0";
         updateAttackTime.restart();
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         ui->pushButtonFightEnterNext->setVisible(false);
@@ -923,7 +961,6 @@ void BaseWindow::displayAttack()
     if(updateAttackTime.elapsed()>3000 /*3000ms*/)
     {
         displayAttackProgression=0;
-        qDebug() << "displayAttack(): more than 3000ms";
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         //attack is finish
         doNextAction();
@@ -1173,4 +1210,11 @@ void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn
 {
     CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
     sendBattleReturn(attackReturn);
+}
+
+
+void CatchChallenger::BaseWindow::on_listWidgetFightAttack_itemActivated(QListWidgetItem *item)
+{
+    Q_UNUSED(item);
+    on_pushButtonFightAttackConfirmed_clicked();
 }
