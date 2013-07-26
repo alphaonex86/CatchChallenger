@@ -2,8 +2,9 @@ INCLUDEPATH += $$PWD/../../general/libtiled/
 DEPENDPATH += $$PWD/../../general/libtiled/
 LIBS *= -ltiled
 
+LIBS += -lvorbis -lvorbisfile
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT       += script
+QT       += script multimedia
 
 win32:CONFIG   += console
 
@@ -69,3 +70,6 @@ win32:RC_FILE += $$PWD/resources/resources-windows.rc
 RESOURCES += $$PWD/resources/client-resources.qrc \
     $$PWD/../crafting/resources/client-resources-plant.qrc \
     $$PWD/../fight/resources/client-resources-fight.qrc
+
+OTHER_FILES += \
+    ../base/audio/vorbis/Makefile.in

@@ -173,7 +173,6 @@ void MainWindow::message(QString message)
 void MainWindow::protocol_is_good()
 {
     CatchChallenger::Api_client_real::client->tryLogin("admin",pass);
-    timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
 }
 
 void MainWindow::try_stop_server()
@@ -588,7 +587,7 @@ void MainWindow::updateSavegameList()
                     {
                         int time_played_number=metaData.value("time_played").toUInt(&ok);
                         QString time_played;
-                        if(!ok)
+                        if(!ok || time_played_number>3600*24*365*50)
                             time_played="Time player: bug";
                         else if(time_played_number>=3600*24*10)
                             time_played=QObject::tr("%n day(s) played","",time_played_number/(3600*24));
@@ -874,6 +873,8 @@ void MainWindow::is_started(bool started)
         saveTime();
         if(!isVisible())
             QCoreApplication::quit();
+        else
+            resetAll();
     }
     else
     {
@@ -899,7 +900,9 @@ void MainWindow::saveTime()
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
                     metaData.setValue("location",locaction);
-                metaData.setValue("time_played",metaData.value("time_played").toUInt()+(QDateTime::currentDateTimeUtc().toTime_t()-timeLaunched));
+                quint64 current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
+                if(current_date_time>timeLaunched)
+                    metaData.setValue("time_played",metaData.value("time_played").toUInt()+(current_date_time-timeLaunched));
                 settingOk=true;
             }
             else
@@ -915,9 +918,16 @@ void MainWindow::saveTime()
     }
 }
 
+void MainWindow::serverError(const QString &error)
+{
+    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
+    resetAll();
+}
+
 void MainWindow::play(const QString &savegamesPath)
 {
     resetAll();
+    timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
     if(!metaData.contains("pass"))
     {
@@ -935,6 +945,7 @@ void MainWindow::play(const QString &savegamesPath)
     internalServer=new CatchChallenger::InternalServer();
     sendSettings(internalServer,savegamesPath);
     connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);
+    connect(internalServer,SIGNAL(error(QString)),this,SLOT(serverError(QString)),Qt::QueuedConnection);
 
     ui->stackedWidget->setCurrentIndex(1);
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
