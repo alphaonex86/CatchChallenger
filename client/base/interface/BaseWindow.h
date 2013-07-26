@@ -262,6 +262,8 @@ private slots:
     void on_learnAttackList_itemActivated(QListWidgetItem *item);
     void on_close_IG_dialog_clicked();
     void on_questsList_itemSelectionChanged();
+    void on_listWidgetFightAttack_itemActivated(QListWidgetItem *item);
+
 protected slots:
     //datapack
     void datapackParsed();

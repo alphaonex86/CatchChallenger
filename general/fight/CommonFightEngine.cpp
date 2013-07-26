@@ -36,29 +36,23 @@ void CommonFightEngine::resetAll()
     selectedMonster=0;
 }
 
-bool CommonFightEngine::otherMonsterIsKO()
+bool CommonFightEngine::otherMonsterIsKO() const
 {
     PublicPlayerMonster * publicPlayerMonster=getOtherMonster();
     if(publicPlayerMonster==NULL)
         return true;
     if(publicPlayerMonster->hp==0)
-    {
-        publicPlayerMonster->buffs.clear();
         return true;
-    }
     return false;
 }
 
-bool CommonFightEngine::currentMonsterIsKO()
+bool CommonFightEngine::currentMonsterIsKO() const
 {
     PlayerMonster * playerMonster=getCurrentMonster();
     if(playerMonster==NULL)
         return true;
     if(playerMonster->hp==0)
-    {
-        playerMonster->buffs.clear();
         return true;
-    }
     return false;
 }
 
@@ -404,6 +398,7 @@ bool CommonFightEngine::monsterIsKO(const PlayerMonster &playerMonter)
 Skill::AttackReturn CommonFightEngine::generateOtherAttack()
 {
     Skill::AttackReturn attackReturn;
+    attackReturn.attack=0;
     attackReturn.doByTheCurrentMonster=false;
     attackReturn.success=false;
     PlayerMonster otherMonster;
@@ -816,7 +811,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             #endif
         }
     }
-    if(!botFightMonsters.isEmpty())
+    else if(!botFightMonsters.isEmpty())
     {
         if(botFightMonsters.first().hp==0)
         {
@@ -837,7 +832,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
     }
     else
     {
-        emit message("unknown other monster type");
+        emit error("unknown other monster type");
         return false;
     }
     return winTheTurn;
@@ -951,7 +946,7 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
         }
     }
     //do the current monster attack
-    if(!turnIsEnd)
+    if(!turnIsEnd && !currentMonsterStatIsFirstToAttack)
     {
         doTheCurrentMonsterAttack(skill,skillLevel);
         if(currentMonsterIsKO())
