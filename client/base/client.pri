@@ -70,6 +70,3 @@ win32:RC_FILE += $$PWD/resources/resources-windows.rc
 RESOURCES += $$PWD/resources/client-resources.qrc \
     $$PWD/../crafting/resources/client-resources-plant.qrc \
     $$PWD/../fight/resources/client-resources-fight.qrc
-
-OTHER_FILES += \
-    ../base/audio/vorbis/Makefile.in
