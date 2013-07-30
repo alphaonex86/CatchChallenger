@@ -88,6 +88,7 @@ signals:
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity) const;
     void useObject(const quint8 &query_id,const quint32 &itemId) const;
+    void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters) const;
     //shop
     void getShopList(const quint32 &query_id,const quint32 &shopId) const;
     void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const;

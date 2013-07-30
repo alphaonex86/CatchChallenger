@@ -349,6 +349,8 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                         }
                         DebugClass::debugConsole(QString("monster.level_to_xp.size(): %1").arg(monster.level_to_xp.size()));
                         #endif
+                        if((monster.xp_for_max_level/monster.give_xp)>100)
+                            DebugClass::debugConsole(QString("Warning: you need more than %1 monster(s) to pass the last level, prefer do that's with the rate for the monster id: %2").arg(monster.xp_for_max_level/monster.give_xp).arg(id));
                         monsters[id]=monster;
                     }
                     else

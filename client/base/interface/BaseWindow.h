@@ -109,6 +109,8 @@ private slots:
     void removeQuery(const QueryType &queryType);
     void updateQueryList();
     void loadSettings();
+    void updateTheWareHouseContent();
+    QListWidgetItem * itemToGraphic(const quint32 &id, const quint32 &quantity);
     //player
     void logged();
     void updatePlayerImage();
@@ -125,8 +127,9 @@ private slots:
     void show_reputation();
     void addCash(const quint32 &cash);
     void removeCash(const quint32 &cash);
-    QPixmap getFrontSkin(const quint32 &skinId);
-    QPixmap getBackSkin(const quint32 &skinId);
+    QPixmap getFrontSkin(const QString &skinName) const;
+    QPixmap getFrontSkin(const quint32 &skinId) const;
+    QPixmap getBackSkin(const quint32 &skinId) const;
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
@@ -152,6 +155,7 @@ private slots:
     void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
     void tradeUpdateCurrentObject();
+    QList<PlayerMonster> warehouseMonsterOnPlayer() const;
     //battle
     void battleRequested(const QString &pseudo, const quint8 &skinInt);
     void battleAcceptedByOther(const QString &pseudo, const quint8 &skinId, const QList<quint8> &stat, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
@@ -263,6 +267,18 @@ private slots:
     void on_close_IG_dialog_clicked();
     void on_questsList_itemSelectionChanged();
     void on_listWidgetFightAttack_itemActivated(QListWidgetItem *item);
+    void on_warehouseWithdrawCash_clicked();
+    void on_warehouseDepositCash_clicked();
+    void on_warehouseWithdrawItem_clicked();
+    void on_warehouseDepositItem_clicked();
+    void on_warehouseWithdrawMonster_clicked();
+    void on_warehouseDepositMonster_clicked();
+    void on_warehousePlayerInventory_itemActivated(QListWidgetItem *item);
+    void on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item);
+    void on_warehousePlayerMonster_itemActivated(QListWidgetItem *item);
+    void on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *item);
+    void on_toolButton_quit_warehouse_clicked();
+    void on_warehouseValidate_clicked();
 
 protected slots:
     //datapack
@@ -277,7 +293,8 @@ private:
     QList<QueryType> queryList;
     quint32 shopId;
     QHash<quint32,ItemToSellOrBuy> itemsIntoTheShop;
-    quint64 tempCashForBuy,cash;
+    quint64 tempCashForBuy,cash,warehouse_cash;
+    qint64 temp_warehouse_cash;// if >0 then Withdraw
     quint32 tempQuantityForBuy,tempItemForBuy;
     //selection of quantity
     quint32 tempQuantityForSell;
@@ -298,11 +315,11 @@ private:
     QString toSmilies(QString text);
     QStringList server_list;
     QAbstractSocket::SocketState socketState;
-    QStringList skinFolderList;
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
 
     //player items
     QHash<quint32,quint32> warehouse_items;
+    QHash<quint32,qint32> change_warehouse_items;
     QHash<quint32,quint32> items;
     QHash<QListWidgetItem *,quint32> items_graphical;
     QHash<quint32,QListWidgetItem *> items_to_graphical;
@@ -318,6 +335,7 @@ private:
     QHash<QListWidgetItem *,quint32> quests_to_id_graphical;
     bool inSelection;
     QList<quint32> objectInUsing;
+    QList<quint32> monster_to_deposit,monster_to_withdraw;
 
     //crafting
     QList<QList<QPair<quint32,quint32> > > materialOfRecipeInUsing;
@@ -351,6 +369,7 @@ private:
     bool haveDisplayOtherAttackSuccess;
     BattleType battleType;
     QMovie *movie;
+    QList<PlayerMonster> warehouse_playerMonster;
 
     //trade
     TradeOtherStat tradeOtherStat;

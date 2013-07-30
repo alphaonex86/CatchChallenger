@@ -341,14 +341,14 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
                          .arg(player_informations->public_and_private_informations.items[item])
                          .arg(item)
                          .arg(player_informations->id)
@@ -362,14 +362,14 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);")
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,0);")
                              .arg(item)
                              .arg(player_informations->id)
                              .arg(quantity)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);")
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,0);")
                          .arg(item)
                          .arg(player_informations->id)
                          .arg(quantity)
@@ -380,6 +380,108 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
     }
 }
 
+void LocalClientHandler::addWarehouseObject(const quint32 &item,const quint32 &quantity)
+{
+    if(player_informations->public_and_private_informations.warehouse_items.contains(item))
+    {
+        player_informations->public_and_private_informations.warehouse_items[item]+=quantity;
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=1;")
+                             .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                             .arg(item)
+                             .arg(player_informations->id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=1;")
+                         .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                         .arg(item)
+                         .arg(player_informations->id)
+                         );
+            break;
+        }
+    }
+    else
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,1);")
+                             .arg(item)
+                             .arg(player_informations->id)
+                             .arg(quantity)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,1);")
+                         .arg(item)
+                         .arg(player_informations->id)
+                         .arg(quantity)
+                         );
+            break;
+        }
+        player_informations->public_and_private_informations.warehouse_items[item]=quantity;
+    }
+}
+
+quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quint32 &quantity)
+{
+    if(player_informations->public_and_private_informations.warehouse_items.contains(item))
+    {
+        if(player_informations->public_and_private_informations.warehouse_items[item]>quantity)
+        {
+            player_informations->public_and_private_informations.warehouse_items[item]-=quantity;
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=1;")
+                                 .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                                 .arg(item)
+                                 .arg(player_informations->id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=1;")
+                                 .arg(player_informations->public_and_private_informations.warehouse_items[item])
+                                 .arg(item)
+                                 .arg(player_informations->id)
+                             );
+                break;
+            }
+            return quantity;
+        }
+        else
+        {
+            quint32 removed_quantity=player_informations->public_and_private_informations.warehouse_items[item];
+            player_informations->public_and_private_informations.warehouse_items.remove(item);
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse=1")
+                                 .arg(item)
+                                 .arg(player_informations->id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse=1")
+                             .arg(item)
+                             .arg(player_informations->id)
+                             );
+                break;
+            }
+            return removed_quantity;
+        }
+    }
+    else
+        return 0;
+}
+
 void LocalClientHandler::saveObjectRetention(const quint32 &item)
 {
     if(player_informations->public_and_private_informations.items.contains(item))
@@ -388,14 +490,14 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->id)
@@ -409,13 +511,13 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
                              .arg(item)
                              .arg(player_informations->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
                          .arg(item)
                          .arg(player_informations->id)
                          );
@@ -435,14 +537,14 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
                                  .arg(player_informations->public_and_private_informations.items[item])
                                  .arg(item)
                                  .arg(player_informations->id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3;")
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
                                  .arg(player_informations->public_and_private_informations.items[item])
                                  .arg(item)
                                  .arg(player_informations->id)
@@ -459,13 +561,13 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
                                  .arg(item)
                                  .arg(player_informations->id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2")
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
                              .arg(item)
                              .arg(player_informations->id)
                              );
@@ -542,6 +644,247 @@ void LocalClientHandler::removeCash(const quint64 &cash)
                      );
         break;
     }
+}
+
+void LocalClientHandler::addWarehouseCash(const quint64 &cash, const bool &forceSave)
+{
+    if(cash==0 && !forceSave)
+        return;
+    player_informations->public_and_private_informations.warehouse_cash+=cash;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE player SET warehouse_cash=%1 WHERE id=%2;")
+                         .arg(player_informations->public_and_private_informations.warehouse_cash)
+                         .arg(player_informations->id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE player SET warehouse_cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.warehouse_cash)
+                     .arg(player_informations->id)
+                     );
+        break;
+    }
+}
+
+void LocalClientHandler::removeWarehouseCash(const quint64 &cash)
+{
+    if(cash==0)
+        return;
+    player_informations->public_and_private_informations.warehouse_cash-=cash;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE player SET warehouse_cash=%1 WHERE id=%2;")
+                         .arg(player_informations->public_and_private_informations.warehouse_cash)
+                         .arg(player_informations->id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE player SET warehouse_cash=%1 WHERE id=%2;")
+                     .arg(player_informations->public_and_private_informations.warehouse_cash)
+                     .arg(player_informations->id)
+                     );
+        break;
+    }
+}
+
+void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+{
+    if(!wareHouseStoreCheck(cash,items,withdrawMonsters,depositeMonsters))
+        return;
+    {
+        int index=0;
+        while(index<items.size())
+        {
+            const QPair<quint32, qint32> &item=items.at(index);
+            if(item.second>0)
+            {
+                removeWarehouseObject(item.first,item.second);
+                addObject(item.first,item.second);
+            }
+            if(item.second<0)
+            {
+                removeObject(item.first,-item.second);
+                addWarehouseObject(item.first,-item.second);
+            }
+            index++;
+        }
+    }
+    //validate the change here
+    if(cash>0)
+    {
+        removeWarehouseCash(cash);
+        addCash(cash);
+    }
+    if(cash<0)
+    {
+        removeCash(-cash);
+        addWarehouseCash(-cash);
+    }
+    {
+        int index=0;
+        while(index<withdrawMonsters.size())
+        {
+            int sub_index=0;
+            while(sub_index<player_informations->public_and_private_informations.warehouse_playerMonster.size())
+            {
+                if(player_informations->public_and_private_informations.warehouse_playerMonster.at(sub_index).id==withdrawMonsters.at(index))
+                {
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("UPDATE monster SET warehouse!=1 WHERE id=%1;")
+                                         .arg(withdrawMonsters.at(index))
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("UPDATE monster SET warehouse!=1 WHERE id=%1;")
+                                         .arg(withdrawMonsters.at(index))
+                                         );
+                        break;
+                    }
+                    player_informations->public_and_private_informations.playerMonster << player_informations->public_and_private_informations.warehouse_playerMonster.at(sub_index);
+                    player_informations->public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
+                    break;
+                }
+                sub_index++;
+            }
+            index++;
+        }
+    }
+    {
+        int index=0;
+        while(index<depositeMonsters.size())
+        {
+            int sub_index=0;
+            while(sub_index<player_informations->public_and_private_informations.playerMonster.size())
+            {
+                if(player_informations->public_and_private_informations.playerMonster.at(sub_index).id==depositeMonsters.at(index))
+                {
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                                         .arg(withdrawMonsters.at(index))
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                                         .arg(withdrawMonsters.at(index))
+                                         );
+                        break;
+                    }
+                    player_informations->public_and_private_informations.warehouse_playerMonster << player_informations->public_and_private_informations.playerMonster.at(sub_index);
+                    player_informations->public_and_private_informations.playerMonster.removeAt(sub_index);
+                    break;
+                }
+                sub_index++;
+            }
+            index++;
+        }
+    }
+
+}
+
+bool LocalClientHandler::wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters) const
+{
+    //check all
+    if((cash>0 && (qint64)player_informations->public_and_private_informations.warehouse_cash<cash) || (cash<0 && (qint64)player_informations->public_and_private_informations.cash<-cash))
+    {
+        emit error("cash transfer is wrong");
+        return false;
+    }
+    {
+        int index=0;
+        while(index<items.size())
+        {
+            const QPair<quint32, qint32> &item=items.at(index);
+            if(item.second>0)
+            {
+                if(!player_informations->public_and_private_informations.warehouse_items.contains(item.first))
+                {
+                    emit error("warehouse item transfer is wrong due to missing");
+                    return false;
+                }
+                if((qint64)player_informations->public_and_private_informations.warehouse_items[item.first]<item.second)
+                {
+                    emit error("warehouse item transfer is wrong due to wrong quantity");
+                    return false;
+                }
+            }
+            if(item.second<0)
+            {
+                if(!player_informations->public_and_private_informations.items.contains(item.first))
+                {
+                    emit error("item transfer is wrong due to missing");
+                    return false;
+                }
+                if((qint64)player_informations->public_and_private_informations.items[item.first]<-item.second)
+                {
+                    emit error("item transfer is wrong due to wrong quantity");
+                    return false;
+                }
+            }
+            index++;
+        }
+    }
+    int count_change=0;
+    {
+        int index=0;
+        while(index<withdrawMonsters.size())
+        {
+            int sub_index=0;
+            while(sub_index<player_informations->public_and_private_informations.warehouse_playerMonster.size())
+            {
+                if(player_informations->public_and_private_informations.warehouse_playerMonster.at(sub_index).id==withdrawMonsters.at(index))
+                {
+                    count_change++;
+                    break;
+                }
+                sub_index++;
+            }
+            if(sub_index==player_informations->public_and_private_informations.warehouse_playerMonster.size())
+            {
+                emit error("no monster to withdraw");
+                return false;
+            }
+            index++;
+        }
+    }
+    {
+        int index=0;
+        while(index<depositeMonsters.size())
+        {
+            int sub_index=0;
+            while(sub_index<player_informations->public_and_private_informations.playerMonster.size())
+            {
+                if(player_informations->public_and_private_informations.playerMonster.at(sub_index).id==depositeMonsters.at(index))
+                {
+                    count_change--;
+                    break;
+                }
+                sub_index++;
+            }
+            if(sub_index==player_informations->public_and_private_informations.playerMonster.size())
+            {
+                emit error("no monster to deposite");
+                return false;
+            }
+            index++;
+        }
+    }
+    if((player_informations->public_and_private_informations.playerMonster.size()+count_change)>CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+    {
+        emit error("have more monster to withdraw than the allowed");
+        return false;
+    }
+    return true;
 }
 
 void LocalClientHandler::sendHandlerCommand(const QString &command,const QString &extraText)

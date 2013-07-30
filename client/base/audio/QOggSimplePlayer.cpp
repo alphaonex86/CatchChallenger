@@ -98,6 +98,7 @@ void QOggSimplePlayer::close()
         output->stop();
         delete output;
         output=NULL;
+        ov_clear(&vf);
     }
     buffer.close();
     /*do by ov_clear
@@ -106,7 +107,6 @@ void QOggSimplePlayer::close()
         fclose(file);
         file=NULL;
     }*/
-    ov_clear(&vf);
 }
 
 void QOggSimplePlayer::finishedPlaying(QAudio::State state)

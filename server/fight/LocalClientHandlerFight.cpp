@@ -704,11 +704,6 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
                 break;
             }
     }
-    else if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
-    {
-        if(!isInFight())
-            saveCurrentMonsterStat();
-    }
     return haveChangeOfLevel;
 }
 
@@ -791,6 +786,14 @@ bool LocalClientHandlerFight::dropKOMonster()
             playerMonster->buffs.clear();
             otherPlayerBattle->updateCanDoFight();
             battleReturn=true;
+        }
+    }
+    else
+    {
+        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+        {
+            if(!isInFight())
+                saveCurrentMonsterStat();
         }
     }
 

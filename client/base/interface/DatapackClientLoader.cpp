@@ -137,7 +137,7 @@ void DatapackClientLoader::parseItemsExtra()
                         DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra[id].image.scaled(72,72);//then zoom: 3x
 
                         //load the name
-                        DatapackClientLoader::itemsExtra[id].name=tr("Unknow object");
+                        bool name_found=false;
                         QDomElement name = item.firstChildElement("name");
                         while(!name.isNull())
                         {
@@ -148,27 +148,54 @@ void DatapackClientLoader::parseItemsExtra()
                                     if(name.attribute("lang")=="en")
                                     {
                                         DatapackClientLoader::itemsExtra[id].name=name.text();
+                                        name_found=true;
                                         break;
                                     }
+                                }
+                                else
+                                {
+                                    DatapackClientLoader::itemsExtra[id].name=name.text();
+                                    name_found=true;
+                                    break;
                                 }
                             }
                             name = name.nextSiblingElement("name");
                         }
+                        if(!name_found)
+                        {
+                            DatapackClientLoader::itemsExtra[id].name=tr("Unknown object");
+                            qDebug() << QString("English name not found for the item with id: %1").arg(id);
+                        }
 
                         //load the description
-                        DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
+                        bool description_found=false;
                         QDomElement description = item.firstChildElement("description");
                         while(!description.isNull())
                         {
                             if(description.isElement())
                             {
-                                if(!description.hasAttribute("lang"))
+                                if(description.hasAttribute("lang"))
+                                {
+                                    if(name.attribute("lang")=="en")
+                                    {
+                                        DatapackClientLoader::itemsExtra[id].description=description.text();
+                                        description_found=true;
+                                        break;
+                                    }
+                                }
+                                else
                                 {
                                     DatapackClientLoader::itemsExtra[id].description=description.text();
+                                    description_found=true;
                                     break;
                                 }
                             }
                             description = description.nextSiblingElement("description");
+                        }
+                        if(!description_found)
+                        {
+                            DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
+                            qDebug() << QString("English description not found for the item with id: %1").arg(id);
                         }
                     }
                     else
@@ -185,7 +212,7 @@ void DatapackClientLoader::parseItemsExtra()
         item = item.nextSiblingElement("item");
     }
 
-    qDebug() << QString("%1 item(s) loaded").arg(DatapackClientLoader::itemsExtra.size());
+    qDebug() << QString("%1 item(s) extra loaded").arg(DatapackClientLoader::itemsExtra.size());
 }
 
 void DatapackClientLoader::parseMaps()
@@ -205,7 +232,7 @@ void DatapackClientLoader::parseMaps()
     }
     maps.sort();
 
-    qDebug() << QString("%1 map(s) loaded").arg(maps.size());
+    qDebug() << QString("%1 map(s) extra loaded").arg(maps.size());
 }
 
 void DatapackClientLoader::parseSkins()

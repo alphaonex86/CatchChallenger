@@ -29,6 +29,8 @@ BaseServer::BaseServer()
     qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
     qRegisterMetaType<Direction>("Direction");
     qRegisterMetaType<QuestAction>("QuestAction");
+    qRegisterMetaType<QList<QPair<quint32,qint32> > >("QList<QPair<quint32,qint32> >");
+    qRegisterMetaType<QList<qint32> >("QList<quint32>");
 
     GlobalServerData::serverPrivateVariables.connected_players	= 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;

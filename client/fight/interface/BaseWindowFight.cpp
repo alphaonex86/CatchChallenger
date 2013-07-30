@@ -208,7 +208,9 @@ void BaseWindow::init_current_monster_display()
         ui->progressBarFightBottomHP->setMaximum(fightStat.hp);
         ui->progressBarFightBottomHP->setValue(fightMonster->hp);
         ui->labelFightBottomHP->setText(QString("%1/%2").arg(fightMonster->hp).arg(fightStat.hp));
-        ui->progressBarFightBottopExp->setMaximum(CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster].level_to_xp.at(fightMonster->level-1));
+        const Monster &monsterGenericInfo=CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster];
+        int level_to_xp=monsterGenericInfo.level_to_xp.at(fightMonster->level-1);
+        ui->progressBarFightBottopExp->setMaximum(level_to_xp);
         ui->progressBarFightBottopExp->setValue(fightMonster->remaining_xp);
     }
     else
@@ -316,6 +318,9 @@ void BaseWindow::updateCurrentMonsterInformation()
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
     ui->frameFightBottom->setVisible(true);
     ui->frameFightBottom->show();
+    const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[monster->monster];
+    ui->progressBarFightBottopExp->setMaximum(currentmonster.level_to_xp.at(monster->level-1));
+    ui->progressBarFightBottopExp->setValue(monster->remaining_xp);
     //list the attack
     fight_attacks_graphical.clear();
     ui->listWidgetFightAttack->clear();
@@ -611,7 +616,7 @@ void BaseWindow::doNextAction()
         doNextActionStep=DoNextActionStep_Start;
         if(!escapeSuccess)
         {//the other attack
-            escape=false;
+            escape=false;//need be dropped to have text to escape
             fightTimerFinish=false;
             CatchChallenger::ClientFightEngine::fightEngine.generateOtherAttack();
             if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
@@ -653,7 +658,7 @@ void BaseWindow::doNextAction()
                 return;
             }
             PublicPlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-            if(otherMonster==NULL)
+            if(currentMonster==NULL)
             {
                 emit error("NULL pointer for other monster at doNextAction()");
                 return;
@@ -769,7 +774,12 @@ void BaseWindow::doNextAction()
         qDebug() << "doNextAction(): you win";
         doNextActionStep=DoNextActionStep_Win;
         if(!escape)
+        {
+            PlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+            if(currentMonster!=NULL)
+                ui->progressBarFightBottopExp->setValue(currentMonster->remaining_xp);
             displayText(tr("You win!"));
+        }
         else
         {
             if(escapeSuccess)

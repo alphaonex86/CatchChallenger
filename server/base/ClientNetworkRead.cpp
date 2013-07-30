@@ -533,6 +533,87 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                 case 0x0005:
                     emit tradeCanceled();
                 break;
+                //deposite/withdraw to the warehouse
+                case 0x0006:
+                {
+                    qint64 cash;
+                    QList<QPair<quint32, qint32> > items;
+                    QList<quint32> withdrawMonsters;
+                    QList<quint32> depositeMonsters;
+                    if((data.size()-in.device()->pos())<((int)sizeof(qint64)))
+                    {
+                        parseError("wrong remaining size for trade add monster");
+                        return;
+                    }
+                    in >> cash;
+                    quint32 size;
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for trade add monster");
+                        return;
+                    }
+                    in >> size;
+                    quint32 index=0;
+                    while(index<size)
+                    {
+                        quint32 id;
+                        if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                        {
+                            parseError("wrong remaining size for trade add monster");
+                            return;
+                        }
+                        in >> id;
+                        qint32 quantity;
+                        if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                        {
+                            parseError("wrong remaining size for trade add monster");
+                            return;
+                        }
+                        in >> quantity;
+                        items << QPair<quint32, qint32>(id,quantity);
+                        index++;
+                    }
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for trade add monster");
+                        return;
+                    }
+                    in >> size;
+                    index=0;
+                    while(index<size)
+                    {
+                        quint32 id;
+                        if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                        {
+                            parseError("wrong remaining size for trade add monster");
+                            return;
+                        }
+                        in >> id;
+                        withdrawMonsters << id;
+                        index++;
+                    }
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for trade add monster");
+                        return;
+                    }
+                    in >> size;
+                    index=0;
+                    while(index<size)
+                    {
+                        quint32 id;
+                        if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                        {
+                            parseError("wrong remaining size for trade add monster");
+                            return;
+                        }
+                        in >> id;
+                        depositeMonsters << id;
+                        index++;
+                    }
+                    emit wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);
+                }
+                break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;

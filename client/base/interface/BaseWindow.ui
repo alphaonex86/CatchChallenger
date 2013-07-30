@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>8</number>
+        <number>13</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -3464,6 +3464,9 @@ padding:6px 6px 6px 14px;
            <property name="movement">
             <enum>QListView::Static</enum>
            </property>
+           <property name="uniformItemSizes">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -4186,9 +4189,9 @@ padding-bottom:3px;
             </spacer>
            </item>
            <item>
-            <widget class="QSpinBox" name="spinBox">
-             <property name="maximum">
-              <number>999999999</number>
+            <widget class="QLabel" name="warehousePlayerCash">
+             <property name="text">
+              <string>Cash: 0</string>
              </property>
             </widget>
            </item>
@@ -4207,6 +4210,18 @@ padding-bottom:3px;
            </item>
            <item>
             <widget class="QPushButton" name="warehouseWithdrawCash">
+             <property name="minimumSize">
+              <size>
+               <width>25</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>25</width>
+               <height>25</height>
+              </size>
+             </property>
              <property name="text">
               <string notr="true">&lt;</string>
              </property>
@@ -4214,6 +4229,18 @@ padding-bottom:3px;
            </item>
            <item>
             <widget class="QPushButton" name="warehouseDepositCash">
+             <property name="minimumSize">
+              <size>
+               <width>25</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>25</width>
+               <height>25</height>
+              </size>
+             </property>
              <property name="text">
               <string notr="true">&gt;</string>
              </property>
@@ -4233,9 +4260,9 @@ padding-bottom:3px;
             </spacer>
            </item>
            <item>
-            <widget class="QSpinBox" name="spinBox_2">
-             <property name="maximum">
-              <number>999999999</number>
+            <widget class="QLabel" name="warehousePlayerStoredCash">
+             <property name="text">
+              <string>Cash: 0</string>
              </property>
             </widget>
            </item>
@@ -4257,7 +4284,14 @@ padding-bottom:3px;
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_43">
            <item>
-            <widget class="QListWidget" name="listWidget"/>
+            <widget class="QListWidget" name="warehousePlayerInventory">
+             <property name="movement">
+              <enum>QListView::Static</enum>
+             </property>
+             <property name="viewMode">
+              <enum>QListView::IconMode</enum>
+             </property>
+            </widget>
            </item>
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_24">
@@ -4278,6 +4312,18 @@ padding-bottom:3px;
               <layout class="QHBoxLayout" name="horizontalLayout_40">
                <item>
                 <widget class="QPushButton" name="warehouseWithdrawItem">
+                 <property name="minimumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
                  <property name="text">
                   <string notr="true">&lt;</string>
                  </property>
@@ -4285,6 +4331,18 @@ padding-bottom:3px;
                </item>
                <item>
                 <widget class="QPushButton" name="warehouseDepositItem">
+                 <property name="minimumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
                  <property name="text">
                   <string notr="true">&gt;</string>
                  </property>
@@ -4308,14 +4366,34 @@ padding-bottom:3px;
             </layout>
            </item>
            <item>
-            <widget class="QListView" name="listView_2"/>
+            <widget class="QListWidget" name="warehousePlayerStoredInventory">
+             <property name="movement">
+              <enum>QListView::Static</enum>
+             </property>
+             <property name="viewMode">
+              <enum>QListView::IconMode</enum>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_44">
            <item>
-            <widget class="QListView" name="listView"/>
+            <widget class="QListWidget" name="warehousePlayerMonster">
+             <property name="iconSize">
+              <size>
+               <width>80</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="movement">
+              <enum>QListView::Static</enum>
+             </property>
+             <property name="viewMode">
+              <enum>QListView::IconMode</enum>
+             </property>
+            </widget>
            </item>
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_25">
@@ -4336,6 +4414,18 @@ padding-bottom:3px;
               <layout class="QHBoxLayout" name="horizontalLayout_41">
                <item>
                 <widget class="QPushButton" name="warehouseWithdrawMonster">
+                 <property name="minimumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
                  <property name="text">
                   <string notr="true">&lt;</string>
                  </property>
@@ -4343,6 +4433,18 @@ padding-bottom:3px;
                </item>
                <item>
                 <widget class="QPushButton" name="warehouseDepositMonster">
+                 <property name="minimumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
                  <property name="text">
                   <string notr="true">&gt;</string>
                  </property>
@@ -4366,7 +4468,20 @@ padding-bottom:3px;
             </layout>
            </item>
            <item>
-            <widget class="QListView" name="listView_3"/>
+            <widget class="QListWidget" name="warehousePlayerStoredMonster">
+             <property name="iconSize">
+              <size>
+               <width>80</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="movement">
+              <enum>QListView::Static</enum>
+             </property>
+             <property name="viewMode">
+              <enum>QListView::IconMode</enum>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
