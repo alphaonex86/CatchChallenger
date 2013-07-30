@@ -191,7 +191,7 @@ void MainWindow::on_botListAdd_clicked()
     botFiles[id]=tempBot;
     QDomElement newXmlElement=domDocument.createElement("bot");
     newXmlElement.setAttribute("id",id);
-    domDocument.appendChild(newXmlElement);
+    domDocument.documentElement().appendChild(newXmlElement);
     updateBotList();
 }
 
@@ -238,19 +238,6 @@ void MainWindow::on_botListDelete_clicked()
     updateBotList();
 }
 
-void MainWindow::on_botList_itemActivated(QListWidgetItem *item)
-{
-    selectedBot=item->data(99).toUInt();
-    if(!botFiles.contains(selectedBot))
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Unable to select the bot, because the returned id is not into the list"));
-        return;
-    }
-    ui->stepListTitle->setText(tr("Step list for the bot: %1").arg(item->text()));
-    updateStepList();
-    ui->stackedWidget->setCurrentWidget(ui->page_step_list);
-}
-
 void MainWindow::on_botListEdit_clicked()
 {
     QList<QListWidgetItem *> selectedItems=ui->botList->selectedItems();
@@ -259,7 +246,7 @@ void MainWindow::on_botListEdit_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Select a bot into the bot list"));
         return;
     }
-    on_botList_itemActivated(selectedItems.first());
+    on_botList_itemDoubleClicked(selectedItems.first());
 }
 
 void MainWindow::updateStepList()
@@ -289,7 +276,7 @@ void MainWindow::on_stepListAdd_clicked()
     while(botFiles[selectedBot].step.contains(index))
         index++;
     bool ok;
-    int id=QInputDialog::getInt(this,tr("Id of the bot"),tr("Give the id for the new bot"),index,index,2147483647,1,&ok);
+    int id=QInputDialog::getInt(this,tr("Id of the step"),tr("Give the id for the new step"),index,index,2147483647,1,&ok);
     if(botFiles[selectedBot].step.contains(id))
     {
         QMessageBox::warning(this,tr("Error"),tr("Sorry but this id is already taken"));
@@ -310,7 +297,7 @@ void MainWindow::on_stepListAdd_clicked()
             quint8 tempId=child.attribute("id").toUShort(&ok);
             if(ok)
             {
-                if(tempId==id)
+                if(tempId==selectedBot)
                 {
                     child.appendChild(botFiles[selectedBot].step[id]);
                     break;
@@ -321,15 +308,19 @@ void MainWindow::on_stepListAdd_clicked()
         }
         child = child.nextSiblingElement("bot");
     }
+    //load the edit
     editStep(id);
     updateStepList();
     if(id==1)
+    {
         updateBotList();
+        ui->stepListTitle->setText(tr("Step list for the bot: %1").arg(selectedBot));
+    }
 }
 
 void MainWindow::on_stepListDelete_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->botList->selectedItems();
+    QList<QListWidgetItem *> selectedItems=ui->stepList->selectedItems();
     if(selectedItems.size()!=1)
     {
         QMessageBox::warning(this,tr("Error"),tr("Select a step into the step list"));
@@ -348,26 +339,15 @@ void MainWindow::on_stepListDelete_clicked()
         updateBotList();
 }
 
-void MainWindow::on_stepList_itemActivated(QListWidgetItem *item)
-{
-    quint8 id=item->data(99).toUInt();
-    if(!botFiles[selectedBot].step.contains(id))
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Unable to select the step, because the returned id is not into the list"));
-        return;
-    }
-    editStep(id);
-}
-
 void MainWindow::on_stepListEdit_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->botList->selectedItems();
+    QList<QListWidgetItem *> selectedItems=ui->stepList->selectedItems();
     if(selectedItems.size()!=1)
     {
         QMessageBox::warning(this,tr("Error"),tr("Select a step into the bot list"));
         return;
     }
-    on_botList_itemActivated(selectedItems.first());
+    on_stepList_itemDoubleClicked(selectedItems.first());
 }
 
 void MainWindow::on_stepListBack_clicked()
@@ -383,7 +363,6 @@ void MainWindow::on_stepEditBack_clicked()
 void MainWindow::editStep(quint8 id)
 {
     selectedStep=id;
-    ui->stackedWidget->setCurrentWidget(ui->page_step_edit);
     QDomElement step=botFiles[selectedBot].step[selectedStep];
     bool needType=false;
     if(!step.hasAttribute("type"))
@@ -478,6 +457,7 @@ void MainWindow::editStep(quint8 id)
         QMessageBox::warning(this,tr("Error"),tr("Error during loading the step"));
         return;
     }
+    ui->stackedWidget->setCurrentWidget(ui->page_step_edit);
 }
 
 void MainWindow::updateTextDisplayed()
@@ -595,4 +575,28 @@ void MainWindow::on_botFileSave_clicked()
     xmlFile.write(domDocument.toByteArray(4));
     xmlFile.close();
     QMessageBox::information(this,tr("Saved"),tr("The file have been correctly saved"));
+}
+
+void MainWindow::on_botList_itemDoubleClicked(QListWidgetItem *item)
+{
+    selectedBot=item->data(99).toUInt();
+    if(!botFiles.contains(selectedBot))
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Unable to select the bot, because the returned id is not into the list"));
+        return;
+    }
+    ui->stepListTitle->setText(tr("Step list for the bot: %1").arg(item->text()));
+    updateStepList();
+    ui->stackedWidget->setCurrentWidget(ui->page_step_list);
+}
+
+void MainWindow::on_stepList_itemDoubleClicked(QListWidgetItem *item)
+{
+    quint8 id=item->data(99).toUInt();
+    if(!botFiles[selectedBot].step.contains(id))
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Unable to select the step, because the returned id is not into the list"));
+        return;
+    }
+    editStep(id);
 }
