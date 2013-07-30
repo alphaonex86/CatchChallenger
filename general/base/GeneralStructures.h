@@ -90,6 +90,17 @@ struct Item
     quint32 price;
 };
 
+struct Trap
+{
+    quint8 min_level,max_level;
+};
+
+struct ItemFull
+{
+    QHash<quint32, Item> item;
+    QHash<quint32, Trap> trap;
+};
+
 enum ObjectUsage
 {
     ObjectUsage_correctlyUsed=0x01,//is correctly used

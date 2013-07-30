@@ -837,9 +837,9 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
     return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
 }
 
-QHash<quint32, Item> DatapackGeneralLoader::loadItems(const QString &folder)
+ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
 {
-    QHash<quint32, Item> items;
+    ItemFull items;
     //open and quick check the file
     QFile itemsFile(folder+"items.xml");
     QByteArray xmlContent;
@@ -877,24 +877,57 @@ QHash<quint32, Item> DatapackGeneralLoader::loadItems(const QString &folder)
                 quint32 id=item.attribute("id").toULongLong(&ok);
                 if(ok)
                 {
-                    if(!items.contains(id))
+                    if(!items.item.contains(id))
                     {
                         //load the price
-                        if(item.hasAttribute("price"))
                         {
-                            bool ok;
-                            items[id].price=item.attribute("price").toUInt(&ok);
-                            if(!ok)
+                            if(item.hasAttribute("price"))
                             {
-                                qDebug() << QString("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
-                                items[id].price=0;
+                                bool ok;
+                                items.item[id].price=item.attribute("price").toUInt(&ok);
+                                if(!ok)
+                                {
+                                    qDebug() << QString("price is not a number: child.tagName(): %1 (at line: %2)").arg(item.tagName()).arg(item.lineNumber());
+                                    items.item[id].price=0;
+                                }
+                            }
+                            else
+                            {
+                                if(!item.hasAttribute("quest") || item.attribute("quest")!="yes")
+                                    qDebug() << QString("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(itemsFile.fileName()).arg(item.lineNumber());
+                                items.item[id].price=0;
                             }
                         }
-                        else
+                        //load the trap
                         {
-                            if(!item.hasAttribute("quest") || item.attribute("quest")!="yes")
-                                qDebug() << QString("For parse item: Price not found, default to 0 (not sellable): child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(itemsFile.fileName()).arg(item.lineNumber());
-                            items[id].price=0;
+                            QDomElement trap = item.firstChildElement("trap");
+                            if(!trap.isNull())
+                            {
+                                if(trap.isElement())
+                                {
+                                    if(trap.hasAttribute("min_level") && trap.hasAttribute("max_level"))
+                                    {
+                                        quint8 min_level=trap.attribute("min_level").toUShort(&ok);
+                                        if(ok)
+                                        {
+                                            quint8 max_level=trap.attribute("max_level").toUShort(&ok);
+                                            if(ok)
+                                            {
+                                                Trap trap;
+                                                trap.min_level=min_level;
+                                                trap.max_level=max_level;
+                                                items.trap[id]=trap;
+                                            }
+                                            else
+                                                qDebug() << QString("Unable to open the file: %1, max_level is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
+                                        }
+                                        else
+                                            qDebug() << QString("Unable to open the file: %1, min_level is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
+                                    }
+                                    else
+                                        qDebug() << QString("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
+                                }
+                            }
                         }
                     }
                     else

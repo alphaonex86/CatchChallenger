@@ -196,14 +196,16 @@ void ClientFightEngine::resetAll()
 
 bool ClientFightEngine::internalTryEscape()
 {
-    if(wildMonsters.isEmpty())
-    {
-        qDebug() << "No wild monster to internal escape";
-        return false;
-    }
     qDebug() << "BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()";
     CatchChallenger::Api_client_real::client->tryEscape();
     return CommonFightEngine::internalTryEscape();
+}
+
+bool ClientFightEngine::tryCapture(const quint32 &item)
+{
+    qDebug() << "ClientFightEngine::tryCapture(): emit tryCapture()";
+    CatchChallenger::Api_client_real::client->useObject(item);
+    return CommonFightEngine::tryCapture(item);
 }
 
 Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)

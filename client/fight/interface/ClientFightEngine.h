@@ -52,6 +52,7 @@ private:
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();
+    bool tryCapture(const quint32 &item);
     void addXPSP();
 private:
     explicit ClientFightEngine();

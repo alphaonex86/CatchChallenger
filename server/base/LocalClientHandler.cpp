@@ -906,7 +906,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
             return;
         }
-        if(!CommonDatapack::commonDatapack.items.contains(objectId))
+        if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
             return;
@@ -942,7 +942,7 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(!CommonDatapack::commonDatapack.items.contains(objectId))
+        if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
         {
             emit receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;
@@ -1228,6 +1228,27 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
                 break;
             }
         }
+        //use trap into fight
+        else if(CommonDatapack::commonDatapack.items.trap.contains(itemId))
+        {
+            if(!localClientHandlerFight.isInFight())
+            {
+                emit error(QString("is not in fight to use trap").arg(itemId));
+                return;
+            }
+            if(!localClientHandlerFight.isInFightWithWild())
+            {
+                emit error(QString("is not in fight with wild to use trap").arg(itemId));
+                return;
+            }
+            localClientHandlerFight.tryCapture(itemId);
+            //send the network reply
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)ObjectUsage_correctlyUsed;
+            emit postReply(query_id,outputData);
+        }
         else
         {
             emit error(QString("can't use the object: %1 because don't have an usage").arg(itemId));
@@ -1367,10 +1388,10 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
     int objectCount=0;
     while(index<items.size())
     {
-        if(CommonDatapack::commonDatapack.items[items.at(index)].price>0)
+        if(CommonDatapack::commonDatapack.items.item[items.at(index)].price>0)
         {
             out2 << (quint32)items.at(index);
-            out2 << (quint32)CommonDatapack::commonDatapack.items[items.at(index)].price;
+            out2 << (quint32)CommonDatapack::commonDatapack.items.item[items.at(index)].price;
             out2 << (quint32)0;
             objectCount++;
         }
@@ -1479,27 +1500,27 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
         emit postReply(query_id,outputData);
         return;
     }
-    if(CommonDatapack::commonDatapack.items[objectId].price==0)
+    if(CommonDatapack::commonDatapack.items.item[objectId].price==0)
     {
         out << (quint8)BuyStat_HaveNotQuantity;
         emit postReply(query_id,outputData);
         return;
     }
-    if(CommonDatapack::commonDatapack.items[objectId].price>price)
+    if(CommonDatapack::commonDatapack.items.item[objectId].price>price)
     {
         out << (quint8)BuyStat_PriceHaveChanged;
         emit postReply(query_id,outputData);
         return;
     }
-    if(CommonDatapack::commonDatapack.items[objectId].price<price)
+    if(CommonDatapack::commonDatapack.items.item[objectId].price<price)
     {
         out << (quint8)BuyStat_BetterPrice;
-        out << (quint32)CommonDatapack::commonDatapack.items[objectId].price;
+        out << (quint32)CommonDatapack::commonDatapack.items.item[objectId].price;
     }
     else
         out << (quint8)BuyStat_Done;
-    if(player_informations->public_and_private_informations.cash>=(CommonDatapack::commonDatapack.items[objectId].price*quantity))
-        removeCash(CommonDatapack::commonDatapack.items[objectId].price*quantity);
+    if(player_informations->public_and_private_informations.cash>=(CommonDatapack::commonDatapack.items.item[objectId].price*quantity))
+        removeCash(CommonDatapack::commonDatapack.items.item[objectId].price*quantity);
     else
     {
         emit error(QString("The player have not the cash to buy %1 item of id: %2").arg(quantity).arg(objectId));
@@ -1601,7 +1622,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    if(!CommonDatapack::commonDatapack.items.contains(objectId))
+    if(!CommonDatapack::commonDatapack.items.item.contains(objectId))
     {
         emit error("this item don't exists");
         return;
@@ -1611,7 +1632,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
         emit error("you have not this quantity to sell");
         return;
     }
-    quint32 realPrice=CommonDatapack::commonDatapack.items[objectId].price/2;
+    quint32 realPrice=CommonDatapack::commonDatapack.items.item[objectId].price/2;
     if(realPrice<price)
     {
         out << (quint8)SoldStat_PriceHaveChanged;
