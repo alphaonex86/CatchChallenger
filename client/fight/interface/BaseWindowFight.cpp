@@ -1007,6 +1007,87 @@ void BaseWindow::displayAttack()
     }
 }
 
+void BaseWindow::displayTrap()
+{
+    PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+    PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(otherMonster==NULL)
+    {
+        error("displayAttack(): crash: unable to get the other monster");
+        doNextAction();
+        return;
+    }
+    if(currentMonster==NULL)
+    {
+        newError(tr("Internal error"),"displayAttack(): crash: unable to get the current monster");
+        doNextAction();
+        return;
+    }
+    //if start, display text
+    if(displayAttackProgression==0)
+    {
+        if(movie!=NULL)
+        {
+            movie->stop();
+            delete movie;
+        }
+        QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_ITEM;
+        QString fileAnimation=skillAnimation+QString("%1.mng").arg(trapItemId);
+        movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
+        if(movie->isValid())
+        {
+            ui->labelFightTrap->setMovie(movie);
+            movie->start();
+        }
+        else
+            qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+        ui->labelFightEnter->setText(QString("Try capture the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+        displayTrapProgression=1;
+    }
+    if(displayTrapProgression==1)
+        ui->labelFightTrap->move(
+                    ui->labelFightMonsterBottom->pos().x+(ui->labelFightMonsterTop->pos().x-ui->labelFightMonsterBottom->pos().x)*movie->currentFrameNumber()/movie->frameCount(),
+                    ui->labelFightMonsterBottom->pos().y-(ui->labelFightMonsterBottom->pos().y-ui->labelFightMonsterTop->pos().y)*movie->currentFrameNumber()/movie->frameCount()
+                    );
+    else
+        ui->labelFightTrap->move(ui->labelFightMonsterTop->pos().x,ui->labelFightMonsterTop->pos().y);
+    if(movie->state()!=QMovie::Running || movie->loopCount()>0)
+    {
+        if(displayTrapProgression==1)
+        {
+            displayTrapProgression=2;
+            if(movie!=NULL)
+            {
+                movie->stop();
+                delete movie;
+            }
+            QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_ITEM;
+            QString fileAnimation;
+            if(trapSuccess)
+                fileAnimation=skillAnimation+QString("%1_success.mng").arg(trapItemId);
+            else
+                fileAnimation=skillAnimation+QString("%1_failed.mng").arg(trapItemId);
+            movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
+            if(movie->isValid())
+            {
+                ui->labelFightTrap->setMovie(movie);
+                movie->start();
+            }
+            else
+                qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+        }
+        else
+        {
+            if(trapSuccess)
+                displayText(tr("You have captured the monster"));
+            else
+                displayText(tr("You have failed the capture"));
+        }
+        return;
+    }
+    displayTrapTimer.start();
+}
+
 void BaseWindow::displayText(const QString &text)
 {
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
@@ -1227,4 +1308,12 @@ void CatchChallenger::BaseWindow::on_listWidgetFightAttack_itemActivated(QListWi
 {
     Q_UNUSED(item);
     on_pushButtonFightAttackConfirmed_clicked();
+}
+
+void CatchChallenger::BaseWindow::useTrap(const quint32 &itemId)
+{
+    displayAttackProgression=0;
+    trapItemId=itemId;
+    trapSuccess=CatchChallenger::ClientFightEngine::fightEngine.tryCapture(itemId);
+    displayTrap();
 }

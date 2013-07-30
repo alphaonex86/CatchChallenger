@@ -43,12 +43,13 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
 void CommonDatapack::parseItems()
 {
     items=DatapackGeneralLoader::loadItems(datapackPath+DATAPACK_BASE_PATH_ITEM);
-    qDebug() << QString("%1 items(s) loaded").arg(items.size());
+    qDebug() << QString("%1 items(s) loaded").arg(items.item.size());
+    qDebug() << QString("%1 trap(s) loaded").arg(items.trap.size());
 }
 
 void CommonDatapack::parseCraftingRecipes()
 {
-    QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items);
+    QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items.item);
     crafingRecipes=multipleVariables.first;
     itemToCrafingRecipes=multipleVariables.second;
     qDebug() << QString("%1 crafting recipe(s) loaded").arg(crafingRecipes.size());
@@ -110,7 +111,8 @@ void CommonDatapack::unload()
     monsterSkills.clear();
     monsterBuffs.clear();
     itemToCrafingRecipes.clear();
-    items.clear();
+    items.item.clear();
+    items.trap.clear();
     isParsed=false;
 }
 

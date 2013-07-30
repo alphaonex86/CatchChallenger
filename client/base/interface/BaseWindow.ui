@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>13</number>
+        <number>8</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2858,7 +2858,7 @@ padding-bottom:3px;
           <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageEnter">
           <layout class="QHBoxLayout" name="horizontalLayout_22">
@@ -2927,9 +2927,6 @@ padding-bottom:3px;
              </item>
              <item>
               <widget class="QPushButton" name="pushButtonFightBag">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
                <property name="text">
                 <string>Bag</string>
                </property>
@@ -3444,6 +3441,28 @@ padding:6px 6px 6px 14px;
           </property>
           <property name="scaledContents">
            <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QLabel" name="labelFightTrap">
+          <property name="geometry">
+           <rect>
+            <x>280</x>
+            <y>230</y>
+            <width>160</width>
+            <height>160</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>160</height>
+           </size>
           </property>
          </widget>
         </widget>

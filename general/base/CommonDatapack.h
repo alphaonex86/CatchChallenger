@@ -32,7 +32,7 @@ public:
     QHash<quint32,Monster> monsters;
     QHash<quint32,Skill> monsterSkills;
     QHash<quint32,Buff> monsterBuffs;
-    QHash<quint32,Item> items;
+    ItemFull items;
 private:
     QMutex inProgress;
     bool isParsed;

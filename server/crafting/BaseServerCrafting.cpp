@@ -173,7 +173,7 @@ void BaseServerCrafting::preload_shop()
                                         DebugClass::debugConsole(QString("preload_shop() product attribute itemId is not a number for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                     else
                                     {
-                                        if(!CommonDatapack::commonDatapack.items.contains(itemId))
+                                        if(!CommonDatapack::commonDatapack.items.item.contains(itemId))
                                             DebugClass::debugConsole(QString("preload_shop() product itemId in not into items list for shops file: %1, child.tagName(): %2 (at line: %3)").arg(shopFile.fileName()).arg(shopItem.tagName()).arg(shopItem.lineNumber()));
                                         else
                                             shop.items << itemId;

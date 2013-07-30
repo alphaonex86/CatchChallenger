@@ -197,6 +197,11 @@ void BaseWindow::load_inventory()
                     if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i.key()))
                         show=true;
                 break;
+                case ObjectType_UseInFight:
+                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
+                        if(CommonDatapack::commonDatapack.items.trap.contains(i.key()))
+                            show=true;
+                break;
                 default:
                 qDebug() << "waitedObjectType is unknow into load_inventory()";
                 break;

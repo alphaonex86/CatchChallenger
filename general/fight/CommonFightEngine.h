@@ -20,6 +20,7 @@ public:
     virtual void resetAll();
     virtual void setVariable(Player_private_and_public_informations *player_informations);
     virtual bool isInFight() const;
+    bool isInFightWithWild() const;
     virtual bool getAbleToFight() const;
     bool haveMonsters() const;
     static Monster::Stat getStat(const Monster &monster, const quint8 &level);
@@ -61,6 +62,8 @@ protected:
     void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
     virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
+    bool internalTryCapture(const Trap &trap);
+    virtual bool tryCapture(const quint32 &item);
     virtual void fightFinished();
     virtual void wildDrop(const quint32 &monster);
     virtual bool checkKOOtherMonstersForGain();

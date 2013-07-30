@@ -61,6 +61,8 @@ BaseWindow::BaseWindow() :
     moveFightMonsterBothTimer.setInterval(20);
     displayAttackTimer.setSingleShot(true);
     displayAttackTimer.setInterval(50);
+    displayTrapTimer.setSingleShot(true);
+    displayTrapTimer.setInterval(50);
     doNextActionTimer.setSingleShot(true);
     doNextActionTimer.setInterval(1500);
 
@@ -110,6 +112,7 @@ BaseWindow::BaseWindow() :
     connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
     connect(&moveFightMonsterBothTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBoth()));
     connect(&displayAttackTimer,SIGNAL(timeout()),this,SLOT(displayAttack()));
+    connect(&displayTrapTimer,SIGNAL(timeout()),this,SLOT(displayTrap()));
     connect(&doNextActionTimer,SIGNAL(timeout()),this,SLOT(doNextAction()));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),Qt::QueuedConnection);
 
@@ -432,6 +435,12 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             ui->stackedWidget->setCurrentWidget(ui->page_inventory);
             on_listCraftingList_itemSelectionChanged();
         break;
+        case ObjectType_UseInFight:
+            ui->inventoryUse->setText(tr("Select"));
+            ui->inventoryUse->setVisible(true);
+            ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+            load_inventory();
+        break;
     }
 }
 
@@ -461,7 +470,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             ItemToSellOrBuy tempItem;
             tempItem.object=itemId;
             tempItem.quantity=quantity;
-            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items[itemId].price/2;
+            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.item[itemId].price/2;
             itemsToSell << tempItem;
             CatchChallenger::Api_client_real::client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
@@ -576,6 +585,27 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             }
             else
                 qDebug() << QString("seed not found for item: %1").arg(itemId);
+        break;
+        case ObjectType_UseInFight:
+        {
+            ui->stackedWidget->setCurrentWidget(ui->page_battle);
+            if(!ok)
+                break;
+            if(!items.contains(itemId))
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(items[itemId]<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            items[itemId]-=quantity;
+            if(items[itemId]==0)
+                items.remove(itemId);
+            useTrap(itemId);
+        }
         break;
         default:
         qDebug() << "waitedObjectType is unknow";
@@ -2216,13 +2246,13 @@ void BaseWindow::displaySellList()
             if(i.value()>1)
                 item->setText(tr("%1\nPrice: %2$, quantity: %3")
                         .arg(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name)
-                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items[i.key()].price/2)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item[i.key()].price/2)
                         .arg(i.value())
                         );
             else
                 item->setText(tr("%1\nPrice: %2$")
                         .arg(DatapackClientLoader::datapackLoader.itemsExtra[i.key()].name)
-                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items[i.key()].price/2)
+                        .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item[i.key()].price/2)
                         );
             ui->shopItemList->addItem(item);
         }
@@ -2329,7 +2359,7 @@ void BaseWindow::on_pushButton_interface_monsters_clicked()
 
 void BaseWindow::on_toolButton_monster_list_quit_clicked()
 {
-    if(waitedObjectType==ObjectType_MonsterToTrade || waitedObjectType==ObjectType_MonsterToLearn)
+    if(waitedObjectType==ObjectType_MonsterToTrade || waitedObjectType==ObjectType_MonsterToLearn || waitedObjectType==ObjectType_UseInFight)
     {
         if(inSelection)
         {
@@ -2680,4 +2710,9 @@ void CatchChallenger::BaseWindow::on_warehouseValidate_clicked()
     }
     load_monsters();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void CatchChallenger::BaseWindow::on_pushButtonFightBag_clicked()
+{
+    selectObject(ObjectType_UseInFight);
 }

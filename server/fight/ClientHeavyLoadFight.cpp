@@ -85,7 +85,7 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.captured_with=monstersQuery.value(6).toUInt(&ok);
             if(ok)
             {
-                if(!CommonDatapack::commonDatapack.items.contains(playerMonster.captured_with))
+                if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.captured_with))
                     emit message(QString("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
             }
             else
