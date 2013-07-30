@@ -2942,6 +2942,40 @@ void Api_protocol::useObject(const quint32 &object)
     output->packOutcommingQuery(0x10,0x0009,queryNumber(),outputData);
 }
 
+void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << cash;
+
+    out << (quint32)items.size();
+    int index=0;
+    while(index<items.size())
+    {
+        out << (quint32)items.at(index).first;
+        out << (qint32)items.at(index).second;
+        index++;
+    }
+
+    out << (quint32)withdrawMonsters.size();
+    index=0;
+    while(index<withdrawMonsters.size())
+    {
+        out << (quint32)withdrawMonsters.at(index);
+        index++;
+    }
+    out << (quint32)depositeMonsters.size();
+    index=0;
+    while(index<depositeMonsters.size())
+    {
+        out << (quint32)depositeMonsters.at(index);
+        index++;
+    }
+
+    output->packOutcommingData(0x50,0x0006,outputData);
+}
+
 void Api_protocol::getShopList(const quint32 &shopId)
 {
     if(haveShopAction)

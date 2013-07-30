@@ -750,6 +750,7 @@ void MapControllerMP::finalPlayerStep()
             if(!haveMapInMemory(current_map))
                 emit inWaitingOfMap();
             loadOtherMap(current_map);
+            hideNotloadedMap();
             return;
         }
         index++;

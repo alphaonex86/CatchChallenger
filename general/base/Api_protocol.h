@@ -200,6 +200,7 @@ public slots:
     //inventory
     void destroyObject(const quint32 &object,const quint32 &quantity=1);
     void useObject(const quint32 &object);
+    void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
 
     //shop
     void getShopList(const quint32 &shopId);
