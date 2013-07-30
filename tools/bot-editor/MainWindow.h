@@ -46,11 +46,9 @@ private slots:
     void on_openBotFile_clicked();
     void on_botListAdd_clicked();
     void on_botListDelete_clicked();
-    void on_botList_itemActivated(QListWidgetItem *item);
     void on_botListEdit_clicked();
     void on_stepListAdd_clicked();
     void on_stepListDelete_clicked();
-    void on_stepList_itemActivated(QListWidgetItem *item);
     void on_stepListEdit_clicked();
     void on_stepListBack_clicked();
     void on_stepEditBack_clicked();
@@ -61,6 +59,8 @@ private slots:
     void on_stepEditSell_editingFinished();
     void on_stepEditFight_editingFinished();
     void on_botFileSave_clicked();
+    void on_botList_itemDoubleClicked(QListWidgetItem *item);
+    void on_stepList_itemDoubleClicked(QListWidgetItem *item);
 };
 
 #endif // MAINWINDOW_H
