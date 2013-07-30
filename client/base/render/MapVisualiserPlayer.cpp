@@ -294,8 +294,8 @@ void MapVisualiserPlayer::moveStepSlot()
     //if have finish the step
     if(moveStep>5)
     {
-        CatchChallenger::Map * old_map=&all_map[current_map]->logicalMap;
         CatchChallenger::Map * map=&all_map[current_map]->logicalMap;
+        const CatchChallenger::Map * old_map=map;
         //set the final value (direction, position, ...)
         switch(direction)
         {

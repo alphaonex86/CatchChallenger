@@ -375,7 +375,6 @@ bool ClientFightEngine::firstLifeEffectQuantityChange(qint32 quantity)
 void ClientFightEngine::setVariable(Player_private_and_public_informations player_informations_local)
 {
     this->player_informations_local=player_informations_local;
-    //CommonFightEngine::setVariable(&this->player_informations_local);
     updateCanDoFight();
 }
 

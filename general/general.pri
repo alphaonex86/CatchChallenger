@@ -41,3 +41,5 @@ HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/DatapackGeneralLoader.h \
     $$PWD/base/CommonDatapack.h \
     $$PWD/fight/CommonFightEngine.h
+
+win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc

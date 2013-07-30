@@ -136,9 +136,11 @@ void BaseWindow::have_current_player_info()
     havePlayerInformations=true;
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
     cash=informations.cash;
+    warehouse_cash=informations.warehouse_cash;
     quests=informations.quests;
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
     ui->tradePlayerPseudo->setText(informations.public_informations.pseudo);
+    ui->warehousePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
     CatchChallenger::ClientFightEngine::fightEngine.setVariable(CatchChallenger::Api_client_real::client->get_player_informations());
     DebugClass::debugConsole(QString("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
@@ -247,6 +249,7 @@ void BaseWindow::updateConnectingStatus()
     if(waitedData.isEmpty())
     {
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
+        warehouse_playerMonster=player_private_and_public_informations.warehouse_playerMonster;
         MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
         load_inventory();
         load_plant_inventory();
@@ -378,20 +381,24 @@ void BaseWindow::show_reputation()
     ui->labelReputation->setText(html);
 }
 
-QPixmap BaseWindow::getFrontSkin(const quint32 &skinId)
+QPixmap BaseWindow::getFrontSkin(const QString &skinName) const
+{
+    QPixmap skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png");
+    if(skin.isNull())
+    {
+        skin=QPixmap(":/images/player_default/front.png");
+        qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png";
+    }
+    return skin;
+}
+
+QPixmap BaseWindow::getFrontSkin(const quint32 &skinId) const
 {
     QPixmap skin;
-    skinFolderList=DatapackClientLoader::datapackLoader.skins;
+    QStringList skinFolderList=DatapackClientLoader::datapackLoader.skins;
     //front image
     if(skinId<(quint32)skinFolderList.size())
-    {
-        skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png");
-        if(skin.isNull())
-        {
-            skin=QPixmap(":/images/player_default/front.png");
-            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/front.png";
-        }
-    }
+        skin=getFrontSkin(skinFolderList.at(skinId));
     else
     {
         skin=QPixmap(":/images/player_default/front.png");
@@ -400,10 +407,10 @@ QPixmap BaseWindow::getFrontSkin(const quint32 &skinId)
     return skin;
 }
 
-QPixmap BaseWindow::getBackSkin(const quint32 &skinId)
+QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
 {
     QPixmap skin;
-    skinFolderList=DatapackClientLoader::datapackLoader.skins;
+    QStringList skinFolderList=DatapackClientLoader::datapackLoader.skins;
     //back image
     if(skinId<(quint32)skinFolderList.size())
     {
@@ -432,6 +439,7 @@ void BaseWindow::updatePlayerImage()
 
         //load into the UI
         ui->player_informations_front->setPixmap(playerFrontImage);
+        ui->warehousePlayerImage->setPixmap(playerFrontImage);
         ui->tradePlayerImage->setPixmap(playerFrontImage);
     }
 }
@@ -481,4 +489,139 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         return;
     }
     ui->questDetails->setText(DatapackClientLoader::datapackLoader.questsExtra[questId].steps[quests[questId].step-1]);
+}
+
+QListWidgetItem * BaseWindow::itemToGraphic(const quint32 &id,const quint32 &quantity)
+{
+    QListWidgetItem *item=new QListWidgetItem();
+    item->setData(99,id);
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(id))
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[id].image);
+        if(quantity>1)
+            item->setText(QString::number(quantity));
+        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[id].name);
+    }
+    else
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        if(quantity>1)
+            item->setText(QString("id: %1 (x%2)").arg(id).arg(quantity));
+        else
+            item->setText(QString("id: %1").arg(id));
+    }
+    return item;
+}
+
+void BaseWindow::updateTheWareHouseContent()
+{
+    if(!haveInventory || !datapackIsParsed)
+        return;
+
+    //inventory
+    {
+        ui->warehousePlayerInventory->clear();
+        QHashIterator<quint32,quint32> i(items);
+        while (i.hasNext()) {
+            i.next();
+            qint64 quantity=i.value();
+            if(change_warehouse_items.contains(i.key()))
+                quantity+=change_warehouse_items[i.key()];
+            if(quantity>0)
+                ui->warehousePlayerInventory->addItem(itemToGraphic(i.key(),quantity));
+        }
+        QHashIterator<quint32,qint32> j(change_warehouse_items);
+        while (j.hasNext()) {
+            j.next();
+            if(!items.contains(j.key()) && j.value()>0)
+                ui->warehousePlayerInventory->addItem(itemToGraphic(j.key(),j.value()));
+        }
+    }
+
+    //inventory warehouse
+    {
+        ui->warehousePlayerStoredInventory->clear();
+        QHashIterator<quint32,quint32> i(warehouse_items);
+        while (i.hasNext()) {
+            i.next();
+            qint64 quantity=i.value();
+            if(change_warehouse_items.contains(i.key()))
+                quantity-=change_warehouse_items[i.key()];
+            if(quantity>0)
+                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(i.key(),quantity));
+        }
+        QHashIterator<quint32,qint32> j(change_warehouse_items);
+        while (j.hasNext()) {
+            j.next();
+            if(!warehouse_items.contains(j.key()) && j.value()<0)
+                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(j.key(),-j.value()));
+        }
+    }
+
+    //cash
+    ui->warehousePlayerCash->setText(tr("Cash: %1").arg(cash+temp_warehouse_cash));
+    ui->warehousePlayerStoredCash->setText(tr("Cash: %1").arg(warehouse_cash-temp_warehouse_cash));
+
+    //monster
+    {
+        const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+        ui->warehousePlayerMonster->clear();
+        int index=0;
+        int size=playerMonster.size();
+        while(index<size)
+        {
+            const PlayerMonster &monster=playerMonster.at(index);
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
+            {
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(tr("%1, level: %2")
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].name)
+                        .arg(monster.level)
+                        );
+                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].description);
+                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].front);
+                item->setData(99,monster.id);
+                if(!monster_to_deposit.contains(monster.id))
+                    ui->warehousePlayerMonster->addItem(item);
+                else
+                    ui->warehousePlayerStoredMonster->addItem(item);
+            }
+            index++;
+        }
+    }
+
+    //monster warehouse
+    {
+        ui->warehousePlayerStoredMonster->clear();
+        int index=0;
+        int size=warehouse_playerMonster.size();
+        while(index<size)
+        {
+            const PlayerMonster &monster=warehouse_playerMonster.at(index);
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
+            {
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(tr("%1, level: %2")
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].name)
+                        .arg(monster.level)
+                        );
+                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].description);
+                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].front);
+                item->setData(99,monster.id);
+                if(!monster_to_withdraw.contains(monster.id))
+                    ui->warehousePlayerStoredMonster->addItem(item);
+                else
+                    ui->warehousePlayerMonster->addItem(item);
+            }
+            index++;
+        }
+    }
+
+    //set the button enabled
+    ui->warehouseWithdrawCash->setEnabled((warehouse_cash-temp_warehouse_cash)>0);
+    ui->warehouseDepositCash->setEnabled((cash+temp_warehouse_cash)>0);
+    ui->warehouseDepositItem->setEnabled(ui->warehousePlayerInventory->count()>0);
+    ui->warehouseWithdrawItem->setEnabled(ui->warehousePlayerStoredInventory->count()>0);
+    ui->warehouseDepositMonster->setEnabled(ui->warehousePlayerMonster->count()>1);
+    ui->warehouseWithdrawMonster->setEnabled(ui->warehousePlayerStoredMonster->count()>0);
 }
