@@ -85,6 +85,12 @@ public slots:
     quint32 objectQuantity(const quint32 &item);
     void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);
+    void addWarehouseCash(const quint64 &cash,const bool &forceSave=false);
+    void removeWarehouseCash(const quint64 &cash);
+    void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
+    bool wareHouseStoreCheck(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters) const;
+    void addWarehouseObject(const quint32 &item,const quint32 &quantity=1);
+    quint32 removeWarehouseObject(const quint32 &item,const quint32 &quantity=1);
 
     void sendHandlerCommand(const QString &command,const QString &extraText);
     //inventory

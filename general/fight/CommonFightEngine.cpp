@@ -874,12 +874,6 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
         getCurrentMonster()->level=level;
     getCurrentMonster()->sp+=sp;
 
-    if(!isInFight())
-    {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message("You win the battle");
-        #endif
-    }
     return haveChangeOfLevel;
 }
 

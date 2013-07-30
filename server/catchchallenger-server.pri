@@ -65,4 +65,3 @@ RESOURCES += \
     $$PWD/resources-server.qrc \
 
 win32:RC_FILE += $$PWD/resources-windows.rc
-win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
