@@ -21,3 +21,5 @@ HEADERS  += MainWindow.h \
 
 FORMS    += MainWindow.ui \
     StepType.ui
+
+win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
