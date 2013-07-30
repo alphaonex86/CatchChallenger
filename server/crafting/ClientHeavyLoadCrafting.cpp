@@ -99,7 +99,7 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }
-        if(!CommonDatapack::commonDatapack.items.contains(id))
+        if(!CommonDatapack::commonDatapack.items.item.contains(id))
         {
             emit message(QString("The item %1 is ignored because it's not into the items list").arg(id));
             continue;

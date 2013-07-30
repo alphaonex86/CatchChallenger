@@ -158,6 +158,11 @@ bool CommonFightEngine::isInFight() const
     return !wildMonsters.empty() || !botFightMonsters.isEmpty();
 }
 
+bool CommonFightEngine::isInFightWithWild() const
+{
+    return !wildMonsters.empty();
+}
+
 void CommonFightEngine::newRandomNumber(const QByteArray &randomData)
 {
     randomSeeds+=randomData;
@@ -748,6 +753,45 @@ bool CommonFightEngine::internalTryEscape()
     if(wildMonsters.first().level>playerMonster->level && value<25)
         return true;
     return false;
+}
+
+bool CommonFightEngine::internalTryCapture(const Trap &trap)
+{
+    if(wildMonsters.isEmpty())
+    {
+        emit error("Not againts wild monster");
+        return false;
+    }
+    if(wildMonsters.first().level<=trap.min_level)
+        return true;
+    if(wildMonsters.first().level>=trap.max_level)
+        return false;
+    quint8 value=getOneSeed(trap.max_level-trap.min_level);
+    if(value>(trap.max_level-wildMonsters.first().level))
+        return true;
+    else
+        return false;
+}
+
+bool CommonFightEngine::tryCapture(const quint32 &item)
+{
+    if(internalTryCapture(CommonDatapack::commonDatapack.items.trap[item]))
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("capture is successful"));
+        #endif
+        put into the monster list
+        wildMonsters.removeFirst();
+        return true;
+    }
+    else
+    {
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("capture is failed"));
+        #endif
+        generateOtherAttack();//Skill::AttackReturn attackReturn=
+        return false;
+    }
 }
 
 void CommonFightEngine::fightFinished()
