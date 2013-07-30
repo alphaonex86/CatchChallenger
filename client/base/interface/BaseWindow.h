@@ -49,7 +49,8 @@ public:
         ObjectType_Sell,
         ObjectType_Trade,
         ObjectType_MonsterToTrade,
-        ObjectType_MonsterToLearn
+        ObjectType_MonsterToLearn,
+        ObjectType_UseInFight
     };
     ObjectType waitedObjectType;
     enum QueryType
@@ -207,6 +208,8 @@ private slots:
     void init_environement_display(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void init_current_monster_display();
     void init_other_monster_display();
+    void useTrap(const quint32 &itemId);
+    void displayTrap();
 
     //learn
     bool showLearnSkill(const quint32 &monsterId);
@@ -279,7 +282,7 @@ private slots:
     void on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *item);
     void on_toolButton_quit_warehouse_clicked();
     void on_warehouseValidate_clicked();
-
+    void on_pushButtonFightBag_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -370,6 +373,10 @@ private:
     BattleType battleType;
     QMovie *movie;
     QList<PlayerMonster> warehouse_playerMonster;
+    quint32 trapItemId;
+    int displayTrapProgression;
+    QTimer displayTrapTimer;
+    bool trapSuccess;
 
     //trade
     TradeOtherStat tradeOtherStat;
