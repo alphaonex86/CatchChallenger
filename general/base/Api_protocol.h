@@ -86,6 +86,9 @@ protected:
     ProtocolParsingOutput *output;
     quint8 queryNumber();
 
+    //inventory
+    QList<quint32> lastObjectUsed;
+
     //datapack
     QString datapack_base_name;
 
@@ -103,73 +106,74 @@ protected:
     QList<quint32> battleRequestId;
     bool isInBattle;
 signals:
-    void newError(const QString &error,const QString &detailedError);
+    void newError(const QString &error,const QString &detailedError) const;
 
     //protocol/connection info
-    void disconnected(const QString &reason);
-    void notLogged(const QString &reason);
-    void logged();
-    void protocol_is_good();
+    void disconnected(const QString &reason) const;
+    void notLogged(const QString &reason) const;
+    void logged() const;
+    void protocol_is_good() const;
 
     //general info
-    void number_of_player(const quint16 &number,const quint16 &max_player);
-    void random_seeds(const QByteArray &data);
+    void number_of_player(const quint16 &number,const quint16 &max_player) const;
+    void random_seeds(const QByteArray &data) const;
 
     //map move
-    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    void move_player(const quint16 &id,const QList<QPair<quint8,CatchChallenger::Direction> > &movement);
-    void remove_player(const quint16 &id);
-    void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
-    void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 y,const CatchChallenger::Direction &direction);
-    void dropAllPlayerOnTheMap();
-    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) const;
+    void move_player(const quint16 &id,const QList<QPair<quint8,CatchChallenger::Direction> > &movement) const;
+    void remove_player(const quint16 &id) const;
+    void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
+    void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 y,const CatchChallenger::Direction &direction) const;
+    void dropAllPlayerOnTheMap() const;
+    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) const;
 
     //plant
-    void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
-    void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y);
-    void seed_planted(const bool &ok);
-    void plant_collected(const CatchChallenger::Plant_collect &stat);
+    void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature) const;
+    void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y) const;
+    void seed_planted(const bool &ok) const;
+    void plant_collected(const CatchChallenger::Plant_collect &stat) const;
     //crafting
-    void recipeUsed(const RecipeUsage &recipeUsage);
+    void recipeUsed(const RecipeUsage &recipeUsage) const;
     //inventory
-    void objectUsed(const ObjectUsage &objectUsage);
+    void objectUsed(const ObjectUsage &objectUsage) const;
+    void monsterCatch(const quint32 &newMonsterId) const;
 
     //chat
-    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
-    void new_system_text(const CatchChallenger::Chat_type &chat_type,const QString &text);
+    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type) const;
+    void new_system_text(const CatchChallenger::Chat_type &chat_type,const QString &text) const;
 
     //player info
-    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-    void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
-    void add_to_inventory(const QHash<quint32,quint32> &items);
-    void remove_to_inventory(const QHash<quint32,quint32> &items);
+    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) const;
+    void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items) const;
+    void add_to_inventory(const QHash<quint32,quint32> &items) const;
+    void remove_to_inventory(const QHash<quint32,quint32> &items) const;
 
     //datapack
-    void haveTheDatapack();
-    void newFile(const QString &fileName,const QByteArray &data,const quint64 &mtime);
-    void removeFile(const QString &fileName);
+    void haveTheDatapack() const;
+    void newFile(const QString &fileName,const QByteArray &data,const quint64 &mtime) const;
+    void removeFile(const QString &fileName) const;
 
     //shop
-    void haveShopList(const QList<ItemToSellOrBuy> &items);
-    void haveBuyObject(const BuyStat &stat,const quint32 &newPrice);
-    void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
+    void haveShopList(const QList<ItemToSellOrBuy> &items) const;
+    void haveBuyObject(const BuyStat &stat,const quint32 &newPrice) const;
+    void haveSellObject(const SoldStat &stat,const quint32 &newPrice) const;
 
     //trade
-    void tradeRequested(const QString &pseudo,const quint8 &skinInt);
-    void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
-    void tradeCanceledByOther();
-    void tradeFinishedByOther();
-    void tradeValidatedByTheServer();
-    void tradeAddTradeCash(const quint64 &cash);
-    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity);
-    void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
+    void tradeRequested(const QString &pseudo,const quint8 &skinInt) const;
+    void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt) const;
+    void tradeCanceledByOther() const;
+    void tradeFinishedByOther() const;
+    void tradeValidatedByTheServer() const;
+    void tradeAddTradeCash(const quint64 &cash) const;
+    void tradeAddTradeObject(const quint32 &item,const quint32 &quantity) const;
+    void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) const;
 
     //battle
-    void battleRequested(const QString &pseudo,const quint8 &skinInt);
-    void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
-    void battleCanceledByOther();
-    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
-    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    void battleRequested(const QString &pseudo,const quint8 &skinInt) const;
+    void battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const;
+    void battleCanceledByOther() const;
+    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn) const;
+    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const;
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);

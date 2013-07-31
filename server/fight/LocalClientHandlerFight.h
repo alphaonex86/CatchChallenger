@@ -67,6 +67,7 @@ protected:
     virtual void wildDrop(const quint32 &monster);
     virtual quint8 getOneSeed(const quint8 &max);
     bool dropKOMonster();
+    void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
 private:
     LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;

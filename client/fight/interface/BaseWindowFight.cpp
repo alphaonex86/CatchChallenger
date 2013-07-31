@@ -1046,11 +1046,11 @@ void BaseWindow::displayTrap()
     }
     if(displayTrapProgression==1)
         ui->labelFightTrap->move(
-                    ui->labelFightMonsterBottom->pos().x+(ui->labelFightMonsterTop->pos().x-ui->labelFightMonsterBottom->pos().x)*movie->currentFrameNumber()/movie->frameCount(),
-                    ui->labelFightMonsterBottom->pos().y-(ui->labelFightMonsterBottom->pos().y-ui->labelFightMonsterTop->pos().y)*movie->currentFrameNumber()/movie->frameCount()
+                    ui->labelFightMonsterBottom->pos().x()+(ui->labelFightMonsterTop->pos().x()-ui->labelFightMonsterBottom->pos().x())*(movie->currentFrameNumber()/movie->frameCount()),
+                    ui->labelFightMonsterBottom->pos().y()-(ui->labelFightMonsterBottom->pos().y()-ui->labelFightMonsterTop->pos().y())*(movie->currentFrameNumber()/movie->frameCount())
                     );
     else
-        ui->labelFightTrap->move(ui->labelFightMonsterTop->pos().x,ui->labelFightMonsterTop->pos().y);
+        ui->labelFightTrap->move(ui->labelFightMonsterTop->pos().x(),ui->labelFightMonsterTop->pos().y());
     if(movie->state()!=QMovie::Running || movie->loopCount()>0)
     {
         if(displayTrapProgression==1)
@@ -1316,4 +1316,17 @@ void CatchChallenger::BaseWindow::useTrap(const quint32 &itemId)
     trapItemId=itemId;
     trapSuccess=CatchChallenger::ClientFightEngine::fightEngine.tryCapture(itemId);
     displayTrap();
+}
+
+void CatchChallenger::BaseWindow::monsterCatch(const quint32 &newMonsterId)
+{
+    CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first().id=newMonsterId;
+    if(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().count()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+        CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first());
+    else
+    {
+        warehouse_playerMonster << CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first();
+        load_monsters();
+    }
+    CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
 }

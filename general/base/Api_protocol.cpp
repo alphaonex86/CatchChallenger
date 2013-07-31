@@ -9,6 +9,7 @@ using namespace CatchChallenger;
 #endif
 
 #include "GeneralStructures.h"
+#include "CommonDatapack.h"
 
 //need host + port here to have datapack base
 
@@ -2622,6 +2623,8 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                 //Use object
                 case 0x0009:
                 {
+                    quint32 item=lastObjectUsed.first();
+                    lastObjectUsed.removeFirst();
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
@@ -2629,16 +2632,30 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                     }
                     quint8 returnCode;
                     in >> returnCode;
-                    switch(returnCode)
+                    if(CommonDatapack::commonDatapack.items.trap.contains(item))
                     {
-                        case 0x01:
-                        case 0x02:
-                        case 0x03:
-                            emit objectUsed((ObjectUsage)returnCode);
-                        break;
-                        default:
-                        parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
-                        return;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        quint32 newMonsterId;
+                        in >> newMonsterId;
+                        emit monsterCatch(newMonsterId);
+                    }
+                    else
+                    {
+                        switch(returnCode)
+                        {
+                            case 0x01:
+                            case 0x02:
+                            case 0x03:
+                                emit objectUsed((ObjectUsage)returnCode);
+                            break;
+                            default:
+                            parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
                     }
                 }
                 break;
@@ -2940,6 +2957,7 @@ void Api_protocol::useObject(const quint32 &object)
     out.setVersion(QDataStream::Qt_4_4);
     out << object;
     output->packOutcommingQuery(0x10,0x0009,queryNumber(),outputData);
+    lastObjectUsed << object;
 }
 
 void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)

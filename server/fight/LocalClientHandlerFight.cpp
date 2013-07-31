@@ -799,3 +799,62 @@ bool LocalClientHandlerFight::dropKOMonster()
 
     return commonReturn || battleReturn;
 }
+
+void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
+{
+    GlobalServerData::serverPrivateVariables.maxMonsterId++;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,warehouse) VALUES(%1,%2);")
+                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                              .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                              .arg(newMonster.hp)
+                              .arg(player_informations->id)
+                              .arg(newMonster.monster)
+                              .arg(newMonster.level)
+                              .arg(newMonster.remaining_xp)
+                              .arg(newMonster.sp)
+                              .arg(newMonster.captured_with)
+                              .arg(newMonster.gender)
+                              )
+                         .arg(QString("%1,%2,%3")
+                              .arg(newMonster.egg_step)
+                              .arg(player_informations->id)
+                              .arg(toStorage)
+                              )
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,warehouse) VALUES(%1,%2);")
+                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                              .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                              .arg(newMonster.hp)
+                              .arg(player_informations->id)
+                              .arg(newMonster.monster)
+                              .arg(newMonster.level)
+                              .arg(newMonster.remaining_xp)
+                              .arg(newMonster.sp)
+                              .arg(newMonster.captured_with)
+                              .arg(newMonster.gender)
+                              )
+                         .arg(QString("%1,%2,%3")
+                              .arg(newMonster.egg_step)
+                              .arg(player_informations->id)
+                              .arg(toStorage)
+                              )
+                         );
+        break;
+    }
+    if(toStorage)
+    {
+        player_informations->public_and_private_informations.warehouse_playerMonster << newMonster;
+        player_informations->public_and_private_informations.warehouse_playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+    }
+    else
+    {
+        player_informations->public_and_private_informations.playerMonster << newMonster;
+        player_informations->public_and_private_informations.playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+    }
+}
