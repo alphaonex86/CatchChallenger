@@ -2858,7 +2858,7 @@ padding-bottom:3px;
           <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageEnter">
           <layout class="QHBoxLayout" name="horizontalLayout_22">

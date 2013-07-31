@@ -130,6 +130,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                         if(map!=old_map)
                             break;
                         parsedMap->logicalMap.botsFightTrigger.insert(QPair<quint8,quint8>(temp_x,temp_y),fightid);
+                        parsedMap->logicalMap.botsFightTriggerExtra.insert(QPair<quint8,quint8>(temp_x,temp_y),QPair<quint8,quint8>(x,y));
                         index_botfight_range++;
                     }
                 }

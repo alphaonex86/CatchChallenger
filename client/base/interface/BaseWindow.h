@@ -186,7 +186,7 @@ private slots:
 
     //fight
     void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
-    void botFightCollision(const quint32 &fightId, CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void botFight(const quint32 &fightId, CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     bool fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void on_pushButtonFightEnterNext_clicked();
     void moveFightMonsterBottom();

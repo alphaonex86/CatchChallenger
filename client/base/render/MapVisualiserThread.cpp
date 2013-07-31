@@ -525,12 +525,12 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                     }
                                                     else
                                                         CatchChallenger::DebugClass::debugConsole(
-                                                                    QString("No botId %1 into %2: properties.tagName(): %3, name: %4 (at line: %5)")
+                                                                    QString("No botId %1 into %2: properties.tagName(): %3, file: %4 (at line: %5)")
                                                                     .arg(botId)
                                                                     .arg(botFile)
-                                                                    .arg(property.tagName())
-                                                                    .arg(property.attribute("name"))
-                                                                    .arg(property.lineNumber())
+                                                                    .arg(bot.tagName())
+                                                                    .arg(parsedMap->logicalMap.map_file)
+                                                                    .arg(bot.lineNumber())
                                                                     );
                                                 }
                                                 else

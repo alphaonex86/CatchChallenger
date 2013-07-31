@@ -547,6 +547,7 @@ struct Bot
     QHash<quint8,QDomElement> step;
     QHash<QString,QString> properties;
     quint8 botId;//id into the file
+    QString skin;
 };
 
 struct BotFight

@@ -49,6 +49,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     if(fightMonster!=NULL)
     {
         QList<quint32> botFightList=all_map[current_map]->logicalMap.botsFightTrigger.values(QPair<quint8,quint8>(x,y));
+        QList<QPair<quint8,quint8> > botFightRemotePointList=all_map[current_map]->logicalMap.botsFightTriggerExtra.values(QPair<quint8,quint8>(x,y));
         int index=0;
         while(index<botFightList.size())
         {
@@ -61,7 +62,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                     keyPressed.clear();
                 }
                 parseStop();
-                emit botFightCollision(botFightList.at(index),static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
+                emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
                 return true;
             }
             index++;

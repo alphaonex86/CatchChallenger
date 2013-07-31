@@ -122,6 +122,7 @@ private:
     };
     QList<DelayedTeleportTo> delayedTeleportTo;
     float scaleSize;
+    bool isTeleported;
 protected:
     bool mHaveTheDatapack;
 
