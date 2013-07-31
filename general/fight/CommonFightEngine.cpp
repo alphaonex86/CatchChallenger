@@ -762,6 +762,10 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         emit error("Not againts wild monster");
         return false;
     }
+    const Monster::Stat &wildMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster],wildMonsters.first().level);
+    if(wildMonsterStat.hp>2)
+        if(wildMonsters.first().hp>=(wildMonsterStat.hp/2))
+            return false;
     if(wildMonsters.first().level<=trap.min_level)
         return true;
     if(wildMonsters.first().level>=trap.max_level)
@@ -793,7 +797,6 @@ bool CommonFightEngine::tryCapture(const quint32 &item)
         newMonster.skills=wildMonsters.first().skills;
         newMonster.sp=0;
         captureAWild(player_informations->playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
-        wildMonsters.removeFirst();
         return true;
     }
     else

@@ -101,6 +101,7 @@ void ClientHeavyLoad::loadMonsters()
                 playerMonster.gender=Gender_Unknown;
             else
             {
+                playerMonster.gender=Gender_Unknown;
                 emit message(QString("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
                 ok=false;
             }
@@ -112,7 +113,51 @@ void ClientHeavyLoad::loadMonsters()
                 emit message(QString("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
         }
         if(ok)
-            warehouse=monstersQuery.value(9).toBool();
+        {
+            if(monstersQuery.value(9).toString()=="1")
+                warehouse=true;
+            else
+            {
+                if(monstersQuery.value(9).toString()=="0")
+                    warehouse=false;
+                else
+                {
+                    warehouse=true;
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                                         .arg(playerMonster.id)
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                                         .arg(playerMonster.id)
+                                         );
+                        break;
+                    }
+                }
+            }
+        }
+        if(!warehouse && player_informations->public_and_private_informations.playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+        {
+            warehouse=true;
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                                 .arg(playerMonster.id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                                 .arg(playerMonster.id)
+                                 );
+                break;
+            }
+        }
         //stats
         if(ok)
         {
