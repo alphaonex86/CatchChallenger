@@ -20,6 +20,7 @@ public:
     static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
     static bool rectTouch(QRect r1,QRect r2);
+    static QString genderToString(const Gender &gender);
 private:
     static QByteArray UTF8EmptyData;
 };

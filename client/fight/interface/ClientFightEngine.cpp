@@ -396,3 +396,8 @@ void ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster 
     Q_UNUSED(toStorage);
     playerMonster_captureInProgress << newMonster;
 }
+
+void ClientFightEngine::captureIsDone()
+{
+    wildMonsters.removeFirst();
+}

@@ -82,6 +82,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(have_inventory(QHash<quint32,quint32>,QHash<quint32,quint32>)),this,SLOT(have_inventory(QHash<quint32,quint32>,QHash<quint32,quint32>)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(add_to_inventory(QHash<quint32,quint32>)),this,SLOT(add_to_inventory(QHash<quint32,quint32>)));
     connect(CatchChallenger::Api_client_real::client,SIGNAL(remove_to_inventory(QHash<quint32,quint32>)),this,SLOT(remove_to_inventory(QHash<quint32,quint32>)));
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(monsterCatch(quint32)),this,SLOT(monsterCatch(quint32)));
 
     //chat
     connect(CatchChallenger::Api_client_real::client,SIGNAL(new_chat_text(CatchChallenger::Chat_type,QString,QString,CatchChallenger::Player_type)),Chat::chat,SLOT(new_chat_text(CatchChallenger::Chat_type,QString,QString,CatchChallenger::Player_type)));
@@ -168,6 +169,7 @@ BaseWindow::BaseWindow() :
     renderFrame->lower();
     renderFrame->lower();
     renderFrame->lower();
+    ui->labelFightTrap->hide();
 
     Chat::chat->setGeometry(QRect(0, 0, 300, 400));
 
@@ -1676,10 +1678,19 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     {
         quint32 tempQuantitySelected;
         bool ok=true;
-        if(items[items_graphical[item]]>1)
-            tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,items[items_graphical[item]],1,&ok);
-        else
-            tempQuantitySelected=1;
+        switch(waitedObjectType)
+        {
+            case ObjectType_Sell:
+            case ObjectType_Trade:
+                if(items[items_graphical[item]]>1)
+                    tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,items[items_graphical[item]],1,&ok);
+                else
+                    tempQuantitySelected=1;
+            break;
+            default:
+                tempQuantitySelected=1;
+            break;
+        }
         if(!ok)
         {
             objectSelection(false);

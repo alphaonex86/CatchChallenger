@@ -808,7 +808,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
             emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,warehouse) VALUES(%1,%2);")
-                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                               .arg(newMonster.hp)
                               .arg(player_informations->id)
@@ -817,7 +817,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                               .arg(newMonster.remaining_xp)
                               .arg(newMonster.sp)
                               .arg(newMonster.captured_with)
-                              .arg(newMonster.gender)
+                              .arg(FacilityLib::genderToString(newMonster.gender))
                               )
                          .arg(QString("%1,%2,%3")
                               .arg(newMonster.egg_step)
@@ -828,7 +828,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,warehouse) VALUES(%1,%2);")
-                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9")
+                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                               .arg(newMonster.hp)
                               .arg(player_informations->id)
@@ -837,7 +837,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                               .arg(newMonster.remaining_xp)
                               .arg(newMonster.sp)
                               .arg(newMonster.captured_with)
-                              .arg(newMonster.gender)
+                              .arg(FacilityLib::genderToString(newMonster.gender))
                               )
                          .arg(QString("%1,%2,%3")
                               .arg(newMonster.egg_step)
@@ -857,4 +857,5 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         player_informations->public_and_private_informations.playerMonster << newMonster;
         player_informations->public_and_private_informations.playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
     }
+    wildMonsters.removeFirst();
 }
