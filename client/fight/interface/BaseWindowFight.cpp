@@ -958,7 +958,7 @@ void BaseWindow::displayAttack()
         }
         ui->labelFightEnter->setText(QString("%1<br />%2").arg(attackOwner).arg(damage));
     }
-    if(displayAttackProgression%100 /* each 400ms */)
+    if(displayAttackProgression%100 /* each 400ms */ && CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<0)
     {
         if(applyOnOtherMonster)
         {
@@ -994,6 +994,13 @@ void BaseWindow::displayAttack()
     if(updateAttackTime.elapsed()>3000 /*3000ms*/)
     {
         displayAttackProgression=0;
+        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity!=0)
+        {
+            if(applyOnOtherMonster)
+                ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
+            else
+                ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
+        }
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         //attack is finish
         doNextAction();
@@ -1008,7 +1015,6 @@ void BaseWindow::displayAttack()
         }
         else if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity>0)
         {
-            hp_to_change=-hp_to_change;
             if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<hp_to_change)
                 hp_to_change=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
         }
