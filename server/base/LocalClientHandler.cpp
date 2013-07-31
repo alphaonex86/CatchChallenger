@@ -1192,73 +1192,76 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("use the object: %1").arg(itemId));
     #endif
-    if(player_informations->public_and_private_informations.items.contains(itemId))
+    if(!player_informations->public_and_private_informations.items.contains(itemId))
     {
-        //if is crafting recipe
-        if(CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
+        emit error(QString("can't use the object: %1 because don't have into the inventory").arg(itemId));
+        return;
+    }
+    if(objectQuantity(itemId)<1)
+    {
+        emit error(QString("have not quantity to use this object: %1 because recipe already registred").arg(itemId));
+        return;
+    }
+    removeObject(itemId);
+    //if is crafting recipe
+    if(CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
+    {
+        quint32 recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes[itemId];
+        if(player_informations->public_and_private_informations.recipes.contains(recipeId))
         {
-            quint32 recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes[itemId];
-            if(player_informations->public_and_private_informations.recipes.contains(recipeId))
-            {
-                emit error(QString("can't use the object: %1 because recipe already registred").arg(itemId));
-                return;
-            }
-            player_informations->public_and_private_informations.recipes << recipeId;
-            //send the network reply
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
-            out << (quint8)ObjectUsage_correctlyUsed;
-            emit postReply(query_id,outputData);
-            //add into db
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("INSERT INTO recipes(player,recipe) VALUES(%1,%2);")
-                             .arg(player_informations->id)
-                             .arg(recipeId)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("INSERT INTO recipes(player,recipe) VALUES(%1,%2);")
-                             .arg(player_informations->id)
-                             .arg(recipeId)
-                             );
-                break;
-            }
-        }
-        //use trap into fight
-        else if(CommonDatapack::commonDatapack.items.trap.contains(itemId))
-        {
-            if(!localClientHandlerFight.isInFight())
-            {
-                emit error(QString("is not in fight to use trap").arg(itemId));
-                return;
-            }
-            if(!localClientHandlerFight.isInFightWithWild())
-            {
-                emit error(QString("is not in fight with wild to use trap").arg(itemId));
-                return;
-            }
-            localClientHandlerFight.tryCapture(itemId);
-            //send the network reply
-            QByteArray outputData;
-            QDataStream out(&outputData, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_4_4);
-            out << (quint8)ObjectUsage_correctlyUsed;
-            out << (quint32)GlobalServerData::serverPrivateVariables.maxMonsterId;
-            emit postReply(query_id,outputData);
-        }
-        else
-        {
-            emit error(QString("can't use the object: %1 because don't have an usage").arg(itemId));
+            emit error(QString("can't use the object: %1 because recipe already registred").arg(itemId));
             return;
         }
+        player_informations->public_and_private_informations.recipes << recipeId;
+        //send the network reply
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)ObjectUsage_correctlyUsed;
+        emit postReply(query_id,outputData);
+        //add into db
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("INSERT INTO recipes(player,recipe) VALUES(%1,%2);")
+                         .arg(player_informations->id)
+                         .arg(recipeId)
+                         );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("INSERT INTO recipes(player,recipe) VALUES(%1,%2);")
+                         .arg(player_informations->id)
+                         .arg(recipeId)
+                         );
+            break;
+        }
+    }
+    //use trap into fight
+    else if(CommonDatapack::commonDatapack.items.trap.contains(itemId))
+    {
+        if(!localClientHandlerFight.isInFight())
+        {
+            emit error(QString("is not in fight to use trap").arg(itemId));
+            return;
+        }
+        if(!localClientHandlerFight.isInFightWithWild())
+        {
+            emit error(QString("is not in fight with wild to use trap").arg(itemId));
+            return;
+        }
+        localClientHandlerFight.tryCapture(itemId);
+        //send the network reply
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)ObjectUsage_correctlyUsed;
+        out << (quint32)GlobalServerData::serverPrivateVariables.maxMonsterId;
+        emit postReply(query_id,outputData);
     }
     else
     {
-        emit error(QString("can't use the object: %1 because don't have into the inventory").arg(itemId));
+        emit error(QString("can't use the object: %1 because don't have an usage").arg(itemId));
         return;
     }
 }

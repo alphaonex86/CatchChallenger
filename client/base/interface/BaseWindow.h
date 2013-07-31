@@ -356,6 +356,7 @@ private:
     QTimer displayAttackTimer;
     QTimer doNextActionTimer;
     QTime updateAttackTime;
+    QTime updateTrapTime;
     MoveType moveType;
     bool fightTimerFinish;
     int displayAttackProgression;
