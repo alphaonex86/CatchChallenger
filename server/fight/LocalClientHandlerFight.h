@@ -45,6 +45,7 @@ public:
     LocalClientHandlerFight * getOtherPlayerBattle() const;
     virtual bool useSkill(const quint32 &skill);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
+    void requestFight(const quint32 &fightId);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();

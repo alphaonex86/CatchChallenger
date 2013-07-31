@@ -137,6 +137,7 @@ private slots:
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void actionOn(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
+    void botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void currentMapLoaded();
 

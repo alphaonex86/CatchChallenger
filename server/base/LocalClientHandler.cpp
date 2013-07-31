@@ -1891,3 +1891,97 @@ void LocalClientHandler::useSkill(const quint32 &skill)
 {
     localClientHandlerFight.useSkill(skill);
 }
+
+void LocalClientHandler::requestFight(const quint32 &fightId)
+{
+    if(localClientHandlerFight.isInFight())
+    {
+        emit error(QString("error: map: %1 (%2,%3), is in fight").arg(static_cast<MapServer *>(map)->map_file).arg(x).arg(y));
+        return;
+    }
+    if(player_informations->isFake)
+        return;
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("request fight at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+    #endif
+    Map *map=this->map;
+    quint8 x=this->x;
+    quint8 y=this->y;
+    //resolv the object
+    Direction direction=getLastDirection();
+    switch(direction)
+    {
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+            direction=lookToMove(direction);
+            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                {
+                    emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    return;
+                }
+            }
+            else
+            {
+                emit error("No valid map in this direction");
+                return;
+            }
+        break;
+        default:
+        emit error("Wrong direction to use a shop");
+        return;
+    }
+    //check if is shop
+    bool found=false;
+    if(static_cast<MapServer*>(this->map)->botsFight.contains(QPair<quint8,quint8>(x,y)))
+    {
+        const QList<quint32> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(QPair<quint8,quint8>(x,y));
+        if(botsFightList.contains(fightId))
+            found=true;
+    }
+    if(!found)
+    {
+        Direction direction=getLastDirection();
+        switch(direction)
+        {
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
+                direction=lookToMove(direction);
+                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+                {
+                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                    {
+                        emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        return;
+                    }
+                }
+                else
+                {
+                    emit error("No valid map in this direction");
+                    return;
+                }
+            break;
+            default:
+            emit error("Wrong direction to use a shop");
+            return;
+        }
+        if(static_cast<MapServer*>(this->map)->botsFight.contains(QPair<quint8,quint8>(x,y)))
+        {
+            const QList<quint32> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.values(QPair<quint8,quint8>(x,y));
+            if(botsFightList.contains(fightId))
+                found=true;
+        }
+        if(!found)
+        {
+            emit error(QString("no fight with id %1 in this direction").arg(fightId));
+            return;
+        }
+    }
+    emit message(QString("is now in fight (after a request) on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(fightId));
+    localClientHandlerFight.requestFight(fightId);
+}
