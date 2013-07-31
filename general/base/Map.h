@@ -51,6 +51,7 @@ public:
     QList<MapMonster> grassMonster;
     QList<MapMonster> waterMonster;
     QList<MapMonster> caveMonster;
+
     QMultiHash<QPair<quint8,quint8>,quint32> botsFightTrigger;//trigger line in front of bot fight
 
     static void removeParsedLayer(const ParsedLayer &parsed_layer);

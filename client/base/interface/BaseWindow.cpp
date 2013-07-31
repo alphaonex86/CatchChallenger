@@ -107,7 +107,7 @@ BaseWindow::BaseWindow() :
     //fight
     connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&ClientFightEngine::fightEngine,SLOT(newRandomNumber(QByteArray)));
     connect(MapController::mapController,SIGNAL(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)));
-    connect(MapController::mapController,SIGNAL(botFightCollision(quint32,CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(botFightCollision(quint32,CatchChallenger::Map_client*,quint8,quint8)));
+    connect(MapController::mapController,SIGNAL(botFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(actionOnCheckBot(CatchChallenger::Map_client*,quint8,quint8)));
     connect(MapController::mapController,SIGNAL(currentMapLoaded()),this,SLOT(currentMapLoaded()));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
     connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
@@ -1639,6 +1639,23 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->warehouseBotImage->setPixmap(pixmap);
         ui->stackedWidget->setCurrentWidget(ui->page_warehouse);
         updateTheWareHouseContent();
+        return;
+    }
+    else if(actualBot.step[step].attribute("type")=="fight")
+    {
+        if(!actualBot.step[step].hasAttribute("fightid"))
+        {
+            showTip(tr("Bot step missing data error, repport this error please"));
+            return;
+        }
+        bool ok;
+        quint32 fightId=actualBot.step[step].attribute("fightid").toUInt(&ok);
+        if(!ok)
+        {
+            showTip(tr("Bot step wrong data type error, repport this error please"));
+            return;
+        }
+        botFight(fightId,MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
         return;
     }
     else
