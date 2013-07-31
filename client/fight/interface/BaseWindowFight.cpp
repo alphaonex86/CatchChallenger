@@ -134,13 +134,16 @@ void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quin
     ui->labelFightEnter->setText(tr("A other %1 is in front of you!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
 }
 
-void BaseWindow::botFightCollision(const quint32 &fightId,CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+void BaseWindow::botFight(const quint32 &fightId,CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
 {
     if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
     {
         emit error("fight id not found at collision");
         return;
     }
+    ui->frameFightTop->setVisible(false);
+    ui->labelFightEnter->setText(DatapackClientLoader::datapackLoader.botFightsExtra[fightId].start);
+    ui->pushButtonFightEnterNext->setVisible(false);
     QList<PlayerMonster> botFightMonstersTransformed;
     const QList<BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapack::commonDatapack.botFights[fightId].monsters;
     int index=0;
@@ -151,11 +154,21 @@ void BaseWindow::botFightCollision(const quint32 &fightId,CatchChallenger::Map_c
     }
     CatchChallenger::ClientFightEngine::fightEngine.setBotMonster(botFightMonstersTransformed);
     this->fightId=fightId;
-    if(!fightCollision(map,x,y))
-        return;
+    init_environement_display(map,x,y);
+    init_current_monster_display();
+    ui->pushButtonFightEnterNext->setVisible(false);
     battleType=BattleType_Bot;
-    ui->labelFightEnter->setText(DatapackClientLoader::datapackLoader.botFightsExtra[fightId].start);
+    QPixmap botImage;
+    if(actualBot.properties.contains("skin"))
+        botImage=getFrontSkin(actualBot.properties["skin"]);
+    else
+        botImage=QPixmap(":/images/player_default/front.png");
+    ui->labelFightMonsterTop->setPixmap(botImage.scaled(160,160));
     qDebug() << QString("The bot %1 is a front of you").arg(fightId);
+    battleStep=BattleStep_Presentation;
+    moveType=MoveType_Enter;
+    resetPosition(true);
+    moveFightMonsterBoth();
 }
 
 bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
@@ -180,8 +193,16 @@ bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &
 
 void BaseWindow::init_environement_display(Map_client *map, const quint8 &x, const quint8 &y)
 {
+    //map not located
+    if(map==NULL)
+    {
+        ui->frameFightBackground->setStyleSheet("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}");
+        return;
+    }
+    //map is grass
     if(MoveOnTheMap::isGrass(*map,x,y))
         ui->frameFightBackground->setStyleSheet("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}");
+    //map is other
     else
         ui->frameFightBackground->setStyleSheet("#frameFightBackground{background-image: url(:/images/interface/fight/background.png);}");
 }
