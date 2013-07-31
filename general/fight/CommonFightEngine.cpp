@@ -626,11 +626,10 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
         {
-
             PublicPlayerMonster *publicPlayerMonster=getOtherMonster();
+            Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicPlayerMonster->monster],publicPlayerMonster->level);
             if(effect.type==QuantityType_Quantity)
             {
-                Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicPlayerMonster->monster],publicPlayerMonster->level);
                 if(effect.quantity<0)
                 {
                     quantity=-((-effect.quantity*stat.attack*player_informations->playerMonster.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
@@ -645,11 +644,17 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
                 }
             }
             else
-                quantity=(publicPlayerMonster->hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)publicPlayerMonster->hp)
+                quantity=(otherStat.hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>=(qint32)publicPlayerMonster->hp)
+            {
+                quantity=-publicPlayerMonster->hp;
                 publicPlayerMonster->hp=0;
-            else if(quantity>0 && quantity>(qint32)(stat.hp-publicPlayerMonster->hp))
+            }
+            else if(quantity>0 && quantity>=(qint32)(stat.hp-publicPlayerMonster->hp))
+            {
+                quantity=stat.hp-publicPlayerMonster->hp;
                 publicPlayerMonster->hp=stat.hp;
+            }
             else
                 publicPlayerMonster->hp+=quantity;
         }
@@ -672,15 +677,19 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
                 }
             }
             else
-                quantity=(player_informations->playerMonster[selectedMonster].hp*effect.quantity)/100;
-            if(quantity<0 && (-quantity)>(qint32)player_informations->playerMonster[selectedMonster].hp)
+                quantity=(stat.hp*effect.quantity)/100;
+            if(quantity<0 && (-quantity)>=(qint32)player_informations->playerMonster[selectedMonster].hp)
             {
+                quantity=-player_informations->playerMonster[selectedMonster].hp;
                 player_informations->playerMonster[selectedMonster].hp=0;
                 player_informations->playerMonster[selectedMonster].buffs.clear();
                 updateCanDoFight();
             }
-            else if(quantity>0 && quantity>(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp))
+            else if(quantity>0 && quantity>=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp))
+            {
+                quantity=stat.hp-player_informations->playerMonster[selectedMonster].hp;
                 player_informations->playerMonster[selectedMonster].hp=stat.hp;
+            }
             else
                 player_informations->playerMonster[selectedMonster].hp+=quantity;
         break;
