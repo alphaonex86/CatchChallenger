@@ -49,6 +49,7 @@ public:
     bool dropKOMonster();
     bool tryCapture(const quint32 &item);
     virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    void captureIsDone();
 private:
     QList<Skill::AttackReturn> attackReturnList;
     Player_private_and_public_informations player_informations_local;

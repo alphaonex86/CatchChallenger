@@ -147,3 +147,17 @@ bool FacilityLib::rectTouch(QRect r1,QRect r2)
 
     return true;
 }
+
+QString FacilityLib::genderToString(const Gender &gender)
+{
+    switch(gender)
+    {
+        case Gender_Male:
+            return "male";
+        case Gender_Female:
+            return "female";
+        default:
+            break;
+    }
+    return "unknown";
+}
