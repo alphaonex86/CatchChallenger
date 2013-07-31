@@ -12,6 +12,7 @@
 #include <QByteArray>
 #include <QDomDocument>
 #include <QDomElement>
+#include <QSqlError>
 
 using namespace CatchChallenger;
 
@@ -20,6 +21,38 @@ void BaseServerFight::preload_monsters_drops()
     GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
 
     DebugClass::debugConsole(QString("%1 monster drop(s) loaded").arg(CommonDatapack::commonDatapack.monsters.size()));
+}
+
+void BaseServerFight::load_monsters_max_id()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1");
+        break;
+    }
+    QSqlQuery maxMonsterIdQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!maxMonsterIdQuery.exec(queryText))
+        DebugClass::debugConsole(maxMonsterIdQuery.lastQuery()+": "+maxMonsterIdQuery.lastError().text());
+    if(!maxMonsterIdQuery.isValid())
+        DebugClass::debugConsole(QString("SQL query is not valid: %1").arg(queryText));
+    GlobalServerData::serverPrivateVariables.maxMonsterId=0;
+    while(maxMonsterIdQuery.next())
+    {
+        bool ok;
+        GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterIdQuery.value(0).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
+            GlobalServerData::serverPrivateVariables.maxMonsterId=0;
+            continue;
+        }
+    }
 }
 
 void BaseServerFight::check_monsters_map()

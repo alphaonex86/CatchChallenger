@@ -1247,6 +1247,7 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);
             out << (quint8)ObjectUsage_correctlyUsed;
+            out << (quint32)GlobalServerData::serverPrivateVariables.maxMonsterId;
             emit postReply(query_id,outputData);
         }
         else
