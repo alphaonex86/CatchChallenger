@@ -38,6 +38,7 @@ public:
     virtual void healAllMonsters();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
+    void addPlayerMonster(const PlayerMonster &playerMonster);
     QList<PlayerMonster> getPlayerMonster() const;
     bool removeMonster(const quint32 &monsterId);
     bool canEscape() const;
@@ -50,6 +51,7 @@ public:
     bool generateWildFightIfCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
+    virtual bool tryCapture(const quint32 &item);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
@@ -63,12 +65,12 @@ protected:
     virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
     bool internalTryCapture(const Trap &trap);
-    virtual bool tryCapture(const quint32 &item);
     virtual void fightFinished();
     virtual void wildDrop(const quint32 &monster);
     virtual bool checkKOOtherMonstersForGain();
     virtual bool giveXPSP(int xp,int sp);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
+    virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
 signals:
     void error(const QString &error) const;
     void message(const QString &message) const;

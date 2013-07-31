@@ -780,7 +780,19 @@ bool CommonFightEngine::tryCapture(const quint32 &item)
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("capture is successful"));
         #endif
-        put into the monster list
+        PlayerMonster newMonster;
+        newMonster.buffs=wildMonsters.first().buffs;
+        newMonster.captured_with=item;
+        newMonster.egg_step=0;
+        newMonster.gender=wildMonsters.first().gender;
+        newMonster.hp=wildMonsters.first().hp;
+        newMonster.id=0;//unknown at this time
+        newMonster.level=wildMonsters.first().level;
+        newMonster.monster=wildMonsters.first().monster;
+        newMonster.remaining_xp=0;
+        newMonster.skills=wildMonsters.first().skills;
+        newMonster.sp=0;
+        captureAWild(player_informations->playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
         wildMonsters.removeFirst();
         return true;
     }
@@ -801,6 +813,12 @@ void CommonFightEngine::fightFinished()
 }
 
 void CommonFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
+{
+    player_informations->playerMonster << playerMonster;
+    updateCanDoFight();
+}
+
+void CommonFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
     player_informations->playerMonster << playerMonster;
     updateCanDoFight();
