@@ -30,6 +30,7 @@ public:
     QList<quint8> battleStat,botMonstersStat;
     QList<quint8> battleMonsterPlace;
     QList<quint32> otherMonsterAttack;
+    QList<PlayerMonster> playerMonster_captureInProgress;
     void fightFinished();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
@@ -46,13 +47,14 @@ public:
     bool isInBattle() const;
     virtual bool useSkill(const quint32 &skill);
     bool dropKOMonster();
+    bool tryCapture(const quint32 &item);
+    virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
 private:
     QList<Skill::AttackReturn> attackReturnList;
     Player_private_and_public_informations player_informations_local;
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();
-    bool tryCapture(const quint32 &item);
     void addXPSP();
 private:
     explicit ClientFightEngine();

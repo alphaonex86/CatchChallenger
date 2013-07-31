@@ -131,6 +131,7 @@ private slots:
     QPixmap getFrontSkin(const QString &skinName) const;
     QPixmap getFrontSkin(const quint32 &skinId) const;
     QPixmap getBackSkin(const quint32 &skinId) const;
+    void monsterCatch(const quint32 &newMonsterId);
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y);

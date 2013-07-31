@@ -162,6 +162,7 @@ struct ServerPrivateVariables
 
     //fight
     QMultiHash<quint32,MonsterDrops> monsterDrops;
+    quint32 maxMonsterId;
 
     //general data
     QList<EventThreader *> eventThreaderList;

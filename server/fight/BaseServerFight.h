@@ -7,6 +7,7 @@ namespace CatchChallenger {
 class BaseServerFight
 {
 protected:
+    virtual void load_monsters_max_id();
     virtual void preload_monsters_drops();
     virtual void check_monsters_map();
     virtual void unload_monsters_drops();

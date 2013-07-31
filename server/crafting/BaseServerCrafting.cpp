@@ -34,7 +34,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
     QSqlQuery plantOnMapQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!plantOnMapQuery.exec(queryText))
         DebugClass::debugConsole(plantOnMapQuery.lastQuery()+": "+plantOnMapQuery.lastError().text());
-    if(plantOnMapQuery.isValid())
+    if(!plantOnMapQuery.isValid())
         DebugClass::debugConsole(QString("SQL query is not valid: %1").arg(queryText));
     while(plantOnMapQuery.next())
     {

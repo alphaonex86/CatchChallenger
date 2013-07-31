@@ -127,6 +127,7 @@ void BaseServer::preload_the_data()
     preload_shop();
     preload_the_players();
     preload_monsters_drops();
+    load_monsters_max_id();
     preload_the_map();
     preload_the_plant_on_map();
     check_monsters_map();

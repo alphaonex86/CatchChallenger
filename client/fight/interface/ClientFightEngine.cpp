@@ -390,3 +390,9 @@ bool ClientFightEngine::useSkill(const quint32 &skill)
     Api_client_real::client->useSkill(skill);
     return CommonFightEngine::useSkill(skill);
 }
+
+void ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
+{
+    Q_UNUSED(toStorage);
+    playerMonster_captureInProgress << newMonster;
+}
