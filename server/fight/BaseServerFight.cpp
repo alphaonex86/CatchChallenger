@@ -30,17 +30,15 @@ void BaseServerFight::load_monsters_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1");
+            queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1");
+            queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
         break;
     }
     QSqlQuery maxMonsterIdQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!maxMonsterIdQuery.exec(queryText))
         DebugClass::debugConsole(maxMonsterIdQuery.lastQuery()+": "+maxMonsterIdQuery.lastError().text());
-    if(!maxMonsterIdQuery.isValid())
-        DebugClass::debugConsole(QString("SQL query is not valid: %1").arg(queryText));
     GlobalServerData::serverPrivateVariables.maxMonsterId=0;
     while(maxMonsterIdQuery.next())
     {
@@ -53,6 +51,8 @@ void BaseServerFight::load_monsters_max_id()
             continue;
         }
     }
+    if(!maxMonsterIdQuery.isValid())
+        DebugClass::debugConsole(QString("SQL query is not valid: %1").arg(queryText));
 }
 
 void BaseServerFight::check_monsters_map()

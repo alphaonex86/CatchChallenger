@@ -652,6 +652,19 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                 case 0x0006:
                     emit heal();
                 break;
+                //Request bot fight
+                case 0x0007:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for trade add type");
+                        return;
+                    }
+                    quint32 fightId;
+                    in >> fightId;
+                    emit requestFight(fightId);
+                }
+                break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;

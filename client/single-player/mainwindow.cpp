@@ -330,10 +330,25 @@ void MainWindow::on_SaveGame_New_clicked()
     index=0;
     while(index<profile.monsters.size())
     {
-        int monster_id;
+        int monster_id=0;
+        /* drop the random to do the correct increment
         do
         {
             monster_id=rand();
+            QSqlQuery sqlQuery(*db);
+            if(!sqlQuery.exec(QString("SELECT * FROM \"monster\" WHERE id=%1").arg(monster_id)))
+            {
+                closeDb(db);
+                db=NULL;
+                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
+                rmpath(savegamesPath);
+                return;
+            }
+            size=sqlQuery.size();
+        } while(size>0);*/
+        do
+        {
+            monster_id++;
             QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(QString("SELECT * FROM \"monster\" WHERE id=%1").arg(monster_id)))
             {
