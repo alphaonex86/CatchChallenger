@@ -62,6 +62,7 @@ void MapControllerMP::resetAll()
 
     mHaveTheDatapack=false;
     player_informations_is_set=false;
+    isTeleported=true;
 
     MapVisualiserPlayer::resetAll();
 }
@@ -734,27 +735,33 @@ void MapControllerMP::finalPlayerStep()
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
         return;
     }
-    int index=0;
-    const int size=current_map_pointer->logicalMap.teleport_semi.size();
-    while(index<size)
+    if(!isTeleported)
     {
-        const CatchChallenger::Map_semi_teleport &current_teleport=current_map_pointer->logicalMap.teleport_semi.at(index);
-        //if need be teleported
-        if(current_teleport.source_x==x && current_teleport.source_y==y)
+        int index=0;
+        const int size=current_map_pointer->logicalMap.teleport_semi.size();
+        while(index<size)
         {
-            unloadPlayerFromCurrentMap();
-            passMapIntoOld();
-            current_map=current_teleport.map;
-            x=current_teleport.destination_x;
-            y=current_teleport.destination_y;
-            if(!haveMapInMemory(current_map))
-                emit inWaitingOfMap();
-            loadOtherMap(current_map);
-            hideNotloadedMap();
-            return;
+            const CatchChallenger::Map_semi_teleport &current_teleport=current_map_pointer->logicalMap.teleport_semi.at(index);
+            //if need be teleported
+            if(current_teleport.source_x==x && current_teleport.source_y==y)
+            {
+                isTeleported=true;
+                unloadPlayerFromCurrentMap();
+                passMapIntoOld();
+                current_map=current_teleport.map;
+                x=current_teleport.destination_x;
+                y=current_teleport.destination_y;
+                if(!haveMapInMemory(current_map))
+                    emit inWaitingOfMap();
+                loadOtherMap(current_map);
+                hideNotloadedMap();
+                return;
+            }
+            index++;
         }
-        index++;
     }
+    else
+        isTeleported=false;
     MapVisualiserPlayer::finalPlayerStep();
 }
 

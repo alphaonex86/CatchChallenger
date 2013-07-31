@@ -34,6 +34,8 @@ public:
     QList<Plant> plantList;
     QHash<QPair<quint8,quint8>,Bot> bots;
     QHash<QPair<quint8,quint8>,BotDisplay> botsDisplay;
+
+    QMultiHash<QPair<quint8,quint8>,QPair<quint8,quint8> > botsFightTriggerExtra;//trigger line in front of bot fight
 };
 }
 

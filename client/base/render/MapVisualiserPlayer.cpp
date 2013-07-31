@@ -917,3 +917,22 @@ void MapVisualiserPlayer::mapDisplayedSlot(const QString &fileName)
         loadPlayerFromCurrentMap();
     }
 }
+
+quint8 MapVisualiserPlayer::getX()
+{
+    return x;
+}
+
+quint8 MapVisualiserPlayer::getY()
+{
+    return y;
+}
+
+CatchChallenger::Map_client * MapVisualiserPlayer::getMapObject()
+{
+    if(all_map.contains(current_map))
+        return &all_map[current_map]->logicalMap;
+    else
+        return NULL;
+}
+
