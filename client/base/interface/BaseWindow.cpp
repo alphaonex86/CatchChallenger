@@ -107,7 +107,7 @@ BaseWindow::BaseWindow() :
     //fight
     connect(CatchChallenger::Api_client_real::client,SIGNAL(random_seeds(QByteArray)),&ClientFightEngine::fightEngine,SLOT(newRandomNumber(QByteArray)));
     connect(MapController::mapController,SIGNAL(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(wildFightCollision(CatchChallenger::Map_client*,quint8,quint8)));
-    connect(MapController::mapController,SIGNAL(botFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(actionOnCheckBot(CatchChallenger::Map_client*,quint8,quint8)));
+    connect(MapController::mapController,SIGNAL(botFightCollision(CatchChallenger::Map_client*,quint8,quint8)),this,SLOT(botFightCollision(CatchChallenger::Map_client*,quint8,quint8)));
     connect(MapController::mapController,SIGNAL(currentMapLoaded()),this,SLOT(currentMapLoaded()));
     connect(&moveFightMonsterBottomTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterBottom()));
     connect(&moveFightMonsterTopTimer,SIGNAL(timeout()),this,SLOT(moveFightMonsterTop()));
@@ -986,6 +986,45 @@ bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, qu
     return true;
 }
 
+void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y)
+{
+    if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
+    {
+        newError(tr("Internal error"),"Bot trigged but no bot at this place");
+        return;
+    }
+    quint8 step=1;
+    actualBot=map->bots[QPair<quint8,quint8>(x,y)];
+    isInQuest=false;
+    if(!actualBot.step.contains(step))
+    {
+        newError(tr("Internal error"),"Bot trigged but no step found");
+        return;
+    }
+    if(actualBot.step[step].attribute("type")=="fight")
+    {
+        if(!actualBot.step[step].hasAttribute("fightid"))
+        {
+            showTip(tr("Bot step missing data error, repport this error please"));
+            return;
+        }
+        bool ok;
+        quint32 fightId=actualBot.step[step].attribute("fightid").toUInt(&ok);
+        if(!ok)
+        {
+            showTip(tr("Bot step wrong data type error, repport this error please"));
+            return;
+        }
+        botFight(fightId,MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
+        return;
+    }
+    else
+    {
+        newError(tr("Internal error"),"Bot trigged but not found");
+        return;
+    }
+}
+
 void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
 {
     switch(blockOnVar)
@@ -1605,6 +1644,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
     {
         ClientFightEngine::fightEngine.healAllMonsters();
         CatchChallenger::Api_client_real::client->heal();
+        load_monsters();
         showTip(tr("You are healed"));
         return;
     }
@@ -1655,6 +1695,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("Bot step wrong data type error, repport this error please"));
             return;
         }
+        CatchChallenger::Api_client_real::client->requestFight(fightId);
         botFight(fightId,MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
         return;
     }

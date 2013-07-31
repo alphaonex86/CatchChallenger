@@ -98,6 +98,7 @@ signals:
     void useSkill(const quint32 &skill) const;
     void learnSkill(const quint32 &monsterId,const quint32 &skill) const;
     void heal() const;
+    void requestFight(const quint32 &fightId) const;
     //quest
     void newQuestAction(const QuestAction &action,const quint32 &questId) const;
     //battle

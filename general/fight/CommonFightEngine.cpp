@@ -96,9 +96,10 @@ void CommonFightEngine::healAllMonsters()
     while(index<player_informations->playerMonster.size())
     {
         if(player_informations->playerMonster.at(index).egg_step==0)
-            player_informations->playerMonster[index].hp=
-                    CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(index).monster].stat.hp*
-                    player_informations->playerMonster.at(index).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        {
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(index).monster],player_informations->playerMonster.at(index).level);
+            player_informations->playerMonster[index].hp=stat.hp;
+        }
         index++;
     }
     updateCanDoFight();
