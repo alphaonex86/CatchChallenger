@@ -3055,6 +3055,15 @@ void Api_protocol::heal()
     output->packOutcommingData(0x60,0x0006,QByteArray());
 }
 
+void Api_protocol::requestFight(const quint32 &fightId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)fightId;
+    output->packOutcommingData(0x60,0x0007,outputData);
+}
+
 void Api_protocol::useSkill(const quint32 &skill)
 {
     QByteArray outputData;
