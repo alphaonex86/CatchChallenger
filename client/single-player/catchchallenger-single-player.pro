@@ -27,6 +27,4 @@ RESOURCES += \
     resources/resources-single-player.qrc \
     ../../server/databases/resources-db-sqlite.qrc
 
-win32:RESOURCES += ../../server/base/resources/resources-windows-qt-plugin.qrc
-
 DEFINES += NOREMOTE

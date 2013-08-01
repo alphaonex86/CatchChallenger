@@ -371,6 +371,16 @@ QString BaseWindow::lastLocation() const
     return MapController::mapController->lastLocation();
 }
 
+QHash<quint32, PlayerQuest> BaseWindow::getQuests() const
+{
+    return quests;
+}
+
+quint8 BaseWindow::getActualBotId() const
+{
+    return actualBot.botId;
+}
+
 void BaseWindow::changeEvent(QEvent *e)
 {
     QWidget::changeEvent(e);
@@ -1109,7 +1119,7 @@ void BaseWindow::updateRXTX()
     previousTXSize=TXSize;
 }
 
-bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
+bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const
 {
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << QString("haveNextStepQuestRequirements for quest: %1").arg(questId);
@@ -1158,7 +1168,7 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
     return true;
 }
 
-bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
+bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) const
 {
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check quest requirement for: " << quest.id;
@@ -1867,7 +1877,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
     load_plant_inventory();
 }
 
-quint32 BaseWindow::itemQuantity(const quint32 &itemId)
+quint32 BaseWindow::itemQuantity(const quint32 &itemId) const
 {
     if(items.contains(itemId))
         return items[itemId];
@@ -2057,6 +2067,7 @@ void BaseWindow::getTextEntryPoint()
     scriptFile.open(QIODevice::ReadOnly);
     QTextStream stream(&scriptFile);
     QString contents = stream.readAll();
+    contents="function getTextEntryPoint()\n{\n"+contents+"\n}";
     quint8 currentQuestStepVar;
     bool haveNextStepQuestRequirementsVar;
     bool finishOneTimeVar;
