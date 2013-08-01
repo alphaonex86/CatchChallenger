@@ -74,8 +74,9 @@ CREATE TABLE player (
     "unvalidated_rescue_map" TEXT,
     "unvalidated_rescue_x" INTEGER,
     "unvalidated_rescue_y" INTEGER,
-    "unvalidated_rescue_orientation" TEXT
-, "warehouse_cash" INTEGER);
+    "unvalidated_rescue_orientation" TEXT,
+    "warehouse_cash" INTEGER
+, "allow" TEXT);
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
 CREATE INDEX "player_recipe_list" on recipes (player ASC);
@@ -88,8 +89,8 @@ CREATE UNIQUE INDEX "bot_already_beaten_index" on bot_already_beaten (player_id 
 CREATE INDEX "bot_already_beaten_by_player" on bot_already_beaten (player_id ASC);
 CREATE INDEX "player_item_index" on item (player_id ASC);
 CREATE INDEX "monster_by_player" on monster (player ASC);
-CREATE UNIQUE INDEX "id" on player (id ASC);
-CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
 CREATE UNIQUE INDEX "player_item_unique_index" on item (item_id ASC, player_id ASC, warehouse ASC);
 CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
+CREATE UNIQUE INDEX "id" on player (id ASC);
+CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
 COMMIT;

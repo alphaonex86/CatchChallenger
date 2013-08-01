@@ -76,6 +76,7 @@ struct Player_internal_informations
     Rescue rescue;
     Rescue unvalidated_rescue;
     QMultiHash<quint32,MonsterDrops> questsDrop;
+    QSet<ActionAllow> allow;
 };
 
 struct ServerSettings
