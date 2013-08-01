@@ -42,6 +42,10 @@ public:
     void serverIsLoading();
     void serverIsReady();
     QString lastLocation() const;
+    QHash<quint32, PlayerQuest> getQuests() const;
+    quint8 getActualBotId() const;
+    bool haveNextStepQuestRequirements(const Quest &quest) const;
+    bool haveStartQuestRequirement(const Quest &quest) const;
     enum ObjectType
     {
         ObjectType_All,
@@ -147,7 +151,7 @@ private slots:
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const ObjectUsage &objectUsage);
-    quint32 itemQuantity(const quint32 &itemId);
+    quint32 itemQuantity(const quint32 &itemId) const;
     //trade
     void tradeRequested(const QString &pseudo, const quint8 &skinInt);
     void tradeAcceptedByOther(const QString &pseudo,const quint8 &skinInt);
@@ -221,8 +225,6 @@ private slots:
     void getTextEntryPoint();
     void showQuestText(const quint32 &textId);
     void nextQuestStep();
-    bool haveNextStepQuestRequirements(const Quest &quest);
-    bool haveStartQuestRequirement(const Quest &quest);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
     bool botHaveQuest(const quint32 &botId);

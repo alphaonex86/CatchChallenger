@@ -35,7 +35,8 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/../fight/interface/ClientFightEngine.cpp \
     $$PWD/../fight/interface/MapVisualiserPlayerWithFight.cpp \
     $$PWD/interface/WithAnotherPlayer.cpp \
-    $$PWD/render/MapVisualiserThread.cpp
+    $$PWD/render/MapVisualiserThread.cpp \
+    $$PWD/interface/QuestJS.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/audio/QOggAudioBuffer.h \
@@ -59,7 +60,8 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/../fight/interface/ClientFightEngine.h \
     $$PWD/../fight/interface/MapVisualiserPlayerWithFight.h \
     $$PWD/interface/WithAnotherPlayer.h \
-    $$PWD/render/MapVisualiserThread.h
+    $$PWD/render/MapVisualiserThread.h \
+    $$PWD/interface/QuestJS.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

@@ -405,7 +405,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     out << (quint32)size;
     while(index<size)
     {
-        QByteArray data=privateMonsterToBinary(player_informations->public_and_private_informations.playerMonster.at(index));
+        QByteArray data=privateMonsterToBinary(player_informations->public_and_private_informations.warehouse_playerMonster.at(index));
         outputData+=data;
         out.device()->seek(out.device()->pos()+data.size());
         index++;
