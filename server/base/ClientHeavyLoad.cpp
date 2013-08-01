@@ -38,18 +38,18 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     }
     //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8),cash(9)
     //rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13),unvalidated_rescue_map(14),unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17)
-    //warehouse_cash(18),allow(19)
+    //warehouse_cash(18),allow(19),clan_leader(20)
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
@@ -70,11 +70,17 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
         else
         {
             bool ok;
-            player_informations->public_and_private_informations.public_informations.clan=loginQuery.value(8).toUInt(&ok);
+            player_informations->public_and_private_informations.clan=loginQuery.value(8).toUInt(&ok);
             if(!ok)
             {
                 emit message(QString("clan id is not an number, clan disabled"));
-                player_informations->public_and_private_informations.public_informations.clan=0;//no clan
+                player_informations->public_and_private_informations.clan=0;//no clan
+            }
+            player_informations->public_and_private_informations.clan_leader=(loginQuery.value(20).toUInt(&ok)==1);
+            if(!ok)
+            {
+                emit message(QString("clan_leader id is not an number, clan_leader disabled"));
+                player_informations->public_and_private_informations.clan_leader=false;//no clan
             }
             player_informations->id=loginQuery.value(0).toUInt(&ok);
             if(!ok)
@@ -139,16 +145,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
                 orentation=Orientation_bottom;
                 emit message(QString("Wrong orientation corrected with bottom"));
             }
-            QStringList allowStringList=loginQuery.value(19).toString().split(";");
-            int index=0;
-            while(index<allowStringList.size())
-            {
-                if(allowStringList.at(index)=="clan")
-                    player_informations->allow << ActionAllow_Clan;
-                else
-                    emit message(QString("Unknown allow code: %1").arg(allowStringList.at(index)));
-                index++;
-            }
+            player_informations->public_and_private_informations.allow=FacilityLib::QStringToAllow(loginQuery.value(19).toString());
             //all is rights
             if(GlobalServerData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))
             {
@@ -210,7 +207,8 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
         else
         {
             player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
-            player_informations->public_and_private_informations.public_informations.clan=0;
+            player_informations->public_and_private_informations.clan=0;
+            player_informations->public_and_private_informations.clan_leader=false;
             player_informations->id=999999999-GlobalServerData::serverPrivateVariables.number_of_bots_logged;
             player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
             player_informations->public_and_private_informations.public_informations.skinId=0x00;//use the first skin by alaphabetic order
@@ -372,6 +370,12 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
     else
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
+    out << FacilityLib::allowToQString(player_informations->public_and_private_informations.allow);
+    out << (quint32)player_informations->public_and_private_informations.clan;
+    if(player_informations->public_and_private_informations.clan_leader)
+        out << (quint8)0x01;
+    else
+        out << (quint8)0x00;
     out << (quint64)player_informations->public_and_private_informations.cash;
     out << (quint64)player_informations->public_and_private_informations.warehouse_cash;
     out << (quint32)GlobalServerData::serverPrivateVariables.map_list.size();
@@ -802,4 +806,30 @@ void ClientHeavyLoad::loadQuests()
         player_informations->public_and_private_informations.quests[id]=playerQuest;
         LocalClientHandler::addQuestStepDrop(player_informations,id,playerQuest.step);
     }
+}
+
+void ClientHeavyLoad::askClan(const quint32 &clanId)
+{
+    //do the query
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+        queryText=QString("SELECT name FROM clan WHERE id=%1")
+                .arg(clanId);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+        queryText=QString("SELECT name FROM clan WHERE id=%1")
+                .arg(clanId);
+        break;
+    }
+    QSqlQuery clanQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!clanQuery.exec(queryText))
+        emit message(clanQuery.lastQuery()+": "+clanQuery.lastError().text());
+    //parse the result
+    if(clanQuery.next())
+        emit haveClanInfo(clanQuery.value(0).toString());
+    else
+        emit message("Warning: clan linked: %1 is not found into db");
 }

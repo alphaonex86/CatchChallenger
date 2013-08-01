@@ -114,13 +114,16 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	SIGNAL(tradeAddTradeObject(quint32,quint32)),localClientHandler,SLOT(tradeAddTradeObject(quint32,quint32)),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(tradeAddTradeMonster(quint32)),      localClientHandler,SLOT(tradeAddTradeMonster(quint32)),Qt::QueuedConnection);
     connect(clientNetworkRead,	SIGNAL(newQuestAction(QuestAction,quint32)),localClientHandler,SLOT(newQuestAction(QuestAction,quint32)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	SIGNAL(clanAction(quint8,quint8,QString)),  localClientHandler,SLOT(clanAction(quint8,quint8,QString)),Qt::QueuedConnection);
 
     //connect the player information
     connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	localClientHandler,	SLOT(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	clientLocalBroadcast,	SLOT(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(newRandomNumber(QByteArray)),			localClientHandler,	SLOT(newRandomNumber(QByteArray)),Qt::QueuedConnection);
+    connect(clientHeavyLoad,	SIGNAL(newRandomNumber(QByteArray)),		localClientHandler,	SLOT(newRandomNumber(QByteArray)),Qt::QueuedConnection);
+    connect(clientHeavyLoad,	SIGNAL(haveClanInfo(QString)),              localClientHandler,	SLOT(haveClanInfo(QString)),Qt::QueuedConnection);
+    connect(localClientHandler,	SIGNAL(askClan(quint32)),                   clientHeavyLoad,	SLOT(askClan(quint32)),Qt::QueuedConnection);
 
     //packet parsed (heavy)
     connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),

@@ -13,7 +13,7 @@
 
 #define COORD_TYPE quint8
 #define SIMPLIFIED_PLAYER_ID_TYPE quint16
-#define CLAN_ID_TYPE quint8
+#define CLAN_ID_TYPE quint32
 #define SPEED_TYPE quint8
 
 namespace CatchChallenger {
@@ -43,6 +43,11 @@ enum Orientation
     Orientation_right = 2,
     Orientation_bottom = 3,
     Orientation_left = 4
+};
+
+enum ActionAllow
+{
+    ActionAllow_Clan
 };
 
 enum Direction
@@ -148,7 +153,6 @@ struct Player_public_informations
 {
     SIMPLIFIED_PLAYER_ID_TYPE simplifiedId;
     QString pseudo;
-    CLAN_ID_TYPE clan;
     Player_type type;
     quint8 skinId;
     SPEED_TYPE speed;
@@ -224,6 +228,9 @@ struct Player_private_and_public_informations
     /// \todo put out of here to have mutalised engine
     QList<PlayerMonster> playerMonster,warehouse_playerMonster;
     QHash<quint32, PlayerQuest> quests;
+    CLAN_ID_TYPE clan;
+    bool clan_leader;
+    QSet<ActionAllow> allow;
 };
 
 /// \brief Define the mode of transmission: client or server
@@ -487,11 +494,6 @@ struct ItemToSellOrBuy
     quint32 object;
     quint32 price;
     quint32 quantity;
-};
-
-enum ActionAllow
-{
-    ActionAllow_Clan
 };
 
 struct Quest

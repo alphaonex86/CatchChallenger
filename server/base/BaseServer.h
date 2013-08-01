@@ -39,6 +39,7 @@ public:
     virtual bool isListen();
     virtual bool isStopped();
     virtual void stop();
+    void load_clan_max_id();
 protected slots:
     virtual void start_internal_server() = 0;
     virtual void stop_internal_server();

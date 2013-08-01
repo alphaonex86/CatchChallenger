@@ -104,6 +104,8 @@ signals:
     //battle
     void battleCanceled() const;
     void battleAccepted() const;
+    //clan
+    void clanAction(const quint8 &query_id,const quint8 &action,const QString &text) const;
 private:
     // for status
     bool have_send_protocol;
