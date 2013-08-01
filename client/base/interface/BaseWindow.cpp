@@ -74,6 +74,9 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(logged()),this,SLOT(logged()),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(haveTheDatapack()),this,SLOT(haveTheDatapack()),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)),Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(clanActionFailed()),this,SLOT(clanActionFailed()),Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(clanActionSuccess(quint32)),this,SLOT(clanActionSuccess(quint32)),Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(clanDissolved()),this,SLOT(clanDissolved()),Qt::QueuedConnection);
 
     //connect the map controler
     connect(CatchChallenger::Api_client_real::client,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
@@ -1292,6 +1295,12 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
             appendReputationPoint(quest.rewards.reputation[index].type,quest.rewards.reputation[index].point);
             index++;
         }
+        index=0;
+        while(index<quest.rewards.allow.size())
+        {
+            allow << quest.rewards.allow[index];
+            index++;
+        }
     }
     return true;
 }
@@ -1687,6 +1696,22 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->IG_dialog->setVisible(true);
         return;
     }
+    else if(actualBot.step[step].attribute("type")=="clan")
+    {
+        QString textToShow;
+        if(clan==0)
+        {
+            if(allow.contains(ActionAllow_Clan))
+                textToShow=QString("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create"));
+            else
+                textToShow=QString("<center>You can't create your clan</center>");
+        }
+        else
+            textToShow=QString("<center>%1</center>").arg(tr("You are already into a clan. Use the clan dongle into the player information."));
+        ui->IG_dialog_text->setText(textToShow);
+        ui->IG_dialog->setVisible(true);
+        return;
+    }
     else if(actualBot.step[step].attribute("type")=="warehouse")
     {
         monster_to_withdraw.clear();
@@ -1701,6 +1726,48 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->warehouseBotImage->setPixmap(pixmap);
         ui->stackedWidget->setCurrentWidget(ui->page_warehouse);
         updateTheWareHouseContent();
+        return;
+    }
+    else if(actualBot.step[step].attribute("type")=="script")
+    {
+        QScriptEngine engine;
+        QString contents = actualBot.step[step].text();
+        contents="function getTextEntryPoint()\n{\n"+contents+"\n}";
+        QScriptValue result = engine.evaluate(contents);
+        if (result.isError()) {
+            qDebug() << "script error:" << QString::fromLatin1("%1: %2")
+                        .arg(result.property("lineNumber").toInt32())
+                        .arg(result.toString());
+            showTip(QString::fromLatin1("%1: %2")
+            .arg(result.property("lineNumber").toInt32())
+            .arg(result.toString()));
+            return;
+        }
+
+        QScriptValue getTextEntryPoint = engine.globalObject().property("getTextEntryPoint");
+        if(getTextEntryPoint.isError())
+        {
+            qDebug() << "script error:" << QString::fromLatin1("%1: %2")
+                        .arg(getTextEntryPoint.property("lineNumber").toInt32())
+                        .arg(getTextEntryPoint.toString());
+            showTip(QString::fromLatin1("%1: %2")
+            .arg(getTextEntryPoint.property("lineNumber").toInt32())
+            .arg(getTextEntryPoint.toString()));
+            return;
+        }
+        QScriptValue returnValue=getTextEntryPoint.call();
+        quint32 textEntryPoint=returnValue.toNumber();
+        if(returnValue.isError())
+        {
+            qDebug() << "script error:" << QString::fromLatin1("%1: %2")
+                        .arg(returnValue.property("lineNumber").toInt32())
+                        .arg(returnValue.toString());
+            showTip(QString::fromLatin1("%1: %2")
+            .arg(returnValue.property("lineNumber").toInt32())
+            .arg(returnValue.toString()));
+            return;
+        }
+        qDebug() << "textEntryPoint:" << textEntryPoint;
         return;
     }
     else if(actualBot.step[step].attribute("type")=="fight")
@@ -1970,9 +2037,21 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             index++;
             continue;
         }
-        if(link=="close")
+        else if(link=="clan_create")
+        {
+            bool ok;
+            QString text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok);
+            if(ok && !text.isEmpty())
+            {
+                actionClan << ActionClan_Create;
+                CatchChallenger::Api_client_real::client->createClan(text);
+            }
+            index++;
+            continue;
+        }
+        else if(link=="close")
             return;
-        if(link=="next_quest_step" && isInQuest)
+        else if(link=="next_quest_step" && isInQuest)
         {
             nextQuestStep();
             index++;
@@ -2808,4 +2887,106 @@ void CatchChallenger::BaseWindow::on_warehouseValidate_clicked()
 void CatchChallenger::BaseWindow::on_pushButtonFightBag_clicked()
 {
     selectObject(ObjectType_UseInFight);
+}
+
+void CatchChallenger::BaseWindow::clanActionSuccess(const quint32 &clanId)
+{
+    switch(actionClan.first())
+    {
+        case ActionClan_Create:
+            if(clan==0)
+            {
+                clan=clanId;
+                clan_leader=true;
+            }
+            updateClanDisplay();
+            showTip(tr("The clan is created"));
+        break;
+        case ActionClan_Leave:
+        case ActionClan_Dissolve:
+            clan=0;
+            updateClanDisplay();
+            showTip(tr("You are leaved the clan"));
+        break;
+        case ActionClan_Invite:
+            showTip(tr("You have correctly invited the player"));
+        break;
+        case ActionClan_Eject:
+            showTip(tr("You have correctly ejected the player from clan"));
+        break;
+        default:
+        newError(tr("Internal error"),"ActionClan unknown");
+        return;
+    }
+    actionClan.removeFirst();
+}
+
+void CatchChallenger::BaseWindow::clanActionFailed()
+{
+    switch(actionClan.first())
+    {
+        case ActionClan_Create:
+            updateClanDisplay();
+        break;
+        case ActionClan_Leave:
+        case ActionClan_Dissolve:
+        break;
+        case ActionClan_Invite:
+            showTip(tr("You have failed to invite the player"));
+        break;
+        case ActionClan_Eject:
+            showTip(tr("You have failed to eject the player from clan"));
+        break;
+        default:
+        newError(tr("Internal error"),"ActionClan unknown");
+        return;
+    }
+    actionClan.removeFirst();
+}
+
+void CatchChallenger::BaseWindow::clanDissolved()
+{
+    clan=0;
+    updateClanDisplay();
+}
+
+void CatchChallenger::BaseWindow::updateClanDisplay()
+{
+    ui->tabWidgetTrainerCard->setTabEnabled(4,clan!=0);
+    ui->clanGrouBoxNormal->setVisible(!clan_leader);
+    ui->clanGrouBoxLeader->setVisible(clan_leader);
+}
+
+void CatchChallenger::BaseWindow::on_clanActionLeave_clicked()
+{
+    actionClan << ActionClan_Leave;
+    CatchChallenger::Api_client_real::client->leaveClan();
+}
+
+void CatchChallenger::BaseWindow::on_clanActionDissolve_clicked()
+{
+    actionClan << ActionClan_Dissolve;
+    CatchChallenger::Api_client_real::client->dissolveClan();
+}
+
+void CatchChallenger::BaseWindow::on_clanActionInvite_clicked()
+{
+    bool ok;
+    QString text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
+    if(ok && !text.isEmpty())
+    {
+        actionClan << ActionClan_Invite;
+        CatchChallenger::Api_client_real::client->inviteClan(text);
+    }
+}
+
+void CatchChallenger::BaseWindow::on_clanActionEject_clicked()
+{
+    bool ok;
+    QString text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
+    if(ok && !text.isEmpty())
+    {
+        actionClan << ActionClan_Eject;
+        CatchChallenger::Api_client_real::client->ejectClan(text);
+    }
 }

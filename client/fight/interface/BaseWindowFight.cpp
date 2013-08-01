@@ -882,6 +882,7 @@ void BaseWindow::displayAttack()
             delete movie;
         }
         movie=NULL;
+        attack_quantity_changed=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
         ui->labelFightMonsterAttackTop->setMovie(NULL);
         ui->labelFightMonsterAttackBottom->setMovie(NULL);
         updateAttackTime.restart();
@@ -958,7 +959,7 @@ void BaseWindow::displayAttack()
         }
         ui->labelFightEnter->setText(QString("%1<br />%2").arg(attackOwner).arg(damage));
     }
-    if(displayAttackProgression%100 /* each 400ms */ && CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<0)
+    if(displayAttackProgression%100 /* each 400ms */ && attack_quantity_changed<0)
     {
         if(applyOnOtherMonster)
         {
