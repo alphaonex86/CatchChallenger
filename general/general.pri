@@ -5,6 +5,8 @@ QMAKE_CXXFLAGS -= -O2
 
 QT       += core gui network xml
 
+LIBS += -lz
+
 TEMPLATE = app
 
 SOURCES += $$PWD/base/Api_protocol.cpp \
