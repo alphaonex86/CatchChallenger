@@ -2861,7 +2861,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
     out.setVersion(QDataStream::Qt_4_4);
     quint8 query_number=queryNumber();
     out << login;
-    QCryptographicHash hash(QCryptographicHash::Sha1);
+    QCryptographicHash hash(QCryptographicHash::Sha512);
     hash.addData(pass.toUtf8());
     outputData+=hash.result();
     output->packOutcommingQuery(0x02,0x0002,query_number,outputData);

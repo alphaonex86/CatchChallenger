@@ -17,7 +17,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
 {
     ui->setupUi(this);
     this->datapackPath=datapackPath;
-    ok=false;
+    this->ok=false;
     ui->description->setText(tr("Profile loading..."));
 
     //open and quick check the file
@@ -97,7 +97,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
                 profile.map=map.attribute("file");
                 if(!QFile::exists(datapackPath+DATAPACK_BASE_PATH_MAP+profile.map))
                 {
-                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, map don't exists: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(xmlFile.fileName()).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
                     startItem = startItem.nextSiblingElement("start");
                     continue;
                 }
