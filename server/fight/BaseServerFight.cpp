@@ -51,8 +51,6 @@ void BaseServerFight::load_monsters_max_id()
             continue;
         }
     }
-    if(!maxMonsterIdQuery.isValid())
-        DebugClass::debugConsole(QString("SQL query is not valid: %1").arg(queryText));
 }
 
 void BaseServerFight::check_monsters_map()
