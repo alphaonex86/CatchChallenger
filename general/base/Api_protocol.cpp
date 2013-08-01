@@ -10,6 +10,7 @@ using namespace CatchChallenger;
 
 #include "GeneralStructures.h"
 #include "CommonDatapack.h"
+#include "FacilityLib.h"
 
 //need host + port here to have datapack base
 
@@ -179,14 +180,6 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                         return;
                     }
                     in >> public_informations.speed;
-
-                    //the clan
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                        return;
-                    }
-                    in >> public_informations.clan;
 
                     //the pseudo
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -949,6 +942,10 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                         return;
                     }
                 }
+                break;
+                //clan dissolved
+                case 0x0009:
+                    emit clanDissolved();
                 break;
                 default:
                 parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -2130,6 +2127,31 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                             }
                             in >> player_informations.public_informations.simplifiedId;
                         }
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            return;
+                        }
+                        QString tempAllow;
+                        in >> tempAllow;
+                        player_informations.allow=FacilityLib::QStringToAllow(tempAllow);
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> player_informations.clan;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        quint8 tempClanLeader;
+                        in >> tempClanLeader;
+                        if(tempClanLeader==0x01)
+                            player_informations.clan_leader=true;
+                        else
+                            player_informations.clan_leader=false;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash, line: %1").arg(__LINE__));
@@ -2535,6 +2557,32 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subC
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("bad return code: %1, line: %2").arg(returnCode).arg(__LINE__));
                         return;
+                    }
+                }
+                break;
+                //Clan action
+                case 0x000D:
+                {
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                                emit clanActionSuccess(0);
+                            else
+                            {
+                                quint32 clanId;
+                                in >> clanId;
+                                emit clanActionSuccess(clanId);
+                            }
+                        break;
+                        case 0x02:
+                            emit clanActionFailed();
+                        break;
+                        default:
+                            parseError(tr("Procotol wrong or corrupted"),QString("bad return code: %1, line: %2").arg(returnCode).arg(__LINE__));
+                        break;
                     }
                 }
                 break;
@@ -3117,6 +3165,54 @@ void Api_protocol::nextQuestStep(const quint32 &questId)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
     output->packOutcommingData(0x6a,0x0004,outputData);
+}
+
+void Api_protocol::createClan(const QString &name)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << name;
+    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+}
+
+void Api_protocol::leaveClan()
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+}
+
+void Api_protocol::dissolveClan()
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x03;
+    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+}
+
+void Api_protocol::inviteClan(const QString &pseudo)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x04;
+    out << pseudo;
+    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+}
+
+void Api_protocol::ejectClan(const QString &pseudo)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x05;
+    out << pseudo;
+    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
 }
 
 void Api_protocol::collectMaturePlant()

@@ -132,6 +132,7 @@ void BaseServer::preload_the_data()
     preload_the_plant_on_map();
     check_monsters_map();
     preload_the_visibility_algorithm();
+    load_clan_max_id();
 }
 
 void BaseServer::preload_the_map()
@@ -1053,4 +1054,34 @@ bool BaseServer::isStopped()
 void BaseServer::stop()
 {
     emit try_stop_server();
+}
+
+void BaseServer::load_clan_max_id()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
+        break;
+    }
+    QSqlQuery maxMonsterIdQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!maxMonsterIdQuery.exec(queryText))
+        DebugClass::debugConsole(maxMonsterIdQuery.lastQuery()+": "+maxMonsterIdQuery.lastError().text());
+    GlobalServerData::serverPrivateVariables.maxClanId=0;
+    while(maxMonsterIdQuery.next())
+    {
+        bool ok;
+        GlobalServerData::serverPrivateVariables.maxClanId=maxMonsterIdQuery.value(0).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
+            GlobalServerData::serverPrivateVariables.maxClanId=0;
+            continue;
+        }
+    }
 }

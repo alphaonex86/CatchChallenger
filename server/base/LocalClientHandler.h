@@ -46,12 +46,25 @@ public:
     quint8 getSelectedMonsterNumber();
     PlayerMonster& getEnemyMonster();
     LocalClientHandlerFight localClientHandlerFight;
+    quint32 getPlayerId() const;
+    void dissolvedClan();
+    void inviteToClan(const quint32 &clanId);
+    void ejectToClan();
+    quint32 getClanId() const;
+    bool haveAClan() const;
 private:
     bool checkCollision();
 
     //info linked
+    struct Clan
+    {
+        QString name;
+        QList<LocalClientHandler *> players;
+    };
     static Direction	temp_direction;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
+    static QHash<quint32,Clan> playerByClan;
+
     //trade
     LocalClientHandler * otherPlayerTrade;
     bool tradeIsValidated;
@@ -128,6 +141,9 @@ public slots:
     void requestFight(const quint32 &fightId);
     void useSkill(const quint32 &skill);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+    //clan
+    void clanAction(const quint8 &query_id,const quint8 &action,const QString &text);
+    void haveClanInfo(const QString &clanName);
 private slots:
     virtual void extraStop();
     void savePosition();
@@ -141,6 +157,7 @@ private slots:
     void addQuestStepDrop(const quint32 &questId,const quint8 &questStep);
     void removeQuestStepDrop(const quint32 &questId,const quint8 &questStep);
 signals:
+    void askClan(const quint32 &clanId);
     void dbQuery(const QString &sqlQuery) const;
     void askRandomNumber() const;
     void receiveSystemText(const QString &text,const bool &important=false) const;

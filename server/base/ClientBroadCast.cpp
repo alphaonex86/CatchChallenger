@@ -73,8 +73,8 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 void ClientBroadCast::askIfIsReadyToStop()
 {
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
-    if(player_informations->public_and_private_informations.public_informations.clan!=0)
-        playerByClan.remove(player_informations->public_and_private_informations.public_informations.clan,this);
+    if(player_informations->public_and_private_informations.clan!=0)
+        playerByClan.remove(player_informations->public_and_private_informations.clan,this);
     clientBroadCastList.removeOne(this);
     emit isReadyToStop();
 }
@@ -111,13 +111,13 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 {
     if(chatType==Chat_type_clan)
     {
-        if(player_informations->public_and_private_informations.public_informations.clan==0)
+        if(player_informations->public_and_private_informations.clan==0)
             emit error("Unable to chat with clan, you have not clan");
         else
         {
-            emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(player_informations->public_and_private_informations.public_informations.clan).arg(text));
+            emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(player_informations->public_and_private_informations.clan).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
-            QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(player_informations->public_and_private_informations.public_informations.clan);
+            QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(player_informations->public_and_private_informations.clan);
             int size=playerWithSameClan.size();
             int index=0;
             while(index<size)
@@ -167,8 +167,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 void ClientBroadCast::send_player_informations()
 {
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
-    if(player_informations->public_and_private_informations.public_informations.clan!=0)
-        playerByClan.insert(player_informations->public_and_private_informations.public_informations.clan,this);
+    if(player_informations->public_and_private_informations.clan!=0)
+        playerByClan.insert(player_informations->public_and_private_informations.clan,this);
     clientBroadCastList << this;
 }
 

@@ -161,3 +161,33 @@ QString FacilityLib::genderToString(const Gender &gender)
     }
     return "unknown";
 }
+
+QString FacilityLib::allowToQString(const QSet<ActionAllow> &allowList)
+{
+    QStringList allowString;
+    QSetIterator<ActionAllow> i(allowList);
+    while (i.hasNext())
+        switch(i.next())
+        {
+            case ActionAllow_Clan:
+                allowString << "clan";
+            break;
+            default:
+            break;
+        }
+    return allowString.join(";");
+}
+
+QSet<ActionAllow> FacilityLib::QStringToAllow(const QString &string)
+{
+    QSet<ActionAllow> allowList;
+    const QStringList &allowStringList=string.split(";");
+    int index=0;
+    while(index<allowStringList.size())
+    {
+        if(allowStringList.at(index)=="clan")
+            allowList << ActionAllow_Clan;
+        index++;
+    }
+    return allowList;
+}

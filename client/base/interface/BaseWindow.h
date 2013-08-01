@@ -56,6 +56,14 @@ public:
         ObjectType_MonsterToLearn,
         ObjectType_UseInFight
     };
+    enum ActionClan
+    {
+        ActionClan_Create,
+        ActionClan_Leave,
+        ActionClan_Dissolve,
+        ActionClan_Invite,
+        ActionClan_Eject
+    };
     ObjectType waitedObjectType;
     enum QueryType
     {
@@ -232,6 +240,12 @@ private slots:
     void updateDisplayedQuests();
     void appendReputationPoint(const QString &type,const qint32 &point);
 
+    //clan
+    void clanActionSuccess(const quint32 &clanId);
+    void clanActionFailed();
+    void clanDissolved();
+    void updateClanDisplay();
+
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
     void on_toolButton_interface_quit_clicked();
@@ -287,6 +301,10 @@ private slots:
     void on_toolButton_quit_warehouse_clicked();
     void on_warehouseValidate_clicked();
     void on_pushButtonFightBag_clicked();
+    void on_clanActionLeave_clicked();
+    void on_clanActionDissolve_clicked();
+    void on_clanActionInvite_clicked();
+    void on_clanActionEject_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -308,6 +326,10 @@ private:
     bool waitToSell;
     QList<ItemToSellOrBuy> itemsToSell;
     QPixmap playerFrontImage,playerBackImage;
+    quint32 clan;
+    bool clan_leader;
+    QSet<ActionAllow> allow;
+    QList<ActionClan> actionClan;
 
     //plant seed in waiting
     quint32 seed_in_waiting;
@@ -382,6 +404,7 @@ private:
     int displayTrapProgression;
     QTimer displayTrapTimer;
     bool trapSuccess;
+    qint32 attack_quantity_changed;
 
     //trade
     TradeOtherStat tradeOtherStat;

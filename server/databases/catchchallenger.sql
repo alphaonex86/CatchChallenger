@@ -21,6 +21,18 @@ CREATE TABLE IF NOT EXISTS `bot_already_beaten` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `clan`
+--
+
+CREATE TABLE IF NOT EXISTS `clan` (
+  `id` int(11) NOT NULL,
+  `name` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `item`
 --
 
@@ -129,8 +141,11 @@ CREATE TABLE IF NOT EXISTS `player` (
   `unvalidated_rescue_orientation` text NOT NULL,
   `warehouse_cash` bigint(20) NOT NULL,
   `allow` text NOT NULL,
+  `clan_leader` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `login` (`login`,`password`)
+  UNIQUE KEY `login` (`login`,`password`),
+  UNIQUE KEY `pseudo` (`pseudo`,`clan`),
+  KEY `clan` (`clan`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
 
 -- --------------------------------------------------------

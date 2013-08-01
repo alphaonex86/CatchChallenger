@@ -37,6 +37,7 @@ public slots:
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
     void dbQuery(const QString &queryText);
     void askedRandomNumber();
+    void askClan(const quint32 &clanId);
     //normal slots
     void askIfIsReadyToStop();
 private:
@@ -84,6 +85,7 @@ signals:
     void put_on_the_map(Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation) const;
     //random linked signals
     void newRandomNumber(const QByteArray &randomData) const;
+    void haveClanInfo(const QString &clanName);
 };
 }
 

@@ -174,6 +174,11 @@ signals:
     void battleCanceledByOther() const;
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn) const;
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const;
+
+    //clan
+    void clanActionSuccess(const quint32 &clanId) const;
+    void clanActionFailed() const;
+    void clanDissolved() const;
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -225,6 +230,13 @@ public slots:
     void finishQuest(const quint32 &questId);
     void cancelQuest(const quint32 &questId);
     void nextQuestStep(const quint32 &questId);
+
+    //clan
+    void createClan(const QString &name);
+    void leaveClan();
+    void dissolveClan();
+    void inviteClan(const QString &pseudo);
+    void ejectClan(const QString &pseudo);
 };
 }
 

@@ -828,6 +828,42 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &sub
                 emit datapackList(queryNumber,files,timestamps);
             }
             break;
+            //Clan action
+            case 0x000D:
+            {
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint8 clanActionId;
+                in >> clanActionId;
+                switch(clanActionId)
+                {
+                    case 0x01:
+                    case 0x04:
+                    case 0x05:
+                    {
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                        {
+                            parseError(QString("error at datapack file list query"));
+                            return;
+                        }
+                        QString tempString;
+                        in >> tempString;
+                        emit clanAction(queryNumber,clanActionId,tempString);
+                    }
+                    break;
+                    case 0x02:
+                    case 0x03:
+                        emit clanAction(queryNumber,clanActionId,QString());
+                    break;
+                    default:
+                    parseError(QString("unknown clan action code"));
+                    return;
+                }
+            }
+            break;
             default:
                 parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
