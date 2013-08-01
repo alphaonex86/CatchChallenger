@@ -1,6 +1,7 @@
 #include "DatapackGeneralLoader.h"
 #include "DebugClass.h"
 #include "GeneralVariable.h"
+#include "CommonDatapack.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -208,75 +209,88 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
             index++;
             continue;
         }
-        QFile itemsFile(entryList.at(index).absoluteFilePath()+"/definition.xml");
-        QByteArray xmlContent;
-        if(!itemsFile.open(QIODevice::ReadOnly))
+        //add it, all seam ok
+        QPair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath()+"/definition.xml");
+        if(returnedQuest.first==true)
         {
-            qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
-            index++;
-            continue;
-        }
-        xmlContent=itemsFile.readAll();
-        itemsFile.close();
-        QDomDocument domDocument;
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-            index++;
-            continue;
-        }
-        QDomElement root = domDocument.documentElement();
-        if(root.tagName()!="quest")
-        {
-            qDebug() << QString("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(itemsFile.fileName());
-            index++;
-            continue;
+            if(quests.contains(returnedQuest.second.id))
+                qDebug() << QString("The quest with id: %1 is already found, disable: %2").arg(returnedQuest.second.id).arg(entryList.at(index).absoluteFilePath()+"/definition.xml");
+            else
+                quests[returnedQuest.second.id]=returnedQuest.second;
         }
 
-        //load the content
-        bool ok;
+        index++;
+    }
+    return quests;
+}
 
-        if(!root.hasAttribute("id"))
+QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
+{
+    CatchChallenger::Quest quest;
+    QFile itemsFile(file);
+    QByteArray xmlContent;
+    if(!itemsFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        return QPair<bool,Quest>(false,quest);
+    }
+    xmlContent=itemsFile.readAll();
+    itemsFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return QPair<bool,Quest>(false,quest);
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="quest")
+    {
+        qDebug() << QString("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(itemsFile.fileName());
+        return QPair<bool,Quest>(false,quest);
+    }
+
+    //load the content
+    bool ok;
+    if(!root.hasAttribute("id"))
+    {
+        qDebug() << QString("Unable to open the file: %1, \"quest\" root balise have not the id attribute").arg(itemsFile.fileName());
+        return QPair<bool,Quest>(false,quest);
+    }
+    QList<quint32> defaultBots;
+    quest.id=root.attribute("id").toUInt(&ok);
+    if(!ok)
+    {
+        qDebug() << QString("Unable to open the file: %1, \"quest\" root balise id attribute is not a number").arg(itemsFile.fileName());
+        return QPair<bool,Quest>(false,quest);
+    }
+    quest.repeatable=false;
+    if(root.hasAttribute("repeatable"))
+        if(root.attribute("repeatable")=="yes" || root.attribute("repeatable")=="true")
+            quest.repeatable=true;
+    if(root.hasAttribute("bot"))
+    {
+        QStringList tempStringList=root.attribute("bot").split(";");
+        int index=0;
+        while(index<tempStringList.size())
         {
+            quint32 tempInt=tempStringList.at(index).toUInt(&ok);
+            if(ok)
+                defaultBots << tempInt;
             index++;
-            continue;
         }
-        QList<quint32> defaultBots;
-        CatchChallenger::Quest quest;
-        quest.id=root.attribute("id").toUInt(&ok);
-        if(!ok)
+    }
+
+    //load requirements
+    QDomElement requirements = root.firstChildElement("requirements");
+    while(!requirements.isNull())
+    {
+        if(requirements.isElement())
         {
-            index++;
-            continue;
-        }
-        quest.repeatable=false;
-        if(root.hasAttribute("repeatable"))
-            if(root.attribute("repeatable")=="yes" || root.attribute("repeatable")=="true")
-                quest.repeatable=true;
-        if(root.hasAttribute("bot"))
-        {
-            QStringList tempStringList=root.attribute("bot").split(";");
-            int index=0;
-            while(index<tempStringList.size())
+            //load requirements reputation
             {
-                quint32 tempInt=tempStringList.at(index).toUInt(&ok);
-                if(ok)
-                    defaultBots << tempInt;
-                index++;
-            }
-        }
-
-        //load requirements
-        QDomElement requirements = root.firstChildElement("requirements");
-        while(!requirements.isNull())
-        {
-            if(requirements.isElement())
-            {
-                QDomElement requirementsItem;
-                //load requirements reputation
-                requirementsItem = requirements.firstChildElement("reputation");
+                QDomElement requirementsItem = requirements.firstChildElement("reputation");
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
@@ -306,8 +320,10 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                         qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirementsItem.tagName()).arg(requirementsItem.lineNumber());
                     requirementsItem = requirementsItem.nextSiblingElement("requirements");
                 }
-                //load requirements quest
-                requirementsItem = requirements.firstChildElement("quest");
+            }
+            //load requirements quest
+            {
+                QDomElement requirementsItem = requirements.firstChildElement("quest");
                 while(!requirementsItem.isNull())
                 {
                     if(requirementsItem.isElement())
@@ -328,46 +344,49 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                     requirementsItem = requirementsItem.nextSiblingElement("quest");
                 }
             }
-            else
-                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirements.tagName()).arg(requirements.lineNumber());
-            requirements = requirements.nextSiblingElement("requirements");
         }
+        else
+            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(requirements.tagName()).arg(requirements.lineNumber());
+        requirements = requirements.nextSiblingElement("requirements");
+    }
 
-        //load rewards
-        QDomElement rewards = root.firstChildElement("rewards");
-        while(!rewards.isNull())
+    //load rewards
+    QDomElement rewards = root.firstChildElement("rewards");
+    while(!rewards.isNull())
+    {
+        if(rewards.isElement())
         {
-            if(rewards.isElement())
+            //load rewards reputation
             {
-                QDomElement rewardsItem;
-                //load rewards reputation
-                rewardsItem = rewards.firstChildElement("reputation");
-                while(!rewardsItem.isNull())
+                QDomElement reputationItem = rewards.firstChildElement("reputation");
+                while(!reputationItem.isNull())
                 {
-                    if(rewardsItem.isElement())
+                    if(reputationItem.isElement())
                     {
-                        if(rewardsItem.hasAttribute("type") && rewardsItem.hasAttribute("point"))
+                        if(reputationItem.hasAttribute("type") && reputationItem.hasAttribute("point"))
                         {
-                            qint32 point=rewardsItem.attribute("point").toInt(&ok);
+                            qint32 point=reputationItem.attribute("point").toInt(&ok);
                             if(ok)
                             {
                                 CatchChallenger::Quest::ReputationRewards reputation;
                                 reputation.point=point;
-                                reputation.type=rewardsItem.attribute("type");
+                                reputation.type=reputationItem.attribute("type");
                                 quest.rewards.reputation << reputation;
                             }
                             else
-                                qDebug() << QString("Unable to open the file: %1, quest rewards point is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                                qDebug() << QString("Unable to open the file: %1, quest rewards point is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
                         }
                         else
-                            qDebug() << QString("Has attribute: %1, quest rewards point have not type or point attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
+                            qDebug() << QString("Has attribute: %1, quest rewards point have not type or point attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
                     }
                     else
-                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber());
-                    rewardsItem = rewardsItem.nextSiblingElement("rewards");
+                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(reputationItem.tagName()).arg(reputationItem.lineNumber());
+                    reputationItem = reputationItem.nextSiblingElement("rewards");
                 }
-                //load rewards item
-                rewardsItem = rewards.firstChildElement("item");
+            }
+            //load rewards item
+            {
+                QDomElement rewardsItem = rewards.firstChildElement("item");
                 while(!rewardsItem.isNull())
                 {
                     if(rewardsItem.isElement())
@@ -379,6 +398,11 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                             item.quantity=1;
                             if(ok)
                             {
+                                if(!CommonDatapack::commonDatapack.items.item.contains(item.item))
+                                {
+                                    qDebug() << QString("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewardsItem.tagName()).arg(rewardsItem.lineNumber()).arg(rewardsItem.attribute("id"));
+                                    return QPair<bool,Quest>(false,quest);
+                                }
                                 if(rewardsItem.hasAttribute("quantity"))
                                 {
                                     item.quantity=rewardsItem.attribute("quantity").toUInt(&ok);
@@ -398,38 +422,64 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                     rewardsItem = rewardsItem.nextSiblingElement("quest");
                 }
             }
-            else
-                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewards.tagName()).arg(rewards.lineNumber());
-            rewards = rewards.nextSiblingElement("rewards");
-        }
-
-        QHash<quint8,CatchChallenger::Quest::Step> steps;
-        //load step
-        QDomElement step = root.firstChildElement("step");
-        while(!step.isNull())
-        {
-            if(step.isElement())
+            //load rewards allow
             {
-                if(step.hasAttribute("id"))
+                QDomElement allowItem = rewards.firstChildElement("allow");
+                while(!allowItem.isNull())
                 {
-                    quint32 id=step.attribute("id").toUInt(&ok);
-                    if(ok)
+                    if(allowItem.isElement())
                     {
-                        CatchChallenger::Quest::Step stepObject;
-                        if(step.hasAttribute("bot"))
+                        if(allowItem.hasAttribute("type"))
                         {
-                            QStringList tempStringList=step.attribute("bot").split(";");
-                            int index=0;
-                            while(index<tempStringList.size())
-                            {
-                                quint32 tempInt=tempStringList.at(index).toUInt(&ok);
-                                if(ok)
-                                    stepObject.bots << tempInt;
-                                index++;
-                            }
+                            if(allowItem.attribute("type")=="clan")
+                                quest.rewards.allow << CatchChallenger::ActionAllow_Clan;
+                            else
+                                qDebug() << QString("Unable to open the file: %1, allow type not understand: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(allowItem.tagName()).arg(allowItem.lineNumber()).arg(allowItem.attribute("id"));
                         }
                         else
-                            stepObject.bots=defaultBots;
+                            qDebug() << QString("Has attribute: %1, rewards item have not attribute id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(allowItem.tagName()).arg(allowItem.lineNumber());
+                    }
+                    else
+                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(allowItem.tagName()).arg(allowItem.lineNumber());
+                    allowItem = allowItem.nextSiblingElement("allow");
+                }
+            }
+            quest.rewards.allow.fromSet(quest.rewards.allow.toSet());
+        }
+        else
+            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(rewards.tagName()).arg(rewards.lineNumber());
+        rewards = rewards.nextSiblingElement("rewards");
+    }
+
+    QHash<quint8,CatchChallenger::Quest::Step> steps;
+    //load step
+    QDomElement step = root.firstChildElement("step");
+    while(!step.isNull())
+    {
+        if(step.isElement())
+        {
+            if(step.hasAttribute("id"))
+            {
+                quint32 id=step.attribute("id").toUInt(&ok);
+                if(ok)
+                {
+                    CatchChallenger::Quest::Step stepObject;
+                    if(step.hasAttribute("bot"))
+                    {
+                        QStringList tempStringList=step.attribute("bot").split(";");
+                        int index=0;
+                        while(index<tempStringList.size())
+                        {
+                            quint32 tempInt=tempStringList.at(index).toUInt(&ok);
+                            if(ok)
+                                stepObject.bots << tempInt;
+                            index++;
+                        }
+                    }
+                    else
+                        stepObject.bots=defaultBots;
+                    //do the item
+                    {
                         QDomElement stepItem = step.firstChildElement("item");
                         while(!stepItem.isNull())
                         {
@@ -442,6 +492,11 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                                     item.quantity=1;
                                     if(ok)
                                     {
+                                        if(!CommonDatapack::commonDatapack.items.item.contains(item.item))
+                                        {
+                                            qDebug() << QString("Unable to open the file: %1, rewards item id is not into the item list: %4: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(stepItem.tagName()).arg(stepItem.lineNumber()).arg(stepItem.attribute("id"));
+                                            return QPair<bool,Quest>(false,quest);
+                                        }
                                         if(stepItem.hasAttribute("quantity"))
                                         {
                                             item.quantity=stepItem.attribute("quantity").toUInt(&ok);
@@ -481,37 +536,55 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
                                 qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
                             stepItem = stepItem.nextSiblingElement("item");
                         }
-                        steps[id]=stepObject;
                     }
-                    else
-                        qDebug() << QString("Unable to open the file: %1, step id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                    //do the fight
+                    {
+                        QDomElement fightItem = step.firstChildElement("fight");
+                        while(!fightItem.isNull())
+                        {
+                            if(fightItem.isElement())
+                            {
+                                if(fightItem.hasAttribute("id"))
+                                {
+                                    quint32 fightId=fightItem.attribute("id").toUInt(&ok);
+                                    if(ok)
+                                        stepObject.requirements.fightId << fightId;
+                                    else
+                                        qDebug() << QString("Unable to open the file: %1, step id is not a number %4: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber()).arg(fightItem.attribute("id"));
+                                }
+                                else
+                                    qDebug() << QString("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                            }
+                            else
+                                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                            fightItem = fightItem.nextSiblingElement("fight");
+                        }
+                    }
+                    steps[id]=stepObject;
                 }
                 else
-                    qDebug() << QString("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                    qDebug() << QString("Unable to open the file: %1, step id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
-            step = step.nextSiblingElement("step");
+                qDebug() << QString("Has attribute: %1, step have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
         }
-
-        //sort the step
-        int indexLoop=1;
-        while(indexLoop<(steps.size()+1))
-        {
-            if(!steps.contains(indexLoop))
-                break;
-            quest.steps << steps[indexLoop];
-            indexLoop++;
-        }
-        if(indexLoop>=(steps.size()+1))
-        {
-            //add it, all seam ok
-            quests[quest.id]=quest;
-        }
-
-        index++;
+        else
+            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+        step = step.nextSiblingElement("step");
     }
-    return quests;
+
+    //sort the step
+    int indexLoop=1;
+    while(indexLoop<(steps.size()+1))
+    {
+        if(!steps.contains(indexLoop))
+            break;
+        quest.steps << steps[indexLoop];
+        indexLoop++;
+    }
+    if(indexLoop<(steps.size()+1))
+        return QPair<bool,Quest>(false,quest);
+    return QPair<bool,Quest>(true,quest);
 }
 
 QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
