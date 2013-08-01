@@ -155,7 +155,7 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                 {
                     QString login;
                     in >> login;
-                    if((data.size()-in.device()->pos())!=20)
+                    if((data.size()-in.device()->pos())!=64)
                         parseError(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainCodeType).arg(data.size()-in.device()->pos()));
                     else if(is_logging_in_progess)
                     {

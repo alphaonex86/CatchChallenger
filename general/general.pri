@@ -1,7 +1,7 @@
 QMAKE_CFLAGS += -O0
 QMAKE_CXXFLAGS += -O0
-QMAKE_CFLAGS -= -O2
-QMAKE_CXXFLAGS -= -O2
+QMAKE_CFLAGS -= -O2 -Os
+QMAKE_CXXFLAGS -= -O2 -Os
 
 QT       += core gui network xml
 

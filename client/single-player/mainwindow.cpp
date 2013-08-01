@@ -246,8 +246,8 @@ void MainWindow::on_SaveGame_New_clicked()
     dbDestination.close();
 
     //initialise the pass
-    QString pass=CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16);
-    QCryptographicHash hash(QCryptographicHash::Sha1);
+    QString pass=CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",32);
+    QCryptographicHash hash(QCryptographicHash::Sha512);
     hash.addData(pass.toUtf8());
     QByteArray passHash=hash.result();
 
@@ -306,19 +306,18 @@ void MainWindow::on_SaveGame_New_clicked()
         size=sqlQuery.size();
     } while(size>0);
     {
+        QString textQuery=QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9,%9);")
+                .arg(player_id)
+                .arg(QString(passHash.toHex()))
+                .arg(nameGame.pseudo())
+                .arg(nameGame.skin())
+                .arg(profile.x)
+                .arg(profile.y)
+                .arg(profile.map)
+                .arg(profile.cash)
+                .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y));
         QSqlQuery sqlQuery(*db);
-        if(!sqlQuery.exec(
-               QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9,%9);")
-               .arg(player_id)
-               .arg(QString(passHash.toHex()))
-               .arg(nameGame.pseudo())
-               .arg(nameGame.skin())
-               .arg(profile.x)
-               .arg(profile.y)
-               .arg(profile.map)
-               .arg(profile.cash)
-               .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
-                    ))
+        if(!sqlQuery.exec(textQuery))
         {
             closeDb(db);
             db=NULL;
@@ -388,7 +387,7 @@ void MainWindow::on_SaveGame_New_clicked()
         {
             QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(
-                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3);")
+                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"warehouse\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,0);")
                    .arg(monster_id)
                    .arg(stat.hp)
                    .arg(player_id)
