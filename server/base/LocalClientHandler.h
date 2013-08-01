@@ -114,6 +114,9 @@ public slots:
     void newQuestAction(const QuestAction &action,const quint32 &questId);
     static bool addQuestStepDrop(Player_internal_informations *player_informations, const quint32 &questId, const quint8 &step);
     static bool removeQuestStepDrop(Player_internal_informations *player_informations,const quint32 &questId,const quint8 &step);
+    void appendAllow(const ActionAllow &allow);
+    void removeAllow(const ActionAllow &allow);
+    void updateAllow();
     //reputation
     void appendReputationPoint(const QString &type,const qint32 &point);
     //battle

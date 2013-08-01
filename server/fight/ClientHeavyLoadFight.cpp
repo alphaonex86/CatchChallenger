@@ -3,6 +3,7 @@
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/fight/CommonFightEngine.h"
 #include "../../general/base/FacilityLib.h"
 
 using namespace CatchChallenger;
@@ -164,15 +165,16 @@ void ClientHeavyLoad::loadMonsters()
             playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(playerMonster.hp>((CommonDatapack::commonDatapack.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX))
+                const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters[playerMonster.monster],playerMonster.level);
+                if(playerMonster.hp>stat.hp)
                 {
                     emit message(QString("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
                                  .arg(playerMonster.hp)
-                                 .arg(((CommonDatapack::commonDatapack.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX))
+                                 .arg(stat.hp)
                                  .arg(playerMonster.level)
                                  .arg(playerMonster.monster)
                                  );
-                    playerMonster.hp=((CommonDatapack::commonDatapack.monsters[playerMonster.monster].stat.hp*playerMonster.level)/CATCHCHALLENGER_MONSTER_LEVEL_MAX);
+                    playerMonster.hp=stat.hp;
                 }
             }
             else

@@ -115,35 +115,6 @@ bool LocalClientHandlerFight::checkLoose()
         emit teleportTo(player_informations->rescue.map,player_informations->rescue.x,player_informations->rescue.y,player_informations->rescue.orientation);
         //regen all the monsters
         healAllMonsters();
-        int index=0;
-        int size=player_informations->public_and_private_informations.playerMonster.size();
-        while(index<size)
-        {
-            if(player_informations->public_and_private_informations.playerMonster[index].egg_step==0)
-            {
-                if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn || GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
-                {
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                         );
-                        break;
-                    }
-                }
-            }
-            index++;
-        }
-        updateCanDoFight();
         fightFinished();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         emit message("You lost the battle");
@@ -156,6 +127,36 @@ bool LocalClientHandlerFight::checkLoose()
         return true;
     }
     return false;
+}
+
+void LocalClientHandlerFight::healAllMonsters()
+{
+    CommonFightEngine::healAllMonsters();
+    int index=0;
+    int size=player_informations->public_and_private_informations.playerMonster.size();
+    while(index<size)
+    {
+        if(player_informations->public_and_private_informations.playerMonster[index].egg_step==0)
+        {
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 );
+                break;
+            }
+        }
+        index++;
+    }
 }
 
 void LocalClientHandlerFight::fightFinished()

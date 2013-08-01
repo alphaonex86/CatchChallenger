@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS `player` (
   `unvalidated_rescue_y` int(11) NOT NULL,
   `unvalidated_rescue_orientation` text NOT NULL,
   `warehouse_cash` bigint(20) NOT NULL,
+  `allow` text NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;

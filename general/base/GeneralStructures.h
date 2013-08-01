@@ -489,6 +489,11 @@ struct ItemToSellOrBuy
     quint32 quantity;
 };
 
+enum ActionAllow
+{
+    ActionAllow_Clan
+};
+
 struct Quest
 {
     struct Item
@@ -522,10 +527,12 @@ struct Quest
     {
         QList<Item> items;
         QList<ReputationRewards> reputation;
+        QList<ActionAllow> allow;
     };
     struct StepRequirements
     {
         QList<Item> items;
+        QList<quint32> fightId;
     };
     struct Step
     {

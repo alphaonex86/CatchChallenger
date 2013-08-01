@@ -46,6 +46,7 @@ public:
     virtual bool useSkill(const quint32 &skill);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     void requestFight(const quint32 &fightId);
+    void healAllMonsters();
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
