@@ -38,18 +38,18 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     }
     //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8),cash(9)
     //rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13),unvalidated_rescue_map(14),unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17)
-    //warehouse_cash(18)
+    //warehouse_cash(18),allow(19)
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
@@ -138,6 +138,16 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             {
                 orentation=Orientation_bottom;
                 emit message(QString("Wrong orientation corrected with bottom"));
+            }
+            QStringList allowStringList=loginQuery.value(19).toString().split(";");
+            int index=0;
+            while(index<allowStringList.size())
+            {
+                if(allowStringList.at(index)=="clan")
+                    player_informations->allow << ActionAllow_Clan;
+                else
+                    emit message(QString("Unknown allow code: %1").arg(allowStringList.at(index)));
+                index++;
             }
             //all is rights
             if(GlobalServerData::serverPrivateVariables.map_list.contains(loginQuery.value(6).toString()))

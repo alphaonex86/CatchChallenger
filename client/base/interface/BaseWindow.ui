@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>8</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -842,14 +842,14 @@ background-image: url(:/images/empty.png);</string>
            <item>
             <widget class="QTabWidget" name="tabWidgetTrainerCard">
              <property name="styleSheet">
-              <string notr="true">#tabWidgetTrainerCardPage2{
+              <string notr="true">#tabWidgetTrainerCardPage4{
 background-color: qlineargradient(spread:pad, x1:0, y1:0.3, x2:0, y2:1, stop:0 rgba(255, 255, 255, 200), stop:1 rgba(221, 221, 221, 200));
 border-color: rgb(204, 204, 204);
 border-radius: 5px;
 }</string>
              </property>
              <property name="currentIndex">
-              <number>0</number>
+              <number>3</number>
              </property>
              <widget class="QWidget" name="tabWidgetTrainerCardPage1">
               <property name="styleSheet">
@@ -1202,6 +1202,23 @@ border-radius: 5px;
                   </layout>
                  </item>
                 </layout>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tabWidgetTrainerCardPage4">
+              <attribute name="title">
+               <string>Finished quests</string>
+              </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_28">
+               <item>
+                <widget class="QTextBrowser" name="finishedQuests">
+                 <property name="styleSheet">
+                  <string notr="true">background-image: url(:/images/empty.png);</string>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>

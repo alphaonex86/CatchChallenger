@@ -3,6 +3,8 @@
 #include "../../general/base/CommonDatapack.h"
 #include "GlobalServerData.h"
 
+#include <QStringList>
+
 using namespace CatchChallenger;
 
 Direction LocalClientHandler::temp_direction;
@@ -1666,6 +1668,57 @@ bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchCh
     if(monsterDrops1.quantity_max!=monsterDrops2.quantity_max)
         return false;
     return true;
+}
+
+void LocalClientHandler::appendAllow(const ActionAllow &allow)
+{
+    if(player_informations->allow.contains(allow))
+        return;
+    player_informations->allow << allow;
+    updateAllow();
+}
+
+void LocalClientHandler::removeAllow(const ActionAllow &allow)
+{
+    if(!player_informations->allow.contains(allow))
+        return;
+    player_informations->allow.remove(allow);
+    updateAllow();
+}
+
+void LocalClientHandler::updateAllow()
+{
+    QStringList allowString;
+    QList<ActionAllow> allowList=player_informations->allow.toList();
+    int index=0;
+    while(index<allowList.size())
+    {
+        switch(allowList.at(index))
+        {
+            case ActionAllow_Clan:
+                allowString << "clan";
+            break;
+            default:
+            break;
+        }
+        index++;
+    }
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE player SET allow='%1' WHERE id=%2;")
+                         .arg(allowString.join(";"))
+                         .arg(player_informations->id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE player SET allow='%1' WHERE id=%2;")
+                         .arg(allowString.join(";"))
+                         .arg(player_informations->id)
+                         );
+        break;
+    }
 }
 
 //reputation

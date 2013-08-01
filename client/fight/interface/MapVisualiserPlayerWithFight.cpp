@@ -17,6 +17,11 @@ void MapVisualiserPlayerWithFight::addBeatenBotFight(const quint32 &botFightId)
     botAlreadyBeaten << botFightId;
 }
 
+bool MapVisualiserPlayerWithFight::haveBeatBot(const quint32 &botFightId) const
+{
+    return botAlreadyBeaten.contains(botFightId);
+}
+
 void MapVisualiserPlayerWithFight::resetAll()
 {
     botAlreadyBeaten.clear();

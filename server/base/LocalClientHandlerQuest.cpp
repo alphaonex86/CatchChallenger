@@ -143,7 +143,18 @@ bool LocalClientHandler::haveNextStepQuestRequirements(const CatchChallenger::Qu
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
         if(objectQuantity(item.item)<item.quantity)
         {
-            emit message(QString("have not the quantity for the item: %1").arg(item.item));
+            emit message(QString("quest requirement, have not the quantity for the item: %1").arg(item.item));
+            return false;
+        }
+        index++;
+    }
+    index=0;
+    while(index<requirements.fightId.size())
+    {
+        const quint32 &fightId=requirements.fightId.at(index);
+        if(!player_informations->public_and_private_informations.bot_already_beaten.contains(fightId))
+        {
+            emit message(QString("quest requirement, have not beat the bot: %1").arg(fightId));
             return false;
         }
         index++;
@@ -279,6 +290,12 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         while(index<quest.rewards.reputation.size())
         {
             appendReputationPoint(quest.rewards.reputation[index].type,quest.rewards.reputation[index].point);
+            index++;
+        }
+        index=0;
+        while(index<quest.rewards.allow.size())
+        {
+            appendAllow(quest.rewards.allow.at(index));
             index++;
         }
     }

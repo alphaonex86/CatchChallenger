@@ -451,6 +451,7 @@ void BaseWindow::updatePlayerImage()
 
 void BaseWindow::updateDisplayedQuests()
 {
+    QString html="<ul>";
     ui->questsList->clear();
     quests_to_id_graphical.clear();
     QHashIterator<quint32, PlayerQuest> i(quests);
@@ -462,7 +463,13 @@ void BaseWindow::updateDisplayedQuests()
             quests_to_id_graphical[item]=i.key();
             ui->questsList->addItem(item);
         }
+        else
+            html+="<li>"+DatapackClientLoader::datapackLoader.questsExtra[i.key()].name+"</li>";
     }
+    html+="</ul>";
+    if(html=="<ul></ul>")
+        html="<i>None</i>";
+    ui->finishedQuests->setHtml(html);
     on_questsList_itemSelectionChanged();
 }
 
