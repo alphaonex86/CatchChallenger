@@ -3,12 +3,12 @@
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/GeneralStructures.h"
 
-QuestJS::QuestJS(const quint32 &quest) :
+Quest::Quest(const quint32 &quest) :
     quest(quest)
 {
 }
 
-int QuestJS::currentQuestStep() const
+int Quest::currentQuestStep() const
 {
     QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
@@ -17,7 +17,7 @@ int QuestJS::currentQuestStep() const
         return quests[quest].step;
 }
 
-int QuestJS::currentBot() const
+int Quest::currentBot() const
 {
     QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
@@ -26,7 +26,7 @@ int QuestJS::currentBot() const
         return CatchChallenger::BaseWindow::baseWindow->getActualBotId();
 }
 
-bool QuestJS::finishOneTime() const
+bool Quest::finishOneTime() const
 {
     QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))
@@ -35,7 +35,7 @@ bool QuestJS::finishOneTime() const
         return quests[quest].finish_one_time;
 }
 
-bool QuestJS::haveQuestStepRequirements() const
+bool Quest::haveQuestStepRequirements() const
 {
     QHash<quint32, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
     if(!quests.contains(quest))

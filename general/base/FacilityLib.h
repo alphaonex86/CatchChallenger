@@ -21,6 +21,8 @@ public:
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
     static bool rectTouch(QRect r1,QRect r2);
     static QString genderToString(const Gender &gender);
+    static QString allowToQString(const QSet<ActionAllow> &allowList);
+    static QSet<ActionAllow> QStringToAllow(const QString &string);
 private:
     static QByteArray UTF8EmptyData;
 };

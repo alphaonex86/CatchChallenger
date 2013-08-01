@@ -135,6 +135,9 @@ void BaseWindow::have_current_player_info()
         return;
     havePlayerInformations=true;
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    clan=informations.clan;
+    allow=informations.allow;
+    clan_leader=informations.clan_leader;
     cash=informations.cash;
     warehouse_cash=informations.warehouse_cash;
     quests=informations.quests;
@@ -146,6 +149,7 @@ void BaseWindow::have_current_player_info()
     DebugClass::debugConsole(QString("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
     updatePlayerImage();
     updateConnectingStatus();
+    updateClanDisplay();
 }
 
 void BaseWindow::haveTheDatapack()

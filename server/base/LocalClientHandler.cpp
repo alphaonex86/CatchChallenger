@@ -1,6 +1,7 @@
 #include "LocalClientHandler.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/FacilityLib.h"
 #include "GlobalServerData.h"
 
 #include <QStringList>
@@ -9,6 +10,7 @@ using namespace CatchChallenger;
 
 Direction LocalClientHandler::temp_direction;
 QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
+QHash<quint32,LocalClientHandler::Clan> LocalClientHandler::playerByClan;
 
 LocalClientHandler::LocalClientHandler()
 {
@@ -57,7 +59,15 @@ void LocalClientHandler::extraStop()
     tradeCanceled();
     localClientHandlerFight.battleCanceled();
     if(player_informations->is_logged)
+    {
         playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
+        if(!playerByClan.contains(player_informations->public_and_private_informations.clan))
+        {
+            playerByClan[player_informations->public_and_private_informations.clan].players.removeOne(this);
+            if(playerByClan[player_informations->public_and_private_informations.clan].players.isEmpty())
+                playerByClan.remove(player_informations->public_and_private_informations.clan);
+        }
+    }
 
     if(!player_informations->is_logged || player_informations->isFake)
         return;
@@ -245,7 +255,6 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     out << y;
     out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
     out << player_informations->public_and_private_informations.public_informations.speed;
-    out << player_informations->public_and_private_informations.public_informations.clan;
 
     outputData+=player_informations->rawPseudo;
     out.device()->seek(out.device()->pos()+player_informations->rawPseudo.size());
@@ -257,6 +266,12 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     localClientHandlerFight.getRandomNumberIfNeeded();
 
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
+    if(player_informations->public_and_private_informations.clan>0)
+    {
+        if(!playerByClan.contains(player_informations->public_and_private_informations.clan))
+            emit askClan(player_informations->public_and_private_informations.clan);
+        playerByClan[player_informations->public_and_private_informations.clan].players << this;
+    }
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
         QObject::connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
 
@@ -1672,49 +1687,34 @@ bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchCh
 
 void LocalClientHandler::appendAllow(const ActionAllow &allow)
 {
-    if(player_informations->allow.contains(allow))
+    if(player_informations->public_and_private_informations.allow.contains(allow))
         return;
-    player_informations->allow << allow;
+    player_informations->public_and_private_informations.allow << allow;
     updateAllow();
 }
 
 void LocalClientHandler::removeAllow(const ActionAllow &allow)
 {
-    if(!player_informations->allow.contains(allow))
+    if(!player_informations->public_and_private_informations.allow.contains(allow))
         return;
-    player_informations->allow.remove(allow);
+    player_informations->public_and_private_informations.allow.remove(allow);
     updateAllow();
 }
 
 void LocalClientHandler::updateAllow()
 {
-    QStringList allowString;
-    QList<ActionAllow> allowList=player_informations->allow.toList();
-    int index=0;
-    while(index<allowList.size())
-    {
-        switch(allowList.at(index))
-        {
-            case ActionAllow_Clan:
-                allowString << "clan";
-            break;
-            default:
-            break;
-        }
-        index++;
-    }
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
             emit dbQuery(QString("UPDATE player SET allow='%1' WHERE id=%2;")
-                         .arg(allowString.join(";"))
+                         .arg(FacilityLib::allowToQString(player_informations->public_and_private_informations.allow))
                          .arg(player_informations->id)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             emit dbQuery(QString("UPDATE player SET allow='%1' WHERE id=%2;")
-                         .arg(allowString.join(";"))
+                         .arg(FacilityLib::allowToQString(player_informations->public_and_private_informations.allow))
                          .arg(player_informations->id)
                          );
         break;
@@ -2037,4 +2037,338 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
     }
     emit message(QString("is now in fight (after a request) on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(fightId));
     localClientHandlerFight.requestFight(fightId);
+}
+
+void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,const QString &text)
+{
+    switch(action)
+    {
+        case 0x01:
+        {
+            if(player_informations->public_and_private_informations.clan>0)
+            {
+                emit error("You are already in clan");
+                return;
+            }
+            if(text.isEmpty())
+            {
+                emit error("You can't create clan with empty name");
+                return;
+            }
+            if(!player_informations->public_and_private_informations.allow.contains(ActionAllow_Clan))
+            {
+                emit error("You have not the right to create clan");
+                return;
+            }
+            GlobalServerData::serverPrivateVariables.maxClanId++;
+            player_informations->public_and_private_informations.clan=GlobalServerData::serverPrivateVariables.maxClanId;
+            playerByClan[player_informations->public_and_private_informations.clan].name=text;
+            playerByClan[player_informations->public_and_private_informations.clan].players << this;
+            player_informations->public_and_private_informations.clan_leader=true;
+            //send the network reply
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)0x01;
+            out << (quint32)GlobalServerData::serverPrivateVariables.maxClanId;
+            emit postReply(query_id,outputData);
+            //add into db
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("INSERT INTO clan(id,name) VALUES(%1,\"%2\");")
+                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                             .arg(SqlFunction::quoteSqlVariable(text))
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("INSERT INTO clan(id,name) VALUES(%1,\"%2\");")
+                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                             .arg(SqlFunction::quoteSqlVariable(text))
+                             );
+                break;
+            }
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE player SET clan=%1,clan_leader=1 WHERE id=%2;")
+                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                             .arg(player_informations->id)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE player SET clan=%1,clan_leader=1 WHERE id=%2;")
+                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
+                             .arg(player_informations->id)
+                             );
+                break;
+            }
+        }
+        break;
+        case 0x02:
+        {
+            if(player_informations->public_and_private_informations.clan==0)
+            {
+                emit error("You have not a clan");
+                return;
+            }
+            if(player_informations->public_and_private_informations.clan_leader)
+            {
+                emit error("You can't leave if you are the leader");
+                return;
+            }
+            playerByClan[player_informations->public_and_private_informations.clan].players.removeOne(this);
+            if(playerByClan[player_informations->public_and_private_informations.clan].players.isEmpty())
+                playerByClan.remove(player_informations->public_and_private_informations.clan);
+            player_informations->public_and_private_informations.clan=0;
+            //send the network reply
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)0x01;
+            emit postReply(query_id,outputData);
+            //update the db
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE player SET clan=0 WHERE id=%1;")
+                             .arg(player_informations->id)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE player SET clan=0 WHERE id=%1;")
+                             .arg(player_informations->id)
+                             );
+                break;
+            }
+        }
+        break;
+        case 0x03:
+        {
+            if(player_informations->public_and_private_informations.clan==0)
+            {
+                emit error("You have not a clan");
+                return;
+            }
+            if(!player_informations->public_and_private_informations.clan_leader)
+            {
+                emit error("You are not a leader to dissolve the clan");
+                return;
+            }
+            const QList<LocalClientHandler *> &players=playerByClan[player_informations->public_and_private_informations.clan].players;
+            //send the network reply
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)0x01;
+            emit postReply(query_id,outputData);
+            //update the db
+            int index=0;
+            while(index<players.size())
+            {
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE player SET clan=0 WHERE id=%1;")
+                                 .arg(players.at(index)->getPlayerId())
+                                 );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE player SET clan=0 WHERE id=%1;")
+                                 .arg(players.at(index)->getPlayerId())
+                                 );
+                    break;
+                }
+                index++;
+            }
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("DELETE FROM clan WHERE id=%1")
+                                 .arg(player_informations->public_and_private_informations.clan)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("DELETE FROM clan WHERE id=%1")
+                                 .arg(player_informations->public_and_private_informations.clan)
+                                 );
+                break;
+            }
+            //update the object
+            playerByClan.remove(player_informations->public_and_private_informations.clan);
+            index=0;
+            while(index<players.size())
+            {
+                if(players.at(index)==this)
+                    player_informations->public_and_private_informations.clan=0;
+                else
+                    players.at(index)->dissolvedClan();
+                index++;
+            }
+        }
+        break;
+        case 0x04:
+        {
+            if(player_informations->public_and_private_informations.clan==0)
+            {
+                emit error("You have not a clan");
+                return;
+            }
+            if(!player_informations->public_and_private_informations.clan_leader)
+            {
+                emit error("You are not a leader to invite into the clan");
+                return;
+            }
+            bool haveAClan=true;
+            if(playerByPseudo.contains(text))
+                if(!playerByPseudo[text]->haveAClan())
+                    haveAClan=false;
+            bool isFound=playerByPseudo.contains(text);
+            //send the network reply
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            if(isFound && !haveAClan)
+                out << (quint8)0x01;
+            else
+            {
+                if(!isFound)
+                    emit message(QString("Clan invite: Player %1 not found, is connected?").arg(text));
+                if(haveAClan)
+                    emit message(QString("Clan invite: Player %1 is already into a clan").arg(text));
+                out << (quint8)0x02;
+            }
+            emit postReply(query_id,outputData);
+            if(!isFound || haveAClan)
+                return;
+            playerByPseudo[text]->inviteToClan(player_informations->public_and_private_informations.clan);
+            emit error("Todo: invite into the clan");
+        }
+        break;
+        case 0x05:
+        {
+            if(player_informations->public_and_private_informations.clan==0)
+            {
+                emit error("You have not a clan");
+                return;
+            }
+            if(!player_informations->public_and_private_informations.clan_leader)
+            {
+                emit error("You are not a leader to invite into the clan");
+                return;
+            }
+            if(player_informations->public_and_private_informations.public_informations.pseudo==text)
+            {
+                emit error("You can't eject your self");
+                return;
+            }
+            bool isIntoTheClan=false;
+            if(playerByPseudo.contains(text))
+                if(playerByPseudo[text]->getClanId()==player_informations->public_and_private_informations.clan)
+                    isIntoTheClan=true;
+            bool isFound=playerByPseudo.contains(text);
+            //send the network reply
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            if(isFound && isIntoTheClan)
+                out << (quint8)0x01;
+            else
+            {
+                if(!isFound)
+                    emit message(QString("Clan invite: Player %1 not found, is connected?").arg(text));
+                if(!isIntoTheClan)
+                    emit message(QString("Clan invite: Player %1 is not into your clan").arg(text));
+                out << (quint8)0x02;
+            }
+            emit postReply(query_id,outputData);
+            if(!isFound)
+            {
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE player SET clan=0 WHERE pseudo=%1 AND clan=%2;")
+                                 .arg(text)
+                                 .arg(player_informations->public_and_private_informations.clan)
+                                 );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE player SET clan=0 WHERE pseudo=%1 AND clan=%2;")
+                                 .arg(text)
+                                 .arg(player_informations->public_and_private_informations.clan)
+                                 );
+                    break;
+                }
+                return;
+            }
+            else if(isIntoTheClan)
+                playerByPseudo[text]->ejectToClan();
+        }
+        break;
+        default:
+            emit error("Action on the clan not found");
+        return;
+    }
+}
+
+quint32 LocalClientHandler::getPlayerId() const
+{
+    if(player_informations->is_logged)
+        return player_informations->id;
+    else
+        return 0;
+}
+
+void LocalClientHandler::haveClanInfo(const QString &clanName)
+{
+    if(playerByClan.contains(player_informations->public_and_private_informations.clan))
+        playerByClan[player_informations->public_and_private_informations.clan].name=clanName;
+}
+
+void LocalClientHandler::dissolvedClan()
+{
+    player_informations->public_and_private_informations.clan=0;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    emit sendPacket(0xC2,0x0009,QByteArray());
+}
+
+void LocalClientHandler::inviteToClan(const quint32 &clanId)
+{
+}
+
+void LocalClientHandler::ejectToClan()
+{
+    dissolvedClan();
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE player SET clan=0 WHERE id=%1;")
+                     .arg(player_informations->id)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE player SET clan=0 WHERE id=%1;")
+                     .arg(player_informations->id)
+                     );
+        break;
+    }
+}
+
+quint32 LocalClientHandler::getClanId() const
+{
+    return player_informations->public_and_private_informations.clan;
+}
+
+bool LocalClientHandler::haveAClan() const
+{
+    return player_informations->public_and_private_informations.clan>0;
 }

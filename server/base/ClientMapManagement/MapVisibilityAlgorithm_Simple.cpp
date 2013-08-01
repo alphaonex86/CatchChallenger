@@ -408,8 +408,6 @@ void MapVisibilityAlgorithm_Simple::send_insert()
         out << (COORD_TYPE)i_insert.value()->y;
         out << (quint8)((quint8)i_insert.value()->getLastDirection() | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
         out << i_insert.value()->player_informations->public_and_private_informations.public_informations.speed;
-        //clan
-        out << i_insert.value()->player_informations->public_and_private_informations.public_informations.clan;
         //pseudo
         purgeBuffer_outputData+=i_insert.value()->player_informations->rawPseudo;
         out.device()->seek(out.device()->pos()+i_insert.value()->player_informations->rawPseudo.size());

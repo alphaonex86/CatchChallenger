@@ -3,12 +3,12 @@
 
 #include <QObject>
 
-class QuestJS : public QObject
+class Quest : public QObject
 {
     Q_OBJECT
 public:
     friend class BaseWindow;
-    explicit QuestJS(const quint32 &quest);
+    explicit Quest(const quint32 &quest);
     Q_SCRIPTABLE int currentQuestStep() const;
     Q_SCRIPTABLE int currentBot() const;
     Q_SCRIPTABLE bool finishOneTime() const;
