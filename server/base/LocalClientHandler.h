@@ -48,7 +48,7 @@ public:
     LocalClientHandlerFight localClientHandlerFight;
     quint32 getPlayerId() const;
     void dissolvedClan();
-    void inviteToClan(const quint32 &clanId);
+    bool inviteToClan(const quint32 &clanId);
     void ejectToClan();
     quint32 getClanId() const;
     bool haveAClan() const;
@@ -144,6 +144,7 @@ public slots:
     //clan
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text);
     void haveClanInfo(const QString &clanName);
+    void sendClanInfo();
 private slots:
     virtual void extraStop();
     void savePosition();
@@ -164,6 +165,7 @@ signals:
     void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     void sendTradeRequest(const QByteArray &data) const;
     void sendBattleRequest(const QByteArray &data) const;
+    void clanChange(const quint32 &clanId) const;
 
     void seedValidated() const;
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;

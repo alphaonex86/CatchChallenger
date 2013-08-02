@@ -947,6 +947,19 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                 case 0x0009:
                     emit clanDissolved();
                 break;
+                //clan info
+                case 0x000A:
+                {
+                    if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong string for reason with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    QString name;
+                    in >> name;
+                    emit clanInformations(name);
+                }
+                break;
                 default:
                 parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                 return;
