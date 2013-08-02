@@ -64,13 +64,13 @@ private:
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
-    virtual void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+    virtual void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
     //have query with reply
     virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    virtual void parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    virtual void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
     //send reply
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
     //error
     void parseError(const QString &userMessage, const QString &errorString);
@@ -180,6 +180,7 @@ signals:
     void clanActionFailed() const;
     void clanDissolved() const;
     void clanInformations(const QString &name) const;
+    void clanInvite(const quint32 &clanId,const QString &name) const;
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -238,6 +239,7 @@ public slots:
     void dissolveClan();
     void inviteClan(const QString &pseudo);
     void ejectClan(const QString &pseudo);
+    void inviteAccept(const bool &accept);
 };
 }
 

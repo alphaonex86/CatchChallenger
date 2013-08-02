@@ -75,7 +75,7 @@ signals:
     void message(const QString &message) const;
     void isReadyToStop() const;
     //send packet on network
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
+    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
     //send reply
     void postReply(const quint8 &queryNumber,const QByteArray &data) const;

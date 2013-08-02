@@ -66,13 +66,13 @@ protected slots:
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data) = 0;
-    virtual void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data) = 0;
+    virtual void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data) = 0;
     //have query with reply
     virtual void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
-    virtual void parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
+    virtual void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
     //send reply
     virtual void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
-    virtual void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
+    virtual void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data) = 0;
     // for data
     bool canStartReadData;
     bool haveData;
@@ -98,10 +98,10 @@ private slots:
     void reset();
 signals:
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 public slots:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 };
 
 class ProtocolParsingOutput : public ProtocolParsing
@@ -113,10 +113,10 @@ public:
 
     //send message without reply
     bool packOutcommingData(const quint8 &mainCodeType,const QByteArray &data);
-    bool packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data);
+    bool packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data);
     //send query with reply
     bool packOutcommingQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    bool packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data);
+    bool packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data);
     //send reply
     bool postReplyData(const quint8 &queryNumber, QByteArray data);
     quint64 getTXSize();
@@ -136,10 +136,10 @@ private:
     #endif
 signals:
     void newOutputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    void newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 public slots:
     void newInputQuery(const quint8 &mainCodeType,const quint8 &queryNumber);
-    void newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
+    void newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber);
 private slots:
     void reset();
 };

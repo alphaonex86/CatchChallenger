@@ -74,14 +74,14 @@ void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &s
                     }
                 break;
                 default:
-                    Api_protocol::parseReplyData(mainCodeType,subCodeType,queryNumber,data);
+                    Api_protocol::parseFullReplyData(mainCodeType,subCodeType,queryNumber,data);
                     return;
                 break;
             }
         }
         break;
         default:
-            Api_protocol::parseReplyData(mainCodeType,subCodeType,queryNumber,data);
+            Api_protocol::parseFullReplyData(mainCodeType,subCodeType,queryNumber,data);
             return;
         break;
     }
@@ -224,7 +224,7 @@ void Api_client_real::sendDatapackContent()
         out << (quint64)info.st_mtime;
         index++;
     }
-    output->packOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
+    output->packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
 }
 
 const QStringList Api_client_real::listDatapack(QString suffix)

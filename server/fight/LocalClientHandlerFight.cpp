@@ -517,7 +517,7 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
     otherPlayerBattle=NULL;
     if(send)
     {
-            emit sendPacket(0xE0,0x0007);
+            emit sendFullPacket(0xE0,0x0007);
             emit receiveSystemText(QString("Battle declined"));
     }
     battleIsValidated=false;
@@ -570,7 +570,7 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
         }
         out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
         QByteArray firstValidOtherPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
-        emit sendPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData+firstValidOtherPlayerMonster);
+        emit sendFullPacket(0xE0,0x0008,otherPlayerBattle->player_informations->rawPseudo+outputData+firstValidOtherPlayerMonster);
     }
 }
 
@@ -653,7 +653,7 @@ void LocalClientHandlerFight::sendBattleReturn(const QList<Skill::AttackReturn> 
     if(monsterPlace!=0x00)
         binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(publicPlayerMonster);
 
-    emit sendPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
+    emit sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
 }
 
 //return true if change level

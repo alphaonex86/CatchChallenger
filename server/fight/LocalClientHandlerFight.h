@@ -84,7 +84,7 @@ signals:
     void receiveSystemText(const QString &text,const bool &important=false) const;
     void postReply(const quint8 &queryNumber,const QByteArray &data) const;
     void sendBattleRequest(const QByteArray &data) const;
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
+    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
     void addObjectAndSend(const quint32 &item,const quint32 &quantity=1) const;

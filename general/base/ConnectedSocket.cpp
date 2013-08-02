@@ -7,12 +7,12 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
 {
     this->fakeSocket=socket;
     this->tcpSocket=NULL;
-    connect(socket,SIGNAL(destroyed()),this,SLOT(destroyedSocket()));
-    connect(socket,SIGNAL(connected()),this,SIGNAL(connected()));
-    connect(socket,SIGNAL(disconnected()),this,SIGNAL(disconnected()));
-    connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SIGNAL(error(QAbstractSocket::SocketError)));
-    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
-    connect(socket,SIGNAL(readyRead()),this,SIGNAL(readyRead()),Qt::DirectConnection);
+    connect(socket,&QFakeSocket::destroyed,     this,&ConnectedSocket::destroyedSocket);
+    connect(socket,&QFakeSocket::connected,     this,&ConnectedSocket::connected);
+    connect(socket,&QFakeSocket::disconnected,  this,&ConnectedSocket::disconnected);
+    connect(socket,static_cast<void(QFakeSocket::*)(QAbstractSocket::SocketError)>(&QFakeSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
+    connect(socket,&QFakeSocket::stateChanged,   this,&ConnectedSocket::stateChanged);
+    connect(socket,&QFakeSocket::readyRead,     this,&ConnectedSocket::readyRead,Qt::DirectConnection);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
@@ -21,12 +21,12 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket,QObject *parent) :
 {
     this->fakeSocket=NULL;
     this->tcpSocket=socket;
-    connect(socket,SIGNAL(destroyed()),this,SLOT(destroyedSocket()));
-    connect(socket,SIGNAL(connected()),this,SIGNAL(connected()));
-    connect(socket,SIGNAL(disconnected()),this,SIGNAL(disconnected()));
-    connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SIGNAL(error(QAbstractSocket::SocketError)));
-    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SIGNAL(stateChanged(QAbstractSocket::SocketState)));
-    connect(socket,SIGNAL(readyRead()),this,SIGNAL(readyRead()),Qt::DirectConnection);
+    connect(socket,&QTcpSocket::destroyed,      this,&ConnectedSocket::destroyedSocket);
+    connect(socket,&QTcpSocket::connected,      this,&ConnectedSocket::connected);
+    connect(socket,&QTcpSocket::disconnected,   this,&ConnectedSocket::disconnected);
+    connect(socket,static_cast<void(QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
+    connect(socket,&QTcpSocket::stateChanged,   this,&ConnectedSocket::stateChanged);
+    connect(socket,&QTcpSocket::readyRead,      this,&ConnectedSocket::readyRead,Qt::DirectConnection);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 

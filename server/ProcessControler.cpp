@@ -6,11 +6,11 @@ using namespace CatchChallenger;
 ProcessControler::ProcessControler()
 {
     qRegisterMetaType<Chat_type>("Chat_type");
-    connect(&server,SIGNAL(is_started(bool)),this,SLOT(server_is_started(bool)));
-    connect(&server,SIGNAL(need_be_stopped()),this,SLOT(server_need_be_stopped()));
-    connect(&server,SIGNAL(need_be_restarted()),this,SLOT(server_need_be_restarted()));
-    connect(&server,SIGNAL(benchmark_result(int,double,double,double,double,double)),this,SLOT(benchmark_result(int,double,double,double,double,double)));
-    connect(&server,SIGNAL(error(QString)),this,SLOT(error(QString)));
+    connect(&server,&CatchChallenger::NormalServer::is_started,this,&ProcessControler::server_is_started);
+    connect(&server,&CatchChallenger::NormalServer::need_be_stopped,this,&ProcessControler::server_need_be_stopped);
+    connect(&server,&CatchChallenger::NormalServer::need_be_restarted,this,&ProcessControler::server_need_be_restarted);
+    connect(&server,&CatchChallenger::NormalServer::benchmark_result,this,&ProcessControler::benchmark_result);
+    connect(&server,&CatchChallenger::NormalServer::error,this,&ProcessControler::error);
     need_be_restarted=false;
     need_be_closed=false;
 

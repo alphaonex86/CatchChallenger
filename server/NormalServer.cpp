@@ -27,16 +27,16 @@ NormalServer::NormalServer() :
     eventDispatcherThread = new EventThreader();
     moveToThread(eventDispatcherThread);
 
-    connect(this,SIGNAL(try_start_benchmark(quint16,quint16,bool)),this,SLOT(start_internal_benchmark(quint16,quint16,bool)),Qt::QueuedConnection);
+    connect(this,&NormalServer::try_start_benchmark,this,&NormalServer::start_internal_benchmark,Qt::QueuedConnection);
 
     in_benchmark_mode=false;
 
     nextStep.start(CATCHCHALLENGER_SERVER_NORMAL_SPEED);
 
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(serverCommand(QString,QString)),this,SLOT(serverCommand(QString,QString)),Qt::QueuedConnection);
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_player_is_connected(Player_internal_informations)),this,SIGNAL(new_player_is_connected(Player_internal_informations)),Qt::QueuedConnection);
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(player_is_disconnected(QString)),this,SIGNAL(player_is_disconnected(QString)),Qt::QueuedConnection);
-    connect(&BroadCastWithoutSender::broadCastWithoutSender,SIGNAL(new_chat_message(QString,Chat_type,QString)),this,SIGNAL(new_chat_message(QString,Chat_type,QString)),Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::serverCommand,this,&NormalServer::serverCommand,Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_player_is_connected,this,&NormalServer::new_player_is_connected,Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::player_is_disconnected,this,&NormalServer::player_is_disconnected,Qt::QueuedConnection);
+    connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_chat_message,this,&NormalServer::new_chat_message,Qt::QueuedConnection);
 }
 
 /** call only when the server is down
@@ -77,7 +77,7 @@ void NormalServer::initAll()
     timer_benchmark_stop=new QTimer();
     timer_benchmark_stop->setInterval(60000);//1min
     timer_benchmark_stop->setSingleShot(true);
-    connect(timer_benchmark_stop,SIGNAL(timeout()),this,SLOT(stop_benchmark()),Qt::QueuedConnection);
+    connect(timer_benchmark_stop,&QTimer::timeout,this,&NormalServer::stop_benchmark,Qt::QueuedConnection);
     BaseServer::initAll();
 }
 
@@ -115,7 +115,7 @@ void NormalServer::start_internal_server()
     {
         server=new QTcpServer();
         //to do in the thread
-        connect(server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
+        connect(server,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
     }
     if(server->isListening())
     {
@@ -332,8 +332,8 @@ void NormalServer::addBot()
     }
     newFakeBot->moveToThread(botThread);
     newFakeBot->start_step();
-    connect(&nextStep,SIGNAL(timeout()),newFakeBot,SLOT(doStep()),Qt::QueuedConnection);
-    connect(newFakeBot,SIGNAL(isDisconnected()),this,SLOT(removeOneBot()),Qt::QueuedConnection);
+    connect(&nextStep,&QTimer::timeout,newFakeBot,&FakeBot::doStep,Qt::QueuedConnection);
+    connect(newFakeBot,&FakeBot::isDisconnected,this,&NormalServer::removeOneBot,Qt::QueuedConnection);
 }
 
 ///////////////////////////////////// Generic command //////////////////////////////////

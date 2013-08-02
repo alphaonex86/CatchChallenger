@@ -21,7 +21,7 @@ void ClientBroadCast::setVariable(Player_internal_informations *player_informati
 {
     this->player_informations=player_informations;
     if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber)
-        connect(&GlobalServerData::serverPrivateVariables.player_updater,SIGNAL(newConnectedPlayer(qint32)),this,SLOT(receive_instant_player_number(qint32)),Qt::QueuedConnection);
+        connect(&GlobalServerData::serverPrivateVariables.player_updater,&PlayerUpdater::newConnectedPlayer,this,&ClientBroadCast::receive_instant_player_number,Qt::QueuedConnection);
 }
 
 //without verification of rights
@@ -102,7 +102,7 @@ void ClientBroadCast::receiveChatText(const Chat_type &chatType,const QString &t
     QDataStream out2(&outputData2, QIODevice::WriteOnly);
     out2.setVersion(QDataStream::Qt_4_4);
     out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
-    emit sendPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
+    emit sendFullPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
 }
 
 void ClientBroadCast::receiveSystemText(const QString &text,const bool &important)
@@ -115,7 +115,7 @@ void ClientBroadCast::receiveSystemText(const QString &text,const bool &importan
     else
         out << (quint8)Chat_type_system;
     out << text;
-    emit sendPacket(0xC2,0x0005,outputData);
+    emit sendFullPacket(0xC2,0x0005,outputData);
 }
 
 void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text)

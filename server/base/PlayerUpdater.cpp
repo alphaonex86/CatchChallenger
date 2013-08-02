@@ -12,9 +12,9 @@ PlayerUpdater::PlayerUpdater()
     //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=9*16*4=576B/s
     next_send_timer.setInterval(250);
 
-    connect(this,SIGNAL(send_addConnectedPlayer()),this,SLOT(internal_addConnectedPlayer()),Qt::QueuedConnection);
-    connect(this,SIGNAL(send_removeConnectedPlayer()),this,SLOT(internal_removeConnectedPlayer()),Qt::QueuedConnection);
-    connect(&next_send_timer,SIGNAL(timeout()),this,SLOT(send_timer()),Qt::QueuedConnection);
+    connect(this,&PlayerUpdater::send_addConnectedPlayer,this,&PlayerUpdater::internal_addConnectedPlayer,Qt::QueuedConnection);
+    connect(this,&PlayerUpdater::send_removeConnectedPlayer,this,&PlayerUpdater::internal_removeConnectedPlayer,Qt::QueuedConnection);
+    connect(&next_send_timer,&QTimer::timeout,this,&PlayerUpdater::send_timer,Qt::QueuedConnection);
 }
 
 void PlayerUpdater::addConnectedPlayer()

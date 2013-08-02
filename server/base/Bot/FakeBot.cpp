@@ -16,12 +16,12 @@ FakeBot::FakeBot() :
     socket(&fakeSocket),
     api(&socket)
 {
-    connect(&api,SIGNAL(insert_player(CatchChallenger::Player_public_informations,quint32,quint16,quint16,CatchChallenger::Direction)),this,SLOT(insert_player(CatchChallenger::Player_public_informations,quint32,quint16,quint16,CatchChallenger::Direction)));
-    connect(&api,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info(CatchChallenger::Player_private_and_public_informations)));
-    connect(&api,SIGNAL(newError(QString,QString)),this,SLOT(newError(QString,QString)));
-    connect(&socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(newSocketError(QAbstractSocket::SocketError)));
-    connect(&socket,SIGNAL(disconnected()),this,SLOT(disconnected()));
-    connect(&socket,SIGNAL(connected()),this,SLOT(tryLink()),Qt::QueuedConnection);
+    connect(&api,&Api_client_virtual::insert_player,            this,&FakeBot::insert_player);
+    connect(&api,&Api_client_virtual::have_current_player_info, this,&FakeBot::have_current_player_info);
+    connect(&api,&Api_client_virtual::newError,                 this,&FakeBot::newError);
+    connect(&socket,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error),                    this,&FakeBot::newSocketError);
+    connect(&socket,&ConnectedSocket::disconnected,             this,&FakeBot::disconnected);
+    connect(&socket,&ConnectedSocket::connected,                this,&FakeBot::tryLink,Qt::QueuedConnection);
 
     details=false;
     map=NULL;
