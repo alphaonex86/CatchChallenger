@@ -77,6 +77,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(clanActionFailed()),this,SLOT(clanActionFailed()),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(clanActionSuccess(quint32)),this,SLOT(clanActionSuccess(quint32)),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(clanDissolved()),this,SLOT(clanDissolved()),Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(clanInformations(QString)),this,SLOT(clanInformations(QString)),Qt::QueuedConnection);
 
     //connect the map controler
     connect(CatchChallenger::Api_client_real::client,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
@@ -174,7 +175,7 @@ BaseWindow::BaseWindow() :
     renderFrame->lower();
     ui->labelFightTrap->hide();
 
-    Chat::chat->setGeometry(QRect(0, 0, 300, 400));
+    Chat::chat->setGeometry(QRect(0, 0, 250, 400));
 
     resetAll();
     loadSettings();
@@ -2946,6 +2947,8 @@ void CatchChallenger::BaseWindow::clanActionFailed()
 
 void CatchChallenger::BaseWindow::clanDissolved()
 {
+    haveClanInformations=false;
+    clanName.clear();
     clan=0;
     updateClanDisplay();
 }
@@ -2955,6 +2958,16 @@ void CatchChallenger::BaseWindow::updateClanDisplay()
     ui->tabWidgetTrainerCard->setTabEnabled(4,clan!=0);
     ui->clanGrouBoxNormal->setVisible(!clan_leader);
     ui->clanGrouBoxLeader->setVisible(clan_leader);
+    ui->clanGrouBoxInformations->setVisible(haveClanInformations);
+    if(haveClanInformations)
+    {
+        if(clanName.isEmpty())
+            ui->clanName->setText(tr("Your clan"));
+        else
+            ui->clanName->setText(clanName);
+    }
+    if(Chat::chat!=NULL)
+        Chat::chat->setClan(clan!=0);
 }
 
 void CatchChallenger::BaseWindow::on_clanActionLeave_clicked()
@@ -2989,4 +3002,11 @@ void CatchChallenger::BaseWindow::on_clanActionEject_clicked()
         actionClan << ActionClan_Eject;
         CatchChallenger::Api_client_real::client->ejectClan(text);
     }
+}
+
+void CatchChallenger::BaseWindow::clanInformations(const QString &name)
+{
+    haveClanInformations=true;
+    clanName=name;
+    updateClanDisplay();
 }

@@ -6,8 +6,6 @@ using namespace CatchChallenger;
 QHash<QString,ClientBroadCast *> ClientBroadCast::playerByPseudo;
 QMultiHash<CLAN_ID_TYPE,ClientBroadCast *> ClientBroadCast::playerByClan;
 QList<ClientBroadCast *> ClientBroadCast::clientBroadCastList;
-QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo;
-QHash<QString,ClientBroadCast *>::const_iterator ClientBroadCast::i_playerByPseudo_end;
 ClientBroadCast *ClientBroadCast::item;
 
 ClientBroadCast::ClientBroadCast()
@@ -52,6 +50,19 @@ void ClientBroadCast::sendSystemMessage(const QString &text,const bool &importan
     }
 }
 
+void ClientBroadCast::clanChange(const quint32 &clanId)
+{
+    if(clanId==0)
+        playerByClan.remove(clan,this);
+    else
+    {
+        if(clan>0)
+            playerByClan.remove(clan,this);
+        playerByClan.insert(clanId,this);
+    }
+    clan=clanId;
+}
+
 void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 {
     if(this->player_informations->public_and_private_informations.public_informations.pseudo==pseudo)
@@ -73,8 +84,8 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
 void ClientBroadCast::askIfIsReadyToStop()
 {
     playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
-    if(player_informations->public_and_private_informations.clan!=0)
-        playerByClan.remove(player_informations->public_and_private_informations.clan,this);
+    if(clan>0)
+        playerByClan.remove(clan,this);
     clientBroadCastList.removeOne(this);
     emit isReadyToStop();
 }
@@ -111,13 +122,13 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 {
     if(chatType==Chat_type_clan)
     {
-        if(player_informations->public_and_private_informations.clan==0)
+        if(clan==0)
             emit error("Unable to chat with clan, you have not clan");
         else
         {
-            emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(player_informations->public_and_private_informations.clan).arg(text));
+            emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(clan).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
-            QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(player_informations->public_and_private_informations.clan);
+            QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(clan);
             int size=playerWithSameClan.size();
             int index=0;
             while(index<size)
@@ -167,8 +178,11 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
 void ClientBroadCast::send_player_informations()
 {
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
-    if(player_informations->public_and_private_informations.clan!=0)
-        playerByClan.insert(player_informations->public_and_private_informations.clan,this);
+    if(clan>0)
+    {
+        clan=player_informations->public_and_private_informations.clan;
+        playerByClan.insert(clan,this);
+    }
     clientBroadCastList << this;
 }
 
@@ -262,8 +276,8 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
         else
         {
             QStringList playerStringList;
-            i_playerByPseudo = playerByPseudo.constBegin();
-            i_playerByPseudo_end = playerByPseudo.constEnd();
+            QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo=playerByPseudo.constBegin();
+            QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo_end=playerByPseudo.constEnd();
             while (i_playerByPseudo != i_playerByPseudo_end)
             {
                 playerStringList << "<b>"+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+"</b>";

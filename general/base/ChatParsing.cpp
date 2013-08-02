@@ -13,7 +13,7 @@ QString ChatParsing::new_chat_message(QString pseudo,Player_type player_type,Cha
         case Chat_type_all://all
         break;
         case Chat_type_clan://clan
-            returned_html+="color:#FFBF00;";
+            returned_html+="color:#AA7F00;";
         break;
         case Chat_type_aliance://aliance
             returned_html+="color:#60BF20;";

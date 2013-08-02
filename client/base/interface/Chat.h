@@ -22,6 +22,7 @@ public:
     ~Chat();
     static Chat *chat;
     void resetAll();
+    void setClan(const bool &haveClan);
 public slots:
     void new_system_text(CatchChallenger::Chat_type chat_type,QString text);
     void new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QString pseudo,CatchChallenger::Player_type type);

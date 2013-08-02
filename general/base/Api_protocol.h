@@ -179,6 +179,7 @@ signals:
     void clanActionSuccess(const quint32 &clanId) const;
     void clanActionFailed() const;
     void clanDissolved() const;
+    void clanInformations(const QString &name) const;
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);

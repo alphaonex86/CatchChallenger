@@ -47,6 +47,8 @@ public slots:
     //normal slots
     void askIfIsReadyToStop();
     void sendSystemMessage(const QString &text,const bool &important=false);
+    //clan
+    void clanChange(const quint32 &clanId);
 signals:
     //normal signals
     void error(const QString &error) const;
@@ -59,9 +61,8 @@ signals:
 private:
     //local data
     qint32 connected_players;//it's th last number of connected player send
-    static QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo;
-    static QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo_end;
     static ClientBroadCast *item;
+    CLAN_ID_TYPE clan;
 };
 }
 
