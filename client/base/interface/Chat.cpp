@@ -18,6 +18,8 @@ Chat::Chat(QWidget *parent) :
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
+
+    setClan(false);
 }
 
 Chat::~Chat()
@@ -35,6 +37,20 @@ void Chat::resetAll()
     ui->comboBox_chat_type->setCurrentIndex(1);
     ui->lineEdit_chat_text->setText("");
     update_chat();
+}
+
+void Chat::setClan(const bool &haveClan)
+{
+    ui->comboBox_chat_type->clear();
+    ui->comboBox_chat_type->addItem(QApplication::translate("Chat", "All", 0));
+    ui->comboBox_chat_type->setItemData(0,0,99);
+    ui->comboBox_chat_type->addItem(QApplication::translate("Chat", "Local", 0));
+    ui->comboBox_chat_type->setItemData(1,1,99);
+    if(haveClan)
+    {
+        ui->comboBox_chat_type->addItem(QApplication::translate("Chat", "Clan", 0));
+        ui->comboBox_chat_type->setItemData(2,2,99);
+    }
 }
 
 void Chat::comboBox_chat_type_currentIndexChanged(int index)
@@ -88,7 +104,7 @@ void Chat::lineEdit_chat_text_returnPressed()
     if(!text.startsWith("/pm "))
     {
         Chat_type chat_type;
-        switch(ui->comboBox_chat_type->currentIndex())
+        switch(ui->comboBox_chat_type->itemData(ui->comboBox_chat_type->currentIndex(),99).toUInt())
         {
         default:
         case 0:
