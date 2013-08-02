@@ -24,12 +24,12 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
 
     lookToMove.setInterval(200);
     lookToMove.setSingleShot(true);
-    connect(&lookToMove,SIGNAL(timeout()),this,SLOT(transformLookToMove()));
-    connect(this,SIGNAL(mapDisplayed(QString)),this,SLOT(mapDisplayedSlot(QString)));
+    connect(&lookToMove,&QTimer::timeout,this,&MapVisualiserPlayer::transformLookToMove);
+    connect(this,&MapVisualiserPlayer::mapDisplayed,this,&MapVisualiserPlayer::mapDisplayedSlot);
 
     moveTimer.setInterval(250/5);
     moveTimer.setSingleShot(true);
-    connect(&moveTimer,SIGNAL(timeout()),this,SLOT(moveStepSlot()));
+    connect(&moveTimer,&QTimer::timeout,this,&MapVisualiserPlayer::moveStepSlot);
 
     this->centerOnPlayer=centerOnPlayer;
 

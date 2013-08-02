@@ -2,6 +2,8 @@
 #include "ui_Chat.h"
 #include "../Api_client_real.h"
 
+#include <QRegularExpression>
+
 using namespace CatchChallenger;
 
 Chat* Chat::chat=NULL;
@@ -11,9 +13,9 @@ Chat::Chat(QWidget *parent) :
     ui(new Ui::Chat)
 {
     ui->setupUi(this);
-    connect(&stopFlood,SIGNAL(timeout()),this,SLOT(removeNumberForFlood()),Qt::QueuedConnection);
-    connect(ui->comboBox_chat_type,SIGNAL(currentIndexChanged(int)),this,SLOT(comboBox_chat_type_currentIndexChanged(int)));
-    connect(ui->lineEdit_chat_text,SIGNAL(returnPressed()),this,SLOT(lineEdit_chat_text_returnPressed()));
+    connect(&stopFlood,&QTimer::timeout,this,&Chat::removeNumberForFlood,Qt::QueuedConnection);
+    connect(ui->comboBox_chat_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&Chat::comboBox_chat_type_currentIndexChanged);
+    connect(ui->lineEdit_chat_text,&QLineEdit::returnPressed,this,&Chat::lineEdit_chat_text_returnPressed);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -71,7 +73,7 @@ void Chat::lineEdit_chat_text_returnPressed()
     QString text=ui->lineEdit_chat_text->text();
     if(text.isEmpty())
         return;
-    if(text.contains(QRegExp("^ +$")))
+    if(text.contains(QRegularExpression("^ +$")))
     {
         ui->lineEdit_chat_text->clear();
         new_system_text(Chat_type_system,"Space text not allowed");
@@ -119,11 +121,11 @@ void Chat::lineEdit_chat_text_returnPressed()
         }
         CatchChallenger::Api_client_real::client->sendChatText(chat_type,text);
     }
-    else if(text.contains(QRegExp("^/pm [^ ]+ .+$")))
+    else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
     {
         QString pseudo=text;
-        pseudo.replace(QRegExp("^/pm ([^ ]+) .+$"), "\\1");
-        text.replace(QRegExp("^/pm [^ ]+ (.+)$"), "\\1");
+        pseudo.replace(QRegularExpression("^/pm ([^ ]+) .+$"), "\\1");
+        text.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
         CatchChallenger::Api_client_real::client->sendPM(text,pseudo);
     }
 }

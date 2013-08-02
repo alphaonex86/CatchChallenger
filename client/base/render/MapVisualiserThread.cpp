@@ -2,6 +2,7 @@
 #include "MapItem.h"
 #include "../../general/base/FacilityLib.h"
 #include <QFileInfo>
+#include <QRegularExpression>
 #include "../ClientVariable.h"
 
 MapVisualiserThread::MapVisualiserThread()
@@ -343,7 +344,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                             QStringList animationList=animation.split(";");
                             if(animationList.size()==2)
                             {
-                                if(animationList.at(0).contains(QRegExp("^[0-9]{1,5}ms$")) && animationList.at(1).contains(QRegExp("^[0-9]{1,3}frames$")))
+                                if(animationList.at(0).contains(QRegularExpression("^[0-9]{1,5}ms$")) && animationList.at(1).contains(QRegularExpression("^[0-9]{1,3}frames$")))
                                 {
                                     QString msString=animationList.at(0);
                                     QString framesString=animationList.at(1);

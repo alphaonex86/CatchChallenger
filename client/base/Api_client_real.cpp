@@ -9,6 +9,7 @@ using namespace CatchChallenger;
 #endif
 
 #include <QApplication>
+#include <QRegularExpression>
 
 //need host + port here to have datapack base
 
@@ -20,8 +21,8 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     host="localhost";
     port=42489;
     datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
-    connect(socket,SIGNAL(disconnected()),					this,SLOT(disconnected()));
-    connect(this,SIGNAL(newFile(QString,QByteArray,quint64)),		this,SLOT(writeNewFile(QString,QByteArray,quint64)));
+    connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
+    connect(this,   &Api_client_real::newFile,      this,&Api_client_real::writeNewFile);
     disconnected();
     dataClear();
 }
@@ -241,7 +242,7 @@ const QStringList Api_client_real::listDatapack(QString suffix)
         else
         {
             //if match with correct file name, considere as valid
-            if(fileInfo.fileName().contains(QRegExp(DATAPACK_FILE_REGEX)))
+            if(fileInfo.fileName().contains(QRegularExpression(DATAPACK_FILE_REGEX)))
                 returnFile << suffix+fileInfo.fileName();
             //is invalid
             else

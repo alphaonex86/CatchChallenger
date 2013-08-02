@@ -34,12 +34,12 @@ MainWindow::MainWindow(QWidget *parent) :
         if(index!=-1)
             ui->comboBoxServerList->setCurrentIndex(index);
     }
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(message(QString)),this,SLOT(message(QString)));
-    connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
-    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
-    connect(CatchChallenger::BaseWindow::baseWindow,SIGNAL(needQuit()),this,SLOT(needQuit()));
+    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
+    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
+    //connect(CatchChallenger::BaseWindow::baseWindow,                &CatchChallenger::BaseWindow::needQuit,             this,&MainWindow::needQuit);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -117,7 +117,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         settings.setValue("pass",ui->lineEditPass->text());
     else
         settings.remove("pass");
-    if(!ui->comboBoxServerList->currentText().contains(QRegExp("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
+    if(!ui->comboBoxServerList->currentText().contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
     {
         QMessageBox::warning(this,"Error","The server is not as form: [host]:[port]");
         return;
@@ -129,9 +129,9 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     }
     settings.setValue("last_server",ui->comboBoxServerList->currentText());
     QString host=ui->comboBoxServerList->currentText();
-    host.remove(QRegExp(":[0-9]{1,5}$"));
+    host.remove(QRegularExpression(":[0-9]{1,5}$"));
     QString port_string=ui->comboBoxServerList->currentText();
-    port_string.remove(QRegExp("^.*:"));
+    port_string.remove(QRegularExpression("^.*:"));
     bool ok;
     quint16 port=port_string.toInt(&ok);
     if(!ok)

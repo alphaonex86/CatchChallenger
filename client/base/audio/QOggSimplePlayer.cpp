@@ -15,12 +15,12 @@ QOggSimplePlayer::QOggSimplePlayer(const QString &filePath, QThread *audioThread
     buffer.open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     this->filePath=filePath;
 
-    connect(&buffer,SIGNAL(readDone()),SLOT(readDone()));
-    connect(this,SIGNAL(internalOpen()),SLOT(open()),Qt::QueuedConnection);
+    connect(&buffer,&QOggAudioBuffer::readDone,this,&QOggSimplePlayer::readDone);
+    connect(this,&QOggSimplePlayer::internalOpen,this,&QOggSimplePlayer::open,Qt::QueuedConnection);
     if(audioThread!=NULL)
-        connect(this,SIGNAL(internalClose()),SLOT(close()),Qt::BlockingQueuedConnection);
+        connect(this,&QOggSimplePlayer::internalClose,this,&QOggSimplePlayer::close,Qt::BlockingQueuedConnection);
     else
-        connect(this,SIGNAL(internalClose()),SLOT(close()),Qt::DirectConnection);
+        connect(this,&QOggSimplePlayer::internalClose,this,&QOggSimplePlayer::close,Qt::DirectConnection);
     emit internalOpen();
 }
 
@@ -85,7 +85,7 @@ void QOggSimplePlayer::open()
         delete output;
     output = new QAudioOutput(format);
     output->setBufferSize(4096);
-    connect(output,SIGNAL(stateChanged(QAudio::State)),SLOT(finishedPlaying(QAudio::State)),Qt::QueuedConnection);
+    connect(output,&QAudioOutput::stateChanged,this,&QOggSimplePlayer::finishedPlaying,Qt::QueuedConnection);
 
     if(needPlay)
         start();

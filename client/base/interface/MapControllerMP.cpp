@@ -23,14 +23,14 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
     resetAll();
 
     //connect the map controler
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(insert_player(CatchChallenger::Player_public_informations,quint32,quint16,quint16,CatchChallenger::Direction)),this,SLOT(insert_player(CatchChallenger::Player_public_informations,quint32,quint16,quint16,CatchChallenger::Direction)),Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(remove_player(quint16)),this,SLOT(remove_player(quint16)),Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(move_player(quint16,QList<QPair<quint8,CatchChallenger::Direction> >)),this,SLOT(move_player(quint16,QList<QPair<quint8,CatchChallenger::Direction> >)),Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(reinsert_player(quint16,quint8,quint8,CatchChallenger::Direction)),this,SLOT(reinsert_player(quint16,quint8,quint8,CatchChallenger::Direction)),Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(reinsert_player(quint16,quint32,quint8,quint8,CatchChallenger::Direction)),this,SLOT(reinsert_player(quint16,quint32,quint8,quint8,CatchChallenger::Direction)),Qt::QueuedConnection);
-    connect(this,SIGNAL(send_player_direction(CatchChallenger::Direction)),CatchChallenger::Api_client_real::client,SLOT(send_player_direction(CatchChallenger::Direction)));//,Qt::QueuedConnection
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),this,SLOT(teleportTo(quint32,quint16,quint16,CatchChallenger::Direction)),Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,   this,&MapControllerMP::have_current_player_info,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_player,              this,&MapControllerMP::insert_player,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_player,              this,&MapControllerMP::remove_player,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::move_player,                this,&MapControllerMP::move_player,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::reinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::reinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection);
+    connect(this,&MapControllerMP::send_player_direction,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::send_player_direction);//,Qt::QueuedConnection
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,                 this,&MapControllerMP::teleportTo,Qt::QueuedConnection);
 
     scaleSize=1;
 }
@@ -592,7 +592,7 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
     insert_player(informations,mapId,x,y,direction);
 }
 
-void MapControllerMP::reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction)
+void MapControllerMP::full_reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -849,7 +849,7 @@ void MapControllerMP::reinject_signals()
                     reinsert_player(delayedActions.at(index).reinsert_single.id,delayedActions.at(index).reinsert_single.x,delayedActions.at(index).reinsert_single.y,delayedActions.at(index).reinsert_single.direction);
                 break;
                 case DelayedType_Reinsert_full:
-                    reinsert_player(delayedActions.at(index).reinsert_full.id,delayedActions.at(index).reinsert_full.mapId,delayedActions.at(index).reinsert_full.x,delayedActions.at(index).reinsert_full.y,delayedActions.at(index).reinsert_full.direction);
+                    full_reinsert_player(delayedActions.at(index).reinsert_full.id,delayedActions.at(index).reinsert_full.mapId,delayedActions.at(index).reinsert_full.x,delayedActions.at(index).reinsert_full.y,delayedActions.at(index).reinsert_full.direction);
                 break;
                 case DelayedType_Drop_all:
                     dropAllPlayerOnTheMap();
