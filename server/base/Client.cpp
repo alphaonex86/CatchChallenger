@@ -124,6 +124,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientHeavyLoad,	SIGNAL(newRandomNumber(QByteArray)),		localClientHandler,	SLOT(newRandomNumber(QByteArray)),Qt::QueuedConnection);
     connect(clientHeavyLoad,	SIGNAL(haveClanInfo(QString)),              localClientHandler,	SLOT(haveClanInfo(QString)),Qt::QueuedConnection);
     connect(localClientHandler,	SIGNAL(askClan(quint32)),                   clientHeavyLoad,	SLOT(askClan(quint32)),Qt::QueuedConnection);
+    connect(localClientHandler,	SIGNAL(clanChange(quint32)),                clientBroadCast,	SLOT(clanChange(quint32)),Qt::QueuedConnection);
 
     //packet parsed (heavy)
     connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),

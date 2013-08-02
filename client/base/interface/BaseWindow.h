@@ -245,6 +245,7 @@ private slots:
     void clanActionFailed();
     void clanDissolved();
     void updateClanDisplay();
+    void clanInformations(const QString &name);
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
@@ -330,6 +331,8 @@ private:
     bool clan_leader;
     QSet<ActionAllow> allow;
     QList<ActionClan> actionClan;
+    QString clanName;
+    bool haveClanInformations;
 
     //plant seed in waiting
     quint32 seed_in_waiting;

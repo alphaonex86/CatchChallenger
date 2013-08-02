@@ -60,6 +60,12 @@ void BaseWindow::resetAll()
     ui->tabWidgetTrainerCard->setCurrentWidget(ui->tabWidgetTrainerCardPage1);
     ui->selectMonster->setVisible(false);
     doNextActionStep=DoNextActionStep_Start;
+    clan=0;
+    clan_leader=false;
+    allow.clear();
+    actionClan.clear();
+    clanName.clear();
+    haveClanInformations=false;
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }

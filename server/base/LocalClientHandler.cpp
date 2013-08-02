@@ -270,6 +270,8 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     {
         if(!playerByClan.contains(player_informations->public_and_private_informations.clan))
             emit askClan(player_informations->public_and_private_informations.clan);
+        else
+            sendClanInfo();
         playerByClan[player_informations->public_and_private_informations.clan].players << this;
     }
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
@@ -2105,6 +2107,8 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                              );
                 break;
             }
+            sendClanInfo();
+            emit clanChange(player_informations->public_and_private_informations.clan);
         }
         break;
         case 0x02:
@@ -2123,6 +2127,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             if(playerByClan[player_informations->public_and_private_informations.clan].players.isEmpty())
                 playerByClan.remove(player_informations->public_and_private_informations.clan);
             player_informations->public_and_private_informations.clan=0;
+            emit clanChange(player_informations->public_and_private_informations.clan);
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2205,7 +2210,10 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             while(index<players.size())
             {
                 if(players.at(index)==this)
+                {
                     player_informations->public_and_private_informations.clan=0;
+                    emit clanChange(player_informations->public_and_private_informations.clan);
+                }
                 else
                     players.at(index)->dissolvedClan();
                 index++;
@@ -2234,7 +2242,13 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             QDataStream out(&outputData, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_4_4);
             if(isFound && !haveAClan)
-                out << (quint8)0x01;
+            {
+                if(playerByPseudo[text]->inviteToClan(player_informations->public_and_private_informations.clan))
+                    out << (quint8)0x01;
+                else
+                    out << (quint8)0x02;
+                emit error("Todo: invite into the clan");
+            }
             else
             {
                 if(!isFound)
@@ -2244,10 +2258,6 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 out << (quint8)0x02;
             }
             emit postReply(query_id,outputData);
-            if(!isFound || haveAClan)
-                return;
-            playerByPseudo[text]->inviteToClan(player_informations->public_and_private_informations.clan);
-            emit error("Todo: invite into the clan");
         }
         break;
         case 0x05:
@@ -2329,6 +2339,20 @@ void LocalClientHandler::haveClanInfo(const QString &clanName)
 {
     if(playerByClan.contains(player_informations->public_and_private_informations.clan))
         playerByClan[player_informations->public_and_private_informations.clan].name=clanName;
+    sendClanInfo();
+}
+
+void LocalClientHandler::sendClanInfo()
+{
+    if(player_informations->public_and_private_informations.clan==0)
+        return;
+    if(!playerByClan.contains(player_informations->public_and_private_informations.clan))
+        return;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << playerByClan[player_informations->public_and_private_informations.clan].name;
+    emit sendPacket(0xC2,0x000A,outputData);
 }
 
 void LocalClientHandler::dissolvedClan()
@@ -2338,10 +2362,12 @@ void LocalClientHandler::dissolvedClan()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     emit sendPacket(0xC2,0x0009,QByteArray());
+    emit clanChange(player_informations->public_and_private_informations.clan);
 }
 
-void LocalClientHandler::inviteToClan(const quint32 &clanId)
+bool LocalClientHandler::inviteToClan(const quint32 &clanId)
 {
+    return false;
 }
 
 void LocalClientHandler::ejectToClan()
