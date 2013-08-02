@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QMessageBox>
-#include <QRegExp>
 #include <QAbstractSocket>
 #include <QSettings>
 #include <QTimer>

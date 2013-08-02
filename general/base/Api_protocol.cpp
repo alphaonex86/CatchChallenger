@@ -624,7 +624,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     }
                     Direction direction=(Direction)directionInt;
 
-                    emit reinsert_player(simplifiedId,mapId,x,y,direction);
+                    emit full_reinsert_player(simplifiedId,mapId,x,y,direction);
                     index_sub_loop++;
                 }
                 index++;
@@ -1634,7 +1634,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                     if(monsterPlace==0)
                         emit sendBattleReturn(attackReturn);
                     else
-                        emit sendBattleReturn(attackReturn,monsterPlace,publicPlayerMonster);
+                        emit sendFullBattleReturn(attackReturn,monsterPlace,publicPlayerMonster);
                 }
                 break;
                 //The other player have declined you battle request

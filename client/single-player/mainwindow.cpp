@@ -37,12 +37,12 @@ MainWindow::MainWindow(QWidget *parent) :
     savegamePath=QCoreApplication::applicationDirPath()+"/savegames/";
     datapackPathExists=QDir(datapackPath).exists();
 
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()),Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)),Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(message(QString)),this,SLOT(message(QString)),Qt::QueuedConnection);
-    connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
-    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
-    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),CatchChallenger::BaseWindow::baseWindow,SLOT(stateChanged(QAbstractSocket::SocketState)),Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,this,&MainWindow::disconnected,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&MainWindow::message,Qt::QueuedConnection);
+    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
+    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&MainWindow::stateChanged,Qt::QueuedConnection);
+    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::stateChanged,Qt::QueuedConnection);
 
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
@@ -582,8 +582,8 @@ void MainWindow::updateSavegameList()
         QString savegamesPath=fileInfo.absoluteFilePath()+"/";
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
         SaveGameLabel *newEntry=new SaveGameLabel();
-        connect(newEntry,SIGNAL(clicked()),this,SLOT(savegameLabelClicked()),Qt::QueuedConnection);
-        connect(newEntry,SIGNAL(doubleClicked()),this,SLOT(savegameLabelDoubleClicked()),Qt::QueuedConnection);
+        connect(newEntry,&SaveGameLabel::clicked,this,&MainWindow::savegameLabelClicked,Qt::QueuedConnection);
+        connect(newEntry,&SaveGameLabel::doubleClicked,this,&MainWindow::savegameLabelDoubleClicked,Qt::QueuedConnection);
         newEntry->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
         QString dateString;
         if(!QFileInfo(savegamesPath+"metadata.conf").exists())
@@ -958,8 +958,8 @@ void MainWindow::play(const QString &savegamesPath)
     }
     internalServer=new CatchChallenger::InternalServer();
     sendSettings(internalServer,savegamesPath);
-    connect(internalServer,SIGNAL(is_started(bool)),this,SLOT(is_started(bool)),Qt::QueuedConnection);
-    connect(internalServer,SIGNAL(error(QString)),this,SLOT(serverError(QString)),Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
 
     ui->stackedWidget->setCurrentIndex(1);
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();

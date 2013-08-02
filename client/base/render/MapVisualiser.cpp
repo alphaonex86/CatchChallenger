@@ -18,8 +18,8 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     Q_UNUSED(OpenGL);
     qRegisterMetaType<MapVisualiserThread::Map_full *>("MapVisualiserThread::Map_full *");
 
-    connect(this,SIGNAL(loadOtherMapAsync(QString)),&mapVisualiserThread,SLOT(loadOtherMapAsync(QString)),Qt::QueuedConnection);
-    connect(&mapVisualiserThread,SIGNAL(asyncMapLoaded(QString,MapVisualiserThread::Map_full *)),this,SLOT(asyncMapLoaded(QString,MapVisualiserThread::Map_full *)),Qt::QueuedConnection);
+    connect(this,&MapVisualiser::loadOtherMapAsync,&mapVisualiserThread,&MapVisualiserThread::loadOtherMapAsync,Qt::QueuedConnection);
+    connect(&mapVisualiserThread,&MapVisualiserThread::asyncMapLoaded,this,&MapVisualiser::asyncMapLoaded,Qt::QueuedConnection);
 
     setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
@@ -35,8 +35,8 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     timeRender.restart();
     waitRenderTime=30;
     timerRender.setSingleShot(true);
-    connect(&timerRender,SIGNAL(timeout()),this,SLOT(render()));
-    connect(&timerUpdateFPS,SIGNAL(timeout()),this,SLOT(updateFPS()));
+    connect(&timerRender,&QTimer::timeout,this,&MapVisualiser::render);
+    connect(&timerUpdateFPS,&QTimer::timeout,this,&MapVisualiser::updateFPS);
     timerUpdateFPS.start();
     FPSText=NULL;
     mShowFPS=false;

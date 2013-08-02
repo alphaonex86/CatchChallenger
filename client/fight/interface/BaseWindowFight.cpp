@@ -1339,7 +1339,7 @@ void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn
     doNextAction();
 }
 
-void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
     sendBattleReturn(attackReturn);

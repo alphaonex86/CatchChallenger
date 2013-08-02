@@ -174,7 +174,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 QTimer *newTimer=new QTimer();
                 newTimer->setInterval(i.key());
                 animationTimer[i.key()]=newTimer;
-                connect(newTimer,SIGNAL(timeout()),this,SLOT(applyTheAnimationTimer()));
+                connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer);
                 /// \todo syncro all the timer start, with frame offset to align with the other timer
                 newTimer->start();
             }
