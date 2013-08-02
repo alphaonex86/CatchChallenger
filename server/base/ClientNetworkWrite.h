@@ -19,7 +19,7 @@ public:
     explicit ClientNetworkWrite(Player_internal_informations *player_informations,ConnectedSocket * socket);
     ~ClientNetworkWrite();
 public slots:
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
+    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data);
     void sendPacket(const quint8 &mainIdent,const QByteArray &data);
 
     void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data);

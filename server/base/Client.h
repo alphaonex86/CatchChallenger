@@ -46,17 +46,15 @@ private:
 
     //socket related
     ConnectedSocket *socket;
-    QString remote_ip;
-    quint16 port;
 
     quint8 stopped_object;
 private slots:
     //socket related
     void connectionError(QAbstractSocket::SocketError);
     //normal management related
-    void errorOutput(QString errorString);
+    void errorOutput(const QString &errorString);
     void kicked();
-    void normalOutput(QString message);
+    void normalOutput(const QString &message);
     //internal management related
     void send_player_informations();
     //remove and stop related

@@ -14,7 +14,7 @@ ClientNetworkWrite::~ClientNetworkWrite()
 }
 
 /* not use mainCodeWithoutSubCodeTypeServerToClient because the reply have unknow code */
-void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+void ClientNetworkWrite::sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
     if(!player_informations->isConnected)
     {
@@ -24,7 +24,7 @@ void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const quint16 &su
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QString("sendPacket(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
     #endif
-    if(!ProtocolParsingOutput::packOutcommingData(mainCodeType,subCodeType,data))
+    if(!ProtocolParsingOutput::packFullOutcommingData(mainCodeType,subCodeType,data))
         return;
     if(!socket->isValid())
     {
@@ -62,7 +62,7 @@ void ClientNetworkWrite::sendQuery(const quint8 &mainIdent,const quint16 &subIde
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     emit message(QString("sendQuery(%1,%2,%3)").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
     #endif
-    if(!ProtocolParsingOutput::packOutcommingQuery(mainIdent,subIdent,queryNumber,data))
+    if(!ProtocolParsingOutput::packFullOutcommingQuery(mainIdent,subIdent,queryNumber,data))
         return;
     if(!socket->isValid())
     {

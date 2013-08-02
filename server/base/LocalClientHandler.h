@@ -49,6 +49,7 @@ public:
     quint32 getPlayerId() const;
     void dissolvedClan();
     bool inviteToClan(const quint32 &clanId);
+    void insertIntoAClan(const quint32 &clanId);
     void ejectToClan();
     quint32 getClanId() const;
     bool haveAClan() const;
@@ -72,6 +73,7 @@ private:
     quint64 tradeCash;
     QHash<quint32,quint32> tradeObjects;
     QList<PlayerMonster> tradeMonster;
+    QList<quint32> inviteToClanList;
 
     //map move
     bool singleMove(const Direction &direction);
@@ -145,6 +147,7 @@ public slots:
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text);
     void haveClanInfo(const QString &clanName);
     void sendClanInfo();
+    void clanInvite(const bool &accept);
 private slots:
     virtual void extraStop();
     void savePosition();

@@ -134,5 +134,5 @@ void ClientHeavyLoad::sendInventory()
     }
 
     //send the items
-    emit sendPacket(0xD0,0x0001,outputData);
+    emit sendFullPacket(0xD0,0x0001,outputData);
 }

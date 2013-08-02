@@ -78,6 +78,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,SIGNAL(clanActionSuccess(quint32)),this,SLOT(clanActionSuccess(quint32)),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(clanDissolved()),this,SLOT(clanDissolved()),Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,SIGNAL(clanInformations(QString)),this,SLOT(clanInformations(QString)),Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,SIGNAL(clanInvite(quint32,QString)),this,SLOT(clanInvite(quint32,QString)),Qt::QueuedConnection);
 
     //connect the map controler
     connect(CatchChallenger::Api_client_real::client,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info()),Qt::QueuedConnection);
@@ -3009,4 +3010,17 @@ void CatchChallenger::BaseWindow::clanInformations(const QString &name)
     haveClanInformations=true;
     clanName=name;
     updateClanDisplay();
+}
+
+void CatchChallenger::BaseWindow::clanInvite(const quint32 &clanId,const QString &name)
+{
+    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?").arg(QString("<b>%1</b>").arg(name)));
+    CatchChallenger::Api_client_real::client->inviteAccept(button==QMessageBox::Yes);
+    if(button==QMessageBox::Yes)
+    {
+        this->clan=clanId;
+        this->clan_leader=false;
+        haveClanInformations=false;
+        updateClanDisplay();
+    }
 }
