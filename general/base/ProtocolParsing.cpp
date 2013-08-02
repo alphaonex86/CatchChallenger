@@ -34,7 +34,7 @@ QSet<quint8> ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
 ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
 {
     this->socket=socket;
-    connect(socket,SIGNAL(disconnected()),this,SLOT(reset()),Qt::QueuedConnection);
+    connect(socket,&ConnectedSocket::disconnected,this,&ProtocolParsing::reset,Qt::QueuedConnection);
 }
 
 void ProtocolParsing::initialiseTheVariable()
@@ -65,6 +65,7 @@ void ProtocolParsing::initialiseTheVariable()
     sizeMultipleCodePacketClientToServer[0x6a][0x0002]=4;
     sizeMultipleCodePacketClientToServer[0x6a][0x0003]=4;
     sizeMultipleCodePacketClientToServer[0x6a][0x0004]=4;
+    sizeMultipleCodePacketClientToServer[0x42][0x0004]=1;
 
     sizeMultipleCodePacketServerToClient[0xC2][0x0009]=0;
     sizeMultipleCodePacketServerToClient[0xD0][0x0006]=0;
@@ -117,7 +118,7 @@ ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTr
 {
     canStartReadData=false;
     RXSize=0;
-    if(!connect(socket,SIGNAL(readyRead()),this,SLOT(parseIncommingData())))
+    if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData))
         DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
     dataClear();
@@ -612,7 +613,7 @@ void ProtocolParsingInput::parseIncommingData()
                         if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                             data=qUncompress(data);
                 }
-                parseMessage(mainCodeType,subCodeType,data);
+                parseFullMessage(mainCodeType,subCodeType,data);
             }
         }
         else
@@ -645,8 +646,8 @@ void ProtocolParsingInput::parseIncommingData()
                             if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                                 data=qUncompress(data);
                     }
-                    emit newInputQuery(mainCodeType,subCodeType,queryNumber);
-                    parseQuery(mainCodeType,subCodeType,queryNumber,data);
+                    emit newFullInputQuery(mainCodeType,subCodeType,queryNumber);
+                    parseFullQuery(mainCodeType,subCodeType,queryNumber,data);
                 }
             }
             else
@@ -697,7 +698,7 @@ void ProtocolParsingInput::parseIncommingData()
                             if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                                 data=qUncompress(data);
                     }
-                    parseReplyData(mainCodeType,subCodeType,queryNumber,data);
+                    parseFullReplyData(mainCodeType,subCodeType,queryNumber,data);
                 }
             }
         }
@@ -775,7 +776,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
     reply_mainCodeType[queryNumber]=mainCodeType;
 }
 
-void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
     if(reply_mainCodeType.contains(queryNumber))
     {
@@ -961,7 +962,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     }
 }
 
-void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
+void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
@@ -1081,7 +1082,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
     }
 }
 
-bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data)
+bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,const quint16 &subCodeType,QByteArray data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -1390,7 +1391,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
     return internalPackOutcommingData(block+data);
 }
 
-bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data)
+bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,QByteArray data)
 {
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
@@ -1531,8 +1532,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         }
     }
 
-    emit newOutputQuery(mainCodeType,subCodeType,queryNumber);
-    //doit étre bloquer avant, car e main code devrai pas avoir de sub code
+    emit newFullOutputQuery(mainCodeType,subCodeType,queryNumber);
     return internalPackOutcommingData(block+data);
 }
 

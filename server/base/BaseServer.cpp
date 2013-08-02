@@ -39,7 +39,7 @@ BaseServer::BaseServer()
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex=0;
     GlobalServerData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
-    GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegExp(DATAPACK_FILE_REGEX);
+    GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
 
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
@@ -77,10 +77,10 @@ BaseServer::BaseServer()
 
     stat=Down;
 
-    connect(&QFakeServer::server,SIGNAL(newConnection()),this,SLOT(newConnection()),Qt::QueuedConnection);
-    connect(this,SIGNAL(need_be_started()),this,SLOT(start_internal_server()),Qt::QueuedConnection);
-    connect(this,SIGNAL(try_stop_server()),this,SLOT(stop_internal_server()),Qt::QueuedConnection);
-    connect(this,SIGNAL(try_initAll()),this,SLOT(initAll()),Qt::QueuedConnection);
+    connect(&QFakeServer::server,&QFakeServer::newConnection,this,&BaseServer::newConnection,       Qt::QueuedConnection);
+    connect(this,&BaseServer::need_be_started,              this,&BaseServer::start_internal_server,Qt::QueuedConnection);
+    connect(this,&BaseServer::try_stop_server,              this,&BaseServer::stop_internal_server, Qt::QueuedConnection);
+    connect(this,&BaseServer::try_initAll,                  this,&BaseServer::initAll,              Qt::QueuedConnection);
     emit try_initAll();
 
     srand(time(NULL));
@@ -151,7 +151,7 @@ void BaseServer::preload_the_map()
     int size=returnList.size();
     int index=0;
     int sub_index;
-    QRegExp mapFilter("\\.tmx$");
+    QRegularExpression mapFilter("\\.tmx$");
     while(index<size)
     {
         QString fileName=returnList.at(index);

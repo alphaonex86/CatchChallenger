@@ -17,18 +17,18 @@ LocalClientHandler::LocalClientHandler()
     otherPlayerTrade=NULL;
     tradeIsValidated=false;
 
-    connect(&localClientHandlerFight,SIGNAL(message(QString)),                          this,SIGNAL(message(QString)));
-    connect(&localClientHandlerFight,SIGNAL(error(QString)),                            this,SIGNAL(error(QString)));
-    connect(&localClientHandlerFight,SIGNAL(dbQuery(QString)),                          this,SIGNAL(dbQuery(QString)));
-    connect(&localClientHandlerFight,SIGNAL(askRandomNumber()),                         this,SIGNAL(askRandomNumber()));
-    connect(&localClientHandlerFight,SIGNAL(receiveSystemText(QString,bool)),           this,SIGNAL(receiveSystemText(QString,bool)));
-    connect(&localClientHandlerFight,SIGNAL(postReply(quint8,QByteArray)),              this,SIGNAL(postReply(quint8,QByteArray)));
-    connect(&localClientHandlerFight,SIGNAL(sendBattleRequest(QByteArray)),             this,SIGNAL(sendBattleRequest(QByteArray)));
-    connect(&localClientHandlerFight,SIGNAL(sendPacket(quint8,QByteArray)),             this,SIGNAL(sendPacket(quint8,QByteArray)));
-    connect(&localClientHandlerFight,SIGNAL(sendPacket(quint8,quint16,QByteArray)),     this,SIGNAL(sendPacket(quint8,quint16,QByteArray)));
-    connect(&localClientHandlerFight,SIGNAL(teleportTo(Map*,quint8,quint8,Orientation)),this,SIGNAL(teleportTo(Map*,quint8,quint8,Orientation)));
-    connect(&localClientHandlerFight,SIGNAL(addObjectAndSend(quint32,quint32)),         this,SLOT(addObjectAndSend(quint32,quint32)));
-    connect(&localClientHandlerFight,SIGNAL(addCash(quint64,bool)),                     this,SLOT(addCash(quint64,bool)));
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::message,             this,&LocalClientHandler::message);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::error,               this,&LocalClientHandler::error);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::dbQuery,             this,&LocalClientHandler::dbQuery);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::askRandomNumber,     this,&LocalClientHandler::askRandomNumber);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::receiveSystemText,   this,&LocalClientHandler::receiveSystemText);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::postReply,           this,&LocalClientHandler::postReply);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::sendBattleRequest,   this,&LocalClientHandler::sendBattleRequest);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::sendPacket,          this,&LocalClientHandler::sendPacket);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::sendFullPacket,      this,&LocalClientHandler::sendFullPacket);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::teleportTo,          this,&LocalClientHandler::teleportTo);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::addObjectAndSend,    this,&LocalClientHandler::addObjectAndSend);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::addCash,             this,&LocalClientHandler::addCash);
 }
 
 LocalClientHandler::~LocalClientHandler()
@@ -348,7 +348,7 @@ void LocalClientHandler::addObjectAndSend(const quint32 &item,const quint32 &qua
     out << (quint32)1;
     out << (quint32)item;
     out << (quint32)quantity;
-    emit sendPacket(0xD0,0x0002,outputData);
+    emit sendFullPacket(0xD0,0x0002,outputData);
 }
 
 void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
@@ -608,7 +608,7 @@ void LocalClientHandler::sendRemoveObject(const quint32 &item,const quint32 &qua
     out << (quint32)1;
     out << (quint32)item;
     out << (quint32)quantity;
-    emit sendPacket(0xD0,0x0003,outputData);
+    emit sendFullPacket(0xD0,0x0003,outputData);
 }
 
 quint32 LocalClientHandler::objectQuantity(const quint32 &item)
@@ -2063,9 +2063,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 return;
             }
             GlobalServerData::serverPrivateVariables.maxClanId++;
-            player_informations->public_and_private_informations.clan=GlobalServerData::serverPrivateVariables.maxClanId;
             playerByClan[player_informations->public_and_private_informations.clan].name=text;
-            playerByClan[player_informations->public_and_private_informations.clan].players << this;
             player_informations->public_and_private_informations.clan_leader=true;
             //send the network reply
             QByteArray outputData;
@@ -2091,24 +2089,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                              );
                 break;
             }
-            switch(GlobalServerData::serverSettings.database.type)
-            {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE player SET clan=%1,clan_leader=1 WHERE id=%2;")
-                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                             .arg(player_informations->id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE player SET clan=%1,clan_leader=1 WHERE id=%2;")
-                             .arg(GlobalServerData::serverPrivateVariables.maxClanId)
-                             .arg(player_informations->id)
-                             );
-                break;
-            }
-            sendClanInfo();
-            emit clanChange(player_informations->public_and_private_informations.clan);
+            insertIntoAClan(GlobalServerData::serverPrivateVariables.maxClanId);
         }
         break;
         case 0x02:
@@ -2247,7 +2228,6 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                     out << (quint8)0x01;
                 else
                     out << (quint8)0x02;
-                emit error("Todo: invite into the clan");
             }
             else
             {
@@ -2352,7 +2332,7 @@ void LocalClientHandler::sendClanInfo()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << playerByClan[player_informations->public_and_private_informations.clan].name;
-    emit sendPacket(0xC2,0x000A,outputData);
+    emit sendFullPacket(0xC2,0x000A,outputData);
 }
 
 void LocalClientHandler::dissolvedClan()
@@ -2361,13 +2341,73 @@ void LocalClientHandler::dissolvedClan()
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    emit sendPacket(0xC2,0x0009,QByteArray());
+    emit sendFullPacket(0xC2,0x0009,QByteArray());
     emit clanChange(player_informations->public_and_private_informations.clan);
 }
 
 bool LocalClientHandler::inviteToClan(const quint32 &clanId)
 {
+    if(!inviteToClanList.isEmpty())
+        return false;
+    inviteToClanList << clanId;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)clanId;
+    out << playerByClan[clanId].name;
+    emit sendFullPacket(0xC2,0x000B,outputData);
     return false;
+}
+
+void LocalClientHandler::clanInvite(const bool &accept)
+{
+    if(!accept)
+    {
+        emit message("You have refused the clan invitation");
+        inviteToClanList.removeFirst();
+        return;
+    }
+    emit message("You have accepted the clan invitation");
+    if(inviteToClanList.isEmpty())
+    {
+        emit error("Can't responde to clan invite, because no in suspend");
+        return;
+    }
+    player_informations->public_and_private_informations.clan_leader=false;
+    insertIntoAClan(inviteToClanList.first());
+    inviteToClanList.removeFirst();
+}
+
+void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
+{
+    player_informations->public_and_private_informations.clan=clanId;
+    playerByClan[clanId].players << this;
+    //add into db
+    QString clan_leader;
+    if(player_informations->public_and_private_informations.clan_leader)
+        clan_leader="1";
+    else
+        clan_leader="0";
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE player SET clan=%1,clan_leader=%2 WHERE id=%3;")
+                     .arg(clanId)
+                     .arg(clan_leader)
+                     .arg(player_informations->id)
+                     );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE player SET clan=%1,clan_leader=%2 WHERE id=%3;")
+                     .arg(clanId)
+                     .arg(clan_leader)
+                     .arg(player_informations->id)
+                     );
+        break;
+    }
+    sendClanInfo();
+    emit clanChange(player_informations->public_and_private_informations.clan);
 }
 
 void LocalClientHandler::ejectToClan()

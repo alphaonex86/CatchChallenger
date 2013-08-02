@@ -246,6 +246,7 @@ private slots:
     void clanDissolved();
     void updateClanDisplay();
     void clanInformations(const QString &name);
+    void clanInvite(const quint32 &clanId, const QString &name);
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);

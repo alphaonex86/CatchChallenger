@@ -2,6 +2,10 @@
 #include "GlobalServerData.h"
 #include "../../general/base/QFakeSocket.h"
 
+#ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+#include <QTime>
+#endif
+
 using namespace CatchChallenger;
 
 /// \warning never cross the signals from and to the different client, complexity ^2
@@ -17,33 +21,36 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     player_informations.is_logged=false;
     player_informations.isConnected=true;
 
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    QTime time;
+    time.restart();
+    #endif
     clientBroadCast=new ClientBroadCast();
     clientHeavyLoad=new ClientHeavyLoad();
     clientNetworkRead=new ClientNetworkRead(&player_informations,socket);
     clientNetworkWrite=new ClientNetworkWrite(&player_informations,socket);
     localClientHandler=new LocalClientHandler();
     clientLocalBroadcast=new ClientLocalBroadcast();
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    normalOutput(QString("creating object time: %1").arg(time.elapsed()));
+    time.restart();
+    #endif
     this->clientMapManagement=clientMapManagement;
 
     if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm!=MapVisibilityAlgorithm_none)
     {
-        connect(clientMapManagement,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
-        connect(clientMapManagement,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
-        connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),clientMapManagement,	SLOT(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
-        connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientMapManagement,	SLOT(moveThePlayer(quint8,Direction)),				Qt::QueuedConnection);
-        connect(clientNetworkRead,	SIGNAL(teleportValidatedTo(Map*,quint8,quint8,Orientation)),			clientMapManagement,	SLOT(teleportValidatedTo(Map*,quint8,quint8,Orientation)),				Qt::QueuedConnection);
-        connect(clientMapManagement,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
-        connect(clientMapManagement,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-        connect(&GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	SIGNAL(timeout()),clientMapManagement,SLOT(purgeBuffer()),Qt::QueuedConnection);
+        connect(clientMapManagement,	&ClientMapManagement::sendFullPacket,   clientNetworkWrite,     &ClientNetworkWrite::sendFullPacket,    Qt::QueuedConnection);
+        connect(clientMapManagement,	&ClientMapManagement::sendPacket,       clientNetworkWrite,     &ClientNetworkWrite::sendPacket,        Qt::QueuedConnection);
+        connect(clientHeavyLoad,        &ClientHeavyLoad::put_on_the_map,       clientMapManagement,	&ClientMapManagement::put_on_the_map,   Qt::QueuedConnection);
+        connect(clientNetworkRead,      &ClientNetworkRead::moveThePlayer,		clientMapManagement,	&ClientMapManagement::moveThePlayer,	Qt::QueuedConnection);
+        connect(clientNetworkRead,      &ClientNetworkRead::teleportValidatedTo,clientMapManagement,	&ClientMapManagement::teleportValidatedTo,Qt::QueuedConnection);
+        connect(clientMapManagement,	&ClientMapManagement::error,			this,                   &Client::errorOutput,                   Qt::QueuedConnection);
+        connect(clientMapManagement,	&ClientMapManagement::message,			this,                   &Client::normalOutput,                  Qt::QueuedConnection);
+        connect(&GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,clientMapManagement,&ClientMapManagement::purgeBuffer,Qt::QueuedConnection);
     }
 
-    remote_ip=socket->peerAddress().toString();
-    port=socket->peerPort();
-    connect(socket,	SIGNAL(error(QAbstractSocket::SocketError)),	this, SLOT(connectionError(QAbstractSocket::SocketError)));
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QString("Connected client: %1, %2").arg(remote_ip).arg(port));
-    #endif
-    connect(socket,	SIGNAL(disconnected()),				this, SLOT(disconnectClient()));
+    connect(socket,	static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error),         this, &Client::connectionError);
+    connect(socket,	&ConnectedSocket::disconnected,	this, &Client::disconnectClient);
 
     ask_is_ready_to_stop=false;
 
@@ -63,136 +70,138 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     //previously without ,Qt::QueuedConnection, added
     //connect input/ouput
-    connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint16,quint8)),	clientNetworkWrite,SLOT(newInputQuery(quint8,quint16,quint8)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(newInputQuery(quint8,quint8)),		clientNetworkWrite,SLOT(newInputQuery(quint8,quint8)),Qt::QueuedConnection);
-    connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint16,quint8)),	clientNetworkRead,SLOT(newOutputQuery(quint8,quint16,quint8)),Qt::QueuedConnection);
-    connect(clientNetworkWrite,	SIGNAL(newOutputQuery(quint8,quint8)),		clientNetworkRead,SLOT(newOutputQuery(quint8,quint8)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::newFullInputQuery,      clientNetworkWrite,&ClientNetworkWrite::newFullInputQuery,  Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::newInputQuery,          clientNetworkWrite,&ClientNetworkWrite::newInputQuery,      Qt::QueuedConnection);
+    connect(clientNetworkWrite,	&ClientNetworkWrite::newFullOutputQuery,	clientNetworkRead,&ClientNetworkRead::newFullOutputQuery,   Qt::QueuedConnection);
+    connect(clientNetworkWrite,	&ClientNetworkWrite::newOutputQuery,		clientNetworkRead,&ClientNetworkRead::newOutputQuery,       Qt::QueuedConnection);
 
     //connect the write, to send packet on the network
-    connect(clientNetworkRead,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
-    connect(clientBroadCast,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(sendPacket(quint8,quint16,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,quint16,QByteArray)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendFullPacket, clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,Qt::QueuedConnection);
+    connect(clientBroadCast,	&ClientBroadCast::sendFullPacket,   clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::sendFullPacket,   clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,Qt::QueuedConnection);
+    connect(localClientHandler,	&MapBasicMove::sendFullPacket,      clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&MapBasicMove::sendFullPacket,     clientNetworkWrite,&ClientNetworkWrite::sendFullPacket,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendPacket,     clientNetworkWrite,&ClientNetworkWrite::sendPacket,Qt::QueuedConnection);
+    connect(clientBroadCast,	&ClientBroadCast::sendPacket,       clientNetworkWrite,&ClientNetworkWrite::sendPacket,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::sendPacket,       clientNetworkWrite,&ClientNetworkWrite::sendPacket,Qt::QueuedConnection);
+    connect(localClientHandler,	&MapBasicMove::sendPacket,          clientNetworkWrite,&ClientNetworkWrite::sendPacket,Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&MapBasicMove::sendPacket,         clientNetworkWrite,&ClientNetworkWrite::sendPacket,Qt::QueuedConnection);
 
-    connect(clientNetworkRead,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
-    connect(clientBroadCast,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,	SIGNAL(sendPacket(quint8,QByteArray)),clientNetworkWrite,SLOT(sendPacket(quint8,QByteArray)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendQuery,      clientNetworkWrite,&ClientNetworkWrite::sendQuery,Qt::QueuedConnection);
 
-    connect(clientNetworkRead,	SIGNAL(sendQuery(quint8,quint16,quint8,QByteArray)),clientNetworkWrite,SLOT(sendQuery(quint8,quint16,quint8,QByteArray)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::postReply,      clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::postReply,        clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::postReply,  clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
+    connect(localClientHandler,&LocalClientHandler::postReply,      clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
 
-    connect(clientNetworkRead,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
-    connect(localClientHandler,SIGNAL(postReply(quint8,QByteArray)),clientNetworkWrite,SLOT(postReply(quint8,QByteArray)),Qt::QueuedConnection);
-
-    connect(localClientHandler,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(dbQuery(QString)),clientHeavyLoad,SLOT(dbQuery(QString)),Qt::QueuedConnection);
-    connect(localClientHandler,SIGNAL(askRandomNumber()),clientHeavyLoad,SLOT(askedRandomNumber()),Qt::QueuedConnection);
+    connect(localClientHandler,  &LocalClientHandler::dbQuery,      clientHeavyLoad,&ClientHeavyLoad::dbQuery,Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::dbQuery,    clientHeavyLoad,&ClientHeavyLoad::dbQuery,Qt::QueuedConnection);
+    connect(localClientHandler,  &LocalClientHandler::askRandomNumber,clientHeavyLoad,&ClientHeavyLoad::askedRandomNumber,Qt::QueuedConnection);
 
     //connect for the seed
-    connect(localClientHandler,SIGNAL(seedValidated()),clientLocalBroadcast,SLOT(seedValidated()),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(useSeed(quint8)),localClientHandler,SLOT(useSeed(quint8)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(addObjectAndSend(quint32,quint32)),localClientHandler,SLOT(addObjectAndSend(quint32,quint32)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(plantSeed(quint8,quint8)),	clientLocalBroadcast,SLOT(plantSeed(quint8,quint8)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(collectPlant(quint8)),		clientLocalBroadcast,SLOT(collectPlant(quint8)),Qt::QueuedConnection);
+    connect(localClientHandler,  &LocalClientHandler::seedValidated,    clientLocalBroadcast,&ClientLocalBroadcast::seedValidated,  Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::useSeed,        localClientHandler,&LocalClientHandler::useSeed,            Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::addObjectAndSend,localClientHandler,&LocalClientHandler::addObjectAndSend,  Qt::QueuedConnection);
+    connect(clientNetworkRead,	 &ClientNetworkRead::plantSeed,         clientLocalBroadcast,&ClientLocalBroadcast::plantSeed,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	 &ClientNetworkRead::collectPlant,		clientLocalBroadcast,&ClientLocalBroadcast::collectPlant,   Qt::QueuedConnection);
 
     //connect for crafting
-    connect(clientNetworkRead,	SIGNAL(useRecipe(quint8,quint32)),	localClientHandler,SLOT(useRecipe(quint8,quint32)),Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::useRecipe,	localClientHandler,&LocalClientHandler::useRecipe,Qt::QueuedConnection);
 
     //connect for trade
-    connect(localClientHandler,	SIGNAL(sendTradeRequest(QByteArray)),       clientNetworkRead,SLOT(sendTradeRequest(QByteArray)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(sendBattleRequest(QByteArray)),       clientNetworkRead,SLOT(sendBattleRequest(QByteArray)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeAccepted()),                    localClientHandler,SLOT(tradeAccepted()),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeCanceled()),                    localClientHandler,SLOT(tradeCanceled()),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(battleAccepted()),                    localClientHandler,SLOT(battleAccepted()),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(battleCanceled()),                    localClientHandler,SLOT(battleCanceled()),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeFinished()),                    localClientHandler,SLOT(tradeFinished()),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeAddTradeCash(quint64)),         localClientHandler,SLOT(tradeAddTradeCash(quint64)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeAddTradeObject(quint32,quint32)),localClientHandler,SLOT(tradeAddTradeObject(quint32,quint32)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(tradeAddTradeMonster(quint32)),      localClientHandler,SLOT(tradeAddTradeMonster(quint32)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(newQuestAction(QuestAction,quint32)),localClientHandler,SLOT(newQuestAction(QuestAction,quint32)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(clanAction(quint8,quint8,QString)),  localClientHandler,SLOT(clanAction(quint8,quint8,QString)),Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::sendTradeRequest,          clientNetworkRead,&ClientNetworkRead::sendTradeRequest,Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::sendBattleRequest,         clientNetworkRead,&ClientNetworkRead::sendBattleRequest,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeAccepted,              localClientHandler,&LocalClientHandler::tradeAccepted,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeCanceled,              localClientHandler,&LocalClientHandler::tradeCanceled,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::battleAccepted,             localClientHandler,&LocalClientHandler::battleAccepted,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::battleCanceled,             localClientHandler,&LocalClientHandler::battleCanceled,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeFinished,              localClientHandler,&LocalClientHandler::tradeFinished,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeAddTradeCash,          localClientHandler,&LocalClientHandler::tradeAddTradeCash,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeAddTradeObject,        localClientHandler,&LocalClientHandler::tradeAddTradeObject,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeAddTradeMonster,       localClientHandler,&LocalClientHandler::tradeAddTradeMonster,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::newQuestAction,             localClientHandler,&LocalClientHandler::newQuestAction,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::clanAction,                 localClientHandler,&LocalClientHandler::clanAction,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::clanInvite,                 localClientHandler,&LocalClientHandler::clanInvite,Qt::QueuedConnection);
 
     //connect the player information
-    connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			clientBroadCast,	SLOT(send_player_informations()),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	localClientHandler,	SLOT(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),	clientLocalBroadcast,	SLOT(put_on_the_map(Map*,/*COORD_TYPE*/quint8,/*COORD_TYPE*/quint8,Orientation)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(send_player_informations()),			this,			SLOT(send_player_informations()),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(newRandomNumber(QByteArray)),		localClientHandler,	SLOT(newRandomNumber(QByteArray)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(haveClanInfo(QString)),              localClientHandler,	SLOT(haveClanInfo(QString)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(askClan(quint32)),                   clientHeavyLoad,	SLOT(askClan(quint32)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(clanChange(quint32)),                clientBroadCast,	SLOT(clanChange(quint32)),Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		clientBroadCast,	&ClientBroadCast::send_player_informations,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               localClientHandler,	&LocalClientHandler::put_on_the_map,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               clientLocalBroadcast,&ClientLocalBroadcast::put_on_the_map,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		this,               &Client::send_player_informations,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::newRandomNumber,              localClientHandler,	&LocalClientHandler::newRandomNumber,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::haveClanInfo,                 localClientHandler,	&LocalClientHandler::haveClanInfo,Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::askClan,                   clientHeavyLoad,	&ClientHeavyLoad::askClan,Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::clanChange,                clientBroadCast,	&ClientBroadCast::clanChange,Qt::QueuedConnection);
 
     //packet parsed (heavy)
-    connect(clientNetworkRead,SIGNAL(askLogin(quint8,QString,QByteArray)),
-        clientHeavyLoad,SLOT(askLogin(quint8,QString,QByteArray)),Qt::QueuedConnection);
-    connect(clientNetworkRead,SIGNAL(datapackList(quint8,QStringList,QList<quint64>)),
-        clientHeavyLoad,SLOT(datapackList(quint8,QStringList,QList<quint64>)),Qt::QueuedConnection);
+    connect(clientNetworkRead,&ClientNetworkRead::askLogin,clientHeavyLoad,&ClientHeavyLoad::askLogin,Qt::QueuedConnection);
+    connect(clientNetworkRead,&ClientNetworkRead::datapackList,clientHeavyLoad,&ClientHeavyLoad::datapackList,Qt::QueuedConnection);
 
     //packet parsed (map management)
-    connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			localClientHandler,	SLOT(moveThePlayer(quint8,Direction)),                                          Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(moveThePlayer(quint8,Direction)),			clientLocalBroadcast,	SLOT(moveThePlayer(quint8,Direction)),                                      Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(teleportValidatedTo(Map*,quint8,quint8,Orientation)),			localClientHandler,	SLOT(teleportValidatedTo(Map*,quint8,quint8,Orientation)),	Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(teleportValidatedTo(Map*,quint8,quint8,Orientation)),			clientLocalBroadcast,	SLOT(teleportValidatedTo(Map*,quint8,quint8,Orientation)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(teleportTo(Map*,quint8,quint8,Orientation)),	clientNetworkRead,	SLOT(teleportTo(Map*,quint8,quint8,Orientation)),                               Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::moveThePlayer,			localClientHandler,	&LocalClientHandler::moveThePlayer,         Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::moveThePlayer,			clientLocalBroadcast,&MapBasicMove::moveThePlayer,              Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::teleportValidatedTo,	localClientHandler,	&LocalClientHandler::teleportValidatedTo,	Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::teleportValidatedTo,	clientLocalBroadcast,&ClientLocalBroadcast::teleportValidatedTo,Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::teleportTo,            clientNetworkRead,	&ClientNetworkRead::teleportTo,             Qt::QueuedConnection);
 
     //packet parsed (broadcast)
-    connect(localClientHandler,	SIGNAL(receiveSystemText(QString)),                 clientBroadCast,	SLOT(receiveSystemText(QString)),                   Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sendChatText(Chat_type,QString)),			clientBroadCast,	SLOT(sendChatText(Chat_type,QString)),				Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sendLocalChatText(QString)),                 clientLocalBroadcast,	SLOT(sendLocalChatText(QString)),				Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sendPM(QString,QString)),                    clientBroadCast,	SLOT(sendPM(QString,QString)),                      Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sendBroadCastCommand(QString,QString)),		clientBroadCast,	SLOT(sendBroadCastCommand(QString,QString)),		Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sendHandlerCommand(QString,QString)),		localClientHandler,	SLOT(sendHandlerCommand(QString,QString)),			Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(destroyObject(quint32,quint32)),             localClientHandler,	SLOT(destroyObject(quint32,quint32)),               Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(useObject(quint8,quint32)),                  localClientHandler,	SLOT(useObject(quint8,quint32)),                    Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::wareHouseStore,                 localClientHandler,	&LocalClientHandler::wareHouseStore,                Qt::QueuedConnection);
-    connect(clientBroadCast,	SIGNAL(kicked()),                                   this,               SLOT(kicked()),                                     Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::receiveSystemText,     clientBroadCast,	&ClientBroadCast::receiveSystemText,        Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendChatText,			clientBroadCast,	&ClientBroadCast::sendChatText,				Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendLocalChatText,      clientLocalBroadcast,&ClientLocalBroadcast::sendLocalChatText,	Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendPM,                 clientBroadCast,	&ClientBroadCast::sendPM,                   Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendBroadCastCommand,	clientBroadCast,	&ClientBroadCast::sendBroadCastCommand,		Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sendHandlerCommand,		localClientHandler,	&LocalClientHandler::sendHandlerCommand,	Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::destroyObject,          localClientHandler,	&LocalClientHandler::destroyObject,         Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::useObject,              localClientHandler,	&LocalClientHandler::useObject,             Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::wareHouseStore,         localClientHandler,	&LocalClientHandler::wareHouseStore,        Qt::QueuedConnection);
+    connect(clientBroadCast,	&ClientBroadCast::kicked,                   this,               &Client::kicked,                            Qt::QueuedConnection);
 
     //shops
-    connect(clientNetworkRead,	SIGNAL(getShopList(quint32,quint32)),                           localClientHandler,	SLOT(getShopList(quint32,quint32)),                         Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(buyObject(quint32,quint32,quint32,quint32,quint32)),		localClientHandler,	SLOT(buyObject(quint32,quint32,quint32,quint32,quint32)),	Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(sellObject(quint32,quint32,quint32,quint32,quint32)),    localClientHandler,	SLOT(sellObject(quint32,quint32,quint32,quint32,quint32)),	Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::getShopList,            localClientHandler,	&LocalClientHandler::getShopList,           Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::buyObject,              localClientHandler,	&LocalClientHandler::buyObject,             Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sellObject,             localClientHandler,	&LocalClientHandler::sellObject,            Qt::QueuedConnection);
 
     //fight
-    connect(clientNetworkRead,	SIGNAL(tryEscape()),                                localClientHandler,	SLOT(tryEscape()),                         Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(useSkill(quint32)),                          localClientHandler,	SLOT(useSkill(quint32)),                   Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(learnSkill(quint32,quint32)),                localClientHandler,	SLOT(learnSkill(quint32,quint32)),         Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(heal()),                                     localClientHandler,	SLOT(heal()),                              Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(requestFight(quint32)),                      localClientHandler,	SLOT(requestFight(quint32)),               Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tryEscape,              localClientHandler,	&LocalClientHandler::tryEscape,             Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::useSkill,               localClientHandler,	&LocalClientHandler::useSkill,              Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::learnSkill,             localClientHandler,	&LocalClientHandler::learnSkill,            Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::heal,                   localClientHandler,	&LocalClientHandler::heal,                  Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::requestFight,           localClientHandler,	&LocalClientHandler::requestFight,          Qt::QueuedConnection);
 
     //connect the message
-    connect(clientBroadCast,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
-    connect(clientNetworkWrite,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(error(QString)),						this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(error(QString)),					this,	SLOT(errorOutput(QString)),Qt::QueuedConnection);
-    connect(clientBroadCast,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-    connect(clientNetworkRead,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-    connect(clientNetworkWrite,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,SIGNAL(message(QString)),					this,	SLOT(normalOutput(QString)),Qt::QueuedConnection);
+    connect(clientBroadCast,	&ClientBroadCast::error,					this,	&Client::errorOutput,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::error,					this,	&Client::errorOutput,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::error,					this,	&Client::errorOutput,Qt::QueuedConnection);
+    connect(clientNetworkWrite,	&ClientNetworkWrite::error,					this,	&Client::errorOutput,Qt::QueuedConnection);
+    connect(localClientHandler,	&MapBasicMove::error,						this,	&Client::errorOutput,Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::error,				this,	&Client::errorOutput,Qt::QueuedConnection);
+    connect(clientBroadCast,	&ClientBroadCast::message,					this,	&Client::normalOutput,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::message,					this,	&Client::normalOutput,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::message,				this,	&Client::normalOutput,Qt::QueuedConnection);
+    connect(clientNetworkWrite,	&ClientNetworkWrite::message,				this,	&Client::normalOutput,Qt::QueuedConnection);
+    connect(localClientHandler,	&MapBasicMove::message,                     this,	&Client::normalOutput,Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::message,			this,	&Client::normalOutput,Qt::QueuedConnection);
 
     //connect to quit
-    connect(clientNetworkRead,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-    connect(clientMapManagement,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-    connect(clientBroadCast,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-    connect(clientHeavyLoad,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-    connect(clientNetworkWrite,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-    connect(localClientHandler,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
-    connect(clientLocalBroadcast,	SIGNAL(isReadyToStop()),this,SLOT(disconnectNextStep()),Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::isReadyToStop,          this,&Client::disconnectNextStep,Qt::QueuedConnection);
+    connect(clientMapManagement,&ClientMapManagement::isReadyToStop,        this,&Client::disconnectNextStep,Qt::QueuedConnection);
+    connect(clientBroadCast,	&ClientBroadCast::isReadyToStop,            this,&Client::disconnectNextStep,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::isReadyToStop,            this,&Client::disconnectNextStep,Qt::QueuedConnection);
+    connect(clientNetworkWrite,	&ClientNetworkWrite::isReadyToStop,         this,&Client::disconnectNextStep,Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::isReadyToStop,         this,&Client::disconnectNextStep,Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::isReadyToStop,      this,&Client::disconnectNextStep,Qt::QueuedConnection);
     //stop
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkRead,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientMapManagement,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientBroadCast,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientHeavyLoad,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientNetworkWrite,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),localClientHandler,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
-    connect(this,SIGNAL(askIfIsReadyToStop()),clientLocalBroadcast,SLOT(askIfIsReadyToStop()),Qt::QueuedConnection);
+    connect(this,&Client::askIfIsReadyToStop,clientNetworkRead,         &ClientNetworkRead::askIfIsReadyToStop,     Qt::QueuedConnection);
+    connect(this,&Client::askIfIsReadyToStop,clientMapManagement,       &ClientMapManagement::askIfIsReadyToStop,   Qt::QueuedConnection);
+    connect(this,&Client::askIfIsReadyToStop,clientBroadCast,           &ClientBroadCast::askIfIsReadyToStop,       Qt::QueuedConnection);
+    connect(this,&Client::askIfIsReadyToStop,clientHeavyLoad,           &ClientHeavyLoad::askIfIsReadyToStop,       Qt::QueuedConnection);
+    connect(this,&Client::askIfIsReadyToStop,clientNetworkWrite,        &ClientNetworkWrite::askIfIsReadyToStop,    Qt::QueuedConnection);
+    connect(this,&Client::askIfIsReadyToStop,localClientHandler,        &MapBasicMove::askIfIsReadyToStop,          Qt::QueuedConnection);
+    connect(this,&Client::askIfIsReadyToStop,clientLocalBroadcast,      &MapBasicMove::askIfIsReadyToStop,          Qt::QueuedConnection);
+
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    normalOutput(QString("connecting object time: %1").arg(time.elapsed()));
+    #endif
 
     stopped_object=0;
 
@@ -314,7 +323,7 @@ void Client::disconnectNextStep()
 }
 
 //* do the message by the general broadcast */
-void Client::errorOutput(QString errorString)
+void Client::errorOutput(const QString &errorString)
 {
     if(player_informations.is_logged)
         clientBroadCast->sendSystemMessage(player_informations.public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
@@ -329,12 +338,27 @@ void Client::kicked()
     disconnectClient();
 }
 
-void Client::normalOutput(QString message)
+void Client::normalOutput(const QString &message)
 {
-    if(!player_informations.is_logged)
-        DebugClass::debugConsole(QString("%1:%2 %3").arg(remote_ip).arg(port).arg(message));
-    else
+    if(!player_informations.public_and_private_informations.public_informations.pseudo.isEmpty())
         DebugClass::debugConsole(QString("%1: %2").arg(player_informations.public_and_private_informations.public_informations.pseudo).arg(message));
+    else
+    {
+        QString ip;
+        if(socket==NULL)
+            ip="unknown";
+        else
+        {
+            QHostAddress hostAddress=socket->peerAddress();
+            if(hostAddress==QHostAddress::LocalHost || hostAddress==QHostAddress::LocalHostIPv6)
+                ip=QString("localhost:%1").arg(socket->peerPort());
+            else if(hostAddress==QHostAddress::Null || hostAddress==QHostAddress::Any || hostAddress==QHostAddress::AnyIPv4 || hostAddress==QHostAddress::AnyIPv6 || hostAddress==QHostAddress::Broadcast)
+                ip="internal";
+            else
+                ip=QString("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
+        }
+        DebugClass::debugConsole(QString("%1: %2").arg(ip).arg(message));
+    }
 }
 
 void Client::send_player_informations()

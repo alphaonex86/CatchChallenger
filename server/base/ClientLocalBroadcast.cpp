@@ -52,7 +52,7 @@ void ClientLocalBroadcast::receiveChatText(const QString &text,const Player_inte
     QDataStream out2(&outputData2, QIODevice::WriteOnly);
     out2.setVersion(QDataStream::Qt_4_4);
     out2 << (quint8)sender_informations->public_and_private_informations.public_informations.type;
-    emit sendPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
+    emit sendFullPacket(0xC2,0x0005,outputData+sender_informations->rawPseudo+outputData2);
 }
 
 bool ClientLocalBroadcast::singleMove(const Direction &direction)

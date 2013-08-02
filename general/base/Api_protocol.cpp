@@ -20,10 +20,10 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     output=new ProtocolParsingOutput(socket,PacketModeTransmission_Client);
     this->tolerantMode=tolerantMode;
 
-    connect(this,SIGNAL(newInputQuery(quint8,quint8)),output,SLOT(newInputQuery(quint8,quint8)));
-    connect(this,SIGNAL(newInputQuery(quint8,quint16,quint8)),output,SLOT(newInputQuery(quint8,quint16,quint8)));
-    connect(output,SIGNAL(newOutputQuery(quint8,quint8)),this,SLOT(newOutputQuery(quint8,quint8)));
-    connect(output,SIGNAL(newOutputQuery(quint8,quint16,quint8)),this,SLOT(newOutputQuery(quint8,quint16,quint8)));
+    connect(this,&Api_protocol::newInputQuery,output,&ProtocolParsingOutput::newInputQuery);
+    connect(this,&Api_protocol::newFullInputQuery,output,&ProtocolParsingOutput::newFullInputQuery);
+    connect(output,&ProtocolParsingOutput::newOutputQuery,this,&Api_protocol::newOutputQuery);
+    connect(output,&ProtocolParsingOutput::newFullOutputQuery,this,&Api_protocol::newFullOutputQuery);
 
     resetAll();
 }
@@ -789,7 +789,7 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
     }
 }
 
-void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
     if(!is_logged)
     {
@@ -958,6 +958,26 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const quint16 &subCod
                     QString name;
                     in >> name;
                     emit clanInformations(name);
+                }
+                break;
+                //clan invite
+                case 0x000B:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint32 clanId;
+                    in >> clanId;
+                    if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong string for reason with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    QString name;
+                    in >> name;
+                    emit clanInvite(clanId,name);
                 }
                 break;
                 default:
@@ -1801,7 +1821,7 @@ void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint8 &queryNumb
     parseError(tr("Procotol wrong or corrupted"),QString("have not query of this type, mainCodeType: %1, queryNumber: %2").arg(mainCodeType).arg(queryNumber));
 }
 
-void Api_protocol::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_protocol::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     if(!is_logged)
     {
@@ -2031,7 +2051,7 @@ void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint8 &query
     parseError(tr("Procotol wrong or corrupted"),QString("have not reply of this type, mainCodeType: %1, queryNumber: %2").arg(mainCodeType).arg(queryNumber));
 }
 
-void Api_protocol::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
@@ -2901,7 +2921,7 @@ bool Api_protocol::sendProtocol()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << QString(PROTOCOL_HEADER);
-    output->packOutcommingQuery(0x02,0x0001,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x02,0x0001,queryNumber(),outputData);
     return true;
 }
 
@@ -2925,7 +2945,7 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
     QCryptographicHash hash(QCryptographicHash::Sha512);
     hash.addData(pass.toUtf8());
     outputData+=hash.result();
-    output->packOutcommingQuery(0x02,0x0002,query_number,outputData);
+    output->packFullOutcommingQuery(0x02,0x0002,query_number,outputData);
     return true;
 }
 
@@ -2962,7 +2982,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)chatType;
     out << text;
-    output->packOutcommingData(0x42,0x0003,outputData);
+    output->packFullOutcommingData(0x42,0x0003,outputData);
     if(!text.startsWith('/'))
         emit new_chat_text(chatType,text,player_informations.public_informations.pseudo,player_informations.public_informations.type);
 }
@@ -2978,7 +2998,7 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
     out << (quint8)Chat_type_pm;
     out << text;
     out << pseudo;
-    output->packOutcommingData(0x42,0x003,outputData);
+    output->packFullOutcommingData(0x42,0x003,outputData);
 }
 
 void Api_protocol::teleportDone()
@@ -2997,7 +3017,7 @@ void Api_protocol::useSeed(const quint8 &plant_id)
     havePlantAction=true;
     QByteArray outputData;
     outputData[0]=plant_id;
-    output->packOutcommingQuery(0x10,0x0006,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x10,0x0006,queryNumber(),outputData);
 }
 
 //inventory
@@ -3008,7 +3028,7 @@ void Api_protocol::destroyObject(const quint32 &object, const quint32 &quantity)
     out.setVersion(QDataStream::Qt_4_4);
     out << object;
     out << quantity;
-    output->packOutcommingData(0x50,0x0002,outputData);
+    output->packFullOutcommingData(0x50,0x0002,outputData);
 }
 
 void Api_protocol::useObject(const quint32 &object)
@@ -3017,7 +3037,7 @@ void Api_protocol::useObject(const quint32 &object)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << object;
-    output->packOutcommingQuery(0x10,0x0009,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x10,0x0009,queryNumber(),outputData);
     lastObjectUsed << object;
 }
 
@@ -3052,7 +3072,7 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,
         index++;
     }
 
-    output->packOutcommingData(0x50,0x0006,outputData);
+    output->packFullOutcommingData(0x50,0x0006,outputData);
 }
 
 void Api_protocol::getShopList(const quint32 &shopId)
@@ -3067,7 +3087,7 @@ void Api_protocol::getShopList(const quint32 &shopId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)shopId;
-    output->packOutcommingQuery(0x10,0x000A,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x10,0x000A,queryNumber(),outputData);
 }
 
 void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
@@ -3085,7 +3105,7 @@ void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const
     out << (quint32)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
-    output->packOutcommingQuery(0x10,0x000B,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x10,0x000B,queryNumber(),outputData);
 }
 
 void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
@@ -3103,17 +3123,17 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
     out << (quint32)objectId;
     out << (quint32)quantity;
     out << (quint32)price;
-    output->packOutcommingQuery(0x10,0x000C,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x10,0x000C,queryNumber(),outputData);
 }
 
 void Api_protocol::tryEscape()
 {
-    output->packOutcommingData(0x60,0x0002,QByteArray());
+    output->packFullOutcommingData(0x60,0x0002,QByteArray());
 }
 
 void Api_protocol::heal()
 {
-    output->packOutcommingData(0x60,0x0006,QByteArray());
+    output->packFullOutcommingData(0x60,0x0006,QByteArray());
 }
 
 void Api_protocol::requestFight(const quint32 &fightId)
@@ -3122,7 +3142,7 @@ void Api_protocol::requestFight(const quint32 &fightId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)fightId;
-    output->packOutcommingData(0x60,0x0007,outputData);
+    output->packFullOutcommingData(0x60,0x0007,outputData);
 }
 
 void Api_protocol::useSkill(const quint32 &skill)
@@ -3141,7 +3161,7 @@ void Api_protocol::learnSkill(const quint32 &monsterId,const quint32 &skill)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)monsterId;
     out << (quint32)skill;
-    output->packOutcommingData(0x60,0x0004,outputData);
+    output->packFullOutcommingData(0x60,0x0004,outputData);
 }
 
 void Api_protocol::startQuest(const quint32 &questId)
@@ -3150,7 +3170,7 @@ void Api_protocol::startQuest(const quint32 &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    output->packOutcommingData(0x6a,0x0001,outputData);
+    output->packFullOutcommingData(0x6a,0x0001,outputData);
 }
 
 void Api_protocol::finishQuest(const quint32 &questId)
@@ -3159,7 +3179,7 @@ void Api_protocol::finishQuest(const quint32 &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    output->packOutcommingData(0x6a,0x0002,outputData);
+    output->packFullOutcommingData(0x6a,0x0002,outputData);
 }
 
 void Api_protocol::cancelQuest(const quint32 &questId)
@@ -3168,7 +3188,7 @@ void Api_protocol::cancelQuest(const quint32 &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    output->packOutcommingData(0x6a,0x0003,outputData);
+    output->packFullOutcommingData(0x6a,0x0003,outputData);
 }
 
 void Api_protocol::nextQuestStep(const quint32 &questId)
@@ -3177,7 +3197,7 @@ void Api_protocol::nextQuestStep(const quint32 &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)questId;
-    output->packOutcommingData(0x6a,0x0004,outputData);
+    output->packFullOutcommingData(0x6a,0x0004,outputData);
 }
 
 void Api_protocol::createClan(const QString &name)
@@ -3187,7 +3207,7 @@ void Api_protocol::createClan(const QString &name)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << name;
-    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
 }
 
 void Api_protocol::leaveClan()
@@ -3196,7 +3216,7 @@ void Api_protocol::leaveClan()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
-    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
 }
 
 void Api_protocol::dissolveClan()
@@ -3205,7 +3225,7 @@ void Api_protocol::dissolveClan()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x03;
-    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
 }
 
 void Api_protocol::inviteClan(const QString &pseudo)
@@ -3215,7 +3235,7 @@ void Api_protocol::inviteClan(const QString &pseudo)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x04;
     out << pseudo;
-    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
 }
 
 void Api_protocol::ejectClan(const QString &pseudo)
@@ -3225,7 +3245,19 @@ void Api_protocol::ejectClan(const QString &pseudo)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x05;
     out << pseudo;
-    output->packOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x02,0x000D,queryNumber(),outputData);
+}
+
+void Api_protocol::inviteAccept(const bool &accept)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    if(accept)
+        out << (quint8)0x01;
+    else
+        out << (quint8)0x02;
+    output->packFullOutcommingData(0x42,0x0004,outputData);
 }
 
 void Api_protocol::collectMaturePlant()
@@ -3236,7 +3268,7 @@ void Api_protocol::collectMaturePlant()
         return;
     }
     havePlantAction=true;
-    output->packOutcommingQuery(0x10,0x0007,queryNumber(),QByteArray());
+    output->packFullOutcommingQuery(0x10,0x0007,queryNumber(),QByteArray());
 }
 
 //crafting
@@ -3246,7 +3278,7 @@ void Api_protocol::useRecipe(const quint32 &recipeId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)recipeId;
-    output->packOutcommingQuery(0x10,0x0008,queryNumber(),outputData);
+    output->packFullOutcommingQuery(0x10,0x0008,queryNumber(),outputData);
 }
 
 void Api_protocol::addRecipe(const quint32 &recipeId)
@@ -3324,7 +3356,7 @@ void Api_protocol::tradeCanceled()
         return;
     }
     isInTrade=false;
-    output->packOutcommingData(0x50,0x0005,QByteArray());
+    output->packFullOutcommingData(0x50,0x0005,QByteArray());
 }
 
 void Api_protocol::tradeFinish()
@@ -3334,7 +3366,7 @@ void Api_protocol::tradeFinish()
         emit newError(tr("Internal problem"),QString("in not in trade"));
         return;
     }
-    output->packOutcommingData(0x50,0x0004,QByteArray());
+    output->packFullOutcommingData(0x50,0x0004,QByteArray());
 }
 
 void Api_protocol::addTradeCash(const quint64 &cash)
@@ -3354,7 +3386,7 @@ void Api_protocol::addTradeCash(const quint64 &cash)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << cash;
-    output->packOutcommingData(0x50,0x0003,outputData);
+    output->packFullOutcommingData(0x50,0x0003,outputData);
 }
 
 void Api_protocol::addObject(const quint32 &item,const quint32 &quantity)
@@ -3375,7 +3407,7 @@ void Api_protocol::addObject(const quint32 &item,const quint32 &quantity)
     out << (quint8)0x02;
     out << item;
     out << quantity;
-    output->packOutcommingData(0x50,0x0003,outputData);
+    output->packFullOutcommingData(0x50,0x0003,outputData);
 }
 
 void Api_protocol::addMonster(const quint32 &monsterId)
@@ -3390,7 +3422,7 @@ void Api_protocol::addMonster(const quint32 &monsterId)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x03;
     out << monsterId;
-    output->packOutcommingData(0x50,0x0003,outputData);
+    output->packFullOutcommingData(0x50,0x0003,outputData);
 }
 
 //to reset all

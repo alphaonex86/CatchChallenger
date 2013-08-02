@@ -101,8 +101,8 @@ void LocalClientHandler::tradeFinished()
         otherPlayerTrade->addExistingMonster(tradeMonster);
         addExistingMonster(otherPlayerTrade->tradeMonster);
 
-        emit otherPlayerTrade->sendPacket(0xD0,0x0008);
-        emit sendPacket(0xD0,0x0008);
+        emit otherPlayerTrade->sendFullPacket(0xD0,0x0008);
+        emit sendFullPacket(0xD0,0x0008);
         otherPlayerTrade->resetTheTrade();
         resetTheTrade();
     }
@@ -111,7 +111,7 @@ void LocalClientHandler::tradeFinished()
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message("Trade freezed");
         #endif
-        emit otherPlayerTrade->sendPacket(0xD0,0x0007);
+        emit otherPlayerTrade->sendFullPacket(0xD0,0x0007);
     }
 }
 
@@ -184,7 +184,7 @@ void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x01;
     out << cash;
-    emit otherPlayerTrade->sendPacket(0xD0,0x0004,outputData);
+    emit otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
 }
 
 void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &quantity)
@@ -225,7 +225,7 @@ void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &
     out << (quint8)0x02;
     out << item;
     out << quantity;
-    emit otherPlayerTrade->sendPacket(0xD0,0x0004,outputData);
+    emit otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
 }
 
 void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
@@ -298,7 +298,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
                 out << (quint8)monster.skills.at(sub_index).level;
                 sub_index++;
             }
-            emit otherPlayerTrade->sendPacket(0xD0,0x0004,outputData);
+            emit otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
             return;
         }
         index++;
@@ -337,7 +337,7 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
     if(send)
     {
         if(tradeIsValidated)
-            emit sendPacket(0xD0,0x0006);
+            emit sendFullPacket(0xD0,0x0006);
         else
             emit receiveSystemText(QString("Trade declined"));
     }
@@ -368,6 +368,6 @@ void LocalClientHandler::internalTradeAccepted(const bool &send)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << otherPlayerTrade->player_informations->public_and_private_informations.public_informations.skinId;
-        emit sendPacket(0xD0,0x0005,otherPlayerTrade->player_informations->rawPseudo+outputData);
+        emit sendFullPacket(0xD0,0x0005,otherPlayerTrade->player_informations->rawPseudo+outputData);
     }
 }

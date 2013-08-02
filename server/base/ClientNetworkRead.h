@@ -5,7 +5,7 @@
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QStringList>
-#include <QRegExp>
+#include <QRegularExpression>
 
 #include "BroadCastWithoutSender.h"
 #include "ServerStructures.h"
@@ -42,19 +42,19 @@ private:
     void parseInputBeforeLogin(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray & inputData);
     //have message without reply
     void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
-    void parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
+    void parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data);
     //have query with reply
     void parseQuery(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    void parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    void parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
     //send reply
     void parseReplyData(const quint8 &mainCodeType,const quint8 &queryNumber,const QByteArray &data);
-    void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
     void parseError(const QString &errorString);
     void receiveSystemText(const QString &text);
 signals:
     //normal signals
-    void sendPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray()) const;
+    void sendFullPacket(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainCodeType,const QByteArray &data=QByteArray()) const;
     void sendQuery(const quint8 &mainIdent,const quint16 &subIdent,const quint8 &queryNumber,const QByteArray &data) const;
     //send reply
@@ -106,6 +106,7 @@ signals:
     void battleAccepted() const;
     //clan
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text) const;
+    void clanInvite(const bool &accept) const;
 private:
     // for status
     bool have_send_protocol;
@@ -124,8 +125,8 @@ private:
     quint8 queryNumber;
     QList<quint8> queryNumberList;
 
-    static QRegExp commandRegExp;
-    static QRegExp commandRegExpWithArgs;
+    static QRegularExpression commandRegExp;
+    static QRegularExpression commandRegExpWithArgs;
 };
 }
 

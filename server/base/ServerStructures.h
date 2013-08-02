@@ -14,6 +14,7 @@
 #include <QSqlQuery>
 #include <QDataStream>
 #include <QMultiHash>
+#include <QRegularExpression>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
@@ -156,7 +157,7 @@ struct ServerPrivateVariables
     //datapack
     QString datapack_basePath;
     QString datapack_mapPath;
-    QRegExp datapack_rightFileName;
+    QRegularExpression datapack_rightFileName;
     QHash<QString,quint64> filesList;
     QHash<quint32,Shop> shops;
 

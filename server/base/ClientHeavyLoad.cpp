@@ -577,7 +577,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             emit error(QString("file name contains illegale char: %1").arg(fileName));
             return;
         }
-        if(fileName.contains(QRegExp("^[a-zA-Z]:/")) || fileName.startsWith("/"))
+        if(fileName.contains(QRegularExpression("^[a-zA-Z]:/")) || fileName.startsWith("/"))
         {
             emit error(QString("start with wrong string: %1").arg(fileName));
             return;
@@ -634,7 +634,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << mtime;
-        emit sendPacket(0xC2,0x0003,fileNameRaw+outputData+content);
+        emit sendFullPacket(0xC2,0x0003,fileNameRaw+outputData+content);
         file.close();
         return true;
     }

@@ -311,7 +311,7 @@ void ClientHeavyLoad::askedRandomNumber()
         index++;
     }
     emit newRandomNumber(randomData);
-    emit sendPacket(0xD0,0x0009,randomData);
+    emit sendFullPacket(0xD0,0x0009,randomData);
 }
 
 void ClientHeavyLoad::loadBotAlreadyBeaten()
