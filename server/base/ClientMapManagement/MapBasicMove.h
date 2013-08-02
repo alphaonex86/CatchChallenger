@@ -45,7 +45,7 @@ signals:
     void error(const QString &error) const;
     void message(const QString &message) const;
     void isReadyToStop() const;
-    void sendPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
+    void sendFullPacket(const quint8 &mainIdent,const quint16 &subIdent,const QByteArray &data=QByteArray()) const;
     void sendPacket(const quint8 &mainIdent,const QByteArray &data=QByteArray()) const;
 public slots:
     //map slots, transmited by the current ClientNetworkRead

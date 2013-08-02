@@ -4,8 +4,8 @@
 
 using namespace CatchChallenger;
 
-QRegExp ClientNetworkRead::commandRegExp=QRegExp("^/([a-z]+)( [^ ].*)?$");
-QRegExp ClientNetworkRead::commandRegExpWithArgs=QRegExp("^/([a-z]+)( [^ ].*)$");
+QRegularExpression ClientNetworkRead::commandRegExp=QRegularExpression("^/([a-z]+)( [^ ].*)?$");
+QRegularExpression ClientNetworkRead::commandRegExpWithArgs=QRegularExpression("^/([a-z]+)( [^ ].*)$");
 
 ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_informations,ConnectedSocket * socket) :
     ProtocolParsingInput(socket,PacketModeTransmission_Server)
@@ -17,7 +17,6 @@ ClientNetworkRead::ClientNetworkRead(Player_internal_informations *player_inform
     this->socket=socket;
 
     queryNumberList.reserve(256);
-    qDebug() << queryNumberList.size();
     int index=0;
     while(index<256)
     {
@@ -259,7 +258,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
     }
 }
 
-void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
+void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint16 &subCodeType,const QByteArray &data)
 {
     if(stopIt)
         return;
@@ -336,7 +335,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                             if(text.contains(commandRegExp))
                             {
                                 text.replace(commandRegExp,"\\2");
-                                text.replace(QRegExp("^ (.*)$"),"\\1");
+                                text.replace(QRegularExpression("^ (.*)$"),"\\1");
                             }
                             else
                                 text="";
@@ -428,6 +427,30 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const quint16 &s
                     }
                 }
                 return;
+            }
+            break;
+            //Clan invite accept
+            case 0x0004:
+            {
+                if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                {
+                    parseError("wrong remaining size for chat");
+                    return;
+                }
+                quint8 returnCode;
+                in >> returnCode;
+                switch(returnCode)
+                {
+                    case 0x01:
+                        emit clanInvite(true);
+                    break;
+                    case 0x02:
+                        emit clanInvite(false);
+                    break;
+                    default:
+                        parseError(QString("wrong return code for clan invite ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    return;
+                }
             }
             break;
             default:
@@ -767,7 +790,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &quer
     return;
 }
 
-void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     if(stopIt)
         return;
@@ -1033,7 +1056,7 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &
     return;
 }
 
-void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     queryNumberList << queryNumber;
     if(stopIt)
@@ -1176,5 +1199,5 @@ void ClientNetworkRead::receiveSystemText(const QString &text)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)Chat_type_system;
     out << text;
-    emit sendPacket(0xC2,0x0005,outputData);
+    emit sendFullPacket(0xC2,0x0005,outputData);
 }
