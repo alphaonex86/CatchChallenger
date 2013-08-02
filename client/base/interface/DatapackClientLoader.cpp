@@ -11,6 +11,7 @@
 #include <QByteArray>
 #include <QDir>
 #include <QFileInfoList>
+#include <QRegularExpression>
 
 DatapackClientLoader DatapackClientLoader::datapackLoader;
 
@@ -222,7 +223,7 @@ void DatapackClientLoader::parseMaps()
     //load the map
     int size=returnList.size();
     int index=0;
-    QRegExp mapFilter("\\.tmx$");
+    QRegularExpression mapFilter("\\.tmx$");
     while(index<size)
     {
         QString fileName=returnList.at(index);

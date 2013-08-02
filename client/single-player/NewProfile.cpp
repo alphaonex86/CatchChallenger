@@ -283,8 +283,8 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     if(ui->comboBox->count()>0)
         ui->description->setText(profileList.at(ui->comboBox->currentIndex()).description);
 
-    connect(this,SIGNAL(parseDatapack(QString)),&DatapackClientLoader::datapackLoader,SLOT(parseDatapack(QString)),Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,SIGNAL(datapackParsed()),this,SLOT(datapackParsed()),Qt::QueuedConnection);
+    connect(this,&NewProfile::parseDatapack,&DatapackClientLoader::datapackLoader,&DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,&DatapackClientLoader::datapackParsed,this,&NewProfile::datapackParsed,Qt::QueuedConnection);
     isParsingDatapack=DatapackClientLoader::datapackLoader.isParsingDatapack();
     if(!isParsingDatapack)
         emit parseDatapack(datapackPath);

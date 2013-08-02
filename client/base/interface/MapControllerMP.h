@@ -25,7 +25,7 @@ public slots:
     void move_player(const quint16 &id,const QList<QPair<quint8,CatchChallenger::Direction> > &movement);
     void remove_player(const quint16 &id);
     void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
-    void reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
+    void full_reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
     void dropAllPlayerOnTheMap();
     void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
 

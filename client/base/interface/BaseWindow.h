@@ -1,6 +1,5 @@
 #include <QWidget>
 #include <QMessageBox>
-#include <QRegExp>
 #include <QAbstractSocket>
 #include <QSettings>
 #include <QTimer>
@@ -130,6 +129,7 @@ private slots:
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
     void add_to_inventory(const QHash<quint32,quint32> &items, const bool &showGain=true);
+    void add_to_inventory_slot(const QHash<quint32,quint32> &items);
     void remove_to_inventory(const QHash<quint32,quint32> &items);
     void load_inventory();
     void load_plant_inventory();
@@ -176,7 +176,7 @@ private slots:
     void battleAcceptedByOther(const QString &pseudo, const quint8 &skinId, const QList<quint8> &stat, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
     void battleCanceledByOther();
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
-    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
+    void sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items);
