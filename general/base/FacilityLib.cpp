@@ -191,3 +191,27 @@ QSet<ActionAllow> FacilityLib::QStringToAllow(const QString &string)
     }
     return allowList;
 }
+
+QDateTime FacilityLib::nextCaptureTime(const City &city)
+{
+    QDateTime nextCityCapture=QDateTime::currentDateTime();
+    nextCityCapture.setTime(QTime(city.capture.hour,city.capture.minute));
+    if(city.capture.frenquency==City::Capture::Frequency_week)
+    {
+        while(nextCityCapture.date().dayOfWeek()!=(int)city.capture.day || nextCityCapture<=QDateTime::currentDateTime())
+            nextCityCapture=nextCityCapture.addDays(1);
+    }
+    else
+    {
+        while(nextCityCapture<=QDateTime::currentDateTime())
+        {
+            QDate tempDate=nextCityCapture.date();
+            if(tempDate.month()>=12)
+                tempDate.setDate(tempDate.year()+1,1,1);
+            else
+                tempDate.setDate(tempDate.year(),tempDate.month()+1,1);
+            nextCityCapture.setDate(tempDate);
+        }
+    }
+    return nextCityCapture;
+}

@@ -2160,6 +2160,32 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             }
                             in >> player_informations.public_informations.simplifiedId;
                         }
+
+                        quint32 captureRemainingTime;
+                        quint8 captureFrequencyType;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the city capture remainingTime, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> captureRemainingTime;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the city capture type, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> captureFrequencyType;
+                        switch(captureFrequencyType)
+                        {
+                            case 0x01:
+                            case 0x02:
+                            break;
+                            default:
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong captureFrequencyType, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        emit cityCapture(captureRemainingTime,captureFrequencyType);
+
                         if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
@@ -2170,13 +2196,13 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         player_informations.allow=FacilityLib::QStringToAllow(tempAllow);
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                         {
-                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash, line: %1").arg(__LINE__));
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player clan, line: %1").arg(__LINE__));
                             return;
                         }
                         in >> player_informations.clan;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
-                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash, line: %1").arg(__LINE__));
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player clan leader, line: %1").arg(__LINE__));
                             return;
                         }
                         quint8 tempClanLeader;
@@ -2193,7 +2219,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         in >> player_informations.cash;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint64))
                         {
-                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash, line: %1").arg(__LINE__));
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash ware house, line: %1").arg(__LINE__));
                             return;
                         }
                         in >> player_informations.warehouse_cash;
@@ -3258,6 +3284,18 @@ void Api_protocol::inviteAccept(const bool &accept)
     else
         out << (quint8)0x02;
     output->packFullOutcommingData(0x42,0x0004,outputData);
+}
+
+void Api_protocol::waitingForCityCaputre(const bool &cancel)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    if(!cancel)
+        out << (quint8)0x00;
+    else
+        out << (quint8)0x01;
+    output->packFullOutcommingData(0x6a,0x0005,outputData);
 }
 
 void Api_protocol::collectMaturePlant()

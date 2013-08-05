@@ -66,6 +66,7 @@ void BaseWindow::resetAll()
     actionClan.clear();
     clanName.clear();
     haveClanInformations=false;
+    nextCityCaptureTimer.stop();
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }
@@ -646,4 +647,19 @@ void BaseWindow::updateTheWareHouseContent()
     ui->warehouseWithdrawItem->setEnabled(ui->warehousePlayerStoredInventory->count()>0);
     ui->warehouseDepositMonster->setEnabled(ui->warehousePlayerMonster->count()>1);
     ui->warehouseWithdrawMonster->setEnabled(ui->warehousePlayerStoredMonster->count()>0);
+}
+
+void BaseWindow::cityCapture(const quint32 &remainingTime,const quint8 &type)
+{
+    if(remainingTime==0)
+    {
+        nextCityCaptureTimer.stop();
+        return;//disabled
+    }
+    nextCityCaptureTimer.start(remainingTime*1000);
+    nextCapture=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+remainingTime*1000);
+    city.capture.frenquency=(City::Capture::Frequency)type;
+    city.capture.day=(City::Capture::Day)QDateTime::currentDateTime().addSecs(remainingTime).date().dayOfWeek();
+    city.capture.hour=QDateTime::currentDateTime().addSecs(remainingTime).time().hour();
+    city.capture.minute=QDateTime::currentDateTime().addSecs(remainingTime).time().minute();
 }

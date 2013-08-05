@@ -389,12 +389,58 @@ void MainWindow::load_settings()
 
     ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+"/catchchallenger.db.sqlite");
 
+    settings->beginGroup("city");
+    if(!settings->contains("capture_frequency"))
+        settings->setValue("capture_frequency","day");
+    if(settings->value("capture_frequency").toString()=="week")
+        ui->comboBox_city_capture_frequency->setCurrentIndex(0);
+    else if(settings->value("capture_frequency").toString()=="month")
+        ui->comboBox_city_capture_frequency->setCurrentIndex(1);
+    else
+        ui->comboBox_city_capture_frequency->setCurrentIndex(0);
+    update_capture();
+    if(settings->value("capture_day").toString()=="monday")
+        ui->comboBox_city_capture_day->setCurrentIndex(0);
+    else if(settings->value("capture_day").toString()=="tuesday")
+        ui->comboBox_city_capture_day->setCurrentIndex(1);
+    else if(settings->value("capture_day").toString()=="wednesday")
+        ui->comboBox_city_capture_day->setCurrentIndex(2);
+    else if(settings->value("capture_day").toString()=="thursday")
+        ui->comboBox_city_capture_day->setCurrentIndex(3);
+    else if(settings->value("capture_day").toString()=="friday")
+        ui->comboBox_city_capture_day->setCurrentIndex(4);
+    else if(settings->value("capture_day").toString()=="saturday")
+        ui->comboBox_city_capture_day->setCurrentIndex(5);
+    else if(settings->value("capture_day").toString()=="sunday")
+        ui->comboBox_city_capture_day->setCurrentIndex(6);
+    else
+        ui->comboBox_city_capture_day->setCurrentIndex(0);
+    QStringList capture_time_string_list=settings->value("capture_time").toString().split(":");
+    if(capture_time_string_list.size()!=2)
+        settings->setValue("capture_time",QString("0:0"));
+    else
+    {
+        bool ok;
+        int hours=capture_time_string_list.first().toUInt(&ok);
+        if(!ok)
+            settings->setValue("capture_time",QString("0:0"));
+        else
+        {
+            int minutes=capture_time_string_list.last().toUInt(&ok);
+            if(!ok)
+                settings->setValue("capture_time",QString("0:0"));
+            else
+                ui->timeEdit_city_capture_time->setTime(QTime(hours,minutes));
+        }
+    }
+    settings->endGroup();
+
     send_settings();
 }
 
 void MainWindow::send_settings()
 {
-    ServerSettings formatedServerSettings;
+    ServerSettings formatedServerSettings=server.getSettings();
 
     //the listen
     formatedServerSettings.server_port					= ui->server_port->value();
@@ -466,6 +512,45 @@ void MainWindow::send_settings()
 
     formatedServerSettings.mapVisibility.simple.max				= ui->MapVisibilityAlgorithmSimpleMax->value();
     formatedServerSettings.mapVisibility.simple.reshow			= ui->MapVisibilityAlgorithmSimpleReshow->value();
+
+    switch(ui->comboBox_city_capture_frequency->currentIndex())
+    {
+        default:
+        case 0:
+            formatedServerSettings.city.capture.frenquency=ServerSettings::City::Capture::Frequency_week;
+        break;
+        case 1:
+            formatedServerSettings.city.capture.frenquency=ServerSettings::City::Capture::Frequency_month;
+        break;
+    }
+    switch(ui->comboBox_city_capture_day->currentIndex())
+    {
+        default:
+        case 0:
+            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Monday;
+        break;
+        case 1:
+            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Tuesday;
+        break;
+        case 2:
+            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Wednesday;
+        break;
+        case 3:
+            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Thursday;
+        break;
+        case 4:
+            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Friday;
+        break;
+        case 5:
+            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Saturday;
+        break;
+        case 6:
+            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Sunday;
+        break;
+    }
+    QTime time=ui->timeEdit_city_capture_time->time();
+    formatedServerSettings.city.capture.hours=time.hour();
+    formatedServerSettings.city.capture.minutes=time.minute();
 
     server.setSettings(formatedServerSettings);
 }
@@ -726,4 +811,86 @@ void CatchChallenger::MainWindow::on_db_fight_sync_currentIndexChanged(int index
         break;
     }
     settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_comboBox_city_capture_frequency_currentIndexChanged(int index)
+{
+    settings->beginGroup("city");
+    switch(index)
+    {
+        default:
+        case 0:
+            settings->setValue("capture_frequency","week");
+        break;
+        case 1:
+            settings->setValue("capture_frequency","month");
+        break;
+    }
+    settings->endGroup();
+    update_capture();
+}
+
+void CatchChallenger::MainWindow::on_comboBox_city_capture_day_currentIndexChanged(int index)
+{
+    settings->beginGroup("city");
+    switch(index)
+    {
+        default:
+        case 0:
+            settings->setValue("capture_day","monday");
+        break;
+        case 1:
+            settings->setValue("capture_day","tuesday");
+        break;
+        case 2:
+            settings->setValue("capture_day","wednesday");
+        break;
+        case 3:
+            settings->setValue("capture_day","thursday");
+        break;
+        case 4:
+            settings->setValue("capture_day","friday");
+        break;
+        case 5:
+            settings->setValue("capture_day","saturday");
+        break;
+        case 6:
+            settings->setValue("capture_day","sunday");
+        break;
+    }
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_timeEdit_city_capture_time_editingFinished()
+{
+    settings->beginGroup("city");
+    QTime time=ui->timeEdit_city_capture_time->time();
+    settings->setValue("capture_time",QString("%1:%2").arg(time.hour()).arg(time.minute()));
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::update_capture()
+{
+    switch(ui->comboBox_city_capture_frequency->currentIndex())
+    {
+        case 0:
+            ui->label_city_capture_day->setVisible(true);
+            ui->label_city_capture_time->setVisible(true);
+            ui->comboBox_city_capture_day->setVisible(true);
+            ui->timeEdit_city_capture_time->setVisible(true);
+        break;
+        case 1:
+            ui->label_city_capture_day->setVisible(false);
+            ui->label_city_capture_time->setVisible(true);
+            ui->comboBox_city_capture_day->setVisible(false);
+            ui->timeEdit_city_capture_time->setVisible(true);
+        break;
+        default:
+        case 2:
+            ui->label_city_capture_day->setVisible(false);
+            ui->label_city_capture_time->setVisible(false);
+            ui->comboBox_city_capture_day->setVisible(false);
+            ui->timeEdit_city_capture_time->setVisible(false);
+        break;
+    }
 }

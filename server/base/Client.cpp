@@ -94,9 +94,9 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientLocalBroadcast,&ClientLocalBroadcast::postReply,  clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
     connect(localClientHandler,&LocalClientHandler::postReply,      clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
 
-    connect(localClientHandler,  &LocalClientHandler::dbQuery,      clientHeavyLoad,&ClientHeavyLoad::dbQuery,Qt::QueuedConnection);
-    connect(clientLocalBroadcast,&ClientLocalBroadcast::dbQuery,    clientHeavyLoad,&ClientHeavyLoad::dbQuery,Qt::QueuedConnection);
-    connect(localClientHandler,  &LocalClientHandler::askRandomNumber,clientHeavyLoad,&ClientHeavyLoad::askedRandomNumber,Qt::QueuedConnection);
+    connect(localClientHandler,  &LocalClientHandler::dbQuery,      clientHeavyLoad,&ClientHeavyLoad::dbQuery,              Qt::QueuedConnection);
+    connect(clientLocalBroadcast,&ClientLocalBroadcast::dbQuery,    clientHeavyLoad,&ClientHeavyLoad::dbQuery,              Qt::QueuedConnection);
+    connect(localClientHandler,  &LocalClientHandler::askRandomNumber,clientHeavyLoad,&ClientHeavyLoad::askedRandomNumber,  Qt::QueuedConnection);
 
     //connect for the seed
     connect(localClientHandler,  &LocalClientHandler::seedValidated,    clientLocalBroadcast,&ClientLocalBroadcast::seedValidated,  Qt::QueuedConnection);
@@ -109,33 +109,34 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	&ClientNetworkRead::useRecipe,	localClientHandler,&LocalClientHandler::useRecipe,Qt::QueuedConnection);
 
     //connect for trade
-    connect(localClientHandler,	&LocalClientHandler::sendTradeRequest,          clientNetworkRead,&ClientNetworkRead::sendTradeRequest,Qt::QueuedConnection);
-    connect(localClientHandler,	&LocalClientHandler::sendBattleRequest,         clientNetworkRead,&ClientNetworkRead::sendBattleRequest,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::tradeAccepted,              localClientHandler,&LocalClientHandler::tradeAccepted,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::tradeCanceled,              localClientHandler,&LocalClientHandler::tradeCanceled,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::battleAccepted,             localClientHandler,&LocalClientHandler::battleAccepted,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::battleCanceled,             localClientHandler,&LocalClientHandler::battleCanceled,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::tradeFinished,              localClientHandler,&LocalClientHandler::tradeFinished,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::tradeAddTradeCash,          localClientHandler,&LocalClientHandler::tradeAddTradeCash,Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::sendTradeRequest,          clientNetworkRead,&ClientNetworkRead::sendTradeRequest,     Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::sendBattleRequest,         clientNetworkRead,&ClientNetworkRead::sendBattleRequest,    Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeAccepted,              localClientHandler,&LocalClientHandler::tradeAccepted,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeCanceled,              localClientHandler,&LocalClientHandler::tradeCanceled,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::battleAccepted,             localClientHandler,&LocalClientHandler::battleAccepted,     Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::battleCanceled,             localClientHandler,&LocalClientHandler::battleCanceled,     Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeFinished,              localClientHandler,&LocalClientHandler::tradeFinished,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::tradeAddTradeCash,          localClientHandler,&LocalClientHandler::tradeAddTradeCash,  Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::tradeAddTradeObject,        localClientHandler,&LocalClientHandler::tradeAddTradeObject,Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::tradeAddTradeMonster,       localClientHandler,&LocalClientHandler::tradeAddTradeMonster,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::newQuestAction,             localClientHandler,&LocalClientHandler::newQuestAction,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::clanAction,                 localClientHandler,&LocalClientHandler::clanAction,Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::clanInvite,                 localClientHandler,&LocalClientHandler::clanInvite,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::newQuestAction,             localClientHandler,&LocalClientHandler::newQuestAction,     Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::clanAction,                 localClientHandler,&LocalClientHandler::clanAction,         Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::clanInvite,                 localClientHandler,&LocalClientHandler::clanInvite,         Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::waitingForCityCaputre,      localClientHandler,&LocalClientHandler::waitingForCityCaputre,Qt::QueuedConnection);
 
     //connect the player information
-    connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		clientBroadCast,	&ClientBroadCast::send_player_informations,Qt::QueuedConnection);
-    connect(clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               localClientHandler,	&LocalClientHandler::put_on_the_map,Qt::QueuedConnection);
-    connect(clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               clientLocalBroadcast,&ClientLocalBroadcast::put_on_the_map,Qt::QueuedConnection);
-    connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		this,               &Client::send_player_informations,Qt::QueuedConnection);
-    connect(clientHeavyLoad,	&ClientHeavyLoad::newRandomNumber,              localClientHandler,	&LocalClientHandler::newRandomNumber,Qt::QueuedConnection);
-    connect(clientHeavyLoad,	&ClientHeavyLoad::haveClanInfo,                 localClientHandler,	&LocalClientHandler::haveClanInfo,Qt::QueuedConnection);
-    connect(localClientHandler,	&LocalClientHandler::askClan,                   clientHeavyLoad,	&ClientHeavyLoad::askClan,Qt::QueuedConnection);
-    connect(localClientHandler,	&LocalClientHandler::clanChange,                clientBroadCast,	&ClientBroadCast::clanChange,Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		clientBroadCast,	&ClientBroadCast::send_player_informations, Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               localClientHandler,	&LocalClientHandler::put_on_the_map,        Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::put_on_the_map,               clientLocalBroadcast,&ClientLocalBroadcast::put_on_the_map,     Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		this,               &Client::send_player_informations,          Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::newRandomNumber,              localClientHandler,	&LocalClientHandler::newRandomNumber,       Qt::QueuedConnection);
+    connect(clientHeavyLoad,	&ClientHeavyLoad::haveClanInfo,                 localClientHandler,	&LocalClientHandler::haveClanInfo,          Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::askClan,                   clientHeavyLoad,	&ClientHeavyLoad::askClan,                  Qt::QueuedConnection);
+    connect(localClientHandler,	&LocalClientHandler::clanChange,                clientBroadCast,	&ClientBroadCast::clanChange,               Qt::QueuedConnection);
 
     //packet parsed (heavy)
-    connect(clientNetworkRead,&ClientNetworkRead::askLogin,clientHeavyLoad,&ClientHeavyLoad::askLogin,Qt::QueuedConnection);
-    connect(clientNetworkRead,&ClientNetworkRead::datapackList,clientHeavyLoad,&ClientHeavyLoad::datapackList,Qt::QueuedConnection);
+    connect(clientNetworkRead,&ClientNetworkRead::askLogin,clientHeavyLoad,&ClientHeavyLoad::askLogin,          Qt::QueuedConnection);
+    connect(clientNetworkRead,&ClientNetworkRead::datapackList,clientHeavyLoad,&ClientHeavyLoad::datapackList,  Qt::QueuedConnection);
 
     //packet parsed (map management)
     connect(clientNetworkRead,	&ClientNetworkRead::moveThePlayer,			localClientHandler,	&LocalClientHandler::moveThePlayer,         Qt::QueuedConnection);

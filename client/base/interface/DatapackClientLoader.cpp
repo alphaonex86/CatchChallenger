@@ -67,6 +67,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseBotFightsExtra();
     parsePlantsExtra();
     parseAudioAmbiance();
+    parseZoneExtra();
     inProgress=false;
     emit datapackParsed();
 }
@@ -268,6 +269,7 @@ void DatapackClientLoader::resetAll()
      monsterBuffsExtra.clear();
      monsterSkillsExtra.clear();
      audioAmbiance.clear();
+     zonesExtra.clear();
 }
 
 void DatapackClientLoader::parseQuestsExtra()
@@ -335,7 +337,10 @@ void DatapackClientLoader::parseQuestsExtra()
         while(!name.isNull())
         {
             if(name.isElement() && name.hasAttribute("lang") && name.attribute("lang")=="en")
+            {
                 quest.name=name.text();
+                break;
+            }
             else
                 qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(name.tagName()).arg(name.lineNumber());
             name = name.nextSiblingElement("name");
@@ -573,4 +578,78 @@ void DatapackClientLoader::parseQuestsLink()
         }
     }
     qDebug() << QString("%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());
+}
+
+void DatapackClientLoader::parseZoneExtra()
+{
+    //open and quick check the file
+    QFileInfoList entryList=QDir(datapackPath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    int index=0;
+    while(index<entryList.size())
+    {
+        if(!entryList.at(index).isFile())
+        {
+            index++;
+            continue;
+        }
+        if(!entryList.at(index).fileName().contains(QRegularExpression("^[a-zA-Z0-9\\- _]+\\.xml$")))
+        {
+            qDebug() << QString("%1 the zone file name not match").arg(entryList.at(index).fileName());
+            index++;
+            continue;
+        }
+        QString zoneCodeName=entryList.at(index).fileName();
+        zoneCodeName.remove(QRegularExpression("\\.xml$"));
+        QFile itemsFile(entryList.at(index).absoluteFilePath());
+        QByteArray xmlContent;
+        if(!itemsFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+            index++;
+            continue;
+        }
+        xmlContent=itemsFile.readAll();
+        itemsFile.close();
+        QDomDocument domDocument;
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            index++;
+            continue;
+        }
+        QDomElement root = domDocument.documentElement();
+        if(root.tagName()!="zone")
+        {
+            qDebug() << QString("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(itemsFile.fileName());
+            index++;
+            continue;
+        }
+
+        //load the content
+        bool haveName=false;
+        DatapackClientLoader::ZoneExtra zone;
+
+        //load name
+        QDomElement name = root.firstChildElement("name");
+        while(!name.isNull())
+        {
+            if(name.isElement() && name.hasAttribute("lang") && name.attribute("lang")=="en")
+            {
+                haveName=true;
+                zone.name=name.text();
+                break;
+            }
+            else
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(name.tagName()).arg(name.lineNumber());
+            name = name.nextSiblingElement("name");
+        }
+        if(haveName)
+            zonesExtra[zoneCodeName]=zone;
+
+        index++;
+    }
+
+    qDebug() << QString("%1 zone(s) extra loaded").arg(zonesExtra.size());
 }

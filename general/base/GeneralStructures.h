@@ -550,6 +550,32 @@ struct Quest
     QList<Step> steps;
 };
 
+struct City
+{
+    struct Capture
+    {
+        enum Frequency
+        {
+            Frequency_week=0x01,
+            Frequency_month=0x02
+        };
+        Frequency frenquency;
+        enum Day
+        {
+            Monday=0x01,
+            Tuesday=0x02,
+            Wednesday=0x03,
+            Thursday=0x04,
+            Friday=0x05,
+            Saturday=0x06,
+            Sunday=0x07
+        };
+        Day day;
+        quint8 hour,minute;
+    };
+    Capture capture;
+};
+
 //permanent bot on client, temp to parse on the server
 struct Bot
 {

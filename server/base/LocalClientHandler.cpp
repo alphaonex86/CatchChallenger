@@ -11,10 +11,14 @@ using namespace CatchChallenger;
 Direction LocalClientHandler::temp_direction;
 QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
 QHash<quint32,LocalClientHandler::Clan> LocalClientHandler::playerByClan;
+QHash<QString,QMultiHash<quint32,LocalClientHandler *> > LocalClientHandler::captureCity;
+QHash<QString,QMultiHash<quint32,LocalClientHandler *> > LocalClientHandler::captureCityValidated;
+QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
 
 LocalClientHandler::LocalClientHandler()
 {
     otherPlayerTrade=NULL;
+    clan=NULL;
     tradeIsValidated=false;
 
     connect(&localClientHandlerFight,&LocalClientHandlerFight::message,             this,&LocalClientHandler::message);
@@ -66,6 +70,15 @@ void LocalClientHandler::extraStop()
             playerByClan[player_informations->public_and_private_informations.clan].players.removeOne(this);
             if(playerByClan[player_informations->public_and_private_informations.clan].players.isEmpty())
                 playerByClan.remove(player_informations->public_and_private_informations.clan);
+        }
+    }
+    if(clan!=NULL)
+    {
+        clan->playercount--;
+        if(clan->playercount==0)
+        {
+            delete clan;
+            clanList.remove(player_informations->public_and_private_informations.clan);
         }
     }
 
@@ -273,6 +286,14 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
         else
             sendClanInfo();
         playerByClan[player_informations->public_and_private_informations.clan].players << this;
+        if(!clanList.contains(player_informations->public_and_private_informations.clan))
+        {
+            clan=new Clan;
+            clan->clanId=player_informations->public_and_private_informations.clan;
+            clan->playercount=0;
+            clanList[player_informations->public_and_private_informations.clan]=clan;
+        }
+        clan->playercount++;
     }
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
         QObject::connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
@@ -299,11 +320,25 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
     return MapBasicMove::moveThePlayer(previousMovedUnit,direction);
 }
 
+bool LocalClientHandler::captureCityInProgress() const
+{
+    if(clan==NULL)
+        return false;
+    if(clan->captureCityInProgress.isEmpty())
+        return false;
+    return captureCity.count(clan->captureCityInProgress)>0;
+}
+
 bool LocalClientHandler::singleMove(const Direction &direction)
 {
     if(localClientHandlerFight.isInFight())//check if is in fight
     {
         emit error(QString("error: try move when is in fight"));
+        return false;
+    }
+    if(captureCityInProgress())
+    {
+        emit error("Try move when is in capture city");
         return false;
     }
     COORD_TYPE x=this->x,y=this->y;
@@ -1118,6 +1153,11 @@ void LocalClientHandler::sendHandlerCommand(const QString &command,const QString
             emit receiveSystemText("You are in fight");
             return;
         }
+        if(captureCityInProgress())
+        {
+            emit error("Try battle when is in capture city");
+            return;
+        }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message("Battle requested");
         #endif
@@ -1899,7 +1939,7 @@ void LocalClientHandler::heal()
             }
         break;
         default:
-        emit error("Wrong direction to use a shop");
+        emit error("Wrong direction to use a heal");
         return;
     }
     //check if is shop
@@ -1928,7 +1968,7 @@ void LocalClientHandler::heal()
                 }
             break;
             default:
-            emit error("Wrong direction to use a shop");
+            emit error("Wrong direction to use a heal");
             return;
         }
         if(!static_cast<MapServer*>(this->map)->heal.contains(QPair<quint8,quint8>(x,y)))
@@ -1952,6 +1992,11 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
     if(localClientHandlerFight.isInFight())
     {
         emit error(QString("error: map: %1 (%2,%3), is in fight").arg(static_cast<MapServer *>(map)->map_file).arg(x).arg(y));
+        return;
+    }
+    if(captureCityInProgress())
+    {
+        emit error("Try requestFight when is in capture city");
         return;
     }
     if(player_informations->isFake)
@@ -2378,6 +2423,11 @@ void LocalClientHandler::clanInvite(const bool &accept)
     inviteToClanList.removeFirst();
 }
 
+quint32 LocalClientHandler::clanId() const
+{
+    return player_informations->public_and_private_informations.clan;
+}
+
 void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
 {
     player_informations->public_and_private_informations.clan=clanId;
@@ -2437,4 +2487,153 @@ quint32 LocalClientHandler::getClanId() const
 bool LocalClientHandler::haveAClan() const
 {
     return player_informations->public_and_private_informations.clan>0;
+}
+
+void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
+{
+    if(clan==NULL)
+    {
+        emit error("Try capture city when is not in clan");
+        return;
+    }
+    if(!cancel)
+    {
+        if(captureCityInProgress())
+        {
+            emit error("Try capture city when is already into that's");
+            return;
+        }
+        if(!localClientHandlerFight.isInFight())
+        {
+            emit error("Try capture city when is in fight");
+            return;
+        }
+        #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+        emit message(QString("ask zonecapture at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
+        #endif
+        Map *map=this->map;
+        quint8 x=this->x;
+        quint8 y=this->y;
+        //resolv the object
+        Direction direction=getLastDirection();
+        switch(direction)
+        {
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
+                direction=lookToMove(direction);
+                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+                {
+                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                    {
+                        emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        return;
+                    }
+                }
+                else
+                {
+                    emit error("No valid map in this direction");
+                    return;
+                }
+            break;
+            default:
+            emit error("Wrong direction to use a zonecapture");
+            return;
+        }
+        //check if is shop
+        if(!static_cast<MapServer*>(this->map)->zonecapture.contains(QPair<quint8,quint8>(x,y)))
+        {
+            Direction direction=getLastDirection();
+            switch(direction)
+            {
+                case Direction_look_at_top:
+                case Direction_look_at_right:
+                case Direction_look_at_bottom:
+                case Direction_look_at_left:
+                    direction=lookToMove(direction);
+                    if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+                    {
+                        if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
+                        {
+                            emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        emit error("No valid map in this direction");
+                        return;
+                    }
+                break;
+                default:
+                emit error("Wrong direction to use a zonecapture");
+                return;
+            }
+            if(!static_cast<MapServer*>(this->map)->zonecapture.contains(QPair<quint8,quint8>(x,y)))
+            {
+                emit error("no zonecapture point in this direction");
+                return;
+            }
+        }
+        //send the shop items (no taxes from now)
+        const QString &zoneName=static_cast<MapServer*>(this->map)->zonecapture[QPair<quint8,quint8>(x,y)];
+        if(!player_informations->public_and_private_informations.clan_leader)
+        {
+            if(clan->captureCityInProgress.isEmpty())
+            {
+                QByteArray outputData;
+                QDataStream out(&outputData, QIODevice::WriteOnly);
+                out.setVersion(QDataStream::Qt_4_4);
+                out << (quint8)0x01;
+                emit sendFullPacket(0xF0,0x0001,outputData);
+                return;
+            }
+        }
+        else
+        {
+            if(clan->captureCityInProgress.isEmpty())
+                clan->captureCityInProgress=zoneName;
+        }
+        if(clan->captureCityInProgress!=zoneName)
+        {
+            QByteArray outputData;
+            QDataStream out(&outputData, QIODevice::WriteOnly);
+            out.setVersion(QDataStream::Qt_4_4);
+            out << (quint8)0x02;
+            out << clan->captureCityInProgress;
+            emit sendFullPacket(0xF0,0x0002,outputData);
+            return;
+        }
+        if(captureCity.count(zoneName)>0)
+        {
+            emit error("already in capture city");
+            return;
+        }
+        captureCity[zoneName].insert(clan->clanId,this);
+    }
+    else
+    {
+        if(clan->captureCityInProgress.isEmpty())
+        {
+            emit error("your clan is not in capture city");
+            return;
+        }
+        int number_removed=captureCity[clan->captureCityInProgress].remove(clan->clanId,this);
+        if(number_removed==0)
+        {
+            emit error("not in capture city");
+            return;
+        }
+        if(captureCity[clan->captureCityInProgress].count(clan->clanId)==0)
+        {
+            captureCity[clan->captureCityInProgress].remove(clan->clanId);
+            if(captureCity[clan->captureCityInProgress].count()==0)
+                captureCity.remove(clan->captureCityInProgress);
+        }
+    }
+}
+
+void LocalClientHandler::starttheCityCapture()
+{
 }

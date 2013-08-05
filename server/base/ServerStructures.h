@@ -15,6 +15,7 @@
 #include <QDataStream>
 #include <QMultiHash>
 #include <QRegularExpression>
+#include <QDateTime>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
@@ -146,6 +147,9 @@ struct ServerSettings
         MapVisibility_simple simple;
     };
     MapVisibility mapVisibility;
+
+    //city
+    City city;
 };
 
 struct ServerPrivateVariables
@@ -164,15 +168,15 @@ struct ServerPrivateVariables
     //fight
     QMultiHash<quint32,MonsterDrops> monsterDrops;
     quint32 maxMonsterId;
+    QHash<QString,QList<quint32> > fightIdList;
 
     //general data
     QList<EventThreader *> eventThreaderList;
     QTimer *timer_player_map;
     bool stopIt;
     quint32 maxClanId;
-
-    //interconnected thread
-    //QMutex clientBroadCastListMutex;
+    QTimer *timer_city_capture;
+    QDateTime time_city_capture;
 
     //datapack
     QHash<QString,quint8> skinList;
