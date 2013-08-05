@@ -225,6 +225,11 @@ private slots:
     void useTrap(const quint32 &itemId);
     void displayTrap();
 
+    //clan/city
+    void cityCapture(const quint32 &remainingTime,const quint8 &type);
+    void cityCaptureUpdateTime();
+    void updatePageZonecapture();
+
     //learn
     bool showLearnSkill(const quint32 &monsterId);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
@@ -307,6 +312,8 @@ private slots:
     void on_clanActionDissolve_clicked();
     void on_clanActionInvite_clicked();
     void on_clanActionEject_clicked();
+    void on_zonecaptureCancel_clicked();
+
 protected slots:
     //datapack
     void datapackParsed();
@@ -409,6 +416,12 @@ private:
     QTimer displayTrapTimer;
     bool trapSuccess;
     qint32 attack_quantity_changed;
+
+    //city
+    QTimer nextCityCaptureTimer;
+    City city;
+    QTimer updater_page_zonecapture;
+    QDateTime nextCapture,nextCaptureOnScreen;
 
     //trade
     TradeOtherStat tradeOtherStat;

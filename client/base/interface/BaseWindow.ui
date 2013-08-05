@@ -50,7 +50,7 @@
         <string notr="true">#page_bioscan{background-image: url(:/images/interface/player/background.png);}</string>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -4852,6 +4852,103 @@ border-image: url(:/images/empty.png);
             </widget>
            </item>
           </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_zonecapture">
+        <property name="styleSheet">
+         <string notr="true">#page_zonecapture{background-image: url(:/images/inventory/background.png);}</string>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_50">
+         <item>
+          <spacer name="horizontalSpacer_46">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>294</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_31">
+           <item>
+            <spacer name="verticalSpacer_30">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="zonecaptureWaitText">
+             <property name="text">
+              <string>You are waiting to capture %1</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="zonecaptureWaitTime">
+             <property name="text">
+              <string>Remaining time: %1</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_31">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="zonecaptureCancel">
+             <property name="text">
+              <string>Cancel</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_29">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_47">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>293</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>

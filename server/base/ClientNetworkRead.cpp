@@ -750,6 +750,22 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     emit newQuestAction(QuestAction_NextStep,questId);
                 }
                 break;
+                //Waiting for city caputre
+                case 0x0005:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                    {
+                        parseError("wrong remaining size for quest next step");
+                        return;
+                    }
+                    quint8 cancel;
+                    in >> cancel;
+                    if(cancel==0x00)
+                        emit waitingForCityCaputre(false);
+                    else
+                        emit waitingForCityCaputre(true);
+                }
+                break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;

@@ -606,7 +606,7 @@ void MainWindow::updateSavegameList()
                         else if(time_played_number>=3600*24*10)
                             time_played=QObject::tr("%n day(s) played","",time_played_number/(3600*24));
                         else if(time_played_number>=3600*24)
-                            time_played=QObject::tr("%n day(s) and %1 played","",time_played_number/3600*24).arg(QObject::tr("%n hour(s)","",(time_played_number%(3600*24))/3600));
+                            time_played=QObject::tr("%n day(s) and %1 played","",time_played_number/(3600*24)).arg(QObject::tr("%n hour(s)","",(time_played_number%(3600*24))/3600));
                         else if(time_played_number>=3600)
                             time_played=QObject::tr("%n hour(s) and %1 played","",time_played_number/3600).arg(QObject::tr("%n minute(s)","",(time_played_number%3600)/60));
                         else
