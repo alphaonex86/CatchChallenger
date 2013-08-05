@@ -233,6 +233,7 @@ void BaseServer::preload_the_city_capture()
     GlobalServerData::serverPrivateVariables.timer_city_capture=new QTimer();
     GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);
     connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&BaseServer::load_next_city_capture,Qt::QueuedConnection);
+    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,&LocalClientHandler::startTheCityCapture);
     load_next_city_capture();
 }
 

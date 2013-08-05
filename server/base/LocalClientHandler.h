@@ -60,17 +60,16 @@ private:
     {
         QString captureCityInProgress;
         quint32 clanId;
-        quint16 playercount;
         QString name;
         QList<LocalClientHandler *> players;
+        bool haveTheInformations;
     };
     //info linked
     static Direction	temp_direction;
     static QHash<quint32,Clan *> clanList;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
-    static QHash<quint32,Clan> playerByClan;
-    static QHash<QString,QMultiHash<quint32,LocalClientHandler *> > captureCity;
-    static QHash<QString,QMultiHash<quint32,LocalClientHandler *> > captureCityValidated;
+    static QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > captureCity;
+    static QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > captureCityValidated;
 
     //trade
     LocalClientHandler * otherPlayerTrade;
@@ -93,6 +92,7 @@ private:
     bool otherPlayerIsInRange(LocalClientHandler * otherPlayer);
 public slots:
     void put_on_the_map(Map *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    void createMemoryClan();
     bool moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction);
     Direction lookToMove(const Direction &direction);
     //seed
@@ -158,7 +158,9 @@ public slots:
     void clanInvite(const bool &accept);
     void waitingForCityCaputre(const bool &cancel);
     quint32 clanId() const;
-    void starttheCityCapture();
+    void previousCityCaptureNotFinished();
+    static void startTheCityCapture();
+    void removeFromClan();
 private slots:
     virtual void extraStop();
     void savePosition();
