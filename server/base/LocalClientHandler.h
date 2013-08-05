@@ -56,15 +56,21 @@ public:
 private:
     bool checkCollision();
 
-    //info linked
     struct Clan
     {
+        QString captureCityInProgress;
+        quint32 clanId;
+        quint16 playercount;
         QString name;
         QList<LocalClientHandler *> players;
     };
+    //info linked
     static Direction	temp_direction;
+    static QHash<quint32,Clan *> clanList;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
     static QHash<quint32,Clan> playerByClan;
+    static QHash<QString,QMultiHash<quint32,LocalClientHandler *> > captureCity;
+    static QHash<QString,QMultiHash<quint32,LocalClientHandler *> > captureCityValidated;
 
     //trade
     LocalClientHandler * otherPlayerTrade;
@@ -74,9 +80,11 @@ private:
     QHash<quint32,quint32> tradeObjects;
     QList<PlayerMonster> tradeMonster;
     QList<quint32> inviteToClanList;
+    Clan *clan;
 
     //map move
     bool singleMove(const Direction &direction);
+    bool captureCityInProgress() const;
     //trade
     void internalTradeCanceled(const bool &send);
     void internalTradeAccepted(const bool &send);
@@ -148,6 +156,9 @@ public slots:
     void haveClanInfo(const QString &clanName);
     void sendClanInfo();
     void clanInvite(const bool &accept);
+    void waitingForCityCaputre(const bool &cancel);
+    quint32 clanId() const;
+    void starttheCityCapture();
 private slots:
     virtual void extraStop();
     void savePosition();

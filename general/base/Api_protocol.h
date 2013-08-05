@@ -181,6 +181,7 @@ signals:
     void clanDissolved() const;
     void clanInformations(const QString &name) const;
     void clanInvite(const quint32 &clanId,const QString &name) const;
+    void cityCapture(const quint32 &remainingTime,const quint8 &type) const;
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -240,6 +241,7 @@ public slots:
     void inviteClan(const QString &pseudo);
     void ejectClan(const QString &pseudo);
     void inviteAccept(const bool &accept);
+    void waitingForCityCaputre(const bool &cancel);
 };
 }
 
