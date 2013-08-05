@@ -10,9 +10,8 @@ using namespace CatchChallenger;
 
 Direction LocalClientHandler::temp_direction;
 QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
-QHash<quint32,LocalClientHandler::Clan> LocalClientHandler::playerByClan;
-QHash<QString,QMultiHash<quint32,LocalClientHandler *> > LocalClientHandler::captureCity;
-QHash<QString,QMultiHash<quint32,LocalClientHandler *> > LocalClientHandler::captureCityValidated;
+QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > LocalClientHandler::captureCity;
+QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > LocalClientHandler::captureCityValidated;
 QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
 
 LocalClientHandler::LocalClientHandler()
@@ -58,6 +57,31 @@ bool LocalClientHandler::checkCollision()
         return true;
 }
 
+void LocalClientHandler::removeFromClan()
+{
+    if(clan!=NULL)
+    {
+        if(!clan->captureCityInProgress.isEmpty())
+        {
+            if(captureCity[clan->captureCityInProgress][clan->clanId].removeOne(this))
+            {
+                if(captureCity[clan->captureCityInProgress][clan->clanId].isEmpty())
+                {
+                    captureCity[clan->captureCityInProgress].remove(clan->clanId);
+                    if(captureCity[clan->captureCityInProgress].count()==0)
+                        captureCity.remove(clan->captureCityInProgress);
+                }
+            }
+        }
+        if(clan->players.removeOne(this))
+        {
+            delete clan;
+            clanList.remove(player_informations->public_and_private_informations.clan);
+        }
+    }
+    player_informations->public_and_private_informations.clan=0;
+}
+
 void LocalClientHandler::extraStop()
 {
     tradeCanceled();
@@ -65,22 +89,8 @@ void LocalClientHandler::extraStop()
     if(player_informations->is_logged)
     {
         playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
-        if(!playerByClan.contains(player_informations->public_and_private_informations.clan))
-        {
-            playerByClan[player_informations->public_and_private_informations.clan].players.removeOne(this);
-            if(playerByClan[player_informations->public_and_private_informations.clan].players.isEmpty())
-                playerByClan.remove(player_informations->public_and_private_informations.clan);
-        }
     }
-    if(clan!=NULL)
-    {
-        clan->playercount--;
-        if(clan->playercount==0)
-        {
-            delete clan;
-            clanList.remove(player_informations->public_and_private_informations.clan);
-        }
-    }
+    removeFromClan();
 
     if(!player_informations->is_logged || player_informations->isFake)
         return;
@@ -281,19 +291,11 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
     if(player_informations->public_and_private_informations.clan>0)
     {
-        if(!playerByClan.contains(player_informations->public_and_private_informations.clan))
+        createMemoryClan();
+        if(!clan->name.isEmpty())
             emit askClan(player_informations->public_and_private_informations.clan);
         else
             sendClanInfo();
-        playerByClan[player_informations->public_and_private_informations.clan].players << this;
-        if(!clanList.contains(player_informations->public_and_private_informations.clan))
-        {
-            clan=new Clan;
-            clan->clanId=player_informations->public_and_private_informations.clan;
-            clan->playercount=0;
-            clanList[player_informations->public_and_private_informations.clan]=clan;
-        }
-        clan->playercount++;
     }
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
         QObject::connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
@@ -303,6 +305,20 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
         localClientHandlerFight.botFightCollision(map,x,y);
     else if(localClientHandlerFight.haveMonsters())
         localClientHandlerFight.checkLoose();
+}
+
+void LocalClientHandler::createMemoryClan()
+{
+    if(!clanList.contains(player_informations->public_and_private_informations.clan))
+    {
+        clan=new Clan;
+        clan->haveTheInformations=false;
+        clan->clanId=player_informations->public_and_private_informations.clan;
+        clanList[player_informations->public_and_private_informations.clan]=clan;
+    }
+    else
+        clan=clanList[player_informations->public_and_private_informations.clan];
+    clan->players << this;
 }
 
 bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction)
@@ -2108,7 +2124,9 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 return;
             }
             GlobalServerData::serverPrivateVariables.maxClanId++;
-            playerByClan[player_informations->public_and_private_informations.clan].name=text;
+            player_informations->public_and_private_informations.clan=GlobalServerData::serverPrivateVariables.maxClanId;
+            createMemoryClan();
+            clan->name=text;
             player_informations->public_and_private_informations.clan_leader=true;
             //send the network reply
             QByteArray outputData;
@@ -2149,10 +2167,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 emit error("You can't leave if you are the leader");
                 return;
             }
-            playerByClan[player_informations->public_and_private_informations.clan].players.removeOne(this);
-            if(playerByClan[player_informations->public_and_private_informations.clan].players.isEmpty())
-                playerByClan.remove(player_informations->public_and_private_informations.clan);
-            player_informations->public_and_private_informations.clan=0;
+            removeFromClan();
             emit clanChange(player_informations->public_and_private_informations.clan);
             //send the network reply
             QByteArray outputData;
@@ -2189,7 +2204,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 emit error("You are not a leader to dissolve the clan");
                 return;
             }
-            const QList<LocalClientHandler *> &players=playerByClan[player_informations->public_and_private_informations.clan].players;
+            const QList<LocalClientHandler *> &players=clanList[player_informations->public_and_private_informations.clan]->players;
             //send the network reply
             QByteArray outputData;
             QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -2231,14 +2246,18 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 break;
             }
             //update the object
-            playerByClan.remove(player_informations->public_and_private_informations.clan);
+            clanList.remove(player_informations->public_and_private_informations.clan);
+            if(!clan->captureCityInProgress.isEmpty())
+                captureCity.remove(clan->captureCityInProgress);
+            delete clan;
             index=0;
             while(index<players.size())
             {
                 if(players.at(index)==this)
                 {
                     player_informations->public_and_private_informations.clan=0;
-                    emit clanChange(player_informations->public_and_private_informations.clan);
+                    clan=NULL;
+                    emit clanChange(player_informations->public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
                 }
                 else
                     players.at(index)->dissolvedClan();
@@ -2362,8 +2381,13 @@ quint32 LocalClientHandler::getPlayerId() const
 
 void LocalClientHandler::haveClanInfo(const QString &clanName)
 {
-    if(playerByClan.contains(player_informations->public_and_private_informations.clan))
-        playerByClan[player_informations->public_and_private_informations.clan].name=clanName;
+    if(clan==NULL)
+        return;
+    if(!clan[player_informations->public_and_private_informations.clan].haveTheInformations)
+    {
+        clan[player_informations->public_and_private_informations.clan].haveTheInformations=true;
+        clan[player_informations->public_and_private_informations.clan].name=clanName;
+    }
     sendClanInfo();
 }
 
@@ -2371,18 +2395,19 @@ void LocalClientHandler::sendClanInfo()
 {
     if(player_informations->public_and_private_informations.clan==0)
         return;
-    if(!playerByClan.contains(player_informations->public_and_private_informations.clan))
+    if(clan==NULL)
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
-    out << playerByClan[player_informations->public_and_private_informations.clan].name;
+    out << clan->name;
     emit sendFullPacket(0xC2,0x000A,outputData);
 }
 
 void LocalClientHandler::dissolvedClan()
 {
     player_informations->public_and_private_informations.clan=0;
+    clan=NULL;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -2394,12 +2419,14 @@ bool LocalClientHandler::inviteToClan(const quint32 &clanId)
 {
     if(!inviteToClanList.isEmpty())
         return false;
+    if(clan==NULL)
+        return false;
     inviteToClanList << clanId;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)clanId;
-    out << playerByClan[clanId].name;
+    out << clan->name;
     emit sendFullPacket(0xC2,0x000B,outputData);
     return false;
 }
@@ -2419,6 +2446,8 @@ void LocalClientHandler::clanInvite(const bool &accept)
         return;
     }
     player_informations->public_and_private_informations.clan_leader=false;
+    player_informations->public_and_private_informations.clan=inviteToClanList.first();
+    createMemoryClan();
     insertIntoAClan(inviteToClanList.first());
     inviteToClanList.removeFirst();
 }
@@ -2430,8 +2459,6 @@ quint32 LocalClientHandler::clanId() const
 
 void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
 {
-    player_informations->public_and_private_informations.clan=clanId;
-    playerByClan[clanId].players << this;
     //add into db
     QString clan_leader;
     if(player_informations->public_and_private_informations.clan_leader)
@@ -2610,7 +2637,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             emit error("already in capture city");
             return;
         }
-        captureCity[zoneName].insert(clan->clanId,this);
+        captureCity[zoneName][clan->clanId] << this;
     }
     else
     {
@@ -2619,21 +2646,52 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             emit error("your clan is not in capture city");
             return;
         }
-        int number_removed=captureCity[clan->captureCityInProgress].remove(clan->clanId,this);
-        if(number_removed==0)
+        if(!captureCity[clan->captureCityInProgress][clan->clanId].removeOne(this))
         {
             emit error("not in capture city");
             return;
         }
-        if(captureCity[clan->captureCityInProgress].count(clan->clanId)==0)
+        if(captureCity[clan->captureCityInProgress][clan->clanId].isEmpty())
         {
             captureCity[clan->captureCityInProgress].remove(clan->clanId);
-            if(captureCity[clan->captureCityInProgress].count()==0)
+            if(captureCity[clan->captureCityInProgress].isEmpty())
                 captureCity.remove(clan->captureCityInProgress);
         }
     }
 }
 
-void LocalClientHandler::starttheCityCapture()
+void LocalClientHandler::startTheCityCapture()
 {
+    QHashIterator<QString,QHash<quint32,QList<LocalClientHandler *> > > i(captureCity);
+    while (i.hasNext()) {
+        i.next();
+        //the city is not free to capture
+        if(captureCityValidated.contains(i.key()))
+        {
+            QHashIterator<quint32,QList<LocalClientHandler *> > j(i.value());
+            while (j.hasNext()) {
+                j.next();
+                clanList[j.key()]->captureCityInProgress.clear();
+                int index=0;
+                while(index<j.value().size())
+                {
+                    j.value().at(index)->previousCityCaptureNotFinished();
+                    index++;
+                }
+            }
+        }
+        //the city is ready to be captured
+        else
+        {
+        }
+    }
+}
+
+void LocalClientHandler::previousCityCaptureNotFinished()
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    emit sendFullPacket(0xF0,0x0003,outputData);
 }
