@@ -6,6 +6,7 @@
 
 #include <QFile>
 #include <QByteArray>
+#include <QDateTime>
 
 using namespace CatchChallenger;
 
@@ -36,6 +37,7 @@ BaseServer::BaseServer()
     GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
     GlobalServerData::serverPrivateVariables.db                   = NULL;
     GlobalServerData::serverPrivateVariables.timer_player_map     = NULL;
+    GlobalServerData::serverPrivateVariables.timer_city_capture   = NULL;
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex=0;
     GlobalServerData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
@@ -74,6 +76,10 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
     GlobalServerData::serverSettings.mapVisibility.simple.max		= 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow		= 20;
+    GlobalServerData::serverSettings.city.capture.frenquency=City::Capture::Frequency_week;
+    GlobalServerData::serverSettings.city.capture.day=City::Capture::Monday;
+    GlobalServerData::serverSettings.city.capture.hour=0;
+    GlobalServerData::serverSettings.city.capture.minute=0;
 
     stat=Down;
 
@@ -133,6 +139,101 @@ void BaseServer::preload_the_data()
     check_monsters_map();
     preload_the_visibility_algorithm();
     load_clan_max_id();
+    preload_the_city_capture();
+    preload_zone();
+}
+
+void BaseServer::preload_zone()
+{
+    //open and quick check the file
+    QFileInfoList entryList=QDir(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    int index=0;
+    while(index<entryList.size())
+    {
+        if(!entryList.at(index).isFile())
+        {
+            index++;
+            continue;
+        }
+        if(!entryList.at(index).fileName().contains(QRegularExpression("^[a-zA-Z0-9\\- _]+\\.xml$")))
+        {
+            qDebug() << QString("%1 the zone file name not match").arg(entryList.at(index).fileName());
+            index++;
+            continue;
+        }
+        QString zoneCodeName=entryList.at(index).fileName();
+        zoneCodeName.remove(QRegularExpression("\\.xml$"));
+        QFile itemsFile(entryList.at(index).absoluteFilePath());
+        QByteArray xmlContent;
+        if(!itemsFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+            index++;
+            continue;
+        }
+        xmlContent=itemsFile.readAll();
+        itemsFile.close();
+        QDomDocument domDocument;
+        QString errorStr;
+        int errorLine,errorColumn;
+        if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            index++;
+            continue;
+        }
+        if(GlobalServerData::serverPrivateVariables.fightIdList.contains(zoneCodeName))
+        {
+            qDebug() << QString("Unable to open the file: %1, zone code name already found");
+            index++;
+            continue;
+        }
+        QDomElement root = domDocument.documentElement();
+        if(root.tagName()!="zone")
+        {
+            qDebug() << QString("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(itemsFile.fileName());
+            index++;
+            continue;
+        }
+
+        //load name
+        QList<quint32> fightIdList;
+        QDomElement capture = root.firstChildElement("capture");
+        if(!capture.isNull())
+        {
+            if(capture.isElement() && capture.hasAttribute("fightId"))
+            {
+                bool ok;
+                const QStringList &fightIdStringList=capture.attribute("fightId").split(";");
+                int sub_index=0;
+                while(sub_index<fightIdStringList.size())
+                {
+                    quint32 fightId=fightIdStringList.at(sub_index).toUInt(&ok);
+                    if(ok)
+                        fightIdList << fightId;
+                    sub_index++;
+                }
+                if(sub_index==fightIdStringList.size() && !fightIdList.isEmpty())
+                    GlobalServerData::serverPrivateVariables.fightIdList[zoneCodeName]=fightIdList;
+                break;
+            }
+            else
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(capture.tagName()).arg(capture.lineNumber());
+        }
+        index++;
+    }
+
+    qDebug() << QString("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.fightIdList.size());
+}
+
+void BaseServer::preload_the_city_capture()
+{
+    if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
+        delete GlobalServerData::serverPrivateVariables.timer_city_capture;
+    GlobalServerData::serverPrivateVariables.timer_city_capture=new QTimer();
+    GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);
+    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&BaseServer::load_next_city_capture,Qt::QueuedConnection);
+    load_next_city_capture();
 }
 
 void BaseServer::preload_the_map()
@@ -543,6 +644,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     int bots_number=0;
     int learnpoint_number=0;
     int healpoint_number=0;
+    int zonecapturepoint_number=0;
     int botfights_number=0;
     int botfightstigger_number=0;
     //resolv the shops, learn, heal
@@ -622,6 +724,24 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
+                        else if(step.attribute("type")=="zonecapture")
+                        {
+                            if(!step.hasAttribute("zone"))
+                                CatchChallenger::DebugClass::debugConsole(QString("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else if(static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                                CatchChallenger::DebugClass::debugConsole(QString("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                CatchChallenger::DebugClass::debugConsole(QString("zonecapture point put at: %1 (%2,%3)")
+                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                #endif
+                                static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture[QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)]=step.attribute("zone");
+                                zonecapturepoint_number++;
+                            }
+                        }
                         else if(step.attribute("type")=="fight")
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
@@ -696,11 +816,19 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     }
 
     DebugClass::debugConsole(QString("%1 learn point(s) on map loaded").arg(learnpoint_number));
+    DebugClass::debugConsole(QString("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
     DebugClass::debugConsole(QString("%1 heal point(s) on map loaded").arg(healpoint_number));
     DebugClass::debugConsole(QString("%1 bot fight(s) on map loaded").arg(botfights_number));
     DebugClass::debugConsole(QString("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
     DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
     DebugClass::debugConsole(QString("%1 bots(s) on map loaded").arg(bots_number));
+}
+
+void BaseServer::load_next_city_capture()
+{
+    GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
+    qint64 time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+    GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
 }
 
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const QString &)
@@ -829,6 +957,8 @@ void BaseServer::unload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
+    unload_zone();
+    unload_the_city_capture();
     unload_the_visibility_algorithm();
     unload_the_plant_on_map();
     unload_the_map();
@@ -840,6 +970,20 @@ void BaseServer::unload_the_data()
     unload_the_players();
 
     CommonDatapack::commonDatapack.unload();
+}
+
+void BaseServer::unload_zone()
+{
+    GlobalServerData::serverPrivateVariables.fightIdList.clear();
+}
+
+void BaseServer::unload_the_city_capture()
+{
+    if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
+    {
+        delete GlobalServerData::serverPrivateVariables.timer_city_capture;
+        GlobalServerData::serverPrivateVariables.timer_city_capture=NULL;
+    }
 }
 
 void BaseServer::unload_the_bots()
@@ -963,8 +1107,45 @@ void BaseServer::loadAndFixSettings()
         case CatchChallenger::MapVisibilityAlgorithm_simple:
         break;
         default:
+            GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm=CatchChallenger::MapVisibilityAlgorithm_simple;
             qDebug() << "Wrong visibility algorithm";
         break;
+    }
+
+    switch(GlobalServerData::serverSettings.city.capture.frenquency)
+    {
+        case City::Capture::Frequency_week:
+        case City::Capture::Frequency_month:
+        break;
+        default:
+            GlobalServerData::serverSettings.city.capture.frenquency=City::Capture::Frequency_week;
+            qDebug() << "Wrong City::Capture::Frequency";
+        break;
+    }
+    switch(GlobalServerData::serverSettings.city.capture.day)
+    {
+        case City::Capture::Monday:
+        case City::Capture::Tuesday:
+        case City::Capture::Wednesday:
+        case City::Capture::Thursday:
+        case City::Capture::Friday:
+        case City::Capture::Saturday:
+        case City::Capture::Sunday:
+        break;
+        default:
+            GlobalServerData::serverSettings.city.capture.day=City::Capture::Monday;
+            qDebug() << "Wrong City::Capture::Day";
+        break;
+    }
+    if(GlobalServerData::serverSettings.city.capture.hour>24)
+    {
+        qDebug() << "GlobalServerData::serverSettings.city.capture.hours out of range";
+        GlobalServerData::serverSettings.city.capture.hour=0;
+    }
+    if(GlobalServerData::serverSettings.city.capture.minute>60)
+    {
+        qDebug() << "GlobalServerData::serverSettings.city.capture.minutes out of range";
+        GlobalServerData::serverSettings.city.capture.minute=0;
     }
 }
 

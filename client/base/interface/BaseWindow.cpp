@@ -79,6 +79,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanDissolved,this,&BaseWindow::clanDissolved,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInformations,this,&BaseWindow::clanInformations,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInvite,this,&BaseWindow::clanInvite,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::cityCapture,this,&BaseWindow::cityCapture,Qt::QueuedConnection);
 
     //connect the map controler
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&BaseWindow::have_current_player_info,Qt::QueuedConnection);
@@ -158,6 +159,8 @@ BaseWindow::BaseWindow() :
 
     connect(&tip_timeout,&QTimer::timeout,this,&BaseWindow::tipTimeout);
     connect(&gain_timeout,&QTimer::timeout,this,&BaseWindow::gainTimeout);
+    connect(&nextCityCaptureTimer,&QTimer::timeout,this,&BaseWindow::cityCaptureUpdateTime);
+    connect(&updater_page_zonecapture,&QTimer::timeout,this,&BaseWindow::updatePageZonecapture);
 
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
 
@@ -174,6 +177,8 @@ BaseWindow::BaseWindow() :
     renderFrame->lower();
     renderFrame->lower();
     ui->labelFightTrap->hide();
+    nextCityCaptureTimer.setSingleShot(true);
+    updater_page_zonecapture.setSingleShot(false);
 
     Chat::chat->setGeometry(QRect(0, 0, 250, 400));
 
@@ -1734,6 +1739,30 @@ void BaseWindow::goToBotStep(const quint8 &step)
         updateTheWareHouseContent();
         return;
     }
+    else if(actualBot.step[step].attribute("type")=="zonecapture")
+    {
+        if(!actualBot.step[step].hasAttribute("zone"))
+        {
+            showTip(tr("Missing attribute for the step"));
+            return;
+        }
+        if(clan==0)
+        {
+            showTip(tr("You can't try capture if you are not in a clan"));
+            return;
+        }
+        QString zone=actualBot.step[step].attribute("zone");
+        if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
+            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(DatapackClientLoader::datapackLoader.zonesExtra[zone].name)));
+        else
+            ui->zonecaptureWaitText->setText(tr("You are waiting to capture a zone"));
+        updater_page_zonecapture.start(1000);
+        nextCaptureOnScreen=nextCapture;
+        ui->stackedWidget->setCurrentWidget(ui->page_zonecapture);
+        CatchChallenger::Api_client_real::client->waitingForCityCaputre(false);
+        updatePageZonecapture();
+        return;
+    }
     else if(actualBot.step[step].attribute("type")=="script")
     {
         QScriptEngine engine;
@@ -3027,4 +3056,47 @@ void CatchChallenger::BaseWindow::clanInvite(const quint32 &clanId,const QString
         haveClanInformations=false;
         updateClanDisplay();
     }
+}
+
+void CatchChallenger::BaseWindow::cityCaptureUpdateTime()
+{
+    if(city.capture.frenquency==City::Capture::Frequency_week)
+        nextCapture=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7);
+    else
+        nextCapture=FacilityLib::nextCaptureTime(city);
+    nextCityCaptureTimer.start(nextCapture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch());
+}
+
+void CatchChallenger::BaseWindow::updatePageZonecapture()
+{
+    if(QDateTime::currentMSecsSinceEpoch()<nextCapture.toMSecsSinceEpoch())
+    {
+        int sec=(nextCapture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000;
+        QString timeText;
+        if(sec>3600*24*365*50)
+            timeText="Time player: bug";
+        else if(sec>=3600*24*10)
+            timeText=QObject::tr("%n day(s)","",sec/(3600*24));
+        else if(sec>=3600*24)
+            timeText=QObject::tr("%n day(s) and %1","",sec/(3600*24)).arg(QObject::tr("%n hour(s)","",(sec%(3600*24))/3600));
+        else if(sec>=3600)
+            timeText=QObject::tr("%n hour(s) and %1","",sec/3600).arg(QObject::tr("%n minute(s)","",(sec%3600)/60));
+        else if(sec>=60)
+            timeText=QObject::tr("%n minute(s) and %1","",sec/60).arg(QObject::tr("%n second(s)","",sec%60));
+        else
+            timeText=QObject::tr("%n second(s)","",sec);
+        ui->zonecaptureWaitTime->setText(tr("Remaining time: %1").arg(QString("<b>%1</b>").arg(timeText)));
+    }
+    else
+    {
+        ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting of players list")+"</i>");
+        updater_page_zonecapture.stop();
+    }
+}
+
+void CatchChallenger::BaseWindow::on_zonecaptureCancel_clicked()
+{
+    updater_page_zonecapture.stop();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    CatchChallenger::Api_client_real::client->waitingForCityCaputre(true);
 }

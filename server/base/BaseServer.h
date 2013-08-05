@@ -49,6 +49,7 @@ protected slots:
     virtual void removeOneClient();
     //new connection
     virtual void newConnection();
+    virtual void load_next_city_capture();
 signals:
     void error(const QString &error) const;
     void try_initAll() const;
@@ -85,12 +86,16 @@ protected:
         Map_to_send old_map;
     };
     virtual void preload_the_data();
+    virtual void preload_zone();
+    virtual void preload_the_city_capture();
     virtual void preload_the_map();
     virtual void preload_the_skin();
     virtual void preload_the_datapack();
     virtual void preload_the_players();
     virtual void preload_the_visibility_algorithm();
     virtual void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
+    virtual void unload_zone();
+    virtual void unload_the_city_capture();
     virtual void unload_the_bots();
     virtual void unload_the_data();
     virtual void unload_the_map();

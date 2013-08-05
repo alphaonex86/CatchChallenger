@@ -39,6 +39,10 @@ public:
         QString name;
         QStringList steps;
     };
+    struct ZoneExtra
+    {
+        QString name;
+    };
     struct BotFightExtra
     {
         QString start;
@@ -78,6 +82,7 @@ public:
     QHash<QString,quint32> questsPathToId;
     QMultiHash<quint32,quint32> botToQuestStart;
     QHash<quint32,BotFightExtra> botFightsExtra;
+    QHash<QString,ZoneExtra> zonesExtra;
     QHash<QString,QString> audioAmbiance;
     QStringList maps,skins;
     QPixmap defaultInventoryImage();
@@ -108,6 +113,7 @@ private slots:
     void parseSkins();
     void parseBotFightsExtra();
     void parseAudioAmbiance();
+    void parseZoneExtra();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

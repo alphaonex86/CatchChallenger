@@ -370,6 +370,16 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
     else
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
+    if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
+        out << (quint32)0x00000000;
+    else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
+    {
+        qint64 time=GlobalServerData::serverPrivateVariables.time_city_capture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+        out << (quint32)time/1000;
+    }
+    else
+        out << (quint32)0x00000000;
+    out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
     out << FacilityLib::allowToQString(player_informations->public_and_private_informations.allow);
     out << (quint32)player_informations->public_and_private_informations.clan;
     if(player_informations->public_and_private_informations.clan_leader)

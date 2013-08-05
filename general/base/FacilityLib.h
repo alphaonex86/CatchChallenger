@@ -5,6 +5,7 @@
 #include <QString>
 #include <QStringList>
 #include <QRect>
+#include <QDateTime>
 #include "GeneralStructures.h"
 
 namespace CatchChallenger {
@@ -23,6 +24,7 @@ public:
     static QString genderToString(const Gender &gender);
     static QString allowToQString(const QSet<ActionAllow> &allowList);
     static QSet<ActionAllow> QStringToAllow(const QString &string);
+    static QDateTime nextCaptureTime(const City &city);
 private:
     static QByteArray UTF8EmptyData;
 };

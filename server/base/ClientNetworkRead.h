@@ -107,6 +107,7 @@ signals:
     //clan
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text) const;
     void clanInvite(const bool &accept) const;
+    void waitingForCityCaputre(const bool &cancel) const;
 private:
     // for status
     bool have_send_protocol;

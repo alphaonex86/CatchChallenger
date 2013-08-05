@@ -60,6 +60,7 @@ private slots:
     void benchmark_result(int latency,double TX_speed,double RX_speed,double TX_size,double RX_size,double second);
     void clean_updated_info();
     void update_benchmark();
+    void update_capture();
     //auto slots
     void on_pushButton_server_start_clicked();
     void on_pushButton_server_stop_clicked();
@@ -96,6 +97,9 @@ private slots:
     void on_db_sqlite_browse_clicked();
     void on_tolerantMode_toggled(bool checked);
     void on_db_fight_sync_currentIndexChanged(int index);
+    void on_comboBox_city_capture_frequency_currentIndexChanged(int index);
+    void on_comboBox_city_capture_day_currentIndexChanged(int index);
+    void on_timeEdit_city_capture_time_editingFinished();
 signals:
     void record_latency();
 };
