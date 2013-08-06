@@ -10,8 +10,8 @@ using namespace CatchChallenger;
 
 Direction LocalClientHandler::temp_direction;
 QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
-QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > LocalClientHandler::captureCity;
-QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > LocalClientHandler::captureCityValidated;
+QHash<QString,QList<LocalClientHandler *> > LocalClientHandler::captureCity;
+QHash<QString,LocalClientHandler::CaptureCityValidated> LocalClientHandler::captureCityValidatedList;
 QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
 
 LocalClientHandler::LocalClientHandler()
@@ -32,6 +32,7 @@ LocalClientHandler::LocalClientHandler()
     connect(&localClientHandlerFight,&LocalClientHandlerFight::teleportTo,          this,&LocalClientHandler::teleportTo);
     connect(&localClientHandlerFight,&LocalClientHandlerFight::addObjectAndSend,    this,&LocalClientHandler::addObjectAndSend);
     connect(&localClientHandlerFight,&LocalClientHandlerFight::addCash,             this,&LocalClientHandler::addCash);
+    connect(&localClientHandlerFight,&LocalClientHandlerFight::fightOrBattleFinish, this,&LocalClientHandler::fightOrBattleFinish);
 }
 
 LocalClientHandler::~LocalClientHandler()
@@ -63,14 +64,10 @@ void LocalClientHandler::removeFromClan()
     {
         if(!clan->captureCityInProgress.isEmpty())
         {
-            if(captureCity[clan->captureCityInProgress][clan->clanId].removeOne(this))
+            if(captureCity[clan->captureCityInProgress].removeOne(this))
             {
-                if(captureCity[clan->captureCityInProgress][clan->clanId].isEmpty())
-                {
-                    captureCity[clan->captureCityInProgress].remove(clan->clanId);
-                    if(captureCity[clan->captureCityInProgress].count()==0)
-                        captureCity.remove(clan->captureCityInProgress);
-                }
+                if(captureCity[clan->captureCityInProgress].isEmpty())
+                    captureCity.remove(clan->captureCityInProgress);
             }
         }
         if(clan->players.removeOne(this))
@@ -82,6 +79,7 @@ void LocalClientHandler::removeFromClan()
     player_informations->public_and_private_informations.clan=0;
 }
 
+/// \todo battle with capture city canceled
 void LocalClientHandler::extraStop()
 {
     tradeCanceled();
@@ -313,8 +311,11 @@ void LocalClientHandler::createMemoryClan()
     {
         clan=new Clan;
         clan->haveTheInformations=false;
+        clan->cash=0;
         clan->clanId=player_informations->public_and_private_informations.clan;
         clanList[player_informations->public_and_private_informations.clan]=clan;
+        if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.contains(clan->clanId))
+            clan->captureCityInProgress=GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId];
     }
     else
         clan=clanList[player_informations->public_and_private_informations.clan];
@@ -1923,6 +1924,11 @@ bool LocalClientHandler::tryEscape()
     }
 }
 
+LocalClientHandlerFight * LocalClientHandler::getLocalClientHandlerFight()
+{
+    return &localClientHandlerFight;
+}
+
 void LocalClientHandler::heal()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -2204,6 +2210,11 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 emit error("You are not a leader to dissolve the clan");
                 return;
             }
+            if(!clan->captureCityInProgress.isEmpty())
+            {
+                emit error("You can't disolv the clan if is in city capture");
+                return;
+            }
             const QList<LocalClientHandler *> &players=clanList[player_informations->public_and_private_informations.clan]->players;
             //send the network reply
             QByteArray outputData;
@@ -2245,10 +2256,24 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                                  );
                 break;
             }
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("DELETE FROM city WHERE city='%1'")
+                                 .arg(clan->capturedCity)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("DELETE FROM city WHERE city='%1'")
+                                 .arg(clan->capturedCity)
+                                 );
+                break;
+            }
             //update the object
             clanList.remove(player_informations->public_and_private_informations.clan);
-            if(!clan->captureCityInProgress.isEmpty())
-                captureCity.remove(clan->captureCityInProgress);
+            GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
+            GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
             delete clan;
             index=0;
             while(index<players.size())
@@ -2379,7 +2404,7 @@ quint32 LocalClientHandler::getPlayerId() const
         return 0;
 }
 
-void LocalClientHandler::haveClanInfo(const QString &clanName)
+void LocalClientHandler::haveClanInfo(const QString &clanName,const quint64 &cash)
 {
     if(clan==NULL)
         return;
@@ -2387,6 +2412,7 @@ void LocalClientHandler::haveClanInfo(const QString &clanName)
     {
         clan[player_informations->public_and_private_informations.clan].haveTheInformations=true;
         clan[player_informations->public_and_private_informations.clan].name=clanName;
+        clan[player_informations->public_and_private_informations.clan].cash=cash;
     }
     sendClanInfo();
 }
@@ -2629,7 +2655,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             out.setVersion(QDataStream::Qt_4_4);
             out << (quint8)0x02;
             out << clan->captureCityInProgress;
-            emit sendFullPacket(0xF0,0x0002,outputData);
+            emit sendFullPacket(0xF0,0x0001,outputData);
             return;
         }
         if(captureCity.count(zoneName)>0)
@@ -2637,7 +2663,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             emit error("already in capture city");
             return;
         }
-        captureCity[zoneName][clan->clanId] << this;
+        captureCity[zoneName] << this;
     }
     else
     {
@@ -2646,45 +2672,313 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             emit error("your clan is not in capture city");
             return;
         }
-        if(!captureCity[clan->captureCityInProgress][clan->clanId].removeOne(this))
+        if(!captureCity[clan->captureCityInProgress].removeOne(this))
         {
             emit error("not in capture city");
             return;
         }
-        if(captureCity[clan->captureCityInProgress][clan->clanId].isEmpty())
-        {
-            captureCity[clan->captureCityInProgress].remove(clan->clanId);
-            if(captureCity[clan->captureCityInProgress].isEmpty())
-                captureCity.remove(clan->captureCityInProgress);
-        }
+        if(captureCity[clan->captureCityInProgress].isEmpty())
+            captureCity.remove(clan->captureCityInProgress);
     }
 }
 
 void LocalClientHandler::startTheCityCapture()
 {
-    QHashIterator<QString,QHash<quint32,QList<LocalClientHandler *> > > i(captureCity);
+    QHashIterator<QString,QList<LocalClientHandler *> > i(captureCity);
     while (i.hasNext()) {
         i.next();
         //the city is not free to capture
-        if(captureCityValidated.contains(i.key()))
+        if(captureCityValidatedList.contains(i.key()))
         {
-            QHashIterator<quint32,QList<LocalClientHandler *> > j(i.value());
-            while (j.hasNext()) {
-                j.next();
-                clanList[j.key()]->captureCityInProgress.clear();
-                int index=0;
-                while(index<j.value().size())
-                {
-                    j.value().at(index)->previousCityCaptureNotFinished();
-                    index++;
-                }
+            int index=0;
+            while(index<i.value().size())
+            {
+                i.value().at(index)->previousCityCaptureNotFinished();
+                index++;
             }
         }
         //the city is ready to be captured
         else
         {
+            CaptureCityValidated tempCaptureCityValidated;
+            if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(i.key()))
+                GlobalServerData::serverPrivateVariables.cityStatusList[i.key()].clan=0;
+            if(GlobalServerData::serverPrivateVariables.cityStatusList[i.key()].clan==0)
+                if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(i.key()))
+                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdList[i.key()];
+            tempCaptureCityValidated.players=i.value();
+            int index;
+            int sub_index;
+            //do the clan count
+            int player_count=tempCaptureCityValidated.players.size()+tempCaptureCityValidated.bots.size();
+            int clan_count=0;
+            if(!tempCaptureCityValidated.bots.isEmpty())
+                clan_count++;
+            if(!tempCaptureCityValidated.players.isEmpty())
+            {
+                index=0;
+                while(index<tempCaptureCityValidated.players.size())
+                {
+                    const quint32 &clanId=tempCaptureCityValidated.players.at(index)->clanId();
+                    if(tempCaptureCityValidated.clanSize.contains(clanId))
+                        tempCaptureCityValidated.clanSize[clanId]++;
+                    else
+                        tempCaptureCityValidated.clanSize[clanId]=1;
+                    index++;
+                }
+                clan_count+=tempCaptureCityValidated.clanSize.size();
+            }
+            //do the PvP
+            index=0;
+            while(index<tempCaptureCityValidated.players.size())
+            {
+                sub_index=index+1;
+                while(sub_index<tempCaptureCityValidated.players.size())
+                {
+                    if(tempCaptureCityValidated.players.at(index)->clanId()!=tempCaptureCityValidated.players.at(sub_index)->clanId())
+                    {
+                        tempCaptureCityValidated.players.at(index)->getLocalClientHandlerFight()->battleFakeAccepted(tempCaptureCityValidated.players.at(sub_index)->getLocalClientHandlerFight());
+                        tempCaptureCityValidated.playersInFight << tempCaptureCityValidated.players.at(index);
+                        tempCaptureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
+                        tempCaptureCityValidated.playersInFight << tempCaptureCityValidated.players.at(sub_index);
+                        tempCaptureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
+                        tempCaptureCityValidated.players.removeAt(index);
+                        index--;
+                        tempCaptureCityValidated.players.removeAt(sub_index-1);
+                        break;
+                    }
+                    sub_index++;
+                }
+                index++;
+            }
+            //bot the bot fight
+            while(!tempCaptureCityValidated.players.isEmpty() && !tempCaptureCityValidated.bots.isEmpty())
+            {
+                tempCaptureCityValidated.playersInFight << tempCaptureCityValidated.players.first();
+                tempCaptureCityValidated.playersInFight.last()->cityCaptureBotFight(player_count,clan_count,tempCaptureCityValidated.bots.first());
+                tempCaptureCityValidated.botsInFight << tempCaptureCityValidated.bots.first();
+                tempCaptureCityValidated.players.first()->getLocalClientHandlerFight()->botFightStart(tempCaptureCityValidated.bots.first());
+                tempCaptureCityValidated.players.removeFirst();
+                tempCaptureCityValidated.bots.removeFirst();
+            }
+            //send the wait to the rest
+            cityCaptureSendInWait(tempCaptureCityValidated,player_count,clan_count);
+
+            captureCityValidatedList[i.key()]=tempCaptureCityValidated;
         }
     }
+    captureCity.clear();
+}
+
+//fightId == 0 if is in battle
+void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fightId)
+{
+    if(clan!=NULL)
+    {
+        if(!clan->captureCityInProgress.isEmpty() && captureCityValidatedList.contains(clan->captureCityInProgress))
+        {
+            CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
+            if(captureCityValidated.playersInFight.removeOne(this))
+            {
+                if(win)
+                {
+                    quint16 player_count=cityCapturePlayerCount(captureCityValidated);
+                    quint16 clan_count=cityCaptureClanCount(captureCityValidated);
+                    if(fightId!=0)
+                        captureCityValidated.botsInFight.removeOne(fightId);
+                    else
+                    {
+                        bool newFightFound=false;
+                        int index=0;
+                        while(index<captureCityValidated.players.size())
+                        {
+                            if(clanId()!=captureCityValidated.players.at(index)->clanId())
+                            {
+                                getLocalClientHandlerFight()->battleFakeAccepted(captureCityValidated.players.at(index)->getLocalClientHandlerFight());
+                                captureCityValidated.playersInFight << captureCityValidated.players.at(index);
+                                captureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
+                                cityCaptureBattle(player_count,clan_count);
+                                captureCityValidated.players.removeAt(index);
+                                newFightFound=true;
+                                break;
+                            }
+                            index++;
+                        }
+                        if(!newFightFound && !captureCityValidated.bots.isEmpty())
+                        {
+                            cityCaptureBotFight(player_count,clan_count,captureCityValidated.bots.first());
+                            captureCityValidated.botsInFight << captureCityValidated.bots.first();
+                            localClientHandlerFight.botFightStart(captureCityValidated.bots.first());
+                            captureCityValidated.bots.removeFirst();
+                            newFightFound=true;
+                        }
+                        if(!newFightFound)
+                        {
+                            captureCityValidated.playersInFight.removeOne(this);
+                            captureCityValidated.players << this;
+                        }
+                    }
+                }
+                else
+                {
+                    if(fightId!=0)
+                    {
+                        captureCityValidated.botsInFight.removeOne(fightId);
+                        captureCityValidated.bots.removeOne(fightId);
+                    }
+                    captureCityValidated.clanSize[clanId()]--;
+                    if(captureCityValidated.clanSize[clanId()]==0)
+                        captureCityValidated.clanSize.remove(clanId());
+                }
+                quint16 player_count=cityCapturePlayerCount(captureCityValidated);
+                quint16 clan_count=cityCaptureClanCount(captureCityValidated);
+                //city capture
+                if(captureCityValidated.bots.isEmpty() && captureCityValidated.botsInFight.isEmpty() && captureCityValidated.playersInFight.isEmpty())
+                {
+                    if(clan->capturedCity==clan->captureCityInProgress)
+                        clan->captureCityInProgress.clear();
+                    else
+                    {
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->capturedCity))
+                        {
+                            GlobalServerData::serverPrivateVariables.cityStatusListReverse.remove(clan->clanId);
+                            GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
+                        }
+                        switch(GlobalServerData::serverSettings.database.type)
+                        {
+                            default:
+                            case ServerSettings::Database::DatabaseType_Mysql:
+                                emit dbQuery(QString("DELETE FROM city WHERE city='%1'")
+                                             .arg(clan->capturedCity)
+                                             );
+                            break;
+                            case ServerSettings::Database::DatabaseType_SQLite:
+                                emit dbQuery(QString("DELETE FROM city WHERE city='%1'")
+                                             .arg(clan->capturedCity)
+                                             );
+                            break;
+                        }
+                        if(!GlobalServerData::serverPrivateVariables.cityStatusList.contains(clan->captureCityInProgress))
+                            GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan!=0)
+                            switch(GlobalServerData::serverSettings.database.type)
+                            {
+                                default:
+                                case ServerSettings::Database::DatabaseType_Mysql:
+                                    emit dbQuery(QString("UPDATE city SET clan=%1 WHERE city='%2';")
+                                                 .arg(clan->clanId)
+                                                 .arg(clan->captureCityInProgress)
+                                                 );
+                                break;
+                                case ServerSettings::Database::DatabaseType_SQLite:
+                                    emit dbQuery(QString("UPDATE city SET clan=%1 WHERE city='%2';")
+                                                 .arg(clan->clanId)
+                                                 .arg(clan->captureCityInProgress)
+                                                 );
+                                break;
+                            }
+                        else
+                            switch(GlobalServerData::serverSettings.database.type)
+                            {
+                                default:
+                                case ServerSettings::Database::DatabaseType_Mysql:
+                                    emit dbQuery(QString("INSERT INTO city(clan,city) VALUES(%1,%2);")
+                                                 .arg(clan->clanId)
+                                                 .arg(clan->captureCityInProgress)
+                                                 );
+                                break;
+                                case ServerSettings::Database::DatabaseType_SQLite:
+                                    emit dbQuery(QString("INSERT INTO city(clan,city) VALUES(%1,%2);")
+                                                 .arg(clan->clanId)
+                                                 .arg(clan->captureCityInProgress)
+                                                 );
+                                break;
+                            }
+                        GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
+                        GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
+                        clan->capturedCity=clan->captureCityInProgress;
+                        clan->captureCityInProgress.clear();
+                        int index=0;
+                        while(index<captureCityValidated.players.size())
+                        {
+                            captureCityValidated.playersInFight.last()->cityCaptureWin();
+                            index++;
+                        }
+
+                    }
+                }
+                else
+                    cityCaptureSendInWait(captureCityValidated,player_count,clan_count);
+                return;
+            }
+        }
+    }
+}
+
+void LocalClientHandler::cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated, const quint16 &number_of_player, const quint16 &number_of_clan)
+{
+    int index=0;
+    while(index<captureCityValidated.players.size())
+    {
+        captureCityValidated.playersInFight.last()->cityCaptureInWait(number_of_player,number_of_clan);
+        index++;
+    }
+}
+
+quint16 LocalClientHandler::cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated)
+{
+    return captureCityValidated.bots.size()+captureCityValidated.botsInFight.size()+captureCityValidated.players.size()+captureCityValidated.playersInFight.size();
+}
+
+quint16 LocalClientHandler::cityCaptureClanCount(const CaptureCityValidated &captureCityValidated)
+{
+    if(captureCityValidated.bots.isEmpty() && captureCityValidated.botsInFight.isEmpty())
+        return captureCityValidated.clanSize.size();
+    else
+        return captureCityValidated.clanSize.size()+1;
+}
+
+void LocalClientHandler::cityCaptureBattle(const quint16 &number_of_player,const quint16 &number_of_clan)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x04;
+    out << (quint16)number_of_player;
+    out << (quint16)number_of_clan;
+    emit sendFullPacket(0xF0,0x0001,outputData);
+}
+
+void LocalClientHandler::cityCaptureBotFight(const quint16 &number_of_player,const quint16 &number_of_clan,const quint32 &fightId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x04;
+    out << (quint16)number_of_player;
+    out << (quint16)number_of_clan;
+    out << (quint32)fightId;
+    emit sendFullPacket(0xF0,0x0001,outputData);
+}
+
+void LocalClientHandler::cityCaptureInWait(const quint16 &number_of_player,const quint16 &number_of_clan)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x05;
+    out << (quint16)number_of_player;
+    out << (quint16)number_of_clan;
+    emit sendFullPacket(0xF0,0x0001,outputData);
+}
+
+void LocalClientHandler::cityCaptureWin()
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x06;
+    emit sendFullPacket(0xF0,0x0001,outputData);
 }
 
 void LocalClientHandler::previousCityCaptureNotFinished()

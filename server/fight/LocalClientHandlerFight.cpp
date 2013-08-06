@@ -465,6 +465,19 @@ void LocalClientHandlerFight::battleAccepted()
     internalBattleAccepted(true);
 }
 
+void LocalClientHandlerFight::battleFakeAccepted(LocalClientHandlerFight * otherPlayer)
+{
+    battleFakeAcceptedInternal(otherPlayer);
+    otherPlayer->battleFakeAcceptedInternal(this);
+    otherPlayerBattle->internalBattleAccepted(true);
+    internalBattleAccepted(true);
+}
+
+void LocalClientHandlerFight::battleFakeAcceptedInternal(LocalClientHandlerFight * otherPlayer)
+{
+    this->otherPlayerBattle=otherPlayer;
+}
+
 void LocalClientHandlerFight::battleFinished()
 {
     if(!battleIsValidated)
@@ -724,11 +737,10 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
             }
         }
         syncForEndOfTurn();
-        if(!isInFight())
+        if(!isInFight() && win)
         {
             if(isBot)
             {
-                emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
                 addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
                 player_informations->public_and_private_informations.bot_already_beaten << botFightId;
                 switch(GlobalServerData::serverSettings.database.type)
@@ -747,9 +759,14 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
                                      );
                     break;
                 }
+                emit fightOrBattleFinish(win,botFightId);
+                emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
             }
             else
+            {
+                emit fightOrBattleFinish(win,0);
                 emit message(QString("Have win agains a wild monster"));
+            }
         }
         return win;
     }
@@ -768,6 +785,7 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
                     emit message(QString("Have win the battle"));
             }
         }
+        emit fightOrBattleFinish(win,0);
         return win;
     }
 }
