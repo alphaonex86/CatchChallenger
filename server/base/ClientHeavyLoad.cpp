@@ -826,11 +826,11 @@ void ClientHeavyLoad::askClan(const quint32 &clanId)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT name FROM clan WHERE id=%1")
+        queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
                 .arg(clanId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QString("SELECT name FROM clan WHERE id=%1")
+        queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
                 .arg(clanId);
         break;
     }
@@ -839,7 +839,16 @@ void ClientHeavyLoad::askClan(const quint32 &clanId)
         emit message(clanQuery.lastQuery()+": "+clanQuery.lastError().text());
     //parse the result
     if(clanQuery.next())
-        emit haveClanInfo(clanQuery.value(0).toString());
+    {
+        bool ok;
+        quint64 cash=clanQuery.value(1).toULongLong(&ok);
+        if(!ok)
+        {
+            cash=0;
+            emit message("Warning: clan linked: %1 have wrong cash value, then reseted to 0");
+        }
+        emit haveClanInfo(clanQuery.value(0).toString(),cash);
+    }
     else
         emit message("Warning: clan linked: %1 is not found into db");
 }

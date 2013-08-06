@@ -21,12 +21,25 @@ CREATE TABLE IF NOT EXISTS `bot_already_beaten` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `city`
+--
+
+CREATE TABLE IF NOT EXISTS `city` (
+  `city` varchar(64) NOT NULL,
+  `clan` int(11) NOT NULL,
+  PRIMARY KEY (`city`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `clan`
 --
 
 CREATE TABLE IF NOT EXISTS `clan` (
   `id` int(11) NOT NULL,
   `name` text NOT NULL,
+  `cash` bigint(20) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
