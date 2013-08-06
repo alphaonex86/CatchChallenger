@@ -41,7 +41,7 @@ public:
     const QStringList listDatapack(QString suffix);
     void cleanDatapack(QString suffix);
 protected:
-    void parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
+    void parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data);
 
     //general data
     void defineMaxPlayers(const quint16 &maxPlayers);

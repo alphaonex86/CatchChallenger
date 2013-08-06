@@ -1795,6 +1795,93 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
             }
         }
         break;
+        case 0xF0:
+        switch(subCodeType)
+        {
+            //Result of the turn
+            case 0x0001:
+            {
+                quint8 returnCode;
+                if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                {
+                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                    return;
+                }
+                in >> returnCode;
+                switch(returnCode)
+                {
+                    case 0x01:
+                        emit captureCityYourAreNotLeader();
+                    break;
+                    case 0x02:
+                    {
+                        QString city;
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            return;
+                        in >> city;
+                        emit captureCityYourLeaderHaveStartInOtherCity(city);
+                    }
+                    break;
+                    case 0x03:
+                        emit captureCityPreviousNotFinished();
+                    break;
+                    case 0x04:
+                    {
+                        quint16 player_count,clan_count;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> player_count;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> clan_count;
+                        if((in.device()->size()-in.device()->pos())==0)
+                            emit captureCityStartBattle(player_count,clan_count);
+                        else if((in.device()->size()-in.device()->pos())==(int)(sizeof(quint32)))
+                        {
+                            quint32 fightId;
+                            in >> fightId;
+                            emit captureCityStartBotFight(player_count,clan_count,fightId);
+                        }
+                    }
+                    break;
+                    case 0x05:
+                    {
+                        quint16 player_count,clan_count;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> player_count;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint16)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> clan_count;
+                        emit captureCityDelayedStart(player_count,clan_count);
+                    }
+                    break;
+                    case 0x06:
+                        emit captureCityWin();
+                    break;
+                    default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, returnCode: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(returnCode).arg(__LINE__));
+                    return;
+                }
+            }
+            break;
+            default:
+            parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+            return;
+        }
+        break;
         default:
             parseError(tr("Procotol wrong or corrupted"),QString("unknow ident main code: %1").arg(mainCodeType));
             return;
@@ -3286,7 +3373,7 @@ void Api_protocol::inviteAccept(const bool &accept)
     output->packFullOutcommingData(0x42,0x0004,outputData);
 }
 
-void Api_protocol::waitingForCityCaputre(const bool &cancel)
+void Api_protocol::waitingForCityCapture(const bool &cancel)
 {
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);

@@ -210,7 +210,12 @@ void BaseServer::preload_zone()
                 {
                     quint32 fightId=fightIdStringList.at(sub_index).toUInt(&ok);
                     if(ok)
-                        fightIdList << fightId;
+                    {
+                        if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
+                            qDebug() << QString("bot fightId %1 not found for capture zone %2").arg(fightId).arg(zoneCodeName);
+                        else
+                            fightIdList << fightId;
+                    }
                     sub_index++;
                 }
                 if(sub_index==fightIdStringList.size() && !fightIdList.isEmpty())
@@ -995,8 +1000,18 @@ void BaseServer::unload_the_data()
     unload_the_skin();
     unload_the_datapack();
     unload_the_players();
+    unload_the_static_data();
 
     CommonDatapack::commonDatapack.unload();
+}
+
+void BaseServer::unload_the_static_data()
+{
+    LocalClientHandler::resetAll();
+    ClientBroadCast::playerByPseudo.clear();
+    ClientBroadCast::playerByClan.clear();
+    ClientBroadCast::clientBroadCastList.clear();
+    ClientHeavyLoad::simplifiedIdList.clear();
 }
 
 void BaseServer::unload_zone()

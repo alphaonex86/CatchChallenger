@@ -29,12 +29,11 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->lineEditPass->setText(settings.value("pass").toString());
         ui->checkBoxRememberPassword->setChecked(true);
     }
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(protocol_is_good()),this,SLOT(protocol_is_good()));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(disconnected(QString)),this,SLOT(disconnected(QString)));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(message(QString)),this,SLOT(message(QString)));
-    connect(CatchChallenger::Api_client_real::client,SIGNAL(have_current_player_info(CatchChallenger::Player_private_and_public_informations)),this,SLOT(have_current_player_info(CatchChallenger::Player_private_and_public_informations)));
-    connect(socket,SIGNAL(error(QAbstractSocket::SocketError)),this,SLOT(error(QAbstractSocket::SocketError)),Qt::QueuedConnection);
-    connect(socket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),this,SLOT(stateChanged(QAbstractSocket::SocketState)));
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&MainWindow::message);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&MainWindow::have_current_player_info);
+    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
+    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&MainWindow::stateChanged);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);

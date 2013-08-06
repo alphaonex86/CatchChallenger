@@ -134,13 +134,21 @@ void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quin
     ui->labelFightEnter->setText(tr("A other %1 is in front of you!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
 }
 
-void BaseWindow::botFight(const quint32 &fightId,CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)
+void BaseWindow::botFight(const quint32 &fightId)
 {
     if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
     {
         emit error("fight id not found at collision");
         return;
     }
+    botFightList << fightId;
+    if(botFightList.size()>1 || !battleInformationsList.isEmpty())
+        return;
+    botFightFull(fightId);
+}
+
+void BaseWindow::botFightFull(const quint32 &fightId)
+{
     ui->frameFightTop->setVisible(false);
     ui->labelFightEnter->setText(DatapackClientLoader::datapackLoader.botFightsExtra[fightId].start);
     ui->pushButtonFightEnterNext->setVisible(false);
@@ -154,7 +162,7 @@ void BaseWindow::botFight(const quint32 &fightId,CatchChallenger::Map_client *ma
     }
     CatchChallenger::ClientFightEngine::fightEngine.setBotMonster(botFightMonstersTransformed);
     this->fightId=fightId;
-    init_environement_display(map,x,y);
+    init_environement_display(MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
     init_current_monster_display();
     ui->pushButtonFightEnterNext->setVisible(false);
     battleType=BattleType_Bot;
@@ -602,30 +610,64 @@ void BaseWindow::loose()
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
+    battleInformationsList.clear();
+    botFightList.clear();
     load_monsters();
 }
 
 void BaseWindow::win()
 {
     CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    if(zonecapture)
+        ui->stackedWidget->setCurrentWidget(ui->page_zonecapture);
+    else
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
     load_monsters();
     switch(battleType)
     {
         case BattleType_Bot:
-            if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
+            if(!zonecapture)
             {
-                emit error("fight id not found at collision");
+                if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
+                {
+                    emit error("fight id not found at collision");
+                    return;
+                }
+                addCash(CatchChallenger::CommonDatapack::commonDatapack.botFights[fightId].cash);
+                MapController::mapController->addBeatenBotFight(fightId);
+            }
+            if(botFightList.isEmpty())
+            {
+                emit error("battle info not found at collision");
                 return;
             }
-            addCash(CatchChallenger::CommonDatapack::commonDatapack.botFights[fightId].cash);
-            MapController::mapController->addBeatenBotFight(fightId);
+            botFightList.removeFirst();
             fightId=0;
+        break;
+        case BattleType_OtherPlayer:
+            if(battleInformationsList.isEmpty())
+            {
+                emit error("battle info not found at collision");
+                return;
+            }
+            battleInformationsList.removeFirst();
         break;
         default:
         break;
+    }
+    if(!battleInformationsList.isEmpty())
+    {
+        const BattleInformations &battleInformations=battleInformationsList.first();
+        battleInformationsList.removeFirst();
+        battleAcceptedByOtherFull(battleInformations);
+    }
+    else if(!botFightList.isEmpty())
+    {
+        quint32 fightId=botFightList.first();
+        botFightList.removeFirst();
+        botFight(fightId);
     }
 }
 
