@@ -85,7 +85,7 @@ signals:
     void put_on_the_map(Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation) const;
     //random linked signals
     void newRandomNumber(const QByteArray &randomData) const;
-    void haveClanInfo(const QString &clanName);
+    void haveClanInfo(const QString &clanName,const quint64 &cash);
 };
 }
 

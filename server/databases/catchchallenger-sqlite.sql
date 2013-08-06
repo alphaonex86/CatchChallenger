@@ -78,9 +78,13 @@ CREATE TABLE player (
     "warehouse_cash" INTEGER,
     "allow" TEXT
 , "clan_leader" INTEGER);
-CREATE TABLE "clan" (
-    "id" INTEGER PRIMARY KEY,
+CREATE TABLE clan (
+    "id" INTEGER,
     "name" TEXT
+, "clan" INTEGER);
+CREATE TABLE "city" (
+    "city" TEXT,
+    "clan" INTEGER
 );
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
@@ -98,7 +102,8 @@ CREATE UNIQUE INDEX "player_item_unique_index" on item (item_id ASC, player_id A
 CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
 CREATE UNIQUE INDEX "id" on player (id ASC);
 CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
-CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
 CREATE UNIQUE INDEX "bypseudoandclan" on player (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on player (clan ASC);
+CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
+CREATE UNIQUE INDEX "cityindex" on city (city ASC);
 COMMIT;

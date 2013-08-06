@@ -182,7 +182,7 @@ void BaseServer::preload_zone()
             index++;
             continue;
         }
-        if(GlobalServerData::serverPrivateVariables.fightIdList.contains(zoneCodeName))
+        if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(zoneCodeName))
         {
             qDebug() << QString("Unable to open the file: %1, zone code name already found");
             index++;
@@ -214,16 +214,42 @@ void BaseServer::preload_zone()
                     sub_index++;
                 }
                 if(sub_index==fightIdStringList.size() && !fightIdList.isEmpty())
-                    GlobalServerData::serverPrivateVariables.fightIdList[zoneCodeName]=fightIdList;
+                    GlobalServerData::serverPrivateVariables.captureFightIdList[zoneCodeName]=fightIdList;
                 break;
             }
             else
                 qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(capture.tagName()).arg(capture.lineNumber());
         }
+        QString queryText;
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                queryText=QString("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                queryText=QString("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
+            break;
+        }
+        QSqlQuery cityStatusQuery(*GlobalServerData::serverPrivateVariables.db);
+        if(!cityStatusQuery.exec(queryText))
+            DebugClass::debugConsole(cityStatusQuery.lastQuery()+": "+cityStatusQuery.lastError().text());
+        if(cityStatusQuery.next())
+        {
+            bool ok;
+            quint32 clanId=cityStatusQuery.value(0).toUInt(&ok);
+            if(ok)
+            {
+                GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
+                GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
+            }
+            else
+                DebugClass::debugConsole(QString("clan id is failed to convert to number for city status"));
+        }
         index++;
     }
 
-    qDebug() << QString("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.fightIdList.size());
+    qDebug() << QString("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
 }
 
 void BaseServer::preload_the_city_capture()
@@ -975,7 +1001,7 @@ void BaseServer::unload_the_data()
 
 void BaseServer::unload_zone()
 {
-    GlobalServerData::serverPrivateVariables.fightIdList.clear();
+    GlobalServerData::serverPrivateVariables.captureFightIdList.clear();
 }
 
 void BaseServer::unload_the_city_capture()
