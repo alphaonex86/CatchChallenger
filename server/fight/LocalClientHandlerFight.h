@@ -47,11 +47,13 @@ public:
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     void requestFight(const quint32 &fightId);
     void healAllMonsters();
+    void battleFakeAccepted(LocalClientHandlerFight * otherPlayer);
+    void battleFakeAcceptedInternal(LocalClientHandlerFight * otherPlayer);
+    bool botFightStart(const quint32 &botFightId);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
     void saveStat();
-    bool botFightStart(const quint32 &botFightId);
     bool buffIsValid(const Skill::BuffEffect &buffEffect);
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
     bool haveBattleSkill() const;
@@ -89,6 +91,7 @@ signals:
     void teleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
     void addObjectAndSend(const quint32 &item,const quint32 &quantity=1) const;
     void addCash(const quint64 &cash,const bool &forceSave=false) const;
+    void fightOrBattleFinish(const bool &win,const quint32 &fightId);
 };
 }
 

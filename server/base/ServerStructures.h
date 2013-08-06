@@ -152,6 +152,11 @@ struct ServerSettings
     City city;
 };
 
+struct CityStatus
+{
+    quint32 clan;
+};
+
 struct ServerPrivateVariables
 {
     //bd
@@ -168,7 +173,9 @@ struct ServerPrivateVariables
     //fight
     QMultiHash<quint32,MonsterDrops> monsterDrops;
     quint32 maxMonsterId;
-    QHash<QString,QList<quint32> > fightIdList;
+    QHash<QString,QList<quint32> > captureFightIdList;
+    QHash<QString,CityStatus> cityStatusList;
+    QHash<quint32,QString> cityStatusListReverse;
 
     //general data
     QList<EventThreader *> eventThreaderList;

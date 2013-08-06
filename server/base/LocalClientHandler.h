@@ -59,17 +59,29 @@ private:
     struct Clan
     {
         QString captureCityInProgress;
+        QString capturedCity;
         quint32 clanId;
-        QString name;
         QList<LocalClientHandler *> players;
+
+        //the db info
         bool haveTheInformations;
+        QString name;
+        quint64 cash;
+    };
+    struct CaptureCityValidated
+    {
+        QList<LocalClientHandler *> players;
+        QList<LocalClientHandler *> playersInFight;
+        QList<quint32> bots;
+        QList<quint32> botsInFight;
+        QHash<quint32,quint16> clanSize;
     };
     //info linked
     static Direction	temp_direction;
     static QHash<quint32,Clan *> clanList;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
-    static QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > captureCity;
-    static QHash<QString,QHash<quint32,QList<LocalClientHandler *> > > captureCityValidated;
+    static QHash<QString,QList<LocalClientHandler *> > captureCity;
+    static QHash<QString,CaptureCityValidated> captureCityValidatedList;
 
     //trade
     LocalClientHandler * otherPlayerTrade;
@@ -151,9 +163,10 @@ public slots:
     void requestFight(const quint32 &fightId);
     void useSkill(const quint32 &skill);
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
+    LocalClientHandlerFight * getLocalClientHandlerFight();
     //clan
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text);
-    void haveClanInfo(const QString &clanName);
+    void haveClanInfo(const QString &clanName, const quint64 &cash);
     void sendClanInfo();
     void clanInvite(const bool &accept);
     void waitingForCityCaputre(const bool &cancel);
@@ -161,6 +174,14 @@ public slots:
     void previousCityCaptureNotFinished();
     static void startTheCityCapture();
     void removeFromClan();
+    void cityCaptureBattle(const quint16 &number_of_player,const quint16 &number_of_clan);
+    void cityCaptureBotFight(const quint16 &number_of_player,const quint16 &number_of_clan,const quint32 &fightId);
+    void cityCaptureInWait(const quint16 &number_of_player,const quint16 &number_of_clan);
+    void cityCaptureWin();
+    void fightOrBattleFinish(const bool &win,const quint32 &fightId);//fightId == 0 if is in battle
+    static void cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated,const quint16 &number_of_player,const quint16 &number_of_clan);
+    static quint16 cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated);
+    static quint16 cityCaptureClanCount(const CaptureCityValidated &captureCityValidated);
 private slots:
     virtual void extraStop();
     void savePosition();
