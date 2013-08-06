@@ -53,6 +53,7 @@ public:
     void ejectToClan();
     quint32 getClanId() const;
     bool haveAClan() const;
+    static void resetAll();
 private:
     bool checkCollision();
 
@@ -92,6 +93,9 @@ private:
     QList<PlayerMonster> tradeMonster;
     QList<quint32> inviteToClanList;
     Clan *clan;
+
+    //city
+    LocalClientHandler * otherCityPlayerBattle;
 
     //map move
     bool singleMove(const Direction &direction);
@@ -173,6 +177,7 @@ public slots:
     quint32 clanId() const;
     void previousCityCaptureNotFinished();
     static void startTheCityCapture();
+    void leaveTheCityCapture();
     void removeFromClan();
     void cityCaptureBattle(const quint16 &number_of_player,const quint16 &number_of_clan);
     void cityCaptureBotFight(const quint16 &number_of_player,const quint16 &number_of_clan,const quint32 &fightId);

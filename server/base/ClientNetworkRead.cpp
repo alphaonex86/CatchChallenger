@@ -755,7 +755,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                 {
                     if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
                     {
-                        parseError("wrong remaining size for quest next step");
+                        parseError("wrong remaining size for city capture");
                         return;
                     }
                     quint8 cancel;

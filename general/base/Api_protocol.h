@@ -182,6 +182,15 @@ signals:
     void clanInformations(const QString &name) const;
     void clanInvite(const quint32 &clanId,const QString &name) const;
     void cityCapture(const quint32 &remainingTime,const quint8 &type) const;
+
+    //city
+    void captureCityYourAreNotLeader();
+    void captureCityYourLeaderHaveStartInOtherCity(const QString &zone);
+    void captureCityPreviousNotFinished();
+    void captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count);
+    void captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId);
+    void captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count);
+    void captureCityWin();
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -241,7 +250,7 @@ public slots:
     void inviteClan(const QString &pseudo);
     void ejectClan(const QString &pseudo);
     void inviteAccept(const bool &accept);
-    void waitingForCityCaputre(const bool &cancel);
+    void waitingForCityCapture(const bool &cancel);
 };
 }
 

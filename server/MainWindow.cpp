@@ -517,40 +517,40 @@ void MainWindow::send_settings()
     {
         default:
         case 0:
-            formatedServerSettings.city.capture.frenquency=ServerSettings::City::Capture::Frequency_week;
+            formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_week;
         break;
         case 1:
-            formatedServerSettings.city.capture.frenquency=ServerSettings::City::Capture::Frequency_month;
+            formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_month;
         break;
     }
     switch(ui->comboBox_city_capture_day->currentIndex())
     {
         default:
         case 0:
-            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Monday;
+            formatedServerSettings.city.capture.day=City::Capture::Monday;
         break;
         case 1:
-            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Tuesday;
+            formatedServerSettings.city.capture.day=City::Capture::Tuesday;
         break;
         case 2:
-            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Wednesday;
+            formatedServerSettings.city.capture.day=City::Capture::Wednesday;
         break;
         case 3:
-            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Thursday;
+            formatedServerSettings.city.capture.day=City::Capture::Thursday;
         break;
         case 4:
-            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Friday;
+            formatedServerSettings.city.capture.day=City::Capture::Friday;
         break;
         case 5:
-            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Saturday;
+            formatedServerSettings.city.capture.day=City::Capture::Saturday;
         break;
         case 6:
-            formatedServerSettings.city.capture.day=ServerSettings::City::Capture::Sunday;
+            formatedServerSettings.city.capture.day=City::Capture::Sunday;
         break;
     }
     QTime time=ui->timeEdit_city_capture_time->time();
-    formatedServerSettings.city.capture.hours=time.hour();
-    formatedServerSettings.city.capture.minutes=time.minute();
+    formatedServerSettings.city.capture.hour=time.hour();
+    formatedServerSettings.city.capture.minute=time.minute();
 
     server.setSettings(formatedServerSettings);
 }

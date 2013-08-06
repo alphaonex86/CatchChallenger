@@ -98,6 +98,7 @@ protected:
     virtual void unload_the_city_capture();
     virtual void unload_the_bots();
     virtual void unload_the_data();
+    virtual void unload_the_static_data();
     virtual void unload_the_map();
     virtual void unload_the_skin();
     virtual void unload_the_datapack();

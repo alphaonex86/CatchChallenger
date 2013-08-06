@@ -50,6 +50,7 @@ public:
     void battleFakeAccepted(LocalClientHandlerFight * otherPlayer);
     void battleFakeAcceptedInternal(LocalClientHandlerFight * otherPlayer);
     bool botFightStart(const quint32 &botFightId);
+    void setInCityCapture(const bool &isInCityCapture);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
@@ -80,6 +81,7 @@ private:
     Player_internal_informations *player_informations;
     quint32 botFightCash;
     quint32 botFightId;
+    bool isInCityCapture;
 signals:
     void dbQuery(const QString &sqlQuery) const;
     void askRandomNumber() const;

@@ -35,7 +35,7 @@ Api_client_real::~Api_client_real()
         socket->waitForDisconnected();
 }
 
-void Api_client_real::parseReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
+void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
 {
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);
