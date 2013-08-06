@@ -93,6 +93,14 @@ public:
         BattleStep_Middle,
         BattleStep_Final
     };
+    struct BattleInformations
+    {
+        QString pseudo;
+        quint8 skinId;
+        QList<quint8> stat;
+        quint8 monsterPlace;
+        PublicPlayerMonster publicPlayerMonster;
+    };
 protected:
     void changeEvent(QEvent *e);
 public slots:
@@ -174,6 +182,7 @@ private slots:
     //battle
     void battleRequested(const QString &pseudo, const quint8 &skinInt);
     void battleAcceptedByOther(const QString &pseudo, const quint8 &skinId, const QList<quint8> &stat, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
+    void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
     void battleCanceledByOther();
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
     void sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
@@ -199,7 +208,8 @@ private slots:
 
     //fight
     void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
-    void botFight(const quint32 &fightId, CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void botFight(const quint32 &fightId);
+    void botFightFull(const quint32 &fightId);
     bool fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void on_pushButtonFightEnterNext_clicked();
     void moveFightMonsterBottom();
@@ -252,6 +262,15 @@ private slots:
     void updateClanDisplay();
     void clanInformations(const QString &name);
     void clanInvite(const quint32 &clanId, const QString &name);
+
+    //city
+    void captureCityYourAreNotLeader();
+    void captureCityYourLeaderHaveStartInOtherCity(const QString &zone);
+    void captureCityPreviousNotFinished();
+    void captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count);
+    void captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId);
+    void captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count);
+    void captureCityWin();
 
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
@@ -416,12 +435,16 @@ private:
     QTimer displayTrapTimer;
     bool trapSuccess;
     qint32 attack_quantity_changed;
+    QList<BattleInformations> battleInformationsList;
+    QList<quint32> botFightList;
 
     //city
     QTimer nextCityCaptureTimer;
     City city;
     QTimer updater_page_zonecapture;
     QDateTime nextCapture,nextCaptureOnScreen;
+    QString zonecaptureName;
+    bool zonecapture;
 
     //trade
     TradeOtherStat tradeOtherStat;

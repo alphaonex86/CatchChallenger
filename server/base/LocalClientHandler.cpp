@@ -16,6 +16,7 @@ QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
 
 LocalClientHandler::LocalClientHandler()
 {
+    otherCityPlayerBattle=NULL;
     otherPlayerTrade=NULL;
     clan=NULL;
     tradeIsValidated=false;
@@ -87,6 +88,7 @@ void LocalClientHandler::extraStop()
     if(player_informations->is_logged)
     {
         playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
+        leaveTheCityCapture();
     }
     removeFromClan();
 
@@ -2556,7 +2558,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             emit error("Try capture city when is already into that's");
             return;
         }
-        if(!localClientHandlerFight.isInFight())
+        if(localClientHandlerFight.isInFight())
         {
             emit error("Try capture city when is in fight");
             return;
@@ -2664,6 +2666,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             return;
         }
         captureCity[zoneName] << this;
+        localClientHandlerFight.setInCityCapture(true);
     }
     else
     {
@@ -2677,9 +2680,23 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
             emit error("not in capture city");
             return;
         }
+        leaveTheCityCapture();
+    }
+}
+
+void LocalClientHandler::leaveTheCityCapture()
+{
+    if(clan==NULL)
+        return;
+    if(clan->captureCityInProgress.isEmpty())
+        return;
+    if(captureCity[clan->captureCityInProgress].removeOne(this))
+    {
         if(captureCity[clan->captureCityInProgress].isEmpty())
             captureCity.remove(clan->captureCityInProgress);
     }
+    localClientHandlerFight.setInCityCapture(false);
+    otherCityPlayerBattle=NULL;
 }
 
 void LocalClientHandler::startTheCityCapture()
@@ -2737,6 +2754,8 @@ void LocalClientHandler::startTheCityCapture()
                 {
                     if(tempCaptureCityValidated.players.at(index)->clanId()!=tempCaptureCityValidated.players.at(sub_index)->clanId())
                     {
+                        tempCaptureCityValidated.players.at(index)->otherCityPlayerBattle=tempCaptureCityValidated.players.at(sub_index);
+                        tempCaptureCityValidated.players.at(sub_index)->otherCityPlayerBattle=tempCaptureCityValidated.players.at(index);
                         tempCaptureCityValidated.players.at(index)->getLocalClientHandlerFight()->battleFakeAccepted(tempCaptureCityValidated.players.at(sub_index)->getLocalClientHandlerFight());
                         tempCaptureCityValidated.playersInFight << tempCaptureCityValidated.players.at(index);
                         tempCaptureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
@@ -2778,45 +2797,52 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
         if(!clan->captureCityInProgress.isEmpty() && captureCityValidatedList.contains(clan->captureCityInProgress))
         {
             CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
-            if(captureCityValidated.playersInFight.removeOne(this))
+            //check if this player is into the capture city with the other player of the team
+            if(captureCityValidated.playersInFight.contains(this))
             {
                 if(win)
                 {
-                    quint16 player_count=cityCapturePlayerCount(captureCityValidated);
-                    quint16 clan_count=cityCaptureClanCount(captureCityValidated);
                     if(fightId!=0)
                         captureCityValidated.botsInFight.removeOne(fightId);
                     else
                     {
-                        bool newFightFound=false;
-                        int index=0;
-                        while(index<captureCityValidated.players.size())
+                        if(otherCityPlayerBattle!=NULL)
                         {
-                            if(clanId()!=captureCityValidated.players.at(index)->clanId())
-                            {
-                                getLocalClientHandlerFight()->battleFakeAccepted(captureCityValidated.players.at(index)->getLocalClientHandlerFight());
-                                captureCityValidated.playersInFight << captureCityValidated.players.at(index);
-                                captureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
-                                cityCaptureBattle(player_count,clan_count);
-                                captureCityValidated.players.removeAt(index);
-                                newFightFound=true;
-                                break;
-                            }
-                            index++;
+                            captureCityValidated.playersInFight.removeOne(otherCityPlayerBattle);
+                            otherCityPlayerBattle=NULL;
                         }
-                        if(!newFightFound && !captureCityValidated.bots.isEmpty())
+                    }
+                    quint16 player_count=cityCapturePlayerCount(captureCityValidated);
+                    quint16 clan_count=cityCaptureClanCount(captureCityValidated);
+                    bool newFightFound=false;
+                    int index=0;
+                    while(index<captureCityValidated.players.size())
+                    {
+                        if(clanId()!=captureCityValidated.players.at(index)->clanId())
                         {
-                            cityCaptureBotFight(player_count,clan_count,captureCityValidated.bots.first());
-                            captureCityValidated.botsInFight << captureCityValidated.bots.first();
-                            localClientHandlerFight.botFightStart(captureCityValidated.bots.first());
-                            captureCityValidated.bots.removeFirst();
+                            getLocalClientHandlerFight()->battleFakeAccepted(captureCityValidated.players.at(index)->getLocalClientHandlerFight());
+                            captureCityValidated.playersInFight << captureCityValidated.players.at(index);
+                            captureCityValidated.playersInFight.last()->cityCaptureBattle(player_count,clan_count);
+                            cityCaptureBattle(player_count,clan_count);
+                            captureCityValidated.players.removeAt(index);
                             newFightFound=true;
+                            break;
                         }
-                        if(!newFightFound)
-                        {
-                            captureCityValidated.playersInFight.removeOne(this);
-                            captureCityValidated.players << this;
-                        }
+                        index++;
+                    }
+                    if(!newFightFound && !captureCityValidated.bots.isEmpty())
+                    {
+                        cityCaptureBotFight(player_count,clan_count,captureCityValidated.bots.first());
+                        captureCityValidated.botsInFight << captureCityValidated.bots.first();
+                        localClientHandlerFight.botFightStart(captureCityValidated.bots.first());
+                        captureCityValidated.bots.removeFirst();
+                        newFightFound=true;
+                    }
+                    if(!newFightFound)
+                    {
+                        captureCityValidated.playersInFight.removeOne(this);
+                        captureCityValidated.players << this;
+                        otherCityPlayerBattle=NULL;
                     }
                 }
                 else
@@ -2825,6 +2851,11 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                     {
                         captureCityValidated.botsInFight.removeOne(fightId);
                         captureCityValidated.bots.removeOne(fightId);
+                    }
+                    else
+                    {
+                        captureCityValidated.playersInFight.removeOne(this);
+                        otherCityPlayerBattle=NULL;
                     }
                     captureCityValidated.clanSize[clanId()]--;
                     if(captureCityValidated.clanSize[clanId()]==0)
@@ -2882,13 +2913,13 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                             {
                                 default:
                                 case ServerSettings::Database::DatabaseType_Mysql:
-                                    emit dbQuery(QString("INSERT INTO city(clan,city) VALUES(%1,%2);")
+                                    emit dbQuery(QString("INSERT INTO city(clan,city) VALUES(%1,'%2');")
                                                  .arg(clan->clanId)
                                                  .arg(clan->captureCityInProgress)
                                                  );
                                 break;
                                 case ServerSettings::Database::DatabaseType_SQLite:
-                                    emit dbQuery(QString("INSERT INTO city(clan,city) VALUES(%1,%2);")
+                                    emit dbQuery(QString("INSERT INTO city(clan,city) VALUES(%1,'%2');")
                                                  .arg(clan->clanId)
                                                  .arg(clan->captureCityInProgress)
                                                  );
@@ -2901,10 +2932,9 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                         int index=0;
                         while(index<captureCityValidated.players.size())
                         {
-                            captureCityValidated.playersInFight.last()->cityCaptureWin();
+                            captureCityValidated.players.last()->cityCaptureWin();
                             index++;
                         }
-
                     }
                 }
                 else
@@ -2988,4 +3018,12 @@ void LocalClientHandler::previousCityCaptureNotFinished()
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)0x02;
     emit sendFullPacket(0xF0,0x0003,outputData);
+}
+
+void LocalClientHandler::resetAll()
+{
+    LocalClientHandler::playerByPseudo.clear();
+    LocalClientHandler::captureCity.clear();
+    LocalClientHandler::captureCityValidatedList.clear();
+    LocalClientHandler::clanList.clear();
 }

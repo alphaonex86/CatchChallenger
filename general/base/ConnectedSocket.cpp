@@ -24,7 +24,7 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket,QObject *parent) :
     connect(socket,&QTcpSocket::destroyed,      this,&ConnectedSocket::destroyedSocket);
     connect(socket,&QTcpSocket::connected,      this,&ConnectedSocket::connected);
     connect(socket,&QTcpSocket::disconnected,   this,&ConnectedSocket::disconnected);
-    connect(socket,static_cast<void(QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
+    connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
     connect(socket,&QTcpSocket::stateChanged,   this,&ConnectedSocket::stateChanged);
     connect(socket,&QTcpSocket::readyRead,      this,&ConnectedSocket::readyRead,Qt::DirectConnection);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);

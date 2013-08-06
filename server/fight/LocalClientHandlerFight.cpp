@@ -14,6 +14,7 @@ LocalClientHandlerFight::LocalClientHandlerFight()
     player_informations=NULL;
     botFightCash=0;
     haveCurrentSkill=false;
+    isInCityCapture=false;
 }
 
 LocalClientHandlerFight::~LocalClientHandlerFight()
@@ -254,6 +255,11 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
     #endif
     this->botFightId=botFightId;
     return true;
+}
+
+void LocalClientHandlerFight::setInCityCapture(const bool &isInCityCapture)
+{
+    this->isInCityCapture=isInCityCapture;
 }
 
 LocalClientHandlerFight * LocalClientHandlerFight::getOtherPlayerBattle() const
@@ -741,23 +747,26 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
         {
             if(isBot)
             {
-                addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
-                player_informations->public_and_private_informations.bot_already_beaten << botFightId;
-                switch(GlobalServerData::serverSettings.database.type)
+                if(!isInCityCapture)
                 {
-                    default:
-                    case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                     .arg(player_informations->id)
-                                     .arg(botFightId)
-                                     );
-                    break;
-                    case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                     .arg(player_informations->id)
-                                     .arg(botFightId)
-                                     );
-                    break;
+                    addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
+                    player_informations->public_and_private_informations.bot_already_beaten << botFightId;
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                         .arg(player_informations->id)
+                                         .arg(botFightId)
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                         .arg(player_informations->id)
+                                         .arg(botFightId)
+                                         );
+                        break;
+                    }
                 }
                 emit fightOrBattleFinish(win,botFightId);
                 emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
