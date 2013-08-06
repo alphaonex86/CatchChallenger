@@ -81,6 +81,14 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInvite,this,&BaseWindow::clanInvite,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::cityCapture,this,&BaseWindow::cityCapture,Qt::QueuedConnection);
 
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourAreNotLeader,this,&BaseWindow::captureCityYourAreNotLeader,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourLeaderHaveStartInOtherCity,this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityPreviousNotFinished,this,&BaseWindow::captureCityPreviousNotFinished,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityStartBattle,this,&BaseWindow::captureCityStartBattle,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityStartBotFight,this,&BaseWindow::captureCityStartBotFight,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityDelayedStart,this,&BaseWindow::captureCityDelayedStart,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityWin,this,&BaseWindow::captureCityWin,Qt::QueuedConnection);
+
     //connect the map controler
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&BaseWindow::have_current_player_info,Qt::QueuedConnection);
 
@@ -339,6 +347,20 @@ void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
 
 void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
+    BattleInformations battleInformations;
+    battleInformations.pseudo=pseudo;
+    battleInformations.skinId=skinId;
+    battleInformations.stat=stat;
+    battleInformations.monsterPlace=monsterPlace;
+    battleInformations.publicPlayerMonster=publicPlayerMonster;
+    battleInformationsList << battleInformations;
+    if(battleInformationsList.size()>1 || !botFightList.isEmpty())
+        return;
+    battleAcceptedByOtherFull(battleInformations);
+}
+
+void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInformations)
+{
     if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
         qDebug() << "already in fight";
@@ -349,7 +371,7 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
     ui->stackedWidget->setCurrentWidget(ui->page_battle);
 
     //skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
-    QPixmap otherFrontImage=getFrontSkin(skinId);
+    QPixmap otherFrontImage=getFrontSkin(battleInformations.skinId);
 
     //reset the other player info
     ui->labelFightMonsterTop->setPixmap(otherFrontImage);
@@ -358,14 +380,14 @@ void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinI
     ui->frameFightBottom->hide();
     ui->labelFightMonsterBottom->setPixmap(playerBackImage);
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-    ui->labelFightEnter->setText(tr("%1 wish fight with you").arg(pseudo));
+    ui->labelFightEnter->setText(tr("%1 wish fight with you").arg(battleInformations.pseudo));
     ui->pushButtonFightEnterNext->hide();
 
     resetPosition(true);
     moveType=MoveType_Enter;
     battleStep=BattleStep_Presentation;
     moveFightMonsterBoth();
-    CatchChallenger::ClientFightEngine::fightEngine.setBattleMonster(stat,monsterPlace,publicPlayerMonster);
+    CatchChallenger::ClientFightEngine::fightEngine.setBattleMonster(battleInformations.stat,battleInformations.monsterPlace,battleInformations.publicPlayerMonster);
 }
 
 void BaseWindow::battleCanceledByOther()
@@ -1039,7 +1061,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, quint8 x, q
             showTip(tr("Bot step wrong data type error, repport this error please"));
             return;
         }
-        botFight(fightId,MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
+        botFight(fightId);
         return;
     }
     else
@@ -1753,13 +1775,20 @@ void BaseWindow::goToBotStep(const quint8 &step)
         }
         QString zone=actualBot.step[step].attribute("zone");
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
-            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(DatapackClientLoader::datapackLoader.zonesExtra[zone].name)));
+        {
+            zonecaptureName=DatapackClientLoader::datapackLoader.zonesExtra[zone].name;
+            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(zonecaptureName)));
+        }
         else
+        {
+            zonecaptureName.clear();
             ui->zonecaptureWaitText->setText(tr("You are waiting to capture a zone"));
+        }
         updater_page_zonecapture.start(1000);
         nextCaptureOnScreen=nextCapture;
+        zonecapture=true;
         ui->stackedWidget->setCurrentWidget(ui->page_zonecapture);
-        CatchChallenger::Api_client_real::client->waitingForCityCaputre(false);
+        CatchChallenger::Api_client_real::client->waitingForCityCapture(false);
         updatePageZonecapture();
         return;
     }
@@ -1820,7 +1849,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             return;
         }
         CatchChallenger::Api_client_real::client->requestFight(fightId);
-        botFight(fightId,MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
+        botFight(fightId);
         return;
     }
     else
@@ -3061,7 +3090,7 @@ void CatchChallenger::BaseWindow::clanInvite(const quint32 &clanId,const QString
 void CatchChallenger::BaseWindow::cityCaptureUpdateTime()
 {
     if(city.capture.frenquency==City::Capture::Frequency_week)
-        nextCapture=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7);
+        nextCapture=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7*1000);
     else
         nextCapture=FacilityLib::nextCaptureTime(city);
     nextCityCaptureTimer.start(nextCapture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch());
@@ -3069,9 +3098,9 @@ void CatchChallenger::BaseWindow::cityCaptureUpdateTime()
 
 void CatchChallenger::BaseWindow::updatePageZonecapture()
 {
-    if(QDateTime::currentMSecsSinceEpoch()<nextCapture.toMSecsSinceEpoch())
+    if(QDateTime::currentMSecsSinceEpoch()<nextCaptureOnScreen.toMSecsSinceEpoch())
     {
-        int sec=(nextCapture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000;
+        int sec=(nextCaptureOnScreen.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000+1;
         QString timeText;
         if(sec>3600*24*365*50)
             timeText="Time player: bug";
@@ -3086,9 +3115,11 @@ void CatchChallenger::BaseWindow::updatePageZonecapture()
         else
             timeText=QObject::tr("%n second(s)","",sec);
         ui->zonecaptureWaitTime->setText(tr("Remaining time: %1").arg(QString("<b>%1</b>").arg(timeText)));
+        ui->zonecaptureCancel->setVisible(true);
     }
     else
     {
+        ui->zonecaptureCancel->setVisible(false);
         ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting of players list")+"</i>");
         updater_page_zonecapture.stop();
     }
@@ -3098,5 +3129,66 @@ void CatchChallenger::BaseWindow::on_zonecaptureCancel_clicked()
 {
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    CatchChallenger::Api_client_real::client->waitingForCityCaputre(true);
+    CatchChallenger::Api_client_real::client->waitingForCityCapture(true);
+    zonecapture=false;
+}
+
+void CatchChallenger::BaseWindow::captureCityYourAreNotLeader()
+{
+    updater_page_zonecapture.stop();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("You are not a clan leader to start a city capture"));
+    zonecapture=false;
+}
+
+void CatchChallenger::BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const QString &zone)
+{
+    updater_page_zonecapture.stop();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
+        showTip(tr("Your clan leader have start a caputre for another city: %1").arg(QString("<b>%1</b>").arg(DatapackClientLoader::datapackLoader.zonesExtra[zone].name)));
+    else
+        showTip(tr("Your clan leader have start a caputre for another city"));
+    zonecapture=false;
+}
+
+void CatchChallenger::BaseWindow::captureCityPreviousNotFinished()
+{
+    updater_page_zonecapture.stop();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("Previous capture of this city is not finished"));
+    zonecapture=false;
+}
+
+void CatchChallenger::BaseWindow::captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count)
+{
+    ui->zonecaptureCancel->setVisible(false);
+    ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
+    updater_page_zonecapture.stop();
+}
+
+void CatchChallenger::BaseWindow::captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId)
+{
+    ui->zonecaptureCancel->setVisible(false);
+    ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
+    updater_page_zonecapture.stop();
+    botFight(fightId);
+}
+
+void CatchChallenger::BaseWindow::captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count)
+{
+    ui->zonecaptureCancel->setVisible(false);
+    ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting fight.")+" "+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
+    updater_page_zonecapture.stop();
+}
+
+void CatchChallenger::BaseWindow::captureCityWin()
+{
+    updater_page_zonecapture.stop();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    if(!zonecaptureName.isEmpty())
+        showTip(tr("Your clan win the city: %1").arg(QString("<b>%1</b>").arg(zonecaptureName)));
+    else
+        showTip(tr("Your clan win the city"));
+    zonecapture=false;
 }
