@@ -33,12 +33,15 @@ public:
     QHash<quint32,Skill> monsterSkills;
     QHash<quint32,Buff> monsterBuffs;
     ItemFull items;
+    QHash<quint32,Industry> industries;
+    QHash<quint32,quint32> industriesLink;
 private:
     QMutex inProgress;
     bool isParsed;
     QString datapackPath;
 private slots:
     void parseItems();
+    void parseIndustries();
     void parseQuests();
     void parsePlants();
     void parseCraftingRecipes();

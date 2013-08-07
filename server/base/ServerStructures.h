@@ -157,6 +157,14 @@ struct CityStatus
     quint32 clan;
 };
 
+struct IndustryStatus
+{
+    quint32 industry;
+    quint32 last_update;
+    QHash<quint32,quint32> resources;
+    QHash<quint32,quint32> products;
+};
+
 struct ServerPrivateVariables
 {
     //bd
@@ -212,6 +220,7 @@ struct ServerPrivateVariables
     QSet<QFakeSocket *> botSockets;
     quint32 number_of_bots_logged;
     int botSpawnIndex;
+    QHash<quint32,IndustryStatus> industriesStatus;
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp

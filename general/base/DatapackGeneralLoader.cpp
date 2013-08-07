@@ -624,8 +624,8 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
         {
             if(plantItem.hasAttribute("id") && plantItem.hasAttribute("itemUsed"))
             {
-                quint8 id=plantItem.attribute("id").toULongLong(&ok);
-                quint32 itemUsed=plantItem.attribute("itemUsed").toULongLong(&ok2);
+                quint8 id=plantItem.attribute("id").toUShort(&ok);
+                quint32 itemUsed=plantItem.attribute("itemUsed").toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!plants.contains(id))
@@ -656,7 +656,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                 if(!sprouted.isNull())
                                     if(sprouted.isElement())
                                     {
-                                        plant.sprouted_seconds=sprouted.text().toULongLong(&ok2)*60;
+                                        plant.sprouted_seconds=sprouted.text().toUInt(&ok2)*60;
                                         if(!ok2)
                                         {
                                             qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(sprouted.tagName()).arg(sprouted.lineNumber()).arg(sprouted.text());
@@ -671,7 +671,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                 if(!taller.isNull())
                                     if(taller.isElement())
                                     {
-                                        plant.taller_seconds=taller.text().toULongLong(&ok2)*60;
+                                        plant.taller_seconds=taller.text().toUInt(&ok2)*60;
                                         if(!ok2)
                                         {
                                             qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(taller.tagName()).arg(taller.lineNumber()).arg(taller.text());
@@ -686,7 +686,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                 if(!flowering.isNull())
                                     if(flowering.isElement())
                                     {
-                                        plant.flowering_seconds=flowering.text().toULongLong(&ok2)*60;
+                                        plant.flowering_seconds=flowering.text().toUInt(&ok2)*60;
                                         if(!ok2)
                                         {
                                             ok=false;
@@ -701,7 +701,7 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                 if(!fruits.isNull())
                                     if(fruits.isElement())
                                     {
-                                        plant.fruits_seconds=fruits.text().toULongLong(&ok2)*60;
+                                        plant.fruits_seconds=fruits.text().toUInt(&ok2)*60;
                                         if(!ok2)
                                         {
                                             qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber()).arg(fruits.text());
@@ -806,8 +806,8 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                 }
 
                 quint32 id=recipeItem.attribute("id").toUInt(&ok);
-                quint32 itemToLearn=recipeItem.attribute("itemToLearn").toULongLong(&ok2);
-                quint32 doItemId=recipeItem.attribute("doItemId").toULongLong(&ok3);
+                quint32 itemToLearn=recipeItem.attribute("itemToLearn").toUInt(&ok2);
+                quint32 doItemId=recipeItem.attribute("doItemId").toUInt(&ok3);
                 if(ok && ok2 && ok3)
                 {
                     if(!crafingRecipes.contains(id))
@@ -910,6 +910,254 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
     return QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> >(crafingRecipes,itemToCrafingRecipes);
 }
 
+QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &folder,const QHash<quint32, Item> &items)
+{
+    QHash<quint32,Industry> industries;
+    QDir dir(folder);
+    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    int file_index=0;
+    while(file_index<fileList.size())
+    {
+        if(fileList.at(file_index).fileName()=="list.xml")
+        {
+            file_index++;
+            continue;
+        }
+        //open and quick check the file
+        QFile industryFile(fileList.at(file_index).absoluteFilePath());
+        QByteArray xmlContent;
+        if(!industryFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << QString("Unable to open the crafting recipe file: %1, error: %2").arg(industryFile.fileName()).arg(industryFile.errorString());
+            file_index++;
+            continue;
+        }
+        xmlContent=industryFile.readAll();
+        industryFile.close();
+        QDomDocument domDocument;
+        QString errorStr;
+        int errorLine,errorColumn;
+        if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QString("Unable to open the crafting recipe file: %1, Parse error at line %2, column %3: %4").arg(industryFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            file_index++;
+            continue;
+        }
+        QDomElement root = domDocument.documentElement();
+        if(root.tagName()!="industries")
+        {
+            qDebug() << QString("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(industryFile.fileName());
+            file_index++;
+            continue;
+        }
+
+        //load the content
+        bool ok,ok2,ok3;
+        QDomElement industryItem = root.firstChildElement("industry");
+        while(!industryItem.isNull())
+        {
+            if(industryItem.isElement())
+            {
+                if(industryItem.hasAttribute("id") && industryItem.hasAttribute("time") && industryItem.hasAttribute("cycletobefull"))
+                {
+                    quint32 id=industryItem.attribute("id").toUInt(&ok);
+                    quint32 time=industryItem.attribute("time").toUInt(&ok2);
+                    quint8 cycletobefull=industryItem.attribute("cycletobefull").toUShort(&ok3);
+                    if(ok && ok2 && ok3)
+                    {
+                        if(time<60*5)
+                            qDebug() << QString("the time need be greater than 5*60 seconds to not slow down the server: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                        else if(cycletobefull<1)
+                            qDebug() << QString("cycletobefull need be greater than 0: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                        else if(!industries.contains(id))
+                        {
+                            Industry industry;
+                            //ressource
+                            {
+                                QDomElement ressourceItem = industryItem.firstChildElement("ressource");
+                                ok=true;
+                                while(!ressourceItem.isNull() && ok)
+                                {
+                                    if(ressourceItem.isElement())
+                                    {
+                                        Industry::Resource ressource;
+                                        ressource.quantity=1;
+                                        if(ressourceItem.hasAttribute("quantity"))
+                                        {
+                                            ressource.quantity=ressourceItem.attribute("quantity").toUInt(&ok);
+                                            if(!ok)
+                                                qDebug() << QString("quantity is not a number: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                        }
+                                        if(ok)
+                                        {
+                                            if(ressourceItem.hasAttribute("id"))
+                                            {
+                                                ressource.item=ressourceItem.attribute("id").toUInt(&ok);
+                                                if(!ok)
+                                                    qDebug() << QString("id is not a number: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                else if(!items.contains(ressource.item))
+                                                {
+                                                    ok=false;
+                                                    qDebug() << QString("id is not into the item list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                }
+                                                else
+                                                    industry.ressources << ressource;
+                                            }
+                                            else
+                                            {
+                                                ok=false;
+                                                qDebug() << QString("have not the id attribute: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        ok=false;
+                                        qDebug() << QString("is not a elements: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                    }
+                                    ressourceItem = ressourceItem.nextSiblingElement("ressource");
+                                }
+                            }
+
+                            //product
+                            if(ok)
+                            {
+                                QDomElement productItem = industryItem.firstChildElement("product");
+                                ok=true;
+                                while(!productItem.isNull() && ok)
+                                {
+                                    if(productItem.isElement())
+                                    {
+                                        Industry::Product product;
+                                        product.quantity=1;
+                                        if(productItem.hasAttribute("quantity"))
+                                        {
+                                            product.quantity=productItem.attribute("quantity").toUInt(&ok);
+                                            if(!ok)
+                                                qDebug() << QString("quantity is not a number: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                        }
+                                        if(ok)
+                                        {
+                                            if(productItem.hasAttribute("id"))
+                                            {
+                                                product.item=productItem.attribute("id").toUInt(&ok);
+                                                if(!ok)
+                                                    qDebug() << QString("id is not a number: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                else if(!items.contains(product.item))
+                                                {
+                                                    ok=false;
+                                                    qDebug() << QString("id is not into the item list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                }
+                                                else
+                                                    industry.products << product;
+                                            }
+                                            else
+                                            {
+                                                ok=false;
+                                                qDebug() << QString("have not the id attribute: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        ok=false;
+                                        qDebug() << QString("is not a elements: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                    }
+                                    productItem = productItem.nextSiblingElement("product");
+                                }
+                            }
+
+                            //add
+                            if(ok)
+                            {
+                                if(industry.products.isEmpty() || industry.ressources.isEmpty())
+                                    qDebug() << QString("product or ressources is empty: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                else
+                                    industries[id]=industry;
+                            }
+                        }
+                        else
+                            qDebug() << QString("Unable to open the insdutries file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                    }
+                    else
+                        qDebug() << QString("Unable to open the insdutries file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                }
+                else
+                    qDebug() << QString("Unable to open the insdutries file: %1, have not the id: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+            }
+            else
+                qDebug() << QString("Unable to open the insdutries file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+            industryItem = industryItem.nextSiblingElement("industry");
+        }
+        file_index++;
+    }
+    return industries;
+}
+
+QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries)
+{
+    QHash<quint32,quint32> industriesLink;
+    //open and quick check the file
+    QFile industriesLinkFile(file);
+    QByteArray xmlContent;
+    if(!industriesLinkFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << QString("Unable to open the crafting recipe file: %1, error: %2").arg(industriesLinkFile.fileName()).arg(industriesLinkFile.errorString());
+        return industriesLink;
+    }
+    xmlContent=industriesLinkFile.readAll();
+    industriesLinkFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("Unable to open the crafting recipe file: %1, Parse error at line %2, column %3: %4").arg(industriesLinkFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return industriesLink;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="industries")
+    {
+        qDebug() << QString("Unable to open the crafting recipe file: %1, \"industries\" root balise not found for the xml file").arg(industriesLinkFile.fileName());
+        return industriesLink;
+    }
+
+    //load the content
+    bool ok,ok2;
+    QDomElement linkItem = root.firstChildElement("link");
+    while(!linkItem.isNull())
+    {
+        if(linkItem.isElement())
+        {
+            if(linkItem.hasAttribute("industry_id") && linkItem.hasAttribute("factory_id"))
+            {
+                quint32 industry_id=linkItem.attribute("industry_id").toUInt(&ok);
+                quint32 factory_id=linkItem.attribute("factory_id").toUInt(&ok2);
+                if(ok && ok2)
+                {
+                    if(!industriesLink.contains(factory_id))
+                    {
+                        if(industries.contains(factory_id))
+                            industriesLink[factory_id]=industry_id;
+                        else
+                            qDebug() << QString("Industry id for factory is not found: %1, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+                    }
+                    else
+                        qDebug() << QString("Factory already found: %1, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+                }
+                else
+                    qDebug() << QString("Unable to open the insdutries link file: %1, the attribute is not a number, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+            }
+            else
+                qDebug() << QString("Unable to open the insdutries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+        }
+        else
+            qDebug() << QString("Unable to open the insdutries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+        linkItem = linkItem.nextSiblingElement("link");
+    }
+    return industriesLink;
+}
+
 ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
 {
     ItemFull items;
@@ -947,7 +1195,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
         {
             if(item.hasAttribute("id"))
             {
-                quint32 id=item.attribute("id").toULongLong(&ok);
+                quint32 id=item.attribute("id").toUInt(&ok);
                 if(ok)
                 {
                     if(!items.item.contains(id))

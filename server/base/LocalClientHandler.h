@@ -99,7 +99,7 @@ private:
 
     //map move
     bool singleMove(const Direction &direction);
-    bool captureCityInProgress() const;
+    bool captureCityInProgress();
     //trade
     void internalTradeCanceled(const bool &send);
     void internalTradeAccepted(const bool &send);
