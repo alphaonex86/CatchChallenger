@@ -162,6 +162,11 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	&ClientNetworkRead::buyObject,              localClientHandler,	&LocalClientHandler::buyObject,             Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::sellObject,             localClientHandler,	&LocalClientHandler::sellObject,            Qt::QueuedConnection);
 
+    //factory
+    connect(clientNetworkRead,	&ClientNetworkRead::getFactoryList,         localClientHandler,	&LocalClientHandler::getFactoryList,        Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::buyFactoryObject,       localClientHandler,	&LocalClientHandler::buyFactoryObject,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sellFactoryObject,      localClientHandler,	&LocalClientHandler::sellFactoryObject,     Qt::QueuedConnection);
+
     //fight
     connect(clientNetworkRead,	&ClientNetworkRead::tryEscape,              localClientHandler,	&LocalClientHandler::tryEscape,             Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::useSkill,               localClientHandler,	&LocalClientHandler::useSkill,              Qt::QueuedConnection);

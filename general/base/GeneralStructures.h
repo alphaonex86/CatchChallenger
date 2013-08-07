@@ -120,7 +120,7 @@ struct Industry
         quint32 item;
         quint32 quantity;
     };
-    QList<Resource> ressources;
+    QList<Resource> resources;
     QList<Product> products;
 };
 

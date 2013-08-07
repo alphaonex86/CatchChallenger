@@ -93,6 +93,10 @@ signals:
     void getShopList(const quint32 &query_id,const quint32 &shopId) const;
     void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const;
     void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const;
+    //factory
+    void getFactoryList(const quint32 &query_id,const quint32 &shopId) const;
+    void buyFactoryObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const;
+    void sellFactoryObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price) const;
     //fight
     void tryEscape() const;
     void useSkill(const quint32 &skill) const;
