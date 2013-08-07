@@ -141,6 +141,7 @@ void BaseServer::preload_the_data()
     load_clan_max_id();
     preload_the_city_capture();
     preload_zone();
+    preload_industries();
 }
 
 void BaseServer::preload_zone()
@@ -255,6 +256,180 @@ void BaseServer::preload_zone()
     }
 
     qDebug() << QString("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
+}
+
+void BaseServer::preload_industries()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT id,industry,resources,products,last_update FROM industries");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id,industry,resources,products,last_update FROM industries");
+        break;
+    }
+    QSqlQuery industryStatusQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!industryStatusQuery.exec(queryText))
+        DebugClass::debugConsole(industryStatusQuery.lastQuery()+": "+industryStatusQuery.lastError().text());
+    while(industryStatusQuery.next())
+    {
+        IndustryStatus industryStatus;
+        bool ok;
+        quint32 id=industryStatusQuery.value(0).toUInt(&ok);
+        if(!ok)
+            DebugClass::debugConsole(QString("preload_industries: id is not a number"));
+        if(ok)
+        {
+            if(!CommonDatapack::commonDatapack.industriesLink.contains(id))
+            {
+                ok=false;
+                DebugClass::debugConsole(QString("preload_industries: industries link not found"));
+            }
+        }
+        if(ok)
+        {
+            industryStatus.industry=industryStatusQuery.value(1).toUInt(&ok);
+            if(!ok)
+                DebugClass::debugConsole(QString("preload_industries: industry is not a number"));
+        }
+        if(ok)
+        {
+            if(!CommonDatapack::commonDatapack.industries.contains(industryStatus.industry))
+            {
+                ok=false;
+                DebugClass::debugConsole(QString("preload_industries: industry id is not found"));
+            }
+        }
+        if(ok)
+        {
+            QStringList resourcesStringList=industryStatusQuery.value(2).toString().split(";");
+            int index=0;
+            while(index<resourcesStringList.size())
+            {
+                QStringList itemStringList=resourcesStringList.at(index).split("->");
+                if(itemStringList.size()!=2)
+                {
+                    DebugClass::debugConsole(QString("preload_industries: wrong entry count"));
+                    ok=false;
+                    break;
+                }
+                quint32 item=itemStringList.first().toUInt(&ok);
+                if(!ok)
+                {
+                    DebugClass::debugConsole(QString("preload_industries: item is not a number"));
+                    break;
+                }
+                quint32 quantity=itemStringList.last().toUInt(&ok);
+                if(!ok)
+                {
+                    DebugClass::debugConsole(QString("preload_industries: quantity is not a number"));
+                    break;
+                }
+                if(industryStatus.resources.contains(item))
+                {
+                    DebugClass::debugConsole(QString("preload_industries: item already set"));
+                    ok=false;
+                    break;
+                }
+                int indexItem=0;
+                while(indexItem<CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.size())
+                {
+                    if(CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.at(indexItem).item==item)
+                        break;
+                    indexItem++;
+                }
+                if(indexItem==CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.size())
+                {
+                    DebugClass::debugConsole(QString("preload_industries: item in db not found"));
+                    ok=false;
+                    break;
+                }
+                if(quantity>CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.at(indexItem).quantity)
+                    quantity=CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.at(indexItem).quantity;
+                industryStatus.resources[item]=quantity;
+                index++;
+            }
+        }
+        if(ok)
+        {
+            QStringList productsStringList=industryStatusQuery.value(3).toString().split(";");
+            int index=0;
+            while(index<productsStringList.size())
+            {
+                QStringList itemStringList=productsStringList.at(index).split("->");
+                if(itemStringList.size()!=2)
+                {
+                    DebugClass::debugConsole(QString("preload_industries: wrong entry count"));
+                    ok=false;
+                    break;
+                }
+                quint32 item=itemStringList.first().toUInt(&ok);
+                if(!ok)
+                {
+                    DebugClass::debugConsole(QString("preload_industries: item is not a number"));
+                    break;
+                }
+                quint32 quantity=itemStringList.last().toUInt(&ok);
+                if(!ok)
+                {
+                    DebugClass::debugConsole(QString("preload_industries: quantity is not a number"));
+                    break;
+                }
+                if(industryStatus.products.contains(item))
+                {
+                    DebugClass::debugConsole(QString("preload_industries: item already set"));
+                    ok=false;
+                    break;
+                }
+                int indexItem=0;
+                while(indexItem<CommonDatapack::commonDatapack.industries[industryStatus.industry].products.size())
+                {
+                    if(CommonDatapack::commonDatapack.industries[industryStatus.industry].products.at(indexItem).item==item)
+                        break;
+                    indexItem++;
+                }
+                if(indexItem==CommonDatapack::commonDatapack.industries[industryStatus.industry].products.size())
+                {
+                    DebugClass::debugConsole(QString("preload_industries: item in db not found"));
+                    ok=false;
+                    break;
+                }
+                if(quantity>CommonDatapack::commonDatapack.industries[industryStatus.industry].products.at(indexItem).quantity)
+                    quantity=CommonDatapack::commonDatapack.industries[industryStatus.industry].products.at(indexItem).quantity;
+                industryStatus.products[item]=quantity;
+                index++;
+            }
+        }
+        if(ok)
+        {
+            industryStatus.last_update=industryStatusQuery.value(4).toUInt(&ok);
+            if(!ok)
+                DebugClass::debugConsole(QString("preload_industries: last_update is not a number"));
+        }
+        if(ok)
+            GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
+        else
+        {
+            QString queryText;
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    queryText=QString("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    queryText=QString("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
+                break;
+            }
+            QSqlQuery industryDeleteQuery(*GlobalServerData::serverPrivateVariables.db);
+            if(!industryDeleteQuery.exec(queryText))
+                DebugClass::debugConsole(industryDeleteQuery.lastQuery()+": "+industryDeleteQuery.lastError().text());
+        }
+    }
+    qDebug() << QString("%1 industrie(s) status loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size());
 }
 
 void BaseServer::preload_the_city_capture()
@@ -989,6 +1164,7 @@ void BaseServer::unload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
+    unload_industries();
     unload_zone();
     unload_the_city_capture();
     unload_the_visibility_algorithm();
@@ -1017,6 +1193,11 @@ void BaseServer::unload_the_static_data()
 void BaseServer::unload_zone()
 {
     GlobalServerData::serverPrivateVariables.captureFightIdList.clear();
+}
+
+void BaseServer::unload_industries()
+{
+    GlobalServerData::serverPrivateVariables.industriesStatus.clear();
 }
 
 void BaseServer::unload_the_city_capture()

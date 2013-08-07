@@ -86,6 +86,13 @@ CREATE TABLE "city" (
     "city" TEXT,
     "clan" INTEGER
 );
+CREATE TABLE "industries" (
+    "id" INTEGER PRIMARY KEY,
+    "industry" INTEGER,
+    "resources" TEXT,
+    "products" TEXT,
+    "last_update" INTEGER
+);
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
 CREATE INDEX "player_recipe_list" on recipes (player ASC);
