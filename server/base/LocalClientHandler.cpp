@@ -339,13 +339,25 @@ bool LocalClientHandler::moveThePlayer(const quint8 &previousMovedUnit,const Dir
     return MapBasicMove::moveThePlayer(previousMovedUnit,direction);
 }
 
-bool LocalClientHandler::captureCityInProgress() const
+bool LocalClientHandler::captureCityInProgress()
 {
     if(clan==NULL)
         return false;
     if(clan->captureCityInProgress.isEmpty())
         return false;
-    return captureCity.count(clan->captureCityInProgress)>0;
+    //search in capture not validated
+    if(captureCity.contains(clan->captureCityInProgress))
+        if(captureCity[clan->captureCityInProgress].contains(this))
+            return true;
+    //search in capture validated
+    if(captureCityValidatedList.contains(clan->captureCityInProgress))
+    {
+        const CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
+        //check if this player is into the capture city with the other player of the team
+        if(captureCityValidated.players.contains(this))
+            return true;
+    }
+    return false;
 }
 
 bool LocalClientHandler::singleMove(const Direction &direction)
@@ -2692,8 +2704,25 @@ void LocalClientHandler::leaveTheCityCapture()
         return;
     if(captureCity[clan->captureCityInProgress].removeOne(this))
     {
+        //drop all the capture because no body clam it
         if(captureCity[clan->captureCityInProgress].isEmpty())
+        {
             captureCity.remove(clan->captureCityInProgress);
+            clan->captureCityInProgress.clear();
+        }
+        else
+        {
+            //drop the clan capture in no other player of the same clan is into it
+            int index=0;
+            while(index<captureCity[clan->captureCityInProgress].size())
+            {
+                if(captureCity[clan->captureCityInProgress].at(index)->clanId()==clanId())
+                    break;
+                index++;
+            }
+            if(index==captureCity[clan->captureCityInProgress].size())
+                clan->captureCityInProgress.clear();
+        }
     }
     localClientHandlerFight.setInCityCapture(false);
     otherCityPlayerBattle=NULL;
