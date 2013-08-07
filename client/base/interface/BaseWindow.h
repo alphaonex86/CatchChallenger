@@ -193,6 +193,11 @@ private slots:
     void haveSellObject(const SoldStat &stat,const quint32 &newPrice);
     void displaySellList();
 
+    //shop
+    void haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice);
+    void haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice);
+    void haveFactoryList(const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products);
+
     //plant
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
@@ -332,7 +337,10 @@ private slots:
     void on_clanActionInvite_clicked();
     void on_clanActionEject_clicked();
     void on_zonecaptureCancel_clicked();
-
+    void on_factoryBuy_clicked();
+    void on_factoryProducts_itemActivated(QListWidgetItem *item);
+    void on_factorySell_clicked();
+    void on_factoryResources_itemActivated(QListWidgetItem *item);
 protected slots:
     //datapack
     void datapackParsed();
@@ -360,6 +368,7 @@ private:
     QList<ActionClan> actionClan;
     QString clanName;
     bool haveClanInformations;
+    quint32 factoryId;
 
     //plant seed in waiting
     quint32 seed_in_waiting;

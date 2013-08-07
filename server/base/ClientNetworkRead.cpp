@@ -1032,6 +1032,84 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 emit sellObject(queryNumber,shopId,objectId,quantity,price);
             }
             break;
+            case 0x000D:
+            {
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 factoryId;
+                in >> factoryId;
+                emit getFactoryList(queryNumber,factoryId);
+            }
+            break;
+            case 0x000E:
+            {
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 factoryId;
+                in >> factoryId;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 objectId;
+                in >> objectId;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 quantity;
+                in >> quantity;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 price;
+                in >> price;
+                emit buyFactoryObject(queryNumber,factoryId,objectId,quantity,price);
+            }
+            break;
+            case 0x000F:
+            {
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 factoryId;
+                in >> factoryId;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 objectId;
+                in >> objectId;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 quantity;
+                in >> quantity;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint32 price;
+                in >> price;
+                emit sellFactoryObject(queryNumber,factoryId,objectId,quantity,price);
+            }
+            break;
             default:
                 parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;

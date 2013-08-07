@@ -142,6 +142,13 @@ public slots:
     void getShopList(const quint32 &query_id,const quint32 &shopId);
     void buyObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     void sellObject(const quint32 &query_id,const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    //factory
+    static IndustryStatus industryStatusWithCurrentTime(const IndustryStatus &industryStatus, const Industry &industry);
+    quint32 getFactoryResourcePrice(const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry);
+    quint32 getFactoryProductPrice(const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry);
+    void getFactoryList(const quint32 &query_id,const quint32 &factoryId);
+    void buyFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     //trade
     void tradeCanceled();
     void tradeAccepted();

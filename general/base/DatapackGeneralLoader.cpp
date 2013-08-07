@@ -1001,7 +1001,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                                     qDebug() << QString("id is not into the item list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 }
                                                 else
-                                                    industry.ressources << ressource;
+                                                    industry.resources << ressource;
                                             }
                                             else
                                             {
@@ -1070,7 +1070,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                             //add
                             if(ok)
                             {
-                                if(industry.products.isEmpty() || industry.ressources.isEmpty())
+                                if(industry.products.isEmpty() || industry.resources.isEmpty())
                                     qDebug() << QString("product or ressources is empty: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                 else
                                     industries[id]=industry;

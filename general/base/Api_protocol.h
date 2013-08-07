@@ -41,9 +41,9 @@ public:
     virtual void tryDisconnect() = 0;
     QString get_datapack_base_name();
 
-    //plant
     bool getHavePlantAction();
     bool getHaveShopAction();
+    bool getHaveFactoryAction();
 
     //to reset all
     void resetAll();
@@ -92,9 +92,9 @@ protected:
     //datapack
     QString datapack_base_name;
 
-    //plant
     bool havePlantAction;
     bool haveShopAction;
+    bool haveFactoryAction;
 
     //teleport list query id
     QList<quint8> teleportList;
@@ -157,6 +157,11 @@ signals:
     void haveShopList(const QList<ItemToSellOrBuy> &items) const;
     void haveBuyObject(const BuyStat &stat,const quint32 &newPrice) const;
     void haveSellObject(const SoldStat &stat,const quint32 &newPrice) const;
+
+    //factory
+    void haveFactoryList(const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products) const;
+    void haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice) const;
+    void haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice) const;
 
     //trade
     void tradeRequested(const QString &pseudo,const quint8 &skinInt) const;
@@ -227,6 +232,11 @@ public slots:
     void getShopList(const quint32 &shopId);
     void buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     void sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+
+    //factory
+    void getFactoryList(const quint32 &factoryId);
+    void buyFactoryObject(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellFactoryObject(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
 
     //fight
     void tryEscape();
