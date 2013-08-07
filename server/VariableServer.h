@@ -27,6 +27,8 @@
 #define CATCHCHALLENGER_SERVER_NORMAL_SPEED 250 //then 250ms, see the protocol
 
 #define CATCHCHALLENGER_SERVER_OWNER_TIMEOUT 60*60*24
+//the % of the price change when the resource/product if full/empty
+#define CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE 20
 
 /** map visibility bandwith optimisation
  Do in define to not drop cpu performance, due to heavy call **/

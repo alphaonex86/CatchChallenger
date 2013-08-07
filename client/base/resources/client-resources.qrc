@@ -37,5 +37,6 @@
         <file>images/link.png</file>
         <file>images/inventory/shop.png</file>
         <file>images/interface/learn.png</file>
+        <file>images/inventory/factory.png</file>
     </qresource>
 </RCC>
