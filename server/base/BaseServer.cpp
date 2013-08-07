@@ -335,20 +335,20 @@ void BaseServer::preload_industries()
                     break;
                 }
                 int indexItem=0;
-                while(indexItem<CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.size())
+                while(indexItem<CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.size())
                 {
-                    if(CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.at(indexItem).item==item)
+                    if(CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.at(indexItem).item==item)
                         break;
                     indexItem++;
                 }
-                if(indexItem==CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.size())
+                if(indexItem==CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.size())
                 {
                     DebugClass::debugConsole(QString("preload_industries: item in db not found"));
                     ok=false;
                     break;
                 }
-                if(quantity>CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.at(indexItem).quantity)
-                    quantity=CommonDatapack::commonDatapack.industries[industryStatus.industry].ressources.at(indexItem).quantity;
+                if(quantity>CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.at(indexItem).quantity)
+                    quantity=CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.at(indexItem).quantity;
                 industryStatus.resources[item]=quantity;
                 index++;
             }

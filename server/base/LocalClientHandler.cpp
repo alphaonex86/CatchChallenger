@@ -1745,6 +1745,212 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
     emit postReply(query_id,outputData);
 }
 
+IndustryStatus LocalClientHandler::industryStatusWithCurrentTime(const IndustryStatus &industryStatus,const Industry &industry)
+{
+    IndustryStatus industryStatusCopy=industryStatus;
+    //do the generated item
+    quint32 timeIntervalCount;
+    if(industryStatus.last_update<(QDateTime::currentMSecsSinceEpoch()/1000))
+    {
+        timeIntervalCount=(QDateTime::currentMSecsSinceEpoch()/1000-industryStatus.last_update)/industry.time;
+        if(timeIntervalCount>industry.cycletobefull)
+            timeIntervalCount=industry.cycletobefull;
+    }
+    int index=0;
+    bool doOneProduct=(timeIntervalCount>0);
+    while(doOneProduct)
+    {
+        index=0;
+        if(doOneProduct)
+            while(index<industry.resources.size())
+            {
+                const Industry::Resource &resource=industry.resources.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.resources[resource.item];
+                if(resource.quantity>quantityInStock)
+                {
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+        index=0;
+        if(doOneProduct)
+            while(index<industry.products.size())
+            {
+                const Industry::Product &product=industry.products.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.products[product.item];
+                if(product.quantity*industry.cycletobefull>=quantityInStock)
+                {
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+        if(doOneProduct)
+        {
+            index=0;
+            while(index<industry.resources.size())
+            {
+                industryStatusCopy.resources[industry.resources.at(index).item]-=industry.resources.at(index).quantity;
+                index++;
+            }
+            index=0;
+            while(index<industry.products.size())
+            {
+                industryStatusCopy.products[industry.products.at(index).item]+=industry.products.at(index).quantity;
+                index++;
+            }
+        }
+    }
+    return industryStatusCopy;
+}
+
+quint32 LocalClientHandler::getFactoryResourcePrice(const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry)
+{
+    quint8 price_temp_change=(resource.quantity*industry.cycletobefull-quantityInStock)*(CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE*2)/resource.quantity*industry.cycletobefull;
+    return CommonDatapack::commonDatapack.items.item[resource.item].price*(100-CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE+price_temp_change)/100;
+}
+
+quint32 LocalClientHandler::getFactoryProductPrice(const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry)
+{
+    quint8 price_temp_change=(product.quantity*industry.cycletobefull-quantityInStock)*(CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE*2)/product.quantity*industry.cycletobefull;
+    return CommonDatapack::commonDatapack.items.item[product.item].price*(100-CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE+price_temp_change)/100;
+}
+
+void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &factoryId)
+{
+    if(localClientHandlerFight.isInFight())
+    {
+        emit error("Try do inventory action when is in fight");
+        return;
+    }
+    if(captureCityInProgress())
+    {
+        emit error("Try do inventory action when is in capture city");
+        return;
+    }
+    if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+    {
+        emit error("factory id not found");
+        return;
+    }
+    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+    //send the shop items (no taxes from now)
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
+    {
+        out << (quint32)industry.resources.size();
+        int index=0;
+        while(index<industry.resources.size())
+        {
+            const Industry::Resource &resource=industry.resources.at(index);
+            out << (quint32)resource.item;
+            out << (quint32)CommonDatapack::commonDatapack.items.item[resource.item].price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100;
+            out << (quint32)resource.quantity*industry.cycletobefull;
+            index++;
+        }
+        out << (quint32)0x00000000;//no product do
+    }
+    else
+    {
+        int index,count_item;
+        const IndustryStatus &industryStatus=industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
+        //send the ressource
+        count_item=0;
+        index=0;
+        while(index<industry.resources.size())
+        {
+            const Industry::Resource &resource=industry.resources.at(index);
+            const quint32 &quantityInStock=industryStatus.resources[resource.item];
+            if(resource.quantity*industry.cycletobefull>quantityInStock)
+                count_item++;
+            index++;
+        }
+        out << (quint32)count_item;
+        index=0;
+        while(index<industry.resources.size())
+        {
+            const Industry::Resource &resource=industry.resources.at(index);
+            const quint32 &quantityInStock=industryStatus.resources[resource.item];
+            if(resource.quantity*industry.cycletobefull>quantityInStock)
+            {
+                out << (quint32)resource.item;
+                out << (quint32)getFactoryResourcePrice(quantityInStock,resource,industry);
+                out << (quint32)resource.quantity*industry.cycletobefull-quantityInStock;
+            }
+            index++;
+        }
+        //send the product
+        count_item=0;
+        index=0;
+        while(index<industry.products.size())
+        {
+            const Industry::Product &product=industry.products.at(index);
+            const quint32 &quantityInStock=industryStatus.products[product.item];
+            if(quantityInStock>0)
+                count_item++;
+            index++;
+        }
+        out << (quint32)count_item;
+        index=0;
+        while(index<industry.products.size())
+        {
+            const Industry::Product &product=industry.products.at(index);
+            const quint32 &quantityInStock=industryStatus.products[product.item];
+            if(quantityInStock>0)
+            {
+                out << (quint32)product.item;
+                out << (quint32)getFactoryProductPrice(quantityInStock,product,industry);
+                out << (quint32)quantityInStock;
+            }
+            index++;
+        }
+    }
+    emit postReply(query_id,outputData);
+}
+
+void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+{
+    if(localClientHandlerFight.isInFight())
+    {
+        emit error("Try do inventory action when is in fight");
+        return;
+    }
+    if(captureCityInProgress())
+    {
+        emit error("Try do inventory action when is in capture city");
+        return;
+    }
+    if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+    {
+        emit error("factory id not found");
+        return;
+    }
+    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+}
+
+void LocalClientHandler::sellFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+{
+    if(localClientHandlerFight.isInFight())
+    {
+        emit error("Try do inventory action when is in fight");
+        return;
+    }
+    if(captureCityInProgress())
+    {
+        emit error("Try do inventory action when is in capture city");
+        return;
+    }
+    if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+    {
+        emit error("factory id not found");
+        return;
+    }
+    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+}
+
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
 {
     if(monsterDrops1.item!=monsterDrops2.item)
