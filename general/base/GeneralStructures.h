@@ -106,6 +106,24 @@ struct ItemFull
     QHash<quint32, Trap> trap;
 };
 
+struct Industry
+{
+    quint32 time;//should not be too short
+    quint8 cycletobefull;
+    struct Resource
+    {
+        quint32 item;
+        quint32 quantity;
+    };
+    struct Product
+    {
+        quint32 item;
+        quint32 quantity;
+    };
+    QList<Resource> ressources;
+    QList<Product> products;
+};
+
 enum ObjectUsage
 {
     ObjectUsage_correctlyUsed=0x01,//is correctly used

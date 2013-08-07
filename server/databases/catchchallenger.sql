@@ -46,6 +46,21 @@ CREATE TABLE IF NOT EXISTS `clan` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `industries`
+--
+
+CREATE TABLE IF NOT EXISTS `industries` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `industry` int(11) NOT NULL,
+  `resources` text NOT NULL,
+  `products` text NOT NULL,
+  `last_update` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `item`
 --
 

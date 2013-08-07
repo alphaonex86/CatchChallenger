@@ -949,7 +949,7 @@ bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map,
 {
     if(!map->bots.contains(QPair<quint8,quint8>(x,y)))
         return false;
-    showTip(tr("To interact with the bot press <i>Enter</i>"));
+    showTip(tr("To interact with the bot press <i><b>Enter</b></i>"));
     return true;
 }
 
