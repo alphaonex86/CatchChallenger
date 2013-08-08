@@ -342,6 +342,7 @@ private slots:
     void on_factorySell_clicked();
     void on_factoryResources_itemActivated(QListWidgetItem *item);
     void on_factoryQuit_clicked();
+    void on_monsterDetailsQuit_clicked();
 protected slots:
     //datapack
     void datapackParsed();

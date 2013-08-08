@@ -2705,7 +2705,85 @@ void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *
 {
     if(!monsters_items_graphical.contains(item))
         return;
-    objectSelection(true,monsters_items_graphical[item]);
+    if(inSelection)
+    {
+       objectSelection(true,monsters_items_graphical[item]);
+       return;
+    }
+    quint32 monsterId=monsters_items_graphical[item];
+    QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
+    int index=0;
+    int size=playerMonster.size();
+    while(index<size)
+    {
+        const PlayerMonster &monster=playerMonster.at(index);
+        if(monster.id==monsterId)
+        {
+            const DatapackClientLoader::MonsterExtra &monsterExtraInfo=DatapackClientLoader::datapackLoader.monsterExtra[monster.monster];
+            const Monster &monsterGeneralInfo=CommonDatapack::commonDatapack.monsters[monster.monster];
+            const Monster::Stat &stat=CommonFightEngine::getStat(monsterGeneralInfo,monster.level);
+            ui->monsterDetailsName->setText(monsterExtraInfo.name);
+            {
+                QPixmap front=monsterExtraInfo.front;
+                front=front.scaled(160,160);
+                ui->monsterDetailsImage->setPixmap(front);
+            }
+            {
+                QPixmap capture;
+                if(DatapackClientLoader::datapackLoader.itemsExtra.contains(monster.captured_with))
+                    capture=DatapackClientLoader::datapackLoader.itemsExtra[monster.captured_with].image;
+                else
+                    capture=DatapackClientLoader::datapackLoader.defaultInventoryImage();
+                capture=capture.scaled(48,48);
+                ui->monsterDetailsCaptured->setPixmap(capture);
+            }
+            if(monster.gender==Gender_Male)
+                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/male.png"));
+            else if(monster.gender==Gender_Female)
+                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/female.png"));
+            else
+                ui->monsterDetailsGender->setPixmap(QPixmap());
+            ui->monsterDetailsLevel->setText(tr("Level: %1").arg(monster.level));
+            ui->monsterDetailsStatHeal->setText(tr("Heal: %1/%2").arg(monster.hp).arg(stat.hp));
+            ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
+            ui->monsterDetailsStatXp->setText(tr("Xp: %1").arg(monster.remaining_xp));
+            ui->monsterDetailsStatAttack->setText(tr("Attack: %1").arg(stat.attack));
+            ui->monsterDetailsStatDefense->setText(tr("Defense: %1").arg(stat.defense));
+            ui->monsterDetailsStatXpBar->setValue(monster.remaining_xp);
+            ui->monsterDetailsStatXpBar->setMaximum(monsterGeneralInfo.level_to_xp.at(monster.level-1));
+            ui->monsterDetailsStatAttackSpe->setText(tr("Special attack: %1").arg(stat.special_attack));
+            ui->monsterDetailsStatDefenseSpe->setText(tr("Special defense: %1").arg(stat.special_defense));
+            ui->monsterDetailsStatSp->setText(tr("Skill point: %1").arg(monster.sp));
+            //skill
+            ui->monsterDetailsSkills->clear();
+            int index=0;
+            while(index<monster.skills.size())
+            {
+                const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(index);
+                QListWidgetItem *item;
+                if(!DatapackClientLoader::datapackLoader.monsterSkillsExtra.contains(playerSkill.skill))
+                    item=new QListWidgetItem(tr("Unknown skill"));
+                else
+                {
+                    if(playerSkill.level>1)
+                        item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name).arg(playerSkill.level));
+                    else
+                        item=new QListWidgetItem(tr("%1").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name));
+                    item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
+                }
+                ui->monsterDetailsSkills->addItem(item);
+                index++;
+            }
+            ui->stackedWidget->setCurrentWidget(ui->page_monsterdetails);
+            return;
+        }
+        index++;
+    }
+    if(index==size)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("No details on the selected monster found"));
+        return;
+    }
 }
 
 void CatchChallenger::BaseWindow::on_close_IG_dialog_clicked()
@@ -3480,4 +3558,9 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
 void CatchChallenger::BaseWindow::on_factoryQuit_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void CatchChallenger::BaseWindow::on_monsterDetailsQuit_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_monster);
 }
