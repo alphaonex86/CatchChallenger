@@ -1777,11 +1777,17 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("The shop call, but missing informations"));
             return;
         }
+
         bool ok;
         factoryId=actualBot.step[step].attribute("factory_id").toUInt(&ok);
         if(!ok)
         {
             showTip(tr("The shop call, but wrong shop id"));
+            return;
+        }
+        if(!CommonDatapack::commonDatapack.industriesLink.contains(factoryId))
+        {
+            showTip(tr("The factory is not found"));
             return;
         }
         ui->factoryResources->clear();
@@ -3242,7 +3248,7 @@ void CatchChallenger::BaseWindow::on_factoryProducts_itemActivated(QListWidgetIt
     quint32 quantity=1;
     quint32 id=item->data(99).toUInt();
     quint32 price=item->data(98).toUInt();
-    if(item->text().isEmpty())
+    if(!item->text().isEmpty())
         quantity=item->text().toUInt();
     if(cash<price)
     {
@@ -3264,6 +3270,8 @@ void CatchChallenger::BaseWindow::on_factoryProducts_itemActivated(QListWidgetIt
         item->setText(QString());
     else
         item->setText(QString::number(quantity));
+    tempQuantityForBuy=quantity;
+    tempItemForBuy=id;
     tempCashForBuy=i*price;
     removeCash(tempCashForBuy);
     CatchChallenger::Api_client_real::client->buyFactoryObject(factoryId,id,i,price);
@@ -3282,7 +3290,7 @@ void CatchChallenger::BaseWindow::on_factoryResources_itemActivated(QListWidgetI
     quint32 quantity=1;
     quint32 id=item->data(99).toUInt();
     quint32 price=item->data(98).toUInt();
-    if(item->text().isEmpty())
+    if(!item->text().isEmpty())
         quantity=item->text().toUInt();
     if(!items.contains(id))
     {
@@ -3309,6 +3317,9 @@ void CatchChallenger::BaseWindow::on_factoryResources_itemActivated(QListWidgetI
     tempItem.quantity=i;
     tempItem.price=price;
     itemsToSell << tempItem;
+    items[id]-=i;
+    if(items[id]==0)
+        items.remove(id);
     CatchChallenger::Api_client_real::client->sellFactoryObject(factoryId,id,i,price);
 }
 
@@ -3422,7 +3433,7 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
             else
                 item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(resources.at(index).object).arg(resources.at(index).price).arg(resources.at(index).quantity));
         }
-        if(resources.at(index).price>cash)
+        if(!items.contains(resources.at(index).object))
         {
             item->setFont(MissingQuantity);
             item->setForeground(QBrush(QColor(200,20,20)));
@@ -3464,4 +3475,9 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
         index++;
     }
     ui->factoryStatus->setText(tr("Have the factory list"));
+}
+
+void CatchChallenger::BaseWindow::on_factoryQuit_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }

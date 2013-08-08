@@ -960,18 +960,18 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
             {
                 if(industryItem.hasAttribute("id") && industryItem.hasAttribute("time") && industryItem.hasAttribute("cycletobefull"))
                 {
+                    Industry industry;
                     quint32 id=industryItem.attribute("id").toUInt(&ok);
-                    quint32 time=industryItem.attribute("time").toUInt(&ok2);
-                    quint8 cycletobefull=industryItem.attribute("cycletobefull").toUShort(&ok3);
+                    industry.time=industryItem.attribute("time").toUInt(&ok2);
+                    industry.cycletobefull=industryItem.attribute("cycletobefull").toUShort(&ok3);
                     if(ok && ok2 && ok3)
                     {
-                        if(time<60*5)
+                        if(industry.time<60*5)
                             qDebug() << QString("the time need be greater than 5*60 seconds to not slow down the server: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
-                        else if(cycletobefull<1)
+                        else if(industry.cycletobefull<1)
                             qDebug() << QString("cycletobefull need be greater than 0: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                         else if(!industries.contains(id))
                         {
-                            Industry industry;
                             //ressource
                             {
                                 QDomElement ressourceItem = industryItem.firstChildElement("ressource");

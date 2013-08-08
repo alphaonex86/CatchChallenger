@@ -334,8 +334,8 @@ void BaseServer::preload_industries()
                     ok=false;
                     break;
                 }
-                if(quantity>industry.resources.at(indexItem).quantity)
-                    quantity=industry.resources.at(indexItem).quantity;
+                if(quantity>(industry.resources.at(indexItem).quantity*industry.cycletobefull))
+                    quantity=industry.resources.at(indexItem).quantity*industry.cycletobefull;
                 industryStatus.resources[item]=quantity;
                 index++;
             }
@@ -384,8 +384,8 @@ void BaseServer::preload_industries()
                     ok=false;
                     break;
                 }
-                if(quantity>industry.products.at(indexItem).quantity)
-                    quantity=industry.products.at(indexItem).quantity;
+                if(quantity>(industry.products.at(indexItem).quantity*industry.cycletobefull))
+                    quantity=industry.products.at(indexItem).quantity*industry.cycletobefull;
                 industryStatus.products[item]=quantity;
                 index++;
             }
