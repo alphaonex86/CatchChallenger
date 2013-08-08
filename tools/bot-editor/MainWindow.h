@@ -40,7 +40,7 @@ private:
     void updateBotList();
     void updateStepList();
     void updateType();
-    void editStep(quint8 id);
+    void editStep(quint8 id, bool newStep=false);
 private slots:
     void on_browseBotFile_clicked();
     void on_openBotFile_clicked();
@@ -61,6 +61,8 @@ private slots:
     void on_botFileSave_clicked();
     void on_botList_itemDoubleClicked(QListWidgetItem *item);
     void on_stepList_itemDoubleClicked(QListWidgetItem *item);
+    void on_stepEditZoneCapture_editingFinished();
+    void on_stepEditIndustry_editingFinished();
 };
 
 #endif // MAINWINDOW_H
