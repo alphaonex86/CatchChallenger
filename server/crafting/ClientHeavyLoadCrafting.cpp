@@ -76,6 +76,11 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("quantity is not a number, skip"));
             continue;
         }
+        if(itemQuery.value(2).toString().isEmpty())
+        {
+            emit message(QString("item warehouse is not a number, skip"));
+            continue;
+        }
         quint32 warehouse=itemQuery.value(2).toBool();
         if(quantity==0)
         {
