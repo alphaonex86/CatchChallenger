@@ -43,6 +43,9 @@ void MainWindow::updateType()
     allowedType["learn"]=tr("Learn");
     allowedType["heal"]=tr("Heal");
     allowedType["fight"]=tr("Fight");
+    allowedType["clan"]=tr("Clan");
+    allowedType["zonecapture"]=tr("Zone capture");
+    allowedType["industry"]=tr("Industry");
 
     reverseAllowedType.clear();
     QHash<QString,QString>::const_iterator i = allowedType.constBegin();
@@ -309,7 +312,7 @@ void MainWindow::on_stepListAdd_clicked()
         child = child.nextSiblingElement("bot");
     }
     //load the edit
-    editStep(id);
+    editStep(id,true);
     updateStepList();
     if(id==1)
     {
@@ -360,7 +363,7 @@ void MainWindow::on_stepEditBack_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_step_list);
 }
 
-void MainWindow::editStep(quint8 id)
+void MainWindow::editStep(quint8 id,bool newStep)
 {
     selectedStep=id;
     QDomElement step=botFiles[selectedBot].step[selectedStep];
@@ -422,6 +425,8 @@ void MainWindow::editStep(quint8 id)
         quint32 id=step.attribute("shop").toUInt(&ok);
         if(!ok)
         {
+            if(newStep)
+                step.setAttribute("shop",1);
             ui->stepEditShop->setValue(1);
             error=true;
         }
@@ -434,6 +439,8 @@ void MainWindow::editStep(quint8 id)
         quint32 id=step.attribute("shop").toUInt(&ok);
         if(!ok)
         {
+            if(newStep)
+                step.setAttribute("shop",1);
             ui->stepEditSell->setValue(1);
             error=true;
         }
@@ -446,13 +453,41 @@ void MainWindow::editStep(quint8 id)
         quint32 id=step.attribute("fightid").toUInt(&ok);
         if(!ok)
         {
+            if(newStep)
+                step.setAttribute("fightid",1);
             ui->stepEditFight->setValue(1);
             error=true;
         }
         else
             ui->stepEditFight->setValue(id);
     }
-    if(error)
+    else if(type=="zonecapture")
+    {
+        if(!step.hasAttribute("zone"))
+        {
+            if(newStep)
+                step.setAttribute("zone","");
+            ui->stepEditZoneCapture->setText(QString());
+            error=true;
+        }
+        else
+            ui->stepEditZoneCapture->setText(step.attribute("zone"));
+    }
+    else if(type=="industry")
+    {
+        bool ok;
+        quint32 id=step.attribute("factory_id").toUInt(&ok);
+        if(!ok)
+        {
+            if(newStep)
+                step.setAttribute("factory_id",1);
+            ui->stepEditIndustry->setValue(1);
+            error=true;
+        }
+        else
+            ui->stepEditIndustry->setValue(id);
+    }
+    if(error && !newStep)
     {
         QMessageBox::warning(this,tr("Error"),tr("Error during loading the step"));
         return;
@@ -599,4 +634,14 @@ void MainWindow::on_stepList_itemDoubleClicked(QListWidgetItem *item)
         return;
     }
     editStep(id);
+}
+
+void MainWindow::on_stepEditZoneCapture_editingFinished()
+{
+    botFiles[selectedBot].step[selectedStep].setAttribute("zone",ui->stepEditZoneCapture->text());
+}
+
+void MainWindow::on_stepEditIndustry_editingFinished()
+{
+    botFiles[selectedBot].step[selectedStep].setAttribute("factory_id",ui->stepEditFight->value());
 }
