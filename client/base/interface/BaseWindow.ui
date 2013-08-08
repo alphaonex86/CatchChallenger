@@ -5205,6 +5205,15 @@ border-image: url(:/images/empty.png);
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
             </property>
+            <property name="gridSize">
+             <size>
+              <width>48</width>
+              <height>48</height>
+             </size>
+            </property>
+            <property name="viewMode">
+             <enum>QListView::IconMode</enum>
+            </property>
            </widget>
            <widget class="QListWidget" name="factoryResources">
             <property name="geometry">
@@ -5220,6 +5229,15 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="gridSize">
+             <size>
+              <width>48</width>
+              <height>48</height>
+             </size>
+            </property>
+            <property name="viewMode">
+             <enum>QListView::IconMode</enum>
             </property>
            </widget>
            <widget class="QLabel" name="factoryStatus">

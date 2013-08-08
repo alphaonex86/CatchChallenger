@@ -450,7 +450,7 @@ void MainWindow::on_SaveGame_New_clicked()
     {
         QSqlQuery sqlQuery(*db);
         if(!sqlQuery.exec(
-               QString("INSERT INTO \"item\"(\"item_id\",\"player_id\",\"quantity\") VALUES(%1,%2,%3);")
+               QString("INSERT INTO \"item\"(\"item_id\",\"player_id\",\"quantity\",\"warehouse\") VALUES(%1,%2,%3,0);")
                .arg(profile.items.at(index).id)
                .arg(player_id)
                .arg(profile.items.at(index).quantity)
