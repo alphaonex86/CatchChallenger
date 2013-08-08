@@ -38,5 +38,8 @@
         <file>images/inventory/shop.png</file>
         <file>images/interface/learn.png</file>
         <file>images/inventory/factory.png</file>
+        <file>images/interface/monsterdetails.png</file>
+        <file>images/interface/female.png</file>
+        <file>images/interface/male.png</file>
     </qresource>
 </RCC>
