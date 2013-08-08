@@ -426,14 +426,14 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=0;")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=0;")
                          .arg(player_informations->public_and_private_informations.items[item])
                          .arg(item)
                          .arg(player_informations->id)
@@ -575,14 +575,14 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=0;")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
+                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=0;")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->id)
@@ -596,13 +596,13 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
+                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse=0")
                              .arg(item)
                              .arg(player_informations->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
+                emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse=0")
                          .arg(item)
                          .arg(player_informations->id)
                          );
@@ -622,14 +622,14 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=0;")
                                  .arg(player_informations->public_and_private_informations.items[item])
                                  .arg(item)
                                  .arg(player_informations->id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse!=1;")
+                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND warehouse=0;")
                                  .arg(player_informations->public_and_private_informations.items[item])
                                  .arg(item)
                                  .arg(player_informations->id)
@@ -646,13 +646,13 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse=0")
                                  .arg(item)
                                  .arg(player_informations->id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse!=1")
+                    emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND warehouse=0")
                              .arg(item)
                              .arg(player_informations->id)
                              );
@@ -823,12 +823,12 @@ void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<qu
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE monster SET warehouse!=1 WHERE id=%1;")
+                            emit dbQuery(QString("UPDATE monster SET warehouse=0 WHERE id=%1;")
                                          .arg(withdrawMonsters.at(index))
                                          );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("UPDATE monster SET warehouse!=1 WHERE id=%1;")
+                            emit dbQuery(QString("UPDATE monster SET warehouse=0 WHERE id=%1;")
                                          .arg(withdrawMonsters.at(index))
                                          );
                         break;
@@ -1817,6 +1817,46 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
     }
 }
 
+//apply on after industryStatusWithCurrentTime()
+IndustryStatus LocalClientHandler::factoryCheckProductionStart(const IndustryStatus &industryStatus,const Industry &industry)
+{
+    IndustryStatus industryStatusCopy=industryStatus;
+    int index=0;
+    bool doOneProduct=true;
+    while(doOneProduct)
+    {
+        index=0;
+        if(doOneProduct)
+            while(index<industry.resources.size())
+            {
+                const Industry::Resource &resource=industry.resources.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.resources[resource.item];
+                if(resource.quantity>quantityInStock)
+                {
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+        index=0;
+        if(doOneProduct)
+            while(index<industry.products.size())
+            {
+                const Industry::Product &product=industry.products.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.products[product.item];
+                if(quantityInStock>=product.quantity*industry.cycletobefull)
+                {
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+    }
+    if(doOneProduct==true)
+        industryStatusCopy.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
+    return industryStatusCopy;
+}
+
 IndustryStatus LocalClientHandler::industryStatusWithCurrentTime(const IndustryStatus &industryStatus,const Industry &industry)
 {
     IndustryStatus industryStatusCopy=industryStatus;
@@ -1852,7 +1892,7 @@ IndustryStatus LocalClientHandler::industryStatusWithCurrentTime(const IndustryS
             {
                 const Industry::Product &product=industry.products.at(index);
                 const quint32 &quantityInStock=industryStatusCopy.products[product.item];
-                if(product.quantity*industry.cycletobefull>=quantityInStock)
+                if(quantityInStock>=product.quantity*industry.cycletobefull)
                 {
                     industryStatusCopy.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
                     doOneProduct=false;
@@ -1860,6 +1900,8 @@ IndustryStatus LocalClientHandler::industryStatusWithCurrentTime(const IndustryS
                 }
                 index++;
             }
+        if(timeIntervalCount<=0)
+            break;
         if(doOneProduct)
         {
             industryStatusCopy.last_update+=industry.time;
@@ -1875,6 +1917,7 @@ IndustryStatus LocalClientHandler::industryStatusWithCurrentTime(const IndustryS
                 industryStatusCopy.products[industry.products.at(index).item]+=industry.products.at(index).quantity;
                 index++;
             }
+            timeIntervalCount--;
         }
     }
     return industryStatusCopy;
@@ -1882,13 +1925,15 @@ IndustryStatus LocalClientHandler::industryStatusWithCurrentTime(const IndustryS
 
 quint32 LocalClientHandler::getFactoryResourcePrice(const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry)
 {
-    quint8 price_temp_change=(resource.quantity*industry.cycletobefull-quantityInStock)*(CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE*2)/resource.quantity*industry.cycletobefull;
+    quint32 max_items=resource.quantity*industry.cycletobefull;
+    quint8 price_temp_change=(max_items-quantityInStock)*(CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE*2)/max_items;
     return CommonDatapack::commonDatapack.items.item[resource.item].price*(100-CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE+price_temp_change)/100;
 }
 
 quint32 LocalClientHandler::getFactoryProductPrice(const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry)
 {
-    quint8 price_temp_change=(product.quantity*industry.cycletobefull-quantityInStock)*(CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE*2)/product.quantity*industry.cycletobefull;
+    quint32 max_items=product.quantity*industry.cycletobefull;
+    quint8 price_temp_change=(max_items-quantityInStock)*(CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE*2)/max_items;
     return CommonDatapack::commonDatapack.items.item[product.item].price*(100-CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE+price_temp_change)/100;
 }
 
@@ -1939,7 +1984,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         {
             const Industry::Resource &resource=industry.resources.at(index);
             const quint32 &quantityInStock=industryStatus.resources[resource.item];
-            if(resource.quantity*industry.cycletobefull>quantityInStock)
+            if(quantityInStock<resource.quantity*industry.cycletobefull)
                 count_item++;
             index++;
         }
@@ -1949,7 +1994,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
         {
             const Industry::Resource &resource=industry.resources.at(index);
             const quint32 &quantityInStock=industryStatus.resources[resource.item];
-            if(resource.quantity*industry.cycletobefull>quantityInStock)
+            if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
                 out << (quint32)resource.item;
                 out << (quint32)getFactoryResourcePrice(quantityInStock,resource,industry);
@@ -2016,13 +2061,13 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
         return;
     }
     const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
-    const IndustryStatus &industryStatus=industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
+    IndustryStatus industryStatus=industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
     quint32 quantityInStock=0;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     Industry::Product product;
-    //check if not overfull
+    //get the right product
     {
         int index=0;
         while(index<industry.products.size())
@@ -2038,14 +2083,14 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
             return;
         }
     }
-    if(industryStatus.products.contains(product.item))
-        quantityInStock=industryStatus.products[product.item];
     quint32 actualPrice=getFactoryProductPrice(quantityInStock,product,industry);
     if(player_informations->public_and_private_informations.cash<(actualPrice*quantity))
     {
         emit error("have not the cash to buy into this factory");
         return;
     }
+    if(industryStatus.products.contains(product.item))
+        quantityInStock=industryStatus.products[product.item];
     if(quantity>quantityInStock)
     {
         out << (quint8)0x03;
@@ -2065,8 +2110,17 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
         out << (quint8)0x02;
         out << (quint32)actualPrice;
     }
+    quantityInStock-=quantity;
+    if(quantityInStock==(product.item*industry.cycletobefull))
+    {
+        industryStatus.products[product.item]=quantityInStock;
+        industryStatus=factoryCheckProductionStart(industryStatus,industry);
+    }
+    else
+        industryStatus.products[product.item]=quantityInStock;
     removeCash(actualPrice*quantity);
     addObject(objectId,quantity);
+    GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
     saveIndustryStatus(factoryId,industryStatus,industry);
     emit postReply(query_id,outputData);
 }
@@ -2148,6 +2202,13 @@ void LocalClientHandler::sellFactoryObject(const quint32 &query_id,const quint32
                     emit postReply(query_id,outputData);
                     return;
                 }
+                if((industryStatus.resources[resource.item]+quantity)==resource.quantity)
+                {
+                    industryStatus.resources[resource.item]+=quantity;
+                    industryStatus=factoryCheckProductionStart(industryStatus,industry);
+                }
+                else
+                    industryStatus.resources[resource.item]+=quantity;
                 break;
             }
             index++;
@@ -2165,6 +2226,7 @@ void LocalClientHandler::sellFactoryObject(const quint32 &query_id,const quint32
         out << (quint8)0x02;
         out << (quint32)resourcePrice;
     }
+    GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
     removeObject(objectId,quantity);
     addCash(resourcePrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
