@@ -265,10 +265,10 @@ void BaseServer::preload_industries()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,industry,resources,products,last_update FROM industries");
+            queryText=QString("SELECT id,resources,products,last_update FROM factory");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,industry,resources,products,last_update FROM industries");
+            queryText=QString("SELECT id,resources,products,last_update FROM factory");
         break;
     }
     QSqlQuery industryStatusQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -291,21 +291,7 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            industryStatus.industry=industryStatusQuery.value(1).toUInt(&ok);
-            if(!ok)
-                DebugClass::debugConsole(QString("preload_industries: industry is not a number"));
-        }
-        if(ok)
-        {
-            if(!CommonDatapack::commonDatapack.industries.contains(industryStatus.industry))
-            {
-                ok=false;
-                DebugClass::debugConsole(QString("preload_industries: industry id is not found"));
-            }
-        }
-        if(ok)
-        {
-            QStringList resourcesStringList=industryStatusQuery.value(2).toString().split(";");
+            QStringList resourcesStringList=industryStatusQuery.value(1).toString().split(";");
             int index=0;
             while(index<resourcesStringList.size())
             {
@@ -334,28 +320,29 @@ void BaseServer::preload_industries()
                     ok=false;
                     break;
                 }
+                const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[id]];
                 int indexItem=0;
-                while(indexItem<CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.size())
+                while(indexItem<industry.resources.size())
                 {
-                    if(CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.at(indexItem).item==item)
+                    if(industry.resources.at(indexItem).item==item)
                         break;
                     indexItem++;
                 }
-                if(indexItem==CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.size())
+                if(indexItem==industry.resources.size())
                 {
                     DebugClass::debugConsole(QString("preload_industries: item in db not found"));
                     ok=false;
                     break;
                 }
-                if(quantity>CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.at(indexItem).quantity)
-                    quantity=CommonDatapack::commonDatapack.industries[industryStatus.industry].resources.at(indexItem).quantity;
+                if(quantity>industry.resources.at(indexItem).quantity)
+                    quantity=industry.resources.at(indexItem).quantity;
                 industryStatus.resources[item]=quantity;
                 index++;
             }
         }
         if(ok)
         {
-            QStringList productsStringList=industryStatusQuery.value(3).toString().split(";");
+            QStringList productsStringList=industryStatusQuery.value(2).toString().split(";");
             int index=0;
             while(index<productsStringList.size())
             {
@@ -383,29 +370,29 @@ void BaseServer::preload_industries()
                     DebugClass::debugConsole(QString("preload_industries: item already set"));
                     ok=false;
                     break;
-                }
+                }const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[id]];
                 int indexItem=0;
-                while(indexItem<CommonDatapack::commonDatapack.industries[industryStatus.industry].products.size())
+                while(indexItem<industry.products.size())
                 {
-                    if(CommonDatapack::commonDatapack.industries[industryStatus.industry].products.at(indexItem).item==item)
+                    if(industry.products.at(indexItem).item==item)
                         break;
                     indexItem++;
                 }
-                if(indexItem==CommonDatapack::commonDatapack.industries[industryStatus.industry].products.size())
+                if(indexItem==industry.products.size())
                 {
                     DebugClass::debugConsole(QString("preload_industries: item in db not found"));
                     ok=false;
                     break;
                 }
-                if(quantity>CommonDatapack::commonDatapack.industries[industryStatus.industry].products.at(indexItem).quantity)
-                    quantity=CommonDatapack::commonDatapack.industries[industryStatus.industry].products.at(indexItem).quantity;
+                if(quantity>industry.products.at(indexItem).quantity)
+                    quantity=industry.products.at(indexItem).quantity;
                 industryStatus.products[item]=quantity;
                 index++;
             }
         }
         if(ok)
         {
-            industryStatus.last_update=industryStatusQuery.value(4).toUInt(&ok);
+            industryStatus.last_update=industryStatusQuery.value(3).toUInt(&ok);
             if(!ok)
                 DebugClass::debugConsole(QString("preload_industries: last_update is not a number"));
         }
