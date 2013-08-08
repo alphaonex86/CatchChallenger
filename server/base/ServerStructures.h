@@ -159,7 +159,6 @@ struct CityStatus
 
 struct IndustryStatus
 {
-    quint32 industry;
     quint32 last_update;
     QHash<quint32,quint32> resources;
     QHash<quint32,quint32> products;

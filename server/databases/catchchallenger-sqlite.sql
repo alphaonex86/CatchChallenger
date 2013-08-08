@@ -86,9 +86,8 @@ CREATE TABLE "city" (
     "city" TEXT,
     "clan" INTEGER
 );
-CREATE TABLE "industries" (
-    "id" INTEGER PRIMARY KEY,
-    "industry" INTEGER,
+CREATE TABLE factory (
+    "id" INTEGER,
     "resources" TEXT,
     "products" TEXT,
     "last_update" INTEGER
