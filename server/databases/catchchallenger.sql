@@ -46,12 +46,11 @@ CREATE TABLE IF NOT EXISTS `clan` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `industries`
+-- Table structure for table `factory`
 --
 
-CREATE TABLE IF NOT EXISTS `industries` (
+CREATE TABLE IF NOT EXISTS `factory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `industry` int(11) NOT NULL,
   `resources` text NOT NULL,
   `products` text NOT NULL,
   `last_update` int(11) NOT NULL,
