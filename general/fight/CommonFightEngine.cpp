@@ -99,6 +99,7 @@ void CommonFightEngine::healAllMonsters()
         {
             const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(index).monster],player_informations->playerMonster.at(index).level);
             player_informations->playerMonster[index].hp=stat.hp;
+            player_informations->playerMonster[index].buffs.clear();
         }
         index++;
     }
@@ -703,20 +704,45 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
     return effect_to_return;
 }
 
-void CommonFightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
+int CommonFightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
+    int index=0;
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
+            while(index<getOtherMonster()->buffs.size())
+            {
+                if(getOtherMonster()->buffs.at(index).buff==effect.buff)
+                {
+                    if(getOtherMonster()->buffs.at(index).level==effect.level)
+                        return -2;
+                    getOtherMonster()->buffs[index].level=effect.level;
+                        return index;
+                }
+                index++;
+            }
             getOtherMonster()->buffs << tempBuff;
+            return -1;
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
+            while(index<getCurrentMonster()->buffs.size())
+            {
+                if(getCurrentMonster()->buffs.at(index).buff==effect.buff)
+                {
+                    if(getCurrentMonster()->buffs.at(index).level==effect.level)
+                        return -2;
+                    getCurrentMonster()->buffs[index].level=effect.level;
+                        return index;
+                }
+                index++;
+            }
             getCurrentMonster()->buffs << tempBuff;
+            return -1;
         break;
         default:
             emit error("Not apply match, can't apply the buff");
@@ -833,6 +859,24 @@ bool CommonFightEngine::tryCapture(const quint32 &item)
 
 void CommonFightEngine::fightFinished()
 {
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        int sub_index=0;
+        while(sub_index<player_informations->playerMonster.at(index).buffs.size())
+        {
+            if(CommonDatapack::commonDatapack.monsterBuffs.contains(player_informations->playerMonster.at(index).buffs.at(sub_index).buff))
+            {
+                if(CommonDatapack::commonDatapack.monsterBuffs[player_informations->playerMonster.at(index).buffs.at(sub_index).buff].duration!=Buff::Duration_Always)
+                    player_informations->playerMonster[index].buffs.removeAt(sub_index);
+                else
+                    sub_index++;
+            }
+            else
+                player_informations->playerMonster[index].buffs.removeAt(sub_index);
+        }
+        index++;
+    }
     wildMonsters.clear();
     botFightMonsters.clear();
 }

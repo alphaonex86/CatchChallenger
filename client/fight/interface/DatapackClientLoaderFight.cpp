@@ -207,6 +207,11 @@ void DatapackClientLoader::parseBuffExtra()
                             monsterBuffExtraEntry.name=tr("Unknown");
                         if(monsterBuffExtraEntry.description.isEmpty())
                             monsterBuffExtraEntry.description=tr("Unknown");
+                        if(QFile(datapackPath+DATAPACK_BASE_PATH_BUFFICON+QString("%1.png").arg(id)).exists())
+                            monsterBuffExtraEntry.icon=QIcon(datapackPath+DATAPACK_BASE_PATH_BUFFICON+QString("%1.png").arg(id));
+                        QList<QSize> availableSizes=monsterBuffExtraEntry.icon.availableSizes();
+                        if(monsterBuffExtraEntry.icon.isNull() || availableSizes.isEmpty())
+                            monsterBuffExtraEntry.icon=QIcon(":/images/interface/buff.png");
                         DatapackClientLoader::datapackLoader.monsterBuffsExtra[id]=monsterBuffExtraEntry;
                     }
                 }
@@ -229,6 +234,7 @@ void DatapackClientLoader::parseBuffExtra()
             DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown");
             monsterBuffExtraEntry.description=tr("Unknown");
+            monsterBuffExtraEntry.icon=QIcon(":/images/interface/buff.png");
             DatapackClientLoader::datapackLoader.monsterBuffsExtra[i.key()]=monsterBuffExtraEntry;
         }
     }

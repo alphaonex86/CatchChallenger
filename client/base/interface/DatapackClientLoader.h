@@ -7,6 +7,7 @@
 #include <QString>
 #include <QStringList>
 #include <QMultiHash>
+#include <QIcon>
 
 #include "../../general/base/GeneralStructures.h"
 
@@ -63,6 +64,7 @@ public:
         {
             QString name;
             QString description;
+            QIcon icon;
         };
         struct Skill
         {
