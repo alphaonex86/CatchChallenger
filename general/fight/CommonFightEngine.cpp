@@ -285,7 +285,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     return playerMonster;
 }
 
-/** \warning you need check before the input data */
+/// \warning you need check before the input data
 Monster::Stat CommonFightEngine::getStat(const Monster &monster, const quint8 &level)
 {
     //get the normal stats
@@ -440,7 +440,9 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster.skills.at(position);
     attackReturn.attack=otherMonsterSkill.skill;
     const Skill::SkillList &skillList=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
-    int index=0;
+    int index;
+    //do the buff
+    index=0;
     while(index<skillList.buff.size())
     {
         const Skill::Buff &buff=skillList.buff.at(index);
@@ -457,6 +459,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         }
         index++;
     }
+    //do the life effect
     index=0;
     while(index<skillList.life.size())
     {
@@ -472,6 +475,16 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
             attackReturn.success=true;
         }
         index++;
+    }
+    //apply the buff
+    if(!currentMonsterIsKO())
+    {
+        PublicPlayerMonster * playerMonster=getOtherMonster();
+        if(playerMonster!=NULL)
+        {
+            attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
+            attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
+        }
     }
     return attackReturn;
 }
@@ -509,30 +522,36 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
             {
                 Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster[selectedMonster].monster],player_informations->playerMonster[selectedMonster].level);
                 if(effect.quantity<0)
-                {
                     quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
                 else if(effect.quantity>0)//ignore the def for heal
-                {
                     quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
             }
             else
                 quantity=(player_informations->playerMonster[selectedMonster].hp*effect.quantity)/100;
+            if(effect.quantity<0)
+            {
+                if(quantity==0)
+                    quantity=-1;
+            }
+            else if(effect.quantity>0)
+            {
+                if(quantity==0)
+                    quantity=1;
+            }
             //kill
             if(quantity<0 && (-quantity)>=(qint32)player_informations->playerMonster[selectedMonster].hp)
             {
+                quantity=-(qint32)player_informations->playerMonster[selectedMonster].hp;
                 player_informations->playerMonster[selectedMonster].hp=0;
                 player_informations->playerMonster[selectedMonster].buffs.clear();
                 updateCanDoFight();
             }
             //full heal
             else if(quantity>0 && quantity>=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp))
+            {
+                quantity=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp);
                 player_informations->playerMonster[selectedMonster].hp=stat.hp;
+            }
             //other life change
             else
                 player_informations->playerMonster[selectedMonster].hp+=quantity;
@@ -542,26 +561,34 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
-                {
                     quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
                 else if(effect.quantity>0)//ignore the def for heal
-                {
                     quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
             }
             else
                 quantity=(otherMonster->hp*effect.quantity)/100;
+            if(effect.quantity<0)
+            {
+                if(quantity==0)
+                    quantity=-1;
+            }
+            else if(effect.quantity>0)
+            {
+                if(quantity==0)
+                    quantity=1;
+            }
             //kill
             if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
+            {
+                quantity=-(qint32)player_informations->playerMonster[selectedMonster].hp;
                 otherMonster->hp=0;
+            }
             //full heal
             else if(quantity>0 && quantity>=(qint32)(stat.hp-otherMonster->hp))
+            {
+                quantity=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp);
                 otherMonster->hp=stat.hp;
+            }
             //other life change
             else
                 otherMonster->hp+=quantity;
@@ -643,20 +670,22 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
-                {
                     quantity=-((-effect.quantity*stat.attack*player_informations->playerMonster.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
                 else if(effect.quantity>0)//ignore the def for heal
-                {
                     quantity=effect.quantity*player_informations->playerMonster.at(selectedMonster).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
             }
             else
                 quantity=(otherStat.hp*effect.quantity)/100;
+            if(effect.quantity<0)
+            {
+                if(quantity==0)
+                    quantity=-1;
+            }
+            else if(effect.quantity>0)
+            {
+                if(quantity==0)
+                    quantity=1;
+            }
             if(quantity<0 && (-quantity)>=(qint32)publicPlayerMonster->hp)
             {
                 quantity=-publicPlayerMonster->hp;
@@ -676,20 +705,22 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
             if(effect.type==QuantityType_Quantity)
             {
                 if(effect.quantity<0)
-                {
                     quantity=-((-effect.quantity*stat.attack*player_informations->playerMonster.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
-                    if(quantity==0)
-                        quantity=-1;
-                }
                 else if(effect.quantity>0)//ignore the def for heal
-                {
                     quantity=effect.quantity*player_informations->playerMonster.at(selectedMonster).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                    if(quantity==0)
-                        quantity=1;
-                }
             }
             else
                 quantity=(stat.hp*effect.quantity)/100;
+            if(effect.quantity<0)
+            {
+                if(quantity==0)
+                    quantity=-1;
+            }
+            else if(effect.quantity>0)
+            {
+                if(quantity==0)
+                    quantity=1;
+            }
             if(quantity<0 && (-quantity)>=(qint32)player_informations->playerMonster[selectedMonster].hp)
             {
                 quantity=-player_informations->playerMonster[selectedMonster].hp;
@@ -1138,9 +1169,9 @@ bool CommonFightEngine::buffIsValid(const Skill::BuffEffect &buffEffect)
 Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)
 {
     /// \todo use the variable currentMonsterStat and otherMonsterStat to have better speed
-    Skill::AttackReturn tempReturnBuff;
-    tempReturnBuff.doByTheCurrentMonster=true;
-    tempReturnBuff.attack=skill;
+    Skill::AttackReturn attackReturn;
+    attackReturn.doByTheCurrentMonster=true;
+    attackReturn.attack=skill;
     const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[skill].level.at(skillLevel-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
     emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
@@ -1175,8 +1206,8 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
             if(success)
                 emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
             #endif
-            tempReturnBuff.success=true;//the attack have work because at less have a buff
-            tempReturnBuff.addBuffEffectMonster << buff.effect;
+            attackReturn.success=true;//the attack have work because at less have a buff
+            attackReturn.addBuffEffectMonster << buff.effect;
             applyCurrentBuffEffect(buff.effect);
         }
         index++;
@@ -1194,65 +1225,124 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
             success=(getOneSeed(100)<life.success);
         if(success)
         {
-            tempReturnBuff.success=true;//the attack have work because at less have a buff
+            attackReturn.success=true;//the attack have work because at less have a buff
             Skill::LifeEffectReturn lifeEffectReturn;
             lifeEffectReturn.on=life.effect.on;
             lifeEffectReturn.quantity=applyCurrentLifeEffect(life.effect).quantity;
-            tempReturnBuff.lifeEffectMonster << lifeEffectReturn;
+            attackReturn.lifeEffectMonster << lifeEffectReturn;
         }
         index++;
     }
     //apply the buff
     if(!currentMonsterIsKO())
     {
-        PlayerMonster * playerMonster=getCurrentMonster();
+        PublicPlayerMonster *playerMonster=getCurrentMonster();
         if(playerMonster!=NULL)
         {
-            int index=0;
-            while(index<playerMonster->buffs.size())
-            {
-                const PlayerBuff &playerBuff=playerMonster->buffs.at(index);
-                if(!CommonDatapack::commonDatapack.monsterBuffs.contains(playerBuff.buff))
-                    playerMonster->buffs.removeAt(index);
-                else
-                {
-                    const Buff &buff=CommonDatapack::commonDatapack.monsterBuffs[playerBuff.buff];
-                    if(buff.duration==Buff::Duration_NumberOfTurn)
-                    {
-                        if(playerMonster->buffs.at(index).remainingNumberOfTurn>0)
-                            playerMonster->buffs[index].remainingNumberOfTurn--;
-                        if(playerMonster->buffs.at(index).remainingNumberOfTurn<=0)
-                        {
-                            Skill::BuffEffect buffEffect;
-                            buffEffect.buff=playerBuff.buff;
-                            buffEffect.on=ApplyOn_Themself;
-                            buffEffect.level=playerBuff.level;
-                            playerMonster->buffs.removeAt(index);
-                            tempReturnBuff.removeBuffEffectMonster << buffEffect;
-                            continue;
-                        }
-                    }
-                    /*const QList<Buff::Effect> &effects=buff.level.at(playerBuff.level-1).fight;
-                    int sub_index=0;
-                    while(sub_index<effects.size())
-                    {
-                        const Buff::Effect &effect=effects.at(sub_index);
-                        if(effect.on==Buff::Effect::EffectOn_HP)
-                        {
-                            if(effect.type==QuantityType_Quantity)
-                            {
-                            apply the life quantity effect
-                            }
-                        }
-                        sub_index++;
-                    }
-                    sdfg dfg dfg*/
-                    index++;
-                }
-            }
+            attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
+            attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
         }
     }
-    return tempReturnBuff;
+    return attackReturn;
+}
+
+QList<Skill::BuffEffect> CommonFightEngine::removeOldBuff(PublicPlayerMonster * playerMonster)
+{
+    QList<Skill::BuffEffect> returnValue;
+    int index=0;
+    while(index<playerMonster->buffs.size())
+    {
+        const PlayerBuff &playerBuff=playerMonster->buffs.at(index);
+        if(!CommonDatapack::commonDatapack.monsterBuffs.contains(playerBuff.buff))
+            playerMonster->buffs.removeAt(index);
+        else
+        {
+            const Buff &buff=CommonDatapack::commonDatapack.monsterBuffs[playerBuff.buff];
+            if(buff.duration==Buff::Duration_NumberOfTurn)
+            {
+                if(playerMonster->buffs.at(index).remainingNumberOfTurn>0)
+                    playerMonster->buffs[index].remainingNumberOfTurn--;
+                if(playerMonster->buffs.at(index).remainingNumberOfTurn<=0)
+                {
+                    Skill::BuffEffect buffEffect;
+                    buffEffect.buff=playerBuff.buff;
+                    buffEffect.on=ApplyOn_Themself;
+                    buffEffect.level=playerBuff.level;
+                    playerMonster->buffs.removeAt(index);
+                    returnValue << buffEffect;
+                    continue;
+                }
+            }
+            index++;
+        }
+    }
+    return returnValue;
+}
+
+QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMonster *playerMonster)
+{
+    QList<Skill::LifeEffectReturn> returnValue;
+    int index=0;
+    while(index<playerMonster->buffs.size())
+    {
+        const PlayerBuff &playerBuff=playerMonster->buffs.at(index);
+        if(!CommonDatapack::commonDatapack.monsterBuffs.contains(playerBuff.buff))
+            playerMonster->buffs.removeAt(index);
+        else
+        {
+            const Buff &buff=CommonDatapack::commonDatapack.monsterBuffs[playerBuff.buff];
+            const QList<Buff::Effect> &effects=buff.level.at(playerBuff.level-1).fight;
+            int sub_index=0;
+            while(sub_index<effects.size())
+            {
+                const Buff::Effect &effect=effects.at(sub_index);
+                if(effect.on==Buff::Effect::EffectOn_HP)
+                {
+                    qint32 quantity;
+                    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
+                    if(effect.type==QuantityType_Quantity)
+                    {
+                        quantity=effect.quantity;
+                        if(quantity<0 && (qint32)playerMonster->hp<=(-quantity))
+                        {
+                            quantity=-playerMonster->hp;
+                            playerMonster->hp=0;
+                            playerMonster->buffs.clear();
+                        }
+                        if(quantity>0 && quantity>=(qint32)(currentMonsterStat.hp-playerMonster->hp))
+                        {
+                            quantity=currentMonsterStat.hp-playerMonster->hp;
+                            playerMonster->hp=currentMonsterStat.hp;
+                        }
+                    }
+                    if(effect.type==QuantityType_Percent)
+                    {
+                        quantity=(player_informations->playerMonster[selectedMonster].hp*effect.quantity)/100;
+                        if(effect.quantity<0)
+                        {
+                            if(quantity==0)
+                                quantity=-1;
+                        }
+                        else if(effect.quantity>0)
+                        {
+                            if(quantity==0)
+                                quantity=1;
+                        }
+                    }
+                    if(quantity<0 || quantity>0)
+                    {
+                        Skill::LifeEffectReturn lifeEffectReturn;
+                        lifeEffectReturn.on=ApplyOn_Themself;
+                        lifeEffectReturn.quantity=quantity;
+                        returnValue << lifeEffectReturn;
+                    }
+                }
+                sub_index++;
+            }
+            index++;
+        }
+    }
+    return returnValue;
 }
 
 bool CommonFightEngine::useSkill(const quint32 &skill)
