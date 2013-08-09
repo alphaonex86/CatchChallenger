@@ -398,6 +398,12 @@ enum QuantityType
 
 struct Buff
 {
+    enum Duration
+    {
+        Duration_Always,
+        Duration_ThisFight,
+        Duration_NumberOfTurn
+    };
     struct Effect
     {
         enum EffectOn
@@ -420,6 +426,8 @@ struct Buff
         QList<Effect> fight;
     };
     QList<GeneralEffect> level;//first entry is buff level 1
+    Duration duration;
+    quint8 durationNumberOfTurn;
 };
 
 enum ApplyOn
