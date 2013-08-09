@@ -957,7 +957,7 @@ void BaseWindow::displayAttack()
         doNextAction();
         return;
     }
-    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty() && CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffEffectMonster.isEmpty())
+    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty() && CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty())
     {
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         newError(tr("Internal error"),"displayAttack(): crash: display an empty lifeEffect list into attack return");
@@ -987,9 +987,9 @@ void BaseWindow::displayAttack()
         //do the buff
         {
             int index=0;
-            while(index<CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffEffectMonster.size())
+            while(index<CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.size())
             {
-                Skill::BuffEffect buffEffect=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffEffectMonster.at(index);
+                Skill::BuffEffect buffEffect=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.at(index);
                 bool buffApplyOnOtherMonster=(
                             CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
                             (buffEffect.on==ApplyOn_AloneEnemy ||

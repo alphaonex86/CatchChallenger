@@ -438,6 +438,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                             if(!monsters.contains(botFightMonster.id))
                                             {
                                                 entryValid=false;
+                                                CatchChallenger::DebugClass::debugConsole(QString("Monster not found into the monster list: %1 into the file %2 (line %3)").arg(botFightMonster.id).arg(xmlFile.fileName()).arg(monster.lineNumber()));
                                                 break;
                                             }
                                             if(!monster.hasAttribute("level"))
@@ -470,6 +471,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                                         if(!monsterSkills.contains(attackId))
                                                         {
                                                             entryValid=false;
+                                                            CatchChallenger::DebugClass::debugConsole(QString("Monster attack not found: %1 into the file %2 (line %3)").arg(attackId).arg(xmlFile.fileName()).arg(monster.lineNumber()));
                                                             break;
                                                         }
                                                         if(attack.hasAttribute("level"))
@@ -863,7 +865,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                 else if(ok)
                 {
                     Buff::Duration duration=Buff::Duration_ThisFight;
-                    quint8 durationNumberOfTurn=3;
+                    quint8 durationNumberOfTurn=0;
                     if(item.hasAttribute("duration"))
                     {
                         if(item.attribute("duration")=="Always")
@@ -879,6 +881,8 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                     durationNumberOfTurn=3;
                                 }
                             }
+                            else
+                                durationNumberOfTurn=3;
                             duration=Buff::Duration_NumberOfTurn;
                         }
                         else if(item.attribute("duration")=="ThisFight")
