@@ -298,9 +298,9 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
         if(attackReturn.success)
         {
             sub_index=0;
-            while(sub_index<attackReturn.buffEffectMonster.size())
+            while(sub_index<attackReturn.addBuffEffectMonster.size())
             {
-                Skill::BuffEffect buff=attackReturn.buffEffectMonster.at(sub_index);
+                Skill::BuffEffect buff=attackReturn.addBuffEffectMonster.at(sub_index);
                 if(!attackReturn.doByTheCurrentMonster)
                     buff.on=invertApplyOn(buff.on);
                 qDebug() << "addAndApplyAttackReturnList() buff on " << buff.on << ", buff:" << buff.buff << ", buff level:" << buff.level;

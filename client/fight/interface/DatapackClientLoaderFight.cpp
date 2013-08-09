@@ -395,41 +395,51 @@ void DatapackClientLoader::parseBotFightsExtra()
                     if(item.hasAttribute("id"))
                     {
                         quint32 id=item.attribute("id").toUInt(&ok);
-                        if(ok && CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(id) && !botFightsExtra.contains(id))
+                        if(ok)
                         {
-                            BotFightExtra botFightExtra;
-                            botFightExtra.start=tr("Ready for the fight?");
-                            botFightExtra.win=tr("You are so strong for me!");
+                            if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(id))
                             {
-                                QDomElement start = item.firstChildElement("start");
-                                while(!start.isNull())
+                                if(!botFightsExtra.contains(id))
                                 {
-                                    if(start.isElement() && start.hasAttribute("lang"))
+                                    BotFightExtra botFightExtra;
+                                    botFightExtra.start=tr("Ready for the fight?");
+                                    botFightExtra.win=tr("You are so strong for me!");
                                     {
-                                        if(start.attribute("lang")=="en")
-                                            botFightExtra.start=start.text();
+                                        QDomElement start = item.firstChildElement("start");
+                                        while(!start.isNull())
+                                        {
+                                            if(start.isElement() && start.hasAttribute("lang"))
+                                            {
+                                                if(start.attribute("lang")=="en")
+                                                    botFightExtra.start=start.text();
+                                            }
+                                            else
+                                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            start = start.nextSiblingElement("start");
+                                        }
+                                        QDomElement win = item.firstChildElement("win");
+                                        while(!win.isNull())
+                                        {
+                                            if(win.isElement() && win.hasAttribute("lang"))
+                                            {
+                                                if(win.attribute("lang")=="en")
+                                                    botFightExtra.win=win.text();
+                                            }
+                                            else
+                                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            win = win.nextSiblingElement("win");
+                                        }
                                     }
-                                    else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                    start = start.nextSiblingElement("start");
+                                    botFightsExtra[id]=botFightExtra;
                                 }
-                                QDomElement win = item.firstChildElement("win");
-                                while(!win.isNull())
-                                {
-                                    if(win.isElement() && win.hasAttribute("lang"))
-                                    {
-                                        if(win.attribute("lang")=="en")
-                                            botFightExtra.win=win.text();
-                                    }
-                                    else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                    win = win.nextSiblingElement("win");
-                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is already into the botFight extra, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                             }
-                            botFightsExtra[id]=botFightExtra;
+                            else
+                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, bot fights have not the id %4, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(id));
                         }
                         else
-                            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number, not into bot fight or already into the extra text: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number to parse bot fight extra, child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                     }
                 }
                 else

@@ -664,12 +664,12 @@ void LocalClientHandlerFight::sendBattleReturn(const QList<Skill::AttackReturn> 
         out << (quint8)attackReturnTemp.success;
         out << (quint32)attackReturnTemp.attack;
         index=0;
-        out << (quint8)attackReturnTemp.buffEffectMonster.size();
-        while(index<attackReturnTemp.buffEffectMonster.size())
+        out << (quint8)attackReturnTemp.addBuffEffectMonster.size();
+        while(index<attackReturnTemp.addBuffEffectMonster.size())
         {
-            out << (quint32)attackReturnTemp.buffEffectMonster.at(index).buff;
-            out << (quint8)attackReturnTemp.buffEffectMonster.at(index).on;
-            out << (quint8)attackReturnTemp.buffEffectMonster.at(index).level;
+            out << (quint32)attackReturnTemp.addBuffEffectMonster.at(index).buff;
+            out << (quint8)attackReturnTemp.addBuffEffectMonster.at(index).on;
+            out << (quint8)attackReturnTemp.addBuffEffectMonster.at(index).level;
             index++;
         }
         index=0;
