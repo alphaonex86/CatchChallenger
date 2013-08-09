@@ -82,6 +82,33 @@ void LocalClientHandlerFight::saveCurrentMonsterStat()
     }
 }
 
+void LocalClientHandlerFight::savePosition()
+{
+    const QList<PlayerMonster> &playerMonsterList=getPlayerMonster();
+    int index=0;
+    while(index<playerMonsterList.size())
+    {
+        const PlayerMonster &playerMonster=playerMonsterList.at(index);
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                             .arg(index+1)
+                             .arg(playerMonster.id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                             .arg(index+1)
+                             .arg(playerMonster.id)
+                             );
+            break;
+        }
+        index++;
+    }
+}
+
 bool LocalClientHandlerFight::checkKOCurrentMonsters()
 {
     if(getCurrentMonster()->hp==0)

@@ -3564,3 +3564,38 @@ void CatchChallenger::BaseWindow::on_monsterDetailsQuit_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_monster);
 }
+
+void CatchChallenger::BaseWindow::on_monsterListMoveUp_clicked()
+{
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    if(selectedMonsters.size()!=1)
+        return;
+}
+
+void CatchChallenger::BaseWindow::on_monsterListMoveDown_clicked()
+{
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    if(selectedMonsters.size()!=1)
+        return;
+}
+
+void CatchChallenger::BaseWindow::on_monsterList_itemSelectionChanged()
+{
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    if(selectedMonsters.size()!=1)
+    {
+        ui->monsterListMoveUp->setEnabled(false);
+        ui->monsterListMoveDown->setEnabled(false);
+        return;
+    }
+    const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+    if(playerMonster.size()<=1)
+    {
+        ui->monsterListMoveUp->setEnabled(false);
+        ui->monsterListMoveDown->setEnabled(false);
+        return;
+    }
+    int row=ui->monsterList->currentRow();
+    ui->monsterListMoveUp->setEnabled(row>0);
+    ui->monsterListMoveDown->setEnabled(row<(playerMonster.size()-1));
+}

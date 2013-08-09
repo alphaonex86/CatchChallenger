@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `egg_step` int(11) NOT NULL,
   `player_origin` int(11) NOT NULL,
   `warehouse` tinyint(1) NOT NULL COMMENT 'true if into warehouse',
+  `position` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `player` (`player`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
@@ -105,7 +106,8 @@ CREATE TABLE IF NOT EXISTS `monster_buff` (
   `monster` int(11) NOT NULL,
   `buff` int(11) NOT NULL,
   `level` int(11) NOT NULL,
-  PRIMARY KEY (`monster`,`buff`)
+  PRIMARY KEY (`monster`,`buff`),
+  KEY `monster` (`monster`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

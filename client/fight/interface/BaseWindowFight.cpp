@@ -118,6 +118,18 @@ void BaseWindow::load_monsters()
         }
         index++;
     }
+    if(inSelection)
+    {
+       ui->monsterListMoveUp->setVisible(false);
+       ui->monsterListMoveDown->setVisible(false);
+    }
+    else
+    {
+        ui->monsterListMoveUp->setVisible(true);
+        ui->monsterListMoveDown->setVisible(true);
+        on_monsterList_itemSelectionChanged();
+    }
+    ui->selectMonster->setVisible(true);
 }
 
 void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y)

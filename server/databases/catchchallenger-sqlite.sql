@@ -41,19 +41,6 @@ CREATE TABLE item (
     "player_id" INTEGER,
     "quantity" INTEGER
 , "warehouse" INTEGER);
-CREATE TABLE monster (
-    "id" INTEGER,
-    "hp" INTEGER,
-    "player" INTEGER,
-    "monster" INTEGER,
-    "level" INTEGER,
-    "xp" INTEGER,
-    "sp" INTEGER,
-    "captured_with" INTEGER,
-    "gender" TEXT,
-    "egg_step" INTEGER,
-    "player_origin" INTEGER
-, "warehouse" INTEGER);
 CREATE TABLE player (
     "id" INTEGER,
     "login" TEXT NOT NULL,
@@ -92,6 +79,20 @@ CREATE TABLE factory (
     "products" TEXT,
     "last_update" INTEGER
 );
+CREATE TABLE monster (
+    "id" INTEGER,
+    "hp" INTEGER,
+    "player" INTEGER,
+    "monster" INTEGER,
+    "level" INTEGER,
+    "xp" INTEGER,
+    "sp" INTEGER,
+    "captured_with" INTEGER,
+    "gender" TEXT,
+    "egg_step" INTEGER,
+    "player_origin" INTEGER,
+    "warehouse" INTEGER
+, "position" INTEGER);
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
 CREATE INDEX "player_recipe_list" on recipes (player ASC);
@@ -103,13 +104,13 @@ CREATE INDEX "player_quest" on quest (player ASC);
 CREATE UNIQUE INDEX "bot_already_beaten_index" on bot_already_beaten (player_id ASC, botfight_id ASC);
 CREATE INDEX "bot_already_beaten_by_player" on bot_already_beaten (player_id ASC);
 CREATE INDEX "player_item_index" on item (player_id ASC);
-CREATE INDEX "monster_by_player" on monster (player ASC);
 CREATE UNIQUE INDEX "player_item_unique_index" on item (item_id ASC, player_id ASC, warehouse ASC);
-CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
 CREATE UNIQUE INDEX "id" on player (id ASC);
 CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
 CREATE UNIQUE INDEX "bypseudoandclan" on player (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on player (clan ASC);
 CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
 CREATE UNIQUE INDEX "cityindex" on city (city ASC);
+CREATE INDEX "monster_by_player" on monster (player ASC);
+CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
 COMMIT;
