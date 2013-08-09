@@ -993,13 +993,13 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             }
                                         }
                                         else
-                                            DebugClass::debugConsole(QString("lookAt not found at: %1 (%2,%3)").arg(shops_number));
+                                            DebugClass::debugConsole(QString("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     }
                                     else
-                                        DebugClass::debugConsole(QString("fightid not found into the list at: %1 (%2,%3)").arg(shops_number));
+                                        DebugClass::debugConsole(QString("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("botsFight point have wrong fightid at: %1 (%2,%3)").arg(shops_number));
+                                    DebugClass::debugConsole(QString("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                             }
                         }
                     }

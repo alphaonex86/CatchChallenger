@@ -1508,7 +1508,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                                 return;
                             }
                             in >> buffEffect.level;
-                            tempAttackReturn.buffEffectMonster << buffEffect;
+                            tempAttackReturn.addBuffEffectMonster << buffEffect;
                             index++;
                         }
                         index=0;

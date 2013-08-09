@@ -452,7 +452,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         if(success)
         {
             applyOtherBuffEffect(buff.effect);
-            attackReturn.buffEffectMonster << buff.effect;
+            attackReturn.addBuffEffectMonster << buff.effect;
             attackReturn.success=true;
         }
         index++;
@@ -583,9 +583,20 @@ void CommonFightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
         emit error(QString("player_informations is NULL"));
         return;
     }
+    if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
+    {
+        emit error(QString("apply a unknown buff"));
+        return;
+    }
+    if(effect.level>CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.size())
+    {
+        emit error(QString("apply buff level out of range"));
+        return;
+    }
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
+    tempBuff.remainingNumberOfTurn=CommonDatapack::commonDatapack.monsterBuffs[effect.buff].durationNumberOfTurn;
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
@@ -706,9 +717,20 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
 
 int CommonFightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
+    if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
+    {
+        emit error(QString("apply a unknown buff"));
+        return -1;
+    }
+    if(effect.level>CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.size())
+    {
+        emit error(QString("apply buff level out of range"));
+        return -1;
+    }
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
+    tempBuff.remainingNumberOfTurn=CommonDatapack::commonDatapack.monsterBuffs[effect.buff].durationNumberOfTurn;
     int index=0;
     switch(effect.on)
     {
@@ -746,8 +768,10 @@ int CommonFightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
         break;
         default:
             emit error("Not apply match, can't apply the buff");
+            return -1;
         break;
     }
+    return -1;
 }
 
 ApplyOn CommonFightEngine::invertApplyOn(const ApplyOn &applyOn)
@@ -1121,7 +1145,9 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
     emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
     #endif
-    int index=0;
+    int index;
+    //do the buff
+    index=0;
     while(index<skillList.buff.size())
     {
         const Skill::Buff &buff=skillList.buff.at(index);
@@ -1149,16 +1175,17 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
             if(success)
                 emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
             #endif
-            tempReturnBuff.success=true;
-            tempReturnBuff.buffEffectMonster << buff.effect;
+            tempReturnBuff.success=true;//the attack have work because at less have a buff
+            tempReturnBuff.addBuffEffectMonster << buff.effect;
             applyCurrentBuffEffect(buff.effect);
         }
         index++;
     }
+    //do the skill
     index=0;
     while(index<skillList.life.size())
     {
-        tempReturnBuff.success=true;
+
         const Skill::Life &life=skillList.life.at(index);
         bool success;
         if(life.success==100)
@@ -1167,12 +1194,63 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
             success=(getOneSeed(100)<life.success);
         if(success)
         {
+            tempReturnBuff.success=true;//the attack have work because at less have a buff
             Skill::LifeEffectReturn lifeEffectReturn;
             lifeEffectReturn.on=life.effect.on;
             lifeEffectReturn.quantity=applyCurrentLifeEffect(life.effect).quantity;
             tempReturnBuff.lifeEffectMonster << lifeEffectReturn;
         }
         index++;
+    }
+    //apply the buff
+    if(!currentMonsterIsKO())
+    {
+        PlayerMonster * playerMonster=getCurrentMonster();
+        if(playerMonster!=NULL)
+        {
+            int index=0;
+            while(index<playerMonster->buffs.size())
+            {
+                const PlayerBuff &playerBuff=playerMonster->buffs.at(index);
+                if(!CommonDatapack::commonDatapack.monsterBuffs.contains(playerBuff.buff))
+                    playerMonster->buffs.removeAt(index);
+                else
+                {
+                    const Buff &buff=CommonDatapack::commonDatapack.monsterBuffs[playerBuff.buff];
+                    if(buff.duration==Buff::Duration_NumberOfTurn)
+                    {
+                        if(playerMonster->buffs.at(index).remainingNumberOfTurn>0)
+                            playerMonster->buffs[index].remainingNumberOfTurn--;
+                        if(playerMonster->buffs.at(index).remainingNumberOfTurn<=0)
+                        {
+                            Skill::BuffEffect buffEffect;
+                            buffEffect.buff=playerBuff.buff;
+                            buffEffect.on=ApplyOn_Themself;
+                            buffEffect.level=playerBuff.level;
+                            playerMonster->buffs.removeAt(index);
+                            tempReturnBuff.removeBuffEffectMonster << buffEffect;
+                            continue;
+                        }
+                    }
+                    /*const QList<Buff::Effect> &effects=buff.level.at(playerBuff.level-1).fight;
+                    int sub_index=0;
+                    while(sub_index<effects.size())
+                    {
+                        const Buff::Effect &effect=effects.at(sub_index);
+                        if(effect.on==Buff::Effect::EffectOn_HP)
+                        {
+                            if(effect.type==QuantityType_Quantity)
+                            {
+                            apply the life quantity effect
+                            }
+                        }
+                        sub_index++;
+                    }
+                    sdfg dfg dfg*/
+                    index++;
+                }
+            }
+        }
     }
     return tempReturnBuff;
 }
