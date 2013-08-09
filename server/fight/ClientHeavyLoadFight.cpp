@@ -15,10 +15,10 @@ void ClientHeavyLoad::loadMonsters()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
         break;
     }
 
@@ -222,6 +222,11 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
             {
                 ok=false;
                 emit message(QString("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
+            }
+            else if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].duration!=Buff::Duration_Always)
+            {
+                ok=false;
+                emit message(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
             }
         }
         else

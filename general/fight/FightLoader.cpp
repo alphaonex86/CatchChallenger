@@ -784,6 +784,8 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 level = level.nextSiblingElement("level");
                             }
+                            if(levelDef.size()==0)
+                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, 0 level found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                             quint8 index=1;
                             while(levelDef.contains(index))
                             {

@@ -47,7 +47,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>8</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -3083,7 +3083,7 @@ padding-bottom:3px;
           <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageEnter">
           <layout class="QHBoxLayout" name="horizontalLayout_22">
@@ -3785,22 +3785,57 @@ padding:6px 6px 6px 14px;
         <property name="styleSheet">
          <string notr="true">#page_monster{background-image: url(:/images/interface/player/background.png);}</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_15">
+        <layout class="QVBoxLayout" name="verticalLayout_33">
          <item>
-          <widget class="QListWidget" name="monsterList">
-           <property name="iconSize">
-            <size>
-             <width>80</width>
-             <height>80</height>
-            </size>
-           </property>
-           <property name="movement">
-            <enum>QListView::Static</enum>
-           </property>
-           <property name="uniformItemSizes">
-            <bool>true</bool>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_52">
+           <item>
+            <widget class="QListWidget" name="monsterList">
+             <property name="iconSize">
+              <size>
+               <width>80</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="movement">
+              <enum>QListView::Static</enum>
+             </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_15">
+             <item>
+              <widget class="QPushButton" name="monsterListMoveUp">
+               <property name="text">
+                <string>Move up</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="monsterListMoveDown">
+               <property name="text">
+                <string>Move down</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_32">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_21">
