@@ -239,8 +239,37 @@ void BaseWindow::init_current_monster_display()
         ui->labelFightBottomHP->setText(QString("%1/%2").arg(fightMonster->hp).arg(fightStat.hp));
         const Monster &monsterGenericInfo=CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster];
         int level_to_xp=monsterGenericInfo.level_to_xp.at(fightMonster->level-1);
-        ui->progressBarFightBottopExp->setMaximum(level_to_xp);
-        ui->progressBarFightBottopExp->setValue(fightMonster->remaining_xp);
+        ui->progressBarFightBottomExp->setMaximum(level_to_xp);
+        ui->progressBarFightBottomExp->setValue(fightMonster->remaining_xp);
+        //do the buff
+        {
+            ui->bottomBuff->clear();
+            int index=0;
+            while(index<fightMonster->buffs.size())
+            {
+                PlayerBuff buffEffect=fightMonster->buffs.at(index);
+                if(buffToGraphicalItemTop.contains(buffEffect.buff))
+                    delete buffToGraphicalItemTop[buffEffect.buff];
+                QListWidgetItem *item=new QListWidgetItem();
+                if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
+                {
+                    item->setToolTip(tr("Unknown buff"));
+                    item->setIcon(QIcon(":/images/interface/buff.png"));
+                }
+                else
+                {
+                    item->setIcon(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].icon);
+                    if(buffEffect.level<=1)
+                        item->setToolTip(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].name);
+                    else
+                        item->setToolTip(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].name).arg(buffEffect.level));
+                    item->setToolTip(item->toolTip()+"\n"+DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].description);
+                }
+                buffToGraphicalItemBottom[buffEffect.buff]=item;
+                ui->bottomBuff->addItem(item);
+                index++;
+            }
+        }
     }
     else
         emit error("Try fight without monster");
@@ -348,8 +377,8 @@ void BaseWindow::updateCurrentMonsterInformation()
     ui->frameFightBottom->setVisible(true);
     ui->frameFightBottom->show();
     const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[monster->monster];
-    ui->progressBarFightBottopExp->setMaximum(currentmonster.level_to_xp.at(monster->level-1));
-    ui->progressBarFightBottopExp->setValue(monster->remaining_xp);
+    ui->progressBarFightBottomExp->setMaximum(currentmonster.level_to_xp.at(monster->level-1));
+    ui->progressBarFightBottomExp->setValue(monster->remaining_xp);
     //list the attack
     fight_attacks_graphical.clear();
     ui->listWidgetFightAttack->clear();
@@ -514,6 +543,35 @@ void BaseWindow::updateOtherMonsterInformation()
         Monster::Stat otherStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
         ui->progressBarFightTopHP->setMaximum(otherStat.hp);
         ui->progressBarFightTopHP->setValue(otherMonster->hp);
+        //do the buff
+        {
+            ui->topBuff->clear();
+            int index=0;
+            while(index<otherMonster->buffs.size())
+            {
+                PlayerBuff buffEffect=otherMonster->buffs.at(index);
+                if(buffToGraphicalItemTop.contains(buffEffect.buff))
+                    delete buffToGraphicalItemTop[buffEffect.buff];
+                QListWidgetItem *item=new QListWidgetItem();
+                if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
+                {
+                    item->setToolTip(tr("Unknown buff"));
+                    item->setIcon(QIcon(":/images/interface/buff.png"));
+                }
+                else
+                {
+                    item->setIcon(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].icon);
+                    if(buffEffect.level<=1)
+                        item->setToolTip(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].name);
+                    else
+                        item->setToolTip(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].name).arg(buffEffect.level));
+                    item->setToolTip(item->toolTip()+"\n"+DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].description);
+                }
+                buffToGraphicalItemTop[buffEffect.buff]=item;
+                ui->topBuff->addItem(item);
+                index++;
+            }
+        }
     }
     else
     {
@@ -840,7 +898,7 @@ void BaseWindow::doNextAction()
         {
             PlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
             if(currentMonster!=NULL)
-                ui->progressBarFightBottopExp->setValue(currentMonster->remaining_xp);
+                ui->progressBarFightBottomExp->setValue(currentMonster->remaining_xp);
             displayText(tr("You win!"));
         }
         else
@@ -899,22 +957,24 @@ void BaseWindow::displayAttack()
         doNextAction();
         return;
     }
-    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty() && CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffEffectMonster.isEmpty())
     {
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         newError(tr("Internal error"),"displayAttack(): crash: display an empty lifeEffect list into attack return");
         doNextAction();
         return;
     }
-    bool applyOnOtherMonster=(
-                CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
-                (CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_AloneEnemy ||
-                 CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_AllEnemy)
-        ) || (
-                    !CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
-                    (CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_Themself ||
-                     CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_AllAlly)
-            );
+    bool applyOnOtherMonster=true;
+    if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+        applyOnOtherMonster=(
+                    CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
+                    (CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_AloneEnemy ||
+                     CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_AllEnemy)
+            ) || (
+                        !CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
+                        (CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_Themself ||
+                         CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().on==ApplyOn_AllAlly)
+                );
     //if start, display text
     if(displayAttackProgression==0)
     {
@@ -924,7 +984,68 @@ void BaseWindow::displayAttack()
             delete movie;
         }
         movie=NULL;
-        attack_quantity_changed=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
+        //do the buff
+        {
+            int index=0;
+            while(index<CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffEffectMonster.size())
+            {
+                Skill::BuffEffect buffEffect=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffEffectMonster.at(index);
+                bool buffApplyOnOtherMonster=(
+                            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
+                            (buffEffect.on==ApplyOn_AloneEnemy ||
+                             buffEffect.on==ApplyOn_AllEnemy)
+                    ) || (
+                                !CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster &&
+                                (buffEffect.on==ApplyOn_Themself ||
+                                 buffEffect.on==ApplyOn_AllAlly)
+                        );
+
+                if(buffApplyOnOtherMonster)
+                {
+                    if(buffToGraphicalItemTop.contains(buffEffect.buff))
+                        delete buffToGraphicalItemTop[buffEffect.buff];
+                }
+                else
+                {
+                    if(buffToGraphicalItemBottom.contains(buffEffect.buff))
+                        delete buffToGraphicalItemBottom[buffEffect.buff];
+                }
+                QListWidgetItem *item=new QListWidgetItem();
+                if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
+                {
+                    item->setToolTip(tr("Unknown buff"));
+                    item->setIcon(QIcon(":/images/interface/buff.png"));
+                }
+                else
+                {
+                    const DatapackClientLoader::MonsterExtra::Buff &buffExtra=DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff];
+                    if(!buffExtra.icon.isNull())
+                        item->setIcon(buffExtra.icon);
+                    else
+                        item->setIcon(QIcon(":/images/interface/buff.png"));
+                    if(buffEffect.level<=1)
+                        item->setToolTip(buffExtra.name);
+                    else
+                        item->setToolTip(tr("%1 at level %2").arg(buffExtra.name).arg(buffEffect.level));
+                    item->setToolTip(item->toolTip()+"\n"+buffExtra.description);
+                }
+                if(buffApplyOnOtherMonster)
+                {
+                    buffToGraphicalItemTop[buffEffect.buff]=item;
+                    ui->topBuff->addItem(item);
+                }
+                else
+                {
+                    buffToGraphicalItemBottom[buffEffect.buff]=item;
+                    ui->bottomBuff->addItem(item);
+                }
+                index++;
+            }
+        }
+        if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+            attack_quantity_changed=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
+        else
+            attack_quantity_changed=0;
         ui->labelFightMonsterAttackTop->setMovie(NULL);
         ui->labelFightMonsterAttackBottom->setMovie(NULL);
         updateAttackTime.restart();
@@ -940,7 +1061,11 @@ void BaseWindow::displayAttack()
                 .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
                 .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack].name);
         QString damage;
-        qint32 quantity=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
+        qint32 quantity;
+        if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+            quantity=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
+        else
+            quantity=0;
         if(applyOnOtherMonster)
         {
             if(quantity>0)
@@ -1037,20 +1162,23 @@ void BaseWindow::displayAttack()
     if(updateAttackTime.elapsed()>3000 /*3000ms*/)
     {
         displayAttackProgression=0;
-        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity!=0)
-        {
-            if(applyOnOtherMonster)
-                ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
-            else
-                ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
-        }
+        if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+            if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity!=0)
+            {
+                if(applyOnOtherMonster)
+                    ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
+                else
+                    ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
+            }
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         //attack is finish
         doNextAction();
     }
     else
     {
-        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<0)
+        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+            hp_to_change=0;
+        else if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<0)
         {
             hp_to_change=-hp_to_change;
             if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity>hp_to_change)

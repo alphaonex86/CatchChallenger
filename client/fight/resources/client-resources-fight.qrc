@@ -11,5 +11,6 @@
         <file>images/interface/fight/plateform-front.png</file>
         <file>images/interface/fight/labelBottom.png</file>
         <file>images/interface/fight/labelTop.png</file>
+        <file>images/interface/buff.png</file>
     </qresource>
 </RCC>

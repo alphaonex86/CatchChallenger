@@ -51,6 +51,7 @@ public:
     void battleFakeAcceptedInternal(LocalClientHandlerFight * otherPlayer);
     bool botFightStart(const quint32 &botFightId);
     void setInCityCapture(const bool &isInCityCapture);
+    int applyCurrentBuffEffect(const Skill::BuffEffect &effect);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
