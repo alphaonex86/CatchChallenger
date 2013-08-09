@@ -52,6 +52,7 @@ public:
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     virtual bool tryCapture(const quint32 &item);
+    virtual int applyCurrentBuffEffect(const Skill::BuffEffect &effect);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
@@ -61,7 +62,6 @@ protected:
     Skill::LifeEffectReturn applyOtherLifeEffect(const Skill::LifeEffect &effect);
     void applyOtherBuffEffect(const Skill::BuffEffect &effect);
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
-    void applyCurrentBuffEffect(const Skill::BuffEffect &effect);
     virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
     bool internalTryCapture(const Trap &trap);

@@ -155,6 +155,20 @@ void LocalClientHandlerFight::healAllMonsters()
                                  );
                 break;
             }
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                             .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                             );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                             .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                             );
+                break;
+            }
         }
         index++;
     }
@@ -937,4 +951,115 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
 void LocalClientHandlerFight::requestFight(const quint32 &fightId)
 {
     botFightStart(fightId);
+}
+
+int LocalClientHandlerFight::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
+{
+    const int &returnCode=CommonFightEngine::applyCurrentBuffEffect(effect);
+    if(returnCode==-2)
+        return returnCode;
+    if(CommonDatapack::commonDatapack.monsterBuffs[effect.buff].duration==Buff::Duration_Always)
+    {
+        if(returnCode==-1)
+            switch(effect.on)
+            {
+                case ApplyOn_AloneEnemy:
+                case ApplyOn_AllEnemy:
+                if(isInBattle())
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
+                                     .arg(otherPlayerBattle->getCurrentMonster()->id)
+                                     .arg(effect.buff)
+                                     .arg(effect.level)
+                                     );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
+                                     .arg(otherPlayerBattle->getCurrentMonster()->id)
+                                     .arg(effect.buff)
+                                     .arg(effect.level)
+                                     );
+                        break;
+                    }
+                break;
+                case ApplyOn_Themself:
+                case ApplyOn_AllAlly:
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(effect.buff)
+                                 .arg(effect.level)
+                                 );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
+                                 .arg(getCurrentMonster()->id)
+                                 .arg(effect.buff)
+                                 .arg(effect.level)
+                                 );
+                    break;
+                }
+                break;
+                default:
+                    emit error("Not apply match, can't apply the buff");
+                break;
+            }
+        else
+            switch(effect.on)
+            {
+                case ApplyOn_AloneEnemy:
+                case ApplyOn_AllEnemy:
+                if(isInBattle())
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
+                                         .arg(otherPlayerBattle->getCurrentMonster()->id)
+                                         .arg(effect.buff)
+                                         .arg(effect.level)
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
+                                         .arg(otherPlayerBattle->getCurrentMonster()->id)
+                                         .arg(effect.buff)
+                                         .arg(effect.level)
+                                         );
+                        break;
+                    }
+                break;
+                case ApplyOn_Themself:
+                case ApplyOn_AllAlly:
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
+                                     .arg(getCurrentMonster()->id)
+                                     .arg(effect.buff)
+                                     .arg(effect.level)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
+                                     .arg(getCurrentMonster()->id)
+                                     .arg(effect.buff)
+                                     .arg(effect.level)
+                                     );
+                    break;
+                }
+                break;
+                default:
+                    emit error("Not apply match, can't apply the buff");
+                break;
+            }
+    }
+    return returnCode;
 }

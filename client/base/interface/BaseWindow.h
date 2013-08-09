@@ -448,6 +448,7 @@ private:
     qint32 attack_quantity_changed;
     QList<BattleInformations> battleInformationsList;
     QList<quint32> botFightList;
+    QHash<quint32,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
 
     //city
     QTimer nextCityCaptureTimer;

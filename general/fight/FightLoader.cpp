@@ -862,6 +862,33 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id already found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                 else if(ok)
                 {
+                    Buff::Duration duration=Buff::Duration_ThisFight;
+                    quint8 durationNumberOfTurn=3;
+                    if(item.hasAttribute("duration"))
+                    {
+                        if(item.attribute("duration")=="Always")
+                            duration=Buff::Duration_Always;
+                        else if(item.attribute("duration")=="NumberOfTurn")
+                        {
+                            if(item.hasAttribute("durationNumberOfTurn"))
+                            {
+                                durationNumberOfTurn=item.attribute("durationNumberOfTurn").toUShort(&ok);
+                                if(!ok)
+                                {
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, durationNumberOfTurn is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    durationNumberOfTurn=3;
+                                }
+                            }
+                            duration=Buff::Duration_NumberOfTurn;
+                        }
+                        else if(item.attribute("duration")=="ThisFight")
+                            duration=Buff::Duration_ThisFight;
+                        else
+                        {
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, attribute duration have wrong value \"%4\" is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("duration")));
+                            duration=Buff::Duration_ThisFight;
+                        }
+                    }
                     QHash<quint8,Buff::GeneralEffect> levelDef;
                     QDomElement effect = item.firstChildElement("effect");
                     if(!effect.isNull())
@@ -974,6 +1001,8 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                 if(levelDef[index].fight.empty() && levelDef[index].walk.empty())
                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, no effect loaded for buff %4 at level %5, missing level to continue: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(id).arg(index));
                                 monsterBuffs[id].level << levelDef[index];
+                                monsterBuffs[id].duration=duration;
+                                monsterBuffs[id].durationNumberOfTurn=durationNumberOfTurn;
                                 levelDef.remove(index);
                                 #ifdef DEBUG_MESSAGE_BUFF_LOAD
                                 DebugClass::debugConsole(QString("for the level %1 of buff %2 have %3 effect(s) in fight and %4 effect(s) in walk").arg(index).arg(id).arg(GlobalData::serverPrivateVariables.monsterBuffs[id].level.at(index-1).fight.size()).arg(GlobalData::serverPrivateVariables.monsterBuffs[id].level.at(index-1).walk.size()));
