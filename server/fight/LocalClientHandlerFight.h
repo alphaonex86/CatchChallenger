@@ -28,6 +28,7 @@ public:
     bool isInFight() const;
     void setVariable(Player_internal_informations *player_informations);
     void saveCurrentMonsterStat();
+    void savePosition();
     bool checkLoose();
     bool isInBattle() const;
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
