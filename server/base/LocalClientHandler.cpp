@@ -95,7 +95,7 @@ void LocalClientHandler::extraStop()
     if(!player_informations->is_logged || player_informations->isFake)
         return;
     //save the monster
-    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && !localClientHandlerFight.isInFight())
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && localClientHandlerFight.isInFight())
         localClientHandlerFight.saveCurrentMonsterStat();
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
     {
@@ -129,6 +129,8 @@ void LocalClientHandler::extraStop()
             }
             index++;
         }
+        localClientHandlerFight.saveCurrentMonsterStat();
+        localClientHandlerFight.savePosition();
     }
     savePosition();
 }
