@@ -45,6 +45,8 @@ public:
     virtual bool tryEscape();
     bool canDoFightAction();
     virtual bool useSkill(const quint32 &skill);
+    QList<Skill::LifeEffectReturn> buffLifeEffect(PublicPlayerMonster * playerMonster);
+    QList<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
