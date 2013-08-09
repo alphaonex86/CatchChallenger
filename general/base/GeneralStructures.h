@@ -186,6 +186,7 @@ struct PlayerBuff
 {
     quint32 buff;
     quint8 level;
+    quint8 remainingNumberOfTurn;
 };
 
 class PublicPlayerMonster
@@ -463,8 +464,9 @@ struct Skill
         bool doByTheCurrentMonster;
         bool success;
         quint32 attack;
-        QList<BuffEffect> buffEffectMonster;
+        QList<BuffEffect> addBuffEffectMonster,removeBuffEffectMonster;
         QList<LifeEffectReturn> lifeEffectMonster;
+        QList<LifeEffectReturn> buffLifeEffectMonster;
     };
     struct Buff
     {
