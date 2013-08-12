@@ -835,8 +835,8 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         ui->inventoryUse->setVisible(false);
         ui->inventoryDestroy->setVisible(!inSelection);
         ui->inventory_image->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-        ui->inventory_name->setText(tr("Unknow name"));
-        ui->inventory_description->setText(tr("Unknow description"));
+        ui->inventory_name->setText(tr("Unknown name"));
+        ui->inventory_description->setText(tr("Unknown description"));
         return;
     }
 
@@ -911,7 +911,7 @@ void BaseWindow::updateQueryList()
                 queryStringList << tr("Collecting plant...");
             break;
             default:
-                queryStringList << tr("Unknow action...");
+                queryStringList << tr("Unknown action...");
             break;
         }
         index++;
@@ -1923,6 +1923,11 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("Bot step wrong data type error, repport this error please"));
             return;
         }
+        if(!CommonDatapack::commonDatapack.botFights.contains(fightId))
+        {
+            showTip(tr("Bot fight not found"));
+            return;
+        }
         CatchChallenger::Api_client_real::client->requestFight(fightId);
         botFight(fightId);
         return;
@@ -2470,8 +2475,8 @@ void BaseWindow::on_shopItemList_itemSelectionChanged()
     if(!DatapackClientLoader::datapackLoader.itemsExtra.contains(shop_items_graphical[item]))
     {
         ui->shopImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-        ui->shopName->setText(tr("Unknow name"));
-        ui->shopDescription->setText(tr("Unknow description"));
+        ui->shopName->setText(tr("Unknown name"));
+        ui->shopDescription->setText(tr("Unknown description"));
         return;
     }
     const DatapackClientLoader::ItemExtra &content=DatapackClientLoader::datapackLoader.itemsExtra[shop_items_graphical[item]];
@@ -2673,11 +2678,19 @@ void BaseWindow::on_pushButton_interface_monsters_clicked()
 void BaseWindow::on_toolButton_monster_list_quit_clicked()
 {
     if(inSelection)
-        if(waitedObjectType==ObjectType_MonsterToTrade || waitedObjectType==ObjectType_MonsterToLearn || waitedObjectType==ObjectType_UseInFight)
+    {
+        switch(waitedObjectType)
         {
+            case ObjectType_MonsterToTrade:
+            case ObjectType_MonsterToLearn:
+            case ObjectType_MonsterToFight:
+            case ObjectType_MonsterToFightKO:
             objectSelection(false);
             return;
+            default:
+            break;
         }
+    }
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 

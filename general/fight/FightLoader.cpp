@@ -441,7 +441,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                                 CatchChallenger::DebugClass::debugConsole(QString("Monster not found into the monster list: %1 into the file %2 (line %3)").arg(botFightMonster.id).arg(xmlFile.fileName()).arg(monster.lineNumber()));
                                                 break;
                                             }
-                                            if(!monster.hasAttribute("level"))
+                                            if(monster.hasAttribute("level"))
                                             {
                                                 botFightMonster.level=monster.attribute("level").toUShort(&ok);
                                                 if(!ok)

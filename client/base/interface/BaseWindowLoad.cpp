@@ -67,6 +67,8 @@ void BaseWindow::resetAll()
     clanName.clear();
     haveClanInformations=false;
     nextCityCaptureTimer.stop();
+    battleInformationsList.clear();
+    botFightList.clear();
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }
