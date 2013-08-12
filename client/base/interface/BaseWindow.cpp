@@ -3570,6 +3570,18 @@ void CatchChallenger::BaseWindow::on_monsterListMoveUp_clicked()
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
+    int	currentRow=ui->monsterList->row(selectedMonsters.first());
+    if(currentRow<=0)
+        return;
+    if(!CatchChallenger::ClientFightEngine::fightEngine.moveUpMonster(currentRow))
+        return;
+    CatchChallenger::Api_client_real::client->monsterMoveUp(currentRow+1);
+    QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
+    ui->monsterList->insertItem(currentRow-1,item);
+    ui->monsterList->item(currentRow)->setSelected(false);
+    ui->monsterList->item(currentRow-1)->setSelected(true);
+    ui->monsterList->setCurrentRow(currentRow-1);
+    on_monsterList_itemSelectionChanged();
 }
 
 void CatchChallenger::BaseWindow::on_monsterListMoveDown_clicked()
@@ -3577,6 +3589,20 @@ void CatchChallenger::BaseWindow::on_monsterListMoveDown_clicked()
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
+    int	currentRow=ui->monsterList->row(selectedMonsters.first());
+    if(currentRow<0)
+        return;
+    if(currentRow>=(ui->monsterList->count()-1))
+        return;
+    if(!CatchChallenger::ClientFightEngine::fightEngine.moveDownMonster(currentRow))
+        return;
+    CatchChallenger::Api_client_real::client->monsterMoveDown(currentRow+1);
+    QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
+    ui->monsterList->insertItem(currentRow+1,item);
+    ui->monsterList->item(currentRow)->setSelected(false);
+    ui->monsterList->item(currentRow+1)->setSelected(true);
+    ui->monsterList->setCurrentRow(currentRow+1);
+    on_monsterList_itemSelectionChanged();
 }
 
 void CatchChallenger::BaseWindow::on_monsterList_itemSelectionChanged()
@@ -3595,7 +3621,7 @@ void CatchChallenger::BaseWindow::on_monsterList_itemSelectionChanged()
         ui->monsterListMoveDown->setEnabled(false);
         return;
     }
-    int row=ui->monsterList->currentRow();
+    int row=ui->monsterList->row(selectedMonsters.first());
     ui->monsterListMoveUp->setEnabled(row>0);
     ui->monsterListMoveDown->setEnabled(row<(playerMonster.size()-1));
 }

@@ -54,6 +54,11 @@ void LocalClientHandlerFight::saveCurrentMonsterStat()
     PlayerMonster * monster=getCurrentMonster();
     if(monster==NULL)
         return;//problem with the selection
+    saveMonsterStat(*monster);
+}
+
+void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
+{
     //save into the db
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
     {
@@ -62,20 +67,20 @@ void LocalClientHandlerFight::saveCurrentMonsterStat()
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                             .arg(getCurrentMonster()->id)
-                             .arg(getCurrentMonster()->hp)
-                             .arg(getCurrentMonster()->remaining_xp)
-                             .arg(getCurrentMonster()->level)
-                             .arg(getCurrentMonster()->sp)
+                             .arg(monster.id)
+                             .arg(monster.hp)
+                             .arg(monster.remaining_xp)
+                             .arg(monster.level)
+                             .arg(monster.sp)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
-                             .arg(getCurrentMonster()->id)
-                             .arg(getCurrentMonster()->hp)
-                             .arg(getCurrentMonster()->remaining_xp)
-                             .arg(getCurrentMonster()->level)
-                             .arg(getCurrentMonster()->sp)
+                             .arg(monster.id)
+                             .arg(monster.hp)
+                             .arg(monster.remaining_xp)
+                             .arg(monster.level)
+                             .arg(monster.sp)
                              );
             break;
         }
@@ -89,22 +94,7 @@ void LocalClientHandlerFight::savePosition()
     while(index<playerMonsterList.size())
     {
         const PlayerMonster &playerMonster=playerMonsterList.at(index);
-        switch(GlobalServerData::serverSettings.database.type)
-        {
-            default:
-            case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
-                             .arg(index+1)
-                             .arg(playerMonster.id)
-                             );
-            break;
-            case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
-                             .arg(index+1)
-                             .arg(playerMonster.id)
-                             );
-            break;
-        }
+        saveMonsterPosition(index+1,playerMonster.id);
         index++;
     }
 }
@@ -1089,4 +1079,52 @@ int LocalClientHandlerFight::applyCurrentBuffEffect(const Skill::BuffEffect &eff
             }
     }
     return returnCode;
+}
+
+bool LocalClientHandlerFight::moveUpMonster(const quint8 &number)
+{
+    if(!CommonFightEngine::moveUpMonster(number))
+        return false;
+    if(GlobalServerData::serverSettings.database.fightSync!=ServerSettings::Database::FightSync_AtTheDisconnexion)
+    {
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number-1].id,number);
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number].id,number+1);
+    }
+    return true;
+}
+
+bool LocalClientHandlerFight::moveDownMonster(const quint8 &number)
+{
+    if(!CommonFightEngine::moveDownMonster(number))
+    {
+        emit error("Move monster have failed");
+        return false;
+    }
+    if(GlobalServerData::serverSettings.database.fightSync!=ServerSettings::Database::FightSync_AtTheDisconnexion)
+    {
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number].id,number+1);
+        saveMonsterPosition(player_informations->public_and_private_informations.playerMonster[number+1].id,number+2);
+    }
+    return true;
+
+}
+
+void LocalClientHandlerFight::saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterPosition)
+{
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                         .arg(monsterPosition)
+                         .arg(monsterId)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                         .arg(monsterPosition)
+                         .arg(monsterId)
+                         );
+        break;
+    }
 }

@@ -953,6 +953,30 @@ QList<PlayerMonster> CommonFightEngine::getPlayerMonster() const
     return player_informations->playerMonster;
 }
 
+bool CommonFightEngine::moveUpMonster(const quint8 &number)
+{
+    if(isInFight())
+        return false;
+    if(number==0)
+        return false;
+    if(number>=(player_informations->playerMonster.size()))
+        return false;
+    player_informations->playerMonster.swap(number,number-1);
+    updateCanDoFight();
+    return true;
+}
+
+bool CommonFightEngine::moveDownMonster(const quint8 &number)
+{
+    if(isInFight())
+        return false;
+    if(number>=(player_informations->playerMonster.size()-1))
+        return false;
+    player_informations->playerMonster.swap(number,number+1);
+    updateCanDoFight();
+    return true;
+}
+
 bool CommonFightEngine::removeMonster(const quint32 &monsterId)
 {
     int index=0;

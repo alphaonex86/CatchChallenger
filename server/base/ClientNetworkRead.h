@@ -103,6 +103,7 @@ signals:
     void learnSkill(const quint32 &monsterId,const quint32 &skill) const;
     void heal() const;
     void requestFight(const quint32 &fightId) const;
+    void moveMonster(const bool &up,const quint8 &number);
     //quest
     void newQuestAction(const QuestAction &action,const quint32 &questId) const;
     //battle

@@ -244,8 +244,10 @@ public slots:
     void heal();
     void requestFight(const quint32 &fightId);
 
-    //lean
+    //monster
     void learnSkill(const quint32 &monsterId,const quint32 &skill);
+    void monsterMoveDown(const quint8 &number);
+    void monsterMoveUp(const quint8 &number);
 
     //quest
     void startQuest(const quint32 &questId);

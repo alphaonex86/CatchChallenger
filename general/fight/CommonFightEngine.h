@@ -40,6 +40,8 @@ public:
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     void addPlayerMonster(const PlayerMonster &playerMonster);
     QList<PlayerMonster> getPlayerMonster() const;
+    virtual bool moveUpMonster(const quint8 &number);
+    virtual bool moveDownMonster(const quint8 &number);
     bool removeMonster(const quint32 &monsterId);
     bool canEscape() const;
     virtual bool tryEscape();
