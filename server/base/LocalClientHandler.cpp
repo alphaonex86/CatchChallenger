@@ -107,30 +107,30 @@ void LocalClientHandler::extraStop()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1;")
+                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                  .arg(player_informations->id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].remaining_xp)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].level)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                 .arg(index+1)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6 WHERE id=%1;")
+                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                  .arg(player_informations->id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].remaining_xp)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].level)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                 .arg(index+1)
                                  );
                 break;
             }
             index++;
         }
-        localClientHandlerFight.saveCurrentMonsterStat();
-        localClientHandlerFight.savePosition();
     }
     savePosition();
 }
@@ -821,22 +821,24 @@ void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<qu
             {
                 if(player_informations->public_and_private_informations.warehouse_playerMonster.at(sub_index).id==withdrawMonsters.at(index))
                 {
+                    player_informations->public_and_private_informations.playerMonster << player_informations->public_and_private_informations.warehouse_playerMonster.at(sub_index);
+                    player_informations->public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
                     switch(GlobalServerData::serverSettings.database.type)
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE monster SET warehouse=0 WHERE id=%1;")
-                                         .arg(withdrawMonsters.at(index))
-                                         );
+                            emit dbQuery(QString("UPDATE monster SET warehouse=0,position=%2 WHERE id=%1;")
+                                        .arg(withdrawMonsters.at(index))
+                                        .arg(player_informations->public_and_private_informations.playerMonster.size()+1)
+                                        );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("UPDATE monster SET warehouse=0 WHERE id=%1;")
-                                         .arg(withdrawMonsters.at(index))
-                                         );
+                            emit dbQuery(QString("UPDATE monster SET warehouse=0,position=%2 WHERE id=%1;")
+                                        .arg(withdrawMonsters.at(index))
+                                        .arg(player_informations->public_and_private_informations.playerMonster.size()+1)
+                                        );
                         break;
                     }
-                    player_informations->public_and_private_informations.playerMonster << player_informations->public_and_private_informations.warehouse_playerMonster.at(sub_index);
-                    player_informations->public_and_private_informations.warehouse_playerMonster.removeAt(sub_index);
                     break;
                 }
                 sub_index++;
@@ -853,22 +855,26 @@ void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<qu
             {
                 if(player_informations->public_and_private_informations.playerMonster.at(sub_index).id==depositeMonsters.at(index))
                 {
+                    player_informations->public_and_private_informations.warehouse_playerMonster << player_informations->public_and_private_informations.playerMonster.at(sub_index);
+                    player_informations->public_and_private_informations.playerMonster.removeAt(sub_index);
+                    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheDisconnexion)
+                        localClientHandlerFight.saveMonsterStat(player_informations->public_and_private_informations.playerMonster.last());
                     switch(GlobalServerData::serverSettings.database.type)
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
-                                         .arg(withdrawMonsters.at(index))
-                                         );
+                            emit dbQuery(QString("UPDATE monster SET warehouse=1,position=%2 WHERE id=%1;")
+                                        .arg(withdrawMonsters.at(index))
+                                        .arg(player_informations->public_and_private_informations.warehouse_playerMonster.size()+1)
+                                        );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
-                                         .arg(withdrawMonsters.at(index))
-                                         );
+                            emit dbQuery(QString("UPDATE monster SET warehouse=1,position=%2 WHERE id=%1;")
+                                        .arg(withdrawMonsters.at(index))
+                                        .arg(player_informations->public_and_private_informations.warehouse_playerMonster.size()+1)
+                                        );
                         break;
                     }
-                    player_informations->public_and_private_informations.warehouse_playerMonster << player_informations->public_and_private_informations.playerMonster.at(sub_index);
-                    player_informations->public_and_private_informations.playerMonster.removeAt(sub_index);
                     break;
                 }
                 sub_index++;
@@ -3545,4 +3551,12 @@ void LocalClientHandler::resetAll()
     LocalClientHandler::captureCity.clear();
     LocalClientHandler::captureCityValidatedList.clear();
     LocalClientHandler::clanList.clear();
+}
+
+void LocalClientHandler::moveMonster(const bool &up,const quint8 &number)
+{
+    if(up)
+        localClientHandlerFight.moveUpMonster(number-1);
+    else
+        localClientHandlerFight.moveDownMonster(number-1);
 }

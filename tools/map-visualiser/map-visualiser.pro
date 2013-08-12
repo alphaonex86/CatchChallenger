@@ -56,3 +56,5 @@ RESOURCES += \
 
 FORMS += \
     Options.ui
+
+win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc

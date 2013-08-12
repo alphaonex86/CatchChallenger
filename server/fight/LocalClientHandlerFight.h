@@ -28,6 +28,7 @@ public:
     bool isInFight() const;
     void setVariable(Player_internal_informations *player_informations);
     void saveCurrentMonsterStat();
+    void saveMonsterStat(const PlayerMonster &monster);
     void savePosition();
     bool checkLoose();
     bool isInBattle() const;
@@ -53,6 +54,9 @@ public:
     bool botFightStart(const quint32 &botFightId);
     void setInCityCapture(const bool &isInCityCapture);
     int applyCurrentBuffEffect(const Skill::BuffEffect &effect);
+    bool moveUpMonster(const quint8 &number);
+    bool moveDownMonster(const quint8 &number);
+    void saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterPosition);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
