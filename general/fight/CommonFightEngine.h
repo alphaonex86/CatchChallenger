@@ -32,9 +32,12 @@ public:
     bool remainMonstersToFight(const quint32 &monsterId) const;
     virtual bool canDoRandomFight(const Map &map,const quint8 &x,const quint8 &y) const;
     void updateCanDoFight();
+    virtual bool haveAnotherMonsterOnThePlayerToFight() const;
+    virtual bool haveAnotherEnnemyMonsterToFight() const;
     bool otherMonsterIsKO() const;
     bool currentMonsterIsKO() const;
-    virtual bool dropKOMonster();
+    virtual bool dropKOCurrentMonster();
+    virtual bool dropKOOtherMonster();
     virtual void healAllMonsters();
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
@@ -53,10 +56,12 @@ public:
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
     bool generateWildFightIfCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    virtual bool doTheOtherMonsterTurn();
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     virtual bool tryCapture(const quint32 &item);
     virtual int applyCurrentBuffEffect(const Skill::BuffEffect &effect);
+    virtual bool changeOfMonsterInFight(const quint32 &monsterId);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
@@ -66,6 +71,7 @@ protected:
     Skill::LifeEffectReturn applyOtherLifeEffect(const Skill::LifeEffect &effect);
     void applyOtherBuffEffect(const Skill::BuffEffect &effect);
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
+    Skill::LifeEffectReturn applyLifeEffect(const Skill::LifeEffect &effect,PlayerMonster *currentMonster,PlayerMonster *otherMonster);
     virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
     bool internalTryCapture(const Trap &trap);
@@ -75,6 +81,7 @@ protected:
     virtual bool giveXPSP(int xp,int sp);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
+    virtual void startTheFight();
 signals:
     void error(const QString &error) const;
     void message(const QString &message) const;
@@ -85,6 +92,7 @@ protected:
     quint8 stepFight_Grass,stepFight_Water,stepFight_Cave;
     QByteArray randomSeeds;
     int selectedMonster;
+    bool doTurnIfChangeOfMonster;
 };
 }
 
