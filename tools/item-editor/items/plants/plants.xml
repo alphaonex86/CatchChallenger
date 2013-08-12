@@ -1,0 +1,68 @@
+<!-- The decimal part for the quantity is random luck to get another berry, if it's 0.1 then you have 10% of luck to have another -->
+<berries>
+
+	<berry id="1"><!-- Mocochinchi -->
+		<name>Moco Berry</name>
+		<name lang="fr">Baie Moco</name>
+		<description>This bay stimulate nerve impulses, which is used to treat paralisies</description>
+		<description lang="fr">Cette baie stimuler l'influx nerveux, ce qui permet de soigner les paralisies</description>
+		<effect>
+			<curse status="Paralysis" /><!-- apply on monster -->
+		</effect>
+		<grow><!-- in hours -->
+			<sprouted>4</sprouted>
+			<taller>8</taller>
+			<flowering>12</flowering>
+			<berries>16</berries>
+		</grow>
+		<quantity>1.1</quantity>
+	</berry>
+	
+	<berry id="2"><!-- Maracuya -->
+		<name>Maracu Berry</name>
+		<name lang="fr">Baie Passio</name>
+		<description>Bay restorative grows in low light</description>
+		<description lang="fr">Baie reconstituante qui pousse avec peu de lumière</description>
+		<effect>
+			<regeneration hp="10" /><!-- apply on monster -->
+		</effect>
+		<grow><!-- in hours -->
+			<sprouted>4</sprouted>
+			<taller>8</taller>
+			<flowering>12</flowering>
+			<berries>16</berries>
+		</grow>
+		<quantity>1.3</quantity>
+	</berry>
+	
+	<berry id="3"><!-- Lima -->
+		<name>Lima Berry</name>
+		<name lang="fr">Baie Lima</name>
+		<description>Sweet bay that can restore 10 points of attack</description>
+		<description lang="fr">Baie douce qui permet de restaurer 10 points d'attaque</description>
+		<effect>
+			<regeneration attack="10" /><!-- apply on attack -->
+		</effect>
+		<grow><!-- in hours -->
+			<sprouted>4</sprouted>
+			<taller>8</taller>
+			<flowering>12</flowering>
+			<berries>16</berries>
+		</grow>
+		<quantity>1.2</quantity>
+	</berry>
+	
+	<berry id="4"><!-- Raspberry -->
+		<name>Rasp Berry</name>
+		<name lang="fr">Baie Rasp</name>
+		<description>Bay inedible. She goes into the manufacture of certain object</description>
+		<description lang="fr">Baie non comestible. Elle entre dans la fabrication de certain objet</description>
+		<grow><!-- in hours -->
+			<sprouted>4</sprouted>
+			<taller>8</taller>
+			<flowering>12</flowering>
+			<berries>16</berries>
+		</grow>
+		<quantity>1.4</quantity>
+	</berry>
+</berries>

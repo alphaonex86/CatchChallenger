@@ -3260,6 +3260,26 @@ void Api_protocol::useSeed(const quint8 &plant_id)
     output->packFullOutcommingQuery(0x10,0x0006,queryNumber(),outputData);
 }
 
+void Api_protocol::monsterMoveUp(const quint8 &number)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << number;
+    output->packFullOutcommingData(0x60,0x0008,outputData);
+}
+
+void Api_protocol::monsterMoveDown(const quint8 &number)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    out << number;
+    output->packFullOutcommingData(0x60,0x0008,outputData);
+}
+
 //inventory
 void Api_protocol::destroyObject(const quint32 &object, const quint32 &quantity)
 {
