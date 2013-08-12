@@ -53,6 +53,8 @@ public:
         ObjectType_Trade,
         ObjectType_MonsterToTrade,
         ObjectType_MonsterToLearn,
+        ObjectType_MonsterToFight,
+        ObjectType_MonsterToFightKO,
         ObjectType_UseInFight
     };
     enum ActionClan
@@ -63,7 +65,6 @@ public:
         ActionClan_Invite,
         ActionClan_Eject
     };
-    ObjectType waitedObjectType;
     enum QueryType
     {
         QueryType_Seed,
@@ -233,7 +234,7 @@ private slots:
     void doNextAction();
     void displayAttack();
     void displayText(const QString &text);
-    void resetPosition(bool outOfScreen=false);
+    void resetPosition(bool outOfScreen=false, bool topMonster=true, bool bottomMonster=true);
     void init_environement_display(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void init_current_monster_display();
     void init_other_monster_display();
@@ -306,7 +307,6 @@ private slots:
     void on_pushButton_interface_monsters_clicked();
     void on_toolButton_monster_list_quit_clicked();
     void on_tradePlayerCash_editingFinished();
-    void on_toolButton_bioscan_quit_clicked();
     void on_tradeCancel_clicked();
     void on_tradeValidate_clicked();
     void on_tradeAddItem_clicked();
@@ -374,6 +374,7 @@ private:
     QString clanName;
     bool haveClanInformations;
     quint32 factoryId;
+    ObjectType waitedObjectType;
 
     //plant seed in waiting
     quint32 seed_in_waiting;

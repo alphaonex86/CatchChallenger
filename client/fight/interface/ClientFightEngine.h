@@ -46,7 +46,7 @@ public:
     Skill::AttackReturn generateOtherAttack();
     bool isInBattle() const;
     virtual bool useSkill(const quint32 &skill);
-    bool dropKOMonster();
+    bool dropKOOtherMonster();
     bool tryCapture(const quint32 &item);
     virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
     void captureIsDone();

@@ -721,6 +721,19 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     emit moveMonster(moveUp,position);
                 }
                 break;
+                //change monster in fight
+                case 0x0009:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint32)))
+                    {
+                        parseError("wrong remaining size for trade add type");
+                        return;
+                    }
+                    quint32 monsterId;
+                    in >> monsterId;
+                    emit changeOfMonsterInFight(monsterId);
+                }
+                break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;

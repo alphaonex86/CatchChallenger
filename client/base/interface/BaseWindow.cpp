@@ -471,8 +471,11 @@ void BaseWindow::selectObject(const ObjectType &objectType)
         break;
         case ObjectType_MonsterToTrade:
         case ObjectType_MonsterToLearn:
+        case ObjectType_MonsterToFight:
+        case ObjectType_MonsterToFightKO:
             ui->selectMonster->setVisible(true);
             ui->stackedWidget->setCurrentWidget(ui->page_monster);
+            load_monsters();
         break;
         case ObjectType_All:
         case ObjectType_Trade:
@@ -563,6 +566,36 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 newError(tr("Internal error"),"Unable to load the right monster");
                 return;
             }
+        }
+        break;
+        case ObjectType_MonsterToFight:
+        case ObjectType_MonsterToFightKO:
+        {
+            ui->stackedWidget->setCurrentWidget(ui->page_battle);
+            if(!ok)
+                return;
+            if(!ClientFightEngine::fightEngine.changeOfMonsterInFight(itemId))
+                return;
+            load_monsters();
+            CatchChallenger::Api_client_real::client->changeOfMonsterInFight(itemId);
+            PlayerMonster * playerMonster=ClientFightEngine::fightEngine.getCurrentMonster();
+            resetPosition(true,false,true);
+            init_current_monster_display();
+            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+            if(DatapackClientLoader::datapackLoader.monsterExtra.contains(playerMonster->monster))
+            {
+                ui->labelFightEnter->setText(tr("Go %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[playerMonster->monster].name));
+                ui->labelFightMonsterBottom->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra[playerMonster->monster].back.scaled(160,160));
+            }
+            else
+            {
+                ui->labelFightEnter->setText(tr("You change of monster"));
+                ui->labelFightMonsterBottom->setPixmap(QPixmap(":/images/monsters/default/back.png"));
+            }
+            ui->pushButtonFightEnterNext->setVisible(false);
+            moveType=MoveType_Enter;
+            battleStep=BattleStep_Presentation;
+            moveFightMonsterBottom();
         }
         break;
         case ObjectType_MonsterToTrade:
@@ -1959,7 +1992,8 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             objectSelection(false);
             return;
         }
-        objectSelection(true,items_graphical[item],tempQuantitySelected);
+        quint32 objectItem=items_graphical[item];
+        objectSelection(true,objectItem,tempQuantitySelected);
         return;
     }
 
@@ -2402,18 +2436,19 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
     {
         if(!items.contains(shop_items_graphical[item]))
             return;
+        quint32 objectItem=shop_items_graphical[item];
         bool ok=true;
-        if(items[shop_items_graphical[item]]>1)
-            tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items[shop_items_graphical[item]],1,&ok);
+        if(items[objectItem]>1)
+            tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items[objectItem],1,&ok);
         else
             tempQuantityForSell=1;
         if(!ok)
             return;
-        if(!items.contains(shop_items_graphical[item]))
+        if(!items.contains(objectItem))
             return;
-        if(items[shop_items_graphical[item]]<tempQuantityForSell)
+        if(items[objectItem]<tempQuantityForSell)
             return;
-        objectSelection(true,shop_items_graphical[item],tempQuantityForSell);
+        objectSelection(true,objectItem,tempQuantityForSell);
         ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Selling the object..."));
     }
@@ -2637,14 +2672,12 @@ void BaseWindow::on_pushButton_interface_monsters_clicked()
 
 void BaseWindow::on_toolButton_monster_list_quit_clicked()
 {
-    if(waitedObjectType==ObjectType_MonsterToTrade || waitedObjectType==ObjectType_MonsterToLearn || waitedObjectType==ObjectType_UseInFight)
-    {
-        if(inSelection)
+    if(inSelection)
+        if(waitedObjectType==ObjectType_MonsterToTrade || waitedObjectType==ObjectType_MonsterToLearn || waitedObjectType==ObjectType_UseInFight)
         {
             objectSelection(false);
             return;
         }
-    }
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
@@ -2654,11 +2687,6 @@ void BaseWindow::on_tradePlayerCash_editingFinished()
         return;
     CatchChallenger::Api_client_real::client->addTradeCash(ui->tradePlayerCash->value()-ui->tradePlayerCash->minimum());
     ui->tradePlayerCash->setMinimum(ui->tradePlayerCash->value());
-}
-
-void BaseWindow::on_toolButton_bioscan_quit_clicked()
-{
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 void BaseWindow::on_tradeCancel_clicked()
@@ -2705,12 +2733,12 @@ void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *
 {
     if(!monsters_items_graphical.contains(item))
         return;
+    quint32 monsterId=monsters_items_graphical[item];
     if(inSelection)
     {
-       objectSelection(true,monsters_items_graphical[item]);
+       objectSelection(true,monsterId);
        return;
     }
-    quint32 monsterId=monsters_items_graphical[item];
     QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
     int index=0;
     int size=playerMonster.size();
