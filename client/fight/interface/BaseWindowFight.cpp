@@ -496,7 +496,10 @@ void BaseWindow::moveFightMonsterTop()
         if(ui->labelFightMonsterTop->pos().rx()>510)
             moveFightMonsterTopTimer.start();
         else
-            updateCurrentMonsterInformation();
+        {
+            updateOtherMonsterInformation();
+            doNextAction();
+        }
     }
     if(moveType==MoveType_Leave)
     {
@@ -506,7 +509,10 @@ void BaseWindow::moveFightMonsterTop()
         if(ui->labelFightMonsterTop->pos().rx()<800)
             moveFightMonsterTopTimer.start();
         else
-            updateCurrentMonsterInformation();
+        {
+            updateOtherMonsterInformation();
+            doNextAction();
+        }
     }
     if(moveType==MoveType_Dead)
     {
@@ -519,7 +525,21 @@ void BaseWindow::moveFightMonsterTop()
         {
             CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
             if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
-                doNextAction();
+            {
+                ui->pushButtonFightEnterNext->setVisible(false);
+                init_other_monster_display();
+                ui->frameFightTop->setVisible(false);
+                updateOtherMonsterInformation();
+                ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+                PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+                if(DatapackClientLoader::datapackLoader.monsterExtra.contains(otherMonster->monster))
+                    ui->labelFightEnter->setText(tr("The other player call %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+                else
+                    ui->labelFightEnter->setText(tr("The other player call %1").arg(tr("(Unknown monster)")));
+                resetPosition(true,true,false);
+                moveType=MoveType_Enter;
+                moveFightMonsterTop();
+            }
             else
             {
                 qDebug() << "doNextAction(): you win";
@@ -590,8 +610,36 @@ void BaseWindow::moveFightMonsterBoth()
         {
             if(battleStep==BattleStep_Presentation)
             {
+                init_current_monster_display();
+                ui->pushButtonFightEnterNext->setVisible(false);
+                init_other_monster_display();
+                ui->frameFightTop->setVisible(false);
+                updateCurrentMonsterInformation();
+                updateOtherMonsterInformation();
                 resetPosition(true);
-                ui->pushButtonFightEnterNext->show();
+                QString text;
+                PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+                if(otherMonster!=NULL)
+                    text+=tr("The other player call %1!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name);
+                else
+                {
+                    qDebug() << "on_pushButtonFightEnterNext_clicked(): NULL pointer for current monster";
+                    text+=tr("The other player call %1!").arg("(Unknow monster)");
+                }
+                text+="<br />";
+                PublicPlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+                if(monster!=NULL)
+                    text+=tr("You call %1!").arg(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].name);
+                else
+                {
+                    qDebug() << "on_pushButtonFightEnterNext_clicked(): NULL pointer for current monster";
+                    text+=tr("You call %1!").arg("(Unknow monster)");
+                }
+                ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+                ui->labelFightEnter->setText(text);
+                battleStep=BattleStep_PresentationMonster;
+                moveType=MoveType_Enter;
+                moveFightMonsterBoth();
             }
             else if(battleStep==BattleStep_PresentationMonster)
             {

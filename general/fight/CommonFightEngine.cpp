@@ -552,88 +552,56 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
 Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffect &effect,PlayerMonster *currentMonster,PlayerMonster *otherMonster)
 {
     qint32 quantity;
-    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+    Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
         case ApplyOn_AllEnemy:
-            if(effect.type==QuantityType_Quantity)
-            {
-                Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-                if(effect.quantity<0)
-                    quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
-                else if(effect.quantity>0)//ignore the def for heal
-                    quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            }
-            else
-                quantity=(currentMonster->hp*effect.quantity)/100;
-            if(effect.quantity<0)
-            {
-                if(quantity==0)
-                    quantity=-1;
-            }
-            else if(effect.quantity>0)
-            {
-                if(quantity==0)
-                    quantity=1;
-            }
-            //kill
-            if(quantity<0 && (-quantity)>=(qint32)currentMonster->hp)
-            {
-                quantity=-(qint32)currentMonster->hp;
-                currentMonster->hp=0;
-            }
-            //full heal
-            else if(quantity>0 && quantity>=(qint32)(stat.hp-currentMonster->hp))
-            {
-                quantity=(qint32)(stat.hp-currentMonster->hp);
-                currentMonster->hp=stat.hp;
-            }
-            //other life change
-            else
-                currentMonster->hp+=quantity;
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
-            if(effect.type==QuantityType_Quantity)
-            {
-                if(effect.quantity<0)
-                    quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
-                else if(effect.quantity>0)//ignore the def for heal
-                    quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            }
-            else
-                quantity=(otherMonster->hp*effect.quantity)/100;
-            if(effect.quantity<0)
-            {
-                if(quantity==0)
-                    quantity=-1;
-            }
-            else if(effect.quantity>0)
-            {
-                if(quantity==0)
-                    quantity=1;
-            }
-            //kill
-            if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
-            {
-                quantity=-(qint32)currentMonster->hp;
-                otherMonster->hp=0;
-            }
-            //full heal
-            else if(quantity>0 && quantity>=(qint32)(stat.hp-otherMonster->hp))
-            {
-                quantity=(qint32)(stat.hp-currentMonster->hp);
-                otherMonster->hp=stat.hp;
-            }
-            //other life change
-            else
-                otherMonster->hp+=quantity;
+            otherStat=stat;
+            otherMonster=currentMonster;
         break;
         default:
             emit error("Not apply match, can't apply the buff");
         break;
     }
+    if(effect.type==QuantityType_Quantity)
+    {
+        if(effect.quantity<0)
+            quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
+        else if(effect.quantity>0)//ignore the def for heal
+            quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    }
+    else
+        quantity=(currentMonster->hp*effect.quantity)/100;
+    if(effect.quantity<0)
+    {
+        if(quantity==0)
+            quantity=-1;
+    }
+    else if(effect.quantity>0)
+    {
+        if(quantity==0)
+            quantity=1;
+    }
+    //kill
+    if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
+    {
+        quantity=-(qint32)otherMonster->hp;
+        otherMonster->hp=0;
+    }
+    //full heal
+    else if(quantity>0 && quantity>=(qint32)(stat.hp-otherMonster->hp))
+    {
+        quantity=(qint32)(stat.hp-otherMonster->hp);
+        otherMonster->hp=stat.hp;
+    }
+    //other life change
+    else
+        otherMonster->hp+=quantity;
     Skill::LifeEffectReturn effect_to_return;
     effect_to_return.on=effect.on;
     effect_to_return.quantity=quantity;
