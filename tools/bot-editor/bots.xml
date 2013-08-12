@@ -1,0 +1,61 @@
+<!--
+default:
+skin is invisible
+-->
+<bots>
+    <bot id="1">
+        <step id="1" type="text">
+            <text lang="en"><![CDATA[Hello world!]]></text>
+        </step>
+        <step id="1" type="text">
+            <text lang="en">Hello !</text>
+            <text lang="fr">Salut !</text>
+        </step>
+        <step id="2" type="text">
+            <text lang="en">...</text>
+            <text lang="fr">...</text>
+        </step>
+    </bot>
+    <bot id="3">
+        <step id="1" type="text">
+            <text lang="en"><![CDATA[You are into dangerous zone.<br />
+			Here grow the root of the evil.<br />
+			<br />
+			Take care.]]></text>
+        </step>
+    </bot>
+    <bot id="4">
+        <step id="1" type="text">
+            <text lang="en"><![CDATA[I can learn you some attack<br />
+			<br />
+			<center>
+				<a href="2">Learn</a><br />
+				<a href="3">Quest</a><br />
+			</center>]]></text>
+        </step>
+        <step id="2" type="learn"/>
+        <step id="3" type="quests"/>
+        <!-- show the default failure text if failed -->
+        <step id="10" type="text">
+            <text lang="en"><![CDATA[The bandit want I give you some plants.]]></text>
+        </step>
+    </bot>
+    <bot id="5">
+        <step id="1" fightid="1" type="fight"/>
+    </bot>
+    <bot id="100">
+        <step id="1" type="heal"/>
+    </bot>
+    <bot id="101">
+        <step id="1" shop="1" type="sell"/>
+    </bot>
+    <bot id="201">
+        <step id="1" fightid="1" type="fight"/>
+    </bot>
+    <bot id="202">
+        <step id="1" fightid="2" type="fight"/>
+    </bot>
+    <bot id="203">
+        <step id="1" fightid="3" type="fight"/>
+    </bot>
+</bots>

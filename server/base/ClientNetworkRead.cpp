@@ -688,6 +688,39 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                     emit requestFight(fightId);
                 }
                 break;
+                //move the monster
+                case 0x0008:
+                {
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                    {
+                        parseError("wrong remaining size for trade add type");
+                        return;
+                    }
+                    quint8 moveWay;
+                    in >> moveWay;
+                    bool moveUp;
+                    switch(moveWay)
+                    {
+                        case 0x01:
+                            moveUp=true;
+                        break;
+                        case 0x02:
+                            moveUp=false;
+                        break;
+                        default:
+                            parseError("wrong move up value");
+                        return;
+                    }
+                    if((data.size()-in.device()->pos())<((int)sizeof(quint8)))
+                    {
+                        parseError("wrong remaining size for trade add type");
+                        return;
+                    }
+                    quint8 position;
+                    in >> position;
+                    emit moveMonster(moveUp,position);
+                }
+                break;
                 default:
                     parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
