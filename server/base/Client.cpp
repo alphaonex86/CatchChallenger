@@ -124,6 +124,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	&ClientNetworkRead::clanInvite,                 localClientHandler,&LocalClientHandler::clanInvite,         Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::waitingForCityCaputre,      localClientHandler,&LocalClientHandler::waitingForCityCaputre,Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::moveMonster,                localClientHandler,&LocalClientHandler::moveMonster,        Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::changeOfMonsterInFight,     localClientHandler,&LocalClientHandler::changeOfMonsterInFight,Qt::QueuedConnection);
 
     //connect the player information
     connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		clientBroadCast,	&ClientBroadCast::send_player_informations, Qt::QueuedConnection);

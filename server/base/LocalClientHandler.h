@@ -197,6 +197,7 @@ public slots:
     static quint16 cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated);
     static quint16 cityCaptureClanCount(const CaptureCityValidated &captureCityValidated);
     void moveMonster(const bool &up,const quint8 &number);
+    void changeOfMonsterInFight(const quint32 &monsterId);
 private slots:
     virtual void extraStop();
     void savePosition();
