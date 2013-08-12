@@ -2348,13 +2348,13 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         quint8 gender;
                         quint32 monster_list_size;
                         in >> monster_list_size;
-                        PlayerMonster monster;
-                        PlayerBuff buff;
-                        PlayerMonster::PlayerSkill skill;
                         index=0;
                         quint32 sub_size,sub_index;
                         while(index<monster_list_size)
                         {
+                            PlayerMonster monster;
+                            PlayerBuff buff;
+                            PlayerMonster::PlayerSkill skill;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id bd, line: %1").arg(__LINE__));
@@ -2484,6 +2484,9 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         index=0;
                         while(index<monster_list_size)
                         {
+                            PlayerMonster monster;
+                            PlayerBuff buff;
+                            PlayerMonster::PlayerSkill skill;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id bd, line: %1").arg(__LINE__));
@@ -3454,6 +3457,15 @@ void Api_protocol::requestFight(const quint32 &fightId)
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint32)fightId;
     output->packFullOutcommingData(0x60,0x0007,outputData);
+}
+
+void Api_protocol::changeOfMonsterInFight(const quint32 &monsterId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)monsterId;
+    output->packFullOutcommingData(0x60,0x0009,outputData);
 }
 
 void Api_protocol::useSkill(const quint32 &skill)

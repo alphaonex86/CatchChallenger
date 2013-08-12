@@ -88,14 +88,36 @@ bool BaseWindow::check_monsters()
 
 void BaseWindow::load_monsters()
 {
-    const QList<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+    const QList<PlayerMonster> &playerMonsters=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+    const PlayerMonster * currentMonster=ClientFightEngine::fightEngine.getCurrentMonster();
     ui->monsterList->clear();
     monsters_items_graphical.clear();
     int index=0;
-    int size=playerMonster.size();
+    int size=playerMonsters.size();
     while(index<size)
     {
-        const PlayerMonster &monster=playerMonster.at(index);
+        const PlayerMonster &monster=playerMonsters.at(index);
+        if(inSelection)
+        {
+            if(waitedObjectType!=ObjectType_MonsterToFightKO && monster.id==currentMonster->id)
+            {
+                index++;
+                continue;
+            }
+            switch(waitedObjectType)
+            {
+                case ObjectType_MonsterToFight:
+                case ObjectType_MonsterToFightKO:
+                    if(monster.hp==0 || monster.egg_step>0)
+                    {
+                        index++;
+                        continue;
+                    }
+                break;
+                default:
+                break;
+            }
+        }
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
         {
             Monster::Stat stat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster],monster.level);
@@ -122,11 +144,13 @@ void BaseWindow::load_monsters()
     {
        ui->monsterListMoveUp->setVisible(false);
        ui->monsterListMoveDown->setVisible(false);
+       ui->toolButton_monster_list_quit->setVisible(waitedObjectType!=ObjectType_MonsterToFightKO);
     }
     else
     {
         ui->monsterListMoveUp->setVisible(true);
         ui->monsterListMoveDown->setVisible(true);
+        ui->toolButton_monster_list_quit->setVisible(true);
         on_monsterList_itemSelectionChanged();
     }
     ui->selectMonster->setVisible(true);
@@ -143,7 +167,13 @@ void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quin
         emit error("NULL pointer for other monster at wildFightCollision()");
         return;
     }
+    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
     ui->labelFightEnter->setText(tr("A other %1 is in front of you!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+    ui->pushButtonFightEnterNext->setVisible(false);
+    moveType=MoveType_Enter;
+    battleStep=BattleStep_Presentation;
+    resetPosition(true);
+    moveFightMonsterBoth();
 }
 
 void BaseWindow::botFight(const quint32 &fightId)
@@ -162,6 +192,7 @@ void BaseWindow::botFight(const quint32 &fightId)
 void BaseWindow::botFightFull(const quint32 &fightId)
 {
     ui->frameFightTop->setVisible(false);
+    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
     ui->labelFightEnter->setText(DatapackClientLoader::datapackLoader.botFightsExtra[fightId].start);
     ui->pushButtonFightEnterNext->setVisible(false);
     QList<PlayerMonster> botFightMonstersTransformed;
@@ -175,6 +206,7 @@ void BaseWindow::botFightFull(const quint32 &fightId)
     CatchChallenger::ClientFightEngine::fightEngine.setBotMonster(botFightMonstersTransformed);
     this->fightId=fightId;
     init_environement_display(MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
+    ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     init_current_monster_display();
     ui->pushButtonFightEnterNext->setVisible(false);
     battleType=BattleType_Bot;
@@ -188,6 +220,7 @@ void BaseWindow::botFightFull(const quint32 &fightId)
     battleStep=BattleStep_Presentation;
     moveType=MoveType_Enter;
     resetPosition(true);
+    battleStep=BattleStep_Presentation;
     moveFightMonsterBoth();
 }
 
@@ -199,6 +232,7 @@ bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const quint8 &
         return false;
     }
     init_environement_display(map,x,y);
+    ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     init_current_monster_display();
     init_other_monster_display();
     PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
@@ -238,7 +272,6 @@ void BaseWindow::init_current_monster_display()
     if(fightMonster!=NULL)
     {
         //current monster
-        ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         ui->stackedWidget->setCurrentWidget(ui->page_battle);
         ui->pushButtonFightEnterNext->setVisible(true);
@@ -290,19 +323,28 @@ void BaseWindow::init_current_monster_display()
 
 void BaseWindow::on_pushButtonFightEnterNext_clicked()
 {
+    ui->pushButtonFightEnterNext->setVisible(false);
     switch(battleStep)
     {
         case BattleStep_Presentation:
-            moveType=MoveType_Dead;
-            moveFightMonsterBoth();
+            if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
+            {
+                moveType=MoveType_Leave;
+                moveFightMonsterBottom();
+            }
+            else
+            {
+                moveType=MoveType_Leave;
+                moveFightMonsterBoth();
+            }
         break;
         case BattleStep_PresentationMonster:
         default:
             ui->frameFightTop->show();
             ui->frameFightBottom->show();
-            ui->pushButtonFightEnterNext->setVisible(false);
             moveType=MoveType_Enter;
             moveFightMonsterBottom();
+            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
             PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
             if(monster!=NULL)
                 ui->labelFightEnter->setText(tr("Protect me %1!").arg(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].name));
@@ -325,7 +367,10 @@ void BaseWindow::moveFightMonsterBottom()
         if(ui->labelFightMonsterBottom->pos().rx()<60)
             moveFightMonsterBottomTimer.start();
         else
+        {
             updateCurrentMonsterInformation();
+            doNextAction();
+        }
     }
     if(moveType==MoveType_Leave)
     {
@@ -335,7 +380,23 @@ void BaseWindow::moveFightMonsterBottom()
         if(ui->labelFightMonsterBottom->pos().rx()>(-ui->labelFightMonsterBottom->size().width()))
             moveFightMonsterBottomTimer.start();
         else
+        {
             updateCurrentMonsterInformation();
+            if(battleStep==BattleStep_Presentation)
+            {
+                resetPosition(true,false,true);
+                battleStep=BattleStep_PresentationMonster;
+                moveType=MoveType_Enter;
+                PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+                if(monster==NULL)
+                {
+                    newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+                    return;
+                }
+                ui->labelFightEnter->setText(tr("Go %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].name));
+                moveFightMonsterBottom();
+            }
+        }
     }
     if(moveType==MoveType_Dead)
     {
@@ -345,7 +406,19 @@ void BaseWindow::moveFightMonsterBottom()
         if(ui->labelFightMonsterBottom->pos().ry()<440)
             moveFightMonsterBottomTimer.start();
         else
-            doNextAction();
+        {
+            CatchChallenger::ClientFightEngine::fightEngine.dropKOCurrentMonster();
+            if(CatchChallenger::ClientFightEngine::fightEngine.haveAnotherMonsterOnThePlayerToFight())
+                selectObject(ObjectType_MonsterToFight);
+            else
+            {
+                #ifdef DEBUG_CLIENT_BATTLE
+                qDebug() << "You lose";
+                #endif
+                displayText(tr("You lose!"));
+                doNextActionStep=DoNextActionStep_Loose;
+            }
+        }
     }
 }
 
@@ -385,7 +458,6 @@ void BaseWindow::updateCurrentMonsterInformation()
     p.setY(280);
     ui->labelFightMonsterBottom->move(p);
     ui->labelFightMonsterBottom->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].back.scaled(160,160));
-    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
     ui->frameFightBottom->setVisible(true);
     ui->frameFightBottom->show();
     const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[monster->monster];
@@ -444,7 +516,35 @@ void BaseWindow::moveFightMonsterTop()
         if(ui->labelFightMonsterTop->pos().rx()<800)
             moveFightMonsterTopTimer.start();
         else
-            doNextAction();
+        {
+            CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
+            if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
+                doNextAction();
+            else
+            {
+                qDebug() << "doNextAction(): you win";
+                doNextActionStep=DoNextActionStep_Win;
+                if(!escape)
+                {
+                    PlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+                    if(currentMonster!=NULL)
+                        ui->progressBarFightBottomExp->setValue(currentMonster->remaining_xp);
+                    displayText(tr("You win!"));
+                }
+                else
+                {
+                    if(escapeSuccess)
+                        displayText(tr("Your escape is successful"));
+                    else
+                        displayText(tr("Your escape have failed but you win"));
+                }
+                if(escape)
+                {
+                    fightTimerFinish=true;
+                    doNextAction();
+                }
+            }
+        }
     }
 }
 
@@ -516,6 +616,7 @@ void BaseWindow::moveFightMonsterBoth()
         {
             if(battleStep==BattleStep_Presentation)
             {
+                ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
                 init_current_monster_display();
                 init_other_monster_display();
                 updateCurrentMonsterInformation();
@@ -618,6 +719,7 @@ void BaseWindow::on_pushButtonFightAttack_clicked()
 
 void BaseWindow::on_pushButtonFightMonster_clicked()
 {
+    selectObject(ObjectType_MonsterToFight);
 }
 
 void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
@@ -824,43 +926,7 @@ void BaseWindow::doNextAction()
         displayAttack();
         return;
     }
-    //if the current monster is KO
-    if(CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight() && CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO())
-    {
-        qDebug() << "doNextAction(): current monster is KO";
-        CatchChallenger::ClientFightEngine::fightEngine.dropKOMonster();
-        doNextActionStep=DoNextActionStep_Start;
-        //current player monster is KO
-        moveType=MoveType_Dead;
-        moveFightMonsterBottom();
-        PlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-        if(currentMonster!=NULL)
-            ui->labelFightEnter->setText(tr("%1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name));
-        else
-        {
-            qDebug() << "doNextAction(): NULL pointer for the current monster";
-            ui->labelFightEnter->setText(tr("%1 have lost!").arg("(Unknown monster)"));
-        }
-        return;
-    }
-    //if the other monster is KO
-    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight() && CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
-    {
-        qDebug() << "doNextAction(): other monster is KO";
-        PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-        if(otherMonster==NULL)
-        {
-            emit error("NULL pointer for other monster at doNextAction()");
-            return;
-        }
-        ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
-        CatchChallenger::ClientFightEngine::fightEngine.dropKOMonster();
-        doNextActionStep=DoNextActionStep_Start;
-        //current player monster is KO
-        moveType=MoveType_Dead;
-        moveFightMonsterTop();
-        return;
-    }
+
     if(doNextActionStep==DoNextActionStep_Loose)
     {
         qDebug() << "doNextAction(): do step loose";
@@ -873,74 +939,44 @@ void BaseWindow::doNextAction()
             fightTimerFinish=true;
         return;
     }
-    //if lose
-    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+
+    //if the current monster is KO
+    if(CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO())
     {
-        qDebug() << "doNextAction(): you lose";
-        if(doNextActionStep<DoNextActionStep_Loose)
+        if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
         {
-            #ifdef DEBUG_CLIENT_BATTLE
-            qDebug() << "You lose";
-            #endif
-            displayText(tr("You lose!"));
-            doNextActionStep=DoNextActionStep_Loose;
+            loose();
             return;
         }
-        #ifdef DEBUG_CLIENT_BATTLE
-        else
-            qDebug() << "Action step wrong then skipped";
-        #endif
-    }
-    #ifdef DEBUG_CLIENT_BATTLE
-    else
-        qDebug() << "Can fight, then continue";
-    #endif
-    if(doNextActionStep==DoNextActionStep_Win)
-    {
-        qDebug() << "doNextAction(): you win step";
-        win();
-        return;
-    }
-    //if win
-    if(CatchChallenger::ClientFightEngine::fightEngine.haveWin())
-    {
-        qDebug() << "doNextAction(): you win";
-        doNextActionStep=DoNextActionStep_Win;
-        if(!escape)
-        {
-            PlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-            if(currentMonster!=NULL)
-                ui->progressBarFightBottomExp->setValue(currentMonster->remaining_xp);
-            displayText(tr("You win!"));
-        }
-        else
-        {
-            if(escapeSuccess)
-                displayText(tr("Your escape is successful"));
-            else
-                displayText(tr("Your escape have failed but you win"));
-        }
-        if(escape)
-        {
-            fightTimerFinish=true;
-            doNextAction();
-        }
-        return;
-    }
-    //replace the KO monster
-    if(ui->progressBarFightTopHP->value()==0)
-    {
-        qDebug() << "doNextAction(): remplace KO other monster";
-        updateOtherMonsterInformation();
-        CatchChallenger::ClientFightEngine::fightEngine.dropKOMonster();
-        init_other_monster_display();
-    }
-    if(ui->progressBarFightBottomHP->value()==0)
-    {
         qDebug() << "doNextAction(): remplace KO current monster";
-        CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO();
-        updateCurrentMonsterInformation();
+        PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+        ui->labelFightEnter->setText(tr("Your %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name));
+        doNextActionStep=DoNextActionStep_Start;
+        moveType=MoveType_Dead;
+        moveFightMonsterBottom();
+        return;
     }
+
+    //if the other monster is KO
+    if(CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
+    {
+        if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
+        {
+            win();
+            return;
+        }
+        qDebug() << "doNextAction(): remplace KO other monster";
+        PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+        ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+        doNextActionStep=DoNextActionStep_Start;
+        //current player monster is KO
+        moveType=MoveType_Dead;
+        moveFightMonsterTop();
+        return;
+    }
+
     //nothing to done, show the menu
     qDebug() << "doNextAction(): show the menu";
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
@@ -1180,7 +1216,10 @@ void BaseWindow::displayAttack()
                 if(applyOnOtherMonster)
                     ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
                 else
+                {
+                    ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
                     ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
+                }
             }
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         //attack is finish
@@ -1319,26 +1358,38 @@ void BaseWindow::displayText(const QString &text)
     doNextActionTimer.start();
 }
 
-void BaseWindow::resetPosition(bool outOfScreen)
+void BaseWindow::resetPosition(bool outOfScreen,bool topMonster,bool bottomMonster)
 {
     QPoint p;
     if(outOfScreen)
     {
-        p.setX(-160);
-        p.setY(280);
-        ui->labelFightMonsterBottom->move(p);
-        p.setX(800);
-        p.setY(90);
-        ui->labelFightMonsterTop->move(p);
+        if(bottomMonster)
+        {
+            p.setX(-160);
+            p.setY(280);
+            ui->labelFightMonsterBottom->move(p);
+        }
+        if(topMonster)
+        {
+            p.setX(800);
+            p.setY(90);
+            ui->labelFightMonsterTop->move(p);
+        }
     }
     else
     {
-        p.setX(510);
-        p.setY(90);
-        ui->labelFightMonsterTop->move(p);
-        p.setX(60);
-        p.setY(280);
-        ui->labelFightMonsterBottom->move(p);
+        if(bottomMonster)
+        {
+            p.setX(60);
+            p.setY(280);
+            ui->labelFightMonsterBottom->move(p);
+        }
+        if(topMonster)
+        {
+            p.setX(510);
+            p.setY(90);
+            ui->labelFightMonsterTop->move(p);
+        }
     }
 }
 

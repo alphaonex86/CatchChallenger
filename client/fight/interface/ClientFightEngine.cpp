@@ -41,6 +41,7 @@ void ClientFightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 
     battleCurrentMonster << publicPlayerMonster;
     battleStat=stat;
     battleMonsterPlace << monsterPlace;
+    startTheFight();
 }
 
 void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters)
@@ -62,6 +63,7 @@ void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonste
         botMonstersStat << 0x01;
         index++;
     }
+    startTheFight();
 }
 
 void ClientFightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
@@ -149,9 +151,9 @@ bool ClientFightEngine::haveWin()
     return true;
 }
 
-bool ClientFightEngine::dropKOMonster()
+bool ClientFightEngine::dropKOOtherMonster()
 {
-    bool commonReturn=CommonFightEngine::dropKOMonster();
+    bool commonReturn=CommonFightEngine::dropKOOtherMonster();
 
     bool battleReturn=false;
     if(!battleCurrentMonster.isEmpty())
@@ -170,6 +172,7 @@ void ClientFightEngine::fightFinished()
     battleCurrentMonster.clear();
     battleStat.clear();
     battleMonsterPlace.clear();
+    doTurnIfChangeOfMonster=true;
     CommonFightEngine::fightFinished();
 }
 

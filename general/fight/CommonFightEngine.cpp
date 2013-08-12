@@ -34,6 +34,7 @@ void CommonFightEngine::resetAll()
     botFightMonsters.clear();
     randomSeeds.clear();
     selectedMonster=0;
+    doTurnIfChangeOfMonster=true;
 }
 
 bool CommonFightEngine::otherMonsterIsKO() const
@@ -56,7 +57,7 @@ bool CommonFightEngine::currentMonsterIsKO() const
     return false;
 }
 
-bool CommonFightEngine::dropKOMonster()
+bool CommonFightEngine::dropKOCurrentMonster()
 {
     PlayerMonster * playerMonster=getCurrentMonster();
     bool currentPlayerReturn=false;
@@ -65,10 +66,14 @@ bool CommonFightEngine::dropKOMonster()
     else if(playerMonster->hp==0)
     {
         playerMonster->buffs.clear();
-        updateCanDoFight();
+        ableToFight=false;
         currentPlayerReturn=true;
     }
+    return currentPlayerReturn;
+}
 
+bool CommonFightEngine::dropKOOtherMonster()
+{
     bool otherMonsterReturn=false;
     if(!wildMonsters.isEmpty())
     {
@@ -86,8 +91,7 @@ bool CommonFightEngine::dropKOMonster()
             otherMonsterReturn=true;
         }
     }
-
-    return currentPlayerReturn || otherMonsterReturn;
+    return otherMonsterReturn;
 }
 
 void CommonFightEngine::healAllMonsters()
@@ -344,6 +348,31 @@ void CommonFightEngine::updateCanDoFight()
     }
 }
 
+bool CommonFightEngine::haveAnotherMonsterOnThePlayerToFight() const
+{
+    if(player_informations==NULL)
+        return false;
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        const PlayerMonster &playerMonsterEntry=player_informations->playerMonster.at(index);
+        if(!monsterIsKO(playerMonsterEntry))
+            return true;
+        index++;
+    }
+    return false;
+}
+
+bool CommonFightEngine::haveAnotherEnnemyMonsterToFight() const
+{
+    if(!wildMonsters.isEmpty())
+        return false;
+    if(!botFightMonsters.isEmpty())
+        return botFightMonsters.size()>1;
+    emit error("Unable to locate the other monster");
+    return false;
+}
+
 PlayerMonster * CommonFightEngine::getCurrentMonster() const
 {
     if(player_informations==NULL)
@@ -484,6 +513,8 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         {
             attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
             attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
+            if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+                doTurnIfChangeOfMonster=false;
         }
     }
     return attackReturn;
@@ -512,6 +543,14 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
         effect_to_return.quantity=0;
         return effect_to_return;
     }
+    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,&player_informations->playerMonster[selectedMonster],otherMonster);
+    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+        doTurnIfChangeOfMonster=false;
+    return lifeEffectReturn;
+}
+
+Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffect &effect,PlayerMonster *currentMonster,PlayerMonster *otherMonster)
+{
     qint32 quantity;
     Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
     switch(effect.on)
@@ -520,14 +559,14 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
         case ApplyOn_AllEnemy:
             if(effect.type==QuantityType_Quantity)
             {
-                Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster[selectedMonster].monster],player_informations->playerMonster[selectedMonster].level);
+                Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
                 if(effect.quantity<0)
                     quantity=-((-effect.quantity*stat.attack*otherMonster->level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
                 else if(effect.quantity>0)//ignore the def for heal
                     quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             }
             else
-                quantity=(player_informations->playerMonster[selectedMonster].hp*effect.quantity)/100;
+                quantity=(currentMonster->hp*effect.quantity)/100;
             if(effect.quantity<0)
             {
                 if(quantity==0)
@@ -539,22 +578,20 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
                     quantity=1;
             }
             //kill
-            if(quantity<0 && (-quantity)>=(qint32)player_informations->playerMonster[selectedMonster].hp)
+            if(quantity<0 && (-quantity)>=(qint32)currentMonster->hp)
             {
-                quantity=-(qint32)player_informations->playerMonster[selectedMonster].hp;
-                player_informations->playerMonster[selectedMonster].hp=0;
-                player_informations->playerMonster[selectedMonster].buffs.clear();
-                updateCanDoFight();
+                quantity=-(qint32)currentMonster->hp;
+                currentMonster->hp=0;
             }
             //full heal
-            else if(quantity>0 && quantity>=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp))
+            else if(quantity>0 && quantity>=(qint32)(stat.hp-currentMonster->hp))
             {
-                quantity=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp);
-                player_informations->playerMonster[selectedMonster].hp=stat.hp;
+                quantity=(qint32)(stat.hp-currentMonster->hp);
+                currentMonster->hp=stat.hp;
             }
             //other life change
             else
-                player_informations->playerMonster[selectedMonster].hp+=quantity;
+                currentMonster->hp+=quantity;
         break;
         case ApplyOn_Themself:
         case ApplyOn_AllAlly:
@@ -580,13 +617,13 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
             //kill
             if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
             {
-                quantity=-(qint32)player_informations->playerMonster[selectedMonster].hp;
+                quantity=-(qint32)currentMonster->hp;
                 otherMonster->hp=0;
             }
             //full heal
             else if(quantity>0 && quantity>=(qint32)(stat.hp-otherMonster->hp))
             {
-                quantity=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp);
+                quantity=(qint32)(stat.hp-currentMonster->hp);
                 otherMonster->hp=stat.hp;
             }
             //other life change
@@ -650,6 +687,7 @@ void CommonFightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 
 Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
+    PlayerMonster *otherMonster;
     if(player_informations==NULL)
     {
         emit error(QString("player_informations is NULL"));
@@ -658,92 +696,22 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
         effect_to_return.quantity=0;
         return effect_to_return;
     }
-    qint32 quantity;
-    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(selectedMonster).monster],player_informations->playerMonster.at(selectedMonster).level);
-    switch(effect.on)
+    if(!wildMonsters.isEmpty())
+        otherMonster=&wildMonsters.first();
+    else if(!botFightMonsters.isEmpty())
+        otherMonster=&botFightMonsters.first();
+    else
     {
-        case ApplyOn_AloneEnemy:
-        case ApplyOn_AllEnemy:
-        {
-            PublicPlayerMonster *publicPlayerMonster=getOtherMonster();
-            Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[publicPlayerMonster->monster],publicPlayerMonster->level);
-            if(effect.type==QuantityType_Quantity)
-            {
-                if(effect.quantity<0)
-                    quantity=-((-effect.quantity*stat.attack*player_informations->playerMonster.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*otherStat.defense));
-                else if(effect.quantity>0)//ignore the def for heal
-                    quantity=effect.quantity*player_informations->playerMonster.at(selectedMonster).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            }
-            else
-                quantity=(otherStat.hp*effect.quantity)/100;
-            if(effect.quantity<0)
-            {
-                if(quantity==0)
-                    quantity=-1;
-            }
-            else if(effect.quantity>0)
-            {
-                if(quantity==0)
-                    quantity=1;
-            }
-            if(quantity<0 && (-quantity)>=(qint32)publicPlayerMonster->hp)
-            {
-                quantity=-publicPlayerMonster->hp;
-                publicPlayerMonster->hp=0;
-            }
-            else if(quantity>0 && quantity>=(qint32)(stat.hp-publicPlayerMonster->hp))
-            {
-                quantity=stat.hp-publicPlayerMonster->hp;
-                publicPlayerMonster->hp=stat.hp;
-            }
-            else
-                publicPlayerMonster->hp+=quantity;
-        }
-        break;
-        case ApplyOn_Themself:
-        case ApplyOn_AllAlly:
-            if(effect.type==QuantityType_Quantity)
-            {
-                if(effect.quantity<0)
-                    quantity=-((-effect.quantity*stat.attack*player_informations->playerMonster.at(selectedMonster).level)/(CATCHCHALLENGER_MONSTER_LEVEL_MAX*stat.defense));
-                else if(effect.quantity>0)//ignore the def for heal
-                    quantity=effect.quantity*player_informations->playerMonster.at(selectedMonster).level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            }
-            else
-                quantity=(stat.hp*effect.quantity)/100;
-            if(effect.quantity<0)
-            {
-                if(quantity==0)
-                    quantity=-1;
-            }
-            else if(effect.quantity>0)
-            {
-                if(quantity==0)
-                    quantity=1;
-            }
-            if(quantity<0 && (-quantity)>=(qint32)player_informations->playerMonster[selectedMonster].hp)
-            {
-                quantity=-player_informations->playerMonster[selectedMonster].hp;
-                player_informations->playerMonster[selectedMonster].hp=0;
-                player_informations->playerMonster[selectedMonster].buffs.clear();
-                updateCanDoFight();
-            }
-            else if(quantity>0 && quantity>=(qint32)(stat.hp-player_informations->playerMonster[selectedMonster].hp))
-            {
-                quantity=stat.hp-player_informations->playerMonster[selectedMonster].hp;
-                player_informations->playerMonster[selectedMonster].hp=stat.hp;
-            }
-            else
-                player_informations->playerMonster[selectedMonster].hp+=quantity;
-        break;
-        default:
-            emit error("Not apply match, can't apply the buff");
-        break;
+        emit error(QString("Unable to locate the other monster to generate other attack"));
+        Skill::LifeEffectReturn effect_to_return;
+        effect_to_return.on=effect.on;
+        effect_to_return.quantity=0;
+        return effect_to_return;
     }
-    Skill::LifeEffectReturn effect_to_return;
-    effect_to_return.on=effect.on;
-    effect_to_return.quantity=quantity;
-    return effect_to_return;
+    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,&player_informations->playerMonster[selectedMonster],otherMonster);
+    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+        doTurnIfChangeOfMonster=false;
+    return lifeEffectReturn;
 }
 
 int CommonFightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
@@ -805,6 +773,42 @@ int CommonFightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
     return -1;
 }
 
+bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
+{
+    if(!isInFight())
+        return false;
+    if(player_informations==NULL)
+    {
+        emit error(QString("player_informations is NULL"));
+        return false;
+    }
+    if(getCurrentMonster()->id==monsterId)
+    {
+        emit error(QString("try change monster but is already on the current monster"));
+        return false;
+    }
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        const PlayerMonster &playerMonsterEntry=player_informations->playerMonster.at(index);
+        if(playerMonsterEntry.id==monsterId)
+        {
+            if(!monsterIsKO(playerMonsterEntry))
+            {
+                selectedMonster=index;
+                ableToFight=true;
+                if(doTurnIfChangeOfMonster)
+                    doTheOtherMonsterTurn();
+                return true;
+            }
+            else
+                return false;
+        }
+        index++;
+    }
+    return false;
+}
+
 ApplyOn CommonFightEngine::invertApplyOn(const ApplyOn &applyOn)
 {
     switch(applyOn)
@@ -837,6 +841,7 @@ quint8 CommonFightEngine::getOneSeed(const quint8 &max)
 
 bool CommonFightEngine::internalTryEscape()
 {
+    doTurnIfChangeOfMonster=true;
     quint8 value=getOneSeed(101);
     PlayerMonster * playerMonster=getCurrentMonster();
     if(playerMonster==NULL)
@@ -882,6 +887,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
 
 bool CommonFightEngine::tryCapture(const quint32 &item)
 {
+    doTurnIfChangeOfMonster=true;
     if(internalTryCapture(CommonDatapack::commonDatapack.items.trap[item]))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
@@ -934,6 +940,7 @@ void CommonFightEngine::fightFinished()
     }
     wildMonsters.clear();
     botFightMonsters.clear();
+    doTurnIfChangeOfMonster=true;
 }
 
 void CommonFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
@@ -1117,6 +1124,27 @@ bool CommonFightEngine::canDoFightAction()
         return false;
 }
 
+bool CommonFightEngine::doTheOtherMonsterTurn()
+{
+    if(isInBattle())
+    {
+        emit error("Can't do the monster turn in battle");
+        return true;
+    }
+    generateOtherAttack();
+    if(currentMonsterIsKO())
+        return true;
+    else
+    {
+        if(otherMonsterIsKO())
+        {
+            checkKOOtherMonstersForGain();
+            return true;
+        }
+    }
+    return false;
+}
+
 void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack)
 {
     bool turnIsEnd=false;
@@ -1137,17 +1165,8 @@ void CommonFightEngine::doTheTurn(const quint32 &skill,const quint8 &skillLevel,
     //do the other monster attack
     if(!turnIsEnd)
     {
-        generateOtherAttack();
-        if(currentMonsterIsKO())
+        if(doTheOtherMonsterTurn())
             turnIsEnd=true;
-        else
-        {
-            if(otherMonsterIsKO())
-            {
-                checkKOOtherMonstersForGain();
-                turnIsEnd=true;
-            }
-        }
     }
     //do the current monster attack
     if(!turnIsEnd && !currentMonsterStatIsFirstToAttack)
@@ -1265,6 +1284,8 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
         {
             attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
             attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
+            if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+                doTurnIfChangeOfMonster=false;
         }
     }
     return attackReturn;
@@ -1371,6 +1392,7 @@ QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMon
 
 bool CommonFightEngine::useSkill(const quint32 &skill)
 {
+    doTurnIfChangeOfMonster=true;
     if(!isInFight())
     {
         emit error("Try use skill when not in fight");
@@ -1382,16 +1404,21 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
         emit error("Unable to locate the current monster");
         return false;
     }
-    int index=0;
-    while(index<getCurrentMonster()->skills.size())
+    if(currentMonsterIsKO())
     {
-        if(getCurrentMonster()->skills.at(index).skill==skill)
+        emit error("Can't attack with KO monster");
+        return false;
+    }
+    int index=0;
+    while(index<currentMonster->skills.size())
+    {
+        if(currentMonster->skills.at(index).skill==skill)
             break;
         index++;
     }
-    if(index==getCurrentMonster()->skills.size())
+    if(index==currentMonster->skills.size())
     {
-        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(getCurrentMonster()->monster).arg(getCurrentMonster()->level).arg(skill));
+        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
         return false;
     }
     const PublicPlayerMonster * otherMonster=getOtherMonster();
@@ -1400,7 +1427,7 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
         emit error("Unable to locate the other monster");
         return false;
     }
-    quint8 skillLevel=getCurrentMonster()->skills.at(index).level;
+    quint8 skillLevel=currentMonster->skills.at(index).level;
     doTheTurn(skill,skillLevel,currentMonsterAttackFirst(currentMonster,otherMonster));
     return true;
 }
@@ -1413,6 +1440,11 @@ bool CommonFightEngine::currentMonsterAttackFirst(const PlayerMonster * currentM
     if(currentMonsterStat.speed>=otherMonsterStat.speed)
         currentMonsterStatIsFirstToAttack=true;
     return currentMonsterStatIsFirstToAttack;
+}
+
+void CommonFightEngine::startTheFight()
+{
+    doTurnIfChangeOfMonster=true;
 }
 
 //return true if now have wild monter to fight
@@ -1452,6 +1484,7 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
                 emit message(QString("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
                 #endif
                 wildMonsters << monster;
+                startTheFight();
             }
             else
                 emit error(QString("error: no more random seed here to have the get"));
@@ -1488,6 +1521,7 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
                 emit message(QString("Start water fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
                 #endif
                 wildMonsters << monster;
+                startTheFight();
             }
             else
                 emit error(QString("error: no more random seed here to have the get"));
@@ -1524,6 +1558,7 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
                 emit message(QString("Start cave fight with monseter id: %1 level %2").arg(monster.monster).arg(monster.level));
                 #endif
                 wildMonsters << monster;
+                startTheFight();
             }
             else
                 emit error(QString("error: no more random seed here to have the get"));

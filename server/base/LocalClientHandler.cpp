@@ -3560,3 +3560,8 @@ void LocalClientHandler::moveMonster(const bool &up,const quint8 &number)
     else
         localClientHandlerFight.moveDownMonster(number-1);
 }
+
+void LocalClientHandler::changeOfMonsterInFight(const quint32 &monsterId)
+{
+    localClientHandlerFight.changeOfMonsterInFight(monsterId);
+}

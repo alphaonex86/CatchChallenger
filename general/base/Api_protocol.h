@@ -243,6 +243,7 @@ public slots:
     void useSkill(const quint32 &skill);
     void heal();
     void requestFight(const quint32 &fightId);
+    void changeOfMonsterInFight(const quint32 &monsterId);
 
     //monster
     void learnSkill(const quint32 &monsterId,const quint32 &skill);
