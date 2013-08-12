@@ -1,2 +1,0 @@
-attaque 1 0.2 s par image
-attaque 2 0.2 s par image aprés 1.4s
