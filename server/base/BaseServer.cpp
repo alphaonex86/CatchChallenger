@@ -192,7 +192,7 @@ void BaseServer::preload_zone()
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!="zone")
         {
-            qDebug() << QString("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(itemsFile.fileName());
+            qDebug() << QString("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(itemsFile.fileName());
             index++;
             continue;
         }
