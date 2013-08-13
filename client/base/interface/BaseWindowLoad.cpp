@@ -71,6 +71,7 @@ void BaseWindow::resetAll()
     botFightList.clear();
     buffToGraphicalItemTop.clear();
     buffToGraphicalItemBottom.clear();
+    zonecapture=false;
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }
