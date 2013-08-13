@@ -288,13 +288,12 @@ void BaseWindow::init_current_monster_display()
         ui->progressBarFightBottomExp->setValue(fightMonster->remaining_xp);
         //do the buff
         {
+            buffToGraphicalItemBottom.clear();
             ui->bottomBuff->clear();
             int index=0;
             while(index<fightMonster->buffs.size())
             {
                 PlayerBuff buffEffect=fightMonster->buffs.at(index);
-                if(buffToGraphicalItemTop.contains(buffEffect.buff))
-                    delete buffToGraphicalItemTop[buffEffect.buff];
                 QListWidgetItem *item=new QListWidgetItem();
                 if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
                 {
@@ -706,13 +705,12 @@ void BaseWindow::updateOtherMonsterInformation()
         ui->progressBarFightTopHP->setValue(otherMonster->hp);
         //do the buff
         {
+            buffToGraphicalItemTop.clear();
             ui->topBuff->clear();
             int index=0;
             while(index<otherMonster->buffs.size())
             {
                 PlayerBuff buffEffect=otherMonster->buffs.at(index);
-                if(buffToGraphicalItemTop.contains(buffEffect.buff))
-                    delete buffToGraphicalItemTop[buffEffect.buff];
                 QListWidgetItem *item=new QListWidgetItem();
                 if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
                 {
@@ -1100,11 +1098,13 @@ void BaseWindow::displayAttack()
                 {
                     if(buffToGraphicalItemTop.contains(buffEffect.buff))
                         delete buffToGraphicalItemTop[buffEffect.buff];
+                    buffToGraphicalItemTop.remove(buffEffect.buff);
                 }
                 else
                 {
                     if(buffToGraphicalItemBottom.contains(buffEffect.buff))
                         delete buffToGraphicalItemBottom[buffEffect.buff];
+                    buffToGraphicalItemBottom.remove(buffEffect.buff);
                 }
                 QListWidgetItem *item=new QListWidgetItem();
                 if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))

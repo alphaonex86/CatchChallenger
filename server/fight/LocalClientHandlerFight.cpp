@@ -13,7 +13,8 @@ LocalClientHandlerFight::LocalClientHandlerFight()
     battleIsValidated=false;
     player_informations=NULL;
     botFightCash=0;
-    haveCurrentSkill=false;
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
     isInCityCapture=false;
 }
 
@@ -543,13 +544,15 @@ void LocalClientHandlerFight::battleFinishedReset()
 {
     otherPlayerBattle=NULL;
     battleIsValidated=false;
-    haveCurrentSkill=false;
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
 }
 
 void LocalClientHandlerFight::resetTheBattle()
 {
     //reset out of battle
-    haveCurrentSkill=false;
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
     battleIsValidated=false;
     otherPlayerBattle=NULL;
     updateCanDoFight();
@@ -574,7 +577,8 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
             emit receiveSystemText(QString("Battle declined"));
     }
     battleIsValidated=false;
-    haveCurrentSkill=false;
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
 }
 
 void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
@@ -604,7 +608,8 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
     #endif
     startTheFight();
     battleIsValidated=true;
-    haveCurrentSkill=false;
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
     if(send)
     {
         QList<PlayerMonster> playerMonstersPreview=otherPlayerBattle->player_informations->public_and_private_informations.playerMonster;
@@ -628,9 +633,9 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
     }
 }
 
-bool LocalClientHandlerFight::haveBattleSkill() const
+bool LocalClientHandlerFight::haveBattleAction() const
 {
-    return haveCurrentSkill;
+    return mHaveCurrentSkill || mMonsterChange;
 }
 
 quint8 LocalClientHandlerFight::getOtherSelectedMonsterNumber() const
@@ -641,9 +646,10 @@ quint8 LocalClientHandlerFight::getOtherSelectedMonsterNumber() const
         return otherPlayerBattle->getCurrentSelectedMonsterNumber();
 }
 
-void LocalClientHandlerFight::haveUsedTheBattleSkill()
+void LocalClientHandlerFight::haveUsedTheBattleAction()
 {
-    haveCurrentSkill=false;
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
 }
 
 bool LocalClientHandlerFight::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const
@@ -668,7 +674,7 @@ quint8 LocalClientHandlerFight::selectedMonsterNumberToMonsterPlace(const quint8
     return selectedMonsterNumber+1;
 }
 
-void LocalClientHandlerFight::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn, const quint8 &monsterPlace, const PublicPlayerMonster &publicPlayerMonster)
+void LocalClientHandlerFight::sendBattleReturn()
 {
     QByteArray binarypublicPlayerMonster;
     int index,master_index;
@@ -703,9 +709,13 @@ void LocalClientHandlerFight::sendBattleReturn(const QList<Skill::AttackReturn> 
         }
         master_index++;
     }
-    out << (quint8)monsterPlace;
-    if(monsterPlace!=0x00)
-        binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(publicPlayerMonster);
+    if(otherPlayerBattle->haveMonsterChange())
+    {
+        out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
+        binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
+    }
+    else
+        out << (quint8)0x00;
 
     emit sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
 }
@@ -815,7 +825,33 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
     }
     else
     {
-        bool win=CommonFightEngine::useSkill(skill);
+        if(haveBattleAction())
+        {
+            emit error("Have already a battle action");
+            return false;
+        }
+        mHaveCurrentSkill=true;
+        mCurrentSkillId=skill;
+        return checkIfCanDoTheTurn();
+    }
+}
+
+bool LocalClientHandlerFight::bothRealPlayerIsReady() const
+{
+    if(!haveBattleAction())
+        return false;
+    if(!otherPlayerBattle->haveBattleAction())
+        return false;
+    return true;
+}
+
+bool LocalClientHandlerFight::checkIfCanDoTheTurn()
+{
+    if(!bothRealPlayerIsReady())
+        return false;
+    if(mHaveCurrentSkill)
+    {
+        bool win=CommonFightEngine::useSkill(mCurrentSkillId);
         if(currentMonsterIsKO() || otherMonsterIsKO())
         {
             dropKOCurrentMonster();
@@ -828,8 +864,12 @@ bool LocalClientHandlerFight::useSkill(const quint32 &skill)
                 emit message(QString("Have win the battle"));
         }
         emit fightOrBattleFinish(win,0);
-        return win;
     }
+    else
+        doTheOtherMonsterTurn();
+    sendBattleReturn();
+    otherPlayerBattle->sendBattleReturn();
+    return true;
 }
 
 bool LocalClientHandlerFight::dropKOOtherMonster()
@@ -965,6 +1005,21 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         player_informations->public_and_private_informations.playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
     }
     wildMonsters.removeFirst();
+}
+
+bool LocalClientHandlerFight::haveCurrentSkill() const
+{
+    return mHaveCurrentSkill;
+}
+
+quint32 LocalClientHandlerFight::getCurrentSkill() const
+{
+    return mCurrentSkillId;
+}
+
+bool LocalClientHandlerFight::haveMonsterChange() const
+{
+    return mMonsterChange;
 }
 
 void LocalClientHandlerFight::requestFight(const quint32 &fightId)
@@ -1129,4 +1184,56 @@ void LocalClientHandlerFight::saveMonsterPosition(const quint32 &monsterId,const
                          );
         break;
     }
+}
+
+bool LocalClientHandlerFight::changeOfMonsterInFight(const quint32 &monsterId)
+{
+    mMonsterChange=true;
+    return CommonFightEngine::changeOfMonsterInFight(monsterId);
+}
+
+bool LocalClientHandlerFight::doTheOtherMonsterTurn()
+{
+    if(!isInBattle())
+        return CommonFightEngine::doTheOtherMonsterTurn();
+    if(!bothRealPlayerIsReady())
+        return false;
+    if(!otherPlayerBattle->haveCurrentSkill())
+        return false;
+    return CommonFightEngine::doTheOtherMonsterTurn();
+}
+
+Skill::AttackReturn LocalClientHandlerFight::generateOtherAttack()
+{
+    Skill::AttackReturn attackReturnTemp;
+    attackReturnTemp.attack=0;
+    attackReturnTemp.doByTheCurrentMonster=false;
+    attackReturnTemp.success=false;
+    if(!isInBattle())
+        return CommonFightEngine::generateOtherAttack();
+    if(!bothRealPlayerIsReady())
+    {
+        emit error("Both player is not ready at generateOtherAttack()");
+        return attackReturnTemp;
+    }
+    if(!otherPlayerBattle->haveCurrentSkill())
+    {
+        emit error("The other player have not skill at generateOtherAttack()");
+        return attackReturnTemp;
+    }
+    quint32 skill=otherPlayerBattle->getCurrentSkill();
+    quint8 skillLevel=getSkillLevel(skill);
+    otherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel);
+    return attackReturn.last();
+}
+
+Skill::AttackReturn LocalClientHandlerFight::doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel)
+{
+    if(!isInBattle())
+        return CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
+    attackReturn << CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
+    Skill::AttackReturn attackReturnTemp=attackReturn.last();
+    attackReturnTemp.doByTheCurrentMonster=false;
+    otherPlayerBattle->attackReturn << attackReturnTemp;
+    return attackReturn.last();
 }

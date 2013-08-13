@@ -241,7 +241,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
         }
         break;
         default:
-            parseError("unknow main ident: "+QString::number(mainCodeType));
+            parseError("unknown main ident: "+QString::number(mainCodeType));
             return;
         break;
     }
@@ -412,14 +412,14 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                                 }
                                 else
                                 {
-                                    emit message("unknow send command: /"+command+" and \""+text+"\"");
-                                    receiveSystemText("unknow send command: /"+command+" and \""+text+"\"");
+                                    emit message("unknown send command: /"+command+" and \""+text+"\"");
+                                    receiveSystemText("unknown send command: /"+command+" and \""+text+"\"");
                                 }
                             }
                             else
                             {
-                                emit message("unknow send command: /"+command+" and \""+text+"\"");
-                                receiveSystemText("unknow send command: /"+command+" and \""+text+"\"");
+                                emit message("unknown send command: /"+command+" and \""+text+"\"");
+                                receiveSystemText("unknown send command: /"+command+" and \""+text+"\"");
                             }
                         }
                         else
@@ -448,13 +448,13 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                         emit clanInvite(false);
                     break;
                     default:
-                        parseError(QString("wrong return code for clan invite ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                        parseError(QString("wrong return code for clan invite ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 }
             }
             break;
             default:
-                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -638,7 +638,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                 }
                 break;
                 default:
-                    parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 break;
             }
@@ -735,7 +735,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                 }
                 break;
                 default:
-                    parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 break;
             }
@@ -813,13 +813,13 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
                 }
                 break;
                 default:
-                    parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                    parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                     return;
                 break;
             }
         break;
         default:
-            parseError("unknow main ident: "+QString::number(mainCodeType));
+            parseError("unknown main ident: "+QString::number(mainCodeType));
             return;
         break;
     }
@@ -950,7 +950,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
             }
             break;
             default:
-                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -1157,13 +1157,13 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
             }
             break;
             default:
-                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            parseError("unknow main ident: "+QString::number(mainCodeType));
+            parseError("unknown main ident: "+QString::number(mainCodeType));
             return;
         break;
     }
@@ -1232,7 +1232,7 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
                 lastTeleportation.removeFirst();
             break;
             default:
-                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -1254,13 +1254,13 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
                             emit tradeCanceled();
                         break;
                         default:
-                            parseError(QString("ident: %1, sub ident: %2, unknow return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
+                            parseError(QString("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
                         break;
                     }
                 }
             break;
             default:
-                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
@@ -1282,19 +1282,19 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
                             emit battleCanceled();
                         break;
                         default:
-                            parseError(QString("ident: %1, sub ident: %2, unknow return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
+                            parseError(QString("ident: %1, sub ident: %2, unknown return code: %3").arg(mainCodeType).arg(subCodeType).arg(returnCode));
                         break;
                     }
                 }
             break;
             default:
-                parseError(QString("ident: %1, unknow sub ident: %2").arg(mainCodeType).arg(subCodeType));
+                parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;
             break;
         }
         break;
         default:
-            parseError("unknow main ident: "+QString::number(mainCodeType));
+            parseError("unknown main ident: "+QString::number(mainCodeType));
             return;
         break;
     }
