@@ -69,6 +69,8 @@ void BaseWindow::resetAll()
     nextCityCaptureTimer.stop();
     battleInformationsList.clear();
     botFightList.clear();
+    buffToGraphicalItemTop.clear();
+    buffToGraphicalItemBottom.clear();
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }

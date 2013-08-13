@@ -57,16 +57,19 @@ public:
     bool moveUpMonster(const quint8 &number);
     bool moveDownMonster(const quint8 &number);
     void saveMonsterPosition(const quint32 &monsterId,const quint8 &monsterPosition);
+    bool changeOfMonsterInFight(const quint32 &monsterId);
+    bool doTheOtherMonsterTurn();
+    Skill::AttackReturn generateOtherAttack();
+    Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
     void saveStat();
     bool buffIsValid(const Skill::BuffEffect &buffEffect);
-    Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel,const Monster::Stat &currentMonsterStat,const Monster::Stat &otherMonsterStat);
-    bool haveBattleSkill() const;
+    bool haveBattleAction() const;
     quint8 getOtherSelectedMonsterNumber() const;
-    void haveUsedTheBattleSkill();
-    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace=0,const PublicPlayerMonster &publicPlayerMonster=PublicPlayerMonster());
+    void haveUsedTheBattleAction();
+    void sendBattleReturn();
     inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
     void internalBattleCanceled(const bool &send);
     void internalBattleAccepted(const bool &send);
@@ -77,17 +80,23 @@ protected:
     bool useSkillAgainstBotMonster(const quint32 &skill, const quint8 &skillLevel);
     virtual void wildDrop(const quint32 &monster);
     virtual quint8 getOneSeed(const quint8 &max);
+    bool bothRealPlayerIsReady() const;
+    bool checkIfCanDoTheTurn();
     bool dropKOOtherMonster();
     void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    bool haveCurrentSkill() const;
+    quint32 getCurrentSkill() const;
+    bool haveMonsterChange() const;
 private:
     LocalClientHandlerFight *otherPlayerBattle;
     bool battleIsValidated;
-    quint32 currentSkill;
-    bool haveCurrentSkill;
+    quint32 mCurrentSkillId;
+    bool mHaveCurrentSkill,mMonsterChange;
     Player_internal_informations *player_informations;
     quint32 botFightCash;
     quint32 botFightId;
     bool isInCityCapture;
+    QList<Skill::AttackReturn> attackReturn;
 signals:
     void dbQuery(const QString &sqlQuery) const;
     void askRandomNumber() const;
