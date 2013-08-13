@@ -391,6 +391,8 @@ bool ClientFightEngine::isInBattle() const
 bool ClientFightEngine::useSkill(const quint32 &skill)
 {
     Api_client_real::client->useSkill(skill);
+    if(isInBattle())
+        return true;
     return CommonFightEngine::useSkill(skill);
 }
 
@@ -403,4 +405,9 @@ void ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster 
 void ClientFightEngine::captureIsDone()
 {
     wildMonsters.removeFirst();
+}
+
+bool ClientFightEngine::doTheOtherMonsterTurn()
+{
+    return true;
 }

@@ -50,6 +50,7 @@ public:
     virtual bool tryEscape();
     bool canDoFightAction();
     virtual bool useSkill(const quint32 &skill);
+    quint8 getSkillLevel(const quint32 &skill);
     QList<Skill::LifeEffectReturn> buffLifeEffect(PublicPlayerMonster * playerMonster);
     QList<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);
@@ -71,7 +72,7 @@ protected:
     Skill::LifeEffectReturn applyOtherLifeEffect(const Skill::LifeEffect &effect);
     void applyOtherBuffEffect(const Skill::BuffEffect &effect);
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
-    Skill::LifeEffectReturn applyLifeEffect(const Skill::LifeEffect &effect,PlayerMonster *currentMonster,PlayerMonster *otherMonster);
+    Skill::LifeEffectReturn applyLifeEffect(const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
     virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
     bool internalTryCapture(const Trap &trap);

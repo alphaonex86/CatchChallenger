@@ -839,7 +839,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                 //chat as input
                 case 0x0005:
                 {
-                    DebugClass::debugConsole("chat as input");
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -860,7 +859,6 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                     }
                     QString text;
                     in >> text;
-                    DebugClass::debugConsole("chat as input: "+text);
                     if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
                         emit new_system_text(chat_type,text);
                     else

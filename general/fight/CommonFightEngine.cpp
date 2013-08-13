@@ -522,7 +522,6 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
 
 Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::LifeEffect &effect)
 {
-    PlayerMonster *otherMonster;
     if(player_informations==NULL)
     {
         emit error(QString("player_informations is NULL"));
@@ -531,25 +530,23 @@ Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::Lif
         effect_to_return.quantity=0;
         return effect_to_return;
     }
-    if(!wildMonsters.isEmpty())
-        otherMonster=&wildMonsters.first();
-    else if(!botFightMonsters.isEmpty())
-        otherMonster=&botFightMonsters.first();
-    else
+    PublicPlayerMonster *currentMonster=getCurrentMonster();
+    PublicPlayerMonster *otherMonster=getOtherMonster();
+    if(currentMonster==NULL || otherMonster==NULL)
     {
-        emit error(QString("Unable to locate the other monster to generate other attack"));
+        emit error(QString("Unable to locate the monster to generate other attack"));
         Skill::LifeEffectReturn effect_to_return;
         effect_to_return.on=effect.on;
         effect_to_return.quantity=0;
         return effect_to_return;
     }
-    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,&player_informations->playerMonster[selectedMonster],otherMonster);
+    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,otherMonster,currentMonster);
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
     return lifeEffectReturn;
 }
 
-Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffect &effect,PlayerMonster *currentMonster,PlayerMonster *otherMonster)
+Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffect &effect,PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster)
 {
     qint32 quantity;
     Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
@@ -655,7 +652,6 @@ void CommonFightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
 
 Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
-    PlayerMonster *otherMonster;
     if(player_informations==NULL)
     {
         emit error(QString("player_informations is NULL"));
@@ -664,19 +660,17 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
         effect_to_return.quantity=0;
         return effect_to_return;
     }
-    if(!wildMonsters.isEmpty())
-        otherMonster=&wildMonsters.first();
-    else if(!botFightMonsters.isEmpty())
-        otherMonster=&botFightMonsters.first();
-    else
+    PublicPlayerMonster *currentMonster=getCurrentMonster();
+    PublicPlayerMonster *otherMonster=getOtherMonster();
+    if(currentMonster==NULL || otherMonster==NULL)
     {
-        emit error(QString("Unable to locate the other monster to generate other attack"));
+        emit error(QString("Unable to locate the monster to generate other attack"));
         Skill::LifeEffectReturn effect_to_return;
         effect_to_return.on=effect.on;
         effect_to_return.quantity=0;
         return effect_to_return;
     }
-    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,&player_informations->playerMonster[selectedMonster],otherMonster);
+    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,currentMonster,otherMonster);
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
     return lifeEffectReturn;
@@ -1094,11 +1088,6 @@ bool CommonFightEngine::canDoFightAction()
 
 bool CommonFightEngine::doTheOtherMonsterTurn()
 {
-    if(isInBattle())
-    {
-        emit error("Can't do the monster turn in battle");
-        return true;
-    }
     generateOtherAttack();
     if(currentMonsterIsKO())
         return true;
@@ -1377,27 +1366,38 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
         emit error("Can't attack with KO monster");
         return false;
     }
-    int index=0;
-    while(index<currentMonster->skills.size())
-    {
-        if(currentMonster->skills.at(index).skill==skill)
-            break;
-        index++;
-    }
-    if(index==currentMonster->skills.size())
-    {
-        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
-        return false;
-    }
     const PublicPlayerMonster * otherMonster=getOtherMonster();
     if(otherMonster==NULL)
     {
         emit error("Unable to locate the other monster");
         return false;
     }
-    quint8 skillLevel=currentMonster->skills.at(index).level;
+    quint8 skillLevel=getSkillLevel(skill);
+    if(skillLevel==0)
+    {
+        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
+        return false;
+    }
     doTheTurn(skill,skillLevel,currentMonsterAttackFirst(currentMonster,otherMonster));
     return true;
+}
+
+quint8 CommonFightEngine::getSkillLevel(const quint32 &skill)
+{
+    PlayerMonster * currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        emit error("Unable to locate the current monster");
+        return 0;
+    }
+    int index=0;
+    while(index<currentMonster->skills.size())
+    {
+        if(currentMonster->skills.at(index).skill==skill)
+            return currentMonster->skills.at(index).level;
+        index++;
+    }
+    return 0;
 }
 
 bool CommonFightEngine::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const
