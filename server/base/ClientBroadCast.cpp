@@ -11,6 +11,7 @@ ClientBroadCast *ClientBroadCast::item;
 ClientBroadCast::ClientBroadCast()
 {
     connected_players=0;
+    clan=0;
 }
 
 ClientBroadCast::~ClientBroadCast()
