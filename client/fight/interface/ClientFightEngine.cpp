@@ -320,7 +320,17 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
                 if(!attackReturn.doByTheCurrentMonster)
                     buff.on=invertApplyOn(buff.on);
                 qDebug() << "addAndApplyAttackReturnList() buff on " << buff.on << ", buff:" << buff.buff << ", buff level:" << buff.level;
-                applyCurrentBuffEffect(buff);
+                addCurrentBuffEffect(buff);
+                sub_index++;
+            }
+            sub_index=0;
+            while(sub_index<attackReturn.removeBuffEffectMonster.size())
+            {
+                Skill::BuffEffect buff=attackReturn.removeBuffEffectMonster.at(sub_index);
+                if(!attackReturn.doByTheCurrentMonster)
+                    buff.on=invertApplyOn(buff.on);
+                qDebug() << "addAndApplyAttackReturnList() buff on " << buff.on << ", buff:" << buff.buff << ", buff level:" << buff.level;
+                removeBuffEffectFull(buff);
                 sub_index++;
             }
             sub_index=0;
@@ -331,6 +341,20 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
                     lifeEffect.on=invertApplyOn(lifeEffect.on);
                 qDebug() << "addAndApplyAttackReturnList() life effect on " << lifeEffect.on << ", quantity:" << lifeEffect.quantity;
                 if(!applyCurrentLifeEffectReturn(lifeEffect))
+                {
+                    emit newError(tr("Internal error"),"Error applying the life effect");
+                    return;
+                }
+                sub_index++;
+            }
+            sub_index=0;
+            while(sub_index<attackReturn.buffLifeEffectMonster.size())
+            {
+                Skill::LifeEffectReturn buffEffect=attackReturn.buffLifeEffectMonster.at(sub_index);
+                if(!attackReturn.doByTheCurrentMonster)
+                    buffEffect.on=invertApplyOn(buffEffect.on);
+                qDebug() << "addAndApplyAttackReturnList() life effect on " << buffEffect.on << ", quantity:" << buffEffect.quantity;
+                if(!applyCurrentLifeEffectReturn(buffEffect))
                 {
                     emit newError(tr("Internal error"),"Error applying the life effect");
                     return;
