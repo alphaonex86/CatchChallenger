@@ -433,7 +433,7 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
     Q_UNUSED(x);
     Q_UNUSED(y);
     Q_UNUSED(direction);
-    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())//then is dead, is teleported to the last rescue point
+    if(CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO() && !CatchChallenger::ClientFightEngine::fightEngine.haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
     {
         qDebug() << "tp on loose: " << fightTimerFinish;
         if(fightTimerFinish)
@@ -844,9 +844,41 @@ void BaseWindow::loose()
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
     doNextActionStep=DoNextActionStep_Start;
-    battleInformationsList.clear();
-    botFightList.clear();
     load_monsters();
+    switch(battleType)
+    {
+        case BattleType_Bot:
+            if(botFightList.isEmpty())
+            {
+                emit error("battle info not found at collision");
+                return;
+            }
+            botFightList.removeFirst();
+            fightId=0;
+        break;
+        case BattleType_OtherPlayer:
+            if(battleInformationsList.isEmpty())
+            {
+                emit error("battle info not found at collision");
+                return;
+            }
+            battleInformationsList.removeFirst();
+        break;
+        default:
+        break;
+    }
+    if(!battleInformationsList.isEmpty())
+    {
+        const BattleInformations &battleInformations=battleInformationsList.first();
+        battleInformationsList.removeFirst();
+        battleAcceptedByOtherFull(battleInformations);
+    }
+    else if(!botFightList.isEmpty())
+    {
+        quint32 fightId=botFightList.first();
+        botFightList.removeFirst();
+        botFight(fightId);
+    }
 }
 
 void BaseWindow::win()
@@ -1030,6 +1062,11 @@ void BaseWindow::doNextAction()
         }
         qDebug() << "doNextAction(): remplace KO other monster";
         PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+        if(otherMonster==NULL)
+        {
+            emit error("No other monster into doNextAction()");
+            return;
+        }
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
         doNextActionStep=DoNextActionStep_Start;
@@ -1642,12 +1679,14 @@ void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackRe
     //breakpoint
     if(CatchChallenger::ClientFightEngine::fightEngine.haveBattleOtherMonster())
     {
-        CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
+        if(!CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster))
+            return;
         sendBattleReturn(attackReturn);
     }
     else
     {
-        CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
+        if(!CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster))
+            return;
         sendBattleReturn(attackReturn);
         init_other_monster_display();
         updateOtherMonsterInformation();

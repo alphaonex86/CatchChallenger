@@ -63,6 +63,7 @@ public:
     virtual bool tryCapture(const quint32 &item);
     virtual int applyCurrentBuffEffect(const Skill::BuffEffect &effect);
     virtual bool changeOfMonsterInFight(const quint32 &monsterId);
+    int applyBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:
@@ -70,7 +71,7 @@ protected:
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
     static bool monsterIsKO(const PlayerMonster &playerMonter);
     Skill::LifeEffectReturn applyOtherLifeEffect(const Skill::LifeEffect &effect);
-    void applyOtherBuffEffect(const Skill::BuffEffect &effect);
+    int applyOtherBuffEffect(const Skill::BuffEffect &effect);
     Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     Skill::LifeEffectReturn applyLifeEffect(const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
     virtual quint8 getOneSeed(const quint8 &max);

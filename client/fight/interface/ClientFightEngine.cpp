@@ -25,37 +25,38 @@ void ClientFightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 
 {
     if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.isEmpty())
     {
-        qDebug() << "have already monster to set battle monster";
+        emit error("have already monster to set battle monster");
         return;
     }
     if(stat.isEmpty())
     {
-        qDebug() << "monster list size can't be empty";
+        emit error("monster list size can't be empty");
         return;
     }
     if(monsterPlace<=0 || monsterPlace>stat.size())
     {
-        qDebug() << "monsterPlace greater than monster list";
+        emit error("monsterPlace greater than monster list");
         return;
     }
+    startTheFight();
     battleCurrentMonster << publicPlayerMonster;
     battleStat=stat;
     battleMonsterPlace << monsterPlace;
-    startTheFight();
 }
 
 void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters)
 {
     if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !this->botFightMonsters.isEmpty())
     {
-        qDebug() << "have already monster to set bot monster";
+        emit error("have already monster to set bot monster");
         return;
     }
     if(botFightMonsters.isEmpty())
     {
-        qDebug() << "monster list size can't be empty";
+        emit error("monster list size can't be empty");
         return;
     }
+    startTheFight();
     this->botFightMonsters=botFightMonsters;
     int index=0;
     while(index<botFightMonsters.size())
@@ -63,23 +64,23 @@ void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonste
         botMonstersStat << 0x01;
         index++;
     }
-    startTheFight();
 }
 
-void ClientFightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+bool ClientFightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    if(battleCurrentMonster.isEmpty() || battleStat.isEmpty())
+    if(battleStat.isEmpty())
     {
-        qDebug() << "have already monster";
-        return;
+        emit error("not monster stat list loaded");
+        return false;
     }
-    if(monsterPlace<=0 || monsterPlace>=battleStat.size())
+    if(monsterPlace<=0 || monsterPlace>battleStat.size())
     {
-        qDebug() << "monsterPlace greater than monster list";
-        return;
+        emit error("monsterPlace greater than monster list");
+        return false;
     }
     battleCurrentMonster << publicPlayerMonster;
     battleMonsterPlace << monsterPlace;
+    return true;
 }
 
 bool ClientFightEngine::haveWin()
@@ -90,18 +91,18 @@ bool ClientFightEngine::haveWin()
         {
             if(wildMonsters.first().hp==0)
             {
-                qDebug() << "remain one KO wild monsters";
+                emit message("remain one KO wild monsters");
                 return true;
             }
             else
             {
-                qDebug() << "remain one wild monsters";
+                emit message("remain one wild monsters");
                 return false;
             }
         }
         else
         {
-            qDebug() << "remain " << wildMonsters.size() << " wild monsters";
+            emit message(QString("remain %1 wild monsters").arg(wildMonsters.size()));
             return false;
         }
     }
@@ -111,18 +112,18 @@ bool ClientFightEngine::haveWin()
         {
             if(botFightMonsters.first().hp==0)
             {
-                qDebug() << "remain one KO botMonsters monsters";
+                emit message("remain one KO botMonsters monsters");
                 return true;
             }
             else
             {
-                qDebug() << "remain one botMonsters monsters";
+                emit message("remain one botMonsters monsters");
                 return false;
             }
         }
         else
         {
-            qDebug() << "remain " << botFightMonsters.size() << " botMonsters monsters";
+            emit message(QString("remain %1 bot monsters").arg(botFightMonsters.size()));
             return false;
         }
     }
@@ -132,22 +133,22 @@ bool ClientFightEngine::haveWin()
         {
             if(battleCurrentMonster.first().hp==0)
             {
-                qDebug() << "remain one KO battleCurrentMonster monsters";
+                emit message("remain one KO battleCurrentMonster monsters");
                 return true;
             }
             else
             {
-                qDebug() << "remain one battleCurrentMonster monsters";
+                emit message("remain one battleCurrentMonster monsters");
                 return false;
             }
         }
         else
         {
-            qDebug() << "remain " << battleCurrentMonster.size() << " battleCurrentMonster monsters";
+            emit message(QString("remain %1 battle monsters").arg(battleCurrentMonster.size()));
             return false;
         }
     }
-    qDebug() << "no remaining monsters";
+    emit message("no remaining monsters");
     return true;
 }
 
@@ -212,14 +213,14 @@ void ClientFightEngine::resetAll()
 
 bool ClientFightEngine::internalTryEscape()
 {
-    qDebug() << "BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()";
+    emit message("BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()");
     CatchChallenger::Api_client_real::client->tryEscape();
     return CommonFightEngine::internalTryEscape();
 }
 
 bool ClientFightEngine::tryCapture(const quint32 &item)
 {
-    qDebug() << "ClientFightEngine::tryCapture(): emit tryCapture()";
+    emit message("ClientFightEngine::tryCapture(): emit tryCapture()");
     CatchChallenger::Api_client_real::client->useObject(item);
     return CommonFightEngine::tryCapture(item);
 }
@@ -235,11 +236,11 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
     PlayerMonster * playerMonster=getCurrentMonster();
     if(playerMonster==NULL)
     {
-        qDebug() << "No current monster at apply current life effect";
+        emit message("No current monster at apply current life effect");
         return false;
     }
     #ifdef DEBUG_CLIENT_BATTLE
-    qDebug() << "applyCurrentLifeEffectReturn on " << effectReturn.on;
+    emit message("applyCurrentLifeEffectReturn on: "+QString::number(effectReturn.on));
     #endif
     qint32 quantity;
     Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
@@ -267,6 +268,7 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
             {
                 qDebug() << "applyCurrentLifeEffect() ennemy is KO";
                 publicPlayerMonster->hp=0;
+                ableToFight=false;
             }
             else if(quantity>0 && quantity>(qint32)(stat.hp-publicPlayerMonster->hp))
             {
@@ -285,8 +287,6 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
             {
                 qDebug() << "applyCurrentLifeEffect() current monster is KO";
                 playerMonster->hp=0;
-                playerMonster->buffs.clear();
-                updateCanDoFight();
             }
             else if(quantity>0 && quantity>(qint32)(stat.hp-playerMonster->hp))
             {

@@ -715,6 +715,11 @@ void MapVisibilityAlgorithm_Simple::teleportValidatedTo(Map *map,const COORD_TYP
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
     if(mapChange)
     {
+        if(this->map->map_file==map->map_file)
+        {
+            emit error("Map pointer != but map_file is same");
+            return;
+        }
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         emit message(QString("have changed of map for teleportation, old map: %1, new map: %2").arg(this->map->map_file).arg(map->map_file));
         #endif
