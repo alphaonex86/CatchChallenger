@@ -507,7 +507,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         if(success)
         {
             attackReturn.success=true;
-            if(applyOtherBuffEffect(buff.effect)>=0)
+            if(addOtherBuffEffect(buff.effect)>=0)
                 attackReturn.addBuffEffectMonster << buff.effect;
         }
         index++;
@@ -612,11 +612,6 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffe
     return effect_to_return;
 }
 
-int CommonFightEngine::applyOtherBuffEffect(const Skill::BuffEffect &effect)
-{
-    return applyBuffEffectFull(effect,getOtherMonster(),getCurrentMonster());
-}
-
 Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
 {
     if(player_informations==NULL)
@@ -643,12 +638,17 @@ Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::L
     return lifeEffectReturn;
 }
 
-int CommonFightEngine::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
+int CommonFightEngine::addOtherBuffEffect(const Skill::BuffEffect &effect)
 {
-    return applyBuffEffectFull(effect,getCurrentMonster(),getOtherMonster());
+    return addBuffEffectFull(effect,getOtherMonster(),getCurrentMonster());
 }
 
-int CommonFightEngine::applyBuffEffectFull(const Skill::BuffEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster)
+int CommonFightEngine::addCurrentBuffEffect(const Skill::BuffEffect &effect)
+{
+    return addBuffEffectFull(effect,getCurrentMonster(),getOtherMonster());
+}
+
+int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster)
 {
     if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
     {
@@ -709,6 +709,73 @@ int CommonFightEngine::applyBuffEffectFull(const Skill::BuffEffect &effect, Publ
         break;
     }
     return -1;
+}
+
+void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
+{
+    if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
+    {
+        emit error(QString("apply a unknown buff"));
+        return;
+    }
+    if(effect.level>CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.size())
+    {
+        emit error(QString("apply buff level out of range"));
+        return;
+    }
+    int index=0;
+    switch(effect.on)
+    {
+        case ApplyOn_AloneEnemy:
+        case ApplyOn_AllEnemy:
+        {
+            PublicPlayerMonster * otherMonster=getOtherMonster();
+            if(otherMonster==NULL)
+            {
+                emit error("Other monster not found for buff remove");
+                return;
+            }
+            while(index<otherMonster->buffs.size())
+            {
+                if(otherMonster->buffs.at(index).buff==effect.buff)
+                {
+                    if(otherMonster->buffs.at(index).level!=effect.level)
+                        emit message(QString("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(otherMonster->buffs.at(index).level).arg(effect.level));
+                    otherMonster->buffs.removeAt(index);
+                    return;
+                }
+                index++;
+            }
+        }
+        break;
+        case ApplyOn_Themself:
+        case ApplyOn_AllAlly:
+        {
+            PublicPlayerMonster * currentMonster=getCurrentMonster();
+            if(currentMonster==NULL)
+            {
+                emit error("Other monster not found for buff remove");
+                return;
+            }
+            while(index<currentMonster->buffs.size())
+            {
+                if(currentMonster->buffs.at(index).buff==effect.buff)
+                {
+                    if(currentMonster->buffs.at(index).level!=effect.level)
+                        emit message(QString("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(currentMonster->buffs.at(index).level).arg(effect.level));
+                    currentMonster->buffs.removeAt(index);
+                    return;
+                }
+                index++;
+            }
+        }
+        break;
+        default:
+            emit error("Not apply match, can't apply the buff");
+            return;
+        break;
+    }
+    emit error("Buff not found to remove");
 }
 
 bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
@@ -1213,7 +1280,7 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
                 emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
             #endif
             attackReturn.success=true;//the attack have work because at less have a buff
-            if(applyCurrentBuffEffect(buff.effect)>=0)
+            if(addCurrentBuffEffect(buff.effect)>=0)
                 attackReturn.addBuffEffectMonster << buff.effect;
         }
         index++;

@@ -399,7 +399,6 @@ void BaseWindow::moveFightMonsterBottom()
     }
     if(moveType==MoveType_Dead)
     {
-        //breakpoint
         QPoint p=ui->labelFightMonsterBottom->pos();
         p.setY(p.ry()+4);
         ui->labelFightMonsterBottom->move(p);
@@ -528,8 +527,6 @@ void BaseWindow::moveFightMonsterTop()
             moveFightMonsterTopTimer.start();
         else
         {
-
-            //breakpoint
             CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
             if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
             {
@@ -556,7 +553,6 @@ void BaseWindow::moveFightMonsterTop()
             }
             else
             {
-                //breakpoint
                 qDebug() << "doNextAction(): you win";
                 doNextActionStep=DoNextActionStep_Win;
                 if(!escape)
@@ -1653,30 +1649,12 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
 
 void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn)
 {
-    //breakpoint
-    #ifdef DEBUG_CLIENT_BATTLE
-    int index=0;
-    while(index<attackReturn.size())
-    {
-        const Skill::AttackReturn &attackReturnTemp=attackReturn.at(index);
-        qDebug() << QString("Do the attack: %1 with success: %2, and do by the current monster: %3").arg(attackReturnTemp.attack).arg(attackReturnTemp.success).arg(attackReturnTemp.doByTheCurrentMonster);
-        int sub_index=0;
-        while(sub_index<attackReturnTemp.lifeEffectMonster.size())
-        {
-            const Skill::LifeEffectReturn &lifeEffectReturn=attackReturnTemp.lifeEffectMonster.at(sub_index);
-            qDebug() << QString("Life effect for this attack: %1, apply on: %2").arg(lifeEffectReturn.quantity).arg(lifeEffectReturn.on);
-            sub_index++;
-        }
-        index++;
-    }
-    #endif
     CatchChallenger::ClientFightEngine::fightEngine.addAndApplyAttackReturnList(attackReturn);
     doNextAction();
 }
 
 void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    //breakpoint
     if(CatchChallenger::ClientFightEngine::fightEngine.haveBattleOtherMonster())
     {
         if(!CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster))
