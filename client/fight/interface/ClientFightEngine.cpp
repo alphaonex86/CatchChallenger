@@ -163,6 +163,19 @@ bool ClientFightEngine::dropKOOtherMonster()
         battleMonsterPlace.removeFirst();
         battleReturn=true;
     }
+    bool haveValidMonster=false;
+    int index=0;
+    while(index<battleStat.size())
+    {
+        if(battleStat.at(index)==0x01)
+        {
+            haveValidMonster=true;
+            break;
+        }
+        index++;
+    }
+    if(!haveValidMonster)
+        battleStat.clear();
 
     return commonReturn || battleReturn;
 }
@@ -180,7 +193,7 @@ bool ClientFightEngine::isInFight() const
 {
     if(CommonFightEngine::isInFight())
         return true;
-    else if(!battleCurrentMonster.empty())
+    else if(!battleStat.empty())
         return true;
     else
         return false;
@@ -384,6 +397,11 @@ void ClientFightEngine::setVariable(Player_private_and_public_informations playe
 }
 
 bool ClientFightEngine::isInBattle() const
+{
+    return !battleStat.isEmpty();
+}
+
+bool ClientFightEngine::haveBattleOtherMonster() const
 {
     return !battleCurrentMonster.isEmpty();
 }

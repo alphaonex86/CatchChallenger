@@ -45,6 +45,7 @@ public:
     void setVariable(Player_private_and_public_informations player_informations_local);
     Skill::AttackReturn generateOtherAttack();
     bool isInBattle() const;
+    bool haveBattleOtherMonster() const;
     virtual bool useSkill(const quint32 &skill);
     bool dropKOOtherMonster();
     bool tryCapture(const quint32 &item);

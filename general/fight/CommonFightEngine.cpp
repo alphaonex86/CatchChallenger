@@ -66,6 +66,7 @@ bool CommonFightEngine::dropKOCurrentMonster()
     else if(playerMonster->hp==0)
     {
         playerMonster->buffs.clear();
+        doTurnIfChangeOfMonster=false;
         ableToFight=false;
         currentPlayerReturn=true;
     }
@@ -328,6 +329,11 @@ Monster::Stat CommonFightEngine::getStat(const Monster &monster, const quint8 &l
 
 void CommonFightEngine::updateCanDoFight()
 {
+    if(isInBattle())
+    {
+        emit error(QString("Can't auto select the next monster when is in battle"));
+        return;
+    }
     ableToFight=false;
     if(player_informations==NULL)
     {
@@ -513,10 +519,10 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         {
             attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
             attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
-            if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
-                doTurnIfChangeOfMonster=false;
         }
     }
+    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+        doTurnIfChangeOfMonster=false;
     return attackReturn;
 }
 
@@ -761,6 +767,8 @@ bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
                 ableToFight=true;
                 if(doTurnIfChangeOfMonster)
                     doTheOtherMonsterTurn();
+                else
+                    doTurnIfChangeOfMonster=true;
                 return true;
             }
             else
@@ -768,6 +776,7 @@ bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
         }
         index++;
     }
+    emit error(QString("unable to locate the new monster to change"));
     return false;
 }
 
@@ -1009,6 +1018,12 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             #endif
         }
     }
+    else if(isInBattle())
+    {
+        if(otherMonsterIsKO())
+            return true;
+        return false;
+    }
     else
     {
         emit error("unknown other monster type");
@@ -1241,10 +1256,10 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
         {
             attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
             attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
-            if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
-                doTurnIfChangeOfMonster=false;
         }
     }
+    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+        doTurnIfChangeOfMonster=false;
     return attackReturn;
 }
 
