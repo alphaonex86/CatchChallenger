@@ -28,13 +28,13 @@ public:
     //current fight
     QList<PublicPlayerMonster> battleCurrentMonster;
     QList<quint8> battleStat,botMonstersStat;
-    QList<quint8> battleMonsterPlace;
+    QList<quint8> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
     QList<quint32> otherMonsterAttack;
     QList<PlayerMonster> playerMonster_captureInProgress;
     void fightFinished();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
-    void addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    bool addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
     void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList);
     QList<Skill::AttackReturn> getAttackReturnList() const;

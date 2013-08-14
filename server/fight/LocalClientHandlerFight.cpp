@@ -135,8 +135,11 @@ bool LocalClientHandlerFight::checkLoose()
         //teleport
         emit teleportTo(player_informations->rescue.map,player_informations->rescue.x,player_informations->rescue.y,player_informations->rescue.orientation);
         //regen all the monsters
+        bool tempInBattle=isInBattle();
         healAllMonsters();
         fightFinished();
+        if(tempInBattle)
+            updateCanDoFight();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         emit message("You lost the battle");
         if(!ableToFight)
@@ -272,6 +275,7 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
         emit error(QString("error: bot id %1 have no monster to fight").arg(botFightId));
         return false;
     }
+    startTheFight();
     botFightCash=botFight.cash;
     int index=0;
     while(index<botFight.monsters.size())
@@ -281,7 +285,6 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
         botFightMonsters << FacilityLib::botFightMonsterToPlayerMonster(monster,stat);
         index++;
     }
-    startTheFight();
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(botFightMonsters.isEmpty())
     {
@@ -529,16 +532,13 @@ void LocalClientHandlerFight::battleFinished()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message("Battle finished");
     #endif
-    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    otherPlayerBattle->updateCanDoFight();
-    if(!otherPlayerBattle->getAbleToFight())
-        emit error(QString("Error: The other player monster in battle is KO into battleFinished()"));
-    updateCanDoFight();
-    if(!getAbleToFight())
-        emit error(QString("Error: Your monster is KO into battleFinished()"));
-    #endif
+    otherPlayerBattle->resetBattleAction();
+    resetBattleAction();
+    LocalClientHandlerFight *tempOtherPlayerBattle=otherPlayerBattle;
     otherPlayerBattle->battleFinishedReset();
     battleFinishedReset();
+    updateCanDoFight();
+    tempOtherPlayerBattle->updateCanDoFight();
 }
 
 void LocalClientHandlerFight::battleFinishedReset()
@@ -569,8 +569,9 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message("Battle canceled");
     #endif
+    bool needUpdateCanDoFight=false;
     if(battleIsValidated)
-        updateCanDoFight();
+        needUpdateCanDoFight=true;
     otherPlayerBattle=NULL;
     if(send)
     {
@@ -580,6 +581,8 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
     battleIsValidated=false;
     mHaveCurrentSkill=false;
     mMonsterChange=false;
+    if(needUpdateCanDoFight)
+        updateCanDoFight();
 }
 
 void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
@@ -637,6 +640,12 @@ void LocalClientHandlerFight::internalBattleAccepted(const bool &send)
 bool LocalClientHandlerFight::haveBattleAction() const
 {
     return mHaveCurrentSkill || mMonsterChange;
+}
+
+void LocalClientHandlerFight::resetBattleAction()
+{
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
 }
 
 quint8 LocalClientHandlerFight::getOtherSelectedMonsterNumber() const
@@ -710,13 +719,16 @@ void LocalClientHandlerFight::sendBattleReturn()
         }
         master_index++;
     }
-    if(otherPlayerBattle->haveMonsterChange())
+    if(otherPlayerBattle==NULL)
+        out << (quint8)0x00;
+    else if(otherPlayerBattle->haveMonsterChange())
     {
         out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
         binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
     }
     else
         out << (quint8)0x00;
+    attackReturn.clear();
 
     emit sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
 }
@@ -866,6 +878,8 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
         CommonFightEngine::useSkill(mCurrentSkillId);
     else
         doTheOtherMonsterTurn();
+    sendBattleReturn();
+    otherPlayerBattle->sendBattleReturn();
     if(currentMonsterIsKO() || otherMonsterIsKO())
     {
         //sendBattleMonsterChange() at changing to not block if both is KO
@@ -881,18 +895,19 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
             bool theOtherWin=otherPlayerBattle->haveAnotherMonsterOnThePlayerToFight();
             dropKOCurrentMonster();
             dropKOOtherMonster();
+            LocalClientHandlerFight *tempOtherPlayerBattle=otherPlayerBattle;
             checkLoose();
-            otherPlayerBattle->checkLoose();
+            tempOtherPlayerBattle->checkLoose();
             emit message(QString("Have win the battle"));
             if(youWin)
                 emitBattleWin();
             if(theOtherWin)
-                otherPlayerBattle->emitBattleWin();
-            battleFinished();
+                tempOtherPlayerBattle->emitBattleWin();
+            return true;
         }
     }
-    sendBattleReturn();
-    otherPlayerBattle->sendBattleReturn();
+    resetBattleAction();
+    otherPlayerBattle->resetBattleAction();
     return true;
 }
 
