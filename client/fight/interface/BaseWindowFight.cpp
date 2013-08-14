@@ -399,6 +399,7 @@ void BaseWindow::moveFightMonsterBottom()
     }
     if(moveType==MoveType_Dead)
     {
+        //breakpoint
         QPoint p=ui->labelFightMonsterBottom->pos();
         p.setY(p.ry()+4);
         ui->labelFightMonsterBottom->move(p);
@@ -408,7 +409,12 @@ void BaseWindow::moveFightMonsterBottom()
         {
             CatchChallenger::ClientFightEngine::fightEngine.dropKOCurrentMonster();
             if(CatchChallenger::ClientFightEngine::fightEngine.haveAnotherMonsterOnThePlayerToFight())
+            {
+                #ifdef DEBUG_CLIENT_BATTLE
+                qDebug() << "Your current monster is KO, select another";
+                #endif
                 selectObject(ObjectType_MonsterToFight);
+            }
             else
             {
                 #ifdef DEBUG_CLIENT_BATTLE
@@ -522,9 +528,18 @@ void BaseWindow::moveFightMonsterTop()
             moveFightMonsterTopTimer.start();
         else
         {
+
+            //breakpoint
             CatchChallenger::ClientFightEngine::fightEngine.dropKOOtherMonster();
             if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
             {
+                if(CatchChallenger::ClientFightEngine::fightEngine.isInBattle() && !CatchChallenger::ClientFightEngine::fightEngine.haveBattleOtherMonster())
+                {
+                    ui->pushButtonFightEnterNext->setVisible(false);
+                    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+                    ui->labelFightEnter->setText(tr("In waiting of other monster selection"));
+                    return;
+                }
                 ui->pushButtonFightEnterNext->setVisible(false);
                 init_other_monster_display();
                 ui->frameFightTop->setVisible(false);
@@ -541,6 +556,7 @@ void BaseWindow::moveFightMonsterTop()
             }
             else
             {
+                //breakpoint
                 qDebug() << "doNextAction(): you win";
                 doNextActionStep=DoNextActionStep_Win;
                 if(!escape)
@@ -1600,6 +1616,7 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
 
 void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn)
 {
+    //breakpoint
     #ifdef DEBUG_CLIENT_BATTLE
     int index=0;
     while(index<attackReturn.size())
@@ -1622,8 +1639,22 @@ void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn
 
 void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
-    sendBattleReturn(attackReturn);
+    //breakpoint
+    if(CatchChallenger::ClientFightEngine::fightEngine.haveBattleOtherMonster())
+    {
+        CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
+        sendBattleReturn(attackReturn);
+    }
+    else
+    {
+        CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster);
+        sendBattleReturn(attackReturn);
+        init_other_monster_display();
+        updateOtherMonsterInformation();
+        battleStep=BattleStep_Middle;
+        moveType=MoveType_Enter;
+        moveFightMonsterTop();
+    }
 }
 
 
