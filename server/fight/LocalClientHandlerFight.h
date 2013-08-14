@@ -61,6 +61,7 @@ public:
     bool doTheOtherMonsterTurn();
     Skill::AttackReturn generateOtherAttack();
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
+    void emitBattleWin();
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
@@ -70,6 +71,7 @@ protected:
     quint8 getOtherSelectedMonsterNumber() const;
     void haveUsedTheBattleAction();
     void sendBattleReturn();
+    void sendBattleMonsterChange();
     inline quint8 selectedMonsterNumberToMonsterPlace(const quint8 &selectedMonsterNumber);
     void internalBattleCanceled(const bool &send);
     void internalBattleAccepted(const bool &send);

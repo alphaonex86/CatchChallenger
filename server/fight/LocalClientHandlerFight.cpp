@@ -145,6 +145,7 @@ bool LocalClientHandlerFight::checkLoose()
             return true;
         }
         #endif
+        emit fightOrBattleFinish(false,0);
         return true;
     }
     return false;
@@ -470,7 +471,7 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
 
 bool LocalClientHandlerFight::isInBattle() const
 {
-    return (otherPlayerBattle!=NULL);
+    return (otherPlayerBattle!=NULL && battleIsValidated);
 }
 
 void LocalClientHandlerFight::registerBattleRequest(LocalClientHandlerFight * otherPlayerBattle)
@@ -720,6 +721,18 @@ void LocalClientHandlerFight::sendBattleReturn()
     emit sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
 }
 
+void LocalClientHandlerFight::sendBattleMonsterChange()
+{
+    QByteArray binarypublicPlayerMonster;
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0;
+    out << (quint8)selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());;
+    binarypublicPlayerMonster=FacilityLib::publicPlayerMonsterToBinary(*getOtherMonster());
+    emit sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
+}
+
 //return true if change level
 bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
 {
@@ -850,26 +863,42 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
     if(!bothRealPlayerIsReady())
         return false;
     if(mHaveCurrentSkill)
+        CommonFightEngine::useSkill(mCurrentSkillId);
+    else
+        doTheOtherMonsterTurn();
+    if(currentMonsterIsKO() || otherMonsterIsKO())
     {
-        bool win=CommonFightEngine::useSkill(mCurrentSkillId);
-        if(currentMonsterIsKO() || otherMonsterIsKO())
+        //sendBattleMonsterChange() at changing to not block if both is KO
+        if(haveAnotherMonsterOnThePlayerToFight() && otherPlayerBattle->haveAnotherMonsterOnThePlayerToFight())
         {
             dropKOCurrentMonster();
             dropKOOtherMonster();
-            bool currentLoose=checkLoose();
-            bool otherLoose=otherPlayerBattle->checkLoose();
-            if(currentLoose || otherLoose)
-                emit message(QString("Have win agains the current monster"));
-            else
-                emit message(QString("Have win the battle"));
+            emit message(QString("Have win agains the current monster"));
         }
-        emit fightOrBattleFinish(win,0);
+        else
+        {
+            bool youWin=haveAnotherMonsterOnThePlayerToFight();
+            bool theOtherWin=otherPlayerBattle->haveAnotherMonsterOnThePlayerToFight();
+            dropKOCurrentMonster();
+            dropKOOtherMonster();
+            checkLoose();
+            otherPlayerBattle->checkLoose();
+            emit message(QString("Have win the battle"));
+            if(youWin)
+                emitBattleWin();
+            if(theOtherWin)
+                otherPlayerBattle->emitBattleWin();
+            battleFinished();
+        }
     }
-    else
-        doTheOtherMonsterTurn();
     sendBattleReturn();
     otherPlayerBattle->sendBattleReturn();
     return true;
+}
+
+void LocalClientHandlerFight::emitBattleWin()
+{
+    emit fightOrBattleFinish(true,0);
 }
 
 bool LocalClientHandlerFight::dropKOOtherMonster()
@@ -878,17 +907,7 @@ bool LocalClientHandlerFight::dropKOOtherMonster()
 
     bool battleReturn=false;
     if(isInBattle())
-    {
-        PlayerMonster * playerMonster=otherPlayerBattle->getCurrentMonster();
-        if(playerMonster==NULL)
-            battleReturn=true;
-        else if(playerMonster->hp==0)
-        {
-            playerMonster->buffs.clear();
-            otherPlayerBattle->updateCanDoFight();
-            battleReturn=true;
-        }
-    }
+        battleReturn=otherPlayerBattle->dropKOCurrentMonster();
     else
     {
         if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
@@ -1188,8 +1207,17 @@ void LocalClientHandlerFight::saveMonsterPosition(const quint32 &monsterId,const
 
 bool LocalClientHandlerFight::changeOfMonsterInFight(const quint32 &monsterId)
 {
-    mMonsterChange=true;
-    return CommonFightEngine::changeOfMonsterInFight(monsterId);
+    bool doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
+    if(!CommonFightEngine::changeOfMonsterInFight(monsterId))
+        return false;
+    if(isInBattle())
+    {
+        if(!doTurnIfChangeOfMonster)
+            otherPlayerBattle->sendBattleMonsterChange();
+        else
+            mMonsterChange=true;
+    }
+    return true;
 }
 
 bool LocalClientHandlerFight::doTheOtherMonsterTurn()
@@ -1224,6 +1252,8 @@ Skill::AttackReturn LocalClientHandlerFight::generateOtherAttack()
     quint32 skill=otherPlayerBattle->getCurrentSkill();
     quint8 skillLevel=getSkillLevel(skill);
     otherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel);
+    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+        doTurnIfChangeOfMonster=false;
     return attackReturn.last();
 }
 
@@ -1235,5 +1265,7 @@ Skill::AttackReturn LocalClientHandlerFight::doTheCurrentMonsterAttack(const qui
     Skill::AttackReturn attackReturnTemp=attackReturn.last();
     attackReturnTemp.doByTheCurrentMonster=false;
     otherPlayerBattle->attackReturn << attackReturnTemp;
+    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
+        doTurnIfChangeOfMonster=false;
     return attackReturn.last();
 }

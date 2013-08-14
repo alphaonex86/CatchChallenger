@@ -66,113 +66,113 @@ BaseWindow::BaseWindow() :
     doNextActionTimer.setSingleShot(true);
     doNextActionTimer.setInterval(1500);
 
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&BaseWindow::protocol_is_good,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,this,&BaseWindow::disconnected,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::error,this,&BaseWindow::error,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&BaseWindow::message,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::notLogged,this,&BaseWindow::notLogged,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::logged,this,&BaseWindow::logged,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveTheDatapack,this,&BaseWindow::haveTheDatapack,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newError,this,&BaseWindow::newError,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanActionFailed,this,&BaseWindow::clanActionFailed,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanActionSuccess,this,&BaseWindow::clanActionSuccess,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanDissolved,this,&BaseWindow::clanDissolved,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInformations,this,&BaseWindow::clanInformations,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInvite,this,&BaseWindow::clanInvite,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::cityCapture,this,&BaseWindow::cityCapture,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::error,              this,&BaseWindow::error,            Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,            this,&BaseWindow::message,          Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::notLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::logged,             this,&BaseWindow::logged,           Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newError,           this,&BaseWindow::newError,         Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanActionFailed,   this,&BaseWindow::clanActionFailed, Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanActionSuccess,  this,&BaseWindow::clanActionSuccess,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanDissolved,      this,&BaseWindow::clanDissolved,    Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInformations,   this,&BaseWindow::clanInformations, Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::clanInvite,         this,&BaseWindow::clanInvite,       Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::cityCapture,        this,&BaseWindow::cityCapture,      Qt::QueuedConnection);
 
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourAreNotLeader,this,&BaseWindow::captureCityYourAreNotLeader,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourLeaderHaveStartInOtherCity,this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityPreviousNotFinished,this,&BaseWindow::captureCityPreviousNotFinished,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityStartBattle,this,&BaseWindow::captureCityStartBattle,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityStartBotFight,this,&BaseWindow::captureCityStartBotFight,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityDelayedStart,this,&BaseWindow::captureCityDelayedStart,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityWin,this,&BaseWindow::captureCityWin,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourAreNotLeader,                this,&BaseWindow::captureCityYourAreNotLeader,              Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityYourLeaderHaveStartInOtherCity,  this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityPreviousNotFinished,             this,&BaseWindow::captureCityPreviousNotFinished,           Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityStartBattle,                     this,&BaseWindow::captureCityStartBattle,                   Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityStartBotFight,                   this,&BaseWindow::captureCityStartBotFight,                 Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityDelayedStart,                    this,&BaseWindow::captureCityDelayedStart,                  Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::captureCityWin,                             this,&BaseWindow::captureCityWin,                           Qt::QueuedConnection);
 
     //connect the map controler
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&BaseWindow::have_current_player_info,Qt::QueuedConnection);
 
     //inventory
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_inventory,this,&BaseWindow::have_inventory);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::add_to_inventory,this,&BaseWindow::add_to_inventory_slot);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_inventory,     this,&BaseWindow::have_inventory);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::add_to_inventory,   this,&BaseWindow::add_to_inventory_slot);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_to_inventory,this,&BaseWindow::remove_to_inventory);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::monsterCatch,this,&BaseWindow::monsterCatch);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::monsterCatch,       this,&BaseWindow::monsterCatch);
 
     //chat
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::new_chat_text,Chat::chat,&Chat::new_chat_text);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::new_chat_text,  Chat::chat,&Chat::new_chat_text);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::new_system_text,Chat::chat,&Chat::new_system_text);
     connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setVisible,Qt::QueuedConnection);
 
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::number_of_player,this,&BaseWindow::number_of_player);
 
     //connect the datapack loader
-    connect(&DatapackClientLoader::datapackLoader,&DatapackClientLoader::datapackParsed,this,&BaseWindow::datapackParsed,Qt::QueuedConnection);
-    connect(this,&BaseWindow::parseDatapack,&DatapackClientLoader::datapackLoader,&DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,&DatapackClientLoader::datapackParsed,MapController::mapController,&MapController::datapackParsed,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
+    connect(this,                                   &BaseWindow::parseDatapack,             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
 
     //render, logical part into Map_Client
-    connect(MapController::mapController,&MapController::stopped_in_front_of,this,&BaseWindow::stopped_in_front_of);
-    connect(MapController::mapController,&MapController::actionOn,this,&BaseWindow::actionOn);
-    connect(MapController::mapController,&MapController::blockedOn,this,&BaseWindow::blockedOn);
-    connect(MapController::mapController,&MapController::error,this,&BaseWindow::error);
+    connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of);
+    connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn);
+    connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn);
+    connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error);
     connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap);
 
     //fight
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::random_seeds,&ClientFightEngine::fightEngine,&ClientFightEngine::newRandomNumber);
-    connect(MapController::mapController,&MapController::wildFightCollision,this,&BaseWindow::wildFightCollision);
-    connect(MapController::mapController,&MapController::botFightCollision,this,&BaseWindow::botFightCollision);
-    connect(MapController::mapController,&MapController::currentMapLoaded,this,&BaseWindow::currentMapLoaded);
-    connect(&moveFightMonsterBottomTimer,&QTimer::timeout,this,&BaseWindow::moveFightMonsterBottom);
-    connect(&moveFightMonsterTopTimer,&QTimer::timeout,this,&BaseWindow::moveFightMonsterTop);
-    connect(&moveFightMonsterBothTimer,&QTimer::timeout,this,&BaseWindow::moveFightMonsterBoth);
-    connect(&displayAttackTimer,&QTimer::timeout,this,&BaseWindow::displayAttack);
-    connect(&displayTrapTimer,&QTimer::timeout,this,&BaseWindow::displayTrap);
-    connect(&doNextActionTimer,&QTimer::timeout,this,&BaseWindow::doNextAction);
+    connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
+    connect(MapController::mapController,   &MapController::botFightCollision,      this,&BaseWindow::botFightCollision);
+    connect(MapController::mapController,   &MapController::currentMapLoaded,       this,&BaseWindow::currentMapLoaded);
+    connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom);
+    connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop);
+    connect(&moveFightMonsterBothTimer,     &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBoth);
+    connect(&displayAttackTimer,            &QTimer::timeout,                       this,&BaseWindow::displayAttack);
+    connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap);
+    connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection);
 
     //plants
-    connect(this,&BaseWindow::useSeed,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::useSeed);
-    connect(this,&BaseWindow::collectMaturePlant,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::collectMaturePlant);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::seed_planted,this,&BaseWindow::seed_planted);
+    connect(this,&BaseWindow::useSeed,              CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::useSeed);
+    connect(this,&BaseWindow::collectMaturePlant,   CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::collectMaturePlant);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::seed_planted,   this,&BaseWindow::seed_planted);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::plant_collected,this,&BaseWindow::plant_collected);
     //crafting
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::recipeUsed,this,&BaseWindow::recipeUsed);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::recipeUsed,     this,&BaseWindow::recipeUsed);
     //trade
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeRequested,this,&BaseWindow::tradeRequested);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAcceptedByOther,this,&BaseWindow::tradeAcceptedByOther);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeCanceledByOther,this,&BaseWindow::tradeCanceledByOther);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeFinishedByOther,this,&BaseWindow::tradeFinishedByOther);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeValidatedByTheServer,this,&BaseWindow::tradeValidatedByTheServer);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAddTradeCash,this,&BaseWindow::tradeAddTradeCash);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAddTradeObject,this,&BaseWindow::tradeAddTradeObject);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAddTradeMonster,this,&BaseWindow::tradeAddTradeMonster);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeRequested,             this,&BaseWindow::tradeRequested);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAcceptedByOther,       this,&BaseWindow::tradeAcceptedByOther);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeCanceledByOther,       this,&BaseWindow::tradeCanceledByOther);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeFinishedByOther,       this,&BaseWindow::tradeFinishedByOther);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeValidatedByTheServer,  this,&BaseWindow::tradeValidatedByTheServer);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAddTradeCash,          this,&BaseWindow::tradeAddTradeCash);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAddTradeObject,        this,&BaseWindow::tradeAddTradeObject);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::tradeAddTradeMonster,       this,&BaseWindow::tradeAddTradeMonster);
     //inventory
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::objectUsed,this,&BaseWindow::objectUsed);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::objectUsed,                 this,&BaseWindow::objectUsed);
     //shop
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveShopList,this,&BaseWindow::haveShopList);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveSellObject,this,&BaseWindow::haveSellObject);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveBuyObject,this,&BaseWindow::haveBuyObject);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveShopList,               this,&BaseWindow::haveShopList);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveSellObject,             this,&BaseWindow::haveSellObject);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveBuyObject,              this,&BaseWindow::haveBuyObject);
     //factory
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveFactoryList,this,&BaseWindow::haveFactoryList);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveSellFactoryObject,this,&BaseWindow::haveSellFactoryObject);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveBuyFactoryObject,this,&BaseWindow::haveBuyFactoryObject);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveFactoryList,            this,&BaseWindow::haveFactoryList);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveSellFactoryObject,      this,&BaseWindow::haveSellFactoryObject);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveBuyFactoryObject,       this,&BaseWindow::haveBuyFactoryObject);
     //battle
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleRequested,this,&BaseWindow::battleRequested);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleAcceptedByOther,this,&BaseWindow::battleAcceptedByOther);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleCanceledByOther,this,&BaseWindow::battleCanceledByOther);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendBattleReturn,this,&BaseWindow::sendBattleReturn);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendBattleReturn,this,&BaseWindow::sendBattleReturn);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleRequested,            this,&BaseWindow::battleRequested);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleAcceptedByOther,      this,&BaseWindow::battleAcceptedByOther);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleCanceledByOther,      this,&BaseWindow::battleCanceledByOther);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendBattleReturn,           this,&BaseWindow::sendBattleReturn);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendFullBattleReturn,       this,&BaseWindow::sendFullBattleReturn);
 
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,this,&BaseWindow::newError);
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,this,&BaseWindow::error);
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
 
     connect(this,&BaseWindow::destroyObject,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::destroyObject);
-    connect(&updateRXTXTimer,&QTimer::timeout,this,&BaseWindow::updateRXTX);
+    connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX);
 
-    connect(&tip_timeout,&QTimer::timeout,this,&BaseWindow::tipTimeout);
-    connect(&gain_timeout,&QTimer::timeout,this,&BaseWindow::gainTimeout);
-    connect(&nextCityCaptureTimer,&QTimer::timeout,this,&BaseWindow::cityCaptureUpdateTime);
-    connect(&updater_page_zonecapture,&QTimer::timeout,this,&BaseWindow::updatePageZonecapture);
+    connect(&tip_timeout,&QTimer::timeout,              this,&BaseWindow::tipTimeout);
+    connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout);
+    connect(&nextCityCaptureTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
+    connect(&updater_page_zonecapture,&QTimer::timeout, this,&BaseWindow::updatePageZonecapture);
 
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
 
@@ -396,6 +396,7 @@ void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInfor
 
 void BaseWindow::battleCanceledByOther()
 {
+    //breakpoint
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     showTip(tr("The other player have canceled the battle"));
     load_monsters();
