@@ -80,17 +80,22 @@ void MainWindow::updateActionButton()
 
 void MainWindow::on_pushButton_server_start_clicked()
 {
+    ui->pushButton_server_start->setEnabled(false);
     send_settings();
     server.start_server();
 }
 
 void MainWindow::on_pushButton_server_stop_clicked()
 {
+    ui->pushButton_server_restart->setEnabled(false);
+    ui->pushButton_server_stop->setEnabled(false);
     server.stop_server();
 }
 
 void MainWindow::on_pushButton_server_restart_clicked()
 {
+    ui->pushButton_server_restart->setEnabled(false);
+    ui->pushButton_server_stop->setEnabled(false);
     need_be_restarted=true;
     server.stop_server();
 }
