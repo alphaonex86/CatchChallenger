@@ -68,6 +68,7 @@ protected:
     void saveStat();
     bool buffIsValid(const Skill::BuffEffect &buffEffect);
     bool haveBattleAction() const;
+    void resetBattleAction();
     quint8 getOtherSelectedMonsterNumber() const;
     void haveUsedTheBattleAction();
     void sendBattleReturn();

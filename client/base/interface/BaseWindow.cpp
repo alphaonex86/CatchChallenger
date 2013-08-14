@@ -396,10 +396,28 @@ void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInfor
 
 void BaseWindow::battleCanceledByOther()
 {
-    //breakpoint
+    CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     showTip(tr("The other player have canceled the battle"));
     load_monsters();
+    if(battleInformationsList.isEmpty())
+    {
+        emit error("battle info not found at collision");
+        return;
+    }
+    battleInformationsList.removeFirst();
+    if(!battleInformationsList.isEmpty())
+    {
+        const BattleInformations &battleInformations=battleInformationsList.first();
+        battleInformationsList.removeFirst();
+        battleAcceptedByOtherFull(battleInformations);
+    }
+    else if(!botFightList.isEmpty())
+    {
+        quint32 fightId=botFightList.first();
+        botFightList.removeFirst();
+        botFight(fightId);
+    }
 }
 
 QString BaseWindow::lastLocation() const
