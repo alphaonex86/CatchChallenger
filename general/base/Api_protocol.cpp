@@ -1465,6 +1465,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                             return;
                         }
                         in >> tempAttackReturn.attack;
+                        //add buff
                         index=0;
                         if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                         {
@@ -1509,6 +1510,52 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                             tempAttackReturn.addBuffEffectMonster << buffEffect;
                             index++;
                         }
+                        //remove buff
+                        index=0;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> listSizeShort;
+                        while(index<listSizeShort)
+                        {
+                            Skill::BuffEffect buffEffect;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> buffEffect.buff;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> tempuint;
+                            switch(tempuint)
+                            {
+                                case ApplyOn_AloneEnemy:
+                                case ApplyOn_AllEnemy:
+                                case ApplyOn_Themself:
+                                case ApplyOn_AllAlly:
+                                case ApplyOn_Nobody:
+                                break;
+                                default:
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            buffEffect.on=(ApplyOn)tempuint;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> buffEffect.level;
+                            tempAttackReturn.removeBuffEffectMonster << buffEffect;
+                            index++;
+                        }
+                        //life effect
                         index=0;
                         if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                         {
@@ -1545,6 +1592,45 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                             }
                             lifeEffectReturn.on=(ApplyOn)tempuint;
                             tempAttackReturn.lifeEffectMonster << lifeEffectReturn;
+                            index++;
+                        }
+                        //buff effect
+                        index=0;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> listSizeShort;
+                        while(index<listSizeShort)
+                        {
+                            Skill::LifeEffectReturn lifeEffectReturn;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> lifeEffectReturn.quantity;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            in >> tempuint;
+                            switch(tempuint)
+                            {
+                                case ApplyOn_AloneEnemy:
+                                case ApplyOn_AllEnemy:
+                                case ApplyOn_Themself:
+                                case ApplyOn_AllAlly:
+                                case ApplyOn_Nobody:
+                                break;
+                                default:
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                                return;
+                            }
+                            lifeEffectReturn.on=(ApplyOn)tempuint;
+                            tempAttackReturn.buffLifeEffectMonster << lifeEffectReturn;
                             index++;
                         }
                         attackReturn << tempAttackReturn;

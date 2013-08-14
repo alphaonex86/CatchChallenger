@@ -700,6 +700,7 @@ void LocalClientHandlerFight::sendBattleReturn()
         out << (quint8)attackReturnTemp.doByTheCurrentMonster;
         out << (quint8)attackReturnTemp.success;
         out << (quint32)attackReturnTemp.attack;
+        //ad buff
         index=0;
         out << (quint8)attackReturnTemp.addBuffEffectMonster.size();
         while(index<attackReturnTemp.addBuffEffectMonster.size())
@@ -709,12 +710,32 @@ void LocalClientHandlerFight::sendBattleReturn()
             out << (quint8)attackReturnTemp.addBuffEffectMonster.at(index).level;
             index++;
         }
+        //remove buff
+        index=0;
+        out << (quint8)attackReturnTemp.removeBuffEffectMonster.size();
+        while(index<attackReturnTemp.removeBuffEffectMonster.size())
+        {
+            out << (quint32)attackReturnTemp.removeBuffEffectMonster.at(index).buff;
+            out << (quint8)attackReturnTemp.removeBuffEffectMonster.at(index).on;
+            out << (quint8)attackReturnTemp.removeBuffEffectMonster.at(index).level;
+            index++;
+        }
+        //life effect
         index=0;
         out << (quint8)attackReturnTemp.lifeEffectMonster.size();
         while(index<attackReturnTemp.lifeEffectMonster.size())
         {
             out << (qint32)attackReturnTemp.lifeEffectMonster.at(index).quantity;
             out << (quint8)attackReturnTemp.lifeEffectMonster.at(index).on;
+            index++;
+        }
+        //buff effect
+        index=0;
+        out << (quint8)attackReturnTemp.buffLifeEffectMonster.size();
+        while(index<attackReturnTemp.buffLifeEffectMonster.size())
+        {
+            out << (qint32)attackReturnTemp.buffLifeEffectMonster.at(index).quantity;
+            out << (quint8)attackReturnTemp.buffLifeEffectMonster.at(index).on;
             index++;
         }
         master_index++;
@@ -1061,9 +1082,9 @@ void LocalClientHandlerFight::requestFight(const quint32 &fightId)
     botFightStart(fightId);
 }
 
-int LocalClientHandlerFight::applyCurrentBuffEffect(const Skill::BuffEffect &effect)
+int LocalClientHandlerFight::addCurrentBuffEffect(const Skill::BuffEffect &effect)
 {
-    const int &returnCode=CommonFightEngine::applyCurrentBuffEffect(effect);
+    const int &returnCode=CommonFightEngine::addCurrentBuffEffect(effect);
     if(returnCode==-2)
         return returnCode;
     if(CommonDatapack::commonDatapack.monsterBuffs[effect.buff].duration==Buff::Duration_Always)
