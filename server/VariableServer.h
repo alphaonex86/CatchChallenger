@@ -30,6 +30,8 @@
 //the % of the price change when the resource/product if full/empty
 #define CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE 20
 
+#define CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX "^[0-9a-zA-Z]{34}"
+
 /** map visibility bandwith optimisation
  Do in define to not drop cpu performance, due to heavy call **/
 

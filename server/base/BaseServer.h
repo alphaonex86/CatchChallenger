@@ -41,7 +41,7 @@ public:
     virtual void stop();
     void load_clan_max_id();
 protected slots:
-    virtual void start_internal_server() = 0;
+    virtual void start_internal_server();
     virtual void stop_internal_server();
     //init, constructor, destructor
     virtual void initAll();//call before all
@@ -50,6 +50,11 @@ protected slots:
     //new connection
     virtual void newConnection();
     virtual void load_next_city_capture();
+    //bitcoin
+    void bitcoinProcessReadyReadStandardError();
+    void bitcoinProcessReadyReadStandardOutput();
+    void bitcoinProcessError(QProcess::ProcessError error);
+    void bitcoinProcessStateChanged(QProcess::ProcessState newState);
 signals:
     void error(const QString &error) const;
     void try_initAll() const;

@@ -440,6 +440,63 @@ void MainWindow::load_settings()
     }
     settings->endGroup();
 
+    {
+        bool ok;
+        ServerSettings::Bitcoin bitcoin;
+        settings->beginGroup("bitcoin");
+        if(!settings->contains("enabled"))
+            settings->setValue("enabled",false);
+        if(!settings->contains("address"))
+            settings->setValue("address","1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ");
+        if(!settings->contains("fee"))
+            settings->setValue("fee",1.0);
+        if(!settings->contains("history"))
+            settings->setValue("history",30);
+        #ifdef Q_OS_WIN32
+        if(!settings->contains("binaryPath"))
+            settings->setValue("binaryPath","%application_path%/bitcoin/bitcoind.exe");
+        if(!settings->contains("workingPath"))
+            settings->setValue("workingPath","%application_path%/bitcoin-storage/");
+        #else
+        if(!settings->contains("binaryPath"))
+            settings->setValue("binaryPath","/usr/bin/bitcoind");
+        if(!settings->contains("workingPath"))
+            settings->setValue("workingPath",QDir::homePath()+"/.CatchChallenger/bitoin/");
+        #endif
+        if(!settings->contains("port"))
+            settings->setValue("port",46349);
+
+        bitcoin.enabled=settings->value("enabled").toBool();
+        bitcoin.address=settings->value("address").toString();
+        if(!bitcoin.address.contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
+            bitcoin.enabled=false;
+        bitcoin.fee=settings->value("fee").toDouble(&ok);
+        if(!ok)
+            bitcoin.fee=1.0;
+        if(bitcoin.fee<0 || bitcoin.fee>100)
+            bitcoin.fee=1.0;
+        bitcoin.history=settings->value("history").toUInt(&ok);
+        if(!ok)
+            bitcoin.history=30;
+        bitcoin.binaryPath=settings->value("binaryPath").toString();
+        bitcoin.workingPath=settings->value("workingPath").toString();
+        int port=settings->value("port").toUInt(&ok);
+        if(!ok)
+            port=46349;
+        if(port<1 || port>65534)
+            port=46349;
+        bitcoin.port=port;
+        settings->endGroup();
+        ui->bitcoin_enabled->setChecked(bitcoin.enabled);
+        ui->bitcoin_address->setText(bitcoin.address);
+        ui->bitcoin_fee->setValue(bitcoin.fee);
+        ui->bitcoin_history->setValue(bitcoin.history);
+        ui->bitcoin_binarypath->setText(bitcoin.binaryPath);
+        ui->bitcoin_workingpath->setText(bitcoin.workingPath);
+        ui->bitcoin_port->setValue(bitcoin.port);
+        on_bitcoin_address_editingFinished();
+    }
+
     send_settings();
 }
 
@@ -556,6 +613,14 @@ void MainWindow::send_settings()
     QTime time=ui->timeEdit_city_capture_time->time();
     formatedServerSettings.city.capture.hour=time.hour();
     formatedServerSettings.city.capture.minute=time.minute();
+
+    formatedServerSettings.bitcoin.address=ui->bitcoin_address->text();
+    formatedServerSettings.bitcoin.binaryPath=ui->bitcoin_binarypath->text();
+    formatedServerSettings.bitcoin.enabled=ui->bitcoin_enabled->isChecked();
+    formatedServerSettings.bitcoin.fee=ui->bitcoin_fee->value();
+    formatedServerSettings.bitcoin.history=ui->bitcoin_history->value();
+    formatedServerSettings.bitcoin.port=ui->bitcoin_port->value();
+    formatedServerSettings.bitcoin.workingPath=ui->bitcoin_workingpath->text();
 
     server.setSettings(formatedServerSettings);
 }
@@ -898,4 +963,81 @@ void CatchChallenger::MainWindow::update_capture()
             ui->timeEdit_city_capture_time->setVisible(false);
         break;
     }
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_enabled_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    settings->beginGroup("bitcoin");
+    settings->setValue("enabled",ui->bitcoin_enabled->isChecked());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_address_editingFinished()
+{
+    if(ui->bitcoin_address->text().contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
+        ui->bitcoin_address->setStyleSheet("");
+    else
+        ui->bitcoin_address->setStyleSheet("background-color: rgb(255, 230, 230);");
+    settings->beginGroup("bitcoin");
+    settings->setValue("address",ui->bitcoin_address->text());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_fee_editingFinished()
+{
+    settings->beginGroup("bitcoin");
+    settings->setValue("fee",ui->bitcoin_fee->value());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_history_editingFinished()
+{
+    settings->beginGroup("bitcoin");
+    settings->setValue("history",ui->bitcoin_history->value());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_workingpath_editingFinished()
+{
+    settings->beginGroup("bitcoin");
+    settings->setValue("workingPath",ui->bitcoin_workingpath->text());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_binarypath_editingFinished()
+{
+    settings->beginGroup("bitcoin");
+    settings->setValue("binaryPath",ui->bitcoin_binarypath->text());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_port_editingFinished()
+{
+    settings->beginGroup("bitcoin");
+    settings->setValue("port",ui->bitcoin_port->value());
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_workingpath_browse_clicked()
+{
+    QString folder=QFileDialog::getExistingDirectory(this,tr("Working path"));
+    if(folder.isEmpty())
+        return;
+    ui->bitcoin_workingpath->setText(folder);
+    on_bitcoin_workingpath_editingFinished();
+}
+
+void CatchChallenger::MainWindow::on_bitcoin_binarypath_browse_clicked()
+{
+    QString file=
+        #ifdef Q_OS_WIN32
+            QFileDialog::getOpenFileName(this,tr("Bitcoind binary path"),QString(),tr("Application (*.exe)"));
+        #else
+            QFileDialog::getOpenFileName(this,tr("Bitcoind binary path"));
+        #endif
+    if(file.isEmpty())
+        return;
+    ui->bitcoin_binarypath->setText(file);
+    on_bitcoin_binarypath_editingFinished();
 }

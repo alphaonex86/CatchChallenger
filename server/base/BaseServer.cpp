@@ -38,15 +38,16 @@ BaseServer::BaseServer()
     GlobalServerData::serverPrivateVariables.db                   = NULL;
     GlobalServerData::serverPrivateVariables.timer_player_map     = NULL;
     GlobalServerData::serverPrivateVariables.timer_city_capture   = NULL;
+    GlobalServerData::serverPrivateVariables.bitcoin.enabled      = false;
 
-    GlobalServerData::serverPrivateVariables.botSpawnIndex=0;
+    GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
     GlobalServerData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
 
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
-    GlobalServerData::serverSettings.max_players=1;
-    GlobalServerData::serverSettings.tolerantMode=false;
+    GlobalServerData::serverSettings.max_players                            = 1;
+    GlobalServerData::serverSettings.tolerantMode                           = false;
     GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber = false;
 
     GlobalServerData::serverSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
@@ -54,32 +55,44 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
 
     //to do a bug
-    GlobalServerData::serverSettings.rates_gold_premium=1;
-    GlobalServerData::serverSettings.rates_shiny_premium=1;
-    GlobalServerData::serverSettings.rates_xp_premium=1;
-    GlobalServerData::serverSettings.server_ip="";
-    GlobalServerData::serverSettings.server_port=42489;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_aliance=true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_clan=true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_local=true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_all=true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_private=true;
-    GlobalServerData::serverSettings.commmonServerSettings.pvp=true;
-    GlobalServerData::serverSettings.commmonServerSettings.rates_gold=1;
-    GlobalServerData::serverSettings.commmonServerSettings.rates_shiny=1;
-    GlobalServerData::serverSettings.commmonServerSettings.rates_xp=1;
-    GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber=true;
-    GlobalServerData::serverSettings.database.type=ServerSettings::Database::DatabaseType_Mysql;
-    GlobalServerData::serverSettings.database.fightSync=ServerSettings::Database::FightSync_AtTheEndOfBattle;
-    GlobalServerData::serverSettings.database.positionTeleportSync=true;
-    GlobalServerData::serverSettings.database.secondToPositionSync=0;
-    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= MapVisibilityAlgorithm_simple;
-    GlobalServerData::serverSettings.mapVisibility.simple.max		= 30;
-    GlobalServerData::serverSettings.mapVisibility.simple.reshow		= 20;
-    GlobalServerData::serverSettings.city.capture.frenquency=City::Capture::Frequency_week;
-    GlobalServerData::serverSettings.city.capture.day=City::Capture::Monday;
-    GlobalServerData::serverSettings.city.capture.hour=0;
-    GlobalServerData::serverSettings.city.capture.minute=0;
+    GlobalServerData::serverSettings.rates_gold_premium                         = 1;
+    GlobalServerData::serverSettings.rates_shiny_premium                        = 1;
+    GlobalServerData::serverSettings.rates_xp_premium                           = 1;
+    GlobalServerData::serverSettings.server_ip                                  = "";
+    GlobalServerData::serverSettings.server_port                                = 42489;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_aliance   = true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_clan      = true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_local     = true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_all       = true;
+    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_private   = true;
+    GlobalServerData::serverSettings.commmonServerSettings.pvp                  = true;
+    GlobalServerData::serverSettings.commmonServerSettings.rates_gold           = 1;
+    GlobalServerData::serverSettings.commmonServerSettings.rates_shiny          = 1;
+    GlobalServerData::serverSettings.commmonServerSettings.rates_xp             = 1;
+    GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber     = true;
+    GlobalServerData::serverSettings.database.type                              = ServerSettings::Database::DatabaseType_Mysql;
+    GlobalServerData::serverSettings.database.fightSync                         = ServerSettings::Database::FightSync_AtTheEndOfBattle;
+    GlobalServerData::serverSettings.database.positionTeleportSync              = true;
+    GlobalServerData::serverSettings.database.secondToPositionSync              = 0;
+    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithm_simple;
+    GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
+    GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
+    GlobalServerData::serverSettings.city.capture.frenquency                    = City::Capture::Frequency_week;
+    GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
+    GlobalServerData::serverSettings.city.capture.hour                          = 0;
+    GlobalServerData::serverSettings.city.capture.minute                        = 0;
+    GlobalServerData::serverSettings.bitcoin.address                            = "1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ";
+    #ifdef Q_OS_WIN32
+    GlobalServerData::serverSettings.bitcoin.binaryPath                         = "%application_path%/bitcoin/bitcoind.exe";
+    GlobalServerData::serverSettings.bitcoin.workingPath                        = "%application_path%/bitcoin-storage/";
+    #else
+    GlobalServerData::serverSettings.bitcoin.binaryPath                         = "/usr/bin/bitcoind";
+    GlobalServerData::serverSettings.bitcoin.workingPath                        = QDir::homePath()+"/.config/CatchChallenger/server/bitoin/";
+    #endif
+    GlobalServerData::serverSettings.bitcoin.enabled                            = false;
+    GlobalServerData::serverSettings.bitcoin.fee                                = 1.0;
+    GlobalServerData::serverSettings.bitcoin.history                            = 30;
+    GlobalServerData::serverSettings.bitcoin.port                               = 46349;
 
     stat=Down;
 
@@ -87,6 +100,10 @@ BaseServer::BaseServer()
     connect(this,&BaseServer::need_be_started,              this,&BaseServer::start_internal_server,Qt::QueuedConnection);
     connect(this,&BaseServer::try_stop_server,              this,&BaseServer::stop_internal_server, Qt::QueuedConnection);
     connect(this,&BaseServer::try_initAll,                  this,&BaseServer::initAll,              Qt::QueuedConnection);
+    connect(&GlobalServerData::serverPrivateVariables.bitcoin.process,&QProcess::stateChanged,                                                  this,&BaseServer::bitcoinProcessStateChanged,Qt::QueuedConnection);
+    connect(&GlobalServerData::serverPrivateVariables.bitcoin.process,static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error), this,&BaseServer::bitcoinProcessError,Qt::QueuedConnection);
+    connect(&GlobalServerData::serverPrivateVariables.bitcoin.process,&QProcess::readyReadStandardOutput,                                       this,&BaseServer::bitcoinProcessReadyReadStandardOutput,Qt::QueuedConnection);
+    connect(&GlobalServerData::serverPrivateVariables.bitcoin.process,&QProcess::readyReadStandardError,                                        this,&BaseServer::bitcoinProcessReadyReadStandardError,Qt::QueuedConnection);
     emit try_initAll();
 
     srand(time(NULL));
@@ -1357,6 +1374,67 @@ void BaseServer::loadAndFixSettings()
         qDebug() << "GlobalServerData::serverSettings.city.capture.minutes out of range";
         GlobalServerData::serverSettings.city.capture.minute=0;
     }
+    if(GlobalServerData::serverSettings.bitcoin.enabled)
+    {
+        if(GlobalServerData::serverSettings.bitcoin.fee<0 || GlobalServerData::serverSettings.bitcoin.fee>100)
+            GlobalServerData::serverSettings.bitcoin.enabled=false;
+        if(!GlobalServerData::serverSettings.bitcoin.address.contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
+            GlobalServerData::serverSettings.bitcoin.enabled=false;
+        if(GlobalServerData::serverSettings.bitcoin.binaryPath.isEmpty())
+            GlobalServerData::serverSettings.bitcoin.enabled=false;
+        if(GlobalServerData::serverSettings.bitcoin.port==0 || GlobalServerData::serverSettings.bitcoin.port>65534)
+            GlobalServerData::serverSettings.bitcoin.enabled=false;
+        if(GlobalServerData::serverSettings.bitcoin.workingPath.isEmpty())
+            GlobalServerData::serverSettings.bitcoin.enabled=false;
+    }
+    if(GlobalServerData::serverSettings.bitcoin.enabled)
+    {
+        GlobalServerData::serverSettings.bitcoin.binaryPath=GlobalServerData::serverSettings.bitcoin.binaryPath.replace("%application_path%",QCoreApplication::applicationDirPath());
+        GlobalServerData::serverSettings.bitcoin.workingPath=GlobalServerData::serverSettings.bitcoin.workingPath.replace("%application_path%",QCoreApplication::applicationDirPath());
+        if(!QFileInfo(GlobalServerData::serverSettings.bitcoin.binaryPath).isFile())
+            GlobalServerData::serverSettings.bitcoin.enabled=false;
+    }
+}
+
+void BaseServer::start_internal_server()
+{
+    if(GlobalServerData::serverSettings.bitcoin.enabled)
+        if(!QFileInfo(GlobalServerData::serverSettings.bitcoin.workingPath).isDir())
+            if(!QDir().mkpath(GlobalServerData::serverSettings.bitcoin.workingPath))
+                GlobalServerData::serverSettings.bitcoin.enabled=false;
+    if(GlobalServerData::serverSettings.bitcoin.enabled)
+    {
+        GlobalServerData::serverPrivateVariables.bitcoin.process.start(GlobalServerData::serverSettings.bitcoin.binaryPath,QStringList()
+                                                                       << QString("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
+                                                                       << QString("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                       << QString("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                       << QString("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
+                                                                       );
+        GlobalServerData::serverPrivateVariables.bitcoin.process.waitForStarted();
+        GlobalServerData::serverPrivateVariables.bitcoin.enabled=GlobalServerData::serverPrivateVariables.bitcoin.process.state()==QProcess::Running;
+    }
+}
+
+void BaseServer::bitcoinProcessReadyReadStandardError()
+{
+    DebugClass::debugConsole("Bitcoin process output: "+QString::fromLocal8Bit(GlobalServerData::serverPrivateVariables.bitcoin.process.readAllStandardOutput()));
+}
+
+void BaseServer::bitcoinProcessReadyReadStandardOutput()
+{
+    DebugClass::debugConsole("Bitcoin process error output: "+QString::fromLocal8Bit(GlobalServerData::serverPrivateVariables.bitcoin.process.readAllStandardError()));
+}
+
+void BaseServer::bitcoinProcessError(QProcess::ProcessError error)
+{
+    DebugClass::debugConsole("Bitcoin process error: "+QString::number((int)error));
+}
+
+void BaseServer::bitcoinProcessStateChanged(QProcess::ProcessState newState)
+{
+    DebugClass::debugConsole("Bitcoin process have new state: "+QString::number((int)newState));
+    if(newState!=QProcess::Starting && newState!=QProcess::Running)
+        GlobalServerData::serverPrivateVariables.bitcoin.enabled=false;
 }
 
 //call by normal stop
