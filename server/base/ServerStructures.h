@@ -16,6 +16,7 @@
 #include <QMultiHash>
 #include <QRegularExpression>
 #include <QDateTime>
+#include <QProcess>
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
@@ -130,6 +131,18 @@ struct ServerSettings
     };
     Database database;
 
+    struct Bitcoin
+    {
+        bool enabled;
+        QString address;
+        double fee;
+        quint16 history;
+        QString workingPath;
+        QString binaryPath;
+        quint16 port;
+    };
+    Bitcoin bitcoin;
+
     //connection
     quint16 max_players;
     bool tolerantMode;
@@ -220,6 +233,14 @@ struct ServerPrivateVariables
     quint32 number_of_bots_logged;
     int botSpawnIndex;
     QHash<quint32,IndustryStatus> industriesStatus;
+
+    //bitcoin
+    struct Bitcoin
+    {
+        bool enabled;
+        QProcess process;
+    };
+    Bitcoin bitcoin;
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp

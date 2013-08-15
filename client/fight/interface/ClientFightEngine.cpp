@@ -451,5 +451,7 @@ void ClientFightEngine::captureIsDone()
 
 bool ClientFightEngine::doTheOtherMonsterTurn()
 {
+    if(!isInBattle())
+        return CommonFightEngine::doTheOtherMonsterTurn();
     return true;
 }
