@@ -114,6 +114,15 @@ signals:
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text) const;
     void clanInvite(const bool &accept) const;
     void waitingForCityCaputre(const bool &cancel) const;
+    //market
+    void getMarketList(const quint32 &query_id) const;
+    void buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity) const;
+    void buyMarketMonster(const quint32 &query_id,const quint32 &monsterId) const;
+    void putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin) const;
+    void putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price,const double &bitcoin) const;
+    void recoverMarketCash(const quint32 &query_id) const;
+    void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity) const;
+    void withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId) const;
 private:
     // for status
     bool have_send_protocol;

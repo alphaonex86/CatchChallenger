@@ -41,5 +41,6 @@
         <file>images/interface/monsterdetails.png</file>
         <file>images/interface/female.png</file>
         <file>images/interface/male.png</file>
+        <file>images/inventory/market.png</file>
     </qresource>
 </RCC>

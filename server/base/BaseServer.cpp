@@ -91,7 +91,6 @@ BaseServer::BaseServer()
     #endif
     GlobalServerData::serverSettings.bitcoin.enabled                            = false;
     GlobalServerData::serverSettings.bitcoin.fee                                = 1.0;
-    GlobalServerData::serverSettings.bitcoin.history                            = 30;
     GlobalServerData::serverSettings.bitcoin.port                               = 46349;
 
     stat=Down;
@@ -159,6 +158,7 @@ void BaseServer::preload_the_data()
     preload_the_city_capture();
     preload_zone();
     preload_industries();
+    preload_market_monsters();
 }
 
 void BaseServer::preload_zone()
@@ -434,6 +434,328 @@ void BaseServer::preload_industries()
         }
     }
     qDebug() << QString("%1 industrie(s) status loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size());
+}
+
+void BaseServer::preload_market_monsters()
+{    QString queryText;
+     switch(GlobalServerData::serverSettings.database.type)
+     {
+         default:
+         case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,player,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
+         break;
+         case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,player,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
+         break;
+     }
+     bool ok;
+     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
+     if(!monstersQuery.exec(queryText))
+         DebugClass::debugConsole(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
+     while(monstersQuery.next())
+     {
+         MarketPlayerMonster marketPlayerMonster;
+         PlayerMonster playerMonster;
+         playerMonster.id=monstersQuery.value(0).toUInt(&ok);
+         if(!ok)
+             DebugClass::debugConsole(QString("monsterId: %1 is not a number").arg(monstersQuery.value(0).toString()));
+         if(ok)
+         {
+             playerMonster.monster=monstersQuery.value(2).toUInt(&ok);
+             if(ok)
+             {
+                 if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
+                 {
+                     ok=false;
+                     DebugClass::debugConsole(QString("monster: %1 is not into monster list").arg(playerMonster.monster));
+                 }
+             }
+             else
+                 DebugClass::debugConsole(QString("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
+         }
+         if(ok)
+         {
+             playerMonster.level=monstersQuery.value(3).toUInt(&ok);
+             if(ok)
+             {
+                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                 {
+                     DebugClass::debugConsole(QString("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+                     playerMonster.level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+                 }
+             }
+             else
+                 DebugClass::debugConsole(QString("level: %1 is not a number").arg(monstersQuery.value(3).toString()));
+         }
+         if(ok)
+         {
+             playerMonster.remaining_xp=monstersQuery.value(4).toUInt(&ok);
+             if(ok)
+             {
+                 if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1))
+                 {
+                     DebugClass::debugConsole(QString("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
+                     playerMonster.remaining_xp=0;
+                 }
+             }
+             else
+                 DebugClass::debugConsole(QString("monster xp: %1 is not a number").arg(monstersQuery.value(4).toString()));
+         }
+         if(ok)
+         {
+             playerMonster.sp=monstersQuery.value(5).toUInt(&ok);
+             if(!ok)
+                 DebugClass::debugConsole(QString("monster sp: %1 is not a number").arg(monstersQuery.value(5).toString()));
+         }
+         if(ok)
+         {
+             playerMonster.captured_with=monstersQuery.value(6).toUInt(&ok);
+             if(ok)
+             {
+                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.captured_with))
+                     DebugClass::debugConsole(QString("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
+             }
+             else
+                 DebugClass::debugConsole(QString("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));
+         }
+         if(ok)
+         {
+             if(monstersQuery.value(7).toString()=="male")
+                 playerMonster.gender=Gender_Male;
+             else if(monstersQuery.value(7).toString()=="female")
+                 playerMonster.gender=Gender_Female;
+             else if(monstersQuery.value(7).toString()=="unknown")
+                 playerMonster.gender=Gender_Unknown;
+             else
+             {
+                 playerMonster.gender=Gender_Unknown;
+                 DebugClass::debugConsole(QString("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
+                 ok=false;
+             }
+         }
+         if(ok)
+         {
+             playerMonster.egg_step=monstersQuery.value(8).toUInt(&ok);
+             if(!ok)
+                 DebugClass::debugConsole(QString("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
+         }
+         if(ok)
+             marketPlayerMonster.player=monstersQuery.value(9).toUInt(&ok);
+         if(ok)
+             marketPlayerMonster.cash=monstersQuery.value(10).toULongLong(&ok);
+         if(ok)
+             marketPlayerMonster.bitcoin=monstersQuery.value(11).toDouble(&ok);
+         //stats
+         if(ok)
+         {
+             playerMonster.hp=monstersQuery.value(1).toUInt(&ok);
+             if(ok)
+             {
+                 const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters[playerMonster.monster],playerMonster.level);
+                 if(playerMonster.hp>stat.hp)
+                 {
+                     DebugClass::debugConsole(QString("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
+                                  .arg(playerMonster.hp)
+                                  .arg(stat.hp)
+                                  .arg(playerMonster.level)
+                                  .arg(playerMonster.monster)
+                                  );
+                     playerMonster.hp=stat.hp;
+                 }
+             }
+             else
+                 DebugClass::debugConsole(QString("monster hp: %1 is not a number").arg(monstersQuery.value(1).toString()));
+         }
+         //finish it
+         if(ok)
+         {
+             playerMonster.buffs=loadMonsterBuffs(playerMonster.id);
+             playerMonster.skills=loadMonsterSkills(playerMonster.id);
+             marketPlayerMonster.monster=playerMonster;
+             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
+         }
+     }
+}
+
+void BaseServer::preload_market_items()
+{
+    LocalClientHandler::marketObjectIdList.clear();
+    int index=0;
+    while(index<=65535)
+    {
+        LocalClientHandler::marketObjectIdList << index;
+        index++;
+    }
+    //do the query
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT item_id,quantity,player_id,market_price,market_bitcoin FROM item WHERE place='market'");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT item_id,quantity,player_id,market_price,market_bitcoin FROM item WHERE place='market'");
+        break;
+    }
+    bool ok;
+    QSqlQuery itemQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!itemQuery.exec(queryText))
+        DebugClass::debugConsole(itemQuery.lastQuery()+": "+itemQuery.lastError().text());
+    //parse the result
+    while(itemQuery.next())
+    {
+        MarketItem marketItem;
+        marketItem.item=itemQuery.value(0).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("item id is not a number, skip"));
+            continue;
+        }
+        marketItem.quantity=itemQuery.value(1).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("quantity is not a number, skip"));
+            continue;
+        }
+        marketItem.player=itemQuery.value(2).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("player id is not a number, skip"));
+            continue;
+        }
+        marketItem.cash=itemQuery.value(3).toULongLong(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("cash is not a number, skip"));
+            continue;
+        }
+        marketItem.bitcoin=itemQuery.value(4).toDouble(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("bitcoin is not a number, skip"));
+            continue;
+        }
+        if(LocalClientHandler::marketObjectIdList.isEmpty())
+        {
+            DebugClass::debugConsole(QString("not more marketObjectId into the list, skip"));
+            return;
+        }
+        marketItem.marketObjectId=LocalClientHandler::marketObjectIdList.first();
+        LocalClientHandler::marketObjectIdList.removeFirst();
+        GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
+    }
+}
+
+QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
+{
+    QList<PlayerBuff> buffs;
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
+        break;
+    }
+
+    bool ok;
+    QSqlQuery monsterBuffsQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!monsterBuffsQuery.exec(queryText))
+        DebugClass::debugConsole(monsterBuffsQuery.lastQuery()+": "+monsterBuffsQuery.lastError().text());
+    while(monsterBuffsQuery.next())
+    {
+        PlayerBuff buff;
+        buff.buff=monsterBuffsQuery.value(0).toUInt(&ok);
+        if(ok)
+        {
+            if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
+            {
+                ok=false;
+                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
+            }
+            else if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].duration!=Buff::Duration_Always)
+            {
+                ok=false;
+                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
+            }
+        }
+        else
+            DebugClass::debugConsole(QString("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
+        if(ok)
+        {
+            buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
+            if(ok)
+            {
+                if(buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
+                {
+                    ok=false;
+                    DebugClass::debugConsole(QString("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
+                }
+            }
+            else
+                DebugClass::debugConsole(QString("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
+        }
+        if(ok)
+            buffs << buff;
+    }
+    return buffs;
+}
+
+QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &monsterId)
+{
+    QList<PlayerMonster::PlayerSkill> skills;
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT skill,level FROM monster_skill WHERE monster=%1").arg(monsterId);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT skill,level FROM monster_skill WHERE monster=%1").arg(monsterId);
+        break;
+    }
+
+    bool ok;
+    QSqlQuery monsterSkillsQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!monsterSkillsQuery.exec(queryText))
+        DebugClass::debugConsole(monsterSkillsQuery.lastQuery()+": "+monsterSkillsQuery.lastError().text());
+    while(monsterSkillsQuery.next())
+    {
+        PlayerMonster::PlayerSkill skill;
+        skill.skill=monsterSkillsQuery.value(0).toUInt(&ok);
+        if(ok)
+        {
+            if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
+            {
+                ok=false;
+                DebugClass::debugConsole(QString("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
+            }
+        }
+        else
+            DebugClass::debugConsole(QString("skill id: %1 is not a number").arg(monsterSkillsQuery.value(0).toString()));
+        if(ok)
+        {
+            skill.level=monsterSkillsQuery.value(1).toUInt(&ok);
+            if(ok)
+            {
+                if(skill.level>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.size())
+                {
+                    ok=false;
+                    DebugClass::debugConsole(QString("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
+                }
+            }
+            else
+                DebugClass::debugConsole(QString("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
+        }
+        if(ok)
+            skills << skill;
+    }
+    return skills;
 }
 
 void BaseServer::preload_the_city_capture()
@@ -855,10 +1177,11 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     int bots_number=0;
     int learnpoint_number=0;
     int healpoint_number=0;
+    int marketpoint_number=0;
     int zonecapturepoint_number=0;
     int botfights_number=0;
     int botfightstigger_number=0;
-    //resolv the shops, learn, heal
+    //resolv the botfights, bots, shops, learn, heal, zonecapture, market
     int size=semi_loaded_map.size();
     int index=0;
     bool ok;
@@ -933,6 +1256,21 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->heal.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
                                 healpoint_number++;
+                            }
+                        }
+                        else if(step.attribute("type")=="market")
+                        {
+                            if(static_cast<MapServer *>(semi_loaded_map[index].map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
+                                CatchChallenger::DebugClass::debugConsole(QString("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
+                            else
+                            {
+                                #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                CatchChallenger::DebugClass::debugConsole(QString("market point put at: %1 (%2,%3)")
+                                    .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                #endif
+                                static_cast<MapServer *>(semi_loaded_map[index].map)->market.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
+                                marketpoint_number++;
                             }
                         }
                         else if(step.attribute("type")=="zonecapture")
@@ -1029,6 +1367,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     DebugClass::debugConsole(QString("%1 learn point(s) on map loaded").arg(learnpoint_number));
     DebugClass::debugConsole(QString("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
     DebugClass::debugConsole(QString("%1 heal point(s) on map loaded").arg(healpoint_number));
+    DebugClass::debugConsole(QString("%1 market point(s) on map loaded").arg(marketpoint_number));
     DebugClass::debugConsole(QString("%1 bot fight(s) on map loaded").arg(botfights_number));
     DebugClass::debugConsole(QString("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
     DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
@@ -1168,6 +1507,7 @@ void BaseServer::unload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
+    unload_market();
     unload_industries();
     unload_zone();
     unload_the_city_capture();
@@ -1197,6 +1537,12 @@ void BaseServer::unload_the_static_data()
 void BaseServer::unload_zone()
 {
     GlobalServerData::serverPrivateVariables.captureFightIdList.clear();
+}
+
+void BaseServer::unload_market()
+{
+    GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.clear();
+    GlobalServerData::serverPrivateVariables.marketItemList.clear();
 }
 
 void BaseServer::unload_industries()

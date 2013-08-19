@@ -61,7 +61,6 @@ HEADERS += \
     $$PWD/fight/LocalClientHandlerFight.h
 
 RESOURCES += \
-    $$PWD/all-server-resources.qrc \
-    $$PWD/resources-server.qrc \
+    $$PWD/all-server-resources.qrc
 
 win32:RC_FILE += $$PWD/resources-windows.rc

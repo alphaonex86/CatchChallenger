@@ -36,11 +36,26 @@ CREATE TABLE "bot_already_beaten" (
     "player_id" INTEGER,
     "botfight_id" INTEGER
 );
-CREATE TABLE item (
-    "item_id" INTEGER,
+CREATE TABLE clan (
+    "id" INTEGER,
+    "name" TEXT
+, "clan" INTEGER);
+CREATE TABLE "city" (
+    "city" TEXT,
+    "clan" INTEGER
+);
+CREATE TABLE factory (
+    "id" INTEGER,
+    "resources" TEXT,
+    "products" TEXT,
+    "last_update" INTEGER
+);
+CREATE TABLE bitcoin_history (
     "player_id" INTEGER,
-    "quantity" INTEGER
-, "warehouse" INTEGER);
+    "date" INTEGER,
+    "change" REAL,
+    "reason" TEXT
+);
 CREATE TABLE player (
     "id" INTEGER,
     "login" TEXT NOT NULL,
@@ -63,22 +78,10 @@ CREATE TABLE player (
     "unvalidated_rescue_y" INTEGER,
     "unvalidated_rescue_orientation" TEXT,
     "warehouse_cash" INTEGER,
-    "allow" TEXT
-, "clan_leader" INTEGER);
-CREATE TABLE clan (
-    "id" INTEGER,
-    "name" TEXT
-, "clan" INTEGER);
-CREATE TABLE "city" (
-    "city" TEXT,
-    "clan" INTEGER
-);
-CREATE TABLE factory (
-    "id" INTEGER,
-    "resources" TEXT,
-    "products" TEXT,
-    "last_update" INTEGER
-);
+    "allow" TEXT,
+    "clan_leader" INTEGER,
+    "bitcoin_offset" REAL
+, "market_cash" INTEGER, "market_bitcoin" REAL);
 CREATE TABLE monster (
     "id" INTEGER,
     "hp" INTEGER,
@@ -91,8 +94,15 @@ CREATE TABLE monster (
     "gender" TEXT,
     "egg_step" INTEGER,
     "player_origin" INTEGER,
-    "warehouse" INTEGER
-, "position" INTEGER);
+    "place" TEXT,
+    "position" INTEGER
+, "market_price" INTEGER, "market_bitcoin" REAL);
+CREATE TABLE item (
+    "item_id" INTEGER,
+    "player_id" INTEGER,
+    "quantity" INTEGER,
+    "place" TEXT
+, "market_price" INTEGER, "market_bitcoin" REAL);
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
 CREATE INDEX "player_recipe_list" on recipes (player ASC);
@@ -103,14 +113,16 @@ CREATE UNIQUE INDEX "player_unique_quest" on quest (player ASC, quest ASC);
 CREATE INDEX "player_quest" on quest (player ASC);
 CREATE UNIQUE INDEX "bot_already_beaten_index" on bot_already_beaten (player_id ASC, botfight_id ASC);
 CREATE INDEX "bot_already_beaten_by_player" on bot_already_beaten (player_id ASC);
-CREATE INDEX "player_item_index" on item (player_id ASC);
-CREATE UNIQUE INDEX "player_item_unique_index" on item (item_id ASC, player_id ASC, warehouse ASC);
+CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
+CREATE UNIQUE INDEX "cityindex" on city (city ASC);
 CREATE UNIQUE INDEX "id" on player (id ASC);
 CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
 CREATE UNIQUE INDEX "bypseudoandclan" on player (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on player (clan ASC);
-CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
-CREATE UNIQUE INDEX "cityindex" on city (city ASC);
 CREATE INDEX "monster_by_player" on monster (player ASC);
 CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
+CREATE INDEX "monster_place" on monster (place ASC);
+CREATE INDEX "player_item_index" on item (player_id ASC);
+CREATE INDEX "item_place" on item (place ASC);
+CREATE UNIQUE INDEX "itemplayerplace" on item (item_id ASC, player_id ASC, place ASC);
 COMMIT;

@@ -49,11 +49,11 @@ void ClientHeavyLoad::loadItems()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT item_id,quantity,warehouse FROM item WHERE player_id=%1")
+            queryText=QString("SELECT item_id,quantity,place FROM item WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT item_id,quantity,warehouse FROM item WHERE player_id=%1")
+            queryText=QString("SELECT item_id,quantity,place FROM item WHERE player_id=%1")
                 .arg(player_informations->id);
         break;
     }
@@ -81,7 +81,21 @@ void ClientHeavyLoad::loadItems()
             emit message(QString("item warehouse is not a number, skip"));
             continue;
         }
-        quint32 warehouse=itemQuery.value(2).toBool();
+        bool warehouse;
+        if(itemQuery.value(2).toString()=="warehouse")
+            warehouse=true;
+        else
+        {
+            if(itemQuery.value(2).toString()=="wear")
+                warehouse=false;
+            else if(itemQuery.value(2).toString()=="market")
+                continue;
+            else
+            {
+                emit message(QString("unknow wear type: %1 for item %2 and player %3").arg(itemQuery.value(9).toString()).arg(id).arg(player_informations->id));
+                continue;
+            }
+        }
         if(quantity==0)
         {
             QString queryText;
@@ -89,16 +103,16 @@ void ClientHeavyLoad::loadItems()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND warehouse=%3")
+                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND place='%3'")
                                          .arg(player_informations->id)
                                          .arg(id)
-                                         .arg(warehouse);
+                                         .arg(itemQuery.value(2).toString());
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND warehouse=%3")
-                                     .arg(player_informations->id)
-                                     .arg(id)
-                                     .arg(warehouse);
+                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND place='%3'")
+                                         .arg(player_informations->id)
+                                         .arg(id)
+                                         .arg(itemQuery.value(2).toString());
                 break;
             }
             emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));

@@ -50,8 +50,10 @@ public:
         ObjectType_All,
         ObjectType_Seed,
         ObjectType_Sell,
+        ObjectType_SellToMarket,
         ObjectType_Trade,
         ObjectType_MonsterToTrade,
+        ObjectType_MonsterToTradeToMarket,
         ObjectType_MonsterToLearn,
         ObjectType_MonsterToFight,
         ObjectType_MonsterToFightKO,
@@ -137,6 +139,8 @@ private slots:
     void updatePlayerImage();
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
+    void add_to_inventory(const quint32 &item,const quint32 &quantity,const bool &showGain=true);
+    void add_to_inventory(const QList<QPair<quint32,quint32> > &items,const bool &showGain=true);
     void add_to_inventory(const QHash<quint32,quint32> &items, const bool &showGain=true);
     void add_to_inventory_slot(const QHash<quint32,quint32> &items);
     void remove_to_inventory(const QHash<quint32,quint32> &items);
@@ -149,6 +153,8 @@ private slots:
     void show_reputation();
     void addCash(const quint32 &cash);
     void removeCash(const quint32 &cash);
+    void addBitcoin(const double &bitcoin);
+    void removeBitcoin(const double &bitcoin);
     QPixmap getFrontSkin(const QString &skinName) const;
     QPixmap getFrontSkin(const quint32 &skinId) const;
     QPixmap getBackSkin(const quint32 &skinId) const;
@@ -278,6 +284,17 @@ private slots:
     void captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count);
     void captureCityWin();
 
+    //market
+    void marketList(const quint64 &price,const double &bitcoin,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList);
+    void addOwnMonster(const MarketMonster &marketMonster);
+    void marketBuy(const bool &success);
+    void marketBuyMonster(const PlayerMonster &playerMonster);
+    void marketPut(const bool &success);
+    void marketGetCash(const quint64 &cash,const double &bitcoin);
+    void marketWithdrawCanceled();
+    void marketWithdrawObject(const quint32 &objectId,const quint32 &quantity);
+    void marketWithdrawMonster(const PlayerMonster &playerMonster);
+
     //autoconnect
     void number_of_player(quint16 number,quint16 max);
     void on_toolButton_interface_quit_clicked();
@@ -346,6 +363,15 @@ private slots:
     void on_monsterListMoveUp_clicked();
     void on_monsterListMoveDown_clicked();
     void on_monsterList_itemSelectionChanged();
+    void on_marketQuit_clicked();
+    void on_marketWithdraw_clicked();
+    void updateMarketObject(QListWidgetItem *item,const MarketObject &marketObject);
+    void on_marketObject_itemActivated(QListWidgetItem *item);
+    void on_marketOwnObject_itemActivated(QListWidgetItem *item);
+    void on_marketMonster_itemActivated(QListWidgetItem *item);
+    void on_marketOwnMonster_itemActivated(QListWidgetItem *item);
+    void on_marketPutObject_clicked();
+    void on_marketPutMonster_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -360,6 +386,7 @@ private:
     quint32 shopId;
     QHash<quint32,ItemToSellOrBuy> itemsIntoTheShop;
     quint64 tempCashForBuy,cash,warehouse_cash;
+    double bitcoin;
     qint64 temp_warehouse_cash;// if >0 then Withdraw
     quint32 tempQuantityForBuy,tempItemForBuy;
     //selection of quantity
@@ -390,6 +417,23 @@ private:
     QStringList server_list;
     QAbstractSocket::SocketState socketState;
     bool haveDatapack,havePlayerInformations,haveInventory,datapackIsParsed;
+
+    //market buy
+    QList<QPair<quint32,quint32> > marketBuyObjectList;
+    quint32 marketBuyCashInSuspend;
+    double marketBuyBitcoinInSuspend;
+    bool marketBuyInSuspend;
+    //market put
+    quint32 marketPutCashInSuspend;
+    double marketPutBitcoinInSuspend;
+    QList<QPair<quint32,quint32> > marketPutObjectInSuspendList;
+    QList<CatchChallenger::PlayerMonster> marketPutMonsterList;
+    QList<quint8> marketPutMonsterPlaceList;
+    bool marketPutInSuspend;
+    //market withdraw
+    bool marketWithdrawInSuspend;
+    QList<MarketObject> marketWithdrawObjectList;
+    QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
     QHash<quint32,quint32> warehouse_items;

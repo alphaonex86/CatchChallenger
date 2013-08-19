@@ -10,8 +10,12 @@ macx {
 
 CONFIG += depend_includepath
 
+LIBS += -lz
+
 TEMPLATE = lib
 TARGET = tiled
+#contains(QT_CONFIG, debug): TARGET = tiledd
+#CONFIG(debug): TARGET = tiledd
 target.path = $${LIBDIR}
 INSTALLS += target
 macx {
