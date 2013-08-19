@@ -306,7 +306,7 @@ void MainWindow::on_SaveGame_New_clicked()
         size=sqlQuery.size();
     } while(size>0);
     {
-        QString textQuery=QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9,%9);")
+        QString textQuery=QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\",\"market_cash\",\"market_bitcoin\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9,%9,0,0);")
                 .arg(player_id)
                 .arg(QString(passHash.toHex()))
                 .arg(nameGame.pseudo())
@@ -387,7 +387,7 @@ void MainWindow::on_SaveGame_New_clicked()
         {
             QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(
-                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"warehouse\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,0);")
+                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"place\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\");")
                    .arg(monster_id)
                    .arg(stat.hp)
                    .arg(player_id)
@@ -450,7 +450,7 @@ void MainWindow::on_SaveGame_New_clicked()
     {
         QSqlQuery sqlQuery(*db);
         if(!sqlQuery.exec(
-               QString("INSERT INTO \"item\"(\"item_id\",\"player_id\",\"quantity\",\"warehouse\") VALUES(%1,%2,%3,0);")
+               QString("INSERT INTO \"item\"(\"item_id\",\"player_id\",\"quantity\",\"place\") VALUES(%1,%2,%3,\"wear\");")
                .arg(profile.items.at(index).id)
                .arg(player_id)
                .arg(profile.items.at(index).quantity)
@@ -976,6 +976,7 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
+    formatedServerSettings.bitcoin.enabled=false;
 
     internalServer->setSettings(formatedServerSettings);
 }

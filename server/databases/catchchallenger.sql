@@ -8,6 +8,19 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `bitcoin_history`
+--
+
+CREATE TABLE IF NOT EXISTS `bitcoin_history` (
+  `player_id` int(11) NOT NULL,
+  `date` int(11) NOT NULL,
+  `change` double NOT NULL,
+  `reason` text NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `bot_already_beaten`
 --
 
@@ -67,9 +80,12 @@ CREATE TABLE IF NOT EXISTS `item` (
   `item_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
-  `warehouse` tinyint(1) NOT NULL COMMENT 'true if into warehouse',
-  PRIMARY KEY (`item_id`,`player_id`,`warehouse`),
-  KEY `player_id` (`player_id`)
+  `place` enum('wear','warehouse','market') NOT NULL,
+  `market_price` bigint(20) NOT NULL,
+  `market_bitcoin` double NOT NULL,
+  PRIMARY KEY (`item_id`,`player_id`,`place`),
+  KEY `player_id` (`player_id`),
+  KEY `place` (`place`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -90,11 +106,14 @@ CREATE TABLE IF NOT EXISTS `monster` (
   `gender` enum('unknown','male','female') NOT NULL,
   `egg_step` int(11) NOT NULL,
   `player_origin` int(11) NOT NULL,
-  `warehouse` tinyint(1) NOT NULL COMMENT 'true if into warehouse',
+  `place` enum('wear','warehouse','market') NOT NULL,
   `position` int(11) NOT NULL,
+  `market_price` bigint(20) NOT NULL,
+  `market_bitcoin` double NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `player` (`player`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
+  KEY `player` (`player`),
+  KEY `place` (`place`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=5 ;
 
 -- --------------------------------------------------------
 
@@ -171,6 +190,9 @@ CREATE TABLE IF NOT EXISTS `player` (
   `warehouse_cash` bigint(20) NOT NULL,
   `allow` text NOT NULL,
   `clan_leader` tinyint(1) NOT NULL,
+  `bitcoin_offset` double NOT NULL,
+  `market_cash` bigint(20) NOT NULL,
+  `market_bitcoin` double NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`),
   UNIQUE KEY `pseudo` (`pseudo`,`clan`),

@@ -93,6 +93,8 @@ protected:
     virtual void preload_the_data();
     virtual void preload_zone();
     virtual void preload_industries();
+    virtual void preload_market_monsters();
+    virtual void preload_market_items();
     virtual void preload_the_city_capture();
     virtual void preload_the_map();
     virtual void preload_the_skin();
@@ -102,6 +104,7 @@ protected:
     virtual void preload_the_bots(const QList<Map_semi> &semi_loaded_map);
     virtual void unload_industries();
     virtual void unload_zone();
+    virtual void unload_market();
     virtual void unload_the_city_capture();
     virtual void unload_the_bots();
     virtual void unload_the_data();
@@ -111,6 +114,9 @@ protected:
     virtual void unload_the_datapack();
     virtual void unload_the_players();
     virtual void unload_the_visibility_algorithm();
+
+    virtual QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
+    virtual QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
 
     virtual bool initialize_the_database();
     virtual void loadBotFile(const QString &fileName);

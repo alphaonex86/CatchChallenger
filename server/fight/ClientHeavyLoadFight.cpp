@@ -15,10 +15,10 @@ void ClientHeavyLoad::loadMonsters()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,warehouse FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
         break;
     }
 
@@ -115,29 +115,18 @@ void ClientHeavyLoad::loadMonsters()
         }
         if(ok)
         {
-            if(monstersQuery.value(9).toString()=="1")
+            if(monstersQuery.value(9).toString()=="warehouse")
                 warehouse=true;
             else
             {
-                if(monstersQuery.value(9).toString()=="0")
+                if(monstersQuery.value(9).toString()=="wear")
                     warehouse=false;
+                else if(monstersQuery.value(9).toString()=="market")
+                    continue;
                 else
                 {
-                    warehouse=true;
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
-                                         .arg(playerMonster.id)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
-                                         .arg(playerMonster.id)
-                                         );
-                        break;
-                    }
+                    emit message(QString("unknow wear type: %1 for monster %2").arg(monstersQuery.value(9).toString()).arg(playerMonster.id));
+                    continue;
                 }
             }
         }
