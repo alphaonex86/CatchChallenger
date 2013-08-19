@@ -258,9 +258,9 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
     {
         if(player_informations->public_and_private_informations.playerMonster.at(index).id==monsterId)
         {
-            if(localClientHandlerFight.isInFight())
+            if(!localClientHandlerFight.remainMonstersToFight(monsterId))
             {
-                emit error("You can't trade monster because you are in fight");
+                emit error("You can't trade this msonter because you will be without monster to fight");
                 return;
             }
             tradeMonster << player_informations->public_and_private_informations.playerMonster.at(index);
@@ -299,6 +299,27 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
                 sub_index++;
             }
             emit otherPlayerTrade->sendFullPacket(0xD0,0x0004,outputData);
+            while(index<player_informations->public_and_private_informations.playerMonster.size())
+            {
+                const PlayerMonster &playerMonster=player_informations->public_and_private_informations.playerMonster.at(index);
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                                     .arg(index+1)
+                                     .arg(playerMonster.id)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                                     .arg(index+1)
+                                     .arg(playerMonster.id)
+                                     );
+                    break;
+                }
+                index++;
+            }
             return;
         }
         index++;

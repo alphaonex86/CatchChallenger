@@ -14,8 +14,6 @@ LIBS += -lz
 
 TEMPLATE = lib
 TARGET = tiled
-#contains(QT_CONFIG, debug): TARGET = tiledd
-#CONFIG(debug): TARGET = tiledd
 target.path = $${LIBDIR}
 INSTALLS += target
 macx {
@@ -23,9 +21,8 @@ macx {
     QMAKE_LFLAGS_SONAME = -Wl,-install_name,@executable_path/../Frameworks/
 }
 
-!win32 {
-    # On other platforms it is necessary to link to zlib explicitly
-    LIBS += -lz
+build_pass:CONFIG(debug, debug|release) {
+	win32:TARGET = tiledd
 }
 
 DEFINES += QT_NO_CAST_FROM_ASCII \
