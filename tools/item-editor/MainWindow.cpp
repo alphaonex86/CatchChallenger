@@ -9,8 +9,7 @@
 #include <QDomElement>
 #include <QDebug>
 #include <QInputDialog>
-
-#include "StepType.h"
+#include <QRegularExpression>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,32 +23,12 @@ MainWindow::MainWindow(QWidget *parent) :
     else
         ui->openItemFile->setFocus();
     ui->stackedWidget->setCurrentWidget(ui->page_welcome);
-    updateType();
-    connect(ui->stepEditLanguageList,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTextDisplayed()),Qt::QueuedConnection);
+    loadingTheInformations=false;
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::updateType()
-{
-    allowedType["text"]=tr("Text");
-    allowedType["shop"]=tr("Shop");
-    allowedType["sell"]=tr("Sell");
-    allowedType["quests"]=tr("Quests");
-    allowedType["warehouse"]=tr("Warehouse");
-    allowedType["learn"]=tr("Learn");
-    allowedType["heal"]=tr("Heal");
-    allowedType["fight"]=tr("Fight");
-
-    reverseAllowedType.clear();
-    QHash<QString,QString>::const_iterator i = allowedType.constBegin();
-    while (i != allowedType.constEnd()) {
-        reverseAllowedType[i.value()]=i.key();
-        ++i;
-    }
 }
 
 void MainWindow::on_browseItemFile_clicked()
@@ -99,9 +78,9 @@ void MainWindow::on_openItemFile_clicked()
     QDomElement child = root.firstChildElement("item");
     while(!child.isNull())
     {
-        if(!child.hasAttribute("id"))
+        if(!child.hasAttribute("id") || !child.hasAttribute("price"))
         {
-            qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QString("Has not attribute \"id\" or \"price\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
             error=true;
         }
         else if(!child.isElement())
@@ -111,39 +90,9 @@ void MainWindow::on_openItemFile_clicked()
         }
         else
         {
-            quint8 id=child.attribute("id").toUShort(&ok);
+            quint32 id=child.attribute("id").toUInt(&ok);
             if(ok)
-            {
-                QDomElement step = child.firstChildElement("step");
-                while(!step.isNull())
-                {
-                    if(!step.hasAttribute("id"))
-                    {
-                        qDebug() << QString("Has not attribute \"type\": Item.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber());
-                        error=true;
-                    }
-                    else if(!step.hasAttribute("type"))
-                    {
-                        qDebug() << QString("Has not attribute \"type\": Item.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber());
-                        error=true;
-                    }
-                    else if(!step.isElement())
-                    {
-                        qDebug() << QString("Is not an element: Item.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber()));
-                        error=true;
-                    }
-                    else
-                    {
-                        quint8 stepId=step.attribute("id").toUShort(&ok);
-                        if(ok)
-                        {
-                            ItemFiles[id].step[stepId]=step;
-                            ItemFiles[id].ItemId=id;
-                        }
-                    }
-                    step = step.nextSiblingElement("step");
-                }
-            }
+                items[id]=child;
             else
             {
                 qDebug() << QString("Attribute \"id\" is not a number: Item.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
@@ -154,64 +103,110 @@ void MainWindow::on_openItemFile_clicked()
     }
     if(error)
         QMessageBox::warning(this,tr("Error"),tr("Some error have been found into the file").arg(xmlFile.fileName()));
+    ui->stackedWidget->setCurrentWidget(ui->page_list);
     updateItemList();
-    ui->stackedWidget->setCurrentWidget(ui->page_Item_list);
 }
 
 void MainWindow::updateItemList()
 {
-    ui->ItemList->clear();
-    QHash<quint8,Item>::const_iterator i = ItemFiles.constBegin();
-    while (i != ItemFiles.constEnd()) {
-        QListWidgetItem *item=new QListWidgetItem();
-        if(i.value().step.contains(1))
-            item->setText(tr("Item %1").arg(i.key()));
-        else
-            item->setText(tr("Item %1 (have not step 1)").arg(i.key()));
+    ui->itemList->clear();
+    QHash<quint32,QDomElement>::const_iterator i = items.constBegin();
+    while (i != items.constEnd()) {
+        QListWidgetItem *item=new QListWidgetItem(ui->itemList);
+        item->setText(tr("Item %1").arg(i.key()));
         item->setData(99,i.key());
-        ui->ItemList->addItem(item);
+        ui->itemList->addItem(item);
         ++i;
     }
 }
 
-void MainWindow::on_ItemListAdd_clicked()
+void MainWindow::on_itemList_itemDoubleClicked(QListWidgetItem *item)
 {
-    int index=1;
-    while(ItemFiles.contains(index))
-        index++;
+    loadingTheInformations=true;
+    quint32 selectedItem=item->data(99).toUInt();
+    if(!items[selectedItem].hasAttribute("price"))
+        items[selectedItem].setAttribute("price",0);
     bool ok;
-    int id=QInputDialog::getInt(this,tr("Id of the Item"),tr("Give the id for the new Item"),index,index,2147483647,1,&ok);
-    if(ItemFiles.contains(id))
+    ui->price->setValue(items[selectedItem].attribute("price").toUInt(&ok));
+    if(!ok)
+        ui->price->setValue(0);
+    if(items[selectedItem].hasAttribute("image"))
     {
-        QMessageBox::warning(this,tr("Error"),tr("Sorry but this id is already taken"));
-        return;
+        QPixmap imageLoaded(QFileInfo(ui->lineEditItemFile->text()).absolutePath()+"/"+items[selectedItem].attribute("image"));
+        imageLoaded.scaled(96,96);
+        ui->image->setPixmap(imageLoaded);
     }
-    Item tempItem;
-    tempItem.ItemId=id;
-    ItemFiles[id]=tempItem;
+    else
+        ui->image->setPixmap(QPixmap());
+    //load name
+    {
+        ui->nameEditLanguageList->clear();
+        QDomElement name = items[selectedItem].firstChildElement("name");
+        while(!name.isNull())
+        {
+            if(!name.hasAttribute("lang"))
+                ui->nameEditLanguageList->addItem("en");
+            else
+                ui->nameEditLanguageList->addItem(name.attribute("lang"));
+            name = name.nextSiblingElement("name");
+        }
+    }
+    //load description
+    {
+        ui->descriptionEditLanguageList->clear();
+        QDomElement description = items[selectedItem].firstChildElement("description");
+        while(!description.isNull())
+        {
+            if(!description.hasAttribute("lang"))
+                ui->descriptionEditLanguageList->addItem("en");
+            else
+                ui->descriptionEditLanguageList->addItem(description.attribute("lang"));
+            description = description.nextSiblingElement("description");
+        }
+    }
+    ui->stackedWidget->setCurrentWidget(ui->page_edit);
+    ui->tabWidget->setCurrentWidget(ui->tabGeneral);
+    loadingTheInformations=false;
+    on_nameEditLanguageList_currentIndexChanged(ui->nameEditLanguageList->currentIndex());
+    on_descriptionEditLanguageList_currentIndexChanged(ui->descriptionEditLanguageList->currentIndex());
+}
+
+void MainWindow::on_itemListAdd_clicked()
+{
+    int index=0;
+    while(items.contains(index))
+        index++;
     QDomElement newXmlElement=domDocument.createElement("item");
-    newXmlElement.setAttribute("id",id);
+    newXmlElement.setAttribute("id",index);
     domDocument.documentElement().appendChild(newXmlElement);
     updateItemList();
 }
 
-void MainWindow::on_ItemListDelete_clicked()
+void MainWindow::on_itemListEdit_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->ItemList->selectedItems();
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    on_itemList_itemDoubleClicked(itemsUI.first());
+}
+
+void MainWindow::on_itemListDelete_clicked()
+{
+    QList<QListWidgetItem *> selectedItems=ui->itemList->selectedItems();
     if(selectedItems.size()!=1)
     {
-        QMessageBox::warning(this,tr("Error"),tr("Select a Item into the Item list"));
+        QMessageBox::warning(this,tr("Error"),tr("Select a bot into the bot list"));
         return;
     }
-    quint8 id=selectedItems.first()->data(99).toUInt();
-    if(!ItemFiles.contains(id))
+    quint32 id=selectedItems.first()->data(99).toUInt();
+    if(!items.contains(id))
     {
-        QMessageBox::warning(this,tr("Error"),tr("Unable remove the Item, because the returned id is not into the list"));
+        QMessageBox::warning(this,tr("Error"),tr("Unable remove the bot, because the returned id is not into the list"));
         return;
     }
     bool ok;
-    //load the Items
-    QDomElement child = domDocument.documentElement().firstChildElement("item");
+    //load the bots
+    QDomElement child = domDocument.documentElement().firstChildElement("bot");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -230,341 +225,15 @@ void MainWindow::on_ItemListDelete_clicked()
                 }
             }
             else
-                qDebug() << QString("Attribute \"id\" is not a number: Item.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
-        child = child.nextSiblingElement("item");
+        child = child.nextSiblingElement("bot");
     }
-    ItemFiles.remove(id);
+    items.remove(id);
     updateItemList();
 }
 
-void MainWindow::on_ItemListEdit_clicked()
-{
-    QList<QListWidgetItem *> selectedItems=ui->ItemList->selectedItems();
-    if(selectedItems.size()!=1)
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Select a Item into the Item list"));
-        return;
-    }
-    on_ItemList_itemDoubleClicked(selectedItems.first());
-}
-
-void MainWindow::updateStepList()
-{
-    ui->stepList->clear();
-    QHash<quint8,QDomElement>::const_iterator i = ItemFiles[selectedItem].step.constBegin();
-    while (i != ItemFiles[selectedItem].step.constEnd()) {
-        QListWidgetItem *item=new QListWidgetItem();
-        if(i.value().hasAttribute("type"))
-        {
-            if(!allowedType.contains(i.value().attribute("type")))
-                item->setText(tr("Step %1 with type wrong: %2").arg(i.key()).arg(i.value().attribute("type")));
-            else
-                item->setText(tr("Step %1: %2").arg(i.key()).arg(allowedType[i.value().attribute("type")]));
-        }
-        else
-            item->setText(tr("Step %1 (have not the attribute type)").arg(i.key()));
-        item->setData(99,i.key());
-        ui->stepList->addItem(item);
-        ++i;
-    }
-}
-
-void MainWindow::on_stepListAdd_clicked()
-{
-    int index=1;
-    while(ItemFiles[selectedItem].step.contains(index))
-        index++;
-    bool ok;
-    int id=QInputDialog::getInt(this,tr("Id of the step"),tr("Give the id for the new step"),index,index,2147483647,1,&ok);
-    if(ItemFiles[selectedItem].step.contains(id))
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Sorry but this id is already taken"));
-        return;
-    }
-    ItemFiles[selectedItem].step[id]=domDocument.createElement("step");
-    ItemFiles[selectedItem].step[id].setAttribute("id",id);
-    //load the Items
-    QDomElement child = domDocument.documentElement().firstChildElement("item");
-    while(!child.isNull())
-    {
-        if(!child.hasAttribute("id"))
-            qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
-        else if(!child.isElement())
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
-        else
-        {
-            quint8 tempId=child.attribute("id").toUShort(&ok);
-            if(ok)
-            {
-                if(tempId==selectedItem)
-                {
-                    child.appendChild(ItemFiles[selectedItem].step[id]);
-                    break;
-                }
-            }
-            else
-                qDebug() << QString("Attribute \"id\" is not a number: Item.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
-        }
-        child = child.nextSiblingElement("item");
-    }
-    //load the edit
-    editStep(id);
-    updateStepList();
-    if(id==1)
-    {
-        updateItemList();
-        ui->stepListTitle->setText(tr("Step list for the Item: %1").arg(selectedItem));
-    }
-}
-
-void MainWindow::on_stepListDelete_clicked()
-{
-    QList<QListWidgetItem *> selectedItems=ui->stepList->selectedItems();
-    if(selectedItems.size()!=1)
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Select a step into the step list"));
-        return;
-    }
-    quint8 id=selectedItems.first()->data(99).toUInt();
-    if(!ItemFiles[selectedItem].step.contains(id))
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Unable remove the step, because the returned id is not into the list"));
-        return;
-    }
-    ItemFiles[selectedItem].step[id].parentNode().removeChild(ItemFiles[selectedItem].step[id]);
-    ItemFiles[selectedItem].step.remove(id);
-    updateStepList();
-    if(id==1)
-        updateItemList();
-}
-
-void MainWindow::on_stepListEdit_clicked()
-{
-    QList<QListWidgetItem *> selectedItems=ui->stepList->selectedItems();
-    if(selectedItems.size()!=1)
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Select a step into the Item list"));
-        return;
-    }
-    on_stepList_itemDoubleClicked(selectedItems.first());
-}
-
-void MainWindow::on_stepListBack_clicked()
-{
-    ui->stackedWidget->setCurrentWidget(ui->page_Item_list);
-}
-
-void MainWindow::on_stepEditBack_clicked()
-{
-    ui->stackedWidget->setCurrentWidget(ui->page_step_list);
-}
-
-void MainWindow::editStep(quint8 id)
-{
-    selectedStep=id;
-    QDomElement step=ItemFiles[selectedItem].step[selectedStep];
-    bool needType=false;
-    if(!step.hasAttribute("type"))
-        needType=true;
-    else if(!allowedType.contains(step.attribute("type")))
-        needType=true;
-    if(needType)
-    {
-        StepType stepType(allowedType,this);
-        stepType.exec();
-        if(!stepType.validated())
-        {
-            ui->stackedWidget->setCurrentWidget(ui->page_step_list);
-            return;
-        }
-        step.setAttribute("type",stepType.type());
-    }
-    QString type=step.attribute("type");
-    int index=0;
-    while(index<ui->tabWidget->count())
-    {
-        if(allowedType[type]==ui->tabWidget->tabText(index))
-        {
-            ui->tabWidget->setTabEnabled(index,true);
-            ui->tabWidget->setCurrentIndex(index);
-        }
-        else
-            ui->tabWidget->setTabEnabled(index,false);
-        index++;
-    }
-    bool error=false;
-    if(type=="text")
-    {
-        ui->stepEditLanguageList->clear();
-        QDomElement text = step.firstChildElement("text");
-        while(!text.isNull())
-        {
-            if(!text.hasAttribute("lang"))
-            {
-                qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(text.tagName()).arg(text.lineNumber());
-                error=true;
-            }
-            else if(!text.isElement())
-            {
-                qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(text.tagName().arg(text.attribute("name")).arg(text.lineNumber()));
-                error=true;
-            }
-            else
-                ui->stepEditLanguageList->addItem(text.attribute("lang"));
-            text = text.nextSiblingElement("text");
-        }
-        updateTextDisplayed();
-    }
-    else if(type=="shop")
-    {
-        bool ok;
-        quint32 id=step.attribute("shop").toUInt(&ok);
-        if(!ok)
-        {
-            ui->stepEditShop->setValue(1);
-            error=true;
-        }
-        else
-            ui->stepEditShop->setValue(id);
-    }
-    else if(type=="sell")
-    {
-        bool ok;
-        quint32 id=step.attribute("shop").toUInt(&ok);
-        if(!ok)
-        {
-            ui->stepEditSell->setValue(1);
-            error=true;
-        }
-        else
-            ui->stepEditSell->setValue(id);
-    }
-    else if(type=="fight")
-    {
-        bool ok;
-        quint32 id=step.attribute("fightid").toUInt(&ok);
-        if(!ok)
-        {
-            ui->stepEditFight->setValue(1);
-            error=true;
-        }
-        else
-            ui->stepEditFight->setValue(id);
-    }
-    if(error)
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Error during loading the step"));
-        return;
-    }
-    ui->stackedWidget->setCurrentWidget(ui->page_step_edit);
-}
-
-void MainWindow::updateTextDisplayed()
-{
-    bool found=false;
-    QDomElement step=ItemFiles[selectedItem].step[selectedStep];
-    QDomElement text = step.firstChildElement("text");
-    while(!text.isNull())
-    {
-        if(text.hasAttribute("lang") && text.isElement() && text.attribute("lang")==ui->stepEditLanguageList->currentText())
-        {
-            ui->plainTextEdit->setPlainText(text.text());
-            found=true;
-            break;
-        }
-        text = text.nextSiblingElement("text");
-    }
-    if(!found)
-        ui->plainTextEdit->setPlainText(QString());
-}
-
-void MainWindow::on_plainTextEdit_textChanged()
-{
-    QDomElement step=ItemFiles[selectedItem].step[selectedStep];
-    QDomElement text = step.firstChildElement("text");
-    while(!text.isNull())
-    {
-        if(text.hasAttribute("lang") && text.isElement() && text.attribute("lang")==ui->stepEditLanguageList->currentText())
-        {
-            QDomText newTextElement=text.ownerDocument().createTextNode(ui->plainTextEdit->toPlainText());
-            int sub_index=0;
-            QDomNodeList nodeList=text.childNodes();
-            while(sub_index<nodeList.size())
-            {
-                text.removeChild(nodeList.at(sub_index));
-                sub_index++;
-            }
-            text.appendChild(newTextElement);
-            return;
-        }
-        text = text.nextSiblingElement("text");
-    }
-}
-
-void MainWindow::on_stepEditLanguageRemove_clicked()
-{
-    QDomElement text = ItemFiles[selectedItem].step[selectedStep].firstChildElement("text");
-    while(!text.isNull())
-    {
-        if(text.hasAttribute("lang") && text.isElement() && text.attribute("lang")==ui->stepEditLanguageList->currentText())
-        {
-            ui->stepEditLanguageList->removeItem(ui->stepEditLanguageList->currentIndex());
-            ItemFiles[selectedItem].step[selectedStep].removeChild(text);
-            updateTextDisplayed();
-            return;
-        }
-        text = text.nextSiblingElement("text");
-    }
-}
-
-void MainWindow::on_stepEditLanguageAdd_clicked()
-{
-    bool ok;
-    QString text = QInputDialog::getText(this, tr("The country code"),
-                                         tr("The country code (ISO, two letter):"), QLineEdit::Normal,
-                                         "en", &ok);
-    if (!ok || text.isEmpty())
-        return;
-    QDomElement textBalise = ItemFiles[selectedItem].step[selectedStep].firstChildElement("text");
-    while(!textBalise.isNull())
-    {
-        if(textBalise.hasAttribute("lang") && textBalise.isElement() && textBalise.attribute("lang")==text)
-        {
-            QMessageBox::warning(this,tr("Error"),tr("This country letter is already found"));
-            return;
-        }
-        textBalise = textBalise.nextSiblingElement("text");
-    }
-    if(!text.contains(QRegExp("^[a-z]{2}(_[A-Z]{2})?$")))
-    {
-        QMessageBox::warning(this,tr("Error"),tr("The country code is ISO code, then 2 letters only"));
-        return;
-    }
-    QDomElement newElement=ItemFiles[selectedItem].step[selectedStep].ownerDocument().createElement("text");
-    newElement.setAttribute("lang",text);
-    if(!newElement.isNull())
-        ItemFiles[selectedItem].step[selectedStep].appendChild(newElement);
-    ui->stepEditLanguageList->addItem(text);
-    ui->stepEditLanguageList->setCurrentIndex(ui->stepEditLanguageList->count()-1);
-}
-
-void MainWindow::on_stepEditShop_editingFinished()
-{
-    ItemFiles[selectedItem].step[selectedStep].setAttribute("shop",ui->stepEditShop->value());
-}
-
-void MainWindow::on_stepEditSell_editingFinished()
-{
-    ItemFiles[selectedItem].step[selectedStep].setAttribute("shop",ui->stepEditSell->value());
-}
-
-void MainWindow::on_stepEditFight_editingFinished()
-{
-    ItemFiles[selectedItem].step[selectedStep].setAttribute("fightid",ui->stepEditFight->value());
-}
-
-void MainWindow::on_ItemFileSave_clicked()
+void MainWindow::on_itemListSave_clicked()
 {
     QFile xmlFile(ui->lineEditItemFile->text());
     if(!xmlFile.open(QIODevice::WriteOnly))
@@ -577,26 +246,162 @@ void MainWindow::on_ItemFileSave_clicked()
     QMessageBox::information(this,tr("Saved"),tr("The file have been correctly saved"));
 }
 
-void MainWindow::on_ItemList_itemDoubleClicked(QListWidgetItem *item)
+void MainWindow::on_nameEditLanguageList_currentIndexChanged(int index)
 {
-    selectedItem=item->data(99).toUInt();
-    if(!ItemFiles.contains(selectedItem))
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Unable to select the Item, because the returned id is not into the list"));
+    if(loadingTheInformations)
         return;
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    Q_UNUSED(index);
+    loadingTheInformations=true;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    QDomElement name = items[selectedItem].firstChildElement("name");
+    while(!name.isNull())
+    {
+        if((!name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()=="en")
+                ||
+                (name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()==name.attribute("lang"))
+                )
+        {
+            ui->namePlainTextEdit->setPlainText(name.text());
+            loadingTheInformations=false;
+            return;
+        }
+        name = name.nextSiblingElement("name");
     }
-    ui->stepListTitle->setText(tr("Step list for the Item: %1").arg(item->text()));
-    updateStepList();
-    ui->stackedWidget->setCurrentWidget(ui->page_step_list);
+    loadingTheInformations=false;
+    QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
 }
 
-void MainWindow::on_stepList_itemDoubleClicked(QListWidgetItem *item)
+void MainWindow::on_descriptionEditLanguageList_currentIndexChanged(int index)
 {
-    quint8 id=item->data(99).toUInt();
-    if(!ItemFiles[selectedItem].step.contains(id))
+    if(loadingTheInformations)
+        return;
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    Q_UNUSED(index);
+    loadingTheInformations=true;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    QDomElement description = items[selectedItem].firstChildElement("description");
+    while(!description.isNull())
     {
-        QMessageBox::warning(this,tr("Error"),tr("Unable to select the step, because the returned id is not into the list"));
+        if((!description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()=="en")
+                ||
+                (description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()==description.attribute("lang"))
+                )
+        {
+            ui->descriptionPlainTextEdit->setPlainText(description.text());
+            loadingTheInformations=false;
+            return;
+        }
+        description = description.nextSiblingElement("description");
+    }
+    loadingTheInformations=false;
+    QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
+}
+
+void MainWindow::on_stepEditBack_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_list);
+}
+
+void MainWindow::on_namePlainTextEdit_textChanged()
+{
+    if(loadingTheInformations)
+        return;
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    QDomElement name = items[selectedItem].firstChildElement("name");
+    while(!name.isNull())
+    {
+        if((!name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()=="en")
+                ||
+                (name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()==name.attribute("lang"))
+                )
+        {
+            QDomText newTextElement=name.ownerDocument().createTextNode(ui->namePlainTextEdit->toPlainText());
+            QDomNodeList nodeList=name.childNodes();
+            int sub_index=0;
+            while(sub_index<nodeList.size())
+            {
+                name.removeChild(nodeList.at(sub_index));
+                sub_index++;
+            }
+            name.appendChild(newTextElement);
+            return;
+        }
+        name = name.nextSiblingElement("name");
+    }
+    QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
+}
+
+void MainWindow::on_descriptionPlainTextEdit_textChanged()
+{
+    if(loadingTheInformations)
+        return;
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    QDomElement description = items[selectedItem].firstChildElement("description");
+    while(!description.isNull())
+    {
+        if((!description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()=="en")
+                ||
+                (description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()==description.attribute("lang"))
+                )
+        {
+            QDomText newTextElement=description.ownerDocument().createTextNode(ui->descriptionPlainTextEdit->toPlainText());
+            QDomNodeList nodeList=description.childNodes();
+            int sub_index=0;
+            while(sub_index<nodeList.size())
+            {
+                description.removeChild(nodeList.at(sub_index));
+                sub_index++;
+            }
+            description.appendChild(newTextElement);
+            return;
+        }
+        description = description.nextSiblingElement("description");
+    }
+    QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
+}
+
+void MainWindow::on_price_editingFinished()
+{
+    if(loadingTheInformations)
+        return;
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    items[selectedItem].setAttribute("price",ui->price->value());
+}
+
+void MainWindow::on_imageBrowse_clicked()
+{
+    QString image=QFileDialog::getOpenFileName(this,"Item image",QFileInfo(ui->lineEditItemFile->text()).absolutePath(),tr("Images (*.png)"));
+    if(image.isEmpty())
+        return;
+    image=QFileInfo(image).absoluteFilePath();
+    QPixmap imageLoaded(image);
+    if(imageLoaded.isNull())
+    {
+        QMessageBox::warning(this,tr("Error"),tr("The image can't be loaded, wrong format?"));
         return;
     }
-    editStep(id);
+    imageLoaded.scaled(96,96);
+    image.remove(QFileInfo(ui->lineEditItemFile->text()).absolutePath());
+    image.replace("\\","/");
+    image.remove(QRegularExpression("^/"));
+    ui->image->setPixmap(imageLoaded);
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    items[selectedItem].setAttribute("image",image);
 }
