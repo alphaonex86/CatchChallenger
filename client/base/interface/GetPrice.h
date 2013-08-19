@@ -11,7 +11,7 @@ class GetPrice : public QDialog
 {
     Q_OBJECT
 public:
-    explicit GetPrice(QWidget *parent, bool bitcoin);
+    explicit GetPrice(QWidget *parent, bool bitcoin,quint32 suggestedPrice);
     ~GetPrice();
     quint32 price();
     double bitcoin();

@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>16</number>
+        <number>15</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -5477,6 +5477,9 @@ border-image: url(:/images/empty.png);
             <property name="pixmap">
              <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknow-object.png</pixmap>
             </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
            </widget>
            <widget class="QLabel" name="monsterDetailsName">
             <property name="geometry">
@@ -5555,6 +5558,9 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="pixmap">
              <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknow-object.png</pixmap>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
             </property>
            </widget>
            <widget class="QListWidget" name="monsterDetailsSkills">

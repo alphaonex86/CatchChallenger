@@ -3590,14 +3590,14 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                                 return;
                             }
-                            quint8 objectId;
+                            quint32 objectId;
                             in >> objectId;
                             if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                                 return;
                             }
-                            quint8 quantity;
+                            quint32 quantity;
                             in >> quantity;
                             emit marketWithdrawObject(objectId,quantity);
                         }
