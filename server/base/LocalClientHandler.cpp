@@ -425,6 +425,11 @@ void LocalClientHandler::addObjectAndSend(const quint32 &item,const quint32 &qua
 
 void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
 {
+    if(!CommonDatapack::commonDatapack.items.item.contains(item))
+    {
+        emit error("Object is not found into the item list");
+        return;
+    }
     if(player_informations->public_and_private_informations.items.contains(item))
     {
         player_informations->public_and_private_informations.items[item]+=quantity;
@@ -453,14 +458,14 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,0);")
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,place) VALUES(%1,%2,%3,'wear');")
                              .arg(item)
                              .arg(player_informations->id)
                              .arg(quantity)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,0);")
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,place) VALUES(%1,%2,%3,'wear');")
                          .arg(item)
                          .arg(player_informations->id)
                          .arg(quantity)
@@ -3645,14 +3650,13 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
     {
         const MarketItem &marketObject=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
-        if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
-            if(player_informations->public_and_private_informations.bitcoin>=0 || marketObject.bitcoin==0)
-            {
-                if(marketObject.player==player_informations->id)
-                    marketOwnItemList << marketObject;
-                else
-                    marketItemList << marketObject;
-            }
+        if(bitcoinEnabled() || marketObject.bitcoin==0)
+        {
+            if(marketObject.player==player_informations->id)
+                marketOwnItemList << marketObject;
+            else
+                marketItemList << marketObject;
+        }
         index++;
     }
     //monster filter
@@ -3660,14 +3664,13 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
     while(index<GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
     {
         const MarketPlayerMonster &marketPlayerMonster=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(index);
-        if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
-            if(player_informations->public_and_private_informations.bitcoin>=0 || marketPlayerMonster.bitcoin==0)
-            {
-                if(marketPlayerMonster.player==player_informations->id)
-                    marketOwnPlayerMonsterList << marketPlayerMonster;
-                else
-                    marketPlayerMonsterList << marketPlayerMonster;
-            }
+        if(bitcoinEnabled() || marketPlayerMonster.bitcoin==0)
+        {
+            if(marketPlayerMonster.player==player_informations->id)
+                marketOwnPlayerMonsterList << marketPlayerMonster;
+            else
+                marketPlayerMonsterList << marketPlayerMonster;
+        }
         index++;
     }
     //object
@@ -4004,9 +4007,33 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
         if(marketItem.player==player_informations->id && marketItem.item==objectId)
         {
             removeObject(objectId,quantity);
+            GlobalServerData::serverPrivateVariables.marketItemList[index].cash=price;
+            GlobalServerData::serverPrivateVariables.marketItemList[index].bitcoin=bitcoin;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
             out << (quint8)0x01;
             emit postReply(query_id,outputData);
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE item SET quantity=%1,market_price=%2,market_bitcoin=%3 WHERE item_id=%4 AND player_id=%5 AND place='market';")
+                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                 .arg(price)
+                                 .arg(bitcoin)
+                                 .arg(marketItem.item)
+                                 .arg(marketItem.player)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE item SET quantity=%1,market_price=%2,market_bitcoin=%3 WHERE item_id=%4 AND player_id=%5 AND place='market';")
+                                 .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                 .arg(price)
+                                 .arg(bitcoin)
+                                 .arg(marketItem.item)
+                                 .arg(marketItem.player)
+                                 );
+                break;
+            }
             return;
         }
         index++;
@@ -4020,6 +4047,28 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
     }
     //append to the market
     removeObject(objectId,quantity);
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,place,market_price,market_bitcoin) VALUES(%1,%2,%3,'market',%4,%5);")
+                         .arg(objectId)
+                         .arg(player_informations->id)
+                         .arg(quantity)
+                         .arg(price)
+                         .arg(bitcoin)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,place,market_price,market_bitcoin) VALUES(%1,%2,%3,'market',%4,%5);")
+                         .arg(objectId)
+                         .arg(player_informations->id)
+                         .arg(quantity)
+                         .arg(price)
+                         .arg(bitcoin)
+                         );
+        break;
+    }
     MarketItem marketItem;
     marketItem.bitcoin=bitcoin;
     marketItem.cash=price;
@@ -4222,7 +4271,8 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
             out << (quint8)0x01;
             out << marketItem.item;
             out << marketItem.quantity;
-            if(marketItem.quantity==0)
+            GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
+            if(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity==0)
             {
                 marketObjectIdList << marketItem.marketObjectId;
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
@@ -4231,41 +4281,40 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND place='market'")
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
+                                     .arg(objectId)
+                                     .arg(player_informations->id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND place='market'")
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
+                                     .arg(objectId)
+                                     .arg(player_informations->id)
                                      );
                     break;
                 }
             }
             else
             {
-                GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
                 switch(GlobalServerData::serverSettings.database.type)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
                         emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND place='market'")
-                                     .arg(marketItem.quantity-quantity)
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
+                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                     .arg(objectId)
+                                     .arg(player_informations->id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
                         emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND place='market'")
-                                     .arg(marketItem.quantity-quantity)
-                                     .arg(marketItem.item)
-                                     .arg(marketItem.player)
+                                     .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
+                                     .arg(objectId)
+                                     .arg(player_informations->id)
                                      );
                     break;
                 }
             }
-            addObject(marketItem.item,quantity);
+            addObject(objectId,quantity);
             emit postReply(query_id,outputData);
             return;
         }
