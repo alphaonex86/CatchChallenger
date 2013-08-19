@@ -13,13 +13,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        MainWindow.cpp \
-    StepType.cpp
+        MainWindow.cpp
 
-HEADERS  += MainWindow.h \
-    StepType.h
+HEADERS  += MainWindow.h
 
-FORMS    += MainWindow.ui \
-    StepType.ui
+FORMS    += MainWindow.ui
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc

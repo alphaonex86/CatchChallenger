@@ -1,0 +1,111 @@
+<items>
+	<item id="1" price="200">
+		<name>Craftball</name>
+		<name lang="fr">Craftball</name>
+		<description>The craftball is perfect to capture a very low level monsters.</description>
+		<description lang="fr">La craft ball est parfaite pour capturer les monstres de trés bas niveaux.</description>
+	</item>
+	
+	<item id="2" price="500">
+		<name>Superball</name>
+		<name lang="fr">Superball</name>
+		<description>The super Superball is perfect to capture a low level monsters.</description>
+		<description lang="fr">La Super ball est parfaite pour capturer les monstres de bas niveaux.</description>
+	</item>
+	
+	<item id="3" price="1000">
+		<name>Hyperball</name>
+		<name lang="fr">Hyperball</name>
+		<description>The hyperball is perfect to capture a mid level monsters.</description>
+		<description lang="fr">La hyper ball est parfaite pour capturer les monstres de niveaux moyen.</description>
+	</item>
+	
+	<item id="4" price="2000">
+		<name>Extraball</name>
+		<name lang="fr">Extraball</name>
+		<description>The Extraball is perfect to capture a hight level monsters.</description>
+		<description lang="fr">La Extra ball est parfaite pour capturer les monstres de haut niveaux.</description>
+	</item>
+	
+	<item id="5" price="300">
+		<name>Potion</name>
+		<name lang="fr">Potion</name>
+		<description>The Superpotion used for very low heal monsters.</description>
+		<description lang="fr">La Potion est utilisé pour soigné les monstres de très bas niveaux.</description>
+		<effectinfight>
+			<regeneration hp="50" />
+		</effectinfight>
+		<effect>
+			<regeneration hp="50" />
+		</effect>
+	</item>
+	
+	<item id="6" price="500">
+		<name>Superpotion</name>
+		<name lang="fr">Superpotion</name>
+		<description>The Superpotion used for low heal monsters.</description>
+		<description lang="fr">La Super potion est utilisé pour soigné les monstres de bas niveaux.</description>
+		<effectinfight>
+			<regeneration hp="100" />
+		</effectinfight>
+		<effect>
+			<regeneration hp="100" />
+		</effect>
+	</item>
+	
+	<item id="7" price="750">
+		<name>Hyperpotion</name>
+		<name lang="fr">Hyperpotion</name>
+		<description>The Hyperpotion used for heal monsters.</description>
+		<description lang="fr">La Hyper potion est utilisé pour soigné les monstres de niveaux moyen.</description>
+		<effectinfight>
+			<regeneration hp="200" />
+		</effectinfight>
+		<effect>
+			<regeneration hp="200" />
+		</effect>
+	</item>	
+	
+	<item id="8" price="1500">
+		<name>Potionmax</name>
+		<name lang="fr">Potionmax</name>
+		<description>The Potionmax used for heal monsters.</description>
+		<description lang="fr">La Potion max est utilisé pour soigné les monstres de niveaux moyen.</description>
+		<effectinfight>
+			<regeneration hp="all" />
+		</effectinfight>
+		<effect>
+			<regeneration hp="all" />
+		</effect>
+	</item>	
+	
+		<item id="9" price="250">
+		<name>Reppousse</name>
+		<name lang="fr">Reppousse</name>
+		<description>The Reppousse used for Reppousse monsters during 100 step.</description>
+		<description lang="fr">Le Repousse est utilisé pour éloigner les monstres pendant 100 pas.</description>
+		<effect>
+			<repousse rate="100"/>
+		</effect>
+	</item>	
+	
+		<item id="10" price="500">
+		<name>Superreppousse</name>
+		<name lang="fr">Superreppousse</name>
+		<description>The Superreppousse used for Reppousse monsters during 250 step.</description>
+		<description lang="fr">La Superreppousse est utilisé pour éloigner les monstres pendant 250 pas.</description>
+		<effect>
+			<repousse rate="250"/>
+		</effect>
+	</item>	
+	
+		<item id="11" price="750">
+		<name>Hyperreppousse</name>
+		<name lang="fr">Hyperreppousse</name>
+		<description>The Hyperreppousse used for Reppousse monsters during 500 step.</description>
+		<description lang="fr">La Hyperreppousse est utilisé pour éloigner les monstres pendant 500 pas.</description>
+		<effect>
+			<repousse rate="500"/>
+		</effect>
+	</item>	
+</items>
