@@ -1156,6 +1156,187 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
                 emit sellFactoryObject(queryNumber,factoryId,objectId,quantity,price);
             }
             break;
+            case 0x0010:
+                emit getMarketList(queryNumber);
+            break;
+            case 0x0011:
+            {
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint8 queryType;
+                in >> queryType;
+                switch(queryType)
+                {
+                    case 0x01:
+                    case 0x02:
+                    break;
+                    default:
+                        parseError(QString("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                if(queryType==0x01)
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 marketObjectId;
+                    in >> marketObjectId;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 quantity;
+                    in >> quantity;
+                    emit buyMarketObject(queryNumber,marketObjectId,quantity);
+                }
+                else
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 monsterId;
+                    in >> monsterId;
+                    emit buyMarketMonster(queryNumber,monsterId);
+                }
+            }
+            break;
+            case 0x0012:
+            {
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint8 queryType;
+                in >> queryType;
+                switch(queryType)
+                {
+                    case 0x01:
+                    case 0x02:
+                    break;
+                    default:
+                        parseError(QString("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                if(queryType==0x01)
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 objectId;
+                    in >> objectId;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 quantity;
+                    in >> quantity;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 price;
+                    in >> price;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(double))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    double bitcoin;
+                    in >> bitcoin;
+                    emit putMarketObject(queryNumber,objectId,quantity,price,bitcoin);
+                }
+                else
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 monsterId;
+                    in >> monsterId;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 price;
+                    in >> price;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(double))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    double bitcoin;
+                    in >> bitcoin;
+                    emit putMarketMonster(queryNumber,monsterId,price,bitcoin);
+                }
+            }
+            break;
+            case 0x0013:
+                emit recoverMarketCash(queryNumber);
+            break;
+            case 0x0014:
+            {
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                quint8 queryType;
+                in >> queryType;
+                switch(queryType)
+                {
+                    case 0x01:
+                    case 0x02:
+                    break;
+                    default:
+                        parseError(QString("market return type with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                if(queryType==0x01)
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 objectId;
+                    in >> objectId;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 quantity;
+                    in >> quantity;
+                    emit withdrawMarketObject(queryNumber,objectId,quantity);
+                }
+                else
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                        return;
+                    }
+                    quint32 monsterId;
+                    in >> monsterId;
+                    emit withdrawMarketMonster(queryNumber,monsterId);
+                }
+            }
+            break;
             default:
                 parseError(QString("ident: %1, unknown sub ident: %2").arg(mainCodeType).arg(subCodeType));
                 return;

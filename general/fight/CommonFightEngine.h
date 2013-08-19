@@ -42,6 +42,7 @@ public:
     bool learnSkill(const quint32 &monsterId,const quint32 &skill);
     void addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     void addPlayerMonster(const PlayerMonster &playerMonster);
+    void insertPlayerMonster(const quint8 &place,const PlayerMonster &playerMonster);
     QList<PlayerMonster> getPlayerMonster() const;
     virtual bool moveUpMonster(const quint8 &number);
     virtual bool moveDownMonster(const quint8 &number);

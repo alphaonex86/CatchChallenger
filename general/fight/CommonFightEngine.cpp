@@ -963,6 +963,12 @@ void CommonFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
     updateCanDoFight();
 }
 
+void CommonFightEngine::insertPlayerMonster(const quint8 &place,const PlayerMonster &playerMonster)
+{
+    player_informations->playerMonster.insert(place,playerMonster);
+    updateCanDoFight();
+}
+
 QList<PlayerMonster> CommonFightEngine::getPlayerMonster() const
 {
     return player_informations->playerMonster;

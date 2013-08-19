@@ -53,6 +53,8 @@ void ProtocolParsing::initialiseTheVariable()
     sizeOnlyMainCodePacketClientToServer[0x61]=4;
     sizeMultipleCodePacketClientToServer[0x10][0x0006]=1;
     sizeMultipleCodePacketClientToServer[0x10][0x0007]=0;
+    sizeMultipleCodePacketClientToServer[0x10][0x0010]=0;
+    sizeMultipleCodePacketClientToServer[0x10][0x0013]=0;
     sizeMultipleCodePacketClientToServer[0x50][0x0002]=8;
     sizeMultipleCodePacketClientToServer[0x50][0x0004]=0;
     sizeMultipleCodePacketClientToServer[0x50][0x0005]=0;
@@ -102,6 +104,7 @@ void ProtocolParsing::initialiseTheVariable()
     qRegisterMetaType<QList<quint8> >("QList<quint8>");//for battleAcceptedByOther(stat,publicPlayerMonster);
     qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
     qRegisterMetaType<QList<Skill::AttackReturn> >("QList<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+    qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
 }
 
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)

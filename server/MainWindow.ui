@@ -995,40 +995,6 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_9">
-          <item>
-           <widget class="QLabel" name="label_27">
-            <property name="text">
-             <string>Transaction history days:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QSpinBox" name="bitcoin_history">
-            <property name="maximum">
-             <number>365</number>
-            </property>
-            <property name="value">
-             <number>30</number>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_9">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_10">
           <item>
            <widget class="QLabel" name="label_28">

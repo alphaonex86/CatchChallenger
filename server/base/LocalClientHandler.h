@@ -54,6 +54,8 @@ public:
     quint32 getClanId() const;
     bool haveAClan() const;
     static void resetAll();
+    //market
+    static QList<quint16> marketObjectIdList;
 private:
     bool checkCollision();
 
@@ -124,6 +126,8 @@ public slots:
     quint32 objectQuantity(const quint32 &item);
     void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);
+    void addBitcoin(const double &bitcoin);
+    void removeBitcoin(const double &bitcoin);
     void addWarehouseCash(const quint64 &cash,const bool &forceSave=false);
     void removeWarehouseCash(const quint64 &cash);
     void wareHouseStore(const qint64 &cash, const QList<QPair<quint32, qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters);
@@ -198,6 +202,15 @@ public slots:
     static quint16 cityCaptureClanCount(const CaptureCityValidated &captureCityValidated);
     void moveMonster(const bool &up,const quint8 &number);
     void changeOfMonsterInFight(const quint32 &monsterId);
+    //market
+    void getMarketList(const quint32 &query_id);
+    void buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity);
+    void buyMarketMonster(const quint32 &query_id,const quint32 &monsterId);
+    void putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin);
+    void putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price,const double &bitcoin);
+    void recoverMarketCash(const quint32 &query_id);
+    void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
+    void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
 private slots:
     virtual void extraStop();
     void savePosition();
