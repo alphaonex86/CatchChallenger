@@ -159,6 +159,7 @@ void BaseServer::preload_the_data()
     preload_zone();
     preload_industries();
     preload_market_monsters();
+    preload_market_items();
 }
 
 void BaseServer::preload_zone()

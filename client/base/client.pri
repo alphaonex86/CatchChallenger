@@ -27,7 +27,14 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/MapItem.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/interface/BaseWindow.cpp \
+    $$PWD/interface/BaseWindowCity.cpp \
+    $$PWD/interface/BaseWindowClan.cpp \
+    $$PWD/interface/BaseWindowFactory.cpp \
+    $$PWD/interface/BaseWindowLoad.cpp \
+    $$PWD/interface/BaseWindowMarket.cpp \
     $$PWD/interface/BaseWindowOptions.cpp \
+    $$PWD/interface/BaseWindowShop.cpp \
+    $$PWD/interface/BaseWindowWarehouse.cpp \
     $$PWD/interface/MapControllerMP.cpp \
     $$PWD/../crafting/interface/MapControllerCrafting.cpp \
     $$PWD/interface/MapController.cpp \
@@ -36,7 +43,6 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/../fight/interface/DatapackClientLoaderFight.cpp \
     $$PWD/../crafting/interface/BaseWindowCrafting.cpp \
     $$PWD/Options.cpp \
-    $$PWD/interface/BaseWindowLoad.cpp \
     $$PWD/../fight/interface/BaseWindowFight.cpp \
     $$PWD/interface/Chat.cpp \
     $$PWD/../fight/interface/ClientFightEngine.cpp \
