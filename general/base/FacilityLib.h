@@ -18,6 +18,7 @@ public:
     static QStringList skinIdList(const QString& skinPath);
     static QString secondsToString(const quint64 &seconds);
     static PublicPlayerMonster playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster);
+    static QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster);
     static QByteArray publicPlayerMonsterToBinary(const PublicPlayerMonster &publicPlayerMonster);
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
     static bool rectTouch(QRect r1,QRect r2);
@@ -25,6 +26,7 @@ public:
     static QString allowToQString(const QSet<ActionAllow> &allowList);
     static QSet<ActionAllow> QStringToAllow(const QString &string);
     static QDateTime nextCaptureTime(const City &city);
+    static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
 private:
     static QByteArray UTF8EmptyData;
 };

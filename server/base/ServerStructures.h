@@ -67,6 +67,8 @@ struct Player_internal_informations
     bool isFake;
     bool is_logged;
     quint32 id;
+    quint64 market_cash;
+    double market_bitcoin;
     QByteArray rawPseudo;
     volatile bool isConnected;
     struct Rescue
@@ -136,7 +138,6 @@ struct ServerSettings
         bool enabled;
         QString address;
         double fee;
-        quint16 history;
         QString workingPath;
         QString binaryPath;
         quint16 port;
@@ -177,6 +178,24 @@ struct IndustryStatus
     QHash<quint32,quint32> products;
 };
 
+struct MarketPlayerMonster
+{
+    PlayerMonster monster;
+    quint32 player;
+    quint32 cash;
+    double bitcoin;
+};
+
+struct MarketItem
+{
+    quint32 marketObjectId;
+    quint32 item;
+    quint32 quantity;
+    quint32 player;
+    quint32 cash;
+    double bitcoin;
+};
+
 struct ServerPrivateVariables
 {
     //bd
@@ -196,6 +215,10 @@ struct ServerPrivateVariables
     QHash<QString,QList<quint32> > captureFightIdList;
     QHash<QString,CityStatus> cityStatusList;
     QHash<quint32,QString> cityStatusListReverse;
+
+    //market
+    QList<MarketItem> marketItemList;
+    QList<MarketPlayerMonster> marketPlayerMonsterList;
 
     //general data
     QList<EventThreader *> eventThreaderList;

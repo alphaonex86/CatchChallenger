@@ -176,6 +176,16 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	&ClientNetworkRead::heal,                   localClientHandler,	&LocalClientHandler::heal,                  Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::requestFight,           localClientHandler,	&LocalClientHandler::requestFight,          Qt::QueuedConnection);
 
+    //market
+    connect(clientNetworkRead,	&ClientNetworkRead::getMarketList,          localClientHandler,	&LocalClientHandler::getMarketList,         Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::buyMarketObject,        localClientHandler,	&LocalClientHandler::buyMarketObject,       Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::buyMarketMonster,       localClientHandler,	&LocalClientHandler::buyMarketMonster,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::putMarketObject,        localClientHandler,	&LocalClientHandler::putMarketObject,       Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::putMarketMonster,       localClientHandler,	&LocalClientHandler::putMarketMonster,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::recoverMarketCash,      localClientHandler,	&LocalClientHandler::recoverMarketCash,     Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::withdrawMarketObject,   localClientHandler,	&LocalClientHandler::withdrawMarketObject,  Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::withdrawMarketMonster,  localClientHandler,	&LocalClientHandler::withdrawMarketMonster, Qt::QueuedConnection);
+
     //connect the message
     connect(clientBroadCast,	&ClientBroadCast::error,					this,	&Client::errorOutput,Qt::QueuedConnection);
     connect(clientHeavyLoad,	&ClientHeavyLoad::error,					this,	&Client::errorOutput,Qt::QueuedConnection);

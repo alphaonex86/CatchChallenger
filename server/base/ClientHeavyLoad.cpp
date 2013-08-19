@@ -8,6 +8,8 @@
 #include "SqlFunction.h"
 #include "LocalClientHandler.h"
 
+#include <QProcess>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -38,18 +40,18 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
     }
     //id(0),login(1),skin(2),position_x(3),position_y(4),orientation(5),map_name(6),type(7),clan(8),cash(9)
     //rescue_map(10),rescue_x(11),rescue_y(12),rescue_orientation(13),unvalidated_rescue_map(14),unvalidated_rescue_x(15),unvalidated_rescue_y(16),unvalidated_rescue_orientation(17)
-    //warehouse_cash(18),allow(19),clan_leader(20)
+    //warehouse_cash(18),allow(19),clan_leader(20),bitcoin_offset(21),market_cash(22),market_bitcoin(23)
     QString queryText;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader,bitcoin_offset,market_cash,market_bitcoin FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader FROM player WHERE login=\"%1\" AND password=\"%2\"")
+            queryText=QString("SELECT id,pseudo,skin,position_x,position_y,orientation,map_name,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader,bitcoin_offset,market_cash,market_bitcoin FROM player WHERE login=\"%1\" AND password=\"%2\"")
                 .arg(SqlFunction::quoteSqlVariable(login))
                 .arg(SqlFunction::quoteSqlVariable(QString(hash.toHex())));
         break;
@@ -122,6 +124,141 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QString &login,const
             {
                 emit message(QString("warehouse cash id is not an number, warehouse cash set to 0"));
                 player_informations->public_and_private_informations.warehouse_cash=0;
+            }
+            if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
+            {
+                double bitcoin_offset=loginQuery.value(21).toDouble(&ok);
+                if(!ok)
+                {
+                    emit message(QString("bitcoin offset is not an number (double), bitconi disabled"));
+                    player_informations->public_and_private_informations.bitcoin=-1.0;
+                }
+                else
+                {
+                    QProcess process;
+                    process.start(GlobalServerData::serverSettings.bitcoin.binaryPath,QStringList()
+                                                                                   << QString("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
+                                                                                   << QString("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                                   << QString("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                                   << QString("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
+                                                                                   << QString("getbalance")
+                                                                                   << QString("CatchChallenger_player_%1").arg(player_informations->id)
+                                                                                   << QString("20")//number of confirmation
+                           );
+                    process.waitForStarted();
+                    process.waitForFinished();
+                    if(process.state()!=QProcess::NotRunning)
+                    {
+                        player_informations->public_and_private_informations.bitcoin=-1.0;
+                        emit message("Have been to kill the bitcoin requester client");
+                        process.terminate();
+                        process.kill();
+                    }
+                    else if(process.exitStatus()!=QProcess::NormalExit || process.exitCode()!=0)
+                    {
+                        player_informations->public_and_private_informations.bitcoin=-1.0;
+                        emit message(QString("Bitcoin requester client have wrong exit code or status, exit code: %1, error code: %2").arg(process.exitCode()).arg((int)process.error()));
+                    }
+                    else
+                    {
+                        QByteArray errorRaw=process.readAllStandardError();
+                        QByteArray outputRaw=process.readAllStandardOutput();
+                        if(!errorRaw.isEmpty())
+                        {
+                            player_informations->public_and_private_informations.bitcoin=-1.0;
+                            emit message(QString("The bitcoin requester client have reported an error: %1").arg(QString::fromLocal8Bit(errorRaw)));
+                        }
+                        else if(outputRaw.isEmpty())
+                        {
+                            player_informations->public_and_private_informations.bitcoin=-1.0;
+                            emit message(QString("The bitcoin requester client have empty output"));
+                        }
+                        else
+                        {
+                            QString stringOutput=QString::fromLocal8Bit(outputRaw);
+                            double bitcoin_real_balance=stringOutput.toDouble(&ok);
+                            if(!ok)
+                            {
+                                player_informations->public_and_private_informations.bitcoin=-1.0;
+                                emit message(QString("The bitcoin requester have not returned a double: %1").arg(stringOutput));
+                            }
+                            else if((bitcoin_real_balance+bitcoin_offset)<0)
+                            {
+                                player_informations->public_and_private_informations.bitcoin=-1.0;
+                                emit message(QString("Bitcoin amount is negative, bitcoind sync?"));
+                            }
+                            else
+                                player_informations->public_and_private_informations.bitcoin=bitcoin_real_balance+bitcoin_offset;
+                        }
+                    }
+                    if(player_informations->public_and_private_informations.bitcoin>=0)
+                    {
+                        QProcess process;
+                        process.start(GlobalServerData::serverSettings.bitcoin.binaryPath,QStringList()
+                                                                                       << QString("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
+                                                                                       << QString("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                                       << QString("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                                       << QString("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
+                                                                                       << QString("getaccountaddress")
+                                                                                       << QString("CatchChallenger_player_%1").arg(player_informations->id)
+                               );
+                        process.waitForStarted();
+                        process.waitForFinished();
+                        if(process.state()!=QProcess::NotRunning)
+                        {
+                            player_informations->public_and_private_informations.bitcoin=-1.0;
+                            emit message("Have been to kill the bitcoin requester client");
+                            process.terminate();
+                            process.kill();
+                        }
+                        else if(process.exitStatus()!=QProcess::NormalExit || process.exitCode()!=0)
+                        {
+                            player_informations->public_and_private_informations.bitcoin=-1.0;
+                            emit message(QString("Bitcoin requester client have wrong exit code or status, exit code: %1, error code: %2").arg(process.exitCode()).arg((int)process.error()));
+                        }
+                        else
+                        {
+                            QByteArray errorRaw=process.readAllStandardError();
+                            QByteArray outputRaw=process.readAllStandardOutput();
+                            if(!errorRaw.isEmpty())
+                            {
+                                player_informations->public_and_private_informations.bitcoin=-1.0;
+                                emit message(QString("The bitcoin requester client have reported an error: %1").arg(QString::fromLocal8Bit(errorRaw)));
+                            }
+                            else if(outputRaw.isEmpty())
+                            {
+                                player_informations->public_and_private_informations.bitcoin=-1.0;
+                                emit message(QString("The bitcoin requester client have empty output"));
+                            }
+                            else
+                            {
+                                QString stringOutput=QString::fromLocal8Bit(outputRaw);
+                                if(stringOutput.contains(QRegularExpression(CATCHCHALLENGER_SERVER_BITCOIN_ADDRESS_REGEX)))
+                                    player_informations->public_and_private_informations.bitcoinAddress=stringOutput;
+                                else
+                                    player_informations->public_and_private_informations.bitcoin=-1.0;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+                player_informations->public_and_private_informations.bitcoin=-1.0;
+            player_informations->market_cash=loginQuery.value(22).toULongLong(&ok);
+            if(!ok)
+            {
+                loginIsWrong(query_id,"Wrong account data",QString("Market cash wrong: %1").arg(loginQuery.value(22).toString()));
+                return;
+            }
+            player_informations->market_bitcoin=0;
+            if(player_informations->public_and_private_informations.bitcoin>=0)
+            {
+                player_informations->market_cash=loginQuery.value(23).toDouble(&ok);
+                if(!ok)
+                {
+                    loginIsWrong(query_id,"Wrong account data",QString("Market bitcoin wrong: %1").arg(loginQuery.value(23).toString()));
+                    return;
+                }
             }
 
             player_informations->public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
@@ -388,6 +525,8 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         out << (quint8)0x00;
     out << (quint64)player_informations->public_and_private_informations.cash;
     out << (quint64)player_informations->public_and_private_informations.warehouse_cash;
+    out << (double)player_informations->public_and_private_informations.bitcoin;
+    out << player_informations->public_and_private_informations.bitcoinAddress;
     out << (quint32)GlobalServerData::serverPrivateVariables.map_list.size();
 
     //temporary variable
@@ -409,7 +548,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     out << (quint32)size;
     while(index<size)
     {
-        QByteArray data=privateMonsterToBinary(player_informations->public_and_private_informations.playerMonster.at(index));
+        QByteArray data=FacilityLib::privateMonsterToBinary(player_informations->public_and_private_informations.playerMonster.at(index));
         outputData+=data;
         out.device()->seek(out.device()->pos()+data.size());
         index++;
@@ -419,7 +558,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     out << (quint32)size;
     while(index<size)
     {
-        QByteArray data=privateMonsterToBinary(player_informations->public_and_private_informations.warehouse_playerMonster.at(index));
+        QByteArray data=FacilityLib::privateMonsterToBinary(player_informations->public_and_private_informations.warehouse_playerMonster.at(index));
         outputData+=data;
         out.device()->seek(out.device()->pos()+data.size());
         index++;
@@ -495,43 +634,6 @@ void ClientHeavyLoad::loginIsWrong(const quint8 &query_id,const QString &message
 
     //send to server to stop the connection
     emit error(debugMessage);
-}
-
-QByteArray ClientHeavyLoad::privateMonsterToBinary(const PlayerMonster &monster)
-{
-    //send the network reply
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-
-    out << (quint32)monster.id;
-    out << (quint32)monster.monster;
-    out << (quint8)monster.level;
-    out << (quint32)monster.remaining_xp;
-    out << (quint32)monster.hp;
-    out << (quint32)monster.sp;
-    out << (quint32)monster.captured_with;
-    out << (quint8)monster.gender;
-    out << (quint32)monster.egg_step;
-    int sub_index=0;
-    int sub_size=monster.buffs.size();
-    out << (quint32)sub_size;
-    while(sub_index<sub_size)
-    {
-        out << (quint32)monster.buffs.at(sub_index).buff;
-        out << (quint8)monster.buffs.at(sub_index).level;
-        sub_index++;
-    }
-    sub_index=0;
-    sub_size=monster.skills.size();
-    out << (quint32)sub_size;
-    while(sub_index<sub_size)
-    {
-        out << (quint32)monster.skills.at(sub_index).skill;
-        out << (quint8)monster.skills.at(sub_index).level;
-        sub_index++;
-    }
-    return outputData;
 }
 
 //load linked data (like item, quests, ...)

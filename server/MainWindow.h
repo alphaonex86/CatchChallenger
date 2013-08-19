@@ -103,7 +103,6 @@ private slots:
     void on_bitcoin_enabled_toggled(bool checked);
     void on_bitcoin_address_editingFinished();
     void on_bitcoin_fee_editingFinished();
-    void on_bitcoin_history_editingFinished();
     void on_bitcoin_workingpath_editingFinished();
     void on_bitcoin_binarypath_editingFinished();
     void on_bitcoin_port_editingFinished();

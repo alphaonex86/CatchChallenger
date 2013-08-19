@@ -8,6 +8,7 @@
 #include "MapController.h"
 #include "Chat.h"
 #include "WithAnotherPlayer.h"
+#include "GetPrice.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -162,6 +163,15 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::battleCanceledByOther,      this,&BaseWindow::battleCanceledByOther);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendBattleReturn,           this,&BaseWindow::sendBattleReturn);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::sendFullBattleReturn,       this,&BaseWindow::sendFullBattleReturn);
+    //market
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketList,                 this,&BaseWindow::marketList);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketBuy,                  this,&BaseWindow::marketBuy);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketBuyMonster,           this,&BaseWindow::marketBuyMonster);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketPut,                  this,&BaseWindow::marketPut);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketGetCash,              this,&BaseWindow::marketGetCash);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawCanceled,     this,&BaseWindow::marketWithdrawCanceled);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawObject,       this,&BaseWindow::marketWithdrawObject);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster);
 
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
@@ -489,6 +499,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             displaySellList();
         break;
         case ObjectType_MonsterToTrade:
+        case ObjectType_MonsterToTradeToMarket:
         case ObjectType_MonsterToLearn:
         case ObjectType_MonsterToFight:
         case ObjectType_MonsterToFightKO:
@@ -496,9 +507,9 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             ui->stackedWidget->setCurrentWidget(ui->page_monster);
             load_monsters();
         break;
+        case ObjectType_SellToMarket:
         case ObjectType_All:
         case ObjectType_Trade:
-        default:
             ui->inventoryUse->setText(tr("Select"));
             ui->inventoryUse->setVisible(true);
             ui->stackedWidget->setCurrentWidget(ui->page_inventory);
@@ -510,17 +521,20 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             ui->stackedWidget->setCurrentWidget(ui->page_inventory);
             load_inventory();
         break;
+        default:
+            emit error("unknown selection type");
+        return;
     }
 }
 
 void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const quint32 &quantity)
 {
     inSelection=false;
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
-    ui->inventoryUse->setText(tr("Select"));
     switch(waitedObjectType)
     {
         case ObjectType_Sell:
+            ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
             if(!ok)
                 break;
             if(!items.contains(itemId))
@@ -545,7 +559,40 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             load_inventory();
             load_plant_inventory();
         break;
+        case ObjectType_SellToMarket:
+        {
+            ui->inventoryUse->setText(tr("Select"));
+            ui->stackedWidget->setCurrentWidget(ui->page_market);
+            if(!ok)
+                break;
+            if(!items.contains(itemId))
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(items[itemId]<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            GetPrice getPrice(this,bitcoin>=0);
+            getPrice.exec();
+            if(!getPrice.isOK())
+                break;
+            CatchChallenger::Api_client_real::client->putMarketObject(itemId,quantity,getPrice.price(),getPrice.bitcoin());
+            items[itemId]-=quantity;
+            if(items[itemId]==0)
+                items.remove(itemId);
+            QPair<quint32,quint32> pair;
+            pair.first=itemId;
+            pair.second=quantity;
+            marketPutObjectInSuspendList << pair;
+            load_inventory();
+            load_plant_inventory();
+        }
+        break;
         case ObjectType_Trade:
+            ui->inventoryUse->setText(tr("Select"));
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;
@@ -573,11 +620,10 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         break;
         case ObjectType_MonsterToLearn:
         {
+            ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
             if(!ok)
-            {
-                ui->stackedWidget->setCurrentWidget(ui->page_map);
                 return;
-            }
             ui->stackedWidget->setCurrentWidget(ui->page_learn);
             monsterToLearn=itemId;
             if(!showLearnSkill(monsterToLearn))
@@ -590,6 +636,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         case ObjectType_MonsterToFight:
         case ObjectType_MonsterToFightKO:
         {
+            ui->inventoryUse->setText(tr("Select"));
             ui->stackedWidget->setCurrentWidget(ui->page_battle);
             if(!ok)
                 return;
@@ -617,8 +664,47 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             moveFightMonsterBottom();
         }
         break;
+        case ObjectType_MonsterToTradeToMarket:
+        {
+            ui->inventoryUse->setText(tr("Select"));
+            ui->stackedWidget->setCurrentWidget(ui->page_market);
+            if(!ok)
+                break;
+            QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
+            if(playerMonster.size()<=1)
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
+                break;
+            }
+            if(!ClientFightEngine::fightEngine.remainMonstersToFight(itemId))
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
+                break;
+            }
+            //get the right monster
+            int index=0;
+            while(index<playerMonster.size())
+            {
+                if(playerMonster.at(index).id==itemId)
+                {
+                    marketPutMonsterList << playerMonster.at(index);
+                    marketPutMonsterPlaceList << index;
+                    ClientFightEngine::fightEngine.removeMonster(itemId);
+                    GetPrice getPrice(this,bitcoin>=0);
+                    getPrice.exec();
+                    if(!getPrice.isOK())
+                        break;
+                    CatchChallenger::Api_client_real::client->putMarketMonster(itemId,getPrice.price(),getPrice.bitcoin());
+                    break;
+                }
+                index++;
+            }
+            load_monsters();
+        }
+        break;
         case ObjectType_MonsterToTrade:
         {
+            ui->inventoryUse->setText(tr("Select"));
             if(waitedObjectType==ObjectType_MonsterToLearn)
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_learn);
@@ -661,6 +747,8 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         }
         break;
         case ObjectType_Seed:
+            ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
             ui->plantUse->setVisible(false);
             if(!ok)
                 break;
@@ -687,6 +775,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         break;
         case ObjectType_UseInFight:
         {
+            ui->inventoryUse->setText(tr("Select"));
             ui->stackedWidget->setCurrentWidget(ui->page_battle);
             if(!ok)
                 break;
@@ -716,6 +805,25 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
 void BaseWindow::add_to_inventory_slot(const QHash<quint32,quint32> &items)
 {
     add_to_inventory(items);
+}
+
+void BaseWindow::add_to_inventory(const quint32 &item,const quint32 &quantity,const bool &showGain)
+{
+    QList<QPair<quint32,quint32> > items;
+    items << QPair<quint32,quint32>(item,quantity);
+    add_to_inventory(items,showGain);
+}
+
+void BaseWindow::add_to_inventory(const QList<QPair<quint32,quint32> > &items,const bool &showGain)
+{
+    int index=0;
+    QHash<quint32,quint32> tempHash;
+    while(index<items.size())
+    {
+        tempHash[items.at(index).first]=items.at(index).second;
+        index++;
+    }
+    add_to_inventory(tempHash,showGain);
 }
 
 void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool &showGain)
@@ -1817,6 +1925,18 @@ void BaseWindow::goToBotStep(const quint8 &step)
         updateTheWareHouseContent();
         return;
     }
+    else if(actualBot.step[step].attribute("type")=="market")
+    {
+        ui->marketMonster->clear();
+        ui->marketObject->clear();
+        ui->marketOwnMonster->clear();
+        ui->marketOwnObject->clear();
+        ui->marketWithdraw->setVisible(false);
+        ui->marketStat->setText(tr("In waiting of market list"));
+        CatchChallenger::Api_client_real::client->getMarketList();
+        ui->stackedWidget->setCurrentWidget(ui->page_market);
+        return;
+    }
     else if(actualBot.step[step].attribute("type")=="industry")
     {
         if(CatchChallenger::Api_client_real::client->getHaveFactoryAction())
@@ -2689,6 +2809,18 @@ void BaseWindow::removeCash(const quint32 &cash)
     ui->tradePlayerCash->setMaximum(this->cash);
 }
 
+void BaseWindow::addBitcoin(const double &bitcoin)
+{
+    this->bitcoin+=bitcoin;
+    ui->bitcoin->setText(QString("%1&#3647;").arg(this->bitcoin));
+}
+
+void BaseWindow::removeBitcoin(const double &bitcoin)
+{
+    this->bitcoin-=bitcoin;
+    ui->bitcoin->setText(QString("%1&#3647;").arg(this->bitcoin));
+}
+
 void BaseWindow::on_pushButton_interface_monsters_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_monster);
@@ -2748,12 +2880,12 @@ void BaseWindow::on_tradeAddItem_clicked()
     selectObject(ObjectType_Trade);
 }
 
-void CatchChallenger::BaseWindow::on_tradeAddMonster_clicked()
+void BaseWindow::on_tradeAddMonster_clicked()
 {
     selectObject(ObjectType_MonsterToTrade);
 }
 
-void CatchChallenger::BaseWindow::on_selectMonster_clicked()
+void BaseWindow::on_selectMonster_clicked()
 {
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
@@ -2761,7 +2893,7 @@ void CatchChallenger::BaseWindow::on_selectMonster_clicked()
     on_monsterList_itemActivated(selectedMonsters.first());
 }
 
-void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
 {
     if(!monsters_items_graphical.contains(item))
         return;
@@ -2846,12 +2978,12 @@ void CatchChallenger::BaseWindow::on_monsterList_itemActivated(QListWidgetItem *
     }
 }
 
-void CatchChallenger::BaseWindow::on_close_IG_dialog_clicked()
+void BaseWindow::on_close_IG_dialog_clicked()
 {
     isInQuest=false;
 }
 
-void CatchChallenger::BaseWindow::on_warehouseWithdrawCash_clicked()
+void BaseWindow::on_warehouseWithdrawCash_clicked()
 {
     bool ok=true;
     int i;
@@ -2865,7 +2997,7 @@ void CatchChallenger::BaseWindow::on_warehouseWithdrawCash_clicked()
     updateTheWareHouseContent();
 }
 
-void CatchChallenger::BaseWindow::on_warehouseDepositCash_clicked()
+void BaseWindow::on_warehouseDepositCash_clicked()
 {
     bool ok=true;
     int i;
@@ -2879,7 +3011,7 @@ void CatchChallenger::BaseWindow::on_warehouseDepositCash_clicked()
     updateTheWareHouseContent();
 }
 
-void CatchChallenger::BaseWindow::on_warehouseWithdrawItem_clicked()
+void BaseWindow::on_warehouseWithdrawItem_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredInventory->selectedItems();
     if(itemList.size()!=1)
@@ -2887,7 +3019,7 @@ void CatchChallenger::BaseWindow::on_warehouseWithdrawItem_clicked()
     on_warehousePlayerStoredInventory_itemActivated(itemList.first());
 }
 
-void CatchChallenger::BaseWindow::on_warehouseDepositItem_clicked()
+void BaseWindow::on_warehouseDepositItem_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerInventory->selectedItems();
     if(itemList.size()!=1)
@@ -2895,7 +3027,7 @@ void CatchChallenger::BaseWindow::on_warehouseDepositItem_clicked()
     on_warehousePlayerInventory_itemActivated(itemList.first());
 }
 
-void CatchChallenger::BaseWindow::on_warehouseWithdrawMonster_clicked()
+void BaseWindow::on_warehouseWithdrawMonster_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredMonster->selectedItems();
     if(itemList.size()!=1)
@@ -2903,7 +3035,7 @@ void CatchChallenger::BaseWindow::on_warehouseWithdrawMonster_clicked()
     on_warehousePlayerStoredMonster_itemActivated(itemList.first());
 }
 
-void CatchChallenger::BaseWindow::on_warehouseDepositMonster_clicked()
+void BaseWindow::on_warehouseDepositMonster_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerMonster->selectedItems();
     if(itemList.size()!=1)
@@ -2911,7 +3043,7 @@ void CatchChallenger::BaseWindow::on_warehouseDepositMonster_clicked()
     on_warehousePlayerMonster_itemActivated(itemList.first());
 }
 
-void CatchChallenger::BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item)
 {
     quint32 quantity=0;
     quint32 id=item->data(99).toUInt();
@@ -2937,7 +3069,7 @@ void CatchChallenger::BaseWindow::on_warehousePlayerInventory_itemActivated(QLis
     updateTheWareHouseContent();
 }
 
-void CatchChallenger::BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item)
 {
     quint32 quantity=0;
     quint32 id=item->data(99).toUInt();
@@ -2963,7 +3095,7 @@ void CatchChallenger::BaseWindow::on_warehousePlayerStoredInventory_itemActivate
     updateTheWareHouseContent();
 }
 
-void CatchChallenger::BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
 {
     quint32 id=item->data(99).toUInt();
     bool remain_valid_monster=false;
@@ -2989,7 +3121,7 @@ void CatchChallenger::BaseWindow::on_warehousePlayerMonster_itemActivated(QListW
     updateTheWareHouseContent();
 }
 
-void CatchChallenger::BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *item)
 {
     quint32 id=item->data(99).toUInt();
     QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
@@ -3003,7 +3135,7 @@ void CatchChallenger::BaseWindow::on_warehousePlayerStoredMonster_itemActivated(
     updateTheWareHouseContent();
 }
 
-QList<PlayerMonster> CatchChallenger::BaseWindow::warehouseMonsterOnPlayer() const
+QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
 {
     QList<PlayerMonster> warehouseMonsterOnPlayerList;
     {
@@ -3032,7 +3164,7 @@ QList<PlayerMonster> CatchChallenger::BaseWindow::warehouseMonsterOnPlayer() con
     return warehouseMonsterOnPlayerList;
 }
 
-void CatchChallenger::BaseWindow::on_toolButton_quit_warehouse_clicked()
+void BaseWindow::on_toolButton_quit_warehouse_clicked()
 {
     monster_to_withdraw.clear();
     monster_to_deposit.clear();
@@ -3041,7 +3173,7 @@ void CatchChallenger::BaseWindow::on_toolButton_quit_warehouse_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void CatchChallenger::BaseWindow::on_warehouseValidate_clicked()
+void BaseWindow::on_warehouseValidate_clicked()
 {
     {
         QList<QPair<quint32,qint32> > change_warehouse_items_list;
@@ -3128,12 +3260,12 @@ void CatchChallenger::BaseWindow::on_warehouseValidate_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void CatchChallenger::BaseWindow::on_pushButtonFightBag_clicked()
+void BaseWindow::on_pushButtonFightBag_clicked()
 {
     selectObject(ObjectType_UseInFight);
 }
 
-void CatchChallenger::BaseWindow::clanActionSuccess(const quint32 &clanId)
+void BaseWindow::clanActionSuccess(const quint32 &clanId)
 {
     switch(actionClan.first())
     {
@@ -3165,7 +3297,7 @@ void CatchChallenger::BaseWindow::clanActionSuccess(const quint32 &clanId)
     actionClan.removeFirst();
 }
 
-void CatchChallenger::BaseWindow::clanActionFailed()
+void BaseWindow::clanActionFailed()
 {
     switch(actionClan.first())
     {
@@ -3188,7 +3320,7 @@ void CatchChallenger::BaseWindow::clanActionFailed()
     actionClan.removeFirst();
 }
 
-void CatchChallenger::BaseWindow::clanDissolved()
+void BaseWindow::clanDissolved()
 {
     haveClanInformations=false;
     clanName.clear();
@@ -3196,7 +3328,7 @@ void CatchChallenger::BaseWindow::clanDissolved()
     updateClanDisplay();
 }
 
-void CatchChallenger::BaseWindow::updateClanDisplay()
+void BaseWindow::updateClanDisplay()
 {
     ui->tabWidgetTrainerCard->setTabEnabled(4,clan!=0);
     ui->clanGrouBoxNormal->setVisible(!clan_leader);
@@ -3213,19 +3345,19 @@ void CatchChallenger::BaseWindow::updateClanDisplay()
         Chat::chat->setClan(clan!=0);
 }
 
-void CatchChallenger::BaseWindow::on_clanActionLeave_clicked()
+void BaseWindow::on_clanActionLeave_clicked()
 {
     actionClan << ActionClan_Leave;
     CatchChallenger::Api_client_real::client->leaveClan();
 }
 
-void CatchChallenger::BaseWindow::on_clanActionDissolve_clicked()
+void BaseWindow::on_clanActionDissolve_clicked()
 {
     actionClan << ActionClan_Dissolve;
     CatchChallenger::Api_client_real::client->dissolveClan();
 }
 
-void CatchChallenger::BaseWindow::on_clanActionInvite_clicked()
+void BaseWindow::on_clanActionInvite_clicked()
 {
     bool ok;
     QString text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
@@ -3236,7 +3368,7 @@ void CatchChallenger::BaseWindow::on_clanActionInvite_clicked()
     }
 }
 
-void CatchChallenger::BaseWindow::on_clanActionEject_clicked()
+void BaseWindow::on_clanActionEject_clicked()
 {
     bool ok;
     QString text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
@@ -3247,14 +3379,14 @@ void CatchChallenger::BaseWindow::on_clanActionEject_clicked()
     }
 }
 
-void CatchChallenger::BaseWindow::clanInformations(const QString &name)
+void BaseWindow::clanInformations(const QString &name)
 {
     haveClanInformations=true;
     clanName=name;
     updateClanDisplay();
 }
 
-void CatchChallenger::BaseWindow::clanInvite(const quint32 &clanId,const QString &name)
+void BaseWindow::clanInvite(const quint32 &clanId,const QString &name)
 {
     QMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?").arg(QString("<b>%1</b>").arg(name)));
     CatchChallenger::Api_client_real::client->inviteAccept(button==QMessageBox::Yes);
@@ -3267,7 +3399,7 @@ void CatchChallenger::BaseWindow::clanInvite(const quint32 &clanId,const QString
     }
 }
 
-void CatchChallenger::BaseWindow::cityCaptureUpdateTime()
+void BaseWindow::cityCaptureUpdateTime()
 {
     if(city.capture.frenquency==City::Capture::Frequency_week)
         nextCapture=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7*1000);
@@ -3276,7 +3408,7 @@ void CatchChallenger::BaseWindow::cityCaptureUpdateTime()
     nextCityCaptureTimer.start(nextCapture.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch());
 }
 
-void CatchChallenger::BaseWindow::updatePageZonecapture()
+void BaseWindow::updatePageZonecapture()
 {
     if(QDateTime::currentMSecsSinceEpoch()<nextCaptureOnScreen.toMSecsSinceEpoch())
     {
@@ -3305,7 +3437,7 @@ void CatchChallenger::BaseWindow::updatePageZonecapture()
     }
 }
 
-void CatchChallenger::BaseWindow::on_zonecaptureCancel_clicked()
+void BaseWindow::on_zonecaptureCancel_clicked()
 {
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
@@ -3313,7 +3445,7 @@ void CatchChallenger::BaseWindow::on_zonecaptureCancel_clicked()
     zonecapture=false;
 }
 
-void CatchChallenger::BaseWindow::captureCityYourAreNotLeader()
+void BaseWindow::captureCityYourAreNotLeader()
 {
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
@@ -3321,7 +3453,7 @@ void CatchChallenger::BaseWindow::captureCityYourAreNotLeader()
     zonecapture=false;
 }
 
-void CatchChallenger::BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const QString &zone)
+void BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const QString &zone)
 {
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
@@ -3332,7 +3464,7 @@ void CatchChallenger::BaseWindow::captureCityYourLeaderHaveStartInOtherCity(cons
     zonecapture=false;
 }
 
-void CatchChallenger::BaseWindow::captureCityPreviousNotFinished()
+void BaseWindow::captureCityPreviousNotFinished()
 {
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
@@ -3340,14 +3472,14 @@ void CatchChallenger::BaseWindow::captureCityPreviousNotFinished()
     zonecapture=false;
 }
 
-void CatchChallenger::BaseWindow::captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count)
+void BaseWindow::captureCityStartBattle(const quint16 &player_count,const quint16 &clan_count)
 {
     ui->zonecaptureCancel->setVisible(false);
     ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
     updater_page_zonecapture.stop();
 }
 
-void CatchChallenger::BaseWindow::captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId)
+void BaseWindow::captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId)
 {
     ui->zonecaptureCancel->setVisible(false);
     ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
@@ -3355,14 +3487,14 @@ void CatchChallenger::BaseWindow::captureCityStartBotFight(const quint16 &player
     botFight(fightId);
 }
 
-void CatchChallenger::BaseWindow::captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count)
+void BaseWindow::captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count)
 {
     ui->zonecaptureCancel->setVisible(false);
     ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting fight.")+" "+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
     updater_page_zonecapture.stop();
 }
 
-void CatchChallenger::BaseWindow::captureCityWin()
+void BaseWindow::captureCityWin()
 {
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
@@ -3373,7 +3505,7 @@ void CatchChallenger::BaseWindow::captureCityWin()
     zonecapture=false;
 }
 
-void CatchChallenger::BaseWindow::on_factoryBuy_clicked()
+void BaseWindow::on_factoryBuy_clicked()
 {
     QList<QListWidgetItem *> selectedItems=ui->factoryProducts->selectedItems();
     if(selectedItems.size()!=1)
@@ -3381,7 +3513,7 @@ void CatchChallenger::BaseWindow::on_factoryBuy_clicked()
     on_factoryProducts_itemActivated(selectedItems.first());
 }
 
-void CatchChallenger::BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
 {
     quint32 quantity=1;
     quint32 id=item->data(99).toUInt();
@@ -3415,7 +3547,7 @@ void CatchChallenger::BaseWindow::on_factoryProducts_itemActivated(QListWidgetIt
     CatchChallenger::Api_client_real::client->buyFactoryObject(factoryId,id,i,price);
 }
 
-void CatchChallenger::BaseWindow::on_factorySell_clicked()
+void BaseWindow::on_factorySell_clicked()
 {
     QList<QListWidgetItem *> selectedItems=ui->factoryResources->selectedItems();
     if(selectedItems.size()!=1)
@@ -3423,7 +3555,7 @@ void CatchChallenger::BaseWindow::on_factorySell_clicked()
     on_factoryResources_itemActivated(selectedItems.first());
 }
 
-void CatchChallenger::BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 {
     quint32 quantity=1;
     quint32 id=item->data(99).toUInt();
@@ -3615,17 +3747,17 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
     ui->factoryStatus->setText(tr("Have the factory list"));
 }
 
-void CatchChallenger::BaseWindow::on_factoryQuit_clicked()
+void BaseWindow::on_factoryQuit_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
-void CatchChallenger::BaseWindow::on_monsterDetailsQuit_clicked()
+void BaseWindow::on_monsterDetailsQuit_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_monster);
 }
 
-void CatchChallenger::BaseWindow::on_monsterListMoveUp_clicked()
+void BaseWindow::on_monsterListMoveUp_clicked()
 {
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
@@ -3644,7 +3776,7 @@ void CatchChallenger::BaseWindow::on_monsterListMoveUp_clicked()
     on_monsterList_itemSelectionChanged();
 }
 
-void CatchChallenger::BaseWindow::on_monsterListMoveDown_clicked()
+void BaseWindow::on_monsterListMoveDown_clicked()
 {
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
@@ -3665,7 +3797,7 @@ void CatchChallenger::BaseWindow::on_monsterListMoveDown_clicked()
     on_monsterList_itemSelectionChanged();
 }
 
-void CatchChallenger::BaseWindow::on_monsterList_itemSelectionChanged()
+void BaseWindow::on_monsterList_itemSelectionChanged()
 {
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
@@ -3684,4 +3816,424 @@ void CatchChallenger::BaseWindow::on_monsterList_itemSelectionChanged()
     int row=ui->monsterList->row(selectedMonsters.first());
     ui->monsterListMoveUp->setEnabled(row>0);
     ui->monsterListMoveDown->setEnabled(row<(playerMonster.size()-1));
+}
+
+void BaseWindow::marketList(const quint64 &price,const double &bitcoin,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList)
+{
+    ui->marketWithdraw->setVisible(true);
+    if(this->bitcoin>=0)
+        ui->marketStat->setText(tr("Cash to withdraw: %1$, %2&#3647;").arg(price).arg(bitcoin));
+    else
+        ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(price));
+    int index;
+    //the object list
+    ui->marketObject->clear();
+    index=0;
+    while(index<marketObjectList.size())
+    {
+        const MarketObject &marketObject=marketObjectList.at(index);
+        QListWidgetItem *item=new QListWidgetItem();
+        updateMarketObject(item,marketObject);
+        ui->marketObject->addItem(item);
+    }
+    //the monster list
+    ui->marketMonster->clear();
+    index=0;
+    while(index<marketMonsterList.size())
+    {
+        const MarketMonster &marketMonster=marketMonsterList.at(index);
+        QListWidgetItem *item=new QListWidgetItem();
+        item->setData(99,marketMonster.monsterId);
+        item->setData(98,marketMonster.price);
+        item->setData(97,marketMonster.bitcoin);
+        item->setData(96,marketMonster.level);
+        QString price;
+        if(marketMonster.bitcoin>0 && marketMonster.price>0)
+            price=tr("Price: %1$, %2&#3647;").arg(marketMonster.price).arg(marketMonster.bitcoin);
+        else if(marketMonster.bitcoin>0)
+            price=tr("Price: %1&#3647;").arg(marketMonster.bitcoin);
+        else if(marketMonster.price>0)
+            price=tr("Price: %1$").arg(marketMonster.price);
+        else
+            price=tr("Price: Free");
+        if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].thumb);
+            item->setText(QString("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
+            item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].description);
+        }
+        else
+        {
+            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+            item->setText(QString("Unknown item with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
+        }
+        ui->marketMonster->addItem(item);
+    }
+    //the object own list
+    ui->marketOwnObject->clear();
+    index=0;
+    while(index<marketOwnObjectList.size())
+    {
+        const MarketObject &marketObject=marketOwnObjectList.at(index);
+        QListWidgetItem *item=new QListWidgetItem();
+        updateMarketObject(item,marketObject);
+        ui->marketOwnObject->addItem(item);
+    }
+    //the object list
+    ui->marketOwnMonster->clear();
+    index=0;
+    while(index<marketOwnMonsterList.size())
+    {
+        addOwnMonster(marketOwnMonsterList.at(index));
+        index++;
+    }
+}
+
+void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
+{
+    QListWidgetItem *item=new QListWidgetItem();
+    item->setData(99,marketMonster.monsterId);
+    item->setData(98,marketMonster.price);
+    item->setData(97,marketMonster.bitcoin);
+    QString price;
+    if(marketMonster.bitcoin>0 && marketMonster.price>0)
+        price=tr("Price: %1$, %2&#3647;").arg(marketMonster.price).arg(marketMonster.bitcoin);
+    else if(marketMonster.bitcoin>0)
+        price=tr("Price: %1&#3647;").arg(marketMonster.bitcoin);
+    else if(marketMonster.price>0)
+        price=tr("Price: %1$").arg(marketMonster.price);
+    else
+        price=tr("Price: Free");
+    if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].thumb);
+        item->setText(QString("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
+        item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].description);
+    }
+    else
+    {
+        item->setIcon(QIcon(":/images/monsters/default/small.png"));
+        item->setText(QString("Unknown monster with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
+    }
+    ui->marketOwnMonster->addItem(item);
+}
+
+void BaseWindow::marketBuy(const bool &success)
+{
+    marketBuyInSuspend=false;
+    if(!success)
+    {
+        showTip(tr("Your buy in the market have failed"));
+        addCash(marketBuyCashInSuspend);
+        addBitcoin(marketBuyBitcoinInSuspend);
+        marketBuyObjectList.removeFirst();
+    }
+    else
+    {
+        QHash<quint32,quint32> items;
+        items[marketBuyObjectList.first().first]=marketBuyObjectList.first().second;
+        add_to_inventory(items);
+        marketBuyObjectList.removeFirst();
+    }
+    marketBuyCashInSuspend=0;
+    marketBuyBitcoinInSuspend=0;
+}
+
+void BaseWindow::marketBuyMonster(const PlayerMonster &playerMonster)
+{
+
+    marketBuyInSuspend=false;
+    ClientFightEngine::fightEngine.addPlayerMonster(playerMonster);
+    load_monsters();
+    marketBuyCashInSuspend=0;
+    marketBuyBitcoinInSuspend=0;
+}
+
+void BaseWindow::marketPut(const bool &success)
+{
+    if(!success)
+    {
+        if(!marketPutObjectInSuspendList.isEmpty())
+            add_to_inventory(marketPutObjectInSuspendList,false);
+        if(!marketPutMonsterList.isEmpty())
+        {
+            ClientFightEngine::fightEngine.insertPlayerMonster(marketPutMonsterPlaceList.first(),marketPutMonsterList.first());
+            load_monsters();
+        }
+    }
+    else
+    {
+        if(!marketPutMonsterList.isEmpty())
+        {
+            MarketMonster marketMonster;
+            marketMonster.bitcoin=marketPutBitcoinInSuspend;
+            marketMonster.price=marketPutCashInSuspend;
+            marketMonster.level=marketPutMonsterList.first().level;
+            marketMonster.monster=marketPutMonsterList.first().monster;
+            marketMonster.monsterId=marketPutMonsterList.first().id;
+            addOwnMonster(marketMonster);
+        }
+        if(!marketPutObjectInSuspendList.isEmpty())
+        {
+            MarketObject marketObject;
+            marketObject.bitcoin=marketPutBitcoinInSuspend;
+            marketObject.price=marketPutCashInSuspend;
+            marketObject.marketObjectId=0;
+            marketObject.objectId=marketPutObjectInSuspendList.first().first;
+            marketObject.quantity=marketPutObjectInSuspendList.first().second;
+            QListWidgetItem *item=new QListWidgetItem();
+            updateMarketObject(item,marketObject);
+            ui->marketOwnObject->addItem(item);
+        }
+    }
+    marketPutCashInSuspend=0;
+    marketPutBitcoinInSuspend=0;
+    marketPutObjectInSuspendList.clear();
+    marketPutMonsterList.clear();
+    marketPutMonsterPlaceList.clear();
+}
+
+void BaseWindow::marketGetCash(const quint64 &cash,const double &bitcoin)
+{
+    addCash(cash);
+    addBitcoin(bitcoin);
+    if(this->bitcoin>=0)
+        ui->marketStat->setText(tr("Cash to withdraw: %1$, %2&#3647;").arg(0).arg(0));
+    else
+        ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(0));
+}
+
+void BaseWindow::marketWithdrawCanceled()
+{
+    marketWithdrawInSuspend=false;
+    if(!marketWithdrawObjectList.isEmpty())
+    {
+        QListWidgetItem *item=new QListWidgetItem();
+        updateMarketObject(item,marketWithdrawObjectList.first());
+        ui->marketOwnObject->addItem(item);
+    }
+    if(!marketWithdrawMonsterList.isEmpty())
+        addOwnMonster(marketWithdrawMonsterList.first());
+    marketWithdrawObjectList.clear();
+    marketWithdrawMonsterList.clear();
+}
+
+void BaseWindow::marketWithdrawObject(const quint32 &objectId,const quint32 &quantity)
+{
+    marketWithdrawInSuspend=false;
+    marketWithdrawObjectList.clear();
+    marketWithdrawMonsterList.clear();
+    add_to_inventory(objectId,quantity);
+}
+
+void BaseWindow::marketWithdrawMonster(const PlayerMonster &playerMonster)
+{
+    marketWithdrawInSuspend=false;
+    marketWithdrawObjectList.clear();
+    marketWithdrawMonsterList.clear();
+    ClientFightEngine::fightEngine.addPlayerMonster(playerMonster);
+}
+
+void BaseWindow::on_marketPutObject_clicked()
+{
+    selectObject(ObjectType_SellToMarket);
+}
+
+void BaseWindow::on_marketPutMonster_clicked()
+{
+    selectObject(ObjectType_MonsterToTradeToMarket);
+}
+
+void BaseWindow::on_marketQuit_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void BaseWindow::on_marketWithdraw_clicked()
+{
+    CatchChallenger::Api_client_real::client->recoverMarketCash();
+}
+
+void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &marketObject)
+{
+    item->setData(99,marketObject.marketObjectId);
+    item->setData(98,marketObject.quantity);
+    item->setData(97,marketObject.price);
+    item->setData(96,marketObject.bitcoin);
+    item->setData(95,marketObject.objectId);
+    QString price;
+    if(marketObject.bitcoin>0 && marketObject.price>0)
+        price=tr("Price: %1$, %2&#3647;").arg(marketObject.price).arg(marketObject.bitcoin);
+    else if(marketObject.bitcoin>0)
+        price=tr("Price: %1&#3647;").arg(marketObject.bitcoin);
+    else if(marketObject.price>0)
+        price=tr("Price: %1$").arg(marketObject.price);
+    else
+        price=tr("Price: Free");
+    QString quantity;
+    if(marketObject.quantity>1)
+        quantity=tr(", quantity: %1").arg(marketObject.quantity);
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.objectId))
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].image);
+        item->setText(QString("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].name).arg(quantity).arg(price));
+        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].description);
+    }
+    else
+    {
+        item->setIcon(QIcon(":/images/monsters/default/small.png"));
+        item->setText(QString("Unknown item with id %1%2\n%3").arg(marketObject.objectId).arg(quantity).arg(price));
+    }
+}
+
+void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
+{
+    if(marketBuyInSuspend)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("You have aleady a buy in progress"));
+        return;
+    }
+    quint32 priceQuantity;
+    quint32 bitcoinQuantity;
+    if(item->data(97).toUInt()>0)
+        priceQuantity=cash/item->data(97).toUInt();
+    else
+        priceQuantity=item->data(98).toUInt();
+    if(item->data(96).toDouble()>0)
+        bitcoinQuantity=bitcoin/item->data(96).toUInt();
+    else
+        bitcoinQuantity=item->data(98).toUInt();
+    if(priceQuantity>item->data(98).toUInt())
+        priceQuantity=item->data(98).toUInt();
+    if(bitcoinQuantity>item->data(98).toUInt())
+        bitcoinQuantity=item->data(98).toUInt();
+    if(priceQuantity>bitcoinQuantity)
+        priceQuantity=bitcoinQuantity;
+    if(bitcoinQuantity>priceQuantity)
+        bitcoinQuantity=priceQuantity;
+    quint32 quantity=priceQuantity;
+    if(quantity==0)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Have not cash to buy it"));
+        return;
+    }
+    if(quantity>1)
+    {
+        bool ok;
+        quantity=QInputDialog::getInt(this,tr("Quantity"),tr("How many item wish you buy?"),quantity,1,quantity,1,&ok);
+        if(!ok)
+            return;
+    }
+    CatchChallenger::Api_client_real::client->buyMarketObject(item->data(99).toUInt(),quantity);
+    QPair<quint32,quint32> newEntry;
+    newEntry.first=item->data(99).toUInt();
+    newEntry.second=quantity;
+    marketBuyObjectList << newEntry;
+    marketBuyInSuspend=true;
+    marketBuyCashInSuspend=quantity*item->data(97).toUInt();
+    marketBuyBitcoinInSuspend=quantity*item->data(96).toDouble();
+    removeCash(marketBuyCashInSuspend);
+    removeBitcoin(marketBuyBitcoinInSuspend);
+    item->setData(98,item->data(98).toUInt()-quantity);
+    if(item->data(98).toUInt()==0)
+        delete item;
+    else
+    {
+        MarketObject marketObject;
+        marketObject.marketObjectId=item->data(99).toUInt();
+        marketObject.quantity=item->data(98).toUInt();
+        marketObject.price=item->data(97).toUInt();
+        marketObject.bitcoin=item->data(96).toDouble();
+        marketObject.objectId=item->data(95).toUInt();
+        updateMarketObject(item,marketObject);
+    }
+}
+
+void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
+{
+    if(marketWithdrawInSuspend)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("You have aleady a withdraw in progress"));
+        return;
+    }
+    bool ok;
+    quint32 quantity=QInputDialog::getInt(this,tr("Quantity"),tr("How many item wish you buy?"),item->data(98).toUInt(),1,item->data(98).toUInt(),1,&ok);
+    if(!ok)
+        return;
+    CatchChallenger::Api_client_real::client->withdrawMarketObject(item->data(95).toUInt(),item->data(98).toUInt());
+    marketWithdrawInSuspend=true;
+    MarketObject marketObject;
+    marketObject.marketObjectId=item->data(99).toUInt();
+    marketObject.quantity=item->data(98).toUInt();
+    marketObject.price=item->data(97).toUInt();
+    marketObject.bitcoin=item->data(96).toDouble();
+    marketObject.objectId=item->data(95).toUInt();
+    marketWithdrawObjectList << marketObject;
+    item->setData(98,item->data(98).toUInt()-quantity);
+    if(item->data(98).toUInt()==0)
+        delete item;
+    else
+        updateMarketObject(item,marketObject);
+}
+
+void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
+{
+    if(marketBuyInSuspend)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("You have aleady a buy in progress"));
+        return;
+    }
+    quint32 priceQuantity;
+    quint32 bitcoinQuantity;
+    if(item->data(98).toUInt()>0)
+        priceQuantity=cash/item->data(98).toUInt();
+    else
+        priceQuantity=1;
+    if(item->data(97).toDouble()>0)
+        bitcoinQuantity=bitcoin/item->data(97).toUInt();
+    else
+        bitcoinQuantity=1;
+    if(priceQuantity>1)
+        priceQuantity=1;
+    if(bitcoinQuantity>1)
+        bitcoinQuantity=1;
+    if(priceQuantity>bitcoinQuantity)
+        priceQuantity=bitcoinQuantity;
+    if(bitcoinQuantity>priceQuantity)
+        bitcoinQuantity=priceQuantity;
+    quint32 quantity=priceQuantity;
+    marketBuyCashInSuspend=item->data(98).toUInt();
+    marketBuyBitcoinInSuspend=item->data(97).toDouble();
+    removeCash(marketBuyCashInSuspend);
+    removeBitcoin(marketBuyBitcoinInSuspend);
+    if(quantity==0)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Have not cash to buy it"));
+        return;
+    }
+    CatchChallenger::Api_client_real::client->buyMarketMonster(item->data(99).toUInt());
+    delete item;
+}
+
+void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
+{
+    if(!ClientFightEngine::fightEngine.getPlayerMonster().size()>CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+    {
+        QMessageBox::warning(this,tr("Warning"),tr("You can wear this monster more"));
+        return;
+    }
+    if(marketWithdrawInSuspend)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("You have aleady a withdraw in progress"));
+        return;
+    }
+    CatchChallenger::MarketMonster playerMonster;
+    playerMonster.monster=item->data(99).toUInt();
+    playerMonster.price=item->data(98).toUInt();
+    playerMonster.bitcoin=item->data(97).toDouble();
+    playerMonster.level=item->data(96).toUInt();
+    marketWithdrawMonsterList << playerMonster;
+    CatchChallenger::Api_client_real::client->withdrawMarketMonster(item->data(99).toUInt());
+    marketWithdrawInSuspend=true;
+    delete item;
 }

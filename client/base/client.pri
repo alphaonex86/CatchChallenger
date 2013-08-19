@@ -1,6 +1,6 @@
 INCLUDEPATH += $$PWD/../../general/libtiled/
 DEPENDPATH += $$PWD/../../general/libtiled/
-LIBS *= -ltiled
+LIBS *= -ltiledd
 
 LIBS += -lvorbis -lvorbisfile
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -36,7 +36,8 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/../fight/interface/MapVisualiserPlayerWithFight.cpp \
     $$PWD/interface/WithAnotherPlayer.cpp \
     $$PWD/render/MapVisualiserThread.cpp \
-    $$PWD/interface/QuestJS.cpp
+    $$PWD/interface/QuestJS.cpp \
+    $$PWD/interface/GetPrice.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/audio/QOggAudioBuffer.h \
@@ -61,11 +62,13 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/../fight/interface/MapVisualiserPlayerWithFight.h \
     $$PWD/interface/WithAnotherPlayer.h \
     $$PWD/render/MapVisualiserThread.h \
-    $$PWD/interface/QuestJS.h
+    $$PWD/interface/QuestJS.h \
+    $$PWD/interface/GetPrice.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
-    $$PWD/interface/WithAnotherPlayer.ui
+    $$PWD/interface/WithAnotherPlayer.ui \
+    $$PWD/interface/GetPrice.ui
 
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
 

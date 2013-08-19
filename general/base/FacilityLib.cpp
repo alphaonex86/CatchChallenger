@@ -114,6 +114,27 @@ QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &p
     return outputData;
 }
 
+QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)playerMonster.monster;
+    out << (quint8)playerMonster.level;
+    out << (quint32)playerMonster.hp;
+    out << (quint32)playerMonster.captured_with;
+    out << (quint8)playerMonster.gender;
+    out << (quint32)playerMonster.buffs.size();
+    int index=0;
+    while(index<playerMonster.buffs.size())
+    {
+        out << (quint32)playerMonster.buffs.at(index).buff;
+        out << (quint8)playerMonster.buffs.at(index).level;
+        index++;
+    }
+    return outputData;
+}
+
 PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster,const Monster::Stat &stat)
 {
     PlayerMonster tempPlayerMonster;
@@ -214,4 +235,41 @@ QDateTime FacilityLib::nextCaptureTime(const City &city)
         }
     }
     return nextCityCapture;
+}
+
+QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
+{
+    //send the network reply
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+
+    out << (quint32)monster.id;
+    out << (quint32)monster.monster;
+    out << (quint8)monster.level;
+    out << (quint32)monster.remaining_xp;
+    out << (quint32)monster.hp;
+    out << (quint32)monster.sp;
+    out << (quint32)monster.captured_with;
+    out << (quint8)monster.gender;
+    out << (quint32)monster.egg_step;
+    int sub_index=0;
+    int sub_size=monster.buffs.size();
+    out << (quint32)sub_size;
+    while(sub_index<sub_size)
+    {
+        out << (quint32)monster.buffs.at(sub_index).buff;
+        out << (quint8)monster.buffs.at(sub_index).level;
+        sub_index++;
+    }
+    sub_index=0;
+    sub_size=monster.skills.size();
+    out << (quint32)sub_size;
+    while(sub_index<sub_size)
+    {
+        out << (quint32)monster.skills.at(sub_index).skill;
+        out << (quint8)monster.skills.at(sub_index).level;
+        sub_index++;
+    }
+    return outputData;
 }

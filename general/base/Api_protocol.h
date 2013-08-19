@@ -196,6 +196,16 @@ signals:
     void captureCityStartBotFight(const quint16 &player_count,const quint16 &clan_count,const quint32 &fightId);
     void captureCityDelayedStart(const quint16 &player_count,const quint16 &clan_count);
     void captureCityWin();
+
+    //market
+    void marketList(const quint64 &price,const double &bitcoin,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList) const;
+    void marketBuy(const bool &success) const;
+    void marketBuyMonster(const PlayerMonster &playerMonster) const;
+    void marketPut(const bool &success) const;
+    void marketGetCash(const quint64 &cash,const double &bitcoin) const;
+    void marketWithdrawCanceled() const;
+    void marketWithdrawObject(const quint32 &objectId,const quint32 &quantity) const;
+    void marketWithdrawMonster(const PlayerMonster &playerMonster) const;
 public slots:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const quint8 &moved_unit,const CatchChallenger::Direction &direction);
@@ -264,6 +274,16 @@ public slots:
     void ejectClan(const QString &pseudo);
     void inviteAccept(const bool &accept);
     void waitingForCityCapture(const bool &cancel);
+
+    //market
+    void getMarketList();
+    void buyMarketObject(const quint32 &marketObjectId,const quint32 &quantity=1);
+    void buyMarketMonster(const quint32 &monsterId);
+    void putMarketObject(const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin);
+    void putMarketMonster(const quint32 &monsterId,const quint32 &price,const double &bitcoin);
+    void recoverMarketCash();
+    void withdrawMarketObject(const quint32 &objectId,const quint32 &quantity=1);
+    void withdrawMarketMonster(const quint32 &monsterId);
 };
 }
 

@@ -238,6 +238,8 @@ struct Player_private_and_public_informations
 {
     Player_public_informations public_informations;
     quint64 cash,warehouse_cash;
+    double bitcoin;
+    QString bitcoinAddress;
     QHash<quint32,quint32> items,warehouse_items;
     //crafting
     QSet<quint32> recipes;
@@ -623,6 +625,23 @@ struct BotFight
     };
     QList<BotFightMonster> monsters;
     quint32 cash;
+};
+
+struct MarketObject
+{
+    quint32 marketObjectId;
+    quint32 objectId;
+    quint32 quantity;
+    quint32 price;
+    double bitcoin;
+};
+struct MarketMonster
+{
+    quint32 monsterId;
+    quint32 monster;
+    quint8 level;
+    quint32 price;
+    double bitcoin;
 };
 
 }

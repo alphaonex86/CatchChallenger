@@ -475,9 +475,6 @@ void MainWindow::load_settings()
             bitcoin.fee=1.0;
         if(bitcoin.fee<0 || bitcoin.fee>100)
             bitcoin.fee=1.0;
-        bitcoin.history=settings->value("history").toUInt(&ok);
-        if(!ok)
-            bitcoin.history=30;
         bitcoin.binaryPath=settings->value("binaryPath").toString();
         bitcoin.workingPath=settings->value("workingPath").toString();
         int port=settings->value("port").toUInt(&ok);
@@ -490,7 +487,6 @@ void MainWindow::load_settings()
         ui->bitcoin_enabled->setChecked(bitcoin.enabled);
         ui->bitcoin_address->setText(bitcoin.address);
         ui->bitcoin_fee->setValue(bitcoin.fee);
-        ui->bitcoin_history->setValue(bitcoin.history);
         ui->bitcoin_binarypath->setText(bitcoin.binaryPath);
         ui->bitcoin_workingpath->setText(bitcoin.workingPath);
         ui->bitcoin_port->setValue(bitcoin.port);
@@ -618,7 +614,6 @@ void MainWindow::send_settings()
     formatedServerSettings.bitcoin.binaryPath=ui->bitcoin_binarypath->text();
     formatedServerSettings.bitcoin.enabled=ui->bitcoin_enabled->isChecked();
     formatedServerSettings.bitcoin.fee=ui->bitcoin_fee->value();
-    formatedServerSettings.bitcoin.history=ui->bitcoin_history->value();
     formatedServerSettings.bitcoin.port=ui->bitcoin_port->value();
     formatedServerSettings.bitcoin.workingPath=ui->bitcoin_workingpath->text();
 
@@ -988,13 +983,6 @@ void CatchChallenger::MainWindow::on_bitcoin_fee_editingFinished()
 {
     settings->beginGroup("bitcoin");
     settings->setValue("fee",ui->bitcoin_fee->value());
-    settings->endGroup();
-}
-
-void CatchChallenger::MainWindow::on_bitcoin_history_editingFinished()
-{
-    settings->beginGroup("bitcoin");
-    settings->setValue("history",ui->bitcoin_history->value());
     settings->endGroup();
 }
 

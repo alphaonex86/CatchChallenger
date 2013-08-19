@@ -2394,6 +2394,18 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> player_informations.warehouse_cash;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(double))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player cash ware house, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> player_informations.bitcoin;
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            return;
+                        }
+                        in >> player_informations.bitcoinAddress;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the number of map, line: %1").arg(__LINE__));
@@ -3164,6 +3176,559 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     haveFactoryAction=false;
                 }
                 break;
+                case 0x0010:
+                {
+                    quint32 listSize,index;
+                    QList<MarketObject> marketObjectList;
+                    QList<MarketMonster> marketMonsterList;
+                    QList<MarketObject> marketOwnObjectList;
+                    QList<MarketMonster> marketOwnMonsterList;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint64 cash;
+                    in >> cash;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    double bitcoin;
+                    in >> bitcoin;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    in >> listSize;
+                    index=0;
+                    while(index<listSize)
+                    {
+                        MarketObject marketObject;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.marketObjectId;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.objectId;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.quantity;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.price;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.bitcoin;
+                        marketObjectList << marketObject;
+                        index++;
+                    }
+                    in >> listSize;
+                    index=0;
+                    while(index<listSize)
+                    {
+                        MarketMonster marketMonster;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.monsterId;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.monster;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.level;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.price;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.bitcoin;
+                        marketMonsterList << marketMonster;
+                        index++;
+                    }
+                    in >> listSize;
+                    index=0;
+                    while(index<listSize)
+                    {
+                        MarketObject marketObject;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.marketObjectId;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.objectId;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.quantity;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.price;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketObject.bitcoin;
+                        marketOwnObjectList << marketObject;
+                        index++;
+                    }
+                    in >> listSize;
+                    index=0;
+                    while(index<listSize)
+                    {
+                        MarketMonster marketMonster;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.monsterId;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.monster;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.level;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.price;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        in >> marketMonster.bitcoin;
+                        marketOwnMonsterList << marketMonster;
+                        index++;
+                    }
+                    emit marketList(cash,bitcoin,marketObjectList,marketMonsterList,marketOwnObjectList,marketOwnMonsterList);
+                }
+                break;
+                case 0x0011:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                            if((in.device()->size()-in.device()->pos())==0)
+                                emit marketBuy(true);
+                        break;
+                        case 0x02:
+                        case 0x03:
+                            emit marketBuy(false);
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong return code, line: %1").arg(__LINE__));
+                        return;
+                    }
+                    if(returnCode==0x01 && (in.device()->size()-in.device()->pos())>0)
+                    {
+                        PlayerMonster monster;
+                        PlayerBuff buff;
+                        PlayerMonster::PlayerSkill skill;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id bd, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.id;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.monster;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster level, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.level;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster remaining_xp, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.remaining_xp;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster hp, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.hp;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster sp, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.sp;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.captured_with;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        quint8 gender;
+                        in >> gender;
+                        switch(gender)
+                        {
+                            case 0x01:
+                            case 0x02:
+                            case 0x03:
+                                monster.gender=(Gender)gender;
+                            break;
+                            default:
+                                parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(gender));
+                                return;
+                            break;
+                        }
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster egg_step, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> monster.egg_step;
+
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster size of list of the buff monsters, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        quint32 sub_size,sub_index;
+                        in >> sub_size;
+                        sub_index=0;
+                        while(sub_index<sub_size)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster buff, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> buff.buff;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster buff level, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> buff.level;
+                            monster.buffs << buff;
+                            sub_index++;
+                        }
+
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster size of list of the skill monsters, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> sub_size;
+                        sub_index=0;
+                        while(sub_index<sub_size)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> skill.skill;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill level, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> skill.level;
+                            monster.skills << skill;
+                            sub_index++;
+                        }
+                        emit marketBuyMonster(monster);
+                    }
+                }
+                break;
+                case 0x0012:
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                            emit marketPut(true);
+                        break;
+                        case 0x02:
+                            emit marketPut(false);
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong return code, line: %1").arg(__LINE__));
+                        return;
+                    }
+                break;
+                case 0x0013:
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint64 cash;
+                    in >> cash;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(double)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    double bitcoin;
+                    in >> bitcoin;
+                    emit marketGetCash(cash,bitcoin);
+                break;
+                case 0x0014:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    switch(returnCode)
+                    {
+                        case 0x01:
+                        break;
+                        case 0x02:
+                            emit marketWithdrawCanceled();
+                        break;
+                        default:
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong return code, line: %1").arg(__LINE__));
+                        return;
+                    }
+                    if(returnCode==0x01)
+                    {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                            return;
+                        }
+                        quint8 returnType;
+                        in >> returnType;
+                        switch(returnType)
+                        {
+                            case 0x01:
+                            case 0x02:
+                            break;
+                            default:
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong return code, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        if(returnType==0x01)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                                return;
+                            }
+                            quint8 objectId;
+                            in >> objectId;
+                            if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                                return;
+                            }
+                            quint8 quantity;
+                            in >> quantity;
+                            emit marketWithdrawObject(objectId,quantity);
+                        }
+                        else
+                        {
+                            PlayerMonster monster;
+                            PlayerBuff buff;
+                            PlayerMonster::PlayerSkill skill;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id bd, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.id;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster id, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.monster;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster level, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.level;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster remaining_xp, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.remaining_xp;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster hp, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.hp;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster sp, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.sp;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.captured_with;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            quint8 gender;
+                            in >> gender;
+                            switch(gender)
+                            {
+                                case 0x01:
+                                case 0x02:
+                                case 0x03:
+                                    monster.gender=(Gender)gender;
+                                break;
+                                default:
+                                    parseError(tr("Procotol wrong or corrupted"),QString("gender code wrong: %2, line: %1").arg(__LINE__).arg(gender));
+                                    return;
+                                break;
+                            }
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster egg_step, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> monster.egg_step;
+
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster size of list of the buff monsters, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            quint32 sub_size,sub_index;
+                            in >> sub_size;
+                            sub_index=0;
+                            while(sub_index<sub_size)
+                            {
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster buff, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> buff.buff;
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster buff level, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> buff.level;
+                                monster.buffs << buff;
+                                sub_index++;
+                            }
+
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster size of list of the skill monsters, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> sub_size;
+                            sub_index=0;
+                            while(sub_index<sub_size)
+                            {
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> skill.skill;
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill level, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> skill.level;
+                                monster.skills << skill;
+                                sub_index++;
+                            }
+                            emit marketWithdrawMonster(monster);
+                        }
+                    }
+                }
+                break;
                 default:
                     parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType code: %1, with mainCodeType: %2, line: %3").arg(subCodeType).arg(mainCodeType).arg(__LINE__));
                     return;
@@ -3677,6 +4242,84 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
     else
         out << (quint8)0x01;
     output->packFullOutcommingData(0x6a,0x0005,outputData);
+}
+
+//market
+void Api_protocol::getMarketList()
+{
+    output->packFullOutcommingQuery(0x10,0x0010,queryNumber(),QByteArray());
+}
+
+void Api_protocol::buyMarketObject(const quint32 &marketObjectId, const quint32 &quantity)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << marketObjectId;
+    out << quantity;
+    output->packFullOutcommingQuery(0x10,0x0011,queryNumber(),outputData);
+}
+
+void Api_protocol::buyMarketMonster(const quint32 &monsterId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    out << monsterId;
+    output->packFullOutcommingQuery(0x10,0x0011,queryNumber(),outputData);
+}
+
+void Api_protocol::putMarketObject(const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << objectId;
+    out << quantity;
+    out << price;
+    out << bitcoin;
+    output->packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData);
+}
+
+void Api_protocol::putMarketMonster(const quint32 &monsterId,const quint32 &price,const double &bitcoin)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    out << monsterId;
+    out << price;
+    out << bitcoin;
+    output->packFullOutcommingQuery(0x10,0x0012,queryNumber(),outputData);
+}
+
+void Api_protocol::recoverMarketCash()
+{
+    output->packFullOutcommingQuery(0x10,0x0013,queryNumber(),QByteArray());
+}
+
+void Api_protocol::withdrawMarketObject(const quint32 &objectId,const quint32 &quantity)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x01;
+    out << objectId;
+    out << quantity;
+    output->packFullOutcommingQuery(0x10,0x0014,queryNumber(),outputData);
+}
+
+void Api_protocol::withdrawMarketMonster(const quint32 &monsterId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    out << monsterId;
+    output->packFullOutcommingQuery(0x10,0x0014,queryNumber(),outputData);
 }
 
 void Api_protocol::collectMaturePlant()
