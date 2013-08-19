@@ -83,6 +83,7 @@ private:
     static Direction	temp_direction;
     static QHash<quint32,Clan *> clanList;
     static QHash<QString,LocalClientHandler *> playerByPseudo;
+    static QHash<quint32,LocalClientHandler *> playerById;
     static QHash<QString,QList<LocalClientHandler *> > captureCity;
     static QHash<QString,CaptureCityValidated> captureCityValidatedList;
 
@@ -124,6 +125,7 @@ public slots:
     quint32 removeObject(const quint32 &item,const quint32 &quantity=1);
     void sendRemoveObject(const quint32 &item,const quint32 &quantity=1);
     quint32 objectQuantity(const quint32 &item);
+    bool addMarketCashWithoutSave(const quint64 &cash,const double &bitcoin);
     void addCash(const quint64 &cash,const bool &forceSave=false);
     void removeCash(const quint64 &cash);
     void addBitcoin(const double &bitcoin);
@@ -208,6 +210,7 @@ public slots:
     void buyMarketMonster(const quint32 &query_id,const quint32 &monsterId);
     void putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin);
     void putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price,const double &bitcoin);
+    inline bool bitcoinEnabled() const;
     void recoverMarketCash(const quint32 &query_id);
     void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
