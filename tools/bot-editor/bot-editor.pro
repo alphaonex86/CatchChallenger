@@ -23,3 +23,6 @@ FORMS    += MainWindow.ui \
     StepType.ui
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
+
+RESOURCES += resources.qrc
+win32:RC_FILE += $$PWD/resources-windows.rc
