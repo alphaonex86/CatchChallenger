@@ -19,48 +19,28 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    //permanent bot on client, temp to parse on the server
-    struct Bot
-    {
-        QHash<quint8,QDomElement> step;
-        quint32 botId;
-    };
+    void updateItemList();
 private slots:
-    void updateTextDisplayed();
+    void on_browseItemFile_clicked();
+    void on_openItemFile_clicked();
+    void on_itemList_itemDoubleClicked(QListWidgetItem *item);
+    void on_itemListAdd_clicked();
+    void on_itemListEdit_clicked();
+    void on_itemListDelete_clicked();
+    void on_itemListSave_clicked();
+    void on_nameEditLanguageList_currentIndexChanged(int index);
+    void on_descriptionEditLanguageList_currentIndexChanged(int index);
+    void on_stepEditBack_clicked();
+    void on_namePlainTextEdit_textChanged();
+    void on_descriptionPlainTextEdit_textChanged();
+    void on_price_editingFinished();
+    void on_imageBrowse_clicked();
 private:
     Ui::MainWindow *ui;
-    QHash<quint8,Bot> botFiles;
-    quint8 selectedBot;
-    quint8 selectedStep;
-    QHash<QString,QString> allowedType;
-    QHash<QString,QString> reverseAllowedType;
+    QHash<quint32,QDomElement> items;
     QSettings settings;
     QDomDocument domDocument;
-private:
-    void updateBotList();
-    void updateStepList();
-    void updateType();
-    void editStep(quint8 id);
-private slots:
-    void on_browseBotFile_clicked();
-    void on_openBotFile_clicked();
-    void on_botListAdd_clicked();
-    void on_botListDelete_clicked();
-    void on_botListEdit_clicked();
-    void on_stepListAdd_clicked();
-    void on_stepListDelete_clicked();
-    void on_stepListEdit_clicked();
-    void on_stepListBack_clicked();
-    void on_stepEditBack_clicked();
-    void on_plainTextEdit_textChanged();
-    void on_stepEditLanguageRemove_clicked();
-    void on_stepEditLanguageAdd_clicked();
-    void on_stepEditShop_editingFinished();
-    void on_stepEditSell_editingFinished();
-    void on_stepEditFight_editingFinished();
-    void on_botFileSave_clicked();
-    void on_botList_itemDoubleClicked(QListWidgetItem *item);
-    void on_stepList_itemDoubleClicked(QListWidgetItem *item);
+    bool loadingTheInformations;
 };
 
 #endif // MAINWINDOW_H
