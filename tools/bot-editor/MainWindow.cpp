@@ -46,6 +46,7 @@ void MainWindow::updateType()
     allowedType["clan"]=tr("Clan");
     allowedType["zonecapture"]=tr("Zone capture");
     allowedType["industry"]=tr("Industry");
+    allowedType["market"]=tr("Market");
 
     reverseAllowedType.clear();
     QHash<QString,QString>::const_iterator i = allowedType.constBegin();
