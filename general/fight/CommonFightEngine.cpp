@@ -134,7 +134,13 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill
                 const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster].learn.at(sub_index);
                 if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
                 {
-                    if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
+                    if(
+                            //if skill not found
+                            (sub_index2==monster.skills.size() && learn.learnSkillLevel==1)
+                            ||
+                            //if skill already found and need level up
+                            (sub_index2<monster.skills.size() && (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
+                            )
                     {
                         quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
                         if(sp>monster.sp)
