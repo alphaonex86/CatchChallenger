@@ -99,7 +99,7 @@ void BaseWindow::load_monsters()
         const PlayerMonster &monster=playerMonsters.at(index);
         if(inSelection)
         {
-            if(waitedObjectType!=ObjectType_MonsterToFightKO && monster.id==currentMonster->id)
+            if(waitedObjectType==ObjectType_MonsterToFight && monster.id==currentMonster->id)
             {
                 index++;
                 continue;
@@ -1547,9 +1547,12 @@ void BaseWindow::on_learnAttackList_itemActivated(QListWidgetItem *item)
     }
     if(!learnSkill(monsterToLearn,attack_to_learn_graphical[item]))
     {
-        newError(tr("Internal error"),"learnSkill failed");
+        ui->learnDescription->setText(tr("You can't learn this attack"));
         return;
     }
+    if(!monsters_items_graphical.contains(item))
+        return;
+    showLearnSkill(monsterToLearn);
 }
 
 bool BaseWindow::learnSkill(const quint32 &monsterId,const quint32 &skill)
@@ -1600,7 +1603,13 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
                             break;
                         sub_index2++;
                     }
-                    if(sub_index2==monster.skills.size() || monster.skills[sub_index2].level<learn.learnSkillLevel)
+                    if(
+                            //if skill not found
+                            (sub_index2==monster.skills.size() && learn.learnSkillLevel==1)
+                            ||
+                            //if skill already found and need level up
+                            (sub_index2<monster.skills.size() && (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
+                    )
                     {
                         if(skillToDisplay.contains(learn.learnSkill))
                         {
@@ -1620,18 +1629,19 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
                 if(i.value()>1)
                     item->setText(tr("%1\nSP cost: %2")
                                 .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[i.key()].name)
-                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()].sp)
+                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp)
                             );
                 else
                     item->setText(tr("%1 level %2\nSP cost: %3")
                                 .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[i.key()].name)
                                 .arg(i.value())
-                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()].sp)
+                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp)
                             );
-                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()].sp>monster.sp)
+                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp>monster.sp)
                 {
                     item->setFont(MissingQuantity);
                     item->setForeground(QBrush(QColor(200,20,20)));
+                    item->setToolTip(tr("You need more sp"));
                 }
                 attack_to_learn_graphical[item]=i.key();
                 ui->learnAttackList->addItem(item);
