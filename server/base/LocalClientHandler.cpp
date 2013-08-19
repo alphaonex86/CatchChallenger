@@ -10,6 +10,7 @@ using namespace CatchChallenger;
 
 Direction LocalClientHandler::temp_direction;
 QHash<QString,LocalClientHandler *> LocalClientHandler::playerByPseudo;
+QHash<quint32,LocalClientHandler *> LocalClientHandler::playerById;
 QHash<QString,QList<LocalClientHandler *> > LocalClientHandler::captureCity;
 QHash<QString,LocalClientHandler::CaptureCityValidated> LocalClientHandler::captureCityValidatedList;
 QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
@@ -89,6 +90,7 @@ void LocalClientHandler::extraStop()
     if(player_informations->is_logged)
     {
         playerByPseudo.remove(player_informations->public_and_private_informations.public_informations.pseudo);
+        playerById.remove(player_informations->id);
         leaveTheCityCapture();
     }
     removeFromClan();
@@ -292,6 +294,7 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     localClientHandlerFight.getRandomNumberIfNeeded();
 
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
+    playerById[player_informations->id]=this;
     if(player_informations->public_and_private_informations.clan>0)
     {
         createMemoryClan();
@@ -686,6 +689,15 @@ quint32 LocalClientHandler::objectQuantity(const quint32 &item)
         return player_informations->public_and_private_informations.items[item];
     else
         return 0;
+}
+
+bool LocalClientHandler::addMarketCashWithoutSave(const quint64 &cash,const double &bitcoin)
+{
+    if(bitcoin>0 && !bitcoinEnabled())
+        return false;
+    player_informations->market_cash+=cash;
+    player_informations->market_bitcoin+=bitcoin;
+    return true;
 }
 
 void LocalClientHandler::addCash(const quint64 &cash, const bool &forceSave)
@@ -3615,6 +3627,11 @@ void LocalClientHandler::changeOfMonsterInFight(const quint32 &monsterId)
 
 void LocalClientHandler::getMarketList(const quint32 &query_id)
 {
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -3711,27 +3728,408 @@ void LocalClientHandler::getMarketList(const quint32 &query_id)
 
 void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &marketObjectId,const quint32 &quantity)
 {
-    if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
+    if(quantity<=0)
+    {
+        emit error("You can't use the market with null quantity");
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    //search into the market
+    int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
+    {
+        const MarketItem marketItem=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
+        if(marketItem.marketObjectId==marketObjectId)
+        {
+            if(marketItem.quantity<quantity)
+            {
+                out << (quint8)0x02;
+                emit postReply(query_id,outputData);
+                return;
+            }
+            //check if have the price
+            if((quantity*marketItem.cash)>player_informations->public_and_private_informations.cash)
+            {
+                out << (quint8)0x03;
+                emit postReply(query_id,outputData);
+                return;
+            }
+            if(marketItem.bitcoin>0)
+            {
+                if(!bitcoinEnabled())
+                {
+                    emit error("Try put in bitcoin but don't have bitcoin access");
+                    return;
+                }
+                if(!playerById[marketItem.player]->bitcoinEnabled())
+                {
+                    emit message("The other have not the bitcoin enabled to buy their object");
+                    out << (quint8)0x03;
+                    emit postReply(query_id,outputData);
+                    return;
+                }
+            }
+            if((quantity*marketItem.bitcoin)>player_informations->public_and_private_informations.bitcoin)
+            {
+                out << (quint8)0x03;
+                emit postReply(query_id,outputData);
+                return;
+            }
+            //apply the buy
+            if(marketItem.quantity==quantity)
+            {
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND place='market'")
+                                     .arg(marketItem.item)
+                                     .arg(marketItem.player)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("DELETE FROM item WHERE item_id=%1 AND player_id=%2 AND place='market'")
+                                     .arg(marketItem.item)
+                                     .arg(marketItem.player)
+                                     );
+                    break;
+                }
+                GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
+            }
+            else
+            {
+                GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND place='market'")
+                                     .arg(marketItem.quantity-quantity)
+                                     .arg(marketItem.item)
+                                     .arg(marketItem.player)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item_id=%2 AND player_id=%3 AND place='market'")
+                                     .arg(marketItem.quantity-quantity)
+                                     .arg(marketItem.item)
+                                     .arg(marketItem.player)
+                                     );
+                    break;
+                }
+            }
+            removeCash(quantity*marketItem.cash);
+            if(marketItem.bitcoin>0)
+                removeBitcoin(quantity*marketItem.bitcoin);
+            if(playerById.contains(marketItem.player))
+            {
+                if(!playerById[marketItem.player]->addMarketCashWithoutSave(quantity*marketItem.cash,quantity*marketItem.bitcoin))
+                    emit message("Problem at market cash adding");
+            }
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE player SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                                 .arg(quantity*marketItem.cash)
+                                 .arg(quantity*marketItem.bitcoin)
+                                 .arg(marketItem.player)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE player SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                                 .arg(quantity*marketItem.cash)
+                                 .arg(quantity*marketItem.bitcoin)
+                                 .arg(marketItem.player)
+                                 );
+                break;
+            }
+            addObject(marketItem.item,quantity);
+            out << (quint8)0x01;
+            emit postReply(query_id,outputData);
+            return;
+        }
+        index++;
+    }
+    out << (quint8)0x03;
+    emit postReply(query_id,outputData);
 }
 
 void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
-    if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    if(player_informations->public_and_private_informations.playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+    {
+        out << (quint8)0x02;
+        emit postReply(query_id,outputData);
+        return;
+    }
+    //search into the market
+    int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
+    {
+        const MarketPlayerMonster marketPlayerMonster=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(index);
+        if(marketPlayerMonster.monster.id==monsterId)
+        {
+            //check if have the price
+            if(marketPlayerMonster.cash>player_informations->public_and_private_informations.cash)
+            {
+                out << (quint8)0x03;
+                emit postReply(query_id,outputData);
+                return;
+            }
+            if(marketPlayerMonster.bitcoin>0)
+            {
+                if(!bitcoinEnabled())
+                {
+                    emit error("Try put in bitcoin but don't have bitcoin access");
+                    return;
+                }
+                if(!playerById[marketPlayerMonster.player]->bitcoinEnabled())
+                {
+                    emit message("The other have not the bitcoin enabled to buy their object");
+                    out << (quint8)0x03;
+                    emit postReply(query_id,outputData);
+                    return;
+                }
+            }
+            if(marketPlayerMonster.bitcoin>player_informations->public_and_private_informations.bitcoin)
+            {
+                out << (quint8)0x03;
+                emit postReply(query_id,outputData);
+                return;
+            }
+            //apply the buy
+            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.removeAt(index);
+            removeCash(marketPlayerMonster.cash);
+            if(marketPlayerMonster.bitcoin>0)
+                removeBitcoin(marketPlayerMonster.bitcoin);
+            if(playerById.contains(marketPlayerMonster.player))
+            {
+                if(!playerById[marketPlayerMonster.player]->addMarketCashWithoutSave(marketPlayerMonster.cash,marketPlayerMonster.bitcoin))
+                    emit message("Problem at market cash adding");
+            }
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE player SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                                 .arg(marketPlayerMonster.cash)
+                                 .arg(marketPlayerMonster.bitcoin)
+                                 .arg(marketPlayerMonster.player)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE player SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                                 .arg(marketPlayerMonster.cash)
+                                 .arg(marketPlayerMonster.bitcoin)
+                                 .arg(marketPlayerMonster.player)
+                                 );
+                break;
+            }
+            localClientHandlerFight.addPlayerMonster(marketPlayerMonster.monster);
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE player SET place='wear',player=%1,position=%2 WHERE id=%3")
+                                 .arg(player_informations->id)
+                                 .arg(localClientHandlerFight.getPlayerMonster().size())
+                                 .arg(marketPlayerMonster.monster.id)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE player SET place='wear',player=%1,position=%2 WHERE id=%3")
+                                 .arg(player_informations->id)
+                                 .arg(localClientHandlerFight.getPlayerMonster().size())
+                                 .arg(marketPlayerMonster.monster.id)
+                                 );
+                break;
+            }
+            out << (quint8)0x01;
+            emit postReply(query_id,outputData);
+            return;
+        }
+        index++;
+    }
+    out << (quint8)0x03;
+    emit postReply(query_id,outputData);
 }
 
 void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin)
 {
-    if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
+    if(!bitcoinEnabled() && bitcoin>0)
+    {
+        emit error("Try put in bitcoin but don't have bitcoin access");
+        return;
+    }
+    if(quantity<=0)
+    {
+        emit error("You can't use the market with null quantity");
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    if(objectQuantity(objectId)<quantity)
+    {
+        out << (quint8)0x02;
+        emit postReply(query_id,outputData);
+        return;
+    }
+    //search into the market
+    int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
+    {
+        const MarketItem &marketItem=GlobalServerData::serverPrivateVariables.marketItemList.at(index);
+        if(marketItem.player==player_informations->id && marketItem.item==objectId)
+        {
+            removeObject(objectId,quantity);
+            GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
+            out << (quint8)0x01;
+            emit postReply(query_id,outputData);
+            return;
+        }
+        index++;
+    }
+    if(marketObjectIdList.isEmpty())
+    {
+        out << (quint8)0x02;
+        emit postReply(query_id,outputData);
+        emit message("No more id into marketObjectIdList");
+        return;
+    }
+    //append to the market
+    removeObject(objectId,quantity);
+    MarketItem marketItem;
+    marketItem.bitcoin=bitcoin;
+    marketItem.cash=price;
+    marketItem.item=objectId;
+    marketItem.marketObjectId=marketObjectIdList.first();
+    marketItem.player=player_informations->id;
+    marketItem.quantity=quantity;
+    marketObjectIdList.removeFirst();
+    GlobalServerData::serverPrivateVariables.marketItemList << marketItem;
+    out << (quint8)0x01;
+    emit postReply(query_id,outputData);
 }
 
 void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price,const double &bitcoin)
 {
-    if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
+    if(!bitcoinEnabled() && bitcoin>0)
+    {
+        emit error("Try put in bitcoin but don't have bitcoin access");
+        return;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    int index=0;
+    while(index<player_informations->public_and_private_informations.playerMonster.size())
+    {
+        const PlayerMonster &playerMonster=player_informations->public_and_private_informations.playerMonster.at(index);
+        if(playerMonster.id==monsterId)
+        {
+            if(!localClientHandlerFight.remainMonstersToFight(monsterId))
+            {
+                emit message("You can't put in market this msonter because you will be without monster to fight");
+                out << (quint8)0x02;
+                emit postReply(query_id,outputData);
+                return;
+            }
+            MarketPlayerMonster marketPlayerMonster;
+            marketPlayerMonster.bitcoin=bitcoin;
+            marketPlayerMonster.cash=price;
+            marketPlayerMonster.monster=playerMonster;
+            marketPlayerMonster.player=player_informations->id;
+            player_informations->public_and_private_informations.playerMonster.removeAt(index);
+            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList << marketPlayerMonster;
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE monster SET place='market',market_price=%1,market_bitcoin=%2 WHERE id=%3;")
+                                 .arg(price)
+                                 .arg(bitcoin)
+                                 .arg(monsterId)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE monster SET place='market',market_price=%1,market_bitcoin=%2 WHERE id=%3;")
+                                 .arg(price)
+                                 .arg(bitcoin)
+                                 .arg(monsterId)
+                                 );
+                break;
+            }
+            while(index<player_informations->public_and_private_informations.playerMonster.size())
+            {
+                const PlayerMonster &playerMonster=player_informations->public_and_private_informations.playerMonster.at(index);
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                                     .arg(index+1)
+                                     .arg(playerMonster.id)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                                     .arg(index+1)
+                                     .arg(playerMonster.id)
+                                     );
+                    break;
+                }
+                index++;
+            }
+            out << (quint8)0x01;
+            emit postReply(query_id,outputData);
+            return;
+        }
+        index++;
+    }
+    out << (quint8)0x02;
+    emit postReply(query_id,outputData);
+}
+
+bool LocalClientHandler::bitcoinEnabled() const
+{
+    return GlobalServerData::serverPrivateVariables.bitcoin.enabled && player_informations->public_and_private_informations.bitcoin>=0;
 }
 
 void LocalClientHandler::recoverMarketCash(const quint32 &query_id)
 {
-    bool bitcoin_enabled=GlobalServerData::serverPrivateVariables.bitcoin.enabled && player_informations->public_and_private_informations.bitcoin>=0;
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
+    bool bitcoin_enabled=bitcoinEnabled();
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -3789,6 +4187,16 @@ void LocalClientHandler::recoverMarketCash(const quint32 &query_id)
 
 void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity)
 {
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
+    if(quantity<=0)
+    {
+        emit error("You can't use the market with null quantity");
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -3816,6 +4224,7 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
             out << marketItem.quantity;
             if(marketItem.quantity==0)
             {
+                marketObjectIdList << marketItem.marketObjectId;
                 GlobalServerData::serverPrivateVariables.marketItemList.removeAt(index);
                 switch(GlobalServerData::serverSettings.database.type)
                 {
@@ -3868,6 +4277,11 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
 
 void LocalClientHandler::withdrawMarketMonster(const quint32 &query_id,const quint32 &monsterId)
 {
+    if(getInTrade() || localClientHandlerFight.isInFight())
+    {
+        emit error("You can't use the market in trade/fight");
+        return;
+    }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
