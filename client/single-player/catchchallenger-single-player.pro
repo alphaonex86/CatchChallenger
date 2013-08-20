@@ -28,3 +28,6 @@ RESOURCES += \
     ../../server/databases/resources-db-sqlite.qrc
 
 DEFINES += NOREMOTE
+
+OTHER_FILES += \
+    catchchallenger-single-player.supp
