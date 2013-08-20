@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QThread>
-#include <QPixmap>
 #include <QMutex>
 #include <QHash>
 #include <QString>

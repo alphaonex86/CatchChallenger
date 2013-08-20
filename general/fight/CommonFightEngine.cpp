@@ -473,13 +473,22 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
         return attackReturn;
     }
     if(otherMonster.skills.empty())
+    {
+        emit message("No other monster attack todo");
         return attackReturn;
+    }
     int position;
     if(otherMonster.skills.size()==1)
         position=0;
     else
         position=getOneSeed(otherMonster.skills.size());
     const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster.skills.at(position);
+    emit message(QString("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
+                 .arg(otherMonsterSkill.skill)
+                 .arg(position)
+                 .arg(otherMonsterSkill.level)
+                 .arg(otherMonster.skills.size())
+                 );
     attackReturn.attack=otherMonsterSkill.skill;
     const Skill::SkillList &skillList=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
     int index;
@@ -512,9 +521,11 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
             success=(getOneSeed(100)<buff.success);
         if(success)
         {
-            attackReturn.success=true;
-            if(addOtherBuffEffect(buff.effect)>=0)
+            if(addOtherBuffEffect(buff.effect)>=-2)//0 to X, update buff, -1 added, -2 updated same buff at same level
+            {
                 attackReturn.addBuffEffectMonster << buff.effect;
+                attackReturn.success=true;
+            }
         }
         index++;
     }
@@ -654,17 +665,24 @@ int CommonFightEngine::addCurrentBuffEffect(const Skill::BuffEffect &effect)
     return addBuffEffectFull(effect,getCurrentMonster(),getOtherMonster());
 }
 
+/* return code:
+ * >=0 if the index of the buff updated
+ * -1 buff added
+ * -2 same buff already found
+ * -3 failed by hp
+ * -4 failed by other
+ * */
 int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster)
 {
     if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
     {
         emit error(QString("apply a unknown buff"));
-        return -1;
+        return -4;
     }
     if(effect.level>CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.size())
     {
         emit error(QString("apply buff level out of range"));
-        return -1;
+        return -4;
     }
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
@@ -711,10 +729,10 @@ int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, Public
         break;
         default:
             emit error("Not apply match, can't apply the buff");
-            return -1;
+            return -4;
         break;
     }
-    return -1;
+    return -4;
 }
 
 void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
@@ -1236,6 +1254,7 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
     Skill::AttackReturn attackReturn;
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.attack=skill;
+    attackReturn.success=false;
     const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[skill].level.at(skillLevel-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
     emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
@@ -1291,9 +1310,11 @@ Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &
             if(success)
                 emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
             #endif
-            attackReturn.success=true;//the attack have work because at less have a buff
-            if(addCurrentBuffEffect(buff.effect)>=0)
+            if(addCurrentBuffEffect(buff.effect)>=-2)//0 to X, update buff, -1 added, -2 updated same buff at same level
+            {
+                attackReturn.success=true;//the attack have work because at less have a buff
                 attackReturn.addBuffEffectMonster << buff.effect;
+            }
         }
         index++;
     }

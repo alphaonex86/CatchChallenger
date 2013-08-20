@@ -1,4 +1,4 @@
-#include <QtGui/QApplication>
+#include <QCoreApplication>
 #include "ProcessControler.h"
 
 int main(int argc, char *argv[])
