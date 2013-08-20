@@ -173,12 +173,13 @@ void MainWindow::on_itemList_itemDoubleClicked(QListWidgetItem *item)
 
 void MainWindow::on_itemListAdd_clicked()
 {
-    int index=0;
+    int index=1;
     while(items.contains(index))
         index++;
     QDomElement newXmlElement=domDocument.createElement("item");
     newXmlElement.setAttribute("id",index);
     domDocument.documentElement().appendChild(newXmlElement);
+    items[index]=newXmlElement;
     updateItemList();
 }
 
@@ -250,6 +251,8 @@ void MainWindow::on_nameEditLanguageList_currentIndexChanged(int index)
 {
     if(loadingTheInformations)
         return;
+    if(ui->nameEditLanguageList->count()<=0)
+        return;
     QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
     if(itemsUI.size()!=1)
         return;
@@ -277,6 +280,8 @@ void MainWindow::on_nameEditLanguageList_currentIndexChanged(int index)
 void MainWindow::on_descriptionEditLanguageList_currentIndexChanged(int index)
 {
     if(loadingTheInformations)
+        return;
+    if(ui->descriptionEditLanguageList->count()<=0)
         return;
     QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
     if(itemsUI.size()!=1)
