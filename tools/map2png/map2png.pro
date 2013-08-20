@@ -6,6 +6,8 @@ TEMPLATE = app
 TARGET = map2png
 
 QT += xml
+QT += gui
+CONFIG   += console
 
 win32:RC_FILE += resources-windows.rc
 
@@ -14,7 +16,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 SOURCES += main.cpp \
-	 map2png.cpp \
+         map2png.cpp \
     ../../general/base/MoveOnTheMap.cpp \
     ../../general/base/Map_loader.cpp \
     ../../general/base/Map.cpp \

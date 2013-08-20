@@ -198,6 +198,8 @@ Map2Png::Map2Png(QWidget *parent) :
 
     //viewport()->setAttribute(Qt::WA_StaticContents);
     //setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+
+    hideTheDoors=true;
 }
 
 
@@ -234,7 +236,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
             int index2=0;
             while(index2<objects.size())
             {
-                if(objects.at(index2)->type()!="door")
+                if(objects.at(index2)->type()!="door" || hideTheDoors)
                     tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
                 index2++;
             }
@@ -283,7 +285,6 @@ QString Map2Png::loadOtherMap(const QString &fileName)
         tempMapObject->tiledRender = new OrthogonalRenderer(tempMapObject->tiledMap);
         break;
     }
-    tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
     tempMapObject->objectGroup = new ObjectGroup();

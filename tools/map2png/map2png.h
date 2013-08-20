@@ -100,6 +100,7 @@ private:
     QGraphicsScene *mScene;
     MapItem* mapItem;
     QString mLastError;
+    bool hideTheDoors;
 
     QHash<QString,Map_full *> other_map;
 private slots:
