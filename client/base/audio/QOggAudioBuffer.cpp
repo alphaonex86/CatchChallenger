@@ -18,7 +18,7 @@ qint64 QOggAudioBuffer::readData(char * rawData, qint64 len)
         open(QIODevice::ReadWrite|QIODevice::Unbuffered);
         //seek(position);
         seek(0);
+        emit readDone();
     }
-    emit readDone();
     return size;
 }
