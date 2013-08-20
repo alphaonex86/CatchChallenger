@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
 #ifdef Q_WS_X11
     QApplication::setGraphicsSystem(QLatin1String("raster"));
 #endif
-    QString help="The arguement to open it: [map.tmx]";
 
     QApplication a(argc, argv);
 
@@ -76,12 +75,16 @@ int main(int argc, char *argv[])
 
     if (options.fileToOpen.isEmpty())
     {
-        qDebug() << help;
-        return 0;
+        QString source = QFileDialog::getOpenFileName(NULL,"Select map");
+        if(source.isEmpty() || source.isNull() || source=="")
+            return 0;
+        options.fileToOpen=source;
     }
 
     Map2Png w;
     w.viewMap(options.fileToOpen);
+    w.show();
+    w.setWindowIcon(QIcon(":/icon.png"));
 
     return a.exec();
 }
