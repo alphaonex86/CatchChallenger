@@ -392,6 +392,8 @@ Skill::AttackReturn ClientFightEngine::generateOtherAttack()
 
 void ClientFightEngine::removeTheFirstLifeEffectAttackReturn()
 {
+    if(attackReturnList.isEmpty())
+        return;
     if(!attackReturnList.first().lifeEffectMonster.isEmpty())
         attackReturnList.first().lifeEffectMonster.removeFirst();
     if(attackReturnList.first().lifeEffectMonster.isEmpty())

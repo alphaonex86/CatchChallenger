@@ -1100,12 +1100,17 @@ void BaseWindow::displayAttack()
         doNextAction();
         return;
     }
-    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty() && CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty())
+    if(
+            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty() &&
+            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffLifeEffectMonster.isEmpty() &&
+            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty() &&
+            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.isEmpty()
+            )
     {
-        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
-        newError(tr("Internal error"),"displayAttack(): crash: display an empty lifeEffect list into attack return");
-        doNextAction();
-        return;
+        qDebug() << QString("displayAttack(): strange: display an empty lifeEffect list into attack return, attack: %1, doByTheCurrentMonster: %2, success: %3")
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack)
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success);
     }
     bool applyOnOtherMonster=true;
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
@@ -1217,10 +1222,22 @@ void BaseWindow::displayAttack()
                 damage=tr("The other %1 is healed of %2")
                     .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
                     .arg(quantity);
-            else
+            else if(quantity<0)
                 damage=tr("The other %1 take %2 of damage")
                     .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
                     .arg(-quantity);
+            if(quantity==0)
+            {
+                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty() || CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.isEmpty())
+                    damage=tr("Do buff change");
+                else
+                    damage=tr("Have no effect");
+            }
+            else
+            {
+                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty() || CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.isEmpty())
+                    damage+=tr(" and do buff change");
+            }
             if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success)
             {
                 quint32 attackId=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack;
@@ -1246,10 +1263,22 @@ void BaseWindow::displayAttack()
                 damage=tr("Your %1 is healed of %2")
                     .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                     .arg(quantity);
-            else
+            else if(quantity<0)
                 damage=tr("Your %1 take %2 of damage")
                     .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                     .arg(-quantity);
+            if(quantity==0)
+            {
+                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty() || CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.isEmpty())
+                    damage=tr("Do buff change");
+                else
+                    damage=tr("Have no effect");
+            }
+            else
+            {
+                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty() || CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.isEmpty())
+                    damage+=tr(" and do buff change");
+            }
             if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success)
             {
                 quint32 attackId=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack;

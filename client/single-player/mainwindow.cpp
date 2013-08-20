@@ -33,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     selectedSavegame=NULL;
     internalServer=NULL;
+    haveLaunchedGame=false;
+    timeLaunched=0;
     datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
     savegamePath=QCoreApplication::applicationDirPath()+"/savegames/";
     datapackPathExists=QDir(datapackPath).exists();
@@ -94,7 +96,7 @@ void MainWindow::resetAll()
         internalServer->deleteLater();
     internalServer=NULL;*/
     pass.clear();
-    saveTime();
+    //saveTime();//not here because called at start!
 
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
 }
