@@ -71,6 +71,8 @@ void QOggSimplePlayer::open()
         }
         qDebug() << QString("Bitstream is %1 channel, %2Hz").arg(vi->channels).arg(vi->rate);
         qDebug() << QString("Encoded by: %1").arg(ov_comment(&vf,-1)->vendor);
+        format.setChannelCount(vi->channels);
+        format.setSampleRate(vi->rate);
         qDebug() << QString("Raw format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
                     .arg(format.sampleRate())
                     .arg(format.channelCount())
@@ -79,8 +81,6 @@ void QOggSimplePlayer::open()
                     .arg(format.byteOrder())
                     .arg(format.sampleType())
                     ;
-        format.setChannelCount(vi->channels);
-        format.setSampleRate(vi->rate);
     }
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
@@ -92,6 +92,24 @@ void QOggSimplePlayer::open()
                     .arg(format.codec())
                     .arg(format.byteOrder())
                     .arg(format.sampleType())
+                    ;
+        QAudioFormat preferedFormat=info.preferredFormat();
+        qDebug() << QString("prefered format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
+                    .arg(preferedFormat.sampleRate())
+                    .arg(preferedFormat.channelCount())
+                    .arg(preferedFormat.sampleSize())
+                    .arg(preferedFormat.codec())
+                    .arg(preferedFormat.byteOrder())
+                    .arg(preferedFormat.sampleType())
+                    ;
+        QAudioFormat nearestFormat=info.nearestFormat(format);
+        qDebug() << QString("nearest format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
+                    .arg(nearestFormat.sampleRate())
+                    .arg(nearestFormat.channelCount())
+                    .arg(nearestFormat.sampleSize())
+                    .arg(nearestFormat.codec())
+                    .arg(nearestFormat.byteOrder())
+                    .arg(nearestFormat.sampleType())
                     ;
         return;
     }
