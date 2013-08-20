@@ -210,7 +210,7 @@ public slots:
     void buyMarketMonster(const quint32 &query_id,const quint32 &monsterId);
     void putMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity,const quint32 &price,const double &bitcoin);
     void putMarketMonster(const quint32 &query_id,const quint32 &monsterId,const quint32 &price,const double &bitcoin);
-    inline bool bitcoinEnabled() const;
+    bool bitcoinEnabled() const;
     void recoverMarketCash(const quint32 &query_id);
     void withdrawMarketObject(const quint32 &query_id,const quint32 &objectId,const quint32 &quantity);
     void withdrawMarketMonster(const quint32 &query_id, const quint32 &monsterId);
