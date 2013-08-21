@@ -1264,7 +1264,8 @@ void BaseWindow::currentMapLoaded()
 {
     qDebug() << "BaseWindow::currentMapLoaded(): map: " << MapController::mapController->currentMap() << " with type: " << MapController::mapController->currentMapType();
     QString type=MapController::mapController->currentMapType();
-    if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
+    QString backgroundsound=MapController::mapController->currentBackgroundsound();
+    if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type) && backgroundsound.isEmpty())
     {
         while(!ambiance.isEmpty())
         {
@@ -1274,7 +1275,11 @@ void BaseWindow::currentMapLoaded()
         }
         return;
     }
-    QString file=DatapackClientLoader::datapackLoader.audioAmbiance[type];
+    QString file;
+    if(DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
+        file=DatapackClientLoader::datapackLoader.audioAmbiance[type];
+    else
+        file=backgroundsound;
     while(!ambiance.isEmpty())
     {
         if(ambiance.first()->getFilePath()==file)
@@ -1285,6 +1290,7 @@ void BaseWindow::currentMapLoaded()
     }
     ambiance << new QOggSimplePlayer(file,&audioReadThread);
     ambiance.last()->start();
+    ambiance.last()->setLoop(true);
 }
 
 //network

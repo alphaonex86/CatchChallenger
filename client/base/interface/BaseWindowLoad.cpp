@@ -315,7 +315,7 @@ void BaseWindow::updateConnectingStatus()
         show_reputation();
         this->setWindowTitle(tr("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         ui->stackedWidget->setCurrentWidget(ui->page_map);
-        showTip(tr("Welcome <b><i>%1</i></b> on catchchallenger").arg(CatchChallenger::Api_client_real::client->getPseudo()));
+        showTip(tr("Welcome <b><i>%1</i></b> on <i>CatchChallenger</i>").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         return;
     }
     ui->label_connecting_status->setText(tr("Waiting: %1").arg(waitedData.join(", ")));

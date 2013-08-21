@@ -1,6 +1,7 @@
 #include "QOggSimplePlayer.h"
 
 #include <QDebug>
+#include <QDir>
 
 #define MAX_BUFFER_SIZE 64*1024
 #define MIN_BUFFER_SIZE 16*1024
@@ -11,7 +12,7 @@ QOggSimplePlayer::QOggSimplePlayer(const QString &filePath, QThread *audioThread
         moveToThread(audioThread);
     needPlay=false;
     output=NULL;
-    file=NULL;
+    loop=false;
     buffer.open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     this->filePath=filePath;
 
@@ -44,21 +45,11 @@ void QOggSimplePlayer::open()
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::SignedInt);
 
-    if(file!=NULL)
+    int returnCode=ov_fopen(QDir::toNativeSeparators(filePath).toLocal8Bit().data(), &vf);
+    if(returnCode < 0)
     {
-        fclose(file);
-        delete file;
-    }
-    file=fopen(filePath.toLocal8Bit().data(),"r");
-    if(file==NULL)
-    {
-        qDebug() << "Unable to open the file";
-        return;
-    }
-
-    if(ov_open_callbacks(/*stdin*/file, &vf, NULL, 0, OV_CALLBACKS_STREAMONLY) < 0)
-    {
-        qDebug() << "Input does not appear to be an Ogg bitstream";
+        qDebug() << "Input does not appear to be an Ogg bitstream for " << QDir::toNativeSeparators(filePath) << ", return code: " << returnCode;
+        ov_clear(&vf);
         return;
     }
 
@@ -73,14 +64,6 @@ void QOggSimplePlayer::open()
         qDebug() << QString("Encoded by: %1").arg(ov_comment(&vf,-1)->vendor);
         format.setChannelCount(vi->channels);
         format.setSampleRate(vi->rate);
-        qDebug() << QString("Raw format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
-                    .arg(format.sampleRate())
-                    .arg(format.channelCount())
-                    .arg(format.sampleSize())
-                    .arg(format.codec())
-                    .arg(format.byteOrder())
-                    .arg(format.sampleType())
-                    ;
     }
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
@@ -111,6 +94,7 @@ void QOggSimplePlayer::open()
                     .arg(nearestFormat.byteOrder())
                     .arg(nearestFormat.sampleType())
                     ;
+        ov_clear(&vf);
         return;
     }
 
@@ -145,7 +129,11 @@ void QOggSimplePlayer::close()
 void QOggSimplePlayer::finishedPlaying(QAudio::State state)
 {
     if (state == QAudio::IdleState)
+    {
         stop();
+        if(loop)
+            start();
+    }
 }
 
 void QOggSimplePlayer::start()
@@ -170,7 +158,11 @@ void QOggSimplePlayer::stop()
     buffer.open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     current_section=0;
     ov_time_seek(&vf,0);
-    fseek(file,0,SEEK_SET);
+}
+
+void QOggSimplePlayer::setLoop(const bool &loop)
+{
+    this->loop=loop;
 }
 
 void QOggSimplePlayer::readDone()

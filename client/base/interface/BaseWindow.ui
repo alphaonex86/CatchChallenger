@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>15</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -1150,17 +1150,17 @@ border: 1px solid rgb(64, 136, 192);</string>
                       <property name="minimumSize">
                        <size>
                         <width>160</width>
-                        <height>100</height>
+                        <height>140</height>
                        </size>
                       </property>
                       <property name="maximumSize">
                        <size>
                         <width>160</width>
-                        <height>100</height>
+                        <height>140</height>
                        </size>
                       </property>
                       <property name="styleSheet">
-                       <string notr="true">background-image: url(:/images/interface/player/ball.png);
+                       <string notr="true">background-image: url(:/images/interface/player/player_background.png);
 background-repeat:no-repeat;
 background-position:center; </string>
                       </property>

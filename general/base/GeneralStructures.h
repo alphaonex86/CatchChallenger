@@ -372,6 +372,8 @@ struct Map_to_send
     QList<MapMonster> grassMonster;
     QList<MapMonster> waterMonster;
     QList<MapMonster> caveMonster;
+
+    QDomElement xmlRoot;
 };
 
 struct CrafingRecipe
