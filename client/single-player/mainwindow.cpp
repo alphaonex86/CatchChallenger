@@ -329,6 +329,7 @@ void MainWindow::on_SaveGame_New_clicked()
         }
     }
     index=0;
+    int monster_position=1;
     while(index<profile.monsters.size())
     {
         int monster_id=0;
@@ -389,7 +390,7 @@ void MainWindow::on_SaveGame_New_clicked()
         {
             QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(
-                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"place\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\");")
+                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"place\",\"position\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\",%8);")
                    .arg(monster_id)
                    .arg(stat.hp)
                    .arg(player_id)
@@ -397,6 +398,7 @@ void MainWindow::on_SaveGame_New_clicked()
                    .arg(profile.monsters.at(index).level)
                    .arg(profile.monsters.at(index).captured_with)
                    .arg(gender)
+                   .arg(monster_position)
                         ))
             {
                 closeDb(db);
@@ -405,6 +407,7 @@ void MainWindow::on_SaveGame_New_clicked()
                 rmpath(savegamesPath);
                 return;
             }
+            monster_position++;
         }
         sub_index=0;
         while(sub_index<skills.size())

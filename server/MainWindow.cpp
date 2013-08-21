@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     settings=new QSettings(QCoreApplication::applicationDirPath()+"/server.properties",QSettings::IniFormat);
+    NormalServer::checkSettingsFile(settings);
     ui->setupUi(this);
     on_MapVisibilityAlgorithm_currentIndexChanged(0);
     updateActionButton();
@@ -285,7 +286,6 @@ void MainWindow::clean_updated_info()
 
 void MainWindow::load_settings()
 {
-    NormalServer::load_default_settings(settings);
     // --------------------------------------------------
     ui->max_player->setValue(settings->value("max-players").toUInt());
     ui->server_ip->setText(settings->value("server-ip").toString());
