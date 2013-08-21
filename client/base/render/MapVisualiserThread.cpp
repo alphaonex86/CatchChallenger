@@ -87,6 +87,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     }
 
     //copy the variables
+    tempMapObject->logicalMap.xmlRoot                               = map_loader.map_to_send.xmlRoot;
     tempMapObject->logicalMap.width                                 = map_loader.map_to_send.width;
     tempMapObject->logicalMap.height                                = map_loader.map_to_send.height;
     tempMapObject->logicalMap.parsed_layer                          = map_loader.map_to_send.parsed_layer;

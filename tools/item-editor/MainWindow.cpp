@@ -410,3 +410,91 @@ void MainWindow::on_imageBrowse_clicked()
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
     items[selectedItem].setAttribute("image",image);
 }
+
+void MainWindow::on_nameEditLanguageAdd_clicked()
+{
+    QString lang=QInputDialog::getText(this,tr("Language"),tr("Give the language code"));
+    if(lang.isEmpty())
+        return;
+    QString name=QInputDialog::getText(this,tr("Name"),tr("Give the name for this language"));
+    if(name.isEmpty())
+        return;
+    QListWidgetItem * item=new QListWidgetItem();
+    item->setData(99,lang);
+    item->setData(98,name);
+    item->setText(QString("%1: %2").arg(lang).arg(name));
+    QDomElement newXmlElement=domDocument.createElement("name");
+    newXmlElement.setAttribute("lang",lang);
+    QDomText newTextElement=domDocument.createTextNode(name);
+    newXmlElement.appendChild(newTextElement);
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    items[selectedItem].appendChild(newXmlElement);
+    ui->nameEditLanguageList->addItem(lang);
+    ui->nameEditLanguageList->setCurrentIndex(ui->nameEditLanguageList->count()-1);
+}
+
+void MainWindow::on_nameEditLanguageRemove_clicked()
+{
+    QString selectedLang=ui->nameEditLanguageList->currentText();
+    QDomElement child = domDocument.documentElement().firstChildElement("name");
+    while(!child.isNull())
+    {
+        QString lang="en";
+        if(child.hasAttribute("lang"))
+            lang=child.attribute("lang");
+        if(selectedLang==lang)
+        {
+            child.parentNode().removeChild(child);
+            break;
+        }
+        child = child.nextSiblingElement("name");
+    }
+    ui->nameEditLanguageList->removeItem(ui->nameEditLanguageList->currentIndex());
+}
+
+void MainWindow::on_descriptionEditLanguageAdd_clicked()
+{
+    QString lang=QInputDialog::getText(this,tr("Language"),tr("Give the language code"));
+    if(lang.isEmpty())
+        return;
+    QString description=QInputDialog::getText(this,tr("Description"),tr("Give the description for this language"));
+    if(description.isEmpty())
+        return;
+    QListWidgetItem * item=new QListWidgetItem();
+    item->setData(99,lang);
+    item->setData(98,description);
+    item->setText(QString("%1: %2").arg(lang).arg(description));
+    QDomElement newXmlElement=domDocument.createElement("description");
+    newXmlElement.setAttribute("lang",lang);
+    QDomText newTextElement=domDocument.createTextNode(description);
+    newXmlElement.appendChild(newTextElement);
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    items[selectedItem].appendChild(newXmlElement);
+    ui->descriptionEditLanguageList->addItem(lang);
+    ui->descriptionEditLanguageList->setCurrentIndex(ui->descriptionEditLanguageList->count()-1);
+}
+
+void MainWindow::on_descriptionEditLanguageRemove_clicked()
+{
+    QString selectedLang=ui->descriptionEditLanguageList->currentText();
+    QDomElement child = domDocument.documentElement().firstChildElement("description");
+    while(!child.isNull())
+    {
+        QString lang="en";
+        if(child.hasAttribute("lang"))
+            lang=child.attribute("lang");
+        if(selectedLang==lang)
+        {
+            child.parentNode().removeChild(child);
+            break;
+        }
+        child = child.nextSiblingElement("description");
+    }
+    ui->descriptionEditLanguageList->removeItem(ui->descriptionEditLanguageList->currentIndex());
+}
