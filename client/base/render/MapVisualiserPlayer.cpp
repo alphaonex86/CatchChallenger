@@ -704,9 +704,39 @@ QString MapVisualiserPlayer::currentMapType() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(!all_map[current_map]->tiledMap->properties().contains("type"))
+    if(all_map[current_map]->tiledMap->properties().contains("type"))
+        if(!all_map[current_map]->tiledMap->properties().value("type").isEmpty())
+            return all_map[current_map]->tiledMap->properties().value("type");
+    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute("type"))
+        if(!all_map[current_map]->logicalMap.xmlRoot.attribute("type").isEmpty())
+            return all_map[current_map]->logicalMap.xmlRoot.attribute("type");
+    return QString();
+}
+
+QString MapVisualiserPlayer::currentZone() const
+{
+    if(!all_map.contains(current_map))
         return QString();
-    return all_map[current_map]->tiledMap->properties().value("type");
+    if(all_map[current_map]->tiledMap->properties().contains("zone"))
+        if(!all_map[current_map]->tiledMap->properties().value("zone").isEmpty())
+            return all_map[current_map]->tiledMap->properties().value("zone");
+    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute("zone"))
+        if(!all_map[current_map]->logicalMap.xmlRoot.attribute("zone").isEmpty())
+            return all_map[current_map]->logicalMap.xmlRoot.attribute("zone");
+    return QString();
+}
+
+QString MapVisualiserPlayer::currentBackgroundsound() const
+{
+    if(!all_map.contains(current_map))
+        return QString();
+    if(all_map[current_map]->tiledMap->properties().contains("backgroundsound"))
+        if(!all_map[current_map]->tiledMap->properties().value("backgroundsound").isEmpty())
+            return all_map[current_map]->tiledMap->properties().value("backgroundsound");
+    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute("backgroundsound"))
+        if(!all_map[current_map]->logicalMap.xmlRoot.attribute("backgroundsound").isEmpty())
+            return all_map[current_map]->logicalMap.xmlRoot.attribute("backgroundsound");
+    return QString();
 }
 
 CatchChallenger::Direction MapVisualiserPlayer::getDirection()

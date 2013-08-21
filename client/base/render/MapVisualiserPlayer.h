@@ -20,6 +20,8 @@ public:
     QString lastLocation() const;
     QString currentMap() const;
     QString currentMapType() const;
+    QString currentZone() const;
+    QString currentBackgroundsound() const;
     CatchChallenger::Direction getDirection();
     enum BlockedOn
     {

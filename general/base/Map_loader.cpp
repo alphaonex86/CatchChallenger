@@ -807,8 +807,8 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
         qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return false;
     }
-    QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="map")
+    this->map_to_send.xmlRoot = domDocument.documentElement();
+    if(this->map_to_send.xmlRoot.tagName()!="map")
     {
         qDebug() << QString("\"map\" root balise not found for the xml file");
         return false;
@@ -816,7 +816,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
 
     //grass
     quint32 tempGrassLuckTotal=0;
-    QDomElement grass = root.firstChildElement("grass");
+    QDomElement grass = this->map_to_send.xmlRoot.firstChildElement("grass");
     if(!grass.isNull())
     {
         if(grass.isElement())
@@ -919,7 +919,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
 
     //water
     quint32 tempWaterLuckTotal=0;
-    QDomElement water = root.firstChildElement("water");
+    QDomElement water = this->map_to_send.xmlRoot.firstChildElement("water");
     if(!water.isNull())
     {
         if(water.isElement())
@@ -1022,7 +1022,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
 
     //cave
     quint32 tempCaveLuckTotal=0;
-    QDomElement cave = root.firstChildElement("cave");
+    QDomElement cave = this->map_to_send.xmlRoot.firstChildElement("cave");
     if(!cave.isNull())
     {
         if(cave.isElement())

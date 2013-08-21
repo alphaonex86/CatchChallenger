@@ -35,6 +35,14 @@ private slots:
     void on_descriptionPlainTextEdit_textChanged();
     void on_price_editingFinished();
     void on_imageBrowse_clicked();
+    void on_nameEditLanguageAdd_clicked();
+
+    void on_nameEditLanguageRemove_clicked();
+
+    void on_descriptionEditLanguageAdd_clicked();
+
+    void on_descriptionEditLanguageRemove_clicked();
+
 private:
     Ui::MainWindow *ui;
     QHash<quint32,QDomElement> items;
