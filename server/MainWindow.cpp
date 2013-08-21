@@ -394,51 +394,53 @@ void MainWindow::load_settings()
 
     ui->db_sqlite_file->setText(QCoreApplication::applicationDirPath()+"/catchchallenger.db.sqlite");
 
-    settings->beginGroup("city");
-    if(!settings->contains("capture_frequency"))
-        settings->setValue("capture_frequency","day");
-    if(settings->value("capture_frequency").toString()=="week")
-        ui->comboBox_city_capture_frequency->setCurrentIndex(0);
-    else if(settings->value("capture_frequency").toString()=="month")
-        ui->comboBox_city_capture_frequency->setCurrentIndex(1);
-    else
-        ui->comboBox_city_capture_frequency->setCurrentIndex(0);
-    update_capture();
-    if(settings->value("capture_day").toString()=="monday")
-        ui->comboBox_city_capture_day->setCurrentIndex(0);
-    else if(settings->value("capture_day").toString()=="tuesday")
-        ui->comboBox_city_capture_day->setCurrentIndex(1);
-    else if(settings->value("capture_day").toString()=="wednesday")
-        ui->comboBox_city_capture_day->setCurrentIndex(2);
-    else if(settings->value("capture_day").toString()=="thursday")
-        ui->comboBox_city_capture_day->setCurrentIndex(3);
-    else if(settings->value("capture_day").toString()=="friday")
-        ui->comboBox_city_capture_day->setCurrentIndex(4);
-    else if(settings->value("capture_day").toString()=="saturday")
-        ui->comboBox_city_capture_day->setCurrentIndex(5);
-    else if(settings->value("capture_day").toString()=="sunday")
-        ui->comboBox_city_capture_day->setCurrentIndex(6);
-    else
-        ui->comboBox_city_capture_day->setCurrentIndex(0);
-    QStringList capture_time_string_list=settings->value("capture_time").toString().split(":");
-    if(capture_time_string_list.size()!=2)
-        settings->setValue("capture_time",QString("0:0"));
-    else
     {
-        bool ok;
-        int hours=capture_time_string_list.first().toUInt(&ok);
-        if(!ok)
+        settings->beginGroup("city");
+        if(!settings->contains("capture_frequency"))
+            settings->setValue("capture_frequency","day");
+        int capture_frequency_int=0;
+        if(settings->value("capture_frequency").toString()=="week")
+            capture_frequency_int=0;
+        else if(settings->value("capture_frequency").toString()=="month")
+            capture_frequency_int=1;
+        update_capture();
+        int capture_day_int=0;
+        if(settings->value("capture_day").toString()=="monday")
+            capture_day_int=0;
+        else if(settings->value("capture_day").toString()=="tuesday")
+            capture_day_int=1;
+        else if(settings->value("capture_day").toString()=="wednesday")
+            capture_day_int=2;
+        else if(settings->value("capture_day").toString()=="thursday")
+            capture_day_int=3;
+        else if(settings->value("capture_day").toString()=="friday")
+            capture_day_int=4;
+        else if(settings->value("capture_day").toString()=="saturday")
+            capture_day_int=5;
+        else if(settings->value("capture_day").toString()=="sunday")
+            capture_day_int=6;
+        int capture_time_hours=0,capture_time_minutes=0;
+        QStringList capture_time_string_list=settings->value("capture_time").toString().split(":");
+        if(capture_time_string_list.size()!=2)
             settings->setValue("capture_time",QString("0:0"));
         else
         {
-            int minutes=capture_time_string_list.last().toUInt(&ok);
+            bool ok;
+            capture_time_hours=capture_time_string_list.first().toUInt(&ok);
             if(!ok)
                 settings->setValue("capture_time",QString("0:0"));
             else
-                ui->timeEdit_city_capture_time->setTime(QTime(hours,minutes));
+            {
+                capture_time_minutes=capture_time_string_list.last().toUInt(&ok);
+                if(!ok)
+                    settings->setValue("capture_time",QString("0:0"));
+            }
         }
+        settings->endGroup();
+        ui->comboBox_city_capture_frequency->setCurrentIndex(capture_frequency_int);
+        ui->comboBox_city_capture_day->setCurrentIndex(capture_day_int);
+        ui->timeEdit_city_capture_time->setTime(QTime(capture_time_hours,capture_time_minutes));
     }
-    settings->endGroup();
 
     {
         bool ok;

@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   PRIMARY KEY (`id`),
   KEY `player` (`player`),
   KEY `place` (`place`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=5 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
 
 -- --------------------------------------------------------
 
@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS `player` (
   `unvalidated_rescue_map` text NOT NULL,
   `unvalidated_rescue_x` int(11) NOT NULL,
   `unvalidated_rescue_y` int(11) NOT NULL,
-  `unvalidated_rescue_orientation` text NOT NULL,
+  `unvalidated_rescue_orientation` enum('top','bottom','left','right') NOT NULL,
   `warehouse_cash` bigint(20) NOT NULL,
   `allow` text NOT NULL,
   `clan_leader` tinyint(1) NOT NULL,
@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS `player` (
   UNIQUE KEY `login` (`login`,`password`),
   UNIQUE KEY `pseudo` (`pseudo`,`clan`),
   KEY `clan` (`clan`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=9 ;
 
 -- --------------------------------------------------------
 
