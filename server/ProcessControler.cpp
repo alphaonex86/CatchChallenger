@@ -15,7 +15,7 @@ ProcessControler::ProcessControler()
     need_be_closed=false;
 
     settings=new QSettings(QCoreApplication::applicationDirPath()+"/server.properties",QSettings::IniFormat);
-    NormalServer::load_default_settings(settings);
+    NormalServer::checkSettingsFile(settings);
     send_settings();
     server.start_server();
 }
@@ -27,7 +27,7 @@ ProcessControler::~ProcessControler()
 
 void ProcessControler::send_settings()
 {
-    CatchChallenger::ServerSettings formatedServerSettings;
+    CatchChallenger::ServerSettings formatedServerSettings=server.getSettings();;
 
     //the listen
     formatedServerSettings.server_port					= settings->value("server-port").toUInt();
@@ -104,9 +104,86 @@ void ProcessControler::send_settings()
             formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithm_simple;
         break;
     }
+    settings->endGroup();
+    settings->beginGroup("MapVisibilityAlgorithm-Simple");
     formatedServerSettings.mapVisibility.simple.max				= settings->value("Max").toUInt();
     formatedServerSettings.mapVisibility.simple.reshow			= settings->value("Reshow").toUInt();
     settings->endGroup();
+
+    settings->beginGroup("city");
+    if(settings->value("capture_frequency").toString()=="week")
+        formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_week;
+    else
+        formatedServerSettings.city.capture.frenquency=City::Capture::Frequency_month;
+
+    if(settings->value("capture_day").toString()=="monday")
+        formatedServerSettings.city.capture.day=City::Capture::Monday;
+    else if(settings->value("capture_day").toString()=="tuesday")
+        formatedServerSettings.city.capture.day=City::Capture::Tuesday;
+    else if(settings->value("capture_day").toString()=="wednesday")
+        formatedServerSettings.city.capture.day=City::Capture::Wednesday;
+    else if(settings->value("capture_day").toString()=="thursday")
+        formatedServerSettings.city.capture.day=City::Capture::Thursday;
+    else if(settings->value("capture_day").toString()=="friday")
+        formatedServerSettings.city.capture.day=City::Capture::Friday;
+    else if(settings->value("capture_day").toString()=="saturday")
+        formatedServerSettings.city.capture.day=City::Capture::Saturday;
+    else if(settings->value("capture_day").toString()=="sunday")
+        formatedServerSettings.city.capture.day=City::Capture::Sunday;
+    else
+        formatedServerSettings.city.capture.day=City::Capture::Monday;
+    formatedServerSettings.city.capture.hour=0;
+    formatedServerSettings.city.capture.minute=0;
+    QStringList capture_time_string_list=settings->value("capture_time").toString().split(":");
+    if(capture_time_string_list.size()==2)
+    {
+        bool ok;
+        formatedServerSettings.city.capture.hour=capture_time_string_list.first().toUInt(&ok);
+        if(!ok)
+            formatedServerSettings.city.capture.hour=0;
+        else
+        {
+            formatedServerSettings.city.capture.minute=capture_time_string_list.last().toUInt(&ok);
+            if(!ok)
+                formatedServerSettings.city.capture.minute=0;
+        }
+    }
+    settings->endGroup();
+
+    {
+        bool ok;
+        settings->beginGroup("bitcoin");
+        formatedServerSettings.bitcoin.address=settings->value("address").toString();
+        if(settings->contains("binaryPath") && !settings->value("binaryPath").toString().isEmpty())
+            formatedServerSettings.bitcoin.binaryPath=settings->value("binaryPath").toString();
+        else
+        {
+            #ifdef Q_OS_WIN32
+            formatedServerSettings.bitcoin.binaryPath                         = "%application_path%/bitcoin/bitcoind.exe";
+            #else
+            formatedServerSettings.bitcoin.binaryPath                         = "/usr/bin/bitcoind";
+            #endif
+        }
+        formatedServerSettings.bitcoin.enabled=(settings->value("enabled").toString()=="true");
+        formatedServerSettings.bitcoin.fee=settings->value("fee").toDouble(&ok);
+        if(!ok)
+            formatedServerSettings.bitcoin.fee=1.0;
+        formatedServerSettings.bitcoin.port=settings->value("port").toUInt(&ok);
+        if(!ok)
+            formatedServerSettings.bitcoin.port=46349;
+        formatedServerSettings.bitcoin.workingPath=settings->value("workingPath").toString();
+        if(settings->contains("workingPath") && !settings->value("workingPath").toString().isEmpty())
+            formatedServerSettings.bitcoin.workingPath=settings->value("workingPath").toString();
+        else
+        {
+            #ifdef Q_OS_WIN32
+            formatedServerSettings.bitcoin.workingPath                        = "%application_path%/bitcoin-storage/";
+            #else
+            formatedServerSettings.bitcoin.workingPath                        = QDir::homePath()+"/.config/CatchChallenger/server/bitoin/";
+            #endif
+        }
+        settings->endGroup();
+    }
 
     server.setSettings(formatedServerSettings);
 }

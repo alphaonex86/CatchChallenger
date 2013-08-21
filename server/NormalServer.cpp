@@ -499,7 +499,7 @@ void NormalServer::start_benchmark(quint16 second,quint16 number_of_client,bool 
     emit try_start_benchmark(second,number_of_client,benchmark_map);
 }
 
-void NormalServer::load_default_settings(QSettings *settings)
+void NormalServer::checkSettingsFile(QSettings *settings)
 {
     if(!settings->contains("max-players"))
         settings->setValue("max-players",200);
@@ -577,5 +577,32 @@ void NormalServer::load_default_settings(QSettings *settings)
         settings->setValue("secondToPositionSync",0);
     if(!settings->contains("positionTeleportSync"))
         settings->setValue("positionTeleportSync",true);
+    settings->endGroup();
+
+
+    settings->beginGroup("city");
+    if(!settings->contains("capture_frequency"))
+        settings->setValue("capture_frequency","month");
+    if(!settings->contains("capture_day"))
+        settings->setValue("capture_day","monday");
+    if(!settings->contains("capture_time"))
+        settings->setValue("capture_time","0:0");
+    settings->endGroup();
+
+    settings->beginGroup("bitcoin");
+    if(!settings->contains("address"))
+        settings->setValue("address","1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ");
+    if(!settings->contains("binaryPath"))
+        settings->setValue("binaryPath","");
+    if(!settings->contains("enabled"))
+        settings->setValue("enabled",false);
+    if(!settings->contains("fee"))
+        settings->setValue("fee",1.0);
+    if(!settings->contains("history"))
+        settings->setValue("history",30);
+    if(!settings->contains("port"))
+        settings->setValue("port",46349);
+    if(!settings->contains("workingPath"))
+        settings->setValue("workingPath","0:0");
     settings->endGroup();
 }
