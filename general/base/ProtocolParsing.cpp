@@ -518,7 +518,7 @@ void ProtocolParsingInput::parseIncommingData()
                 }
                 else //if need more data
                 {
-                    if(socket->bytesAvailable()<CATCHCHALLENGER_MIN_PACKET_SIZE && (dataSize-data.size())>CATCHCHALLENGER_MIN_PACKET_SIZE)
+                    /*if(socket->bytesAvailable()<CATCHCHALLENGER_MIN_PACKET_SIZE && (dataSize-data.size())>CATCHCHALLENGER_MIN_PACKET_SIZE)
                     {
                         if(!need_query_number)
                         {
@@ -541,7 +541,7 @@ void ProtocolParsingInput::parseIncommingData()
                         }
                         dataClear();
                         return;
-                    }
+                    }*/
                     RXSize+=socket->bytesAvailable();
                     data.append(socket->readAll());
                     #ifdef PROTOCOLPARSINGDEBUG
