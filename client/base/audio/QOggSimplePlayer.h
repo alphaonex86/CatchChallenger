@@ -29,6 +29,7 @@ public:
 public slots:
     void start();
     void stop();
+    void setLoop(const bool &loop);
 private slots:
     void finishedPlaying(QAudio::State state);
     void readDone();
@@ -37,11 +38,11 @@ private slots:
 private:
     QAudioOutput *output;
     QOggAudioBuffer buffer;
-    FILE * file;
     OggVorbis_File vf;
     int current_section;
     QString filePath;
     bool needPlay;
+    bool loop;
 signals:
     void internalOpen();
     void internalClose();
