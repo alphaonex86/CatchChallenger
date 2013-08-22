@@ -29,10 +29,13 @@ QStringList FacilityLib::listFolder(const QString& folder,const QString& suffix)
     for (int index=0;index<sizeEntryList;++index)
     {
         QFileInfo fileInfo=entryList.at(index);
-        if(fileInfo.isDir())
-            returnList+=listFolder(folder,suffix+fileInfo.fileName()+"/");//put unix separator because it's transformed into that's under windows too
-        else if(fileInfo.isFile())
-            returnList+=suffix+fileInfo.fileName();
+        if(!fileInfo.fileName().startsWith("."))
+        {
+            if(fileInfo.isDir())
+                returnList+=listFolder(folder,suffix+fileInfo.fileName()+"/");//put unix separator because it's transformed into that's under windows too
+            else if(fileInfo.isFile())
+                returnList+=suffix+fileInfo.fileName();
+        }
     }
     return returnList;
 }

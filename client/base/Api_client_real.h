@@ -62,6 +62,8 @@ private:
 private slots:
     void disconnected();
     void writeNewFile(const QString &fileName, const QByteArray &data, const quint64 &mtime);
+signals:
+    void newDatapackFile() const;
 };
 }
 

@@ -84,6 +84,7 @@ void BaseWindow::resetAll()
     marketWithdrawInSuspend=false;
     marketWithdrawObjectList.clear();
     marketWithdrawMonsterList.clear();
+    datapackCount=0;
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }
@@ -209,6 +210,12 @@ void BaseWindow::haveTheDatapack()
     emit parseDatapack(CatchChallenger::Api_client_real::client->get_datapack_base_name());
 }
 
+void BaseWindow::newDatapackFile()
+{
+    datapackCount++;
+    updateConnectingStatus();
+}
+
 void BaseWindow::have_inventory(const QHash<quint32,quint32> &items, const QHash<quint32, quint32> &warehouse_items)
 {
     #ifdef DEBUG_BASEWINDOWS
@@ -297,7 +304,12 @@ void BaseWindow::updateConnectingStatus()
     if(!haveInventory || !havePlayerInformations)
         waitedData << tr("loading the player informations");
     if(!haveDatapack)
-        waitedData << tr("loading the datapack");
+    {
+        if(datapackCount==0)
+            waitedData << tr("loading the datapack");
+        else
+            waitedData << tr("Loaded datapack file: %1").arg(datapackCount);
+    }
     else if(!datapackIsParsed)
         waitedData << tr("opening the datapack");
     if(waitedData.isEmpty())

@@ -172,6 +172,7 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawCanceled,     this,&BaseWindow::marketWithdrawCanceled);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawObject,       this,&BaseWindow::marketWithdrawObject);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster);
+    connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFile,            this,&BaseWindow::newDatapackFile);
 
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
     connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
