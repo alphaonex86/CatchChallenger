@@ -945,6 +945,7 @@ void MainWindow::serverError(const QString &error)
 
 void MainWindow::play(const QString &savegamesPath)
 {
+    ui->stackedWidget->setCurrentIndex(1);
     resetAll();
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
@@ -966,7 +967,6 @@ void MainWindow::play(const QString &savegamesPath)
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
     connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
 
-    ui->stackedWidget->setCurrentIndex(1);
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
 }
 

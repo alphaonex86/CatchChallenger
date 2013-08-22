@@ -31,6 +31,7 @@
 #define CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT 7
 //if need more than this size and receive less, bug with the preivous message, reset
 #define CATCHCHALLENGER_MIN_PACKET_SIZE 128
+#define CATCHCHALLENGER_MAX_PACKET_SIZE 200
 
 #define CATCHCHALLENGER_BOTFIGHT_RANGE 5
 #define RANDOM_FLOAT_PART_DIVIDER 10000

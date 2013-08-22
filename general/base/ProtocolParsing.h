@@ -121,7 +121,7 @@ public:
     bool postReplyData(const quint8 &queryNumber, QByteArray data);
     quint64 getTXSize();
 private:
-    bool internalPackOutcommingData(const QByteArray &data);
+    bool internalPackOutcommingData(QByteArray data);
     QByteArray encodeSize(quint32 size);
 
     quint64 TXSize;
