@@ -125,4 +125,6 @@ CREATE INDEX "monster_place" on monster (place ASC);
 CREATE INDEX "player_item_index" on item (player_id ASC);
 CREATE INDEX "item_place" on item (place ASC);
 CREATE UNIQUE INDEX "itemplayerplace" on item (item_id ASC, player_id ASC, place ASC);
+CREATE UNIQUE INDEX "player_unique_login" on player (login ASC);
+CREATE UNIQUE INDEX "player_unique_pseudo" on player (pseudo ASC);
 COMMIT;
