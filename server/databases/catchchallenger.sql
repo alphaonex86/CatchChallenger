@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   PRIMARY KEY (`id`),
   KEY `player` (`player`),
   KEY `place` (`place`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -196,8 +196,10 @@ CREATE TABLE IF NOT EXISTS `player` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`),
   UNIQUE KEY `pseudo` (`pseudo`,`clan`),
+  UNIQUE KEY `login_2` (`login`),
+  UNIQUE KEY `pseudo_2` (`pseudo`),
   KEY `clan` (`clan`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=9 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
