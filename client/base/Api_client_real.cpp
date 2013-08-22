@@ -157,6 +157,7 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
         DebugClass::debugConsole(QString("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
         return;
     }
+    emit newDatapackFile();
     #ifdef Q_CC_GNU
         //this function avalaible on unix and mingw
         utimbuf butime;

@@ -1542,7 +1542,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
     return internalPackOutcommingData(block+data);
 }
 
-bool ProtocolParsingOutput::internalPackOutcommingData(const QByteArray &data)
+bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
 {
     #ifdef PROTOCOLPARSINGDEBUG
     DebugClass::debugConsole("internalPackOutcommingData(): start");
@@ -1550,13 +1550,22 @@ bool ProtocolParsingOutput::internalPackOutcommingData(const QByteArray &data)
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
     emit message(QString("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    TXSize+=data.size();
-    byteWriten = socket->write(data);
-    if(data.size()!=byteWriten)
+    QByteArray dataToSend;
+    while(!data.isEmpty())
     {
-        DebugClass::debugConsole(QString("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        emit error(QString("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-        return false;
+        if(data.size()<=CATCHCHALLENGER_MAX_PACKET_SIZE)
+            dataToSend=data;
+        else
+            dataToSend=data.mid(0,CATCHCHALLENGER_MAX_PACKET_SIZE);
+        TXSize+=dataToSend.size();
+        byteWriten = socket->write(dataToSend);
+        if(dataToSend.size()!=byteWriten)
+        {
+            DebugClass::debugConsole(QString("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+            emit error(QString("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+            return false;
+        }
+        data.remove(0,dataToSend.size());
     }
     return true;
 }
