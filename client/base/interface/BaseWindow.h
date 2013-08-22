@@ -170,6 +170,7 @@ private slots:
 
     //datapack
     void haveTheDatapack();
+    void newDatapackFile();
 
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
@@ -402,6 +403,7 @@ private:
     bool haveClanInformations;
     quint32 factoryId;
     ObjectType waitedObjectType;
+    quint32 datapackCount;
 
     //plant seed in waiting
     quint32 seed_in_waiting;

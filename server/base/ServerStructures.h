@@ -206,6 +206,7 @@ struct ServerPrivateVariables
     QString datapack_basePath;
     QString datapack_mapPath;
     QRegularExpression datapack_rightFileName;
+    QRegularExpression datapack_rightFolderName;
     QHash<QString,quint64> filesList;
     QHash<quint32,Shop> shops;
 
