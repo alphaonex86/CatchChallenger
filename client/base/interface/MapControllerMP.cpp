@@ -712,6 +712,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     this->x=x;
     this->y=y;
 
+    hideNotloadedMap();
     unloadPlayerFromCurrentMap();
     passMapIntoOld();
     QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
