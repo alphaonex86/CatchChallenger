@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     timeLaunched=0;
     datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
     savegamePath=QCoreApplication::applicationDirPath()+"/savegames/";
+    MapController::mapController->setDatapackPath(datapackPath);
     datapackPathExists=QDir(datapackPath).exists();
 
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
@@ -945,8 +946,8 @@ void MainWindow::serverError(const QString &error)
 
 void MainWindow::play(const QString &savegamesPath)
 {
-    ui->stackedWidget->setCurrentIndex(1);
     resetAll();
+    ui->stackedWidget->setCurrentIndex(1);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
     if(!metaData.contains("pass"))

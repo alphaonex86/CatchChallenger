@@ -185,8 +185,6 @@ BaseWindow::BaseWindow() :
     connect(&nextCityCaptureTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
     connect(&updater_page_zonecapture,&QTimer::timeout, this,&BaseWindow::updatePageZonecapture);
 
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
-
     renderFrame = new QFrame(ui->page_map);
     renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
     renderFrame->setMinimumSize(QSize(600, 572));
