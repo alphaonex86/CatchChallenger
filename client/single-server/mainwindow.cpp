@@ -121,6 +121,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
     ui->stackedWidget->setCurrentIndex(1);
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(host,port);
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
