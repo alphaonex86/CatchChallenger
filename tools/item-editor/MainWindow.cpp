@@ -176,6 +176,15 @@ void MainWindow::on_itemListAdd_clicked()
     int index=1;
     while(items.contains(index))
         index++;
+    bool ok;
+    index=QInputDialog::getInt(this,tr("Id"),tr("What id do you want"),index,0,2000000000,1,&ok);
+    if(!ok)
+        return;
+    if(items.contains(index))
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Id already taken"));
+        return;
+    }
     QDomElement newXmlElement=domDocument.createElement("item");
     newXmlElement.setAttribute("id",index);
     domDocument.documentElement().appendChild(newXmlElement);
