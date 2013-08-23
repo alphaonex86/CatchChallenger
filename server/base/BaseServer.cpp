@@ -215,7 +215,7 @@ void BaseServer::preload_zone()
             continue;
         }
 
-        //load name
+        //load capture
         QList<quint32> fightIdList;
         QDomElement capture = root.firstChildElement("capture");
         if(!capture.isNull())
