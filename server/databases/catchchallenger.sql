@@ -2,7 +2,7 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 --
--- Database: `catchchallenger`
+-- Database: `cc_server`
 --
 
 -- --------------------------------------------------------
@@ -50,11 +50,12 @@ CREATE TABLE IF NOT EXISTS `city` (
 --
 
 CREATE TABLE IF NOT EXISTS `clan` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` text NOT NULL,
   `cash` bigint(20) NOT NULL,
+  `date` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -170,8 +171,7 @@ CREATE TABLE IF NOT EXISTS `player` (
   `login` varchar(32) NOT NULL,
   `password` varchar(128) NOT NULL,
   `pseudo` varchar(255) NOT NULL,
-  `email` text NOT NULL,
-  `skin` text NOT NULL,
+  `skin` varchar(16) NOT NULL,
   `position_x` int(11) NOT NULL,
   `position_y` int(11) NOT NULL,
   `orientation` enum('top','bottom','left','right') NOT NULL,
@@ -193,12 +193,50 @@ CREATE TABLE IF NOT EXISTS `player` (
   `bitcoin_offset` double NOT NULL,
   `market_cash` bigint(20) NOT NULL,
   `market_bitcoin` double NOT NULL,
+  `date` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`,`password`),
   UNIQUE KEY `pseudo` (`pseudo`,`clan`),
   UNIQUE KEY `login_2` (`login`),
   UNIQUE KEY `pseudo_2` (`pseudo`),
   KEY `clan` (`clan`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `player_meta`
+--
+
+CREATE TABLE IF NOT EXISTS `player_meta` (
+  `id` int(11) NOT NULL,
+  `email` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `player_register`
+--
+
+CREATE TABLE IF NOT EXISTS `player_register` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `login` varchar(32) NOT NULL,
+  `password` varchar(128) NOT NULL,
+  `pseudo` varchar(255) NOT NULL,
+  `skin` varchar(16) NOT NULL,
+  `position_x` int(11) NOT NULL,
+  `position_y` int(11) NOT NULL,
+  `orientation` enum('top','bottom','left','right') NOT NULL,
+  `map_name` text NOT NULL,
+  `cash` bigint(20) NOT NULL,
+  `email` varchar(64) NOT NULL,
+  `key` text NOT NULL,
+  `date` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `login_2` (`login`),
+  UNIQUE KEY `pseudo_2` (`pseudo`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
