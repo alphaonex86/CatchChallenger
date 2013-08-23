@@ -85,6 +85,12 @@ void BaseWindow::resetAll()
     marketWithdrawObjectList.clear();
     marketWithdrawMonsterList.clear();
     datapackCount=0;
+    while(!ambiance.isEmpty())
+    {
+        ambiance.first()->stop();
+        delete ambiance.first();
+        ambiance.removeFirst();
+    }
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }

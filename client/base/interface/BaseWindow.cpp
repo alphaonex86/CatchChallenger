@@ -9,6 +9,7 @@
 #include "Chat.h"
 #include "WithAnotherPlayer.h"
 #include "GetPrice.h"
+#include "../Options.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -1290,6 +1291,7 @@ void BaseWindow::currentMapLoaded()
     ambiance << new QOggSimplePlayer(file,&audioReadThread);
     ambiance.last()->start();
     ambiance.last()->setLoop(true);
+    ambiance.last()->setVolume(Options::options.getAudioVolume());
 }
 
 //network

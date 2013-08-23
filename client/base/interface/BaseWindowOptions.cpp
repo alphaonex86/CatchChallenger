@@ -25,9 +25,18 @@ void BaseWindow::on_spinBoxMaxFPS_editingFinished()
     MapController::mapController->setTargetFPS(Options::options.getFinalFPS());
 }
 
+void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
+{
+    Options::options.setAudioVolume(value);
+    int index=0;
+    while(index<ambiance.size())
+        ambiance.at(index)->setVolume(value);
+}
+
 void BaseWindow::loadSettings()
 {
     ui->checkBoxZoom->setChecked(Options::options.getZoomEnabled());
+    ui->audioVolume->setValue(Options::options.getAudioVolume());
     ui->checkBoxLimitFPS->setChecked(Options::options.getLimitedFPS());
     ui->spinBoxMaxFPS->setValue(Options::options.getFPS());
     if(Options::options.getZoomEnabled())
