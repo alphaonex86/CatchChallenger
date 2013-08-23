@@ -26,6 +26,14 @@ Options::Options()
         zoom=settings->value("zoom").toBool();
     else
         zoom=true;
+    if(settings->contains("audioVolume"))
+    {
+        audioVolume=settings->value("audioVolume").toUInt(&ok);
+        if(!ok || audioVolume>100)
+            audioVolume=100;
+    }
+    else
+        audioVolume=100;
 }
 
 Options::~Options()
@@ -66,6 +74,17 @@ void Options::setZoomEnabled(const bool &zoom)
     emit newZoomEnabled(zoom);
 }
 
+void Options::setAudioVolume(const quint8 &audioVolume)
+{
+    if(this->audioVolume==audioVolume)
+        return;
+    if(audioVolume>100)
+        return;
+    this->audioVolume=audioVolume;
+    settings->setValue("audioVolume",audioVolume);
+    emit newAudioVolume(audioVolume);
+}
+
 quint16 Options::getFPS()
 {
     return fps;
@@ -87,4 +106,9 @@ quint16 Options::getFinalFPS()
 bool Options::getZoomEnabled()
 {
     return zoom;
+}
+
+quint8 Options::getAudioVolume()
+{
+    return audioVolume;
 }

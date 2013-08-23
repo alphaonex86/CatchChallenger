@@ -26,6 +26,7 @@ public:
     explicit QOggSimplePlayer(const QString &filePath, QThread * audioThread=NULL);
     virtual ~QOggSimplePlayer();
     QString getFilePath() const;
+    void setVolume(qreal volume);
 public slots:
     void start();
     void stop();
@@ -36,6 +37,7 @@ private slots:
     void close();
     void open();
 private:
+    qreal volume;
     QAudioOutput *output;
     QOggAudioBuffer buffer;
     OggVorbis_File vf;

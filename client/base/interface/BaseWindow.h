@@ -373,6 +373,7 @@ private slots:
     void on_marketOwnMonster_itemActivated(QListWidgetItem *item);
     void on_marketPutObject_clicked();
     void on_marketPutMonster_clicked();
+    void on_audioVolume_valueChanged(int value);
 protected slots:
     //datapack
     void datapackParsed();
