@@ -467,7 +467,7 @@ void MainWindow::on_openMapMetaFile_clicked()
     }
 
     ui->stackedWidget->setCurrentWidget(ui->page_edit);
-    ui->tabWidget->setCurrentWidget(ui->tabWidget);
+    ui->tabWidget->setCurrentWidget(ui->tabGeneral);
 }
 
 void MainWindow::on_nameAdd_clicked()
