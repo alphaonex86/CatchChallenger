@@ -3,6 +3,7 @@
 #include "../Api_client_real.h"
 
 #include <QRegularExpression>
+#include <QScrollBar>
 
 using namespace CatchChallenger;
 
@@ -191,7 +192,7 @@ void Chat::update_chat()
         index++;
     }
     ui->textBrowser_chat->setHtml(nameHtml);
-    //textBrowser_chat->scrollToAnchor(QString::number(index-1));
+    ui->textBrowser_chat->verticalScrollBar()->setValue(ui->textBrowser_chat->verticalScrollBar()->maximum());
 }
 
 QString Chat::toHtmlEntities(QString text)
