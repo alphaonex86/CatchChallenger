@@ -126,6 +126,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
+    qDebug() << "socketState:" << (int)socketState;
     if(socketState==QAbstractSocket::UnconnectedState)
         resetAll();
     CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
@@ -133,6 +134,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 
 void MainWindow::error(QAbstractSocket::SocketError socketError)
 {
+    qDebug() << "socketError:" << (int)socketError;
     resetAll();
     switch(socketError)
     {
