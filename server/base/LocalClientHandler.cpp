@@ -3205,7 +3205,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
                 return;
             }
         }
-        //send the shop items (no taxes from now)
+        //send the zone capture
         const QString &zoneName=static_cast<MapServer*>(this->map)->zonecapture[QPair<quint8,quint8>(x,y)];
         if(!player_informations->public_and_private_informations.clan_leader)
         {
