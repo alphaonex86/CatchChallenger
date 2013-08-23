@@ -2720,15 +2720,17 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("INSERT INTO clan(id,name) VALUES(%1,\"%2\");")
+                    emit dbQuery(QString("INSERT INTO clan(id,name,date) VALUES(%1,\"%2\",%3);")
                              .arg(GlobalServerData::serverPrivateVariables.maxClanId)
                              .arg(SqlFunction::quoteSqlVariable(text))
+                             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
                              );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("INSERT INTO clan(id,name) VALUES(%1,\"%2\");")
+                    emit dbQuery(QString("INSERT INTO clan(id,name,date) VALUES(%1,\"%2\",%3);")
                              .arg(GlobalServerData::serverPrivateVariables.maxClanId)
                              .arg(SqlFunction::quoteSqlVariable(text))
+                             .arg(QDateTime::currentMSecsSinceEpoch()/1000)
                              );
                 break;
             }
