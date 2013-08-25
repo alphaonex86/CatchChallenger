@@ -1291,7 +1291,7 @@ void BaseWindow::currentMapLoaded()
     ambiance << new QOggSimplePlayer(file,&audioReadThread);
     ambiance.last()->start();
     ambiance.last()->setLoop(true);
-    ambiance.last()->setVolume(Options::options.getAudioVolume());
+    ambiance.last()->setVolume((qreal)Options::options.getAudioVolume()/(qreal)100);
 }
 
 //network

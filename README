@@ -17,3 +17,28 @@ Asynchronous protocol with no influence of internet and server latency. Thread i
 Qt programming to have multi-platform and assembly access. Internal implementation with event. Client work on every OS with Qt 2D part (no graphic card required).
 SGBD: Mysql and SQLite.
 Is into 3 part: server, client, datapack. Single player planned with mix of all
+
+====================================================
+Compiling
+
+Dep: tiled, zlib, libvorbis/libogg for the client, Qt5
+For the Gui server:
+cd server/
+qmake catchchallenger-server-gui.pro
+make
+For the CLI server:
+cd server/
+qmake catchchallenger-server-cli.pro
+make
+For the game solo:
+cd client/single-player/
+qmake *.pro
+make
+For the MMORPG game:
+cd client/single-server/
+qmake *.pro
+make
+
+Assemble it, for the SERVER AND GAME SOLO put the datapack from:
+https://github.com/tgjklmda/datapack2/
+near the application.

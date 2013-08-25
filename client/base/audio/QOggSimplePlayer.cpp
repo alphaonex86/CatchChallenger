@@ -45,6 +45,8 @@ QString QOggSimplePlayer::getFilePath() const
 
 void QOggSimplePlayer::open()
 {
+    if(!QFile(filePath).exists())
+        return;
     QAudioFormat format;
     format.setSampleRate(48000);
     format.setChannelCount(1);
