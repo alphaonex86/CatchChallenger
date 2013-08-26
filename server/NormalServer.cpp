@@ -519,6 +519,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("sendPlayerNumber",false);
     if(!settings->contains("tolerantMode"))
         settings->setValue("tolerantMode",false);
+    if(!settings->contains("compression"))
+        settings->setValue("compression","zlib");
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))

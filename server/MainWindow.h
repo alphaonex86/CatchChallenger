@@ -108,6 +108,8 @@ private slots:
     void on_bitcoin_port_editingFinished();
     void on_bitcoin_workingpath_browse_clicked();
     void on_bitcoin_binarypath_browse_clicked();
+    void on_compression_currentIndexChanged(int index);
+
 signals:
     void record_latency();
 };

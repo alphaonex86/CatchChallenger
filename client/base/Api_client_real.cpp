@@ -49,6 +49,11 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                 //Send datapack file list
                 case 0x000C:
                     {
+                        if(datapackFilesList.isEmpty() && data.size()==1)
+                        {
+                            emit haveTheDatapack();
+                            return;
+                        }
                         QList<bool> boolList;
                         while((in.device()->size()-in.device()->pos())>0)
                         {
@@ -262,7 +267,7 @@ const QStringList Api_client_real::listDatapack(QString suffix)
         else
         {
             //if match with correct file name, considere as valid
-            if(fileInfo.fileName().contains(QRegularExpression(DATAPACK_FILE_REGEX)))
+            if(fileInfo.fileName().contains(QRegularExpression(DATAPACK_FILE_REGEX)) && extensionAllowed.contains(fileInfo.suffix()))
                 returnFile << suffix+fileInfo.fileName();
             //is invalid
             else
