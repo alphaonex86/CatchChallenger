@@ -97,7 +97,9 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
             qDebug() << "Unable the load the default bot tileset";
     }
-    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->setTile(parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->tileAt(baseTile));
+    Tiled::Cell cell=parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->cell();
+    cell.tile=parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->tileAt(baseTile);
+    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->setCell(cell);
     ObjectGroupItem::objectGroupLink[parsedMap->objectGroup]->addObject(parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject);
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->setPosition(QPoint(x,y+1));

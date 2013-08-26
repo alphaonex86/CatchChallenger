@@ -3,7 +3,7 @@
 
 #include "../../general/base/Map.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/libtiled/mapobject.h"
+#include "libtiled/mapobject.h"
 #include "ClientStructures.h"
 #include "DisplayStructures.h"
 

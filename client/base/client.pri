@@ -1,5 +1,4 @@
-INCLUDEPATH += $$PWD/../../general/libtiled/
-DEPENDPATH += $$PWD/../../general/libtiled/
+INCLUDEPATH += libtiled/
 LIBS *= -ltiled
 build_pass:CONFIG(debug, debug|release) {
     win32

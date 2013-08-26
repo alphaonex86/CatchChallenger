@@ -152,7 +152,9 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     if(debugTags)
     {
         Tiled::MapObject * tagMapObject = new Tiled::MapObject();
-        tagMapObject->setTile(tagTileset->tileAt(tagTilesetIndex));
+        Tiled::Cell cell=tagMapObject->cell();
+        cell.tile=tagTileset->tileAt(tagTilesetIndex);
+        tagMapObject->setCell(cell);
         tagMapObject->setPosition(QPoint(tempMapObject->logicalMap.width/2,tempMapObject->logicalMap.height/2+1));
         tempMapObject->objectGroup->addObject(tagMapObject);
         tagTilesetIndex++;
@@ -372,7 +374,9 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                         Tiled::MapObject *object=new Tiled::MapObject();
                                         objectGroup->addObject(object);
                                         object->setPosition(QPointF(x,y+1));
-                                        object->setTile(tile);
+                                        Tiled::Cell cell=object->cell();
+                                        cell.tile=tile;
+                                        object->setCell(cell);
                                         if(!tempMapObject->animatedObject.contains(ms))
                                         {
                                             Map_animation tempAnimationDescriptor;
