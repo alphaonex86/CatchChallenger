@@ -33,6 +33,8 @@ BaseServer::BaseServer()
     qRegisterMetaType<QList<QPair<quint32,qint32> > >("QList<QPair<quint32,qint32> >");
     qRegisterMetaType<QList<qint32> >("QList<quint32>");
 
+    ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Zlib;
+
     GlobalServerData::serverPrivateVariables.connected_players	= 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
     GlobalServerData::serverPrivateVariables.db                   = NULL;
@@ -60,6 +62,7 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.rates_xp_premium                           = 1;
     GlobalServerData::serverSettings.server_ip                                  = "";
     GlobalServerData::serverSettings.server_port                                = 42489;
+    GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_Zlib;
     GlobalServerData::serverSettings.commmonServerSettings.chat_allow_aliance   = true;
     GlobalServerData::serverSettings.commmonServerSettings.chat_allow_clan      = true;
     GlobalServerData::serverSettings.commmonServerSettings.chat_allow_local     = true;
@@ -1748,6 +1751,23 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.bitcoin.workingPath=GlobalServerData::serverSettings.bitcoin.workingPath.replace("%application_path%",QCoreApplication::applicationDirPath());
         if(!QFileInfo(GlobalServerData::serverSettings.bitcoin.binaryPath).isFile())
             GlobalServerData::serverSettings.bitcoin.enabled=false;
+    }
+
+    switch(GlobalServerData::serverSettings.commmonServerSettings.compressionType)
+    {
+        case CatchChallenger::CompressionType_None:
+            GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_None;
+            ProtocolParsing::compressionType=ProtocolParsing::CompressionType_None;
+        break;
+        default:
+        case CatchChallenger::CompressionType_Zlib:
+            GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_Zlib;
+            ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Zlib;
+        break;
+        case CatchChallenger::CompressionType_Xz:
+            GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_Xz;
+            ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Xz;
+        break;
     }
 }
 

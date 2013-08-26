@@ -45,6 +45,13 @@ enum Orientation
     Orientation_left = 4
 };
 
+enum CompressionType
+{
+    CompressionType_None = 0x00,
+    CompressionType_Zlib = 0x01,
+    CompressionType_Xz = 0x02
+};
+
 enum ActionAllow
 {
     ActionAllow_Clan
@@ -266,6 +273,8 @@ enum PacketModeTransmission
  * If benchmark/local client -> single player, the settigns is send to keep the structure, but few useless, no performance impact */
 struct CommmonServerSettings
 {
+    CompressionType compressionType;
+
     //fight
     bool pvp;
     bool sendPlayerNumber;

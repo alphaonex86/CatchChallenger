@@ -2286,9 +2286,31 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     in >> returnCode;
                     if(returnCode==0x01)
                     {
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            return;
+                        }
+                        quint8 compressionCode;
+                        in >> compressionCode;
+                        switch(compressionCode)
+                        {
+                            case 0x00:
+                                ProtocolParsing::compressionType=ProtocolParsing::CompressionType_None;
+                            break;
+                            case 0x01:
+                                ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Zlib;
+                            break;
+                            case 0x02:
+                                ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Xz;
+                            break;
+                            default:
+                                emit newError(tr("Procotol wrong or corrupted"),QString("compression type wrong with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            return;
+                        }
+
                         have_receive_protocol=true;
                         emit protocol_is_good();
-                        //DebugClass::debugConsole("the protocol is good");
                     }
                     else if(returnCode==0x02)
                     {
