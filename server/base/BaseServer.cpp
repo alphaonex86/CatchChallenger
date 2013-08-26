@@ -1117,6 +1117,10 @@ void BaseServer::preload_the_skin()
 
 void BaseServer::preload_the_datapack()
 {
+    QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED+QString(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
+    QSet<QString> extensionAllowed=extensionAllowedTemp.toSet();
+    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
+    ClientHeavyLoad::compressedExtension=compressedExtensionAllowedTemp.toSet();
     QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverPrivateVariables.datapack_basePath);
     int index=0;
     int size=returnList.size();
@@ -1125,14 +1129,17 @@ void BaseServer::preload_the_datapack()
         QString fileName=returnList.at(index);
         if(fileName.contains(GlobalServerData::serverPrivateVariables.datapack_rightFileName))
         {
-            QFile file(GlobalServerData::serverPrivateVariables.datapack_basePath+returnList.at(index));
-            if(file.size()<=8*1024*1024)
+            if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
             {
-                if(file.open(QIODevice::ReadOnly))
+                QFile file(GlobalServerData::serverPrivateVariables.datapack_basePath+returnList.at(index));
+                if(file.size()<=8*1024*1024)
                 {
-                    fileName.replace("\\","/");//remplace if is under windows server
-                    GlobalServerData::serverPrivateVariables.filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
-                    file.close();
+                    if(file.open(QIODevice::ReadOnly))
+                    {
+                        fileName.replace("\\","/");//remplace if is under windows server
+                        GlobalServerData::serverPrivateVariables.filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
+                        file.close();
+                    }
                 }
             }
         }
@@ -1590,6 +1597,7 @@ void BaseServer::unload_the_visibility_algorithm()
 void BaseServer::unload_the_datapack()
 {
     GlobalServerData::serverPrivateVariables.filesList.clear();
+    ClientHeavyLoad::compressedExtension.clear();
 }
 
 void BaseServer::unload_the_players()

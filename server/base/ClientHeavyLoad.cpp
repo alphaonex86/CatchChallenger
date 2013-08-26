@@ -17,6 +17,15 @@
 using namespace CatchChallenger;
 
 QList<quint16> ClientHeavyLoad::simplifiedIdList;
+quint8 ClientHeavyLoad::tempDatapackListReplySize=0;
+quint8 ClientHeavyLoad::tempDatapackListReply=0;
+QByteArray ClientHeavyLoad::tempDatapackListReplyArray;
+QByteArray ClientHeavyLoad::rawFiles;
+QByteArray ClientHeavyLoad::compressedFiles;
+int ClientHeavyLoad::tempDatapackListReplyTestCount;
+int ClientHeavyLoad::rawFilesCount;
+int ClientHeavyLoad::compressedFilesCount;
+QSet<QString> ClientHeavyLoad::compressedExtension;
 
 ClientHeavyLoad::ClientHeavyLoad()
 {
@@ -673,10 +682,16 @@ void ClientHeavyLoad::askIfIsReadyToStop()
 //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
 void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps)
 {
+    tempDatapackListReplyArray.clear();
+    tempDatapackListReplyTestCount=0;
+    rawFiles.clear();
+    compressedFiles.clear();
+    rawFilesCount=0;
+    compressedFilesCount=0;
+    tempDatapackListReply=0;
+    tempDatapackListReplySize=0;
     QHash<QString,quint64> filesList=GlobalServerData::serverPrivateVariables.filesList;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
+
     int loopIndex=0;
     int loop_size=files.size();
     //validate, remove or update the file actualy on the client
@@ -695,16 +710,16 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             return;
         }
         if(!filesList.contains(fileName))
-            out << (quint8)0x02;//to delete
+            addDatapackListReply(true);//to delete
         //the file on the client is already updated
         else
         {
             if(filesList[fileName]==mtime)
-                out << (quint8)0x01;//found
+                addDatapackListReply(false);//found
             else
             {
                 if(sendFile(fileName,filesList[fileName]))
-                    out << (quint8)0x01;//found but updated
+                    addDatapackListReply(false);//found but updated
                 else
                 {
                     //disconnect to prevent desync of datapack
@@ -716,13 +731,125 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         }
         loopIndex++;
     }
+    if(tempDatapackListReplyTestCount!=files.size())
+    {
+        emit error("Bit count return not match");
+        return;
+    }
     //send not in the list
     QHashIterator<QString,quint64> i(filesList);
     while (i.hasNext()) {
         i.next();
         sendFile(i.key(),i.value());
     }
-    emit postReply(query_id,outputData);
+    sendFileContent();
+    sendCompressedFileContent();
+    purgeDatapackListReply(query_id);
+}
+
+void ClientHeavyLoad::addDatapackListReply(const bool &fileRemove)
+{
+    tempDatapackListReplyTestCount++;
+    switch(tempDatapackListReplySize)
+    {
+        case 0:
+            if(fileRemove)
+                tempDatapackListReply|=0x01;
+            else
+                tempDatapackListReply&=~0x01;
+        break;
+        case 1:
+            if(fileRemove)
+                tempDatapackListReply|=0x02;
+            else
+                tempDatapackListReply&=~0x02;
+        break;
+        case 2:
+            if(fileRemove)
+                tempDatapackListReply|=0x04;
+            else
+                tempDatapackListReply&=~0x04;
+        break;
+        case 3:
+            if(fileRemove)
+                tempDatapackListReply|=0x08;
+            else
+                tempDatapackListReply&=~0x08;
+        break;
+        case 4:
+            if(fileRemove)
+                tempDatapackListReply|=0x10;
+            else
+                tempDatapackListReply&=~0x10;
+        break;
+        case 5:
+            if(fileRemove)
+                tempDatapackListReply|=0x20;
+            else
+                tempDatapackListReply&=~0x20;
+        break;
+        case 6:
+            if(fileRemove)
+                tempDatapackListReply|=0x40;
+            else
+                tempDatapackListReply&=~0x40;
+        break;
+        case 7:
+            if(fileRemove)
+                tempDatapackListReply|=0x80;
+            else
+                tempDatapackListReply&=~0x80;
+        break;
+        default:
+        break;
+    }
+    tempDatapackListReplySize++;
+    if(tempDatapackListReplySize>=8)
+    {
+        tempDatapackListReplyArray[tempDatapackListReplyArray.size()]=tempDatapackListReply;
+        tempDatapackListReplySize=0;
+        tempDatapackListReply=0;
+    }
+}
+
+void ClientHeavyLoad::purgeDatapackListReply(const quint8 &query_id)
+{
+    if(tempDatapackListReplySize>0)
+    {
+        tempDatapackListReplyArray[tempDatapackListReplyArray.size()]=tempDatapackListReply;
+        tempDatapackListReplySize=0;
+        tempDatapackListReply=0;
+    }
+    emit postReply(query_id,tempDatapackListReplyArray);
+    tempDatapackListReplyArray.clear();
+}
+
+void ClientHeavyLoad::sendFileContent()
+{
+    if(rawFiles.size()>0 && rawFilesCount>0)
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)rawFilesCount;
+        emit sendFullPacket(0xC2,0x0003,outputData+rawFiles);
+        rawFiles.clear();
+        rawFilesCount=0;
+    }
+}
+
+void ClientHeavyLoad::sendCompressedFileContent()
+{
+    if(compressedFiles.size()>0 && compressedFilesCount>0)
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)compressedFilesCount;
+        emit sendFullPacket(0xC2,0x0003,outputData+compressedFiles);
+        compressedFiles.clear();
+        compressedFilesCount=0;
+    }
 }
 
 bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
@@ -735,7 +862,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
     QFile file(GlobalServerData::serverPrivateVariables.datapack_basePath+fileName);
     if(file.open(QIODevice::ReadOnly))
     {
-        QByteArray content=file.readAll();
+        const QByteArray &content=file.readAll();
         /*emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
                  .arg(fileName)
                  .arg(checkMtime)
@@ -745,8 +872,27 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
+        out << (quint32)content.size();
         out << mtime;
-        emit sendFullPacket(0xC2,0x0003,fileNameRaw+outputData+content);
+        if(content.size()>CATCHCHALLENGER_SERVER_DATAPACK_FILEPURGE_KB*1024)
+            emit sendFullPacket(0xC2,0x0003,fileNameRaw+outputData+content);
+        else
+        {
+            if(compressedExtension.contains(QFileInfo(file).suffix()))
+            {
+                compressedFiles+=fileNameRaw+outputData+content;
+                compressedFilesCount++;
+                if(compressedFiles.size()>CATCHCHALLENGER_SERVER_DATAPACK_COMPRESSEDFILEPURGE_KB*1024 || compressedFilesCount>=255)
+                    sendCompressedFileContent();
+            }
+            else
+            {
+                rawFiles+=fileNameRaw+outputData+content;
+                rawFilesCount++;
+                if(rawFiles.size()>CATCHCHALLENGER_SERVER_DATAPACK_FILEPURGE_KB*1024 || rawFilesCount>=255)
+                    sendFileContent();
+            }
+        }
         file.close();
         return true;
     }
