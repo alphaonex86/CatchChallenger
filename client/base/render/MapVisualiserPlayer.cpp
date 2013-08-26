@@ -118,7 +118,9 @@ void MapVisualiserPlayer::keyPressParse()
         //look in this direction
         else
         {
-            playerMapObject->setTile(playerTileset->tileAt(10));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(10);
+            playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_left;
             lookToMove.start();
             emit send_player_direction(direction);
@@ -143,7 +145,9 @@ void MapVisualiserPlayer::keyPressParse()
         //look in this direction
         else
         {
-            playerMapObject->setTile(playerTileset->tileAt(4));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(4);
+            playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_right;
             lookToMove.start();
             emit send_player_direction(direction);
@@ -168,7 +172,9 @@ void MapVisualiserPlayer::keyPressParse()
         //look in this direction
         else
         {
-            playerMapObject->setTile(playerTileset->tileAt(1));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(1);
+            playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_top;
             lookToMove.start();
             emit send_player_direction(direction);
@@ -193,7 +199,9 @@ void MapVisualiserPlayer::keyPressParse()
         //look in this direction
         else
         {
-            playerMapObject->setTile(playerTileset->tileAt(7));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(7);
+            playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_bottom;
             lookToMove.start();
             emit send_player_direction(direction);
@@ -266,22 +274,34 @@ void MapVisualiserPlayer::moveStepSlot()
     {
         //stopped step
         case 0:
-        playerMapObject->setTile(playerTileset->tileAt(baseTile+0));
+        {
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(baseTile+0);
+            playerMapObject->setCell(cell);
+        }
         break;
         case 1:
         MapObjectItem::objectLink[playerMapObject]->setZValue(qCeil(playerMapObject->y()));
         break;
         //transition step
         case 2:
-        if(stepAlternance)
-            playerMapObject->setTile(playerTileset->tileAt(baseTile-1));
-        else
-            playerMapObject->setTile(playerTileset->tileAt(baseTile+1));
-        stepAlternance=!stepAlternance;
+        {
+            Tiled::Cell cell=playerMapObject->cell();
+            if(stepAlternance)
+                cell.tile=playerTileset->tileAt(baseTile-1);
+            else
+                cell.tile=playerTileset->tileAt(baseTile+1);
+            playerMapObject->setCell(cell);
+            stepAlternance=!stepAlternance;
+        }
         break;
         //stopped step
         case 4:
-        playerMapObject->setTile(playerTileset->tileAt(baseTile+0));
+        {
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(baseTile+0);
+            playerMapObject->setCell(cell);
+        }
         break;
     }
 
@@ -415,7 +435,9 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             keyPressed.remove(Qt::Key_Left);
             direction=CatchChallenger::Direction_look_at_left;
-            playerMapObject->setTile(playerTileset->tileAt(10));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(10);
+            playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -437,7 +459,9 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             keyPressed.remove(Qt::Key_Right);
             direction=CatchChallenger::Direction_look_at_right;
-            playerMapObject->setTile(playerTileset->tileAt(4));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(4);
+            playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -459,7 +483,9 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             keyPressed.remove(Qt::Key_Up);
             direction=CatchChallenger::Direction_look_at_top;
-            playerMapObject->setTile(playerTileset->tileAt(1));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(1);
+            playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -481,7 +507,9 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             keyPressed.remove(Qt::Key_Down);
             direction=CatchChallenger::Direction_look_at_bottom;
-            playerMapObject->setTile(playerTileset->tileAt(7));
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(7);
+            playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -870,7 +898,9 @@ void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &
             ObjectGroupItem::objectGroupLink[all_map[current_map]->objectGroup]->addObject(grassCurrentObject);
             grassCurrentObject->setPosition(QPoint(x,y+1));
             MapObjectItem::objectLink[playerMapObject]->setZValue(y);
-            grassCurrentObject->setTile(animationTileset->tileAt(2));
+            Tiled::Cell cell=grassCurrentObject->cell();
+            cell.tile=animationTileset->tileAt(2);
+            grassCurrentObject->setCell(cell);
         }
     }
     else
@@ -890,7 +920,9 @@ void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &
             ObjectGroupItem::objectGroupLink[all_map[map_destination->map_file]->objectGroup]->addObject(nextCurrentObject);
             nextCurrentObject->setPosition(QPoint(x_destination,y_destination+1));
             MapObjectItem::objectLink[playerMapObject]->setZValue(y_destination);
-            nextCurrentObject->setTile(animationTileset->tileAt(1));
+            Tiled::Cell cell=nextCurrentObject->cell();
+            cell.tile=animationTileset->tileAt(1);
+            nextCurrentObject->setCell(cell);
         }
     }
     else
@@ -921,7 +953,11 @@ void MapVisualiserPlayer::loadGrassTile()
             case 1:
             break;
             case 2:
-                grassCurrentObject->setTile(animationTileset->tileAt(0));
+            {
+                Tiled::Cell cell=grassCurrentObject->cell();
+                cell.tile=animationTileset->tileAt(0);
+                grassCurrentObject->setCell(cell);
+            }
             break;
         }
     }
@@ -933,7 +969,11 @@ void MapVisualiserPlayer::loadGrassTile()
             case 1:
             break;
             case 3:
-                nextCurrentObject->setTile(animationTileset->tileAt(2));
+            {
+                Tiled::Cell cell=nextCurrentObject->cell();
+                cell.tile=animationTileset->tileAt(2);
+                nextCurrentObject->setCell(cell);
+            }
             break;
         }
     }

@@ -13,7 +13,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/DebugClass.h"
-#include "../../general/libtiled/tile.h"
+#include "libtiled/tile.h"
 #include "../../general/base/Map.h"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()

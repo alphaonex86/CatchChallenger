@@ -918,7 +918,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
     int file_index=0;
     while(file_index<fileList.size())
     {
-        if(fileList.at(file_index).fileName()=="list.xml")
+        if(!fileList.at(file_index).isFile())
         {
             file_index++;
             continue;

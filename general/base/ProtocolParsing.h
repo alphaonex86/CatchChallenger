@@ -15,6 +15,11 @@ class ProtocolParsing : public QObject
 {
     Q_OBJECT
 public:
+    enum CompressionType
+    {
+        CompressionType_Zlib,
+        CompressionType_Xz
+    };
     ProtocolParsing(ConnectedSocket * socket);
     static void initialiseTheVariable();
     static void setMaxPlayers(const quint16 &maxPlayers);
@@ -24,6 +29,7 @@ protected:
     //connexion parameters
     static QSet<quint8> mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
     static QSet<quint8> mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
+    static CompressionType compressionType;
     //if is a query
     static QSet<quint8> mainCode_IsQueryClientToServer;
     static quint8 replyCodeClientToServer;

@@ -7,11 +7,11 @@
 #include <QInputDialog>
 
 #include "../base/render/MapVisualiserPlayer.h"
-#include "../base/FacilityLib.h"
+#include "../../general/base/FacilityLib.h"
 #include "../base/interface/DatapackClientLoader.h"
 #include "../fight/interface/ClientFightEngine.h"
-#include "../base/DebugClass.h"
-#include "../base/CommonDatapack.h"
+#include "../../general/base/DebugClass.h"
+#include "../../general/base/CommonDatapack.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),

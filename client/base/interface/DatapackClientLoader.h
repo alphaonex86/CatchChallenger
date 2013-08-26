@@ -11,7 +11,7 @@
 
 #include "../../general/base/GeneralStructures.h"
 
-#include "tileset.h"
+#include "libtiled/tileset.h"
 
 class DatapackClientLoader : public QThread
 {

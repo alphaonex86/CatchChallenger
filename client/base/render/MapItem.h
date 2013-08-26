@@ -2,14 +2,14 @@
 #include "ObjectGroupItem.h"
 #include "TileLayerItem.h"
 
-#include "../../general/libtiled/isometricrenderer.h"
-#include "../../general/libtiled/map.h"
-#include "../../general/libtiled/mapobject.h"
-#include "../../general/libtiled/mapreader.h"
-#include "../../general/libtiled/objectgroup.h"
-#include "../../general/libtiled/orthogonalrenderer.h"
-#include "../../general/libtiled/tilelayer.h"
-#include "../../general/libtiled/tileset.h"
+#include "libtiled/isometricrenderer.h"
+#include "libtiled/map.h"
+#include "libtiled/mapobject.h"
+#include "libtiled/mapreader.h"
+#include "libtiled/objectgroup.h"
+#include "libtiled/orthogonalrenderer.h"
+#include "libtiled/tilelayer.h"
+#include "libtiled/tileset.h"
 
 #ifndef MAPITEM_H
 #define MAPITEM_H
