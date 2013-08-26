@@ -48,18 +48,30 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
             {
                 //Send datapack file list
                 case 0x000C:
-                    if((in.device()->size()-in.device()->pos())!=((int)sizeof(quint8))*datapackFilesList.size())
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size to return file list"));
-                        return;
-                    }
-                    quint8 reply_code;
-                    {
+                        QList<bool> boolList;
+                        while((in.device()->size()-in.device()->pos())>0)
+                        {
+                            quint8 returnCode;
+                            in >> returnCode;
+                            boolList.append(returnCode&0x01);
+                            boolList.append(returnCode&0x02);
+                            boolList.append(returnCode&0x04);
+                            boolList.append(returnCode&0x08);
+                            boolList.append(returnCode&0x10);
+                            boolList.append(returnCode&0x20);
+                            boolList.append(returnCode&0x40);
+                            boolList.append(returnCode&0x80);
+                        }
+                        if(boolList.size()<datapackFilesList.size())
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            return;
+                        }
                         int index=0;
                         while(index<datapackFilesList.size())
                         {
-                            in >> reply_code;
-                            if(reply_code==0x02)
+                            if(boolList.first())
                             {
                                 DebugClass::debugConsole(QString("remove the file: %1").arg(datapack_base_name+"/"+datapackFilesList.at(index)));
                                 QFile file(datapack_base_name+"/"+datapackFilesList.at(index));
@@ -67,12 +79,19 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                                     DebugClass::debugConsole(QString("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
                                 //emit removeFile(datapackFilesList.at(index));
                             }
+                            boolList.removeFirst();
                             index++;
                         }
                         datapackFilesList.clear();
                         cleanDatapack("");
+                        if(boolList.size()>=8)
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            return;
+                        }
                         emit haveTheDatapack();
                     }
+                    return;
                 break;
                 default:
                     Api_protocol::parseFullReplyData(mainCodeType,subCodeType,queryNumber,data);

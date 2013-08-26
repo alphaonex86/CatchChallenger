@@ -58,6 +58,7 @@ private:
     bool have_send_protocol;
     bool have_receive_protocol;
     bool tolerantMode;
+    static QSet<QString> extensionAllowed;
 
     //to send trame
     quint8 lastQueryNumber;
