@@ -2,6 +2,8 @@
 #include "DebugClass.h"
 #include "GeneralVariable.h"
 
+#include <lzma.h>
+
 using namespace CatchChallenger;
 
 QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
@@ -31,6 +33,108 @@ QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePack
 QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
 QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
 QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
+
+/* read/write buffer sizes */
+#define IN_BUF_MAX  409600
+#define OUT_BUF_MAX 409600
+/* analogous to xz CLI options: -0 to -9 */
+#define COMPRESSION_LEVEL 9
+
+extern "C" void *lz_alloc(void *opaque, size_t nmemb, size_t size)
+{
+    Q_UNUSED(opaque);
+    Q_UNUSED(nmemb);
+    void *p = NULL;
+    try{
+        p = new char [size];
+    }
+    catch(std::bad_alloc &ba)
+    {
+        p = NULL;
+    }
+    return p;
+}
+
+extern "C" void lz_free(void *opaque, void *ptr)
+{
+    Q_UNUSED(opaque);
+    delete [] (char*)ptr;
+}
+
+
+QByteArray lzmaCompress(QByteArray data)
+{
+    QByteArray arr;
+    lzma_check check = LZMA_CHECK_CRC64;
+    lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
+    lzma_allocator al;
+    al.alloc = lz_alloc;
+    al.free = lz_free;
+    strm.allocator = &al;
+    quint8 *in_buf;
+    quint8 out_buf [OUT_BUF_MAX];
+    size_t in_len;  /* length of useful data in in_buf */
+    size_t out_len; /* length of useful data in out_buf */
+    lzma_ret ret_xz;
+
+    /* initialize xz encoder */
+    ret_xz = lzma_easy_encoder (&strm, 9, check);
+    if (ret_xz != LZMA_OK) {
+        return QByteArray();
+    }
+
+    in_len = data.size();
+    in_buf = (quint8*)data.data();
+    strm.next_in = in_buf;
+    strm.avail_in = in_len;
+
+    do {
+        strm.next_out = out_buf;
+        strm.avail_out = OUT_BUF_MAX;
+        ret_xz = lzma_code (&strm, LZMA_FINISH);
+
+        out_len = OUT_BUF_MAX - strm.avail_out;
+        arr.append((char*)out_buf, out_len);
+        out_buf[0] = 0;
+    } while (strm.avail_out == 0);
+    lzma_end (&strm);
+    return arr;
+}
+
+QByteArray lzmaUncompress(QByteArray data)
+{
+    lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
+    const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED;
+    const uint64_t memory_limit = UINT64_MAX; /* no memory limit */
+    quint8 *in_buf;
+    uint8_t out_buf [OUT_BUF_MAX];
+    size_t in_len;  /* length of useful data in in_buf */
+    size_t out_len; /* length of useful data in out_buf */
+    lzma_ret ret_xz;
+    QByteArray arr;
+
+    ret_xz = lzma_stream_decoder (&strm, memory_limit, flags);
+    if (ret_xz != LZMA_OK) {
+        return QByteArray();
+    }
+
+    in_len = data.size();
+    in_buf = (quint8*)data.data();
+
+    strm.next_in = in_buf;
+    strm.avail_in = in_len;
+    do {
+        strm.next_out = out_buf;
+        strm.avail_out = OUT_BUF_MAX;
+        ret_xz = lzma_code (&strm, LZMA_FINISH);
+
+        out_len = OUT_BUF_MAX - strm.avail_out;
+        arr.append((char*)out_buf, out_len);
+        out_buf[0] = 0;
+    } while (strm.avail_out == 0);
+    lzma_end (&strm);
+    return arr;
+}
 
 ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
 {
@@ -620,11 +724,13 @@ void ProtocolParsingInput::parseIncommingData()
                             switch(compressionType)
                             {
                                 case CompressionType_Xz:
-                                    data=qUncompress(data);
+                                    data=lzmaUncompress(data);
                                 break;
                                 case CompressionType_Zlib:
                                 default:
                                     data=qUncompress(data);
+                                break;
+                                case CompressionType_None:
                                 break;
                             }
                 }
@@ -635,11 +741,13 @@ void ProtocolParsingInput::parseIncommingData()
                             switch(compressionType)
                             {
                                 case CompressionType_Xz:
-                                    data=qUncompress(data);
+                                    data=lzmaUncompress(data);
                                 break;
                                 case CompressionType_Zlib:
                                 default:
                                     data=qUncompress(data);
+                                break;
+                                case CompressionType_None:
                                 break;
                             }
                 }
@@ -671,11 +779,13 @@ void ProtocolParsingInput::parseIncommingData()
                                 switch(compressionType)
                                 {
                                     case CompressionType_Xz:
-                                        data=qUncompress(data);
+                                        data=lzmaUncompress(data);
                                     break;
                                     case CompressionType_Zlib:
                                     default:
                                         data=qUncompress(data);
+                                    break;
+                                    case CompressionType_None:
                                     break;
                                 }
                     }
@@ -686,11 +796,13 @@ void ProtocolParsingInput::parseIncommingData()
                                 switch(compressionType)
                                 {
                                     case CompressionType_Xz:
-                                        data=qUncompress(data);
+                                        data=lzmaUncompress(data);
                                     break;
                                     case CompressionType_Zlib:
                                     default:
                                         data=qUncompress(data);
+                                    break;
+                                    case CompressionType_None:
                                     break;
                                 }
                     }
@@ -719,11 +831,13 @@ void ProtocolParsingInput::parseIncommingData()
                             switch(compressionType)
                             {
                                 case CompressionType_Xz:
-                                    data=qUncompress(data);
+                                    data=lzmaUncompress(data);
                                 break;
                                 case CompressionType_Zlib:
                                 default:
                                     data=qUncompress(data);
+                                break;
+                                case CompressionType_None:
                                 break;
                             }
                     }
@@ -733,11 +847,13 @@ void ProtocolParsingInput::parseIncommingData()
                             switch(compressionType)
                             {
                                 case CompressionType_Xz:
-                                    data=qUncompress(data);
+                                    data=lzmaUncompress(data);
                                 break;
                                 case CompressionType_Zlib:
                                 default:
                                     data=qUncompress(data);
+                                break;
+                                case CompressionType_None:
                                 break;
                             }
                     }
@@ -759,11 +875,13 @@ void ProtocolParsingInput::parseIncommingData()
                                 switch(compressionType)
                                 {
                                     case CompressionType_Xz:
-                                        data=qUncompress(data);
+                                        data=lzmaUncompress(data);
                                     break;
                                     case CompressionType_Zlib:
                                     default:
                                         data=qUncompress(data);
+                                    break;
+                                    case CompressionType_None:
                                     break;
                                 }
                     }
@@ -774,11 +892,13 @@ void ProtocolParsingInput::parseIncommingData()
                                 switch(compressionType)
                                 {
                                     case CompressionType_Xz:
-                                        data=qUncompress(data);
+                                        data=lzmaUncompress(data);
                                     break;
                                     case CompressionType_Zlib:
                                     default:
                                         data=qUncompress(data);
+                                    break;
+                                    case CompressionType_None:
                                     break;
                                 }
                     }
@@ -944,11 +1064,13 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray d
             switch(compressionType)
             {
                 case CompressionType_Xz:
-                    data=qCompress(data,9);
+                    data=lzmaCompress(data);
                 break;
                 case CompressionType_Zlib:
                 default:
                     data=qCompress(data,9);
+                break;
+                case CompressionType_None:
                 break;
             }
         }
@@ -1207,11 +1329,13 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }
@@ -1235,11 +1359,13 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }
@@ -1291,11 +1417,13 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }
@@ -1319,11 +1447,13 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }
@@ -1553,11 +1683,13 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }
@@ -1581,11 +1713,13 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }
@@ -1637,11 +1771,13 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }
@@ -1665,11 +1801,13 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     switch(compressionType)
                     {
                         case CompressionType_Xz:
-                            data=qCompress(data,9);
+                            data=lzmaCompress(data);
                         break;
                         case CompressionType_Zlib:
                         default:
                             data=qCompress(data,9);
+                        break;
+                        case CompressionType_None:
                         break;
                     }
                 }

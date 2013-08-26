@@ -83,7 +83,10 @@ void ClientNetworkWrite::postReply(const quint8 &queryNumber,const QByteArray &d
     emit message(QString("postReply(%1,%2)").arg(queryNumber).arg(QString(data.toHex())));
     #endif
     if(!ProtocolParsingOutput::postReplyData(queryNumber,data))
+    {
+        emit message(QString("can't' send reply: postReply(%1,%2)").arg(queryNumber).arg(QString(data.toHex())));
         return;
+    }
     if(!socket->isValid())
     {
         emit error("device is not valid at postReply()");

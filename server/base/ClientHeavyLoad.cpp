@@ -820,6 +820,8 @@ void ClientHeavyLoad::purgeDatapackListReply(const quint8 &query_id)
         tempDatapackListReplySize=0;
         tempDatapackListReply=0;
     }
+    if(tempDatapackListReplyArray.isEmpty())
+        tempDatapackListReplyArray[0x00]=0x00;
     emit postReply(query_id,tempDatapackListReplyArray);
     tempDatapackListReplyArray.clear();
 }
@@ -846,7 +848,7 @@ void ClientHeavyLoad::sendCompressedFileContent()
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint8)compressedFilesCount;
-        emit sendFullPacket(0xC2,0x0003,outputData+compressedFiles);
+        emit sendFullPacket(0xC2,0x0004,outputData+compressedFiles);
         compressedFiles.clear();
         compressedFilesCount=0;
     }
@@ -875,15 +877,33 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
         out << (quint32)content.size();
         out << mtime;
         if(content.size()>CATCHCHALLENGER_SERVER_DATAPACK_FILEPURGE_KB*1024)
-            emit sendFullPacket(0xC2,0x0003,fileNameRaw+outputData+content);
+        {
+            QByteArray outputData2;
+            outputData2[0x00]=0x01;
+            emit sendFullPacket(0xC2,0x0003,outputData2+fileNameRaw+outputData+content);
+        }
         else
         {
             if(compressedExtension.contains(QFileInfo(file).suffix()))
             {
                 compressedFiles+=fileNameRaw+outputData+content;
                 compressedFilesCount++;
-                if(compressedFiles.size()>CATCHCHALLENGER_SERVER_DATAPACK_COMPRESSEDFILEPURGE_KB*1024 || compressedFilesCount>=255)
-                    sendCompressedFileContent();
+                switch(ProtocolParsing::compressionType)
+                {
+                    case ProtocolParsing::CompressionType_Xz:
+                    if(compressedFiles.size()>CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024 || compressedFilesCount>=255)
+                        sendCompressedFileContent();
+                    break;
+                    default:
+                    case ProtocolParsing::CompressionType_Zlib:
+                    if(compressedFiles.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || compressedFilesCount>=255)
+                        sendCompressedFileContent();
+                    break;
+                    case ProtocolParsing::CompressionType_None:
+                    if(compressedFiles.size()>CATCHCHALLENGER_SERVER_DATAPACK_FILEPURGE_KB*1024 || compressedFilesCount>=255)
+                        sendCompressedFileContent();
+                    break;
+                }
             }
             else
             {

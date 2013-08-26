@@ -123,6 +123,21 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                     if(protocol==PROTOCOL_HEADER)
                     {
                         out << (quint8)0x01;		//protocol supported
+                        switch(ProtocolParsing::compressionType)
+                        {
+                            case CompressionType_None:
+                                out << (quint8)0x00;
+                            break;
+                            case CompressionType_Zlib:
+                                out << (quint8)0x01;
+                            break;
+                            case CompressionType_Xz:
+                                out << (quint8)0x02;
+                            break;
+                            default:
+                                emit error("Compression selected wrong");
+                            return;
+                        }
                         emit postReply(queryNumber,outputData);
                         have_send_protocol=true;
                         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE

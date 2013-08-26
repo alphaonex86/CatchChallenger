@@ -296,6 +296,12 @@ void MainWindow::load_settings()
     ui->benchmark_seconds->setValue(settings->value("benchmark_seconds").toUInt());
     ui->benchmark_clients->setValue(settings->value("benchmark_clients").toUInt());
     ui->tolerantMode->setChecked(settings->value("tolerantMode").toBool());
+    if(settings->value("compression").toString()=="none")
+        ui->compression->setCurrentIndex(0);
+    else if(settings->value("compression").toString()=="xz")
+        ui->compression->setCurrentIndex(2);
+    else
+        ui->compression->setCurrentIndex(1);
 
     quint32 tempValue=0;
     settings->beginGroup("MapVisibilityAlgorithm");
@@ -509,6 +515,21 @@ void MainWindow::send_settings()
     //fight
     formatedServerSettings.commmonServerSettings.pvp			= ui->pvp->isChecked();
     formatedServerSettings.commmonServerSettings.sendPlayerNumber		= ui->sendPlayerNumber->isChecked();
+
+    //compression
+    switch(ui->compression->currentIndex())
+    {
+        case 0:
+        formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_None;
+        break;
+        default:
+        case 1:
+        formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_Zlib;
+        break;
+        case 2:
+        formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_Xz;
+        break;
+    }
 
     //rates
     formatedServerSettings.commmonServerSettings.rates_xp			= ui->rates_xp_normal->value();
@@ -1030,4 +1051,23 @@ void CatchChallenger::MainWindow::on_bitcoin_binarypath_browse_clicked()
         return;
     ui->bitcoin_binarypath->setText(file);
     on_bitcoin_binarypath_editingFinished();
+}
+
+void CatchChallenger::MainWindow::on_compression_currentIndexChanged(int index)
+{
+    if(index<0)
+        return;
+    switch(index)
+    {
+        case 0:
+        settings->setValue("compression","none");
+        break;
+        default:
+        case 1:
+        settings->setValue("compression","zlib");
+        break;
+        case 2:
+        settings->setValue("compression","xz");
+        break;
+    }
 }
