@@ -30,11 +30,22 @@ public:
     ~ClientHeavyLoad();
     void setVariable(Player_internal_informations *player_informations);
     static QList<quint16> simplifiedIdList;
+    static quint8 tempDatapackListReplySize;
+    static QByteArray tempDatapackListReplyArray;
+    static quint8 tempDatapackListReply;
+    static int tempDatapackListReplyTestCount;
+    static QByteArray rawFiles,compressedFiles;
+    static int rawFilesCount,compressedFilesCount;
+    static QSet<QString> compressedExtension;
 public slots:
     virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
     virtual void askLoginBot(const quint8 &query_id);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
+    void addDatapackListReply(const bool &fileRemove);
+    void purgeDatapackListReply(const quint8 &query_id);
+    void sendFileContent();
+    void sendCompressedFileContent();
     void dbQuery(const QString &queryText);
     void askedRandomNumber();
     void askClan(const quint32 &clanId);
