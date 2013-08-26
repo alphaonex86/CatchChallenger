@@ -139,19 +139,35 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         {
             case CatchChallenger::Direction_look_at_top:
             case CatchChallenger::Direction_move_at_top:
-                playerMapObject->setTile(playerTileset->tileAt(1));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(1);
+                playerMapObject->setCell(cell);
+            }
             break;
             case CatchChallenger::Direction_look_at_right:
             case CatchChallenger::Direction_move_at_right:
-                playerMapObject->setTile(playerTileset->tileAt(4));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(4);
+                playerMapObject->setCell(cell);
+            }
             break;
             case CatchChallenger::Direction_look_at_bottom:
             case CatchChallenger::Direction_move_at_bottom:
-                playerMapObject->setTile(playerTileset->tileAt(7));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(7);
+                playerMapObject->setCell(cell);
+            }
             break;
             case CatchChallenger::Direction_look_at_left:
             case CatchChallenger::Direction_move_at_left:
-                playerMapObject->setTile(playerTileset->tileAt(10));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(10);
+                playerMapObject->setCell(cell);
+            }
             break;
             default:
             QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
@@ -211,19 +227,35 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         {
             case CatchChallenger::Direction_look_at_top:
             case CatchChallenger::Direction_move_at_top:
-                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(1));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(1);
+                playerMapObject->setCell(cell);
+            }
             break;
             case CatchChallenger::Direction_look_at_right:
             case CatchChallenger::Direction_move_at_right:
-                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(4));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(4);
+                playerMapObject->setCell(cell);
+            }
             break;
             case CatchChallenger::Direction_look_at_bottom:
             case CatchChallenger::Direction_move_at_bottom:
-                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(7));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(7);
+                playerMapObject->setCell(cell);
+            }
             break;
             case CatchChallenger::Direction_look_at_left:
             case CatchChallenger::Direction_move_at_left:
-                tempPlayer.playerMapObject->setTile(tempPlayer.playerTileset->tileAt(10));
+            {
+                Tiled::Cell cell=playerMapObject->cell();
+                cell.tile=playerTileset->tileAt(10);
+                playerMapObject->setCell(cell);
+            }
             break;
             default:
                 delete tempPlayer.playerMapObject;
@@ -468,19 +500,35 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     {
         case CatchChallenger::Direction_look_at_top:
         case CatchChallenger::Direction_move_at_top:
-            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(1));
+        {
+            Tiled::Cell cell=otherPlayerList[id].playerMapObject->cell();
+            cell.tile=otherPlayerList[id].playerTileset->tileAt(1);
+            otherPlayerList[id].playerMapObject->setCell(cell);
+        }
         break;
         case CatchChallenger::Direction_look_at_right:
         case CatchChallenger::Direction_move_at_right:
-            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(4));
+        {
+            Tiled::Cell cell=otherPlayerList[id].playerMapObject->cell();
+            cell.tile=otherPlayerList[id].playerTileset->tileAt(4);
+            otherPlayerList[id].playerMapObject->setCell(cell);
+        }
         break;
         case CatchChallenger::Direction_look_at_bottom:
         case CatchChallenger::Direction_move_at_bottom:
-            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(7));
+        {
+            Tiled::Cell cell=otherPlayerList[id].playerMapObject->cell();
+            cell.tile=otherPlayerList[id].playerTileset->tileAt(7);
+            otherPlayerList[id].playerMapObject->setCell(cell);
+        }
         break;
         case CatchChallenger::Direction_look_at_left:
         case CatchChallenger::Direction_move_at_left:
-            otherPlayerList[id].playerMapObject->setTile(otherPlayerList[id].playerTileset->tileAt(10));
+        {
+            Tiled::Cell cell=otherPlayerList[id].playerMapObject->cell();
+            cell.tile=otherPlayerList[id].playerTileset->tileAt(10);
+            otherPlayerList[id].playerMapObject->setCell(cell);
+        }
         break;
         default:
             qDebug() << QString("move_player(): player: %1 (%2), wrong direction: %3").arg(otherPlayerList[id].informations.pseudo).arg(id).arg(otherPlayerList[id].presumed_direction);
@@ -689,19 +737,35 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     {
         case CatchChallenger::Direction_look_at_top:
         case CatchChallenger::Direction_move_at_top:
-            playerMapObject->setTile(playerTileset->tileAt(1));
+        {
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(1);
+            playerMapObject->setCell(cell);
+        }
         break;
         case CatchChallenger::Direction_look_at_right:
         case CatchChallenger::Direction_move_at_right:
-            playerMapObject->setTile(playerTileset->tileAt(4));
+        {
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(4);
+            playerMapObject->setCell(cell);
+        }
         break;
         case CatchChallenger::Direction_look_at_bottom:
         case CatchChallenger::Direction_move_at_bottom:
-            playerMapObject->setTile(playerTileset->tileAt(7));
+        {
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(7);
+            playerMapObject->setCell(cell);
+        }
         break;
         case CatchChallenger::Direction_look_at_left:
         case CatchChallenger::Direction_move_at_left:
-            playerMapObject->setTile(playerTileset->tileAt(10));
+        {
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(10);
+            playerMapObject->setCell(cell);
+        }
         break;
         default:
         QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
@@ -951,22 +1015,34 @@ void MapControllerMP::moveOtherPlayerStepSlot()
     {
         //stopped step
         case 0:
-        otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+0));
+        {
+            Tiled::Cell cell=otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->cell();
+            cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+0);
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setCell(cell);
+        }
         break;
         case 1:
         MapObjectItem::objectLink[otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject]->setZValue(qCeil(otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->y()));
         break;
         //transition step
         case 2:
-        if(stepAlternance)
-            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile-1));
-        else
-            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+1));
-        otherPlayerList[otherPlayerListByTimer[timer]].stepAlternance=!otherPlayerList[otherPlayerListByTimer[timer]].stepAlternance;
+        {
+            Tiled::Cell cell=otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->cell();
+            if(stepAlternance)
+                cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile-1);
+            else
+                cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+1);
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setCell(cell);
+            otherPlayerList[otherPlayerListByTimer[timer]].stepAlternance=!otherPlayerList[otherPlayerListByTimer[timer]].stepAlternance;
+        }
         break;
         //stopped step
         case 4:
-        otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+0));
+        {
+            Tiled::Cell cell=otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->cell();
+            cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(baseTile+0);
+            otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setCell(cell);
+        }
         break;
     }
 
@@ -1018,7 +1094,9 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
             {
                 otherPlayerList[otherPlayerListByTimer[timer]].presumed_direction=CatchChallenger::Direction_look_at_left;
-                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(10));
+                Tiled::Cell cell=otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->cell();
+                cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(10);
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setCell(cell);
                 otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
                 timer->stop();
             }
@@ -1036,7 +1114,9 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
             {
                 otherPlayerList[otherPlayerListByTimer[timer]].presumed_direction=CatchChallenger::Direction_look_at_right;
-                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(4));
+                Tiled::Cell cell=otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->cell();
+                cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(4);
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setCell(cell);
                 otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
                 timer->stop();
             }
@@ -1054,7 +1134,9 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
             {
                 otherPlayerList[otherPlayerListByTimer[timer]].presumed_direction=CatchChallenger::Direction_look_at_top;
-                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(1));
+                Tiled::Cell cell=otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->cell();
+                cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(1);
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setCell(cell);
                 otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
                 timer->stop();
             }
@@ -1072,7 +1154,9 @@ void MapControllerMP::moveOtherPlayerStepSlot()
             if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,otherPlayerList[otherPlayerListByTimer[timer]].presumed_map->logicalMap,x,y,true))
             {
                 otherPlayerList[otherPlayerListByTimer[timer]].presumed_direction=CatchChallenger::Direction_look_at_bottom;
-                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setTile(otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(7));
+                Tiled::Cell cell=otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->cell();
+                cell.tile=otherPlayerList[otherPlayerListByTimer[timer]].playerTileset->tileAt(7);
+                otherPlayerList[otherPlayerListByTimer[timer]].playerMapObject->setCell(cell);
                 otherPlayerList[otherPlayerListByTimer[timer]].inMove=false;
                 timer->stop();
             }

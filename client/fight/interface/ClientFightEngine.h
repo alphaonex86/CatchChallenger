@@ -7,10 +7,10 @@
 #include <QString>
 #include <QPixmap>
 
-#include "../base/GeneralStructures.h"
+#include "../../general/base/GeneralStructures.h"
 #include "../../general/base/Map.h"
 #include "../../general/fight/CommonFightEngine.h"
-#include "../base/Api_protocol.h"
+#include "../../general/base/Api_protocol.h"
 
 namespace CatchChallenger {
 //only the logique here, store nothing

@@ -54,16 +54,18 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
     quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
     CatchChallenger::Map_client::Plant plant;
     plant.mapObject=new Tiled::MapObject();
+    Tiled::Cell cell=plant.mapObject->cell();
     if(seconds_to_mature==0)
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(4));
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(4);
     else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].flowering_seconds))
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(3));
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(3);
     else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].taller_seconds))
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(2));
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(2);
     else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].sprouted_seconds))
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(1));
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(1);
     else
-        plant.mapObject->setTile(DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(0));
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(0);
+    plant.mapObject->setCell(cell);
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     plant.mapObject->setPosition(QPoint(x,y+1));
     plant.x=x;

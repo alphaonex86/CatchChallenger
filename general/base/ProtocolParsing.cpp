@@ -4,32 +4,33 @@
 
 using namespace CatchChallenger;
 
-QSet<quint8>				ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
+QSet<quint8>                        ProtocolParsing::mainCodeWithoutSubCodeTypeClientToServer;//if need sub code or not
 //if is a query
-QSet<quint8>				ProtocolParsing::mainCode_IsQueryClientToServer;
-quint8					ProtocolParsing::replyCodeClientToServer;
+QSet<quint8>                        ProtocolParsing::mainCode_IsQueryClientToServer;
+quint8                              ProtocolParsing::replyCodeClientToServer;
+ProtocolParsing::CompressionType    ProtocolParsing::compressionType;
 //predefined size
-QHash<quint8,quint16>			ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
+QHash<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketClientToServer;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketClientToServer;
-QHash<quint8,quint16>			ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
+QHash<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketClientToServer;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketClientToServer;
 
-QSet<quint8>				ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
+QSet<quint8>                            ProtocolParsing::mainCodeWithoutSubCodeTypeServerToClient;//if need sub code or not
 //if is a query
-QSet<quint8>				ProtocolParsing::mainCode_IsQueryServerToClient;
-quint8					ProtocolParsing::replyCodeServerToClient;
+QSet<quint8>                            ProtocolParsing::mainCode_IsQueryServerToClient;
+quint8                                  ProtocolParsing::replyCodeServerToClient;
 //predefined size
-QHash<quint8,quint16>			ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
+QHash<quint8,quint16>                   ProtocolParsing::sizeOnlyMainCodePacketServerToClient;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::sizeMultipleCodePacketServerToClient;
-QHash<quint8,quint16>			ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
+QHash<quint8,quint16>                   ProtocolParsing::replySizeOnlyMainCodePacketServerToClient;
 QHash<quint8,QHash<quint16,quint16> >	ProtocolParsing::replySizeMultipleCodePacketServerToClient;
 
-QHash<quint8,QSet<quint16> > ProtocolParsing::compressionMultipleCodePacketClientToServer;
-QHash<quint8,QSet<quint16> > ProtocolParsing::compressionMultipleCodePacketServerToClient;
-QHash<quint8,QSet<quint16> > ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
-QHash<quint8,QSet<quint16> > ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
-QSet<quint8> ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
-QSet<quint8> ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
+QHash<quint8,QSet<quint16> >    ProtocolParsing::compressionMultipleCodePacketClientToServer;
+QHash<quint8,QSet<quint16> >    ProtocolParsing::compressionMultipleCodePacketServerToClient;
+QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketClientToServer;
+QHash<quint8,QSet<quint16> >    ProtocolParsing::replyComressionMultipleCodePacketServerToClient;
+QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketClientToServer;
+QSet<quint8>                    ProtocolParsing::replyComressionOnlyMainCodePacketServerToClient;
 
 ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
 {
@@ -39,6 +40,10 @@ ProtocolParsing::ProtocolParsing(ConnectedSocket * socket)
 
 void ProtocolParsing::initialiseTheVariable()
 {
+    if(!mainCodeWithoutSubCodeTypeServerToClient.isEmpty())
+        return;
+    compressionType=CompressionType_Zlib;
+
     //def query without the sub code
     mainCodeWithoutSubCodeTypeServerToClient << 0xC0 << 0xC1 << 0xC3 << 0xC4 << 0xC5 << 0xC6 << 0xC7 << 0xC8 << 0xD1 << 0xD2;
     mainCodeWithoutSubCodeTypeClientToServer << 0x40 << 0x41 << 0x61;
@@ -612,13 +617,31 @@ void ProtocolParsingInput::parseIncommingData()
                 {
                     if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                         if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
-                            data=qUncompress(data);
+                            switch(compressionType)
+                            {
+                                case CompressionType_Xz:
+                                    data=qUncompress(data);
+                                break;
+                                case CompressionType_Zlib:
+                                default:
+                                    data=qUncompress(data);
+                                break;
+                            }
                 }
                 else
                 {
                     if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                         if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                            data=qUncompress(data);
+                            switch(compressionType)
+                            {
+                                case CompressionType_Xz:
+                                    data=qUncompress(data);
+                                break;
+                                case CompressionType_Zlib:
+                                default:
+                                    data=qUncompress(data);
+                                break;
+                            }
                 }
                 parseFullMessage(mainCodeType,subCodeType,data);
             }
@@ -645,13 +668,31 @@ void ProtocolParsingInput::parseIncommingData()
                     {
                         if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                             if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
-                                data=qUncompress(data);
+                                switch(compressionType)
+                                {
+                                    case CompressionType_Xz:
+                                        data=qUncompress(data);
+                                    break;
+                                    case CompressionType_Zlib:
+                                    default:
+                                        data=qUncompress(data);
+                                    break;
+                                }
                     }
                     else
                     {
                         if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                             if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                                data=qUncompress(data);
+                                switch(compressionType)
+                                {
+                                    case CompressionType_Xz:
+                                        data=qUncompress(data);
+                                    break;
+                                    case CompressionType_Zlib:
+                                    default:
+                                        data=qUncompress(data);
+                                    break;
+                                }
                     }
                     emit newFullInputQuery(mainCodeType,subCodeType,queryNumber);
                     parseFullQuery(mainCodeType,subCodeType,queryNumber,data);
@@ -675,12 +716,30 @@ void ProtocolParsingInput::parseIncommingData()
                     if(isClient)
                     {
                         if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
-                                data=qUncompress(data);
+                            switch(compressionType)
+                            {
+                                case CompressionType_Xz:
+                                    data=qUncompress(data);
+                                break;
+                                case CompressionType_Zlib:
+                                default:
+                                    data=qUncompress(data);
+                                break;
+                            }
                     }
                     else
                     {
                         if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
-                                data=qUncompress(data);
+                            switch(compressionType)
+                            {
+                                case CompressionType_Xz:
+                                    data=qUncompress(data);
+                                break;
+                                case CompressionType_Zlib:
+                                default:
+                                    data=qUncompress(data);
+                                break;
+                            }
                     }
                     parseReplyData(mainCodeType,queryNumber,data);
                 }
@@ -697,13 +756,31 @@ void ProtocolParsingInput::parseIncommingData()
                     {
                         if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                             if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
-                                data=qUncompress(data);
+                                switch(compressionType)
+                                {
+                                    case CompressionType_Xz:
+                                        data=qUncompress(data);
+                                    break;
+                                    case CompressionType_Zlib:
+                                    default:
+                                        data=qUncompress(data);
+                                    break;
+                                }
                     }
                     else
                     {
                         if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                             if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                                data=qUncompress(data);
+                                switch(compressionType)
+                                {
+                                    case CompressionType_Xz:
+                                        data=qUncompress(data);
+                                    break;
+                                    case CompressionType_Zlib:
+                                    default:
+                                        data=qUncompress(data);
+                                    break;
+                                }
                     }
                     parseFullReplyData(mainCodeType,subCodeType,queryNumber,data);
                 }
@@ -864,7 +941,16 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray d
             #ifdef PROTOCOLPARSINGDEBUG
             DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1) is now compressed").arg(queryNumber));
             #endif
-            data=qCompress(data,9);
+            switch(compressionType)
+            {
+                case CompressionType_Xz:
+                    data=qCompress(data,9);
+                break;
+                case CompressionType_Zlib:
+                default:
+                    data=qCompress(data,9);
+                break;
+            }
         }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(data.size()==0)
@@ -1118,7 +1204,16 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
@@ -1137,7 +1232,16 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
@@ -1184,7 +1288,16 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
@@ -1203,7 +1316,16 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
@@ -1428,7 +1550,16 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
@@ -1447,7 +1578,16 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
@@ -1494,7 +1634,16 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
@@ -1513,7 +1662,16 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                     #ifdef PROTOCOLPARSINGDEBUG
                     DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
-                    data=qCompress(data,9);
+                    switch(compressionType)
+                    {
+                        case CompressionType_Xz:
+                            data=qCompress(data,9);
+                        break;
+                        case CompressionType_Zlib:
+                        default:
+                            data=qCompress(data,9);
+                        break;
+                    }
                 }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
