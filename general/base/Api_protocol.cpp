@@ -9,16 +9,25 @@ using namespace CatchChallenger;
 #endif
 
 #include "GeneralStructures.h"
+#include "GeneralVariable.h"
 #include "CommonDatapack.h"
 #include "FacilityLib.h"
 
 //need host + port here to have datapack base
+
+QSet<QString> Api_protocol::extensionAllowed;
 
 Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     ProtocolParsingInput(socket,PacketModeTransmission_Client)
 {
     output=new ProtocolParsingOutput(socket,PacketModeTransmission_Client);
     this->tolerantMode=tolerantMode;
+
+    if(extensionAllowed.isEmpty())
+    {
+        QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";");
+        extensionAllowed=extensionAllowedTemp.toSet();
+    }
 
     connect(this,&Api_protocol::newInputQuery,output,&ProtocolParsingOutput::newInputQuery);
     connect(this,&Api_protocol::newFullInputQuery,output,&ProtocolParsingOutput::newFullInputQuery);
@@ -806,33 +815,65 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
             {
                 //file as input
                 case 0x0003:
+                case 0x0004:
                 {
                     if((in.device()->size()-in.device()->pos())<(int)(int)(sizeof(quint8)))
                     {
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
                     }
-                    quint8 fileNameSize;
-                    in >> fileNameSize;
-                    if((in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                    quint8 fileListSize;
+                    in >> fileListSize;
+                    int index=0;
+                    while(index<fileListSize)
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
+                        if((in.device()->size()-in.device()->pos())<(int)(int)(sizeof(quint8)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        quint8 fileNameSize;
+                        in >> fileNameSize;
+                        if((in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
+                        in.device()->seek(in.device()->pos()+rawText.size());
+                        QString fileName=QString::fromUtf8(rawText.data(),rawText.size());
+                        if(!extensionAllowed.contains(QFileInfo(fileName).suffix()))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("extension not allowed: %4 with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__).arg(QFileInfo(fileName).suffix()));
+                            if(!tolerantMode)
+                                return;
+                        }
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        quint32 size;
+                        in >> size;
+                        if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        quint64 mtime;
+                        in >> mtime;
+                        QDateTime date;
+                        date.setTime_t(mtime);
+                        if((in.device()->size()-in.device()->pos())<size)
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                            return;
+                        }
+                        QByteArray dataFile=data.mid(in.device()->pos(),size);
+                        in.device()->seek(in.device()->pos()+size);
+                        emit newFile(fileName,dataFile,mtime);
+                        index++;
                     }
-                    QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
-                    in.device()->seek(in.device()->pos()+rawText.size());
-                    QString fileName=QString::fromUtf8(rawText.data(),rawText.size());
-                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint64)))
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
-                        return;
-                    }
-                    quint64 mtime;
-                    in >> mtime;
-                    QDateTime date;
-                    date.setTime_t(mtime);
-                    QByteArray dataFile=data.right(data.size()-in.device()->pos());
-                    emit newFile(fileName,dataFile,mtime);
                     return;//no remaining data, because all remaing is used as file data
                 }
                 break;

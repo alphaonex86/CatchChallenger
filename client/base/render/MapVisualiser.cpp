@@ -54,7 +54,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setBackgroundBrush(Qt::black);
     setFrameStyle(0);
 
-    //viewport()->setAttribute(Qt::WA_StaticContents);
+    viewport()->setAttribute(Qt::WA_StaticContents);
     viewport()->setAttribute(Qt::WA_TranslucentBackground);
     viewport()->setAttribute(Qt::WA_NoSystemBackground);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
