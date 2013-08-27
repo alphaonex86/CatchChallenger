@@ -67,7 +67,6 @@ private:
         QList<LocalClientHandler *> players;
 
         //the db info
-        bool haveTheInformations;
         QString name;
         quint64 cash;
     };
@@ -185,7 +184,7 @@ public slots:
     LocalClientHandlerFight * getLocalClientHandlerFight();
     //clan
     void clanAction(const quint8 &query_id,const quint8 &action,const QString &text);
-    void haveClanInfo(const QString &clanName, const quint64 &cash);
+    void haveClanInfo(const quint32 &clanId, const QString &clanName, const quint64 &cash);
     void sendClanInfo();
     void clanInvite(const bool &accept);
     void waitingForCityCaputre(const bool &cancel);
