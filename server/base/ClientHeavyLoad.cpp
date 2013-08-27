@@ -26,6 +26,7 @@ int ClientHeavyLoad::tempDatapackListReplyTestCount;
 int ClientHeavyLoad::rawFilesCount;
 int ClientHeavyLoad::compressedFilesCount;
 QSet<QString> ClientHeavyLoad::compressedExtension;
+QHash<quint32,quint16> ClientHeavyLoad::clanConnectedCount;
 
 ClientHeavyLoad::ClientHeavyLoad()
 {
@@ -528,6 +529,46 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
     out << FacilityLib::allowToQString(player_informations->public_and_private_informations.allow);
     out << (quint32)player_informations->public_and_private_informations.clan;
+    if(player_informations->public_and_private_informations.clan!=0)
+    {
+        if(clanConnectedCount.contains(player_informations->public_and_private_informations.clan))
+            clanConnectedCount[player_informations->public_and_private_informations.clan]++;
+        else
+        {
+            clanConnectedCount[player_informations->public_and_private_informations.clan]=1;
+            //do the query
+            QString queryText;
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
+                        .arg(player_informations->public_and_private_informations.clan);
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
+                        .arg(player_informations->public_and_private_informations.clan);
+                break;
+            }
+            QSqlQuery clanQuery(*GlobalServerData::serverPrivateVariables.db);
+            if(!clanQuery.exec(queryText))
+                emit message(clanQuery.lastQuery()+": "+clanQuery.lastError().text());
+            //parse the result
+            if(clanQuery.next())
+            {
+                bool ok;
+                quint64 cash=clanQuery.value(1).toULongLong(&ok);
+                if(!ok)
+                {
+                    cash=0;
+                    emit message("Warning: clan linked: %1 have wrong cash value, then reseted to 0");
+                }
+                emit haveClanInfo(player_informations->public_and_private_informations.clan,clanQuery.value(0).toString(),cash);
+            }
+            else
+                emit message("Warning: clan linked: %1 is not found into db");
+        }
+    }
     if(player_informations->public_and_private_informations.clan_leader)
         out << (quint8)0x01;
     else
@@ -675,6 +716,12 @@ void ClientHeavyLoad::askIfIsReadyToStop()
     {
         simplifiedIdList << player_informations->public_and_private_informations.public_informations.simplifiedId;
         GlobalServerData::serverPrivateVariables.connected_players_id_list.remove(player_informations->id);
+        if(player_informations->public_and_private_informations.clan!=0)
+        {
+            clanConnectedCount[player_informations->public_and_private_informations.clan]--;
+            if(clanConnectedCount[player_informations->public_and_private_informations.clan]==0)
+                clanConnectedCount.remove(player_informations->public_and_private_informations.clan);
+        }
     }
     emit isReadyToStop();
 }
@@ -1084,39 +1131,4 @@ void ClientHeavyLoad::loadQuests()
         player_informations->public_and_private_informations.quests[id]=playerQuest;
         LocalClientHandler::addQuestStepDrop(player_informations,id,playerQuest.step);
     }
-}
-
-void ClientHeavyLoad::askClan(const quint32 &clanId)
-{
-    //do the query
-    QString queryText;
-    switch(GlobalServerData::serverSettings.database.type)
-    {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
-                .arg(clanId);
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
-                .arg(clanId);
-        break;
-    }
-    QSqlQuery clanQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!clanQuery.exec(queryText))
-        emit message(clanQuery.lastQuery()+": "+clanQuery.lastError().text());
-    //parse the result
-    if(clanQuery.next())
-    {
-        bool ok;
-        quint64 cash=clanQuery.value(1).toULongLong(&ok);
-        if(!ok)
-        {
-            cash=0;
-            emit message("Warning: clan linked: %1 have wrong cash value, then reseted to 0");
-        }
-        emit haveClanInfo(clanQuery.value(0).toString(),cash);
-    }
-    else
-        emit message("Warning: clan linked: %1 is not found into db");
 }

@@ -45,6 +45,7 @@ QString QOggSimplePlayer::getFilePath() const
 
 void QOggSimplePlayer::open()
 {
+    QMutexLocker mutexLocker(&mutex);
     if(!QFile(filePath).exists())
         return;
     QAudioFormat format;
@@ -122,6 +123,7 @@ void QOggSimplePlayer::open()
 
 void QOggSimplePlayer::close()
 {
+    QMutexLocker mutexLocker(&mutex);
     if(output!=NULL)
     {
         output->stop();
@@ -150,6 +152,7 @@ void QOggSimplePlayer::finishedPlaying(QAudio::State state)
 
 void QOggSimplePlayer::start()
 {
+    QMutexLocker mutexLocker(&mutex);
     needPlay=true;
     if(output==NULL)
         return;
@@ -160,13 +163,14 @@ void QOggSimplePlayer::start()
 
 void QOggSimplePlayer::stop()
 {
+    QMutexLocker mutexLocker(&mutex);
     needPlay=false;
     if(output==NULL)
         return;
-    output->reset();
+    output->stop();
+    buffer.clearData();
     buffer.seek(0);
     buffer.close();
-    buffer.setData(QByteArray());
     buffer.open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     current_section=0;
     ov_time_seek(&vf,0);
@@ -179,13 +183,14 @@ void QOggSimplePlayer::setLoop(const bool &loop)
 
 void QOggSimplePlayer::readDone()
 {
+    QMutexLocker mutexLocker(&mutex);
     if(output==NULL)
         return;
-    if(buffer.data().size()<MIN_BUFFER_SIZE)
+    if(buffer.bufferUsage()<MIN_BUFFER_SIZE)
     {
         char pcmout[4096];
-        buffer.seek(buffer.data().size());
-        while(buffer.data().size()<MAX_BUFFER_SIZE){
+        buffer.seek(buffer.bufferUsage());
+        while(buffer.bufferUsage()<MAX_BUFFER_SIZE){
             long ret=ov_read(&vf,pcmout,sizeof(pcmout),0,2,1,&current_section);
             if (ret == 0) {
                 /* EOF */
