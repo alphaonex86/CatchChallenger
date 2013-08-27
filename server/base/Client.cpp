@@ -133,7 +133,6 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		this,               &Client::send_player_informations,          Qt::QueuedConnection);
     connect(clientHeavyLoad,	&ClientHeavyLoad::newRandomNumber,              localClientHandler,	&LocalClientHandler::newRandomNumber,       Qt::QueuedConnection);
     connect(clientHeavyLoad,	&ClientHeavyLoad::haveClanInfo,                 localClientHandler,	&LocalClientHandler::haveClanInfo,          Qt::QueuedConnection);
-    connect(localClientHandler,	&LocalClientHandler::askClan,                   clientHeavyLoad,	&ClientHeavyLoad::askClan,                  Qt::QueuedConnection);
     connect(localClientHandler,	&LocalClientHandler::clanChange,                clientBroadCast,	&ClientBroadCast::clanChange,               Qt::QueuedConnection);
 
     //packet parsed (heavy)

@@ -37,6 +37,7 @@ public:
     static QByteArray rawFiles,compressedFiles;
     static int rawFilesCount,compressedFilesCount;
     static QSet<QString> compressedExtension;
+    static QHash<quint32,quint16> clanConnectedCount;
 public slots:
     virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
     virtual void askLoginBot(const quint8 &query_id);
@@ -48,7 +49,6 @@ public slots:
     void sendCompressedFileContent();
     void dbQuery(const QString &queryText);
     void askedRandomNumber();
-    void askClan(const quint32 &clanId);
     //normal slots
     void askIfIsReadyToStop();
 private:
@@ -95,7 +95,7 @@ signals:
     void put_on_the_map(Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation) const;
     //random linked signals
     void newRandomNumber(const QByteArray &randomData) const;
-    void haveClanInfo(const QString &clanName,const quint64 &cash);
+    void haveClanInfo(const quint32 &clanId,const QString &clanName,const quint64 &cash);
 };
 }
 

@@ -14,6 +14,7 @@ QHash<quint32,LocalClientHandler *> LocalClientHandler::playerById;
 QHash<QString,QList<LocalClientHandler *> > LocalClientHandler::captureCity;
 QHash<QString,LocalClientHandler::CaptureCityValidated> LocalClientHandler::captureCityValidatedList;
 QHash<quint32,LocalClientHandler::Clan *> LocalClientHandler::clanList;
+
 QList<quint16> LocalClientHandler::marketObjectIdList;
 
 LocalClientHandler::LocalClientHandler()
@@ -296,13 +297,7 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     playerByPseudo[player_informations->public_and_private_informations.public_informations.pseudo]=this;
     playerById[player_informations->id]=this;
     if(player_informations->public_and_private_informations.clan>0)
-    {
-        createMemoryClan();
-        if(!clan->name.isEmpty())
-            emit askClan(player_informations->public_and_private_informations.clan);
-        else
-            sendClanInfo();
-    }
+        sendClanInfo();
     if(GlobalServerData::serverSettings.database.secondToPositionSync>0 && !player_informations->isFake)
         QObject::connect(&GlobalServerData::serverPrivateVariables.positionSync,SIGNAL(timeout()),this,SLOT(savePosition()),Qt::QueuedConnection);
 
@@ -318,12 +313,11 @@ void LocalClientHandler::createMemoryClan()
     if(!clanList.contains(player_informations->public_and_private_informations.clan))
     {
         clan=new Clan;
-        clan->haveTheInformations=false;
         clan->cash=0;
         clan->clanId=player_informations->public_and_private_informations.clan;
         clanList[player_informations->public_and_private_informations.clan]=clan;
         if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.contains(clan->clanId))
-            clan->captureCityInProgress=GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId];
+            clan->capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId];
     }
     else
         clan=clanList[player_informations->public_and_private_informations.clan];
@@ -2980,17 +2974,12 @@ quint32 LocalClientHandler::getPlayerId() const
         return 0;
 }
 
-void LocalClientHandler::haveClanInfo(const QString &clanName,const quint64 &cash)
+void LocalClientHandler::haveClanInfo(const quint32 &clanId,const QString &clanName,const quint64 &cash)
 {
-    if(clan==NULL)
-        return;
-    if(!clan[player_informations->public_and_private_informations.clan].haveTheInformations)
-    {
-        clan[player_informations->public_and_private_informations.clan].haveTheInformations=true;
-        clan[player_informations->public_and_private_informations.clan].name=clanName;
-        clan[player_informations->public_and_private_informations.clan].cash=cash;
-    }
-    sendClanInfo();
+    player_informations->public_and_private_informations.clan=clanId;
+    createMemoryClan();
+    clanList[clanId]->name=clanName;
+    clanList[clanId]->cash=cash;
 }
 
 void LocalClientHandler::sendClanInfo()
