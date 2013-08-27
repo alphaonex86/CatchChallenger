@@ -5,6 +5,8 @@
 
 #include <QAudioOutput>
 #include <QBuffer>
+#include <QMutex>
+#include <QMutexLocker>
 
 #ifdef _WIN32
 #include <io.h>
@@ -45,6 +47,7 @@ private:
     QString filePath;
     bool needPlay;
     bool loop;
+    QMutex mutex;
 signals:
     void internalOpen();
     void internalClose();
