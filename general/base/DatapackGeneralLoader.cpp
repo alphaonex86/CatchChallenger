@@ -890,6 +890,30 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                         }
                         if(ok)
                         {
+                            if(itemToCrafingRecipes.contains(recipe.itemToLearn))
+                            {
+                                ok=false;
+                                qDebug() << QString("preload_crafting_recipes() itemToLearn already used to learn another recipe: %4: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()).arg(itemToCrafingRecipes[recipe.itemToLearn]);
+                            }
+                        }
+                        if(ok)
+                        {
+                            if(recipe.itemToLearn==recipe.doItemId)
+                            {
+                                ok=false;
+                                qDebug() << QString("preload_crafting_recipes() the product of the recipe can't be them self: %4: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()).arg(id);
+                            }
+                        }
+                        if(ok)
+                        {
+                            if(itemToCrafingRecipes.contains(recipe.doItemId))
+                            {
+                                ok=false;
+                                qDebug() << QString("preload_crafting_recipes() the product of the recipe can't be a recipe: %4: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber()).arg(itemToCrafingRecipes[recipe.doItemId]);
+                            }
+                        }
+                        if(ok)
+                        {
                             crafingRecipes[id]=recipe;
                             itemToCrafingRecipes[recipe.itemToLearn]=id;
                         }

@@ -1,13 +1,3 @@
-INCLUDEPATH += libtiled/
-LIBS *= -ltiled
-build_pass:CONFIG(debug, debug|release) {
-    win32
-    {
-        LIBS -= -ltiled
-        LIBS += -ltiledd
-    }
-}
-
 LIBS += -lvorbis -lvorbisfile
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QT       += script multimedia
