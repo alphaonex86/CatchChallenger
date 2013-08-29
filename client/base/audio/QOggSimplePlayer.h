@@ -38,6 +38,8 @@ private slots:
     void readDone();
     void close();
     void open();
+    void internalStop();
+    void internalStart();
 private:
     qreal volume;
     QAudioOutput *output;
@@ -51,6 +53,8 @@ private:
 signals:
     void internalOpen();
     void internalClose();
+    void emitInternalStop();
+    void emitInternalStart();
 };
 
 #endif // QOGGSIMPLEPLAYER_H
