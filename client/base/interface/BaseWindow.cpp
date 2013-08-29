@@ -2701,12 +2701,12 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
             }
             if(monster.gender==Gender_Male)
             {
-                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/male.png"));
+                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/male.png").scaled(48,48));
                 ui->monsterDetailsGender->setToolTip(tr("Gender: %1").arg(tr("Male")));
             }
             else if(monster.gender==Gender_Female)
             {
-                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/female.png"));
+                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/female.png").scaled(48,48));
                 ui->monsterDetailsGender->setToolTip(tr("Gender: %1").arg(tr("Female")));
             }
             else
@@ -2740,6 +2740,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                         item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name).arg(playerSkill.level));
                     else
                         item=new QListWidgetItem(tr("%1").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name));
+                    item->setText(item->text()+"\n"+DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                     item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                 }
                 ui->monsterDetailsSkills->addItem(item);

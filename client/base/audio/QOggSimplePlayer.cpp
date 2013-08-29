@@ -19,6 +19,8 @@ QOggSimplePlayer::QOggSimplePlayer(const QString &filePath, QThread *audioThread
 
     connect(&buffer,&QOggAudioBuffer::readDone,this,&QOggSimplePlayer::readDone,Qt::QueuedConnection);
     connect(this,&QOggSimplePlayer::internalOpen,this,&QOggSimplePlayer::open,Qt::QueuedConnection);
+    connect(this,&QOggSimplePlayer::emitInternalStart,this,&QOggSimplePlayer::internalStart,Qt::QueuedConnection);
+    connect(this,&QOggSimplePlayer::emitInternalStop,this,&QOggSimplePlayer::internalStop,Qt::QueuedConnection);
     if(audioThread!=NULL)
         connect(this,&QOggSimplePlayer::internalClose,this,&QOggSimplePlayer::close,Qt::BlockingQueuedConnection);
     else
@@ -152,28 +154,34 @@ void QOggSimplePlayer::finishedPlaying(QAudio::State state)
 
 void QOggSimplePlayer::start()
 {
+    emit emitInternalStart();
+}
+
+void QOggSimplePlayer::internalStart()
+{
     QMutexLocker mutexLocker(&mutex);
     needPlay=true;
     if(output==NULL)
         return;
-    stop();
+    internalStop();
     readDone();
     output->start(&buffer);
 }
 
-void QOggSimplePlayer::stop()
+void QOggSimplePlayer::internalStop()
 {
-    QMutexLocker mutexLocker(&mutex);
     needPlay=false;
     if(output==NULL)
         return;
     output->stop();
     buffer.clearData();
-    buffer.seek(0);
-    buffer.close();
-    buffer.open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     current_section=0;
     ov_time_seek(&vf,0);
+}
+
+void QOggSimplePlayer::stop()
+{
+    emit emitInternalStop();
 }
 
 void QOggSimplePlayer::setLoop(const bool &loop)
@@ -183,7 +191,6 @@ void QOggSimplePlayer::setLoop(const bool &loop)
 
 void QOggSimplePlayer::readDone()
 {
-    QMutexLocker mutexLocker(&mutex);
     if(output==NULL)
         return;
     if(buffer.bufferUsage()<MIN_BUFFER_SIZE)
