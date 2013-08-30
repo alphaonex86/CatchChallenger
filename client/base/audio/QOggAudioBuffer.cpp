@@ -14,9 +14,9 @@ qint64 QOggAudioBuffer::readData(char * rawData, qint64 len)
     if(size>0)
     {
         //re-open because can't setData if open
-        QOggAudioBuffer::close();
+        QBuffer::close();
         setData(buffer().mid(size));
-        QOggAudioBuffer::open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+        QBuffer::open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     }
     emit readDone();
     return size;
@@ -44,10 +44,10 @@ void QOggAudioBuffer::clearData()
 {
     QMutexLocker mutexLocker(&mutex);
     //re-open because can't setData if open
-    QOggAudioBuffer::close();
+    QBuffer::close();
     QBuffer::seek(0);
     QBuffer::setData(QByteArray());
-    QOggAudioBuffer::open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+    QBuffer::open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
 bool QOggAudioBuffer::open(OpenMode openMode)

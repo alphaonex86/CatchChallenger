@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_CONNECTEDSOCKET_H
 
 #include <QIODevice>
-#include <QTcpSocket>
+#include <QSslSocket>
 #include <QAbstractSocket>
 #include <QObject>
 #include <QHostAddress>
@@ -16,7 +16,7 @@ class ConnectedSocket : public QIODevice
     Q_OBJECT
 public:
     explicit ConnectedSocket(QFakeSocket *socket,QObject *parent = 0);
-    explicit ConnectedSocket(QTcpSocket *socket,QObject *parent = 0);
+    explicit ConnectedSocket(QSslSocket *socket,QObject *parent = 0);
     ~ConnectedSocket();
     void	abort();
     void	connectToHost(const QString & hostName,quint16 port);
@@ -36,7 +36,7 @@ public:
     qint64	bytesAvailable() const;
     void	close();
     QFakeSocket *fakeSocket;
-    QTcpSocket *tcpSocket;
+    QSslSocket *sslSocket;
 protected:
     virtual bool	isSequential() const;
     virtual bool canReadLine() const;
