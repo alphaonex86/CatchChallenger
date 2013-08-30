@@ -65,7 +65,10 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
     if(fakeSocket!=NULL)
         fakeSocket->connectToHost();
     if(sslSocket!=NULL)
+    {
         sslSocket->connectToHostEncrypted(hostName,port);
+        sslSocket->startClientEncryption();
+    }
 }
 
 void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
@@ -73,7 +76,10 @@ void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
     if(fakeSocket!=NULL)
         fakeSocket->connectToHost();
     if(sslSocket!=NULL)
+    {
         sslSocket->connectToHost(address,port);
+        sslSocket->startClientEncryption();
+    }
 }
 
 void ConnectedSocket::disconnectFromHost()
