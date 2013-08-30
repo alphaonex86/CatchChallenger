@@ -499,7 +499,7 @@ void NormalServer::newConnection()
     if(server!=NULL)
         while(server->hasPendingConnections())
         {
-            QTcpSocket *socket = server->nextPendingConnection();
+            QSslSocket *socket = static_cast<QSslSocket *>(server->nextPendingConnection());
             if(socket!=NULL)
             {
                 DebugClass::debugConsole(QString("new client connected by tcp socket"));
