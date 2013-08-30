@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
 
     realSocket=new QSslSocket();
+    realSocket->ignoreSslErrors();
+    realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
     connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors);
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
