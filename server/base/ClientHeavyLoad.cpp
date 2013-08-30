@@ -536,6 +536,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         else
         {
             clanConnectedCount[player_informations->public_and_private_informations.clan]=1;
+            emit message(QString("First client of the clan: %1, get the info").arg(player_informations->public_and_private_informations.clan));
             //do the query
             QString queryText;
             switch(GlobalServerData::serverSettings.database.type)

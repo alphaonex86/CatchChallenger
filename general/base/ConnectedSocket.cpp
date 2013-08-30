@@ -1,4 +1,5 @@
 #include "ConnectedSocket.h"
+#include <QSslSocket>
 
 using namespace CatchChallenger;
 
@@ -63,7 +64,7 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
     if(fakeSocket!=NULL)
         fakeSocket->connectToHost();
     if(tcpSocket!=NULL)
-        tcpSocket->connectToHost(hostName,port);
+        static_cast<QSslSocket *>(tcpSocket)->connectToHostEncrypted(hostName,port);
 }
 
 void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)

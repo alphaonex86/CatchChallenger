@@ -2976,6 +2976,7 @@ quint32 LocalClientHandler::getPlayerId() const
 
 void LocalClientHandler::haveClanInfo(const quint32 &clanId,const QString &clanName,const quint64 &cash)
 {
+    emit message(QString("First client of the clan: %1, clanId: %2 to connect").arg(clanName).arg(clanId));
     player_informations->public_and_private_informations.clan=clanId;
     createMemoryClan();
     clanList[clanId]->name=clanName;
@@ -2988,6 +2989,7 @@ void LocalClientHandler::sendClanInfo()
         return;
     if(clan==NULL)
         return;
+    emit message(QString("Send the clan info: %1, clanId: %2, get the info").arg(clan->name).arg(player_informations->public_and_private_informations.clan));
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);

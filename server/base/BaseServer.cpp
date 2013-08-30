@@ -33,14 +33,14 @@ BaseServer::BaseServer()
     qRegisterMetaType<QList<QPair<quint32,qint32> > >("QList<QPair<quint32,qint32> >");
     qRegisterMetaType<QList<qint32> >("QList<quint32>");
 
-    ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Zlib;
+    ProtocolParsing::compressionType                                = ProtocolParsing::CompressionType_Zlib;
 
-    GlobalServerData::serverPrivateVariables.connected_players	= 0;
-    GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
-    GlobalServerData::serverPrivateVariables.db                   = NULL;
-    GlobalServerData::serverPrivateVariables.timer_player_map     = NULL;
-    GlobalServerData::serverPrivateVariables.timer_city_capture   = NULL;
-    GlobalServerData::serverPrivateVariables.bitcoin.enabled      = false;
+    GlobalServerData::serverPrivateVariables.connected_players      = 0;
+    GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
+    GlobalServerData::serverPrivateVariables.db                     = NULL;
+    GlobalServerData::serverPrivateVariables.timer_player_map       = NULL;
+    GlobalServerData::serverPrivateVariables.timer_city_capture     = NULL;
+    GlobalServerData::serverPrivateVariables.bitcoin.enabled        = false;
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
     GlobalServerData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";

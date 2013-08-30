@@ -3,7 +3,7 @@
 
 #include "../base/render/MapVisualiserPlayer.h"
 
-//catchchallenger.first-world.info
+//#define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
 #define SERVER_DNS_OR_IP "localhost"
 #define SERVER_NAME tr("CatchChallenger")
 #define SERVER_PORT 42489
@@ -18,7 +18,9 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
 
-    socket=new CatchChallenger::ConnectedSocket(new QTcpSocket());
+    realSocket=new QSslSocket();
+    connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors);
+    socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     ui->setupUi(this);
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
@@ -78,6 +80,16 @@ void MainWindow::resetAll()
         ui->pushButtonTryLogin->setFocus();
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
     setWindowTitle("CatchChallenger - "+SERVER_NAME);
+}
+
+void MainWindow::sslErrors(const QList<QSslError> &errors)
+{
+    int index=0;
+    while(index<errors.size())
+    {
+        qDebug() << "Ssl error:" << errors.at(index).errorString();
+        index++;
+    }
 }
 
 void MainWindow::disconnected(QString reason)
