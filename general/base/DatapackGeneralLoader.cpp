@@ -991,9 +991,11 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                     if(ok && ok2 && ok3)
                     {
                         if(industry.time<60*5)
-                            qDebug() << QString("the time need be greater than 5*60 seconds to not slow down the server: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                            qDebug() << QString("the time need be greater than 5*60 seconds to not slow down the server: %4, %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber()).arg(industry.time);
                         else if(industry.cycletobefull<1)
                             qDebug() << QString("cycletobefull need be greater than 0: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                        else if(industry.cycletobefull>10)
+                            qDebug() << QString("cycletobefull need be lower to 10 to not slow down the server, use the quantity: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                         else if(!industries.contains(id))
                         {
                             //ressource
@@ -1101,16 +1103,16 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                             }
                         }
                         else
-                            qDebug() << QString("Unable to open the insdutries file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                            qDebug() << QString("Unable to open the industries file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                     }
                     else
-                        qDebug() << QString("Unable to open the insdutries file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                        qDebug() << QString("Unable to open the industries file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                 }
                 else
-                    qDebug() << QString("Unable to open the insdutries file: %1, have not the id: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                    qDebug() << QString("Unable to open the industries file: %1, have not the id: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the insdutries file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                qDebug() << QString("Unable to open the industries file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
             industryItem = industryItem.nextSiblingElement("industry");
         }
         file_index++;
@@ -1161,8 +1163,8 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
                 {
                     if(!industriesLink.contains(factory_id))
                     {
-                        if(industries.contains(factory_id))
-                            industriesLink[factory_id]=industry_id;
+                        if(industries.contains(industry_id))
+                            industriesLink[industry_id]=industry_id;
                         else
                             qDebug() << QString("Industry id for factory is not found: %1, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
                     }
@@ -1170,13 +1172,13 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
                         qDebug() << QString("Factory already found: %1, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
                 }
                 else
-                    qDebug() << QString("Unable to open the insdutries link file: %1, the attribute is not a number, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+                    qDebug() << QString("Unable to open the industries link file: %1, the attribute is not a number, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the insdutries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+                qDebug() << QString("Unable to open the industries link file: %1, have not the id, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
         }
         else
-            qDebug() << QString("Unable to open the insdutries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
+            qDebug() << QString("Unable to open the industries link file: %1, is not a element, child.tagName(): %2 (at line: %3)").arg(industriesLinkFile.fileName()).arg(linkItem.tagName()).arg(linkItem.lineNumber());
         linkItem = linkItem.nextSiblingElement("link");
     }
     return industriesLink;
