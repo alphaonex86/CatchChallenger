@@ -1,6 +1,7 @@
 #include "NormalServer.h"
 #include "base/GlobalServerData.h"
 #include "../general/base/FacilityLib.h"
+#include <QSslSocket>
 
 /*
   When disconnect the fake client, stop the benchmark
@@ -13,8 +14,10 @@ bool NormalServer::oneInstanceRunning=false;
 NormalServer::NormalServer() :
     BaseServer()
 {
-    server                                                  = NULL;
-    timer_benchmark_stop                                    = NULL;
+    server                  = NULL;
+    timer_benchmark_stop    = NULL;
+    sslCertificate          = NULL;
+    sslKey                  = NULL;
 
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//broad cast (0)
     GlobalServerData::serverPrivateVariables.eventThreaderList << new EventThreader();//map management (1)
@@ -60,7 +63,7 @@ NormalServer::~NormalServer()
     if(server!=NULL)
     {
         server->close();
-        delete server;
+        server->deleteLater();
         server=NULL;
     }
 
@@ -70,6 +73,10 @@ NormalServer::~NormalServer()
     eventDispatcherThread->quit();
     eventDispatcherThread->wait();
     delete eventDispatcherThread;
+    if(sslKey!=NULL)
+        delete sslKey;
+    if(sslCertificate!=NULL)
+        delete sslCertificate;
 }
 
 void NormalServer::initAll()
@@ -111,9 +118,55 @@ void NormalServer::load_settings()
 //start with allow real player to connect
 void NormalServer::start_internal_server()
 {
+    if(sslKey!=NULL)
+        delete sslKey;
+    QFile key(QCoreApplication::applicationDirPath()+"/server.key");
+    if(!key.open(QIODevice::ReadOnly))
+    {
+        DebugClass::debugConsole(QString("Unable to access to the server key: %1").arg(key.errorString()));
+        stat=Down;
+        emit is_started(false);
+        emit error(QString("Unable to access to the server key"));
+        return;
+    }
+    QByteArray keyData=key.readAll();
+    key.close();
+    QSslKey sslKey(keyData,QSsl::Rsa);
+    if(sslKey.isNull())
+    {
+        DebugClass::debugConsole(QString("Server key is wrong"));
+        stat=Down;
+        emit is_started(false);
+        emit error(QString("Server key is wrong"));
+        return;
+    }
+
+    if(sslCertificate!=NULL)
+        delete sslCertificate;
+    QFile certificate(QCoreApplication::applicationDirPath()+"/server.crt");
+    if(!certificate.open(QIODevice::ReadOnly))
+    {
+        DebugClass::debugConsole(QString("Unable to access to the server certificate: %1").arg(certificate.errorString()));
+        stat=Down;
+        emit is_started(false);
+        emit error(QString("Unable to access to the server certificate"));
+        return;
+    }
+    QByteArray certificateData=certificate.readAll();
+    certificate.close();
+    QSslCertificate sslCertificate(certificateData);
+    if(sslCertificate.isNull())
+    {
+        DebugClass::debugConsole(QString("Server certificate is wrong"));
+        stat=Down;
+        emit is_started(false);
+        emit error(QString("Server certificate is wrong"));
+        return;
+    }
+
     if(server==NULL)
     {
-        server=new QTcpServer();
+        server=new QSslServer(sslCertificate,sslKey);
         //to do in the thread
         connect(server,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
     }
@@ -142,6 +195,7 @@ void NormalServer::start_internal_server()
     {
         DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         stat=Down;
+        emit is_started(false);
         emit error(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         return;
     }
@@ -149,9 +203,11 @@ void NormalServer::start_internal_server()
     {
         DebugClass::debugConsole(QString("Unable to listen the internal server"));
         stat=Down;
+        emit is_started(false);
         emit error(QString("Unable to listen the internal server"));
         return;
     }
+
     if(server_ip.isEmpty())
         DebugClass::debugConsole(QString("Listen *:%1").arg(GlobalServerData::serverSettings.server_port));
     else
@@ -161,6 +217,7 @@ void NormalServer::start_internal_server()
     {
         server->close();
         stat=Down;
+        emit is_started(false);
         return;
     }
 
@@ -169,6 +226,7 @@ void NormalServer::start_internal_server()
         DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         server->close();
         stat=Down;
+        emit is_started(false);
         emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         return;
     }
@@ -281,6 +339,11 @@ void NormalServer::stop_internal_server()
         server->deleteLater();
         server=NULL;
     }
+
+    if(sslKey!=NULL)
+        delete sslKey;
+    if(sslCertificate!=NULL)
+        delete sslCertificate;
 }
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////
