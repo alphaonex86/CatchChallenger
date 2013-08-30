@@ -9,6 +9,8 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QDir>
+#include <QSslKey>
+#include <QSslCertificate>
 
 #include "../general/base/DebugClass.h"
 #include "base/ServerStructures.h"
@@ -21,6 +23,7 @@
 #include "base/MapServer.h"
 #include "crafting/BaseServerCrafting.h"
 #include "base/BaseServer.h"
+#include "QSslServer.h"
 
 #ifndef CATCHCHALLENGER_EVENTDISPATCHER_H
 #define CATCHCHALLENGER_EVENTDISPATCHER_H
@@ -57,7 +60,7 @@ private:
     QString listenIpAndPort(QString server_ip,quint16 server_port);
     //store about the network
     QString server_ip;
-    QTcpServer *server;
+    QSslServer *server;
     //store benchmark related
     bool in_benchmark_mode;
     bool benchmark_map;
@@ -70,6 +73,8 @@ private:
     //to check double instance
     //shared into all the program
     static bool oneInstanceRunning;
+    QSslCertificate *sslCertificate;
+    QSslKey *sslKey;
 
     //bot related
     void removeBots();

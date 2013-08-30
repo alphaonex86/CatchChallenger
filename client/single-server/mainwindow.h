@@ -6,6 +6,8 @@
 #include <QAbstractSocket>
 #include <QSettings>
 #include <QTimer>
+#include <QSslError>
+#include <QSslSocket>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -34,11 +36,13 @@ private slots:
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();
     void message(QString message);
+    void sslErrors(const QList<QSslError> &errors);
     void disconnected(QString reason);
     void protocol_is_good();
     void needQuit();
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
 private:
+    QSslSocket *realSocket;
     Ui::MainWindow *ui;
     void resetAll();
     QStringList chat_list_player_pseudo;
