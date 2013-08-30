@@ -13,5 +13,7 @@ void QSslServer::incomingConnection(int socketDescriptor)
    socket->setSocketDescriptor(socketDescriptor);
    socket->setPrivateKey(sslKey);
    socket->setLocalCertificate(sslCertificate);
+   socket->setPeerVerifyMode(QSslSocket::VerifyNone);
+   socket->ignoreSslErrors();
    socket->startServerEncryption();
 }
