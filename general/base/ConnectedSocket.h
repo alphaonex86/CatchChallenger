@@ -43,6 +43,7 @@ protected:
     virtual bool canReadLine() const;
     virtual qint64	readData(char * data, qint64 maxSize);
     virtual qint64	writeData(const char * data, qint64 maxSize);
+    void sslErrors(const QList<QSslError> &errors);
 signals:
     void	connected();
     void	disconnected();
