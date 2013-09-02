@@ -168,7 +168,7 @@ void NormalServer::start_internal_server()
     {
         server=new QSslServer(sslCertificate,sslKey);
         //to do in the thread
-        connect(server,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
+        connect(server,&QSslServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
     }
     if(server->isListening())
     {
