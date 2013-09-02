@@ -62,7 +62,7 @@ NormalServer::~NormalServer()
     }
     if(server!=NULL)
     {
-        server->close();
+        server->close();/// \warning crash due to different thread
         server->deleteLater();
         server=NULL;
     }
@@ -500,6 +500,7 @@ void NormalServer::newConnection()
         while(server->hasPendingConnections())
         {
             QSslSocket *socket = static_cast<QSslSocket *>(server->nextPendingConnection());
+            connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
             if(socket!=NULL)
             {
                 DebugClass::debugConsole(QString("new client connected by tcp socket"));
@@ -508,6 +509,16 @@ void NormalServer::newConnection()
             else
                 DebugClass::debugConsole("NULL client: "+socket->peerAddress().toString());
         }
+}
+
+void NormalServer::sslErrors(const QList<QSslError> &errors)
+{
+    int index=0;
+    while(index<errors.size())
+    {
+        DebugClass::debugConsole(QString("Ssl error: %1").arg(errors.at(index).errorString()));
+        index++;
+    }
 }
 
 bool NormalServer::isListen()
