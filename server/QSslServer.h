@@ -11,11 +11,12 @@ class QSslServer : public QTcpServer
 public:
     explicit QSslServer(const QSslCertificate &sslCertificate,const QSslKey &sslKey);
 protected:
-    void incomingConnection(int socketDescriptor);
+    void incomingConnection(qintptr socketDescriptor);
 private:
     QSslCertificate sslCertificate;
     QSslKey sslKey;
-
+private slots:
+    void sslErrors(const QList<QSslError> &errors);
 };
 
 #endif // QSSLSERVER_H

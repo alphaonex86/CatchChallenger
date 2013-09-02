@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     realSocket=new QSslSocket();
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
-    connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors);
+    connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     ui->setupUi(this);
@@ -86,12 +86,16 @@ void MainWindow::resetAll()
 
 void MainWindow::sslErrors(const QList<QSslError> &errors)
 {
+    QStringList sslErrors;
     int index=0;
     while(index<errors.size())
     {
         qDebug() << "Ssl error:" << errors.at(index).errorString();
+        sslErrors << errors.at(index).errorString();
         index++;
     }
+    QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
+    realSocket->disconnectFromHost();
 }
 
 void MainWindow::disconnected(QString reason)
