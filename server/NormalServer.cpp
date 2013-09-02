@@ -118,6 +118,15 @@ void NormalServer::load_settings()
 //start with allow real player to connect
 void NormalServer::start_internal_server()
 {
+    if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() && !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
+    {
+        DebugClass::debugConsole(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+        stat=Down;
+        emit is_started(false);
+        emit error(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+        return;
+    }
+
     if(sslKey!=NULL)
         delete sslKey;
     QFile key(QCoreApplication::applicationDirPath()+"/server.key");
@@ -336,7 +345,7 @@ void NormalServer::stop_internal_server()
     if(server!=NULL)
     {
         server->close();
-        server->deleteLater();
+        delete server;
         server=NULL;
     }
 
