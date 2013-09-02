@@ -37,6 +37,7 @@ public:
     void	close();
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
+    QByteArray tempClearData;
 protected:
     virtual bool	isSequential() const;
     virtual bool canReadLine() const;
@@ -49,6 +50,8 @@ signals:
     void	stateChanged(QAbstractSocket::SocketState socketState);
 private slots:
     void destroyedSocket();
+    void encrypted();
+    void startHandshake();
 };
 }
 
