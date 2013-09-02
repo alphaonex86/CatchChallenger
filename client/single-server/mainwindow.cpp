@@ -5,7 +5,7 @@
 
 //#define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
 #define SERVER_DNS_OR_IP "localhost"
-#define SERVER_NAME tr("CatchChallenger")
+#define SERVER_NAME tr("Official server")
 #define SERVER_PORT 42489
 #define REGISTER_URL "http://catchchallenger.first-world.info/register.html"
 #define WEBSITE "http://catchchallenger.first-world.info/"
