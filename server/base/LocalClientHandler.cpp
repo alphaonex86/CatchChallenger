@@ -1282,7 +1282,7 @@ bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skil
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return false;
                 }
             }
@@ -1308,7 +1308,7 @@ bool LocalClientHandler::learnSkill(const quint32 &monsterId,const quint32 &skil
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        emit error(QString("learnSkill() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return false;
                     }
                 }
@@ -1482,7 +1482,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -1512,7 +1512,7 @@ void LocalClientHandler::getShopList(const quint32 &query_id,const quint32 &shop
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            emit error(QString("getShopList() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }
@@ -1592,7 +1592,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -1624,7 +1624,7 @@ void LocalClientHandler::buyObject(const quint32 &query_id,const quint32 &shopId
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            emit error(QString("buyObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }
@@ -1721,7 +1721,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -1753,7 +1753,7 @@ void LocalClientHandler::sellObject(const quint32 &query_id,const quint32 &shopI
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            emit error(QString("sellObject() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }
@@ -2518,7 +2518,7 @@ void LocalClientHandler::heal()
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -2547,7 +2547,7 @@ void LocalClientHandler::heal()
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        emit error(QString("heal() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return;
                     }
                 }
@@ -2610,7 +2610,7 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
             {
                 if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -2646,7 +2646,7 @@ void LocalClientHandler::requestFight(const quint32 &fightId)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        emit error(QString("requestFight() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return;
                     }
                 }
@@ -3147,7 +3147,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                     {
-                        emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                        emit error(QString("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                         return;
                     }
                 }
@@ -3176,7 +3176,7 @@ void LocalClientHandler::waitingForCityCaputre(const bool &cancel)
                     {
                         if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                         {
-                            emit error(QString("plantSeed() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                            emit error(QString("waitingForCityCaputre() Can't move at this direction from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                             return;
                         }
                     }

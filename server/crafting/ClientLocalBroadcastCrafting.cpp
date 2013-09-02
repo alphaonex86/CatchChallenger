@@ -342,7 +342,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -357,7 +357,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -372,7 +372,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -387,7 +387,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QString("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
