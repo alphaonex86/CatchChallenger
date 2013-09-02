@@ -998,36 +998,36 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                             qDebug() << QString("cycletobefull need be lower to 10 to not slow down the server, use the quantity: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                         else if(!industries.contains(id))
                         {
-                            //ressource
+                            //resource
                             {
-                                QDomElement ressourceItem = industryItem.firstChildElement("ressource");
+                                QDomElement resourceItem = industryItem.firstChildElement("resource");
                                 ok=true;
-                                while(!ressourceItem.isNull() && ok)
+                                while(!resourceItem.isNull() && ok)
                                 {
-                                    if(ressourceItem.isElement())
+                                    if(resourceItem.isElement())
                                     {
-                                        Industry::Resource ressource;
-                                        ressource.quantity=1;
-                                        if(ressourceItem.hasAttribute("quantity"))
+                                        Industry::Resource resource;
+                                        resource.quantity=1;
+                                        if(resourceItem.hasAttribute("quantity"))
                                         {
-                                            ressource.quantity=ressourceItem.attribute("quantity").toUInt(&ok);
+                                            resource.quantity=resourceItem.attribute("quantity").toUInt(&ok);
                                             if(!ok)
                                                 qDebug() << QString("quantity is not a number: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                         }
                                         if(ok)
                                         {
-                                            if(ressourceItem.hasAttribute("id"))
+                                            if(resourceItem.hasAttribute("id"))
                                             {
-                                                ressource.item=ressourceItem.attribute("id").toUInt(&ok);
+                                                resource.item=resourceItem.attribute("id").toUInt(&ok);
                                                 if(!ok)
                                                     qDebug() << QString("id is not a number: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
-                                                else if(!items.contains(ressource.item))
+                                                else if(!items.contains(resource.item))
                                                 {
                                                     ok=false;
                                                     qDebug() << QString("id is not into the item list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 }
                                                 else
-                                                    industry.resources << ressource;
+                                                    industry.resources << resource;
                                             }
                                             else
                                             {
@@ -1041,7 +1041,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                         ok=false;
                                         qDebug() << QString("is not a elements: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                     }
-                                    ressourceItem = ressourceItem.nextSiblingElement("ressource");
+                                    resourceItem = resourceItem.nextSiblingElement("resource");
                                 }
                             }
 
@@ -1097,7 +1097,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                             if(ok)
                             {
                                 if(industry.products.isEmpty() || industry.resources.isEmpty())
-                                    qDebug() << QString("product or ressources is empty: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                    qDebug() << QString("product or resources is empty: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                 else
                                     industries[id]=industry;
                             }
