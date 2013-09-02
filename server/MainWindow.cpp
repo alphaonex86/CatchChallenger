@@ -104,7 +104,7 @@ void MainWindow::on_pushButton_server_restart_clicked()
 void MainWindow::server_is_started(bool is_started)
 {
     updateActionButton();
-    if(need_be_closed)
+    if(need_be_closed || !isVisible())
     {
         QCoreApplication::exit();
         return;
