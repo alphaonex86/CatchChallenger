@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&MainWindow::message);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,this,&MainWindow::have_current_player_info);
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
-    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&MainWindow::stateChanged);
+    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&MainWindow::stateChanged,Qt::QueuedConnection);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -86,6 +86,7 @@ void MainWindow::resetAll()
 
 void MainWindow::sslErrors(const QList<QSslError> &errors)
 {
+    /*haveShowDisconnectionReason=true;
     QStringList sslErrors;
     int index=0;
     while(index<errors.size())
@@ -95,7 +96,7 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
         index++;
     }
     QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
-    realSocket->disconnectFromHost();
+    realSocket->disconnectFromHost();*/
 }
 
 void MainWindow::disconnected(QString reason)
@@ -148,6 +149,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     qDebug() << "socketState:" << (int)socketState;
     if(socketState==QAbstractSocket::UnconnectedState)
         resetAll();
+    if(socketState==QAbstractSocket::ConnectedState)
+        haveShowDisconnectionReason=false;
     CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
 }
 
@@ -159,10 +162,7 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
         if(haveShowDisconnectionReason)
-        {
-            haveShowDisconnectionReason=false;
             return;
-        }
         QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server"));
     break;
     case QAbstractSocket::ConnectionRefusedError:
