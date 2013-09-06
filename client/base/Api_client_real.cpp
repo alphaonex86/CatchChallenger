@@ -20,7 +20,7 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
 {
     host="localhost";
     port=42489;
-    datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
+    datapack_base_name=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
     connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
     connect(this,   &Api_client_real::newFile,      this,&Api_client_real::writeNewFile);
     disconnected();
@@ -140,7 +140,7 @@ void Api_client_real::tryConnect(QString host,quint16 port)
     this->host=host;
     this->port=port;
     socket->connectToHost(host,port);
-    datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
+    datapack_base_name=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
 }
 
 void Api_client_real::disconnected()
@@ -233,7 +233,7 @@ void Api_client_real::sendDatapackContent()
         return;
     }
     wait_datapack_content=true;
-    datapack_base_name=QString("%1/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
+    datapack_base_name=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
     QDir(datapack_base_name).mkpath(datapack_base_name);
     quint8 datapack_content_query_number=queryNumber();
     datapackFilesList=listDatapack("");

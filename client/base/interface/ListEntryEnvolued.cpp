@@ -1,12 +1,11 @@
-#include "SaveGameLabel.h"
-#include <QDebug>
+#include "ListEntryEnvolued.h"
 
-SaveGameLabel::SaveGameLabel()
+ListEntryEnvolued::ListEntryEnvolued()
 {
     haveFirstClick=false;
 }
 
-void SaveGameLabel::mousePressEvent(QMouseEvent *)
+void ListEntryEnvolued::mousePressEvent(QMouseEvent *)
 {
     //double click
     if(haveFirstClick && lastClick.elapsed()<400)
@@ -24,6 +23,6 @@ void SaveGameLabel::mousePressEvent(QMouseEvent *)
     }
 }
 
-void SaveGameLabel::mouseReleaseEvent(QMouseEvent *)
+void ListEntryEnvolued::mouseReleaseEvent(QMouseEvent *)
 {
 }

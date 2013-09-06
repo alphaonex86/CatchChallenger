@@ -276,3 +276,30 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     }
     return outputData;
 }
+
+bool FacilityLib::rmpath(const QDir &dir)
+{
+    if(!dir.exists())
+        return true;
+    bool allHaveWork=true;
+    QFileInfoList list = dir.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);
+    for (int i = 0; i < list.size(); ++i)
+    {
+        QFileInfo fileInfo(list.at(i));
+        if(!fileInfo.isDir())
+        {
+            if(!QFile(fileInfo.absoluteFilePath()).remove())
+                allHaveWork=false;
+        }
+        else
+        {
+            //return the fonction for scan the new folder
+            if(!FacilityLib::rmpath(dir.absolutePath()+'/'+fileInfo.fileName()+'/'))
+                allHaveWork=false;
+        }
+    }
+    if(!allHaveWork)
+        return false;
+    allHaveWork=dir.rmdir(dir.absolutePath());
+    return allHaveWork;
+}
