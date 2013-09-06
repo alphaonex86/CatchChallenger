@@ -5,7 +5,7 @@ QMAKE_CXXFLAGS -= -O2 -Os
 
 QT       += core gui network xml
 
-LIBS += -lz -llzma -ltiled
+LIBS += -lz -llzma
 
 TEMPLATE = app
 

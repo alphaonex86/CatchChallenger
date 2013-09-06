@@ -1,4 +1,4 @@
-LIBS += -lvorbis -lvorbisfile
+LIBS += -lvorbis -lvorbisfile -ltiled
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QT       += script multimedia
 
@@ -25,6 +25,7 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/interface/BaseWindowShop.cpp \
     $$PWD/interface/BaseWindowWarehouse.cpp \
     $$PWD/interface/MapControllerMP.cpp \
+    $$PWD/interface/ListEntryEnvolued.cpp \
     $$PWD/../crafting/interface/MapControllerCrafting.cpp \
     $$PWD/interface/MapController.cpp \
     $$PWD/interface/DatapackClientLoader.cpp \
@@ -55,6 +56,7 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/Map_client.h \
     $$PWD/interface/BaseWindow.h \
     $$PWD/interface/MapControllerMP.h \
+    $$PWD/interface/ListEntryEnvolued.h \
     $$PWD/interface/MapController.h \
     $$PWD/interface/DatapackClientLoader.h \
     $$PWD/ClientVariable.h \

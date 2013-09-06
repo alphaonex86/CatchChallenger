@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QRegularExpression>
-#include <QAbstractSocket>
+#include <QSslSocket>
 #include <QSettings>
 #include <QTimer>
 
@@ -14,6 +14,7 @@
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
+#include "../base/interface/ListEntryEnvolued.h"
 
 namespace Ui {
     class MainWindow;
@@ -38,7 +39,18 @@ private slots:
     void disconnected(QString reason);
     void protocol_is_good();
     void needQuit();
+    void sslErrors(const QList<QSslError> &errors);
+    void ListEntryEnvoluedClicked();
+    void ListEntryEnvoluedDoubleClicked();
+    void ListEntryEnvoluedUpdate();
+    void on_manageDatapack_clicked();
+    QPair<QString,QString> getDatapackInformations(const QString &filePath);
+    void on_backDatapack_clicked();
+
+    void on_deleteDatapack_clicked();
+
 private:
+    QSpacerItem *spacer;
     Ui::MainWindow *ui;
     void resetAll();
     QStringList chat_list_player_pseudo;
@@ -52,6 +64,10 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
+    QSslSocket *realSocket;
+    QList<ListEntryEnvolued *> datapack;
+    QHash<ListEntryEnvolued *,QString> datapackPathList;
+    ListEntryEnvolued * selectedDatapack;
 };
 
 #endif // MAINWINDOW_H

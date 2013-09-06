@@ -3,8 +3,8 @@
 
 #include "../base/render/MapVisualiserPlayer.h"
 
-//#define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
-#define SERVER_DNS_OR_IP "localhost"
+#define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
+//#define SERVER_DNS_OR_IP "localhost"
 #define SERVER_NAME tr("Official server")
 #define SERVER_PORT 42489
 #define REGISTER_URL "http://catchchallenger.first-world.info/register.html"
@@ -86,7 +86,7 @@ void MainWindow::resetAll()
 
 void MainWindow::sslErrors(const QList<QSslError> &errors)
 {
-    /*haveShowDisconnectionReason=true;
+    haveShowDisconnectionReason=true;
     QStringList sslErrors;
     int index=0;
     while(index<errors.size())
@@ -95,7 +95,7 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
         sslErrors << errors.at(index).errorString();
         index++;
     }
-    QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
+    /*QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
     realSocket->disconnectFromHost();*/
 }
 

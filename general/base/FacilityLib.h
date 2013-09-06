@@ -5,6 +5,7 @@
 #include <QString>
 #include <QStringList>
 #include <QRect>
+#include <QDir>
 #include <QDateTime>
 #include "GeneralStructures.h"
 
@@ -27,6 +28,7 @@ public:
     static QSet<ActionAllow> QStringToAllow(const QString &string);
     static QDateTime nextCaptureTime(const City &city);
     static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
+    static bool rmpath(const QDir &dir);
 private:
     static QByteArray UTF8EmptyData;
 };

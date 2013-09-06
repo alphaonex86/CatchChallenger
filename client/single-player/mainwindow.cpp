@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "NewGame.h"
-#include "NewProfile.h"
 
 #include <QSettings>
 #include <QInputDialog>
@@ -58,6 +57,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle("CatchChallenger - "+tr("Single player"));
     ui->SaveGame_New->setEnabled(datapackPathExists);
+
+    newProfile=NULL;
 }
 
 MainWindow::~MainWindow()
@@ -66,6 +67,8 @@ MainWindow::~MainWindow()
     socket->disconnectFromHost();
     if(internalServer!=NULL)
         delete internalServer;
+    if(newProfile!=NULL)
+        delete newProfile;
     internalServer=NULL;
     delete CatchChallenger::Api_client_real::client;
     delete CatchChallenger::BaseWindow::baseWindow;
@@ -186,15 +189,23 @@ void MainWindow::try_stop_server()
     saveTime();
 }
 
+
 void MainWindow::on_SaveGame_New_clicked()
 {
     resetAll();
     //load the information
-    NewProfile newProfile(datapackPath,this);
-    newProfile.exec();
-    if(!newProfile.ok)
-        return;
-    NewProfile::Profile profile=newProfile.getProfile();
+    if(newProfile!=NULL)
+        delete newProfile;
+    newProfile=new NewProfile(datapackPath,this);
+    connect(newProfile,&NewProfile::finished,this,&MainWindow::NewProfile_finished);
+}
+
+void MainWindow::NewProfile_finished()
+{
+    if(newProfile->profileListSize()>1)
+        if(!newProfile->ok)
+            return;
+    NewProfile::Profile profile=newProfile->getProfile();
     NewGame nameGame(profile.forcedskin,this);
     if(!nameGame.haveSkin())
     {
@@ -488,22 +499,22 @@ void MainWindow::closeDb(QSqlDatabase *db)
     QSqlDatabase::removeDatabase(connectionName);
 }
 
-void MainWindow::savegameLabelClicked()
+void MainWindow::ListEntryEnvoluedClicked()
 {
-    SaveGameLabel * selectedSavegame=qobject_cast<SaveGameLabel *>(QObject::sender());
+    ListEntryEnvolued * selectedSavegame=qobject_cast<ListEntryEnvolued *>(QObject::sender());
     if(selectedSavegame==NULL)
         return;
     this->selectedSavegame=selectedSavegame;
-    savegameLabelUpdate();
+    ListEntryEnvoluedUpdate();
 }
 
-void MainWindow::savegameLabelDoubleClicked()
+void MainWindow::ListEntryEnvoluedDoubleClicked()
 {
-    savegameLabelClicked();
+    ListEntryEnvoluedClicked();
     on_SaveGame_Play_clicked();
 }
 
-void MainWindow::savegameLabelUpdate()
+void MainWindow::ListEntryEnvoluedUpdate()
 {
     int index=0;
     while(index<savegame.size())
@@ -587,9 +598,9 @@ void MainWindow::updateSavegameList()
         }
         QString savegamesPath=fileInfo.absoluteFilePath()+"/";
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
-        SaveGameLabel *newEntry=new SaveGameLabel();
-        connect(newEntry,&SaveGameLabel::clicked,this,&MainWindow::savegameLabelClicked,Qt::QueuedConnection);
-        connect(newEntry,&SaveGameLabel::doubleClicked,this,&MainWindow::savegameLabelDoubleClicked,Qt::QueuedConnection);
+        ListEntryEnvolued *newEntry=new ListEntryEnvolued();
+        connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::ListEntryEnvoluedClicked,Qt::QueuedConnection);
+        connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::ListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
         newEntry->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
         QString dateString;
         if(!QFileInfo(savegamesPath+"metadata.conf").exists())
@@ -672,7 +683,7 @@ void MainWindow::updateSavegameList()
         spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
         ui->scrollAreaWidgetContents->layout()->addItem(spacer);
     }
-    savegameLabelUpdate();
+    ListEntryEnvoluedUpdate();
 }
 
 QString MainWindow::getMapName(const QString &file)

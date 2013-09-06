@@ -42,5 +42,6 @@
         <file>images/interface/female.png</file>
         <file>images/interface/male.png</file>
         <file>images/inventory/market.png</file>
+        <file>images/savegame-select.png</file>
     </qresource>
 </RCC>
