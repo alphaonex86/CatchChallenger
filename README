@@ -21,7 +21,7 @@ Is into 3 part: server, client, datapack. Single player planned with mix of all
 ====================================================
 Compiling
 
-Dep: tiled, zlib, libvorbis/libogg for the client, Qt5
+Dep: tiled, zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvorbis/libogg for the client, Qt5
 For the Gui server:
 cd server/
 qmake catchchallenger-server-gui.pro
