@@ -45,6 +45,7 @@ public:
     Profile getProfile();
     explicit NewProfile(const QString &datapackPath,QWidget *parent = 0);
     ~NewProfile();
+    int profileListSize();
 private slots:
     void on_ok_clicked();
     void on_pushButton_2_clicked();
