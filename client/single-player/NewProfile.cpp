@@ -330,8 +330,9 @@ void NewProfile::datapackParsed()
         isParsingDatapack=false;
         emit parseDatapack(datapackPath);
     }
-    if(profileList.size()==1)
+    if(profileList.size()==1)//do into the next screen:  && profileList.first().forcedskin.size()==1
     {
+        emit finished(0);
         CatchChallenger::DebugClass::debugConsole("Default profile selected");
         ok=true;
         close();//only one, then select it
@@ -339,4 +340,9 @@ void NewProfile::datapackParsed()
     }
     ui->ok->setEnabled(true);
     show();
+}
+
+int NewProfile::profileListSize()
+{
+    return profileList.size();
 }

@@ -1,14 +1,14 @@
-#ifndef QSAVEGAMELABEL_H
-#define QSAVEGAMELABEL_H
+#ifndef LISTENTRYENVOLUED_H
+#define LISTENTRYENVOLUED_H
 
 #include <QLabel>
 #include <QTime>
 
-class SaveGameLabel : public QLabel
+class ListEntryEnvolued : public QLabel
 {
     Q_OBJECT
 public:
-    explicit SaveGameLabel();
+    explicit ListEntryEnvolued();
 protected:
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
@@ -20,4 +20,4 @@ private:
     bool haveFirstClick;
 };
 
-#endif // QSAVEGAMELABEL_H
+#endif // LISTENTRYENVOLUED_H

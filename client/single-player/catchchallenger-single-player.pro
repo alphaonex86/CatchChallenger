@@ -8,7 +8,6 @@ TARGET = catchchallenger-single-player
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-        SaveGameLabel.cpp \
         InternalServer.cpp \
         NewGame.cpp \
     NewProfile.cpp
@@ -16,7 +15,6 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
         InternalServer.h \
         NewGame.h \
-        SaveGameLabel.h \
     NewProfile.h
 
 FORMS    += mainwindow.ui \

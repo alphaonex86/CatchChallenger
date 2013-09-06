@@ -1927,7 +1927,7 @@ IndustryStatus LocalClientHandler::industryStatusWithCurrentTime(const IndustryS
 {
     IndustryStatus industryStatusCopy=industryStatus;
     //do the generated item
-    quint32 timeIntervalCount;
+    quint32 timeIntervalCount=0;
     if(industryStatus.last_update<(QDateTime::currentMSecsSinceEpoch()/1000))
     {
         timeIntervalCount=(QDateTime::currentMSecsSinceEpoch()/1000-industryStatus.last_update)/industry.time;

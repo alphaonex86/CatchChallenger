@@ -15,8 +15,9 @@
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
-#include "SaveGameLabel.h"
+#include "../base/interface/ListEntryEnvolued.h"
 #include "InternalServer.h"
+#include "NewProfile.h"
 
 namespace Ui {
     class MainWindow;
@@ -40,9 +41,9 @@ private slots:
     void protocol_is_good();
     void try_stop_server();
     void on_SaveGame_New_clicked();
-    void savegameLabelClicked();
-    void savegameLabelDoubleClicked();
-    void savegameLabelUpdate();
+    void ListEntryEnvoluedClicked();
+    void ListEntryEnvoluedDoubleClicked();
+    void ListEntryEnvoluedUpdate();
     void on_SaveGame_Delete_clicked();
     void on_SaveGame_Rename_clicked();
     void on_SaveGame_Copy_clicked();
@@ -52,6 +53,7 @@ private slots:
     void play(const QString &savegamesPath);
     void serverError(const QString &error);
     void sendSettings(CatchChallenger::InternalServer * internalServer, const QString &savegamesPath);
+    void NewProfile_finished();
 private:
     Ui::MainWindow *ui;
     void resetAll();
@@ -65,10 +67,10 @@ private:
     QString lastMessageSend;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
-    QList<SaveGameLabel *> savegame;
-    QHash<SaveGameLabel *,QString> savegamePathList;
-    QHash<SaveGameLabel *,bool> savegameWithMetaData;
-    SaveGameLabel * selectedSavegame;
+    QList<ListEntryEnvolued *> savegame;
+    QHash<ListEntryEnvolued *,QString> savegamePathList;
+    QHash<ListEntryEnvolued *,bool> savegameWithMetaData;
+    ListEntryEnvolued * selectedSavegame;
     QSpacerItem *spacer;
     CatchChallenger::InternalServer * internalServer;
     QString datapackPath;
@@ -79,6 +81,7 @@ private:
     QString launchedGamePath;
     bool haveLaunchedGame;
     bool datapackPathExists;
+    NewProfile *newProfile;
 };
 
 #endif // MAINWINDOW_H
