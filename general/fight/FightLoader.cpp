@@ -845,6 +845,38 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
             DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement("skill");
     }
+    //check the default attack
+    if(!monsterSkills.contains(0))
+        DebugClass::debugConsole(QString("Warning: no default monster attack if no more attack"));
+    else if(monsterSkills[0].level.isEmpty())
+    {
+        monsterSkills.remove(0);
+        DebugClass::debugConsole(QString("Warning: no level for default monster attack if no more attack"));
+    }
+    else
+    {
+        if(monsterSkills[0].level.first().life.isEmpty())
+        {
+            monsterSkills.remove(0);
+            DebugClass::debugConsole(QString("Warning: no life effect for the default attack"));
+        }
+        else
+        {
+            int index=0;
+            while(index<monsterSkills[0].level.first().life.size())
+            {
+                const Skill::Life &life=monsterSkills[0].level.first().life.at(index);
+                if(life.success==100 && life.effect.on==ApplyOn_AloneEnemy && life.effect.quantity<0)
+                    break;
+                index++;
+            }
+            if(index==monsterSkills[0].level.first().life.size())
+            {
+                monsterSkills.remove(0);
+                DebugClass::debugConsole(QString("Warning: no valid life effect for the default attack: success=100%, on=ApplyOn_AloneEnemy, quantity<0"));
+            }
+        }
+    }
     return monsterSkills;
 }
 

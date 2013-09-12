@@ -42,6 +42,11 @@ bool CommonFightEngine::otherMonsterIsKO() const
     PublicPlayerMonster * publicPlayerMonster=getOtherMonster();
     if(publicPlayerMonster==NULL)
         return true;
+    return genericMonsterIsKO(publicPlayerMonster);
+}
+
+bool CommonFightEngine::genericMonsterIsKO(const PublicPlayerMonster * publicPlayerMonster) const
+{
     if(publicPlayerMonster->hp==0)
         return true;
     return false;
@@ -52,9 +57,7 @@ bool CommonFightEngine::currentMonsterIsKO() const
     PlayerMonster * playerMonster=getCurrentMonster();
     if(playerMonster==NULL)
         return true;
-    if(playerMonster->hp==0)
-        return true;
-    return false;
+    return genericMonsterIsKO(playerMonster);
 }
 
 bool CommonFightEngine::dropKOCurrentMonster()
@@ -456,120 +459,6 @@ bool CommonFightEngine::monsterIsKO(const PlayerMonster &playerMonter)
     return playerMonter.hp<=0 || playerMonter.egg_step>0;
 }
 
-Skill::AttackReturn CommonFightEngine::generateOtherAttack()
-{
-    Skill::AttackReturn attackReturn;
-    attackReturn.attack=0;
-    attackReturn.doByTheCurrentMonster=false;
-    attackReturn.success=false;
-    PlayerMonster otherMonster;
-    if(!wildMonsters.isEmpty())
-        otherMonster=wildMonsters.first();
-    else if(!botFightMonsters.isEmpty())
-        otherMonster=botFightMonsters.first();
-    else
-    {
-        emit error("no other monster found");
-        return attackReturn;
-    }
-    if(otherMonster.skills.empty())
-    {
-        emit message("No other monster attack todo");
-        return attackReturn;
-    }
-    int position;
-    if(otherMonster.skills.size()==1)
-        position=0;
-    else
-        position=getOneSeed(otherMonster.skills.size());
-    const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster.skills.at(position);
-    emit message(QString("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
-                 .arg(otherMonsterSkill.skill)
-                 .arg(position)
-                 .arg(otherMonsterSkill.level)
-                 .arg(otherMonster.skills.size())
-                 );
-    attackReturn.attack=otherMonsterSkill.skill;
-    const Skill::SkillList &skillList=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[otherMonsterSkill.skill].level.at(otherMonsterSkill.level-1);
-    int index;
-    //do the life effect
-    index=0;
-    while(index<skillList.life.size())
-    {
-        const Skill::Life &life=skillList.life.at(index);
-        bool success;
-        if(life.success==100)
-            success=true;
-        else
-            success=(getOneSeed(100)<life.success);
-        if(success)
-        {
-            attackReturn.lifeEffectMonster << applyOtherLifeEffect(life.effect);
-            attackReturn.success=true;
-        }
-        index++;
-    }
-    //do the buff
-    index=0;
-    while(index<skillList.buff.size())
-    {
-        const Skill::Buff &buff=skillList.buff.at(index);
-        bool success;
-        if(buff.success==100)
-            success=true;
-        else
-            success=(getOneSeed(100)<buff.success);
-        if(success)
-        {
-            if(addOtherBuffEffect(buff.effect)>=-2)//0 to X, update buff, -1 added, -2 updated same buff at same level
-            {
-                attackReturn.addBuffEffectMonster << buff.effect;
-                attackReturn.success=true;
-            }
-        }
-        index++;
-    }
-    //apply the buff
-    if(!currentMonsterIsKO())
-    {
-        PublicPlayerMonster * playerMonster=getOtherMonster();
-        if(playerMonster!=NULL)
-        {
-            attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
-            attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
-        }
-    }
-    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
-        doTurnIfChangeOfMonster=false;
-    return attackReturn;
-}
-
-Skill::LifeEffectReturn CommonFightEngine::applyOtherLifeEffect(const Skill::LifeEffect &effect)
-{
-    if(player_informations==NULL)
-    {
-        emit error(QString("player_informations is NULL"));
-        Skill::LifeEffectReturn effect_to_return;
-        effect_to_return.on=effect.on;
-        effect_to_return.quantity=0;
-        return effect_to_return;
-    }
-    PublicPlayerMonster *currentMonster=getCurrentMonster();
-    PublicPlayerMonster *otherMonster=getOtherMonster();
-    if(currentMonster==NULL || otherMonster==NULL)
-    {
-        emit error(QString("Unable to locate the monster to generate other attack"));
-        Skill::LifeEffectReturn effect_to_return;
-        effect_to_return.on=effect.on;
-        effect_to_return.quantity=0;
-        return effect_to_return;
-    }
-    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,otherMonster,currentMonster);
-    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
-        doTurnIfChangeOfMonster=false;
-    return lifeEffectReturn;
-}
-
 Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffect &effect,PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster)
 {
     qint32 quantity;
@@ -627,32 +516,6 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffe
     effect_to_return.on=effect.on;
     effect_to_return.quantity=quantity;
     return effect_to_return;
-}
-
-Skill::LifeEffectReturn CommonFightEngine::applyCurrentLifeEffect(const Skill::LifeEffect &effect)
-{
-    if(player_informations==NULL)
-    {
-        emit error(QString("player_informations is NULL"));
-        Skill::LifeEffectReturn effect_to_return;
-        effect_to_return.on=effect.on;
-        effect_to_return.quantity=0;
-        return effect_to_return;
-    }
-    PublicPlayerMonster *currentMonster=getCurrentMonster();
-    PublicPlayerMonster *otherMonster=getOtherMonster();
-    if(currentMonster==NULL || otherMonster==NULL)
-    {
-        emit error(QString("Unable to locate the monster to generate other attack"));
-        Skill::LifeEffectReturn effect_to_return;
-        effect_to_return.on=effect.on;
-        effect_to_return.quantity=0;
-        return effect_to_return;
-    }
-    Skill::LifeEffectReturn lifeEffectReturn=applyLifeEffect(effect,currentMonster,otherMonster);
-    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
-        doTurnIfChangeOfMonster=false;
-    return lifeEffectReturn;
 }
 
 int CommonFightEngine::addOtherBuffEffect(const Skill::BuffEffect &effect)
@@ -1248,91 +1111,6 @@ bool CommonFightEngine::buffIsValid(const Skill::BuffEffect &buffEffect)
     return true;
 }
 
-Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)
-{
-    /// \todo use the variable currentMonsterStat and otherMonsterStat to have better speed
-    Skill::AttackReturn attackReturn;
-    attackReturn.doByTheCurrentMonster=true;
-    attackReturn.attack=skill;
-    attackReturn.success=false;
-    const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[skill].level.at(skillLevel-1);
-    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-    emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
-    #endif
-    int index;
-    //do the skill
-    index=0;
-    while(index<skillList.life.size())
-    {
-
-        const Skill::Life &life=skillList.life.at(index);
-        bool success;
-        if(life.success==100)
-            success=true;
-        else
-            success=(getOneSeed(100)<life.success);
-        if(success)
-        {
-            attackReturn.success=true;//the attack have work because at less have a buff
-            Skill::LifeEffectReturn lifeEffectReturn;
-            lifeEffectReturn.on=life.effect.on;
-            lifeEffectReturn.quantity=applyCurrentLifeEffect(life.effect).quantity;
-            attackReturn.lifeEffectMonster << lifeEffectReturn;
-        }
-        index++;
-    }
-    //do the buff
-    index=0;
-    while(index<skillList.buff.size())
-    {
-        const Skill::Buff &buff=skillList.buff.at(index);
-        #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-        if(!buffIsValid(buff.effect))
-        {
-            emit error("Buff is not valid");
-            return tempReturnBuff;
-        }
-        #endif
-        bool success;
-        if(buff.success==100)
-            success=true;
-        else
-        {
-            success=(getOneSeed(100)<buff.success);
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(success)
-                emit message(QString("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
-            #endif
-        }
-        if(success)
-        {
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            if(success)
-                emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
-            #endif
-            if(addCurrentBuffEffect(buff.effect)>=-2)//0 to X, update buff, -1 added, -2 updated same buff at same level
-            {
-                attackReturn.success=true;//the attack have work because at less have a buff
-                attackReturn.addBuffEffectMonster << buff.effect;
-            }
-        }
-        index++;
-    }
-    //apply the buff
-    if(!currentMonsterIsKO())
-    {
-        PublicPlayerMonster *playerMonster=getCurrentMonster();
-        if(playerMonster!=NULL)
-        {
-            attackReturn.removeBuffEffectMonster << removeOldBuff(playerMonster);
-            attackReturn.lifeEffectMonster << buffLifeEffect(playerMonster);
-        }
-    }
-    if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
-        doTurnIfChangeOfMonster=false;
-    return attackReturn;
-}
-
 QList<Skill::BuffEffect> CommonFightEngine::removeOldBuff(PublicPlayerMonster * playerMonster)
 {
     QList<Skill::BuffEffect> returnValue;
@@ -1624,4 +1402,142 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
 
     /// no fight in this zone
     return false;
+}
+
+Skill::AttackReturn CommonFightEngine::generateOtherAttack()
+{
+    Skill::AttackReturn attackReturn;
+    attackReturn.attack=0;
+    attackReturn.doByTheCurrentMonster=false;
+    attackReturn.success=false;
+    PlayerMonster *otherMonster;
+    if(!wildMonsters.isEmpty())
+        otherMonster=&wildMonsters.first();
+    else if(!botFightMonsters.isEmpty())
+        otherMonster=&botFightMonsters.first();
+    else
+    {
+        emit error("no other monster found");
+        return attackReturn;
+    }
+    if(otherMonster->skills.empty())
+    {
+        if(CommonDatapack::commonDatapack.monsterSkills.contains(0))
+        {
+            emit message("Generated bot/wild default attack");
+            attackReturn=genericMonsterAttack(otherMonster,getCurrentMonster(),0,1);
+            attackReturn.doByTheCurrentMonster=false;
+            return attackReturn;
+        }
+        else
+        {
+            emit message("No other monster attack todo");
+            return attackReturn;
+        }
+    }
+    int position;
+    if(otherMonster->skills.size()==1)
+        position=0;
+    else
+        position=getOneSeed(otherMonster->skills.size());
+    const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster->skills.at(position);
+    emit message(QString("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
+                 .arg(otherMonsterSkill.skill)
+                 .arg(position)
+                 .arg(otherMonsterSkill.level)
+                 .arg(otherMonster->skills.size())
+                 );
+    attackReturn=genericMonsterAttack(otherMonster,getCurrentMonster(),otherMonsterSkill.skill,otherMonsterSkill.level);
+    attackReturn.doByTheCurrentMonster=false;
+    return attackReturn;
+}
+
+Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const quint32 &skill, const quint8 &skillLevel)
+{
+    Skill::AttackReturn attackReturn;
+    attackReturn.doByTheCurrentMonster=true;
+    attackReturn.attack=skill;
+    attackReturn.success=false;
+    const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[skill].level.at(skillLevel-1);
+    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+    emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
+    #endif
+    int index;
+    //do the skill
+    if(!genericMonsterIsKO(currentMonster))
+    {
+        index=0;
+        while(index<skillList.life.size())
+        {
+            const Skill::Life &life=skillList.life.at(index);
+            bool success;
+            if(life.success==100)
+                success=true;
+            else
+                success=(getOneSeed(100)<life.success);
+            if(success)
+            {
+                attackReturn.success=true;//the attack have work because at less have a buff
+                Skill::LifeEffectReturn lifeEffectReturn;
+                lifeEffectReturn.on=life.effect.on;
+                lifeEffectReturn.quantity=applyLifeEffect(life.effect,currentMonster,otherMonster).quantity;
+                attackReturn.lifeEffectMonster << lifeEffectReturn;
+            }
+            index++;
+        }
+    }
+    //do the buff
+    if(!genericMonsterIsKO(currentMonster))
+    {
+        index=0;
+        while(index<skillList.buff.size())
+        {
+            const Skill::Buff &buff=skillList.buff.at(index);
+            #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
+            if(!buffIsValid(buff.effect))
+            {
+                emit error("Buff is not valid");
+                return tempReturnBuff;
+            }
+            #endif
+            bool success;
+            if(buff.success==100)
+                success=true;
+            else
+            {
+                success=(getOneSeed(100)<buff.success);
+                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                if(success)
+                    emit message(QString("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+                #endif
+            }
+            if(success)
+            {
+                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                if(success)
+                    emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+                #endif
+                if(addBuffEffectFull(buff.effect,currentMonster,otherMonster)>=-2)//0 to X, update buff, -1 added, -2 updated same buff at same level
+                {
+                    attackReturn.success=true;//the attack have work because at less have a buff
+                    attackReturn.addBuffEffectMonster << buff.effect;
+                }
+            }
+            index++;
+        }
+    }
+    //apply the buff
+    if(!genericMonsterIsKO(currentMonster))
+    {
+        attackReturn.removeBuffEffectMonster << removeOldBuff(currentMonster);
+        attackReturn.lifeEffectMonster << buffLifeEffect(currentMonster);
+    }
+    if(genericMonsterIsKO(currentMonster) && !genericMonsterIsKO(otherMonster))
+        doTurnIfChangeOfMonster=false;
+    return attackReturn;
+}
+
+Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)
+{
+    return genericMonsterAttack(getCurrentMonster(),getOtherMonster(),skill,skillLevel);
 }

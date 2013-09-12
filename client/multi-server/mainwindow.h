@@ -20,6 +20,17 @@ namespace Ui {
     class MainWindow;
 }
 
+class ConnexionInfo
+{
+public:
+    QString host;
+    quint16 port;
+    QString name;
+    quint32 connexionCounter;
+    quint32 lastConnexion;
+    bool operator<(const ConnexionInfo &connexionInfo) const;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -43,14 +54,24 @@ private slots:
     void ListEntryEnvoluedClicked();
     void ListEntryEnvoluedDoubleClicked();
     void ListEntryEnvoluedUpdate();
+    void serverListEntryEnvoluedClicked();
+    void serverListEntryEnvoluedDoubleClicked();
+    void serverListEntryEnvoluedUpdate();
     void on_manageDatapack_clicked();
     QPair<QString,QString> getDatapackInformations(const QString &filePath);
     void on_backDatapack_clicked();
-
     void on_deleteDatapack_clicked();
-
+    void displayServerList();
+    void on_server_add_clicked();
+    void saveConnexionInfoList();
+    void on_server_select_clicked();
+    void on_server_remove_clicked();
+    void on_server_refresh_clicked();
+    void on_login_cancel_clicked();
 private:
+    QList<ConnexionInfo> connexionInfoList;
     QSpacerItem *spacer;
+    QSpacerItem *spacerServer;
     Ui::MainWindow *ui;
     void resetAll();
     QStringList chat_list_player_pseudo;
@@ -65,9 +86,11 @@ private:
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
     QSslSocket *realSocket;
-    QList<ListEntryEnvolued *> datapack;
+    QList<ListEntryEnvolued *> datapack,server;
     QHash<ListEntryEnvolued *,QString> datapackPathList;
+    QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
     ListEntryEnvolued * selectedDatapack;
+    ListEntryEnvolued * selectedServer;
 };
 
 #endif // MAINWINDOW_H
