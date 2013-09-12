@@ -9,13 +9,14 @@
 #include <QFileInfo>
 #include <QPointer>
 #include <QMessageBox>
+#include <QGLFormat>
+#include <QGLWidget>
 
 #include "../../general/base/MoveOnTheMap.h"
 
 MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     mScene(new QGraphicsScene(this))
 {
-    Q_UNUSED(OpenGL);
     qRegisterMetaType<MapVisualiserThread::Map_full *>("MapVisualiserThread::Map_full *");
 
     connect(this,&MapVisualiser::loadOtherMapAsync,&mapVisualiserThread,&MapVisualiserThread::loadOtherMapAsync,Qt::QueuedConnection);
@@ -50,7 +51,8 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
 /*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setDragMode(QGraphicsView::ScrollHandDrag);*/
     setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing
-                         | QGraphicsView::DontSavePainterState);
+                         | QGraphicsView::DontSavePainterState
+                         );
     setBackgroundBrush(Qt::black);
     setFrameStyle(0);
 
@@ -58,7 +60,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     viewport()->setAttribute(Qt::WA_TranslucentBackground);
     viewport()->setAttribute(Qt::WA_NoSystemBackground);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
-/*    if(OpenGL)
+    if(OpenGL)
     {
         QGLFormat format(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
         //setSampleBuffers
@@ -70,7 +72,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
             QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers: create widget");
         else
             setViewport(widgetOpenGL);
-    }*/
+    }
 
     tagTilesetIndex=0;
     tagTileset = new Tiled::Tileset("tags",16,16);
@@ -98,11 +100,12 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
 MapVisualiser::~MapVisualiser()
 {
     //remove the not used map
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+    /// \todo re-enable this
+    /*QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
         destroyMap(*i);
         i = all_map.constBegin();//needed
-    }
+    }*/
 
     //delete mapItem;
     //delete playerMapObject;
