@@ -16,11 +16,6 @@ CREATE TABLE reputation (
     "type" TEXT,
     "point" INTEGER
 , "level" INTEGER);
-CREATE TABLE "monster_skill" (
-    "monster" INTEGER,
-    "skill" INTEGER,
-    "level" INTEGER
-);
 CREATE TABLE "monster_buff" (
     "monster" INTEGER,
     "buff" INTEGER,
@@ -106,12 +101,16 @@ CREATE TABLE clan (
     "name" TEXT,
     "cash" INTEGER
 , "date" INTEGER);
+CREATE TABLE monster_skill (
+    "monster" INTEGER,
+    "skill" INTEGER,
+    "level" INTEGER
+, "endurance" INTEGER);
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
 CREATE INDEX "player_recipe_list" on recipes (player ASC);
 CREATE UNIQUE INDEX "reputation_index" on reputation (player ASC, type ASC);
 CREATE UNIQUE INDEX "monster_buff_2" on monster_buff (monster ASC, buff ASC);
-CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
 CREATE UNIQUE INDEX "player_unique_quest" on quest (player ASC, quest ASC);
 CREATE INDEX "player_quest" on quest (player ASC);
 CREATE UNIQUE INDEX "bot_already_beaten_index" on bot_already_beaten (player_id ASC, botfight_id ASC);
@@ -130,4 +129,5 @@ CREATE INDEX "byclan" on player (clan ASC);
 CREATE UNIQUE INDEX "player_unique_login" on player (login ASC);
 CREATE UNIQUE INDEX "player_unique_pseudo" on player (pseudo ASC);
 CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
+CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
 COMMIT;

@@ -1,6 +1,6 @@
 LIBS += -lvorbis -lvorbisfile -ltiled
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT       += script multimedia
+QT       += script multimedia opengl
 
 win32:CONFIG   += console
 

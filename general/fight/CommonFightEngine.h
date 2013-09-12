@@ -35,7 +35,10 @@ public:
     virtual bool haveAnotherMonsterOnThePlayerToFight() const;
     virtual bool haveAnotherEnnemyMonsterToFight() const;
     bool otherMonsterIsKO() const;
+    bool genericMonsterIsKO(const PublicPlayerMonster * publicPlayerMonster) const;
     bool currentMonsterIsKO() const;
+    int addOtherBuffEffect(const Skill::BuffEffect &effect);
+    int addCurrentBuffEffect(const Skill::BuffEffect &effect);
     virtual bool dropKOCurrentMonster();
     virtual bool dropKOOtherMonster();
     virtual void healAllMonsters();
@@ -62,7 +65,6 @@ public:
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     virtual bool tryCapture(const quint32 &item);
-    virtual int addCurrentBuffEffect(const Skill::BuffEffect &effect);
     virtual bool changeOfMonsterInFight(const quint32 &monsterId);
     int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     void removeBuffEffectFull(const Skill::BuffEffect &effect);
@@ -72,9 +74,6 @@ protected:
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
     static bool monsterIsKO(const PlayerMonster &playerMonter);
-    Skill::LifeEffectReturn applyOtherLifeEffect(const Skill::LifeEffect &effect);
-    int addOtherBuffEffect(const Skill::BuffEffect &effect);
-    Skill::LifeEffectReturn applyCurrentLifeEffect(const Skill::LifeEffect &effect);
     Skill::LifeEffectReturn applyLifeEffect(const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
     virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
@@ -84,6 +83,7 @@ protected:
     virtual bool checkKOOtherMonstersForGain();
     virtual bool giveXPSP(int xp,int sp);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
+    Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const quint32 &skill, const quint8 &skillLevel);
     virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
     virtual void startTheFight();
 signals:
