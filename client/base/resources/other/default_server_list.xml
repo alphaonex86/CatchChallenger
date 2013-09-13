@@ -1,0 +1,10 @@
+<servers>
+	<server host="catchchallenger.first-world.info" port="42489" unique_code="Jt8uCOrMCCbUG3s4aAVxhb8dSlCmbY1y7ZY1y8SzkypXvE0ewEiyh2Qkvhu5YjgL">
+		<lang lang="en">
+			<name>Official CatchChallenger server</name>
+			<register_page>http://catchchallenger.first-world.info/register.html</register_page>
+			<lost_passwd_page>http://catchchallenger.first-world.info/lost_password.html</lost_passwd_page>
+			<site_page>http://catchchallenger.first-world.info/</site_page>
+		</lang>
+	</server>
+</servers>

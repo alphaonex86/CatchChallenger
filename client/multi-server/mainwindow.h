@@ -7,6 +7,8 @@
 #include <QSslSocket>
 #include <QSettings>
 #include <QTimer>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -28,6 +30,10 @@ public:
     QString name;
     quint32 connexionCounter;
     quint32 lastConnexion;
+    QString register_page;
+    QString lost_passwd_page;
+    QString site_page;
+    QString unique_code;
     bool operator<(const ConnexionInfo &connexionInfo) const;
 };
 
@@ -68,8 +74,15 @@ private slots:
     void on_server_remove_clicked();
     void on_server_refresh_clicked();
     void on_login_cancel_clicked();
+    QList<ConnexionInfo> loadXmlConnexionInfoList();
+    QList<ConnexionInfo> loadXmlConnexionInfoList(const QByteArray &xmlContent);
+    QList<ConnexionInfo> loadXmlConnexionInfoList(const QString &file);
+    QList<ConnexionInfo> loadConfigConnexionInfoList();
+    void downloadFile();
+    void metaDataChanged();
+    void httpFinished();
 private:
-    QList<ConnexionInfo> connexionInfoList;
+    QList<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
     Ui::MainWindow *ui;
@@ -89,8 +102,11 @@ private:
     QList<ListEntryEnvolued *> datapack,server;
     QHash<ListEntryEnvolued *,QString> datapackPathList;
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
+    QSet<ListEntryEnvolued *> customServerConnexion;
     ListEntryEnvolued * selectedDatapack;
     ListEntryEnvolued * selectedServer;
+    QNetworkAccessManager qnam;
+    QNetworkReply *reply;
 };
 
 #endif // MAINWINDOW_H
