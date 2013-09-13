@@ -1,6 +1,13 @@
 #include "mainwindow.h"
 #include "AddServer.h"
 #include "ui_mainwindow.h"
+#include <QStandardPaths>
+
+#ifdef Q_CC_GNU
+//this next header is needed to change file time/date under gcc
+#include <utime.h>
+#include <sys/stat.h>
+#endif
 
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
@@ -13,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
 
+    reply=NULL;
     realSocket=new QSslSocket();
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
@@ -23,69 +31,14 @@ MainWindow::MainWindow(QWidget *parent) :
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
-    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
-    {
-        QStringList connexionList;
-        QStringList nameList;
-        QStringList connexionCounterList;
-        QStringList lastConnexionList;
-        if(settings.contains("connexionList"))
-            connexionList=settings.value("connexionList").toStringList();
-        if(settings.contains("nameList"))
-            nameList=settings.value("nameList").toStringList();
-        if(settings.contains("connexionCounterList"))
-            connexionCounterList=settings.value("connexionCounterList").toStringList();
-        if(settings.contains("lastConnexionList"))
-            lastConnexionList=settings.value("lastConnexionList").toStringList();
-        if(nameList.size()!=connexionList.size())
-            nameList.clear();
-        if(connexionCounterList.size()!=connexionList.size())
-            connexionCounterList.clear();
-        if(lastConnexionList.size()!=connexionList.size())
-            lastConnexionList.clear();
-        while(nameList.size()<connexionList.size())
-            nameList << QString();
-        while(connexionCounterList.size()<connexionList.size())
-            connexionCounterList << QString();
-        while(lastConnexionList.size()<connexionList.size())
-            lastConnexionList << QString();
-        int index=0;
-        while(index<connexionList.size())
-        {
-            QString connexion=connexionList.at(index);
-            QString name=nameList.at(index);
-            QString connexionCounter=connexionCounterList.at(index);
-            QString lastConnexion=lastConnexionList.at(index);
-            if(connexion.contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
-            {
-                QString host=connexion;
-                host.remove(QRegularExpression(":[0-9]{1,5}$"));
-                QString port_string=connexion;
-                port_string.remove(QRegularExpression("^.*:"));
-                bool ok;
-                quint16 port=port_string.toInt(&ok);
-                if(ok)
-                {
-                    ConnexionInfo connexionInfo;
-                    connexionInfo.host=host;
-                    connexionInfo.port=port;
-                    connexionInfo.name=name;
-                    connexionInfo.connexionCounter=connexionCounter.toUInt(&ok);
-                    if(!ok)
-                        connexionInfo.connexionCounter=0;
-                    connexionInfo.lastConnexion=lastConnexion.toUInt(&ok);
-                    if(!ok)
-                        connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
-                    if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
-                        connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
-                    connexionInfoList << connexionInfo;
-                }
-            }
-            index++;
-        }
-        displayServerList();
-    }
     ui->warning->setVisible(false);
+    ui->server_refresh->setEnabled(true);
+    temp_xmlConnexionInfoList=loadXmlConnexionInfoList();
+    temp_customConnexionInfoList=loadConfigConnexionInfoList();
+    mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
+    qSort(mergedConnexionInfoList);
+    displayServerList();
+    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
@@ -103,6 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
     stateChanged(QAbstractSocket::UnconnectedState);
 
     setWindowTitle("CatchChallenger");
+    downloadFile();
 }
 
 MainWindow::~MainWindow()
@@ -114,16 +68,210 @@ MainWindow::~MainWindow()
     delete socket;
 }
 
+QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
+{
+    QList<ConnexionInfo> returnedVar;
+    QStringList connexionList;
+    QStringList nameList;
+    QStringList connexionCounterList;
+    QStringList lastConnexionList;
+    if(settings.contains("connexionList"))
+        connexionList=settings.value("connexionList").toStringList();
+    if(settings.contains("nameList"))
+        nameList=settings.value("nameList").toStringList();
+    if(settings.contains("connexionCounterList"))
+        connexionCounterList=settings.value("connexionCounterList").toStringList();
+    if(settings.contains("lastConnexionList"))
+        lastConnexionList=settings.value("lastConnexionList").toStringList();
+    if(nameList.size()!=connexionList.size())
+        nameList.clear();
+    if(connexionCounterList.size()!=connexionList.size())
+        connexionCounterList.clear();
+    if(lastConnexionList.size()!=connexionList.size())
+        lastConnexionList.clear();
+    while(nameList.size()<connexionList.size())
+        nameList << QString();
+    while(connexionCounterList.size()<connexionList.size())
+        connexionCounterList << QString();
+    while(lastConnexionList.size()<connexionList.size())
+        lastConnexionList << QString();
+    int index=0;
+    while(index<connexionList.size())
+    {
+        QString connexion=connexionList.at(index);
+        QString name=nameList.at(index);
+        QString connexionCounter=connexionCounterList.at(index);
+        QString lastConnexion=lastConnexionList.at(index);
+        if(connexion.contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
+        {
+            QString host=connexion;
+            host.remove(QRegularExpression(":[0-9]{1,5}$"));
+            QString port_string=connexion;
+            port_string.remove(QRegularExpression("^.*:"));
+            bool ok;
+            quint16 port=port_string.toInt(&ok);
+            if(ok)
+            {
+                ConnexionInfo connexionInfo;
+                connexionInfo.host=host;
+                connexionInfo.port=port;
+                connexionInfo.name=name;
+                connexionInfo.connexionCounter=connexionCounter.toUInt(&ok);
+                if(!ok)
+                    connexionInfo.connexionCounter=0;
+                connexionInfo.lastConnexion=lastConnexion.toUInt(&ok);
+                if(!ok)
+                    connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
+                    connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                returnedVar << connexionInfo;
+            }
+        }
+        index++;
+    }
+    return returnedVar;
+}
+
+QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
+{
+    if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).isDir())
+    {
+        if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/server_list.xml").isFile())
+            return loadXmlConnexionInfoList(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/server_list.xml");
+        else
+            return loadXmlConnexionInfoList(QString(":/other/default_server_list.xml"));
+    }
+    else
+        return loadXmlConnexionInfoList(QString(":/other/default_server_list.xml"));
+}
+
+QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlContent)
+{
+    QList<ConnexionInfo> returnedVar;
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg("server_list.xml").arg(errorLine).arg(errorColumn).arg(errorStr);
+        return returnedVar;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="servers")
+    {
+        qDebug() << QString("Unable to open the file: %1, \"servers\" root balise not found for the xml file").arg("server_list.xml");
+        return returnedVar;
+    }
+
+    bool ok;
+    //load the content
+    QDomElement server = root.firstChildElement("server");
+    while(!server.isNull())
+    {
+        if(server.isElement())
+        {
+            if(server.hasAttribute("host") && server.hasAttribute("port") && server.hasAttribute("unique_code"))
+            {
+                ConnexionInfo connexionInfo;
+                connexionInfo.host=server.attribute("host");
+                connexionInfo.unique_code=server.attribute("unique_code");
+                quint32 temp_port=server.attribute("port").toUInt(&ok);
+                if(!connexionInfo.host.contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+$")))
+                    qDebug() << QString("Unable to open the file: %1, host is wrong: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(connexionInfo.host);
+                else if(!ok)
+                    qDebug() << QString("Unable to open the file: %1, port is not a number: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(server.attribute("port"));
+                else if(temp_port<1 || temp_port>65535)
+                    qDebug() << QString("Unable to open the file: %1, port is not in range: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(server.attribute("port"));
+                else if(connexionInfo.unique_code.isEmpty())
+                    qDebug() << QString("Unable to open the file: %1, unique_code can't be empty: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(server.attribute("port"));
+                else
+                {
+                    connexionInfo.port=temp_port;
+                    QDomElement lang = server.firstChildElement("lang");
+                    while(!lang.isNull())
+                    {
+                        if(lang.isElement())
+                        {
+                            if(!lang.hasAttribute("lang") || lang.attribute("lang")=="en")
+                            {
+                                QDomElement name = lang.firstChildElement("name");
+                                if(!name.isNull())
+                                    connexionInfo.name=name.text();
+                                QDomElement register_page = lang.firstChildElement("register_page");
+                                if(!register_page.isNull())
+                                    connexionInfo.register_page=register_page.text();
+                                QDomElement lost_passwd_page = lang.firstChildElement("lost_passwd_page");
+                                if(!lost_passwd_page.isNull())
+                                    connexionInfo.lost_passwd_page=lost_passwd_page.text();
+                                QDomElement site_page = lang.firstChildElement("site_page");
+                                if(!site_page.isNull())
+                                    connexionInfo.site_page=site_page.text();
+                                break;
+                            }
+                        }
+                        else
+                            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
+                        lang = lang.nextSiblingElement("lang");
+                    }
+                    settings.beginGroup(QString("Xml-%1").arg(server.attribute("unique_code")));
+                    if(settings.contains("connexionCounter"))
+                    {
+                        connexionInfo.connexionCounter=settings.value("connexionCounter").toUInt(&ok);
+                        if(!ok)
+                            connexionInfo.connexionCounter=0;
+                    }
+                    else
+                        connexionInfo.connexionCounter=0;
+                    if(settings.contains("lastConnexion"))
+                    {
+                        connexionInfo.lastConnexion=settings.value("lastConnexion").toUInt(&ok);
+                        if(!ok)
+                            connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                    }
+                    else
+                        connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                    settings.endGroup();
+                    if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
+                        connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                    returnedVar << connexionInfo;
+                }
+            }
+            else
+                qDebug() << QString("Unable to open the file: %1, missing host or port: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber());
+        }
+        else
+            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber());
+        server = server.nextSiblingElement("server");
+    }
+    return returnedVar;
+}
+
+QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QString &file)
+{
+    QList<ConnexionInfo> returnedVar;
+    //open and quick check the file
+    QFile itemsFile(file);
+    QByteArray xmlContent;
+    if(!itemsFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        return returnedVar;
+    }
+    xmlContent=itemsFile.readAll();
+    itemsFile.close();
+    return loadXmlConnexionInfoList(xmlContent);
+}
+
 bool ConnexionInfo::operator<(const ConnexionInfo &connexionInfo) const
 {
     if(connexionCounter<connexionInfo.connexionCounter)
-        return true;
+        return false;
     if(connexionCounter>connexionInfo.connexionCounter)
-        return false;
-    if(lastConnexion<connexionInfo.lastConnexion)
         return true;
-    if(lastConnexion>connexionInfo.lastConnexion)
+    if(lastConnexion<connexionInfo.lastConnexion)
         return false;
+    if(lastConnexion>connexionInfo.lastConnexion)
+        return true;
     return true;
 }
 
@@ -138,16 +286,15 @@ void MainWindow::displayServerList()
         index++;
     }
     serverConnexion.clear();
-    qSort(connexionInfoList);
-    index=0;
-    if(connexionInfoList.isEmpty())
+    if(mergedConnexionInfoList.isEmpty())
         ui->serverEmpty->setText(QString("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
-    while(index<connexionInfoList.size())
+    index=0;
+    while(index<mergedConnexionInfoList.size())
     {
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
         connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::serverListEntryEnvoluedClicked,Qt::QueuedConnection);
         connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::serverListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
-        const ConnexionInfo &connexionInfo=connexionInfoList.at(index);
+        const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
         QString name;
         QString star;
         if(connexionInfo.connexionCounter>0)
@@ -155,27 +302,30 @@ void MainWindow::displayServerList()
         QString lastConnexion;
         if(connexionInfo.connexionCounter>0)
             lastConnexion=tr("Last connexion: %1").arg(QDateTime::fromMSecsSinceEpoch((quint64)connexionInfo.lastConnexion*1000).toString());
+        QString custom;
+        if(connexionInfo.unique_code.isEmpty())
+            custom=QString(" (%1)").arg(tr("Custom"));
         if(connexionInfo.name.isEmpty())
         {
             name=QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
-            newEntry->setText(QString("%3<span style=\"font-size:12pt;font-weight:600;\">%1:%2</span><br/><span style=\"color:#909090;\">%2:%3 (%6)</span>")
+            newEntry->setText(QString("%3<span style=\"font-size:12pt;font-weight:600;\">%1:%2</span><br/><span style=\"color:#909090;\">%2:%3%6</span>")
                               .arg(connexionInfo.host)
                               .arg(connexionInfo.port)
                               .arg(star)
                               .arg(lastConnexion)
-                              .arg(tr("Custom"))
+                              .arg(custom)
                               );
         }
         else
         {
             name=connexionInfo.name;
-            newEntry->setText(QString("%4<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2:%3 %5 (%6)</span>")
+            newEntry->setText(QString("%4<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2:%3 %5%6</span>")
                               .arg(connexionInfo.name)
                               .arg(connexionInfo.host)
                               .arg(connexionInfo.port)
                               .arg(star)
                               .arg(lastConnexion)
-                              .arg(tr("Custom"))
+                              .arg(custom)
                               );
         }
         newEntry->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
@@ -183,7 +333,9 @@ void MainWindow::displayServerList()
         ui->scrollAreaWidgetContentsServer->layout()->addWidget(newEntry);
 
         server << newEntry;
-        serverConnexion[newEntry]=&connexionInfoList[index];
+        serverConnexion[newEntry]=&mergedConnexionInfoList[index];
+        if(connexionInfo.unique_code.isEmpty())
+            customServerConnexion << newEntry;
         index++;
     }
     ui->serverEmpty->setVisible(index==0);
@@ -218,7 +370,7 @@ void MainWindow::serverListEntryEnvoluedUpdate()
         index++;
     }
     ui->server_select->setEnabled(selectedServer!=NULL);
-    ui->server_remove->setEnabled(selectedServer!=NULL);
+    ui->server_remove->setEnabled(selectedServer!=NULL && customServerConnexion.contains(selectedServer));
 }
 
 void MainWindow::on_server_add_clicked()
@@ -238,15 +390,23 @@ void MainWindow::on_server_add_clicked()
     connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
     connexionInfo.name=addServer.name();
     connexionInfo.port=addServer.port();
-    connexionInfoList << connexionInfo;
+    mergedConnexionInfoList << connexionInfo;
     saveConnexionInfoList();
     displayServerList();
 }
 
 void MainWindow::on_server_select_clicked()
 {
+    if(!serverConnexion.contains(selectedServer))
+    {
+        QMessageBox::warning(this,tr("Internal error"),tr("Internal error: Can't select this server"));
+        return;
+    }
     ui->stackedWidget->setCurrentWidget(ui->login);
-    settings.beginGroup(QString("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+    if(customServerConnexion.contains(selectedServer))
+        settings.beginGroup(QString("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+    else
+        settings.beginGroup(QString("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
     if(settings.contains("login"))
         ui->lineEditLogin->setText(settings.value("login").toString());
     else
@@ -266,10 +426,22 @@ void MainWindow::on_login_cancel_clicked()
 
 void MainWindow::on_server_remove_clicked()
 {
-}
-
-void MainWindow::on_server_refresh_clicked()
-{
+    if(selectedServer==NULL)
+        return;
+    if(!customServerConnexion.contains(selectedServer))
+        return;
+    int index=0;
+    while(index<mergedConnexionInfoList.size())
+    {
+        if(serverConnexion[selectedServer]==&mergedConnexionInfoList.at(index))
+        {
+            mergedConnexionInfoList.removeAt(index);
+            saveConnexionInfoList();
+            displayServerList();
+            break;
+        }
+        index++;
+    }
 }
 
 void MainWindow::saveConnexionInfoList()
@@ -278,14 +450,31 @@ void MainWindow::saveConnexionInfoList()
     QStringList nameList;
     QStringList connexionCounterList;
     QStringList lastConnexionList;
-    int index=0;
-    while(index<connexionInfoList.size())
+    int index;
+    index=0;
+    while(index<mergedConnexionInfoList.size())
     {
-        const ConnexionInfo &connexionInfo=connexionInfoList.at(index);
-        connexionList << QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
-        nameList << connexionInfo.name;
-        connexionCounterList << QString::number(connexionInfo.connexionCounter);
-        lastConnexionList << QString::number(connexionInfo.lastConnexion);
+        const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
+        if(connexionInfo.unique_code.isEmpty())
+        {
+            connexionList << QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
+            nameList << connexionInfo.name;
+            connexionCounterList << QString::number(connexionInfo.connexionCounter);
+            lastConnexionList << QString::number(connexionInfo.lastConnexion);
+        }
+        else
+        {
+            settings.beginGroup(QString("Xml-%1").arg(connexionInfo.unique_code));
+            if(connexionInfo.connexionCounter>0)
+                settings.setValue("connexionCounter",connexionInfo.connexionCounter);
+            else
+                settings.remove("connexionCounter");
+            if(connexionInfo.lastConnexion>0 && connexionInfo.connexionCounter>0)
+                settings.setValue("lastConnexion",connexionInfo.lastConnexion);
+            else
+                settings.remove("lastConnexion");
+            settings.endGroup();
+        }
         index++;
     }
     settings.setValue("connexionList",connexionList);
@@ -364,7 +553,10 @@ void MainWindow::on_lineEditPass_returnPressed()
 
 void MainWindow::on_pushButtonTryLogin_clicked()
 {
-    settings.beginGroup(QString("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+    if(customServerConnexion.contains(selectedServer))
+        settings.beginGroup(QString("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+    else
+        settings.beginGroup(QString("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
     settings.setValue("login",ui->lineEditLogin->text());
     if(ui->checkBoxRememberPassword->isChecked())
         settings.setValue("pass",ui->lineEditPass->text());
@@ -630,4 +822,97 @@ void MainWindow::on_deleteDatapack_clicked()
     if(!CatchChallenger::FacilityLib::rmpath(datapackPathList[selectedDatapack]))
         QMessageBox::warning(this,tr("Error"),tr("Remove the datapack path is not completed. Try after restarting the application"));
     on_manageDatapack_clicked();
+}
+
+void MainWindow::downloadFile()
+{
+    QNetworkRequest networkRequest(QString(CATCHCHALLENGER_SERVER_LIST_URL));
+    networkRequest.setHeader(QNetworkRequest::UserAgentHeader,QString("CatchChallenger Multi server %1").arg(CATCHCHALLENGER_VERSION));
+    reply = qnam.get(networkRequest);
+    connect(reply, &QNetworkReply::finished, this, &MainWindow::httpFinished);
+    connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged);
+    ui->warning->setVisible(true);
+    ui->warning->setText(tr("Loading the server list..."));
+    ui->server_refresh->setEnabled(false);
+}
+
+void MainWindow::on_server_refresh_clicked()
+{
+    if(reply!=NULL)
+    {
+        reply->abort();
+        reply->deleteLater();
+        reply=NULL;
+    }
+    downloadFile();
+}
+
+void MainWindow::metaDataChanged()
+{
+    if(!QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/server_list.xml").isFile())
+        return;
+    QVariant val=reply->header(QNetworkRequest::LastModifiedHeader);
+    if(!val.isValid())
+        return;
+    if(val.toDateTime()==QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/server_list.xml").lastModified())
+    {
+        reply->abort();
+        reply->deleteLater();
+        ui->warning->setVisible(false);
+        ui->server_refresh->setEnabled(true);
+        reply=NULL;
+        return;
+    }
+}
+
+void MainWindow::httpFinished()
+{
+    ui->server_refresh->setEnabled(true);
+    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (reply->error())
+    {
+        ui->warning->setText(tr("Get server list failed: %1").arg(reply->errorString()));
+        reply->deleteLater();
+        reply=NULL;
+        return;
+    } else if (!redirectionTarget.isNull()) {
+        ui->warning->setText(tr("Get server list redirection denied to: %1").arg(reply->errorString()));
+        reply->deleteLater();
+        reply=NULL;
+        return;
+    }
+    ui->warning->setVisible(false);
+    QByteArray content=reply->readAll();
+    QFile cache(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/server_list.xml");
+    if(cache.open(QIODevice::ReadWrite))
+    {
+        cache.write(content);
+        QVariant val=reply->header(QNetworkRequest::LastModifiedHeader);
+        if(val.isValid())
+        {
+            #ifdef Q_CC_GNU
+                //this function avalaible on unix and mingw
+                utimbuf butime;
+                butime.actime=val.toDateTime().toTime_t();
+                butime.modtime=val.toDateTime().toTime_t();
+                int returnVal=utime(cache.fileName().toLocal8Bit().data(),&butime);
+                if(returnVal==0)
+                    return;
+                else
+                {
+                    qDebug() << QString("Can't set time: %1").arg(cache.fileName());
+                    return;
+                }
+            #else
+                #error "Not supported on this platform"
+            #endif
+        }
+        cache.close();
+    }
+    temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
+    mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
+    qSort(mergedConnexionInfoList);
+    displayServerList();
+    reply->deleteLater();
+    reply=NULL;
 }
