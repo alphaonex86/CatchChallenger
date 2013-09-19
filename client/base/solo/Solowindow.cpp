@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "Solowindow.h"
+#include "ui_solowindow.h"
 #include "NewGame.h"
 
 #include <QSettings>
@@ -12,195 +12,59 @@
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/CommonDatapack.h"
 
-MainWindow::MainWindow(QWidget *parent) :
+SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString &savegamePath,const bool &standAlone) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::SoloWindow)
 {
-    qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
-    qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
-    qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
-    qRegisterMetaType<CatchChallenger::Player_type>("QAbstractSocket::SocketState");
-    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
-    qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
-    qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
-
-    socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
+    /*socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket);
-    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();*/
+    this->standAlone=standAlone;
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
-    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     selectedSavegame=NULL;
-    internalServer=NULL;
+/*    internalServer=NULL;
     haveLaunchedGame=false;
-    timeLaunched=0;
-    datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
-    savegamePath=QCoreApplication::applicationDirPath()+"/savegames/";
+    timeLaunched=0;*/
+    this->datapackPath=datapackPath;//QCoreApplication::applicationDirPath()+"/datapack/";
+    this->savegamePath=savegamePath;//QCoreApplication::applicationDirPath()+"/savegames/";
     MapController::mapController->setDatapackPath(datapackPath);
     datapackPathExists=QDir(datapackPath).exists();
 
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,this,&MainWindow::disconnected,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&MainWindow::message,Qt::QueuedConnection);
-    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
-    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&MainWindow::stateChanged,Qt::QueuedConnection);
-    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::stateChanged,Qt::QueuedConnection);
+    /*connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&SoloWindow::protocol_is_good,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,this,&SoloWindow::disconnected,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&SoloWindow::message,Qt::QueuedConnection);
+    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&SoloWindow::error,Qt::QueuedConnection);
+    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&SoloWindow::stateChanged,Qt::QueuedConnection);
+    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::stateChanged,Qt::QueuedConnection);*/
 
-    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
-    CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
+    //CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
 
-    stateChanged(QAbstractSocket::UnconnectedState);
-
-    /*    ui->stackedWidget->setCurrentIndex(1);
-    client->tryConnect(host,port);*/
     updateSavegameList();
 
-    setWindowTitle("CatchChallenger - "+tr("Single player"));
+    if(!standAlone)
+        delete ui->horizontalSpacer_Back;
+    ui->SaveGame_Back->setVisible(!standAlone);
     ui->SaveGame_New->setEnabled(datapackPathExists);
 
     newProfile=NULL;
 }
 
-MainWindow::~MainWindow()
+SoloWindow::~SoloWindow()
 {
-    saveTime();
-    socket->disconnectFromHost();
-    if(internalServer!=NULL)
-        delete internalServer;
-    if(newProfile!=NULL)
-        delete newProfile;
-    internalServer=NULL;
-    delete CatchChallenger::Api_client_real::client;
-    delete CatchChallenger::BaseWindow::baseWindow;
-    delete ui;
-    socket->deleteLater();
+    //delete ui;
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void SoloWindow::on_SaveGame_New_clicked()
 {
-    qDebug() << "close event";
-    event->ignore();
-    this->hide();
-    socket->disconnectFromHost();
-    if(internalServer==NULL)
-        QCoreApplication::quit();
-    else
-        qDebug() << "server is running, need wait to close";
-}
-
-void MainWindow::resetAll()
-{
-    if(internalServer!=NULL)
-        internalServer->stop();
-    CatchChallenger::Api_client_real::client->resetAll();
-    CatchChallenger::BaseWindow::baseWindow->resetAll();
-    ui->stackedWidget->setCurrentIndex(0);
-    lastMessageSend="";
-/*    if(internalServer!=NULL)
-        internalServer->deleteLater();
-    internalServer=NULL;*/
-    pass.clear();
-    //saveTime();//not here because called at start!
-
-    //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
-}
-
-void MainWindow::disconnected(QString)
-{
-    resetAll();
-}
-
-void MainWindow::changeEvent(QEvent *e)
-{
-    QMainWindow::changeEvent(e);
-    switch (e->type()) {
-    case QEvent::LanguageChange:
-        ui->retranslateUi(this);
-    break;
-    default:
-    break;
-    }
-}
-
-void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
-{
-    if(socketState==QAbstractSocket::UnconnectedState)
-        resetAll();
-    CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
-}
-
-void MainWindow::error(QAbstractSocket::SocketError socketError)
-{
-    resetAll();
-    switch(socketError)
-    {
-    case QAbstractSocket::RemoteHostClosedError:
-        QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server"));
-    break;
-    case QAbstractSocket::ConnectionRefusedError:
-        QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server"));
-    break;
-    case QAbstractSocket::SocketTimeoutError:
-        QMessageBox::information(this,tr("Connection closed"),tr("Socket time out, server too long"));
-    break;
-    case QAbstractSocket::HostNotFoundError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The host address was not found."));
-    break;
-    case QAbstractSocket::SocketAccessError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The socket operation failed because the application lacked the required privileges."));
-    break;
-    case QAbstractSocket::SocketResourceError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The local system ran out of resources"));
-    break;
-    case QAbstractSocket::NetworkError:
-        QMessageBox::information(this,tr("Connection closed"),tr("An error occurred with the network"));
-    break;
-    case QAbstractSocket::UnsupportedSocketOperationError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)"));
-    break;
-    case QAbstractSocket::SslHandshakeFailedError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The SSL/TLS handshake failed, so the connection was closed"));
-    break;
-    default:
-        QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError));
-    }
-}
-
-void MainWindow::haveNewError()
-{
-//	QMessageBox::critical(this,tr("Error"),client->errorString());
-}
-
-void MainWindow::message(QString message)
-{
-    qDebug() << message;
-}
-
-void MainWindow::protocol_is_good()
-{
-    CatchChallenger::Api_client_real::client->tryLogin("admin",pass);
-}
-
-void MainWindow::try_stop_server()
-{
-    if(internalServer!=NULL)
-        delete internalServer;
-    internalServer=NULL;
-    saveTime();
-}
-
-
-void MainWindow::on_SaveGame_New_clicked()
-{
-    resetAll();
     //load the information
     if(newProfile!=NULL)
         delete newProfile;
     newProfile=new NewProfile(datapackPath,this);
-    connect(newProfile,&NewProfile::finished,this,&MainWindow::NewProfile_finished);
+    connect(newProfile,&NewProfile::finished,this,&SoloWindow::NewProfile_finished);
 }
 
-void MainWindow::NewProfile_finished()
+void SoloWindow::NewProfile_finished()
 {
     if(newProfile->profileListSize()>1)
         if(!newProfile->ok)
@@ -487,10 +351,10 @@ void MainWindow::NewProfile_finished()
 
     updateSavegameList();
 
-    play(savegamesPath);
+    emit play(savegamesPath);
 }
 
-void MainWindow::closeDb(QSqlDatabase *db)
+void SoloWindow::closeDb(QSqlDatabase *db)
 {
     db->commit();
     db->close();
@@ -499,7 +363,7 @@ void MainWindow::closeDb(QSqlDatabase *db)
     QSqlDatabase::removeDatabase(connectionName);
 }
 
-void MainWindow::ListEntryEnvoluedClicked()
+void SoloWindow::ListEntryEnvoluedClicked()
 {
     ListEntryEnvolued * selectedSavegame=qobject_cast<ListEntryEnvolued *>(QObject::sender());
     if(selectedSavegame==NULL)
@@ -508,13 +372,13 @@ void MainWindow::ListEntryEnvoluedClicked()
     ListEntryEnvoluedUpdate();
 }
 
-void MainWindow::ListEntryEnvoluedDoubleClicked()
+void SoloWindow::ListEntryEnvoluedDoubleClicked()
 {
     ListEntryEnvoluedClicked();
     on_SaveGame_Play_clicked();
 }
 
-void MainWindow::ListEntryEnvoluedUpdate()
+void SoloWindow::ListEntryEnvoluedUpdate()
 {
     int index=0;
     while(index<savegame.size())
@@ -531,7 +395,7 @@ void MainWindow::ListEntryEnvoluedUpdate()
     ui->SaveGame_Delete->setEnabled(selectedSavegame!=NULL);
 }
 
-bool MainWindow::rmpath(const QDir &dir)
+bool SoloWindow::rmpath(const QDir &dir)
 {
     if(!dir.exists())
         return true;
@@ -565,7 +429,7 @@ bool MainWindow::rmpath(const QDir &dir)
     return true;
 }
 
-void MainWindow::updateSavegameList()
+void SoloWindow::updateSavegameList()
 {
     if(!datapackPathExists)
     {
@@ -599,8 +463,8 @@ void MainWindow::updateSavegameList()
         QString savegamesPath=fileInfo.absoluteFilePath()+"/";
         QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
-        connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::ListEntryEnvoluedClicked,Qt::QueuedConnection);
-        connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::ListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
+        connect(newEntry,&ListEntryEnvolued::clicked,this,&SoloWindow::ListEntryEnvoluedClicked,Qt::QueuedConnection);
+        connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&SoloWindow::ListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
         newEntry->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
         QString dateString;
         if(!QFileInfo(savegamesPath+"metadata.conf").exists())
@@ -686,7 +550,7 @@ void MainWindow::updateSavegameList()
     ListEntryEnvoluedUpdate();
 }
 
-QString MainWindow::getMapName(const QString &file)
+QString SoloWindow::getMapName(const QString &file)
 {
     //open and quick check the file
     QFile xmlFile(file);
@@ -724,7 +588,7 @@ QString MainWindow::getMapName(const QString &file)
     return QString();
 }
 
-QString MainWindow::getMapZone(const QString &file)
+QString SoloWindow::getMapZone(const QString &file)
 {
     //open and quick check the file
     QFile xmlFile(file);
@@ -770,7 +634,7 @@ QString MainWindow::getMapZone(const QString &file)
     return QString();
 }
 
-QString MainWindow::getZoneName(const QString &zone)
+QString SoloWindow::getZoneName(const QString &zone)
 {
     //open and quick check the file
     QFile xmlFile(datapackPath+DATAPACK_BASE_PATH_ZONE+zone+".xml");
@@ -810,7 +674,7 @@ QString MainWindow::getZoneName(const QString &zone)
     return QString();
 }
 
-void MainWindow::on_SaveGame_Delete_clicked()
+void SoloWindow::on_SaveGame_Delete_clicked()
 {
     if(selectedSavegame==NULL)
         return;
@@ -824,7 +688,7 @@ void MainWindow::on_SaveGame_Delete_clicked()
     updateSavegameList();
 }
 
-void MainWindow::on_SaveGame_Rename_clicked()
+void SoloWindow::on_SaveGame_Rename_clicked()
 {
     if(selectedSavegame==NULL)
         return;
@@ -846,7 +710,7 @@ void MainWindow::on_SaveGame_Rename_clicked()
     updateSavegameList();
 }
 
-void MainWindow::on_SaveGame_Copy_clicked()
+void SoloWindow::on_SaveGame_Copy_clicked()
 {
     if(selectedSavegame==NULL)
         return;
@@ -880,7 +744,7 @@ void MainWindow::on_SaveGame_Copy_clicked()
     updateSavegameList();
 }
 
-void MainWindow::on_SaveGame_Play_clicked()
+void SoloWindow::on_SaveGame_Play_clicked()
 {
     if(selectedSavegame==NULL)
         return;
@@ -889,10 +753,123 @@ void MainWindow::on_SaveGame_Play_clicked()
     if(!savegameWithMetaData[selectedSavegame])
         return;
 
-    play(savegamesPath);
+    emit play(savegamesPath);
 }
 
-void MainWindow::is_started(bool started)
+/*void SoloWindow::closeEvent(QCloseEvent *event)
+{
+    qDebug() << "close event";
+    event->ignore();
+    this->hide();
+    socket->disconnectFromHost();
+    if(internalServer==NULL)
+        QCoreApplication::quit();
+    else
+        qDebug() << "server is running, need wait to close";
+}*/
+
+/*void SoloWindow::resetAll()
+{
+    if(internalServer!=NULL)
+        internalServer->stop();
+    CatchChallenger::Api_client_real::client->resetAll();
+    CatchChallenger::BaseWindow::baseWindow->resetAll();
+    ui->stackedWidget->setCurrentIndex(0);
+    lastMessageSend="";
+    if(internalServer!=NULL)
+        internalServer->deleteLater();
+    internalServer=NULL;
+    pass.clear();
+    //saveTime();//not here because called at start!
+
+    //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
+}*/
+
+/*void SoloWindow::disconnected(QString)
+{
+    resetAll();
+}*/
+
+void SoloWindow::changeEvent(QEvent *e)
+{
+    QMainWindow::changeEvent(e);
+    switch (e->type()) {
+    case QEvent::LanguageChange:
+        ui->retranslateUi(this);
+    break;
+    default:
+    break;
+    }
+}
+
+/*void SoloWindow::stateChanged(QAbstractSocket::SocketState socketState)
+{
+    if(socketState==QAbstractSocket::UnconnectedState)
+        resetAll();
+    CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
+}
+
+void SoloWindow::error(QAbstractSocket::SocketError socketError)
+{
+    resetAll();
+    switch(socketError)
+    {
+    case QAbstractSocket::RemoteHostClosedError:
+        QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server"));
+    break;
+    case QAbstractSocket::ConnectionRefusedError:
+        QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server"));
+    break;
+    case QAbstractSocket::SocketTimeoutError:
+        QMessageBox::information(this,tr("Connection closed"),tr("Socket time out, server too long"));
+    break;
+    case QAbstractSocket::HostNotFoundError:
+        QMessageBox::information(this,tr("Connection closed"),tr("The host address was not found."));
+    break;
+    case QAbstractSocket::SocketAccessError:
+        QMessageBox::information(this,tr("Connection closed"),tr("The socket operation failed because the application lacked the required privileges."));
+    break;
+    case QAbstractSocket::SocketResourceError:
+        QMessageBox::information(this,tr("Connection closed"),tr("The local system ran out of resources"));
+    break;
+    case QAbstractSocket::NetworkError:
+        QMessageBox::information(this,tr("Connection closed"),tr("An error occurred with the network"));
+    break;
+    case QAbstractSocket::UnsupportedSocketOperationError:
+        QMessageBox::information(this,tr("Connection closed"),tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)"));
+    break;
+    case QAbstractSocket::SslHandshakeFailedError:
+        QMessageBox::information(this,tr("Connection closed"),tr("The SSL/TLS handshake failed, so the connection was closed"));
+    break;
+    default:
+        QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError));
+    }
+}
+
+void SoloWindow::haveNewError()
+{
+//	QMessageBox::critical(this,tr("Error"),client->errorString());
+}
+
+void SoloWindow::message(QString message)
+{
+    qDebug() << message;
+}
+
+void SoloWindow::protocol_is_good()
+{
+    CatchChallenger::Api_client_real::client->tryLogin("admin",pass);
+}
+
+void SoloWindow::try_stop_server()
+{
+    if(internalServer!=NULL)
+        delete internalServer;
+    internalServer=NULL;
+    saveTime();
+}
+
+void SoloWindow::is_started(bool started)
 {
     if(!started)
     {
@@ -914,7 +891,7 @@ void MainWindow::is_started(bool started)
     }
 }
 
-void MainWindow::saveTime()
+void SoloWindow::saveTime()
 {
     //save the time
     if(haveLaunchedGame)
@@ -949,13 +926,13 @@ void MainWindow::saveTime()
     }
 }
 
-void MainWindow::serverError(const QString &error)
+void SoloWindow::serverError(const QString &error)
 {
     QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
     resetAll();
 }
 
-void MainWindow::play(const QString &savegamesPath)
+void SoloWindow::play(const QString &savegamesPath)
 {
     resetAll();
     ui->stackedWidget->setCurrentIndex(1);
@@ -976,13 +953,13 @@ void MainWindow::play(const QString &savegamesPath)
     }
     internalServer=new CatchChallenger::InternalServer();
     sendSettings(internalServer,savegamesPath);
-    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
-    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&SoloWindow::is_started,Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::error,this,&SoloWindow::serverError,Qt::QueuedConnection);
 
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
 }
 
-void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
+void SoloWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
 {
     CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
@@ -997,4 +974,9 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.bitcoin.enabled=false;
 
     internalServer->setSettings(formatedServerSettings);
+}*/
+
+void SoloWindow::on_SaveGame_Back_clicked()
+{
+    emit back();
 }

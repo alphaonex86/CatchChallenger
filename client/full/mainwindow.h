@@ -17,6 +17,7 @@
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
+#include "../base/solo/Solowindow.h"
 
 namespace Ui {
     class MainWindow;
@@ -81,7 +82,18 @@ private slots:
     void downloadFile();
     void metaDataChanged();
     void httpFinished();
+    void on_multiplayer_clicked();
+    void on_server_back_clicked();
+    void gameSolo_play(const QString &savegamesPath);
+    void gameSolo_back();
+    void on_solo_clicked();
 private:
+    enum ServerMode
+    {
+        ServerMode_Internal,
+        ServerMode_Remote
+    };
+    ServerMode serverMode;
     QList<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
@@ -107,6 +119,7 @@ private:
     ListEntryEnvolued * selectedServer;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
+    SoloWindow *solowindow;
 };
 
 #endif // MAINWINDOW_H

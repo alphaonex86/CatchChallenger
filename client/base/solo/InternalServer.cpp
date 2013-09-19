@@ -1,6 +1,6 @@
 #include "InternalServer.h"
-#include "../../server/base/GlobalServerData.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../../server/base/GlobalServerData.h"
+#include "../../../general/base/FacilityLib.h"
 
 using namespace CatchChallenger;
 

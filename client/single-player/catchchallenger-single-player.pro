@@ -22,10 +22,8 @@ FORMS    += mainwindow.ui \
     NewProfile.ui
 
 RESOURCES += \
-    resources/resources-single-player.qrc \
+    ../base/resources/resources-single-player.qrc \
     ../../server/databases/resources-db-sqlite.qrc
 
 DEFINES += NOREMOTE
 
-OTHER_FILES += \
-    catchchallenger-single-player.supp
