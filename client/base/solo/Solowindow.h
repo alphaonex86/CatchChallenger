@@ -1,5 +1,5 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef SOLOWINDOW_H
+#define SOLOWINDOW_H
 
 #include <QMainWindow>
 #include <QMessageBox>
@@ -20,19 +20,29 @@
 #include "NewProfile.h"
 
 namespace Ui {
-    class MainWindow;
+    class SoloWindow;
 }
 
-class MainWindow : public QMainWindow
+class SoloWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+    explicit SoloWindow(QWidget *parent,const QString &datapackPath,const QString &savegamePath,const bool &standAlone);
+    ~SoloWindow();
 protected:
     void changeEvent(QEvent *e);
-    void closeEvent(QCloseEvent *event);
 private slots:
+    void on_SaveGame_Delete_clicked();
+    void on_SaveGame_Rename_clicked();
+    void on_SaveGame_Copy_clicked();
+    void on_SaveGame_Play_clicked();
+    void on_SaveGame_New_clicked();
+    void ListEntryEnvoluedClicked();
+    void ListEntryEnvoluedDoubleClicked();
+    void ListEntryEnvoluedUpdate();
+    void NewProfile_finished();
+    void closeDb(QSqlDatabase *db);
+/*private slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();
@@ -40,48 +50,47 @@ private slots:
     void disconnected(QString);
     void protocol_is_good();
     void try_stop_server();
-    void on_SaveGame_New_clicked();
-    void ListEntryEnvoluedClicked();
-    void ListEntryEnvoluedDoubleClicked();
-    void ListEntryEnvoluedUpdate();
-    void on_SaveGame_Delete_clicked();
-    void on_SaveGame_Rename_clicked();
-    void on_SaveGame_Copy_clicked();
-    void on_SaveGame_Play_clicked();
+
+
     void saveTime();
     void is_started(bool started);
-    void play(const QString &savegamesPath);
     void serverError(const QString &error);
     void sendSettings(CatchChallenger::InternalServer * internalServer, const QString &savegamesPath);
-    void NewProfile_finished();
+    */
+    void on_SaveGame_Back_clicked();
 private:
-    Ui::MainWindow *ui;
+    Ui::SoloWindow *ui;
     void resetAll();
     bool rmpath(const QDir &dir);
     void updateSavegameList();
     QString getMapName(const QString &file);
     QString getMapZone(const QString &file);
     QString getZoneName(const QString &zone);
-    void closeDb(QSqlDatabase *db);
-    QSettings settings;
-    QString lastMessageSend;
-    QStringList server_list;
-    CatchChallenger::ConnectedSocket *socket;
     QList<ListEntryEnvolued *> savegame;
     QHash<ListEntryEnvolued *,QString> savegamePathList;
     QHash<ListEntryEnvolued *,bool> savegameWithMetaData;
     ListEntryEnvolued * selectedSavegame;
+    bool datapackPathExists;
+    NewProfile *newProfile;
+    bool standAlone;
     QSpacerItem *spacer;
-    CatchChallenger::InternalServer * internalServer;
     QString datapackPath;
     QString savegamePath;
+    /*
+    QSettings settings;
+    QString lastMessageSend;
+    QStringList server_list;
+    CatchChallenger::ConnectedSocket *socket;
+    CatchChallenger::InternalServer * internalServer;
     //loaded game
     QString pass;
     quint64 timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
-    bool datapackPathExists;
-    NewProfile *newProfile;
+    */
+signals:
+    void play(const QString &savegamesPath);
+    void back();
 };
 
-#endif // MAINWINDOW_H
+#endif // SOLOWINDOW_H

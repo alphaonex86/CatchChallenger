@@ -19,6 +19,17 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
+    qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
+    qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
+    qRegisterMetaType<CatchChallenger::Player_type>("QAbstractSocket::SocketState");
+    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
+    qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
+    qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
+
+    /*socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket);
+    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);*/
 
     reply=NULL;
     realSocket=new QSslSocket();
@@ -31,6 +42,11 @@ MainWindow::MainWindow(QWidget *parent) :
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
+    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/internal/",QCoreApplication::applicationDirPath()+"/savegames/",false);
+    connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
+    connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
+    ui->stackedWidget->addWidget(solowindow);
+    ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
     ui->server_refresh->setEnabled(true);
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList();
@@ -338,12 +354,12 @@ void MainWindow::displayServerList()
             customServerConnexion << newEntry;
         index++;
     }
-    ui->serverEmpty->setVisible(index==0);
+    ui->serverWidget->setVisible(index==0);
     if(index>0)
     {
         ui->scrollAreaWidgetContentsServer->layout()->removeItem(spacerServer);
-        delete spacer;
-        spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
+        delete spacerServer;
+        spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
         ui->scrollAreaWidgetContentsServer->layout()->addItem(spacerServer);
     }
     serverListEntryEnvoluedUpdate();
@@ -421,7 +437,7 @@ void MainWindow::on_server_select_clicked()
 
 void MainWindow::on_login_cancel_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->page);
+    ui->stackedWidget->setCurrentWidget(ui->multi);
 }
 
 void MainWindow::on_server_remove_clicked()
@@ -492,7 +508,18 @@ void MainWindow::resetAll()
 {
     CatchChallenger::Api_client_real::client->resetAll();
     CatchChallenger::BaseWindow::baseWindow->resetAll();
-    ui->stackedWidget->setCurrentWidget(ui->page);
+    switch(serverMode)
+    {
+        case ServerMode_Internal:
+            ui->stackedWidget->setCurrentWidget(solowindow);
+        break;
+        case ServerMode_Remote:
+            ui->stackedWidget->setCurrentWidget(ui->multi);
+        break;
+        default:
+            ui->stackedWidget->setCurrentWidget(ui->mode);
+        break;
+    }
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
@@ -553,6 +580,7 @@ void MainWindow::on_lineEditPass_returnPressed()
 
 void MainWindow::on_pushButtonTryLogin_clicked()
 {
+    serverMode=ServerMode_Remote;
     if(customServerConnexion.contains(selectedServer))
         settings.beginGroup(QString("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
     else
@@ -797,7 +825,7 @@ void MainWindow::on_manageDatapack_clicked()
         datapackPathList[newEntry]=fileInfo.absoluteFilePath();
         index++;
     }
-    ui->datapackEmpty->setVisible(index==0);
+    ui->datapackWidget->setVisible(index==0);
     if(index>0)
     {
         ui->scrollAreaWidgetContents->layout()->removeItem(spacer);
@@ -811,7 +839,7 @@ void MainWindow::on_manageDatapack_clicked()
 
 void MainWindow::on_backDatapack_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->page);
+    ui->stackedWidget->setCurrentWidget(ui->multi);
 }
 
 void MainWindow::on_deleteDatapack_clicked()
@@ -915,4 +943,30 @@ void MainWindow::httpFinished()
     displayServerList();
     reply->deleteLater();
     reply=NULL;
+}
+
+void MainWindow::on_multiplayer_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->multi);
+}
+
+void MainWindow::on_server_back_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->mode);
+}
+
+void MainWindow::gameSolo_play(const QString &savegamesPath)
+{
+}
+
+void MainWindow::gameSolo_back()
+{
+    ui->stackedWidget->setCurrentWidget(ui->mode);
+}
+
+void MainWindow::on_solo_clicked()
+{
+    int index=ui->stackedWidget->indexOf(solowindow);
+    if(index>=0)
+        ui->stackedWidget->setCurrentWidget(solowindow);
 }

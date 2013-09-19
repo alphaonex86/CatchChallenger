@@ -45,9 +45,129 @@
       <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="page">
+      <widget class="QWidget" name="mode">
        <property name="styleSheet">
-        <string notr="true">#page{background-image: url(:/images/background.png);}</string>
+        <string notr="true">#mode{background-image: url(:/images/background.png);}</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_9">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
+          <item>
+           <spacer name="horizontalSpacer_11">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_8">
+            <item>
+             <spacer name="verticalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="solo">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Solo</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="multiplayer">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Multiplayers</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_12">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <spacer name="horizontalSpacer_10">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_catchchallenger_link">
+            <property name="text">
+             <string>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;color:#FFF;text-decoration:none;&quot;&gt;CatchChallenger&lt;/span&gt;&lt;/a&gt; &lt;!-- (Don't remove please) --&gt;</string>
+            </property>
+            <property name="openExternalLinks">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="multi">
+       <property name="styleSheet">
+        <string notr="true">#multi{background-image: url(:/images/background.png);}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
@@ -147,7 +267,7 @@ QLabel { padding:2px; }</string>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_12">
                     <item>
-                     <widget class="QWidget" name="widget_3" native="true">
+                     <widget class="QWidget" name="serverWidget" native="true">
                       <layout class="QVBoxLayout" name="verticalLayout_13">
                        <item>
                         <widget class="QLabel" name="serverEmpty">
@@ -261,6 +381,13 @@ border-radius:5px;</string>
                    </widget>
                   </item>
                   <item>
+                   <widget class="QPushButton" name="server_back">
+                    <property name="text">
+                     <string>Back</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <spacer name="horizontalSpacer_20">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
@@ -343,16 +470,6 @@ border-radius:5px;</string>
              </size>
             </property>
            </spacer>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_catchchallenger_link">
-            <property name="text">
-             <string>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;color:#FFF;text-decoration:none;&quot;&gt;CatchChallenger&lt;/span&gt;&lt;/a&gt; &lt;!-- (Don't remove please) --&gt;</string>
-            </property>
-            <property name="openExternalLinks">
-             <bool>true</bool>
-            </property>
-           </widget>
           </item>
          </layout>
         </item>
@@ -442,7 +559,7 @@ QLabel { padding:2px; }</string>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
                   <item>
-                   <widget class="QWidget" name="widget" native="true">
+                   <widget class="QWidget" name="datapackWidget" native="true">
                     <layout class="QVBoxLayout" name="verticalLayout_5">
                      <item>
                       <widget class="QLabel" name="datapackEmpty">
