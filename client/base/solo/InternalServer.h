@@ -11,16 +11,16 @@
 #include <QSemaphore>
 #include <QString>
 
-#include "../../general/base/DebugClass.h"
-#include "../../server/base/ServerStructures.h"
-#include "../../server/base/Client.h"
-#include "../../general/base/Map_loader.h"
-#include "../../server/base/Bot/FakeBot.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/QFakeServer.h"
-#include "../../general/base/QFakeSocket.h"
-#include "../../server/base/MapServer.h"
-#include "../../server/base/BaseServer.h"
+#include "../../../general/base/DebugClass.h"
+#include "../../../server/base/ServerStructures.h"
+#include "../../../server/base/Client.h"
+#include "../../../general/base/Map_loader.h"
+#include "../../../server/base/Bot/FakeBot.h"
+#include "../../../general/base/ProtocolParsing.h"
+#include "../../../general/base/QFakeServer.h"
+#include "../../../general/base/QFakeSocket.h"
+#include "../../../server/base/MapServer.h"
+#include "../../../server/base/BaseServer.h"
 
 #ifndef CATCHCHALLENGER_INTERNALSERVER_H
 #define CATCHCHALLENGER_INTERNALSERVER_H
