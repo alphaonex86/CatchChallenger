@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>SoloWindow</class>
+ <widget class="QMainWindow" name="SoloWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -26,7 +26,7 @@
    <string>CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../base/resources/client-resources.qrc">
+   <iconset resource="../resources/client-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -177,7 +177,27 @@ QLabel { padding:2px; }</string>
                      <bool>false</bool>
                     </property>
                     <property name="text">
-                     <string>Play selected game</string>
+                     <string>Play</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_Back">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="SaveGame_Back">
+                    <property name="text">
+                     <string>Back</string>
                     </property>
                    </widget>
                   </item>
@@ -345,7 +365,7 @@ QLabel { padding:2px; }</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../base/resources/client-resources.qrc"/>
+  <include location="../resources/client-resources.qrc"/>
  </resources>
  <connections/>
 </ui>
