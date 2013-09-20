@@ -12,14 +12,14 @@ SOURCES += main.cpp\
     ../base/solo/NewProfile.cpp \
     ../base/solo/NewGame.cpp \
     ../base/solo/InternalServer.cpp \
-    ../base/solo/Solowindow.cpp
+    ../base/solo/SoloWindow.cpp
 
 HEADERS  += mainwindow.h \
     AddServer.h \
     ../base/solo/NewProfile.h \
     ../base/solo/NewGame.h \
     ../base/solo/InternalServer.h \
-    ../base/solo/Solowindow.h
+    ../base/solo/SoloWindow.h
 
 FORMS    += mainwindow.ui \
     AddServer.ui \

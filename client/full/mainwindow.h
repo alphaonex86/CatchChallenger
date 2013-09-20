@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QDateTime>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -17,7 +18,7 @@
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
-#include "../base/solo/Solowindow.h"
+#include "../base/solo/SoloWindow.h"
 
 namespace Ui {
     class MainWindow;
@@ -87,11 +88,16 @@ private slots:
     void gameSolo_play(const QString &savegamesPath);
     void gameSolo_back();
     void on_solo_clicked();
+    void sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath);
+    void is_started(bool started);
+    void saveTime();
+    void serverError(const QString &error);
 private:
     enum ServerMode
     {
         ServerMode_Internal,
-        ServerMode_Remote
+        ServerMode_Remote,
+        ServerMode_None
     };
     ServerMode serverMode;
     QList<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
@@ -120,6 +126,11 @@ private:
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
     SoloWindow *solowindow;
+    QString pass;
+    quint64 timeLaunched;
+    QString launchedGamePath;
+    bool haveLaunchedGame;
+    CatchChallenger::InternalServer * internalServer;
 };
 
 #endif // MAINWINDOW_H

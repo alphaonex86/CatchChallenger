@@ -1,12 +1,12 @@
 #include <QApplication>
-#include "mainwindow.h"
+#include "SimpleSoloServer.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("client");
     a.setOrganizationName("CatchChallenger");
-    MainWindow w;
+    SimpleSoloServer w;
     w.show();
     return a.exec();
 }
