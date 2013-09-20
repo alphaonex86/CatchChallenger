@@ -43,7 +43,6 @@ BaseServer::BaseServer()
     GlobalServerData::serverPrivateVariables.bitcoin.enabled        = false;
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
-    GlobalServerData::serverPrivateVariables.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= QRegularExpression(DATAPACK_FILE_REGEX);
 
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
@@ -56,7 +55,7 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.database.sqlite.file="";
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
 
-    //to do a bug
+    GlobalServerData::serverSettings.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
     GlobalServerData::serverSettings.rates_gold_premium                         = 1;
     GlobalServerData::serverSettings.rates_shiny_premium                        = 1;
     GlobalServerData::serverSettings.rates_xp_premium                           = 1;
@@ -146,7 +145,7 @@ void BaseServer::preload_the_data()
 {
     GlobalServerData::serverPrivateVariables.stopIt=false;
 
-    CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverPrivateVariables.datapack_basePath);
+    CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
     preload_the_datapack();
     preload_the_skin();
     preload_shop();
@@ -168,7 +167,7 @@ void BaseServer::preload_the_data()
 void BaseServer::preload_zone()
 {
     //open and quick check the file
-    QFileInfoList entryList=QDir(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+    QFileInfoList entryList=QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
     while(index<entryList.size())
     {
@@ -775,7 +774,7 @@ void BaseServer::preload_the_city_capture()
 
 void BaseServer::preload_the_map()
 {
-    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MAP;
+    GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MAP;
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
@@ -1107,7 +1106,7 @@ void BaseServer::preload_the_map()
 
 void BaseServer::preload_the_skin()
 {
-    QStringList skinFolderList=FacilityLib::skinIdList(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
+    QStringList skinFolderList=FacilityLib::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     int index=0;
     while(index<skinFolderList.size())
     {
@@ -1124,7 +1123,7 @@ void BaseServer::preload_the_datapack()
     QSet<QString> extensionAllowed=extensionAllowedTemp.toSet();
     QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
     ClientHeavyLoad::compressedExtension=compressedExtensionAllowedTemp.toSet();
-    QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverPrivateVariables.datapack_basePath);
+    QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverSettings.datapack_basePath);
     int index=0;
     int size=returnList.size();
     while(index<size)
@@ -1134,7 +1133,7 @@ void BaseServer::preload_the_datapack()
         {
             if(!QFileInfo(fileName).suffix().isEmpty() && extensionAllowed.contains(QFileInfo(fileName).suffix()))
             {
-                QFile file(GlobalServerData::serverPrivateVariables.datapack_basePath+returnList.at(index));
+                QFile file(GlobalServerData::serverSettings.datapack_basePath+returnList.at(index));
                 if(file.size()<=8*1024*1024)
                 {
                     if(file.open(QIODevice::ReadOnly))

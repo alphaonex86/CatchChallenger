@@ -7,14 +7,14 @@
 #include <QMessageBox>
 #include <QDebug>
 
-NewGame::NewGame(const QStringList &forcedSkin,QWidget *parent) :
+NewGame::NewGame(const QString &skinPath,const QStringList &forcedSkin,QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewGame)
 {
     ui->setupUi(this);
     this->forcedSkin=forcedSkin;
     ok=false;
-    skinPath=QCoreApplication::applicationDirPath()+"/datapack/"+DATAPACK_BASE_PATH_SKIN;
+    this->skinPath=skinPath;
     QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int index=0;
     while(index<entryList.size())

@@ -18,7 +18,7 @@ using namespace CatchChallenger;
 
 void BaseServerFight::preload_monsters_drops()
 {
-    GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
+    GlobalServerData::serverPrivateVariables.monsterDrops=loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
 
     DebugClass::debugConsole(QString("%1 monster drop(s) loaded").arg(CommonDatapack::commonDatapack.monsters.size()));
 }
