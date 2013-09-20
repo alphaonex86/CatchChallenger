@@ -157,7 +157,7 @@ QLabel { padding:2px; }</string>
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_11">
+                 <layout class="QHBoxLayout" name="horizontalLayout_main">
                   <item>
                    <spacer name="horizontalSpacer_11">
                     <property name="orientation">
@@ -217,7 +217,7 @@ QLabel { padding:2px; }</string>
                  </layout>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_login_4">
+                 <layout class="QHBoxLayout" name="horizontalLayout_sub">
                   <item>
                    <spacer name="horizontalSpacer_login_3">
                     <property name="orientation">

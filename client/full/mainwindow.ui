@@ -43,7 +43,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -299,7 +299,7 @@ border-radius:5px;</string>
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_12">
+                 <layout class="QHBoxLayout" name="horizontalLayout_main">
                   <item>
                    <spacer name="horizontalSpacer_17">
                     <property name="orientation">
@@ -553,7 +553,7 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>94</width>
+                   <width>81</width>
                    <height>39</height>
                   </rect>
                  </property>

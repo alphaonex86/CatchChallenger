@@ -88,6 +88,7 @@ struct ServerSettings
     //the listen, implicit on the client
     quint16 server_port;
     QString server_ip;
+    QString datapack_basePath;
 
     //settings of the server shared with the client
     CommmonServerSettings commmonServerSettings;
@@ -203,7 +204,6 @@ struct ServerPrivateVariables
     QString db_type_string;
 
     //datapack
-    QString datapack_basePath;
     QString datapack_mapPath;
     QRegularExpression datapack_rightFileName;
     QRegularExpression datapack_rightFolderName;

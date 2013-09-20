@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    serverMode=ServerMode_None;
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -31,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);*/
 
+    internalServer=NULL;
     reply=NULL;
     realSocket=new QSslSocket();
     realSocket->ignoreSslErrors();
@@ -520,6 +522,7 @@ void MainWindow::resetAll()
             ui->stackedWidget->setCurrentWidget(ui->mode);
         break;
     }
+    serverMode=ServerMode_None;
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
@@ -957,6 +960,111 @@ void MainWindow::on_server_back_clicked()
 
 void MainWindow::gameSolo_play(const QString &savegamesPath)
 {
+    serverMode=ServerMode_Internal;
+    resetAll();
+    ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
+    timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
+    QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
+    if(!metaData.contains("pass"))
+    {
+        QMessageBox::critical(NULL,tr("Error"),tr("Unable to load internal value"));
+        return;
+    }
+    launchedGamePath=savegamesPath;
+    haveLaunchedGame=true;
+    pass=metaData.value("pass").toString();
+    if(internalServer!=NULL)
+        delete internalServer;
+    internalServer=new CatchChallenger::InternalServer();
+    sendSettings(internalServer,savegamesPath);
+    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
+    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
+
+    CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
+}
+
+void MainWindow::serverError(const QString &error)
+{
+    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
+    resetAll();
+}
+
+void MainWindow::is_started(bool started)
+{
+    if(!started)
+    {
+        if(internalServer!=NULL)
+        {
+            delete internalServer;
+            internalServer=NULL;
+        }
+        saveTime();
+        if(!isVisible())
+            QCoreApplication::quit();
+        else
+            resetAll();
+    }
+    else
+    {
+        CatchChallenger::BaseWindow::baseWindow->serverIsReady();
+        socket->connectToHost("localhost",9999);
+    }
+}
+
+void MainWindow::saveTime()
+{
+    if(serverMode!=ServerMode_Internal)
+        return;
+    if(internalServer==NULL)
+        return;
+    //save the time
+    if(haveLaunchedGame)
+    {
+        bool settingOk=false;
+        QSettings metaData(launchedGamePath+"metadata.conf",QSettings::IniFormat);
+        if(metaData.isWritable())
+        {
+            if(metaData.status()==QSettings::NoError)
+            {
+                QString locaction=CatchChallenger::BaseWindow::baseWindow->lastLocation();
+                QString mapPath=internalServer->getSettings().datapack_basePath+DATAPACK_BASE_PATH_MAP;
+                if(locaction.startsWith(mapPath))
+                    locaction.remove(0,mapPath.size());
+                if(!locaction.isEmpty())
+                    metaData.setValue("location",locaction);
+                quint64 current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
+                if(current_date_time>timeLaunched)
+                    metaData.setValue("time_played",metaData.value("time_played").toUInt()+(current_date_time-timeLaunched));
+                settingOk=true;
+            }
+            else
+                qDebug() << "Settings error: " << metaData.status();
+        }
+        solowindow->updateSavegameList();
+        if(!settingOk)
+        {
+            QMessageBox::critical(NULL,tr("Error"),tr("Unable to save internal value at game stopping"));
+            return;
+        }
+        haveLaunchedGame=false;
+    }
+}
+
+void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
+{
+    CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
+
+    formatedServerSettings.max_players=1;
+    formatedServerSettings.tolerantMode=false;
+    formatedServerSettings.commmonServerSettings.sendPlayerNumber = false;
+    formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_None;
+
+    formatedServerSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+    formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
+    formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
+    formatedServerSettings.bitcoin.enabled=false;
+
+    internalServer->setSettings(formatedServerSettings);
 }
 
 void MainWindow::gameSolo_back()

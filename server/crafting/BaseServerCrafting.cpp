@@ -120,7 +120,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
 void BaseServerCrafting::preload_shop()
 {
     //open and quick check the file
-    QFile shopFile(GlobalServerData::serverPrivateVariables.datapack_basePath+DATAPACK_BASE_PATH_SHOP+"shop.xml");
+    QFile shopFile(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SHOP+"shop.xml");
     QByteArray xmlContent;
     if(!shopFile.open(QIODevice::ReadOnly))
     {
