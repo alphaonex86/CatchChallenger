@@ -909,7 +909,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
     QByteArray fileNameRaw=FacilityLib::toUTF8(fileName);
     if(fileNameRaw.size()>255 || fileNameRaw.size()==0)
         return false;
-    QFile file(GlobalServerData::serverPrivateVariables.datapack_basePath+fileName);
+    QFile file(GlobalServerData::serverSettings.datapack_basePath+fileName);
     if(file.open(QIODevice::ReadOnly))
     {
         const QByteArray &content=file.readAll();
