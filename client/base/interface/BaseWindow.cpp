@@ -41,6 +41,8 @@ BaseWindow::BaseWindow() :
     socketState=QAbstractSocket::UnconnectedState;
 
     MapController::mapController=new MapController(true,false,true,false);
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
     Chat::chat=new Chat(ui->page_map);
@@ -229,7 +231,9 @@ BaseWindow::~BaseWindow()
         delete movie;
     delete ui;
     delete MapController::mapController;
+    MapController::mapController=NULL;
     delete Chat::chat;
+    Chat::chat=NULL;
 }
 
 void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)

@@ -39,7 +39,7 @@ public:
 
     virtual void sendDatapackContent() = 0;
     virtual void tryDisconnect() = 0;
-    QString get_datapack_base_name();
+    virtual QString get_datapack_base_name() const;
 
     bool getHavePlantAction();
     bool getHaveShopAction();

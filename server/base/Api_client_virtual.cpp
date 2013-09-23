@@ -10,9 +10,10 @@ using namespace CatchChallenger;
 
 //need host + port here to have datapack base
 
-Api_client_virtual::Api_client_virtual(ConnectedSocket *socket) :
+Api_client_virtual::Api_client_virtual(ConnectedSocket *socket, const QString &forcedDatapack) :
     Api_protocol(socket)
 {
+    this->forcedDatapack=forcedDatapack;
     datapack_base_name=QString("%1/datapack/").arg(QCoreApplication::applicationDirPath());
 }
 
@@ -28,6 +29,11 @@ void Api_client_virtual::sendDatapackContent()
 void Api_client_virtual::tryDisconnect()
 {
     socket->disconnectFromHost();
+}
+
+QString Api_client_virtual::get_datapack_base_name() const
+{
+    return forcedDatapack;
 }
 
 //general data
