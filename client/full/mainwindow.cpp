@@ -27,20 +27,13 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
 
-    /*socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket);
-    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
-    spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);*/
-
+    socket=NULL;
     internalServer=NULL;
     reply=NULL;
     realSocket=new QSslSocket();
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
     connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
-    socket=new CatchChallenger::ConnectedSocket(realSocket);
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
-    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
@@ -56,20 +49,13 @@ MainWindow::MainWindow(QWidget *parent) :
     mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
     qSort(mergedConnexionInfoList);
     displayServerList();
-    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
-    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     //connect(CatchChallenger::BaseWindow::baseWindow,                &CatchChallenger::BaseWindow::needQuit,             this,&MainWindow::needQuit);
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
     haveShowDisconnectionReason=false;
-    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
-    CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
@@ -79,11 +65,19 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    CatchChallenger::Api_client_real::client->tryDisconnect();
-    delete CatchChallenger::Api_client_real::client;
-    delete CatchChallenger::BaseWindow::baseWindow;
+    if(CatchChallenger::Api_client_real::client!=NULL)
+    {
+        CatchChallenger::Api_client_real::client->tryDisconnect();
+        CatchChallenger::Api_client_real::client->deleteLater();
+    }
+    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+        delete CatchChallenger::BaseWindow::baseWindow;
+    if(socket!=NULL)
+    {
+        socket->abort();
+        socket->deleteLater();
+    }
     delete ui;
-    delete socket;
 }
 
 QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
@@ -508,8 +502,8 @@ void MainWindow::serverListEntryEnvoluedDoubleClicked()
 
 void MainWindow::resetAll()
 {
-    CatchChallenger::Api_client_real::client->resetAll();
-    CatchChallenger::BaseWindow::baseWindow->resetAll();
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        CatchChallenger::Api_client_real::client->resetAll();
     switch(serverMode)
     {
         case ServerMode_Internal:
@@ -522,7 +516,8 @@ void MainWindow::resetAll()
             ui->stackedWidget->setCurrentWidget(ui->mode);
         break;
     }
-    serverMode=ServerMode_None;
+    CatchChallenger::BaseWindow::baseWindow->deleteLater();
+    CatchChallenger::BaseWindow::baseWindow=NULL;
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
@@ -594,6 +589,22 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     else
         settings.remove("pass");
     settings.endGroup();
+    if(socket!=NULL)
+    {
+        socket->abort();
+        socket->deleteLater();
+    }
+    socket=new CatchChallenger::ConnectedSocket(realSocket);
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
+    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
+    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+        delete CatchChallenger::BaseWindow::baseWindow;
+    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
+    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(serverConnexion[selectedServer]->host,serverConnexion[selectedServer]->port);
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
@@ -607,7 +618,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
         resetAll();
-    CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
+    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+        CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
 }
 
 void MainWindow::error(QAbstractSocket::SocketError socketError)
@@ -664,7 +676,10 @@ void MainWindow::message(QString message)
 
 void MainWindow::protocol_is_good()
 {
-    CatchChallenger::Api_client_real::client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
+    if(serverMode==ServerMode_Internal)
+        CatchChallenger::Api_client_real::client->tryLogin("admin",pass);
+    else
+        CatchChallenger::Api_client_real::client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
 }
 
 void MainWindow::needQuit()
@@ -692,7 +707,7 @@ void MainWindow::ListEntryEnvoluedUpdate()
             datapack.at(index)->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
         index++;
     }
-    ui->deleteDatapack->setEnabled(selectedDatapack!=NULL);
+    ui->deleteDatapack->setEnabled(selectedDatapack!=NULL && datapackPathList[selectedDatapack]!=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/internal").absoluteFilePath());
 }
 
 void MainWindow::ListEntryEnvoluedDoubleClicked()
@@ -960,8 +975,24 @@ void MainWindow::on_server_back_clicked()
 
 void MainWindow::gameSolo_play(const QString &savegamesPath)
 {
-    serverMode=ServerMode_Internal;
     resetAll();
+    if(socket!=NULL)
+    {
+        socket->abort();
+        socket->deleteLater();
+    }
+    socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+"/datapack/internal/");
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
+    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
+    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+        delete CatchChallenger::BaseWindow::baseWindow;
+    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
+    serverMode=ServerMode_Internal;
+    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
@@ -979,6 +1010,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     sendSettings(internalServer,savegamesPath);
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
     connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverError,Qt::QueuedConnection);
+    internalServer->start();
 
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
 }
@@ -1063,6 +1095,7 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
     formatedServerSettings.bitcoin.enabled=false;
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->get_datapack_base_name();
 
     internalServer->setSettings(formatedServerSettings);
 }

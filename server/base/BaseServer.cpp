@@ -110,6 +110,11 @@ BaseServer::BaseServer()
     srand(time(NULL));
 }
 
+void BaseServer::start()
+{
+    emit need_be_started();
+}
+
 /** call only when the server is down
  * \warning this function is thread safe because it quit all thread before remove */
 BaseServer::~BaseServer()

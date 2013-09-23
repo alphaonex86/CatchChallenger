@@ -79,6 +79,12 @@ void QOggSimplePlayer::open()
         format.setChannelCount(vi->channels);
         format.setSampleRate(vi->rate);
     }
+    if(format.channelCount()!=1)
+    {
+        qDebug() << "Only mono sound is supported due to a bug";
+        ov_clear(&vf);
+        return;
+    }
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(format)) {

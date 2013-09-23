@@ -4581,7 +4581,7 @@ void Api_protocol::startReadData()
     canStartReadData=true;
 }
 
-QString Api_protocol::get_datapack_base_name()
+QString Api_protocol::get_datapack_base_name() const
 {
     return datapack_base_name;
 }
