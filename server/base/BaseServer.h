@@ -40,6 +40,7 @@ public:
     virtual bool isStopped();
     virtual void stop();
     void load_clan_max_id();
+    void start();
 protected slots:
     virtual void start_internal_server();
     virtual void stop_internal_server();

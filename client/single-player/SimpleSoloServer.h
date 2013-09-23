@@ -16,11 +16,25 @@ public:
     ~SimpleSoloServer();
 public slots:
     void play(const QString &savegamesPath);
-    void back();
+    void sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath);
+    void protocol_is_good();
+    void disconnected(QString reason);
+    void message(QString message);
+    void stateChanged(QAbstractSocket::SocketState socketState);
+    void serverError(const QString &error);
+    void is_started(bool started);
+    void saveTime();
+    void resetAll();
 private:
     Ui::SimpleSoloServer *ui;
     SoloWindow *solowindow;
     CatchChallenger::ConnectedSocket *socket;
+    quint64 timeLaunched;
+    QString launchedGamePath;
+    bool haveLaunchedGame;
+    CatchChallenger::InternalServer * internalServer;
+    QString pass;
+    bool haveShowDisconnectionReason;
 };
 
 #endif // SIMPLESOLOSERVER_H
