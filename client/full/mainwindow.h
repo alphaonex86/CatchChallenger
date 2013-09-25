@@ -19,6 +19,7 @@
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
 #include "../base/solo/SoloWindow.h"
+#include "../base/LanguagesSelect.h"
 
 namespace Ui {
     class MainWindow;
@@ -92,6 +93,7 @@ private slots:
     void is_started(bool started);
     void saveTime();
     void serverError(const QString &error);
+    void on_languages_clicked();
 private:
     enum ServerMode
     {
@@ -131,6 +133,7 @@ private:
     QString launchedGamePath;
     bool haveLaunchedGame;
     CatchChallenger::InternalServer * internalServer;
+    LanguagesSelect languagesSelect;
 };
 
 #endif // MAINWINDOW_H

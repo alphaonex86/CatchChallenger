@@ -7,7 +7,7 @@ Options Options::options;
 Options::Options()
 {
     bool ok;
-    settings=new QSettings();
+    settings=new QSettings("CatchChallenger","client-options");
     /* for portable version
     settings=new QSettings(QCoreApplication::applicationDirPath()+"/client-settings.conf",QSettings::IniFormat); */
     if(settings->contains("fps"))
@@ -34,6 +34,8 @@ Options::Options()
     }
     else
         audioVolume=100;
+    if(settings->contains("language"))
+        language=settings->value("language").toString();
 }
 
 Options::~Options()
@@ -85,6 +87,15 @@ void Options::setAudioVolume(const quint8 &audioVolume)
     emit newAudioVolume(audioVolume);
 }
 
+void Options::setLanguage(const QString &language)//the main code
+{
+    if(this->language==language)
+        return;
+    this->language=language;
+    settings->setValue("language",language);
+    emit newLanguage(language);
+}
+
 quint16 Options::getFPS()
 {
     return fps;
@@ -111,4 +122,9 @@ bool Options::getZoomEnabled()
 quint8 Options::getAudioVolume()
 {
     return audioVolume;
+}
+
+QString Options::getLanguage()//the main code
+{
+    return language;
 }

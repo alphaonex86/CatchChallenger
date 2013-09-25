@@ -16,6 +16,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     ui(new Ui::NewProfile)
 {
     ui->setupUi(this);
+    DatapackClientLoader::datapackLoader.resetAll();
     this->datapackPath=datapackPath;
     this->ok=false;
     ui->description->setText(tr("Profile loading..."));
