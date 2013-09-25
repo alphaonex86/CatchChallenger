@@ -194,6 +194,28 @@ void LocalClientHandlerFight::healAllMonsters()
                 break;
             }
         }
+        int sub_index=0;
+        while(sub_index<player_informations->public_and_private_informations.playerMonster[index].skills.size())
+        {
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
+                                 );
+                break;
+            }
+        }
         index++;
     }
 }
@@ -390,7 +412,7 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                 {
                     if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
                     {
-                        quint32 sp=CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
+                        quint32 sp=CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp_to_learn;
                         if(sp>monster.sp)
                         {
                             emit error(QString("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));
@@ -1287,6 +1309,16 @@ Skill::AttackReturn LocalClientHandlerFight::generateOtherAttack()
     }
     quint32 skill=otherPlayerBattle->getCurrentSkill();
     quint8 skillLevel=getSkillLevel(skill);
+    if(skillLevel==0)
+    {
+        if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.monsterSkills.contains(skill))
+            skillLevel=1;
+        else
+        {
+            emit error(QString("Unable to fight because the current monster have not the skill %3").arg(skill));
+            return attackReturnTemp;
+        }
+    }
     otherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel);
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
@@ -1304,4 +1336,34 @@ Skill::AttackReturn LocalClientHandlerFight::doTheCurrentMonsterAttack(const qui
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
     return attackReturn.last();
+}
+
+quint8 LocalClientHandlerFight::decreaseSkillEndurance(const quint32 &skill)
+{
+    PlayerMonster * currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        emit error("Unable to locate the current monster");
+        return 0;
+    }
+    quint8 newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                         .arg(newEndurance)
+                         .arg(currentMonster->id)
+                         .arg(skill)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                         .arg(newEndurance)
+                         .arg(currentMonster->id)
+                         .arg(skill)
+                         );
+        break;
+    }
+    return newEndurance;
 }

@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    a.setApplicationName("client-multi-server");
+    a.setApplicationName("client-full");
     a.setOrganizationName("CatchChallenger");
     MainWindow w;
     w.show();

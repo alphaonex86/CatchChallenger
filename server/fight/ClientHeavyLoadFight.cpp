@@ -248,10 +248,10 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT skill,level FROM monster_skill WHERE monster=%1").arg(monsterId);
+            queryText=QString("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT skill,level FROM monster_skill WHERE monster=%1").arg(monsterId);
+            queryText=QString("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
         break;
     }
 
@@ -285,7 +285,21 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
                 }
             }
             else
-                emit message(QString("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
+                emit message(QString("skill level: %1 is not a number").arg(monsterSkillsQuery.value(1).toString()));
+        }
+        if(ok)
+        {
+            skill.endurance=monsterSkillsQuery.value(2).toUInt(&ok);
+            if(ok)
+            {
+                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance)
+                {
+                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance;
+                    emit message(QString("skill %1 for monsterId: %2 have to hight endurance").arg(skill.skill).arg(monsterId));
+                }
+            }
+            else
+                emit message(QString("skill endurance: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
         }
         if(ok)
             skills << skill;

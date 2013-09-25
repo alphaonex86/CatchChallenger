@@ -272,6 +272,7 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     {
         out << (quint32)monster.skills.at(sub_index).skill;
         out << (quint8)monster.skills.at(sub_index).level;
+        out << (quint8)monster.skills.at(sub_index).endurance;
         sub_index++;
     }
     return outputData;

@@ -43,7 +43,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -138,6 +138,20 @@
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <widget class="QToolButton" name="languages">
+            <property name="icon">
+             <iconset resource="../base/resources/client-resources.qrc">
+              <normaloff>:/images/interface/languages.png</normaloff>:/images/interface/languages.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>22</width>
+              <height>22</height>
+             </size>
+            </property>
+           </widget>
+          </item>
           <item>
            <spacer name="horizontalSpacer_10">
             <property name="orientation">
@@ -553,8 +567,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>81</width>
-                   <height>39</height>
+                   <width>750</width>
+                   <height>292</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
