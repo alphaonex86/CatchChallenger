@@ -645,14 +645,33 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                         {
                                             sp=level.attribute("sp").toUShort(&ok);
                                             if(!ok)
+                                            {
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, sp is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(level.tagName()).arg(level.lineNumber()));
                                                 sp=0;
+                                            }
+                                        }
+                                        quint8 endurance=40;
+                                        if(level.hasAttribute("endurance"))
+                                        {
+                                            endurance=level.attribute("endurance").toUShort(&ok);
+                                            if(!ok)
+                                            {
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, endurance is not number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(level.tagName()).arg(level.lineNumber()));
+                                                endurance=40;
+                                            }
+                                            if(endurance<1)
+                                            {
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, endurance lower than 1: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(level.tagName()).arg(level.lineNumber()));
+                                                endurance=40;
+                                            }
                                         }
                                         quint8 number;
                                         if(ok)
                                             number=level.attribute("number").toUShort(&ok);
                                         if(ok)
                                         {
-                                            levelDef[number].sp=sp;
+                                            levelDef[number].sp_to_learn=sp;
+                                            levelDef[number].endurance=endurance;
                                             if(number>0)
                                             {
                                                 {

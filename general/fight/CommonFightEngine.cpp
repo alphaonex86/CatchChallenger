@@ -108,6 +108,16 @@ void CommonFightEngine::healAllMonsters()
             const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(index).monster],player_informations->playerMonster.at(index).level);
             player_informations->playerMonster[index].hp=stat.hp;
             player_informations->playerMonster[index].buffs.clear();
+            int sub_index=0;
+            while(sub_index<player_informations->playerMonster[index].skills.size())
+            {
+                player_informations->playerMonster[index].skills[sub_index].endurance=
+                        CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[
+                        player_informations->playerMonster[index].skills.at(sub_index).skill
+                        ]
+                        .level.at(player_informations->playerMonster[index].skills.at(sub_index).level-1).endurance;
+                sub_index++;
+            }
         }
         index++;
     }
@@ -145,7 +155,7 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill
                             (sub_index2<monster.skills.size() && (monster.skills[sub_index2].level+1)==learn.learnSkillLevel)
                             )
                     {
-                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp;
+                        quint32 sp=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp_to_learn;
                         if(sp>monster.sp)
                             return false;
                         player_informations->playerMonster[index].sp-=sp;
@@ -1238,14 +1248,21 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     quint8 skillLevel=getSkillLevel(skill);
     if(skillLevel==0)
     {
-        emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
-        return false;
+        if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.monsterSkills.contains(skill))
+            skillLevel=1;
+        else
+        {
+            emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
+            return false;
+        }
     }
+    else
+        decreaseSkillEndurance(skill);
     doTheTurn(skill,skillLevel,currentMonsterAttackFirst(currentMonster,otherMonster));
     return true;
 }
 
-quint8 CommonFightEngine::getSkillLevel(const quint32 &skill)
+quint8 CommonFightEngine::getSkillLevel(const quint32 &skill) const
 {
     PlayerMonster * currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
@@ -1256,11 +1273,50 @@ quint8 CommonFightEngine::getSkillLevel(const quint32 &skill)
     int index=0;
     while(index<currentMonster->skills.size())
     {
-        if(currentMonster->skills.at(index).skill==skill)
+        if(currentMonster->skills.at(index).skill==skill && currentMonster->skills.at(index).endurance>0)
             return currentMonster->skills.at(index).level;
         index++;
     }
     return 0;
+}
+
+quint8 CommonFightEngine::decreaseSkillEndurance(const quint32 &skill)
+{
+    PlayerMonster * currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        emit error("Unable to locate the current monster");
+        return 0;
+    }
+    int index=0;
+    while(index<currentMonster->skills.size())
+    {
+        if(currentMonster->skills.at(index).skill==skill && currentMonster->skills.at(index).endurance>0)
+        {
+            currentMonster->skills[index].endurance--;
+            return currentMonster->skills.at(index).endurance;
+        }
+        index++;
+    }
+    return 0;
+}
+
+bool CommonFightEngine::haveMoreEndurance() const
+{
+    PlayerMonster * currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        emit error("Unable to locate the current monster");
+        return false;
+    }
+    int index=0;
+    while(index<currentMonster->skills.size())
+    {
+        if(currentMonster->skills.at(index).endurance>0)
+            return true;
+        index++;
+    }
+    return false;
 }
 
 bool CommonFightEngine::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const

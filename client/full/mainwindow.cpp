@@ -1111,3 +1111,8 @@ void MainWindow::on_solo_clicked()
     if(index>=0)
         ui->stackedWidget->setCurrentWidget(solowindow);
 }
+
+void MainWindow::on_languages_clicked()
+{
+    languagesSelect.exec();
+}

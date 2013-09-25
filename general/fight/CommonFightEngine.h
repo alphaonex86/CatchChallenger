@@ -54,7 +54,9 @@ public:
     virtual bool tryEscape();
     bool canDoFightAction();
     virtual bool useSkill(const quint32 &skill);
-    quint8 getSkillLevel(const quint32 &skill);
+    quint8 getSkillLevel(const quint32 &skill) const;
+    virtual quint8 decreaseSkillEndurance(const quint32 &skill);
+    bool haveMoreEndurance() const;
     QList<Skill::LifeEffectReturn> buffLifeEffect(PublicPlayerMonster * playerMonster);
     QList<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
     static bool buffIsValid(const Skill::BuffEffect &buffEffect);

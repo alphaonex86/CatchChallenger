@@ -61,6 +61,7 @@ public:
     bool doTheOtherMonsterTurn();
     Skill::AttackReturn generateOtherAttack();
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
+    quint8 decreaseSkillEndurance(const quint32 &skill);
     void emitBattleWin();
 protected:
     bool checkKOCurrentMonsters();
