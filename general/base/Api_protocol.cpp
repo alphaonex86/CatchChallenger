@@ -2627,6 +2627,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                                     return;
                                 }
                                 in >> skill.level;
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill level, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> skill.endurance;
                                 monster.skills << skill;
                                 sub_index++;
                             }
@@ -2759,6 +2765,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                                     return;
                                 }
                                 in >> skill.level;
+                                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                                {
+                                    parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the monster skill level, line: %1").arg(__LINE__));
+                                    return;
+                                }
+                                in >> skill.endurance;
                                 monster.skills << skill;
                                 sub_index++;
                             }

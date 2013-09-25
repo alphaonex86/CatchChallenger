@@ -129,7 +129,10 @@ void BaseWindow::load_monsters()
                     .arg(stat.hp)
                     );
             item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].description);
-            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].front);
+            if(!DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].thumb.isNull())
+                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].thumb);
+            else
+                item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[monster.monster].front);
             ui->monsterList->addItem(item);
             monsters_items_graphical[item]=monster.id;
         }
@@ -476,13 +479,18 @@ void BaseWindow::updateCurrentMonsterInformation()
         QListWidgetItem *item=new QListWidgetItem();
         const PlayerMonster::PlayerSkill &skill=monster->skills.at(index);
         if(skill.level>1)
-            item->setText(QString("%1, level %2")
+            item->setText(QString("%1, level %2 (remaining endurance: %3)")
                     .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[skill.skill].name)
                     .arg(skill.level)
+                    .arg(skill.endurance)
                     );
         else
-            item->setText(DatapackClientLoader::datapackLoader.monsterSkillsExtra[skill.skill].name);
+            item->setText(QString("%1 (remaining endurance: %2)")
+                    .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[skill.skill].name)
+                    .arg(skill.endurance)
+                    );
         item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[skill.skill].description);
+        item->setData(99,skill.endurance);
         fight_attacks_graphical[item]=skill.skill;
         ui->listWidgetFightAttack->addItem(item);
         index++;
@@ -793,10 +801,21 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         QMessageBox::warning(this,tr("Selection error"),tr("You need select an attack"));
         return;
     }
+    if(itemsList.first()->data(99).toUInt()<=0)
+    {
+        QMessageBox::warning(this,tr("No endurance"),tr("You have no more endurance to use this skill"));
+        return;
+    }
     doNextActionStep=DoNextActionStep_Start;
     escape=false;
     haveDisplayCurrentAttackSuccess=false;
     haveDisplayOtherAttackSuccess=false;
+    PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(monster==NULL)
+    {
+        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        return;
+    }
     CatchChallenger::ClientFightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()]);
     if(battleType!=BattleType_OtherPlayer)
         doNextAction();
@@ -806,6 +825,7 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         ui->labelFightEnter->setText(tr("In waiting of the other player action"));
         ui->pushButtonFightEnterNext->hide();
     }
+    updateCurrentMonsterInformation();
 }
 
 void BaseWindow::on_pushButtonFightReturn_clicked()
@@ -1658,15 +1678,15 @@ bool BaseWindow::showLearnSkill(const quint32 &monsterId)
                 if(i.value()>1)
                     item->setText(tr("%1\nSP cost: %2")
                                 .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[i.key()].name)
-                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp)
+                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp_to_learn)
                             );
                 else
                     item->setText(tr("%1 level %2\nSP cost: %3")
                                 .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[i.key()].name)
                                 .arg(i.value())
-                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp)
+                                .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp_to_learn)
                             );
-                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp>monster.sp)
+                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[i.key()].level[i.value()-1].sp_to_learn>monster.sp)
                 {
                     item->setFont(MissingQuantity);
                     item->setForeground(QBrush(QColor(200,20,20)));

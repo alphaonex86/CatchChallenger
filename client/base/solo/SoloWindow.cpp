@@ -63,7 +63,10 @@ void SoloWindow::NewProfile_finished()
     if(newProfile->profileListSize()>1)
         if(!newProfile->ok)
             return;
+    newProfile->ok=false;
     NewProfile::Profile profile=newProfile->getProfile();
+    newProfile->deleteLater();
+    newProfile=NULL;
     NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,profile.forcedskin,this);
     if(!nameGame.haveSkin())
     {
@@ -73,6 +76,7 @@ void SoloWindow::NewProfile_finished()
     nameGame.exec();
     if(!nameGame.haveTheInformation())
         return;
+
     int index=0;
 
     //locate the new folder and create it
@@ -178,7 +182,7 @@ void SoloWindow::NewProfile_finished()
         size=sqlQuery.size();
     } while(size>0);
     {
-        QString textQuery=QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\",\"market_cash\",\"market_bitcoin\",\"date\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',NULL,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+");")
+        QString textQuery=QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\",\"market_cash\",\"market_bitcoin\",\"date\",\"warehouse_cash\",\"allow\",\"clan_leader\",\"bitcoin_offset\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0);")
                 .arg(player_id)
                 .arg(QString(passHash.toHex()))
                 .arg(nameGame.pseudo())
@@ -260,7 +264,7 @@ void SoloWindow::NewProfile_finished()
         {
             QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(
-                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"place\",\"position\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\",%8);")
+                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"place\",\"position\",\"market_price\",\"market_bitcoin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\",%8,0,0);")
                    .arg(monster_id)
                    .arg(stat.hp)
                    .arg(player_id)
@@ -282,12 +286,17 @@ void SoloWindow::NewProfile_finished()
         sub_index=0;
         while(sub_index<skills.size())
         {
+            quint8 endurance=0;
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills[sub_index].skill))
+                if(skills[sub_index].level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.size() && skills[sub_index].level>0)
+                    endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.at(skills[sub_index].level-1).endurance;
             QSqlQuery sqlQuery(*db);
             if(!sqlQuery.exec(
-                   QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\") VALUES(%1,%2,%3);")
+                   QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\",\"endurance\") VALUES(%1,%2,%3,%4);")
                    .arg(monster_id)
                    .arg(skills[sub_index].skill)
                    .arg(skills[sub_index].level)
+                   .arg(endurance)
                         ))
             {
                 closeDb(db);

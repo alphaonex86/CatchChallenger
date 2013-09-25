@@ -54,6 +54,8 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     }
     inProgress=true;
     this->datapackPath=datapackPath;
+    if(mDefaultInventoryImage==NULL)
+        mDefaultInventoryImage=new QPixmap(":/images/inventory/unknow-object.png");
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
     parseItemsExtra();
     parseMaps();

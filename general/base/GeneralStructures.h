@@ -214,6 +214,7 @@ class PlayerMonster : public PublicPlayerMonster
     {
         quint32 skill;
         quint8 level;
+        quint8 endurance;
     };
     quint32 remaining_xp;
     quint32 sp;
@@ -495,7 +496,8 @@ struct Skill
     {
         QList<Buff> buff;
         QList<Life> life;
-        quint32 sp;
+        quint8 endurance;
+        quint32 sp_to_learn;
     };
     QList<Skill::SkillList> level;//first is level 1
 };

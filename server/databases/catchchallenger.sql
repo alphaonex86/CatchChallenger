@@ -2,7 +2,7 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 --
--- Database: `cc_server`
+-- Database: `catchchallenger`
 --
 
 -- --------------------------------------------------------
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS `clan` (
   `cash` bigint(20) NOT NULL,
   `date` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
 
 -- --------------------------------------------------------
 
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS `monster` (
   PRIMARY KEY (`id`),
   KEY `player` (`player`),
   KEY `place` (`place`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=13 ;
 
 -- --------------------------------------------------------
 
@@ -140,6 +140,7 @@ CREATE TABLE IF NOT EXISTS `monster_skill` (
   `monster` int(11) NOT NULL,
   `skill` int(11) NOT NULL,
   `level` int(11) NOT NULL,
+  `endurance` int(11) NOT NULL,
   PRIMARY KEY (`monster`,`skill`),
   KEY `monster` (`monster`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -200,7 +201,7 @@ CREATE TABLE IF NOT EXISTS `player` (
   UNIQUE KEY `login_2` (`login`),
   UNIQUE KEY `pseudo_2` (`pseudo`),
   KEY `clan` (`clan`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21 ;
 
 -- --------------------------------------------------------
 
@@ -237,7 +238,7 @@ CREATE TABLE IF NOT EXISTS `player_register` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `login_2` (`login`),
   UNIQUE KEY `pseudo_2` (`pseudo`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21 ;
 
 -- --------------------------------------------------------
 

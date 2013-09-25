@@ -106,6 +106,11 @@ CREATE TABLE monster_skill (
     "skill" INTEGER,
     "level" INTEGER
 , "endurance" INTEGER);
+CREATE TABLE "player_skill" (
+    "player" INTEGER,
+    "skill" INTEGER,
+    "level" INTEGER
+);
 CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
 CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
 CREATE INDEX "player_recipe_list" on recipes (player ASC);
@@ -130,4 +135,6 @@ CREATE UNIQUE INDEX "player_unique_login" on player (login ASC);
 CREATE UNIQUE INDEX "player_unique_pseudo" on player (pseudo ASC);
 CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
 CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
+CREATE UNIQUE INDEX "player_skill_unique" on player_skill (player ASC, skill ASC);
+CREATE INDEX "player_skill_list" on player_skill (player ASC);
 COMMIT;

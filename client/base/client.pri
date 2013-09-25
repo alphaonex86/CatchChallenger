@@ -40,7 +40,8 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/interface/WithAnotherPlayer.cpp \
     $$PWD/render/MapVisualiserThread.cpp \
     $$PWD/interface/QuestJS.cpp \
-    $$PWD/interface/GetPrice.cpp
+    $$PWD/interface/GetPrice.cpp \
+    ../base/LanguagesSelect.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/audio/QOggAudioBuffer.h \
@@ -67,15 +68,20 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/interface/WithAnotherPlayer.h \
     $$PWD/render/MapVisualiserThread.h \
     $$PWD/interface/QuestJS.h \
-    $$PWD/interface/GetPrice.h
+    $$PWD/interface/GetPrice.h \
+    ../base/LanguagesSelect.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
     $$PWD/interface/WithAnotherPlayer.ui \
-    $$PWD/interface/GetPrice.ui
+    $$PWD/interface/GetPrice.ui \
+    ../base/LanguagesSelect.ui
 
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
 
 RESOURCES += $$PWD/resources/client-resources.qrc \
     $$PWD/../crafting/resources/client-resources-plant.qrc \
     $$PWD/../fight/resources/client-resources-fight.qrc
+
+TRANSLATIONS    = $$PWD/resources/languages/en/translation.ts \
+    $$PWD/languages/fr/translation.ts
