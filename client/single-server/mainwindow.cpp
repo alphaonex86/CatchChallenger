@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
     numberForFlood=0;
     haveShowDisconnectionReason=false;
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
+    CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
 
     ui->label_login_register->setText(QString("<a href=\"%1\"><span style=\"text-decoration:underline;color:#0057ae;\">Register</span></a>").arg(REGISTER_URL));

@@ -142,7 +142,7 @@ void DatapackClientLoader::parseItemsExtra()
                         DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra[id].image.scaled(72,72);//then zoom: 3x
 
                         //load the name
-                        const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+                        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
                         bool name_found=false;
                         QDomElement name = item.firstChildElement("name");
                         if(!language.isEmpty() && language!="en")
@@ -356,7 +356,7 @@ void DatapackClientLoader::parseQuestsExtra()
 
         //load name
         QDomElement name = root.firstChildElement("name");
-        const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         bool found=false;
         if(!language.isEmpty() && language!="en")
             while(!name.isNull())
@@ -547,7 +547,7 @@ void DatapackClientLoader::parseQuestsText()
                     if(ok)
                     {
                         QDomElement text = client_logic.firstChildElement("text");
-                        const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+                        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
                         bool found=false;
                         if(!language.isEmpty() && language!="en")
                             while(!text.isNull())
@@ -723,7 +723,7 @@ void DatapackClientLoader::parseZoneExtra()
 
         //load name
         QDomElement name = root.firstChildElement("name");
-        const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         bool found=false;
         if(!language.isEmpty() && language!="en")
             while(!name.isNull())

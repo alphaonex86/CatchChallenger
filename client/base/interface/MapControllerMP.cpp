@@ -22,6 +22,15 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
 
     resetAll();
 
+    scaleSize=1;
+}
+
+MapControllerMP::~MapControllerMP()
+{
+}
+
+void MapControllerMP::connectAllSignals()
+{
     //connect the map controler
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,   this,&MapControllerMP::have_current_player_info,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_player,              this,&MapControllerMP::insert_player,Qt::QueuedConnection);
@@ -31,12 +40,6 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer,const bool &debugTag
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::reinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection);
     connect(this,&MapControllerMP::send_player_direction,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::send_player_direction);//,Qt::QueuedConnection
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,                 this,&MapControllerMP::teleportTo,Qt::QueuedConnection);
-
-    scaleSize=1;
-}
-
-MapControllerMP::~MapControllerMP()
-{
 }
 
 void MapControllerMP::resetAll()

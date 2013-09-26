@@ -21,6 +21,7 @@ SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
         delete CatchChallenger::BaseWindow::baseWindow;
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->addWidget(solowindow);

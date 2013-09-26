@@ -580,7 +580,7 @@ QString SoloWindow::getMapName(const QString &file)
         CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
-    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     QDomElement item = root.firstChildElement("name");
     if(!language.isEmpty() && language!="en")
         while(!item.isNull())
@@ -676,7 +676,7 @@ QString SoloWindow::getZoneName(const QString &zone)
 
     //load the content
     QDomElement item = root.firstChildElement("name");
-    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     while(!item.isNull())
     {
         if(item.isElement())

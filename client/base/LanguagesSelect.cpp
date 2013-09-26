@@ -11,7 +11,7 @@
 #include <QDebug>
 #include <QLibraryInfo>
 
-LanguagesSelect LanguagesSelect::languagesSelect;
+LanguagesSelect *LanguagesSelect::languagesSelect=NULL;
 
 LanguagesSelect::LanguagesSelect() :
     ui(new Ui::LanguagesSelect)
