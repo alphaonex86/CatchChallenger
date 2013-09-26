@@ -15,7 +15,7 @@ class LanguagesSelect : public QDialog
 {
     Q_OBJECT
 public:
-    static LanguagesSelect languagesSelect;
+    static LanguagesSelect *languagesSelect;
     explicit LanguagesSelect();
     ~LanguagesSelect();
     struct Language

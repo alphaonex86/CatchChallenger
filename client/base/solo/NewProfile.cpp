@@ -55,7 +55,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
         if(startItem.isElement())
         {
             Profile profile;
-            const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+            const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
             bool found=false;
             QDomElement name = startItem.firstChildElement("name");
             if(!language.isEmpty() && language!="en")

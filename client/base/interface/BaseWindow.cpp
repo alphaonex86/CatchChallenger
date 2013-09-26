@@ -71,6 +71,95 @@ BaseWindow::BaseWindow() :
     doNextActionTimer.setSingleShot(true);
     doNextActionTimer.setInterval(1500);
 
+
+    connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setVisible,Qt::QueuedConnection);
+
+
+
+    //connect the datapack loader
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
+    connect(this,                                   &BaseWindow::parseDatapack,             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
+    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
+
+    //render, logical part into Map_Client
+    connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of);
+    connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn);
+    connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn);
+    connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error);
+    connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap);
+
+    //fight
+    connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
+    connect(MapController::mapController,   &MapController::botFightCollision,      this,&BaseWindow::botFightCollision);
+    connect(MapController::mapController,   &MapController::currentMapLoaded,       this,&BaseWindow::currentMapLoaded);
+    connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom);
+    connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop);
+    connect(&moveFightMonsterBothTimer,     &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBoth);
+    connect(&displayAttackTimer,            &QTimer::timeout,                       this,&BaseWindow::displayAttack);
+    connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap);
+    connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
+
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
+    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
+
+    connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX);
+
+    connect(&tip_timeout,&QTimer::timeout,              this,&BaseWindow::tipTimeout);
+    connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout);
+    connect(&nextCityCaptureTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
+    connect(&updater_page_zonecapture,&QTimer::timeout, this,&BaseWindow::updatePageZonecapture);
+
+    renderFrame = new QFrame(ui->page_map);
+    renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
+    renderFrame->setMinimumSize(QSize(600, 572));
+    QVBoxLayout *renderLayout = new QVBoxLayout(renderFrame);
+    renderLayout->setSpacing(0);
+    renderLayout->setContentsMargins(0, 0, 0, 0);
+    renderLayout->setObjectName(QString::fromUtf8("renderLayout"));
+    renderLayout->addWidget(MapController::mapController);
+    renderFrame->setGeometry(QRect(0, 0, 800, 516));
+    renderFrame->lower();
+    renderFrame->lower();
+    renderFrame->lower();
+    ui->labelFightTrap->hide();
+    nextCityCaptureTimer.setSingleShot(true);
+    updater_page_zonecapture.setSingleShot(false);
+
+    Chat::chat->setGeometry(QRect(0, 0, 250, 400));
+
+    resetAll();
+    loadSettings();
+
+    MapController::mapController->setFocus();
+
+    /// \todo able to cancel quest
+    ui->cancelQuest->hide();
+
+    audioReadThread.start(QThread::IdlePriority);
+}
+
+BaseWindow::~BaseWindow()
+{
+    while(!ambiance.isEmpty())
+    {
+        delete ambiance.first();
+        ambiance.removeFirst();
+    }
+    audioReadThread.quit();
+    audioReadThread.wait();
+    if(movie!=NULL)
+        delete movie;
+    delete ui;
+    delete MapController::mapController;
+    MapController::mapController=NULL;
+    delete Chat::chat;
+    Chat::chat=NULL;
+}
+
+void BaseWindow::connectAllSignals()
+{
+    MapController::mapController->connectAllSignals();
+
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::error,              this,&BaseWindow::error,            Qt::QueuedConnection);
@@ -106,34 +195,6 @@ BaseWindow::BaseWindow() :
     //chat
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::new_chat_text,  Chat::chat,&Chat::new_chat_text);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::new_system_text,Chat::chat,&Chat::new_system_text);
-    connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setVisible,Qt::QueuedConnection);
-
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::number_of_player,this,&BaseWindow::number_of_player);
-
-    //connect the datapack loader
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
-    connect(this,                                   &BaseWindow::parseDatapack,             &DatapackClientLoader::datapackLoader,  &DatapackClientLoader::parseDatapack,Qt::QueuedConnection);
-    connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  MapController::mapController,           &MapController::datapackParsed,Qt::QueuedConnection);
-
-    //render, logical part into Map_Client
-    connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of);
-    connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn);
-    connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn);
-    connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error);
-    connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap);
-
-    //fight
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::random_seeds,&ClientFightEngine::fightEngine,&ClientFightEngine::newRandomNumber);
-    connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
-    connect(MapController::mapController,   &MapController::botFightCollision,      this,&BaseWindow::botFightCollision);
-    connect(MapController::mapController,   &MapController::currentMapLoaded,       this,&BaseWindow::currentMapLoaded);
-    connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom);
-    connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop);
-    connect(&moveFightMonsterBothTimer,     &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBoth);
-    connect(&displayAttackTimer,            &QTimer::timeout,                       this,&BaseWindow::displayAttack);
-    connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap);
-    connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection);
 
     //plants
     connect(this,&BaseWindow::useSeed,              CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::useSeed);
@@ -178,63 +239,11 @@ BaseWindow::BaseWindow() :
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster);
     connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFile,            this,&BaseWindow::newDatapackFile);
 
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::newError,  this,&BaseWindow::newError);
-    connect(&CatchChallenger::ClientFightEngine::fightEngine,&ClientFightEngine::error,     this,&BaseWindow::error);
-
     connect(this,&BaseWindow::destroyObject,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::destroyObject);
-    connect(&updateRXTXTimer,&QTimer::timeout,          this,&BaseWindow::updateRXTX);
-
-    connect(&tip_timeout,&QTimer::timeout,              this,&BaseWindow::tipTimeout);
-    connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout);
-    connect(&nextCityCaptureTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
-    connect(&updater_page_zonecapture,&QTimer::timeout, this,&BaseWindow::updatePageZonecapture);
-
-    renderFrame = new QFrame(ui->page_map);
-    renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
-    renderFrame->setMinimumSize(QSize(600, 572));
-    QVBoxLayout *renderLayout = new QVBoxLayout(renderFrame);
-    renderLayout->setSpacing(0);
-    renderLayout->setContentsMargins(0, 0, 0, 0);
-    renderLayout->setObjectName(QString::fromUtf8("renderLayout"));
-    renderLayout->addWidget(MapController::mapController);
-    renderFrame->setGeometry(QRect(0, 0, 800, 516));
-    renderFrame->lower();
-    renderFrame->lower();
-    renderFrame->lower();
-    ui->labelFightTrap->hide();
-    nextCityCaptureTimer.setSingleShot(true);
-    updater_page_zonecapture.setSingleShot(false);
-
-    Chat::chat->setGeometry(QRect(0, 0, 250, 400));
-
-    resetAll();
-    loadSettings();
-
-    MapController::mapController->setFocus();
-
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::number_of_player,this,&BaseWindow::number_of_player);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::random_seeds,&ClientFightEngine::fightEngine,&ClientFightEngine::newRandomNumber);
     CatchChallenger::Api_client_real::client->startReadData();
-    /// \todo able to cancel quest
-    ui->cancelQuest->hide();
-
-    audioReadThread.start(QThread::IdlePriority);
-}
-
-BaseWindow::~BaseWindow()
-{
-    while(!ambiance.isEmpty())
-    {
-        delete ambiance.first();
-        ambiance.removeFirst();
-    }
-    audioReadThread.quit();
-    audioReadThread.wait();
-    if(movie!=NULL)
-        delete movie;
-    delete ui;
-    delete MapController::mapController;
-    MapController::mapController=NULL;
-    delete Chat::chat;
-    Chat::chat=NULL;
 }
 
 void BaseWindow::tradeRequested(const QString &pseudo,const quint8 &skinInt)
@@ -1302,6 +1311,8 @@ void BaseWindow::currentMapLoaded()
 //network
 void BaseWindow::updateRXTX()
 {
+    if(CatchChallenger::Api_client_real::client==NULL)
+        return;
     quint64 RXSize=CatchChallenger::Api_client_real::client->getRXSize();
     quint64 TXSize=CatchChallenger::Api_client_real::client->getTXSize();
     if(previousRXSize>RXSize)
@@ -1796,7 +1807,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
     }
     if(actualBot.step[step].attribute("type")=="text")
     {
-        const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         QDomElement text = actualBot.step[step].firstChildElement("text");
         if(!language.isEmpty() && language!="en")
             while(!text.isNull())
