@@ -17,6 +17,7 @@ public:
     explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
     ~MapController();
     static MapController *mapController;
+    virtual void connectAllSignals();
     virtual void resetAll();
 private:
     //the delayed action

@@ -18,6 +18,7 @@ public:
     ~MapControllerMP();
 
     virtual void resetAll();
+    virtual void connectAllSignals();
     void setScale(const float &scaleSize);
 public slots:
     //map move

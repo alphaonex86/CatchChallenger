@@ -50,6 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
     mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
     qSort(mergedConnexionInfoList);
     displayServerList();
+    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
     //connect(CatchChallenger::BaseWindow::baseWindow,                &CatchChallenger::BaseWindow::needQuit,             this,&MainWindow::needQuit);
 
@@ -66,6 +68,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+    {
+        CatchChallenger::BaseWindow::baseWindow->deleteLater();
+        CatchChallenger::BaseWindow::baseWindow=NULL;
+    }
     if(CatchChallenger::Api_client_real::client!=NULL)
     {
         CatchChallenger::Api_client_real::client->tryDisconnect();
@@ -201,7 +208,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                 {
                     connexionInfo.port=temp_port;
                     QDomElement lang;
-                    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+                    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
                     bool found=false;
                     if(!language.isEmpty() && language!="en")
                     {
@@ -553,8 +560,6 @@ void MainWindow::resetAll()
             ui->stackedWidget->setCurrentWidget(ui->mode);
         break;
     }
-    CatchChallenger::BaseWindow::baseWindow->deleteLater();
-    CatchChallenger::BaseWindow::baseWindow=NULL;
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
@@ -637,11 +642,8 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
-    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
-        delete CatchChallenger::BaseWindow::baseWindow;
-    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
-    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(serverConnexion[selectedServer]->host,serverConnexion[selectedServer]->port);
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
@@ -806,7 +808,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
     returnVar.second=tr("Unknown");
     item = root.firstChildElement("name");
     bool found=false;
-    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     if(!language.isEmpty() && language!="en")
         while(!item.isNull())
         {
@@ -1036,12 +1038,9 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
-    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
-        delete CatchChallenger::BaseWindow::baseWindow;
-    CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
+    CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
     serverMode=ServerMode_Internal;
-    ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);

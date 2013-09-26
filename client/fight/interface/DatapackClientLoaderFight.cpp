@@ -40,7 +40,7 @@ void DatapackClientLoader::parseMonstersExtra()
         return;
     }
 
-    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     //load the content
     bool ok;
     QDomElement item = root.firstChildElement("monster");
@@ -207,7 +207,7 @@ void DatapackClientLoader::parseBuffExtra()
         return;
     }
 
-    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     //load the content
     bool ok;
     QDomElement item = root.firstChildElement("buff");
@@ -368,7 +368,7 @@ void DatapackClientLoader::parseSkillsExtra()
         return;
     }
 
-    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     bool found;
     //load the content
     bool ok;
@@ -499,7 +499,7 @@ void DatapackClientLoader::parseSkillsExtra()
 
 void DatapackClientLoader::parseBotFightsExtra()
 {
-    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     bool found;
     QDir dir(datapackPath+DATAPACK_BASE_PATH_FIGHT);
     QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
