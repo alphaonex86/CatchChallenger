@@ -14,15 +14,16 @@ class LanguagesSelect;
 class LanguagesSelect : public QDialog
 {
     Q_OBJECT
-
 public:
-    explicit LanguagesSelect(QWidget *parent = 0);
+    static LanguagesSelect languagesSelect;
+    explicit LanguagesSelect();
     ~LanguagesSelect();
     struct Language
     {
         QString fullName;
         QString path;
     };
+    QString getCurrentLanguages();
 public slots:
     void show();
     void updateContent();

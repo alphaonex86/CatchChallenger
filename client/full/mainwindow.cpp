@@ -11,6 +11,7 @@
 
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
+#include "../base/LanguagesSelect.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -199,31 +200,67 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                 else
                 {
                     connexionInfo.port=temp_port;
-                    QDomElement lang = server.firstChildElement("lang");
-                    while(!lang.isNull())
+                    QDomElement lang;
+                    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+                    bool found=false;
+                    if(!language.isEmpty() && language!="en")
                     {
-                        if(lang.isElement())
+                        lang = server.firstChildElement("lang");
+                        while(!lang.isNull())
                         {
-                            if(!lang.hasAttribute("lang") || lang.attribute("lang")=="en")
+                            if(lang.isElement())
                             {
-                                QDomElement name = lang.firstChildElement("name");
-                                if(!name.isNull())
-                                    connexionInfo.name=name.text();
-                                QDomElement register_page = lang.firstChildElement("register_page");
-                                if(!register_page.isNull())
-                                    connexionInfo.register_page=register_page.text();
-                                QDomElement lost_passwd_page = lang.firstChildElement("lost_passwd_page");
-                                if(!lost_passwd_page.isNull())
-                                    connexionInfo.lost_passwd_page=lost_passwd_page.text();
-                                QDomElement site_page = lang.firstChildElement("site_page");
-                                if(!site_page.isNull())
-                                    connexionInfo.site_page=site_page.text();
-                                break;
+                                if(lang.hasAttribute("lang") && lang.attribute("lang")==language)
+                                {
+                                    QDomElement name = lang.firstChildElement("name");
+                                    if(!name.isNull())
+                                        connexionInfo.name=name.text();
+                                    QDomElement register_page = lang.firstChildElement("register_page");
+                                    if(!register_page.isNull())
+                                        connexionInfo.register_page=register_page.text();
+                                    QDomElement lost_passwd_page = lang.firstChildElement("lost_passwd_page");
+                                    if(!lost_passwd_page.isNull())
+                                        connexionInfo.lost_passwd_page=lost_passwd_page.text();
+                                    QDomElement site_page = lang.firstChildElement("site_page");
+                                    if(!site_page.isNull())
+                                        connexionInfo.site_page=site_page.text();
+                                    found=true;
+                                    break;
+                                }
                             }
+                            else
+                                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
+                            lang = lang.nextSiblingElement("lang");
                         }
-                        else
-                            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
-                        lang = lang.nextSiblingElement("lang");
+                    }
+                    if(!found)
+                    {
+                        lang = server.firstChildElement("lang");
+                        while(!lang.isNull())
+                        {
+                            if(lang.isElement())
+                            {
+                                if(!lang.hasAttribute("lang") || lang.attribute("lang")=="en")
+                                {
+                                    QDomElement name = lang.firstChildElement("name");
+                                    if(!name.isNull())
+                                        connexionInfo.name=name.text();
+                                    QDomElement register_page = lang.firstChildElement("register_page");
+                                    if(!register_page.isNull())
+                                        connexionInfo.register_page=register_page.text();
+                                    QDomElement lost_passwd_page = lang.firstChildElement("lost_passwd_page");
+                                    if(!lost_passwd_page.isNull())
+                                        connexionInfo.lost_passwd_page=lost_passwd_page.text();
+                                    QDomElement site_page = lang.firstChildElement("site_page");
+                                    if(!site_page.isNull())
+                                        connexionInfo.site_page=site_page.text();
+                                    break;
+                                }
+                            }
+                            else
+                                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
+                            lang = lang.nextSiblingElement("lang");
+                        }
                     }
                     settings.beginGroup(QString("Xml-%1").arg(server.attribute("unique_code")));
                     if(settings.contains("connexionCounter"))
@@ -768,25 +805,37 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
 
     returnVar.second=tr("Unknown");
     item = root.firstChildElement("name");
-    while(!item.isNull())
-    {
-        if(item.isElement())
+    bool found=false;
+    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    if(!language.isEmpty() && language!="en")
+        while(!item.isNull())
         {
-            if(item.hasAttribute("lang"))
+            if(item.isElement())
             {
-                if(item.attribute("lang")=="en")
+                if(item.hasAttribute("lang") && item.attribute("lang")==language)
+                {
+                    returnVar.second=item.text();
+                    found=true;
+                    break;
+                }
+            }
+            item = item.nextSiblingElement("name");
+        }
+    if(!found)
+    {
+        root.firstChildElement("name");
+        while(!item.isNull())
+        {
+            if(item.isElement())
+            {
+                if(!item.hasAttribute("lang") || item.attribute("lang")=="en")
                 {
                     returnVar.second=item.text();
                     break;
                 }
             }
-            else
-            {
-                returnVar.second=item.text();
-                break;
-            }
+            item = item.nextSiblingElement("name");
         }
-        item = item.nextSiblingElement("name");
     }
     return returnVar;
 }

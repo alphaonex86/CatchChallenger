@@ -11,8 +11,9 @@
 #include <QDebug>
 #include <QLibraryInfo>
 
-LanguagesSelect::LanguagesSelect(QWidget *parent) :
-    QDialog(parent),
+LanguagesSelect LanguagesSelect::languagesSelect;
+
+LanguagesSelect::LanguagesSelect() :
     ui(new Ui::LanguagesSelect)
 {
     ui->setupUi(this);
@@ -117,6 +118,11 @@ LanguagesSelect::LanguagesSelect(QWidget *parent) :
 LanguagesSelect::~LanguagesSelect()
 {
     delete ui;
+}
+
+QString LanguagesSelect::getCurrentLanguages()
+{
+    return currentLanguage;
 }
 
 void LanguagesSelect::show()

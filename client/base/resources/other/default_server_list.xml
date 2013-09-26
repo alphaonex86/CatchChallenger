@@ -6,5 +6,11 @@
 			<lost_passwd_page>http://catchchallenger.first-world.info/lost_password.html</lost_passwd_page>
 			<site_page>http://catchchallenger.first-world.info/</site_page>
 		</lang>
+		<lang lang="fr">
+			<name>Serveur Officiel de CatchChallenger</name>
+			<register_page>http://catchchallenger.first-world.info/register.html</register_page>
+			<lost_passwd_page>http://catchchallenger.first-world.info/lost_password.html</lost_passwd_page>
+			<site_page>http://catchchallenger.first-world.info/</site_page>
+		</lang>
 	</server>
 </servers>

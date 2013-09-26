@@ -9,6 +9,7 @@
 #include "Chat.h"
 #include "WithAnotherPlayer.h"
 #include "GetPrice.h"
+#include "../LanguagesSelect.h"
 #include "../Options.h"
 
 #include <QListWidgetItem>
@@ -1795,14 +1796,25 @@ void BaseWindow::goToBotStep(const quint8 &step)
     }
     if(actualBot.step[step].attribute("type")=="text")
     {
+        const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
         QDomElement text = actualBot.step[step].firstChildElement("text");
+        if(!language.isEmpty() && language!="en")
+            while(!text.isNull())
+            {
+                if(text.hasAttribute("lang") && text.attribute("lang")==language)
+                {
+                    QString textToShow=text.text();
+                    textToShow=parseHtmlToDisplay(textToShow);
+                    ui->IG_dialog_text->setText(textToShow);
+                    ui->IG_dialog->setVisible(true);
+                    return;
+                }
+                text = actualBot.step[step].nextSiblingElement("text");
+            }
+        text = actualBot.step[step].firstChildElement("text");
         while(!text.isNull())
         {
-            if(text.hasAttribute("lang") && text.attribute("lang")!="en")
-            {
-                //not enlish, skip for now
-            }
-            else
+            if(!text.hasAttribute("lang") || text.attribute("lang")=="en")
             {
                 QString textToShow=text.text();
                 textToShow=parseHtmlToDisplay(textToShow);
