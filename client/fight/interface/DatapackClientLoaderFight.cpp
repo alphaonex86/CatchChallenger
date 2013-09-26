@@ -1,4 +1,5 @@
 #include "../../base/interface/DatapackClientLoader.h"
+#include "../../base/LanguagesSelect.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/DebugClass.h"
@@ -39,6 +40,7 @@ void DatapackClientLoader::parseMonstersExtra()
         return;
     }
 
+    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
     //load the content
     bool ok;
     QDomElement item = root.firstChildElement("monster");
@@ -61,29 +63,77 @@ void DatapackClientLoader::parseMonstersExtra()
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         CatchChallenger::DebugClass::debugConsole(QString("monster extra loading: %1").arg(id));
                         #endif
+                        bool found=false;
                         QDomElement name = item.firstChildElement("name");
-                        while(!name.isNull())
-                        {
-                            if(name.isElement() && name.hasAttribute("lang"))
+                        if(!language.isEmpty() && language!="en")
+                            while(!name.isNull())
                             {
-                                if(name.attribute("lang")=="en")
-                                    monsterExtraEntry.name=name.text();
+                                if(name.isElement())
+                                {
+                                    if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                                    {
+                                        monsterExtraEntry.name=name.text();
+                                        found=true;
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                name = name.nextSiblingElement("name");
                             }
-                            else
-                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            name = name.nextSiblingElement("name");
+                        if(!found)
+                        {
+                            name = item.firstChildElement("name");
+                            while(!name.isNull())
+                            {
+                                if(name.isElement())
+                                {
+                                    if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                                    {
+                                        monsterExtraEntry.name=name.text();
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                name = name.nextSiblingElement("name");
+                            }
                         }
+                        found=false;
                         QDomElement description = item.firstChildElement("description");
-                        while(!description.isNull())
-                        {
-                            if(description.isElement() && description.hasAttribute("lang"))
+                        if(!language.isEmpty() && language!="en")
+                            while(!description.isNull())
                             {
-                                if(description.attribute("lang")=="en")
-                                    monsterExtraEntry.description=description.text();
+                                if(description.isElement())
+                                {
+                                    if(description.hasAttribute("lang") && description.attribute("lang")==language)
+                                    {
+                                            monsterExtraEntry.description=description.text();
+                                            found=true;
+                                            break;
+                                    }
+                                    else
+                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                }
+                                description = description.nextSiblingElement("description");
                             }
-                            else
-                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            description = description.nextSiblingElement("description");
+                        if(!found)
+                        {
+                            description = item.firstChildElement("description");
+                            while(!description.isNull())
+                            {
+                                if(description.isElement())
+                                {
+                                    if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
+                                    {
+                                            monsterExtraEntry.description=description.text();
+                                            break;
+                                    }
+                                    else
+                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                }
+                                description = description.nextSiblingElement("description");
+                            }
                         }
                         if(monsterExtraEntry.name.isEmpty())
                             monsterExtraEntry.name=tr("Unknown");
@@ -157,6 +207,7 @@ void DatapackClientLoader::parseBuffExtra()
         return;
     }
 
+    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
     //load the content
     bool ok;
     QDomElement item = root.firstChildElement("buff");
@@ -179,29 +230,77 @@ void DatapackClientLoader::parseBuffExtra()
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         CatchChallenger::DebugClass::debugConsole(QString("monster extra loading: %1").arg(id));
                         #endif
+                        bool found=false;
                         QDomElement name = item.firstChildElement("name");
-                        while(!name.isNull())
-                        {
-                            if(name.isElement() && name.hasAttribute("lang"))
+                        if(!language.isEmpty() && language!="en")
+                            while(!name.isNull())
                             {
-                                if(name.attribute("lang")=="en")
-                                    monsterBuffExtraEntry.name=name.text();
+                                if(name.isElement())
+                                {
+                                    if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                                    {
+                                        monsterBuffExtraEntry.name=name.text();
+                                        found=true;
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                name = name.nextSiblingElement("name");
                             }
-                            else
-                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            name = name.nextSiblingElement("name");
+                        if(!found)
+                        {
+                            name = item.firstChildElement("name");
+                            while(!name.isNull())
+                            {
+                                if(name.isElement())
+                                {
+                                    if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                                    {
+                                        monsterBuffExtraEntry.name=name.text();
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                name = name.nextSiblingElement("name");
+                            }
                         }
+                        found=false;
                         QDomElement description = item.firstChildElement("description");
-                        while(!description.isNull())
-                        {
-                            if(description.isElement() && description.hasAttribute("lang"))
+                        if(!language.isEmpty() && language!="en")
+                            while(!description.isNull())
                             {
-                                if(description.attribute("lang")=="en")
-                                    monsterBuffExtraEntry.description=description.text();
+                                if(description.isElement())
+                                {
+                                    if(description.hasAttribute("lang") && description.attribute("lang")==language)
+                                    {
+                                        monsterBuffExtraEntry.description=description.text();
+                                        found=true;
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                description = description.nextSiblingElement("description");
                             }
-                            else
-                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            description = description.nextSiblingElement("description");
+                        if(!found)
+                        {
+                            description = item.firstChildElement("description");
+                            while(!description.isNull())
+                            {
+                                if(description.isElement())
+                                {
+                                    if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
+                                    {
+                                        monsterBuffExtraEntry.description=description.text();
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                description = description.nextSiblingElement("description");
+                            }
                         }
                         if(monsterBuffExtraEntry.name.isEmpty())
                             monsterBuffExtraEntry.name=tr("Unknown");
@@ -269,6 +368,8 @@ void DatapackClientLoader::parseSkillsExtra()
         return;
     }
 
+    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    bool found;
     //load the content
     bool ok;
     QDomElement item = root.firstChildElement("skill");
@@ -291,29 +392,77 @@ void DatapackClientLoader::parseSkillsExtra()
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         CatchChallenger::DebugClass::debugConsole(QString("monster extra loading: %1").arg(id));
                         #endif
+                        found=false;
                         QDomElement name = item.firstChildElement("name");
-                        while(!name.isNull())
-                        {
-                            if(name.isElement() && name.hasAttribute("lang"))
+                        if(!language.isEmpty() && language!="en")
+                            while(!name.isNull())
                             {
-                                if(name.attribute("lang")=="en")
-                                    monsterSkillExtraEntry.name=name.text();
+                                if(name.isElement())
+                                {
+                                    if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                                    {
+                                        monsterSkillExtraEntry.name=name.text();
+                                        found=true;
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                name = name.nextSiblingElement("name");
                             }
-                            else
-                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            name = name.nextSiblingElement("name");
+                        if(!found)
+                        {
+                            name = item.firstChildElement("name");
+                            while(!name.isNull())
+                            {
+                                if(name.isElement())
+                                {
+                                    if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                                    {
+                                        monsterSkillExtraEntry.name=name.text();
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                name = name.nextSiblingElement("name");
+                            }
                         }
+                        found=false;
                         QDomElement description = item.firstChildElement("description");
-                        while(!description.isNull())
-                        {
-                            if(description.isElement() && description.hasAttribute("lang"))
+                        if(!language.isEmpty() && language!="en")
+                            while(!description.isNull())
                             {
-                                if(description.attribute("lang")=="en")
-                                    monsterSkillExtraEntry.description=description.text();
+                                if(description.isElement())
+                                {
+                                    if(description.hasAttribute("lang") && description.attribute("lang")==language)
+                                    {
+                                        monsterSkillExtraEntry.description=description.text();
+                                        found=true;
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                description = description.nextSiblingElement("description");
                             }
-                            else
-                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                            description = description.nextSiblingElement("description");
+                        if(!found)
+                        {
+                            description = item.firstChildElement("description");
+                            while(!description.isNull())
+                            {
+                                if(description.isElement())
+                                {
+                                    if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
+                                    {
+                                        monsterSkillExtraEntry.description=description.text();
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                description = description.nextSiblingElement("description");
+                            }
                         }
                         if(monsterSkillExtraEntry.name.isEmpty())
                             monsterSkillExtraEntry.name=tr("Unknown");
@@ -350,6 +499,8 @@ void DatapackClientLoader::parseSkillsExtra()
 
 void DatapackClientLoader::parseBotFightsExtra()
 {
+    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+    bool found;
     QDir dir(datapackPath+DATAPACK_BASE_PATH_FIGHT);
     QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
     int index_file=0;
@@ -405,29 +556,77 @@ void DatapackClientLoader::parseBotFightsExtra()
                                     botFightExtra.start=tr("Ready for the fight?");
                                     botFightExtra.win=tr("You are so strong for me!");
                                     {
+                                        found=false;
                                         QDomElement start = item.firstChildElement("start");
-                                        while(!start.isNull())
-                                        {
-                                            if(start.isElement() && start.hasAttribute("lang"))
+                                        if(!language.isEmpty() && language!="en")
+                                            while(!start.isNull())
                                             {
-                                                if(start.attribute("lang")=="en")
-                                                    botFightExtra.start=start.text();
+                                                if(start.isElement())
+                                                {
+                                                    if(start.hasAttribute("lang") && start.attribute("lang")==language)
+                                                    {
+                                                        botFightExtra.start=start.text();
+                                                        found=true;
+                                                        break;
+                                                    }
+                                                }
+                                                else
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                start = start.nextSiblingElement("start");
                                             }
-                                            else
-                                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                            start = start.nextSiblingElement("start");
+                                        if(!found)
+                                        {
+                                            start = item.firstChildElement("start");
+                                            while(!start.isNull())
+                                            {
+                                                if(start.isElement())
+                                                {
+                                                    if(!start.hasAttribute("lang") || start.attribute("lang")=="en")
+                                                    {
+                                                        botFightExtra.start=start.text();
+                                                        break;
+                                                    }
+                                                }
+                                                else
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                start = start.nextSiblingElement("start");
+                                            }
                                         }
+                                        found=false;
                                         QDomElement win = item.firstChildElement("win");
-                                        while(!win.isNull())
-                                        {
-                                            if(win.isElement() && win.hasAttribute("lang"))
+                                        if(!language.isEmpty() && language!="en")
+                                            while(!win.isNull())
                                             {
-                                                if(win.attribute("lang")=="en")
-                                                    botFightExtra.win=win.text();
+                                                if(win.isElement())
+                                                {
+                                                    if(win.hasAttribute("lang") && win.attribute("lang")==language)
+                                                    {
+                                                        botFightExtra.win=win.text();
+                                                        found=true;
+                                                        break;
+                                                    }
+                                                }
+                                                else
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                win = win.nextSiblingElement("win");
                                             }
-                                            else
-                                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                            win = win.nextSiblingElement("win");
+                                        if(!found)
+                                        {
+                                            win = item.firstChildElement("win");
+                                            while(!win.isNull())
+                                            {
+                                                if(win.isElement())
+                                                {
+                                                    if(!win.hasAttribute("lang") || win.attribute("lang")=="en")
+                                                    {
+                                                        botFightExtra.win=win.text();
+                                                        break;
+                                                    }
+                                                }
+                                                else
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                win = win.nextSiblingElement("win");
+                                            }
                                         }
                                     }
                                     botFightsExtra[id]=botFightExtra;
