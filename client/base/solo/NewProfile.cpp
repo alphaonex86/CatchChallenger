@@ -10,6 +10,7 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/DebugClass.h"
 #include "../base/interface/DatapackClientLoader.h"
+#include "../base/LanguagesSelect.h"
 
 NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     QDialog(parent),
@@ -54,18 +55,38 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
         if(startItem.isElement())
         {
             Profile profile;
+            const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
+            bool found=false;
             QDomElement name = startItem.firstChildElement("name");
-            while(!name.isNull())
-            {
-                if(name.isElement())
+            if(!language.isEmpty() && language!="en")
+                while(!name.isNull())
                 {
-                    if(name.hasAttribute("lang") && name.attribute("lang")=="en")
+                    if(name.isElement())
                     {
-                        profile.name=name.text();
-                        break;
+                        if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                        {
+                            profile.name=name.text();
+                            found=true;
+                            break;
+                        }
                     }
+                    name = name.nextSiblingElement("name");
                 }
-                name = name.nextSiblingElement("name");
+            if(!found)
+            {
+                name = startItem.firstChildElement("name");
+                while(!name.isNull())
+                {
+                    if(name.isElement())
+                    {
+                        if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                        {
+                            profile.name=name.text();
+                            break;
+                        }
+                    }
+                    name = name.nextSiblingElement("name");
+                }
             }
             if(profile.name.isEmpty())
             {
@@ -73,18 +94,37 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
                 startItem = startItem.nextSiblingElement("start");
                 continue;
             }
+            found=false;
             QDomElement description = startItem.firstChildElement("description");
-            while(!description.isNull())
-            {
-                if(description.isElement())
+            if(!language.isEmpty() && language!="en")
+                while(!description.isNull())
                 {
-                    if(description.hasAttribute("lang") && description.attribute("lang")=="en")
+                    if(description.isElement())
                     {
-                        profile.description=description.text();
-                        break;
+                        if(description.hasAttribute("lang") && description.attribute("lang")==language)
+                        {
+                            profile.description=description.text();
+                            found=true;
+                            break;
+                        }
                     }
+                    description = description.nextSiblingElement("description");
                 }
-                description = description.nextSiblingElement("description");
+            if(!found)
+            {
+                description = startItem.firstChildElement("description");
+                while(!description.isNull())
+                {
+                    if(description.isElement())
+                    {
+                        if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
+                        {
+                            profile.description=description.text();
+                            break;
+                        }
+                    }
+                    description = description.nextSiblingElement("description");
+                }
             }
             if(profile.description.isEmpty())
             {

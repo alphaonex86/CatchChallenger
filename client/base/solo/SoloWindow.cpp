@@ -8,6 +8,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../base/interface/DatapackClientLoader.h"
+#include "../base/LanguagesSelect.h"
 #include "../fight/interface/ClientFightEngine.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/CommonDatapack.h"
@@ -579,13 +580,22 @@ QString SoloWindow::getMapName(const QString &file)
         CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
+    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
     QDomElement item = root.firstChildElement("name");
+    if(!language.isEmpty() && language!="en")
+        while(!item.isNull())
+        {
+            if(item.isElement())
+                if(item.hasAttribute("lang") && item.attribute("lang")==language)
+                    return item.text();
+            item = item.nextSiblingElement("name");
+        }
+    item = root.firstChildElement("name");
     while(!item.isNull())
     {
         if(item.isElement())
-            if(item.hasAttribute("lang"))
-                if(item.attribute("lang")=="en")
-                    return item.text();
+            if(!item.hasAttribute("lang") || item.attribute("lang")=="en")
+                return item.text();
         item = item.nextSiblingElement("name");
     }
     return QString();
@@ -666,12 +676,20 @@ QString SoloWindow::getZoneName(const QString &zone)
 
     //load the content
     QDomElement item = root.firstChildElement("name");
+    const QString &language=LanguagesSelect::languagesSelect.getCurrentLanguages();
     while(!item.isNull())
     {
         if(item.isElement())
-            if(item.hasAttribute("lang"))
-                if(item.attribute("lang")=="en")
-                    return item.text();
+            if(item.hasAttribute("lang") && item.attribute("lang")==language)
+                return item.text();
+        item = item.nextSiblingElement("name");
+    }
+    item = root.firstChildElement("name");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+            if(!item.hasAttribute("lang") || item.attribute("lang")=="en")
+                return item.text();
         item = item.nextSiblingElement("name");
     }
     return QString();
