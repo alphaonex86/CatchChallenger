@@ -41,7 +41,7 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/MapVisualiserThread.cpp \
     $$PWD/interface/QuestJS.cpp \
     $$PWD/interface/GetPrice.cpp \
-    ../base/LanguagesSelect.cpp
+    $$PWD/LanguagesSelect.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/audio/QOggAudioBuffer.h \
@@ -69,13 +69,13 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/render/MapVisualiserThread.h \
     $$PWD/interface/QuestJS.h \
     $$PWD/interface/GetPrice.h \
-    ../base/LanguagesSelect.h
+    $$PWD/LanguagesSelect.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
     $$PWD/interface/WithAnotherPlayer.ui \
     $$PWD/interface/GetPrice.ui \
-    ../base/LanguagesSelect.ui
+    $$PWD/LanguagesSelect.ui
 
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
 

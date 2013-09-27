@@ -66,9 +66,9 @@ void BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const QString &zone)
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
-        showTip(tr("Your clan leader have start a caputre for another city: %1").arg(QString("<b>%1</b>").arg(DatapackClientLoader::datapackLoader.zonesExtra[zone].name)));
+        showTip(tr("Your clan leader have start a capture for another city")+QString(": %1").arg(QString("<b>%1</b>").arg(DatapackClientLoader::datapackLoader.zonesExtra[zone].name)));
     else
-        showTip(tr("Your clan leader have start a caputre for another city"));
+        showTip(tr("Your clan leader have start a capture for another city"));
     zonecapture=false;
 }
 
@@ -107,7 +107,7 @@ void BaseWindow::captureCityWin()
     updater_page_zonecapture.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     if(!zonecaptureName.isEmpty())
-        showTip(tr("Your clan win the city: %1").arg(QString("<b>%1</b>").arg(zonecaptureName)));
+        showTip(tr("Your clan win the city")+QString(": %1").arg(QString("<b>%1</b>").arg(zonecaptureName)));
     else
         showTip(tr("Your clan win the city"));
     zonecapture=false;

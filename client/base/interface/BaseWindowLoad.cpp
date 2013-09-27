@@ -331,7 +331,7 @@ void BaseWindow::updateConnectingStatus()
             return;
         load_monsters();
         show_reputation();
-        this->setWindowTitle(tr("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
+        this->setWindowTitle(QString("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Welcome <b><i>%1</i></b> on <i>CatchChallenger</i>").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         return;

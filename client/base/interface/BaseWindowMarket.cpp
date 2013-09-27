@@ -264,7 +264,7 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
         price=tr("Price: Free");
     QString quantity;
     if(marketObject.quantity>1)
-        quantity=tr(", quantity: %1").arg(marketObject.quantity);
+        quantity=QString(", ")+tr("quantity: %1").arg(marketObject.quantity);
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.objectId))
     {
         item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].image);
@@ -415,7 +415,7 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
 {
     if(!ClientFightEngine::fightEngine.getPlayerMonster().size()>CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
     {
-        QMessageBox::warning(this,tr("Warning"),tr("You can wear this monster more"));
+        QMessageBox::warning(this,tr("Warning"),tr("You can't wear this monster more"));
         return;
     }
     if(marketWithdrawInSuspend)

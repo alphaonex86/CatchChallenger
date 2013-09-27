@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>CatchChallenger</string>
+   <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../resources/client-resources.qrc">
@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>8</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -260,9 +260,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-                  </property>
-                  <property name="text">
-                   <string>...</string>
                   </property>
                  </widget>
                 </item>
@@ -613,9 +610,6 @@ background-image: url(:/images/interface/option-options.png);
 border-image: url(:/images/empty.png);
 }</string>
               </property>
-              <property name="text">
-               <string>...</string>
-              </property>
              </widget>
             </item>
             <item>
@@ -683,9 +677,6 @@ background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
               </property>
-              <property name="text">
-               <string>...</string>
-              </property>
              </widget>
             </item>
             <item>
@@ -752,7 +743,7 @@ background-image: url(:/images/empty.png);</string>
 background-image: url(:/images/empty.png);</string>
                  </property>
                  <property name="text">
-                  <string>?/?</string>
+                  <string notr="true">?/?</string>
                  </property>
                 </widget>
                </item>
@@ -1603,9 +1594,6 @@ background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
              </property>
-             <property name="text">
-              <string>...</string>
-             </property>
             </widget>
            </item>
           </layout>
@@ -1758,9 +1746,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-            </property>
-            <property name="text">
-             <string>...</string>
             </property>
            </widget>
            <widget class="QLabel" name="inventory_name">
@@ -1974,11 +1959,11 @@ padding-bottom:3px;
               <item>
                <widget class="QCheckBox" name="checkBoxZoom">
                 <property name="toolTip">
-                 <string>The other player is displayed in zoom x2 range.
-Without it will be show into the screen, with it it show at the border</string>
+                 <string>The other player is displayed in zoom 2x range.
+Without the zoom 2x, it should have display problem.</string>
                 </property>
                 <property name="text">
-                 <string>Zoom x2 (see tooltip)</string>
+                 <string>Zoom 2x (see tooltip)</string>
                 </property>
                 <property name="checked">
                  <bool>true</bool>
@@ -2064,39 +2049,6 @@ Without it will be show into the screen, with it it show at the border</string>
               <string>Misc</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_11">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_15">
-                <item>
-                 <widget class="QLabel" name="label">
-                  <property name="text">
-                   <string>Language:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_4">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="comboBoxLanguage">
-                  <item>
-                   <property name="text">
-                    <string>English</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-               </layout>
-              </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_56">
                 <item>
@@ -2295,9 +2247,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-             </property>
-             <property name="text">
-              <string>...</string>
              </property>
             </widget>
            </item>
@@ -2703,9 +2652,6 @@ background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
          </property>
-         <property name="text">
-          <string>...</string>
-         </property>
         </widget>
        </widget>
        <widget class="QWidget" name="page_crafting">
@@ -2959,9 +2905,6 @@ background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
          </property>
-         <property name="text">
-          <string>...</string>
-         </property>
         </widget>
        </widget>
        <widget class="QWidget" name="page_shop">
@@ -3114,9 +3057,6 @@ background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
             </property>
-            <property name="text">
-             <string>...</string>
-            </property>
            </widget>
            <widget class="QListWidget" name="shopItemList">
             <property name="geometry">
@@ -3225,7 +3165,7 @@ padding-bottom:3px;
           <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageEnter">
           <layout class="QHBoxLayout" name="horizontalLayout_22">
@@ -3339,9 +3279,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-             </property>
-             <property name="text">
-              <string>...</string>
              </property>
             </widget>
            </item>
@@ -4043,9 +3980,6 @@ background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
              </property>
-             <property name="text">
-              <string>...</string>
-             </property>
             </widget>
            </item>
           </layout>
@@ -4303,7 +4237,7 @@ border-image: url(:/images/empty.png);
              <item>
               <widget class="QLabel" name="tradeOtherStat">
                <property name="text">
-                <string>TextLabel</string>
+                <string></string>
                </property>
               </widget>
              </item>
@@ -4351,9 +4285,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-             </property>
-             <property name="text">
-              <string>...</string>
              </property>
             </widget>
            </item>
@@ -4410,9 +4341,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-            </property>
-            <property name="text">
-             <string>...</string>
             </property>
            </widget>
            <widget class="QLabel" name="label_16">
@@ -5037,9 +4965,6 @@ background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
              </property>
-             <property name="text">
-              <string>...</string>
-             </property>
             </widget>
            </item>
           </layout>
@@ -5348,9 +5273,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-            </property>
-            <property name="text">
-             <string>...</string>
             </property>
            </widget>
            <widget class="QLabel" name="factoryBotImage">
@@ -5777,9 +5699,6 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-            </property>
-            <property name="text">
-             <string>...</string>
             </property>
            </widget>
           </widget>

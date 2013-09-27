@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>CatchChallenger</string>
+   <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../resources/client-resources.qrc">

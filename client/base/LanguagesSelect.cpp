@@ -184,24 +184,32 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
     if(currentLanguage==newLanguage)
         return;
     //unload the old language
-    if(currentLanguage!="en")
+    int indexTranslator=0;
+    while(indexTranslator<installedTranslator.size())
     {
-        int indexTranslator=0;
-        while(indexTranslator<installedTranslator.size())
-        {
-            QCoreApplication::removeTranslator(installedTranslator[indexTranslator]);
-            delete installedTranslator[indexTranslator];
-            indexTranslator++;
-        }
-        installedTranslator.clear();
+        QCoreApplication::removeTranslator(installedTranslator[indexTranslator]);
+        delete installedTranslator[indexTranslator];
+        indexTranslator++;
     }
+    installedTranslator.clear();
     QTranslator *temp;
     QStringList fileToLoad;
     //load the language main
+    QDir dir;
     if(newLanguage=="en")
-        fileToLoad<<":/Languages/en/translation.qm";
+        dir=QDir(":/Languages/en/");
     else
-        fileToLoad<<languagesByMainCode[newLanguage].path+"translation.qm";
+        dir=QDir(languagesByMainCode[newLanguage].path);
+    QFileInfoList fileInfoList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    int index=0;
+    while(index<fileInfoList.size())
+    {
+        const QFileInfo &fileInfo=fileInfoList.at(index);
+        if(fileInfo.suffix()=="qm")
+            fileToLoad << fileInfo.absoluteFilePath();
+        index++;
+    }
+
     int indexTranslationFile=0;
     while(indexTranslationFile<fileToLoad.size())
     {
@@ -220,16 +228,6 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
     {
         QCoreApplication::installTranslator(temp);
         installedTranslator<<temp;
-    }
-    else
-    {
-        if(!temp->load(languagesByMainCode[newLanguage].path+"qt.qm") || temp->isEmpty())
-            delete temp;
-        else
-        {
-            QCoreApplication::installTranslator(temp);
-            installedTranslator<<temp;
-        }
     }
     currentLanguage=newLanguage;
 }
