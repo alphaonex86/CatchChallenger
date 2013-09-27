@@ -2766,7 +2766,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                     if(playerSkill.level>1)
                         item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name).arg(playerSkill.level));
                     else
-                        item=new QListWidgetItem(tr("%1").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name));
+                        item=new QListWidgetItem(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name);
                     item->setText(item->text()+"\n"+DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                     item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                 }
