@@ -101,14 +101,14 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>ok</string>
+        <string>Ok</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pushButton_2">
        <property name="text">
-        <string>cancel</string>
+        <string>Cancel</string>
        </property>
       </widget>
      </item>
