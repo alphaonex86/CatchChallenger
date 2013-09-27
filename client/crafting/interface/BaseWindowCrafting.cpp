@@ -42,7 +42,7 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
             showTip(tr("Plant collected"));
         break;
         case Plant_collect_empty_dirt:
-            showTip(tr("Try collected empty dirt"));
+            showTip(tr("Try collect an empty dirt"));
         break;
         case Plant_collect_owned_by_another_player:
             showTip(tr("This plant had been planted recently by another player"));

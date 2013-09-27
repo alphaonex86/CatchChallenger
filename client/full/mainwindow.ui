@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>CatchChallenger</string>
+   <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../base/resources/client-resources.qrc">
@@ -43,7 +43,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -308,7 +308,7 @@ border: 1px solid rgb(255, 221, 50);
 border-radius:5px;</string>
                   </property>
                   <property name="text">
-                   <string>Loading the server list...</string>
+                   <string>Loading the servers list...</string>
                   </property>
                  </widget>
                 </item>
@@ -567,8 +567,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>750</width>
-                   <height>292</height>
+                   <width>81</width>
+                   <height>39</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
