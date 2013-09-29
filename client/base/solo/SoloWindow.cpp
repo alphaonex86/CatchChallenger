@@ -40,6 +40,7 @@ SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString
     if(standAlone)
         ui->horizontalLayout_main->removeItem(ui->horizontalSpacer_Back);
     ui->SaveGame_Back->setVisible(!standAlone);
+    ui->languages->setVisible(standAlone);
     ui->SaveGame_New->setEnabled(datapackPathExists);
 
     newProfile=NULL;
@@ -937,4 +938,9 @@ void SoloWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 void SoloWindow::on_SaveGame_Back_clicked()
 {
     emit back();
+}
+
+void SoloWindow::on_languages_clicked()
+{
+    LanguagesSelect::languagesSelect->exec();
 }

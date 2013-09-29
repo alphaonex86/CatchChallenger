@@ -265,10 +265,6 @@ void NormalServer::start_internal_benchmark(quint16 second,quint16 number_of_cli
     stat=InUp;
     load_settings();
     //firstly get the spawn point
-    if(benchmark_map)
-        GlobalServerData::serverPrivateVariables.datapack_basePath=":/datapack/";
-    else
-        GlobalServerData::serverPrivateVariables.datapack_basePath=QCoreApplication::applicationDirPath()+"/datapack/";
     preload_the_data();
 
     int index=0;
