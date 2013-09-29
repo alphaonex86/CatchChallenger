@@ -84,7 +84,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             continue;
         if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list[map],x,y))
         {
-            DebugClass::debugConsole(QString("Plant ignored because coor is no dirt: %1 (%2,%3)").arg(map).arg(x).arg(y));
+            DebugClass::debugConsole(QString("Plant ignored because is not into dirt layer: %1 (%2,%3)").arg(map).arg(x).arg(y));
             continue;
         }
         quint64 plant_timestamps=plantOnMapQuery.value(5).toULongLong(&ok);

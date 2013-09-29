@@ -133,7 +133,6 @@ private:
     QString launchedGamePath;
     bool haveLaunchedGame;
     CatchChallenger::InternalServer * internalServer;
-    LanguagesSelect languagesSelect;
 };
 
 #endif // MAINWINDOW_H

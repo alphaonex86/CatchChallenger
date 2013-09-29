@@ -46,13 +46,7 @@
        <property name="styleSheet">
         <string notr="true">#page_login{background-image: url(:/images/background.png);}</string>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <property name="margin">
-         <number>0</number>
-        </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <spacer name="verticalSpacer_login_2">
           <property name="orientation">
@@ -361,6 +355,37 @@ padding: 0 5px;</string>
            </size>
           </property>
          </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QToolButton" name="languages">
+            <property name="icon">
+             <iconset resource="../base/resources/client-resources.qrc">
+              <normaloff>:/images/interface/languages.png</normaloff>:/images/interface/languages.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>22</width>
+              <height>22</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>

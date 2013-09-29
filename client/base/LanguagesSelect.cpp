@@ -141,9 +141,9 @@ void LanguagesSelect::updateContent()
     while (i != languagesByMainCode.constEnd()) {
         QListWidgetItem *item=new QListWidgetItem(QIcon(i.value().path+"flag.png"),i.value().fullName);
         item->setData(99,i.key());
+        ui->listWidget->addItem(item);
         if(language==i.key())
             item->setSelected(true);
-        ui->listWidget->addItem(item);
         ++i;
     }
 }
@@ -240,12 +240,20 @@ void LanguagesSelect::on_cancel_clicked()
 
 void LanguagesSelect::on_ok_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->listWidget->selectedItems();
-    if(selectedItems.size()!=1)
-        return;
-    const QString &language=selectedItems.first()->data(99).toString();
-    Options::options.setLanguage(language);
-    setCurrentLanguage(language);
-    close();
+    if(!ui->automatic->isChecked())
+    {
+        QList<QListWidgetItem *> selectedItems=ui->listWidget->selectedItems();
+        if(selectedItems.size()!=1)
+            return;
+        const QString &language=selectedItems.first()->data(99).toString();
+        Options::options.setLanguage(language);
+        setCurrentLanguage(language);
+    }
+    else
+    {
+        Options::options.setLanguage(QString());
+        setCurrentLanguage(getTheRightLanguage());
+    }
     updateContent();
+    close();
 }

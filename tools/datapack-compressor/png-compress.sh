@@ -1,6 +1,6 @@
 #!/bin/bash
-for VARIABLE in `find ./ -name '*.png'`
+for VARIABLE in `find ./ -name '*.png' -type f`
 do
-	cat ${VARIABLE} | pngquant - --speed 1 > /tmp/tmp.png
-	mv /tmp/tmp.png ${VARIABLE}
+	cat "${VARIABLE}" | pngquant - --speed 1 > /tmp/tmp.png
+	mv /tmp/tmp.png "${VARIABLE}"
 done
