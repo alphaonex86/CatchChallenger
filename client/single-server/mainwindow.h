@@ -41,6 +41,8 @@ private slots:
     void protocol_is_good();
     void needQuit();
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
+    void on_languages_clicked();
+
 private:
     QSslSocket *realSocket;
     Ui::MainWindow *ui;

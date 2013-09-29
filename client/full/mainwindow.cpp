@@ -1040,6 +1040,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
@@ -1162,5 +1163,5 @@ void MainWindow::on_solo_clicked()
 
 void MainWindow::on_languages_clicked()
 {
-    languagesSelect.exec();
+    LanguagesSelect::languagesSelect->exec();
 }
