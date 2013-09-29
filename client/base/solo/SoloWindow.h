@@ -59,6 +59,8 @@ private slots:
     void sendSettings(CatchChallenger::InternalServer * internalServer, const QString &savegamesPath);
     */
     void on_SaveGame_Back_clicked();
+    void on_languages_clicked();
+
 private:
     Ui::SoloWindow *ui;
     void resetAll();

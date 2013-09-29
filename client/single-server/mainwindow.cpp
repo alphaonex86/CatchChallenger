@@ -2,13 +2,12 @@
 #include "ui_mainwindow.h"
 
 #include "../base/render/MapVisualiserPlayer.h"
+#include "../base/LanguagesSelect.h"
 
 #define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
 //#define SERVER_DNS_OR_IP "localhost"
 #define SERVER_NAME tr("Official server")
 #define SERVER_PORT 42489
-#define REGISTER_URL "http://catchchallenger.first-world.info/register.html"
-#define WEBSITE "http://catchchallenger.first-world.info/"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -47,9 +46,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
-
-    ui->label_login_register->setText(QString("<a href=\"%1\"><span style=\"text-decoration:underline;color:#0057ae;\">Register</span></a>").arg(REGISTER_URL));
-    ui->label_login_website->setText(QString("<a href=\"%1\"><span style=\"text-decoration:underline;color:#0057ae;\">Web site</span></a>").arg(WEBSITE));
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
@@ -218,4 +214,9 @@ void MainWindow::needQuit()
 void MainWindow::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
     setWindowTitle(QString("CatchChallenger - %1 - %2").arg(SERVER_NAME).arg(informations.public_informations.pseudo));
+}
+
+void MainWindow::on_languages_clicked()
+{
+    LanguagesSelect::languagesSelect->exec();
 }
