@@ -394,7 +394,7 @@ struct CrafingRecipe
     quint8 success;//0-100
     struct Material
     {
-        quint32 itemId;
+        quint32 item;
         quint32 quantity;
     };
     QList<Material> materials;

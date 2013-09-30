@@ -62,7 +62,7 @@ signals:
     void try_stop_server() const;
     void need_be_started() const;
     //stat
-    void is_started(bool) const;
+    void is_started(const bool &) const;
 protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const QString &);
     virtual void connect_the_last_client(Client * client);
