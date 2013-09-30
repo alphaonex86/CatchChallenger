@@ -1985,14 +1985,14 @@ void BaseWindow::goToBotStep(const quint8 &step)
             showTip(tr("Already in shop action"));
             return;
         }
-        if(!actualBot.step[step].hasAttribute("factory_id"))
+        if(!actualBot.step[step].hasAttribute("industry"))
         {
             showTip(tr("The shop call, but missing informations"));
             return;
         }
 
         bool ok;
-        factoryId=actualBot.step[step].attribute("factory_id").toUInt(&ok);
+        factoryId=actualBot.step[step].attribute("industry").toUInt(&ok);
         if(!ok)
         {
             showTip(tr("The shop call, but wrong shop id"));

@@ -477,11 +477,11 @@ void MainWindow::editStep(quint8 id,bool newStep)
     else if(type=="industry")
     {
         bool ok;
-        quint32 id=step.attribute("factory_id").toUInt(&ok);
+        quint32 id=step.attribute("industry").toUInt(&ok);
         if(!ok)
         {
             if(newStep)
-                step.setAttribute("factory_id",1);
+                step.setAttribute("industry",1);
             ui->stepEditIndustry->setValue(1);
             error=true;
         }
@@ -644,5 +644,5 @@ void MainWindow::on_stepEditZoneCapture_editingFinished()
 
 void MainWindow::on_stepEditIndustry_editingFinished()
 {
-    botFiles[selectedBot].step[selectedStep].setAttribute("factory_id",ui->stepEditFight->value());
+    botFiles[selectedBot].step[selectedStep].setAttribute("industry",ui->stepEditFight->value());
 }
