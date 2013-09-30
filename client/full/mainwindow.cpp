@@ -552,6 +552,9 @@ void MainWindow::resetAll()
     {
         case ServerMode_Internal:
             ui->stackedWidget->setCurrentWidget(solowindow);
+            if(internalServer!=NULL)
+                internalServer->stop();
+            saveTime();
         break;
         case ServerMode_Remote:
             ui->stackedWidget->setCurrentWidget(ui->multi);
@@ -1079,7 +1082,6 @@ void MainWindow::is_started(bool started)
             delete internalServer;
             internalServer=NULL;
         }
-        saveTime();
         if(!isVisible())
             QCoreApplication::quit();
         else

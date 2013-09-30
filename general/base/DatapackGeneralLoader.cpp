@@ -861,9 +861,30 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                                         break;
                                     }
                                     CatchChallenger::CrafingRecipe::Material newMaterial;
-                                    newMaterial.itemId=itemId;
+                                    newMaterial.item=itemId;
                                     newMaterial.quantity=quantity;
-                                    recipe.materials << newMaterial;
+                                    int index=0;
+                                    while(index<recipe.materials.size())
+                                    {
+                                        if(recipe.materials.at(index).item==newMaterial.item)
+                                            break;
+                                        index++;
+                                    }
+                                    if(index<recipe.materials.size())
+                                    {
+                                        ok=false;
+                                        qDebug() << QString("id of item already into resource or product list: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                    }
+                                    else
+                                    {
+                                        if(recipe.doItemId==newMaterial.item)
+                                        {
+                                            qDebug() << QString("id of item already into resource or product list: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                                            ok=false;
+                                        }
+                                        else
+                                            recipe.materials << newMaterial;
+                                    }
                                 }
                                 else
                                     qDebug() << QString("preload_crafting_recipes() material have not attribute itemId for crafting recipe file: %1: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
@@ -1027,7 +1048,37 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                                     qDebug() << QString("id is not into the item list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 }
                                                 else
-                                                    industry.resources << resource;
+                                                {
+                                                    int index=0;
+                                                    while(index<industry.resources.size())
+                                                    {
+                                                        if(industry.resources.at(index).item==resource.item)
+                                                            break;
+                                                        index++;
+                                                    }
+                                                    if(index<industry.resources.size())
+                                                    {
+                                                        ok=false;
+                                                        qDebug() << QString("id of item already into resource or product list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                    }
+                                                    else
+                                                    {
+                                                        index=0;
+                                                        while(index<industry.products.size())
+                                                        {
+                                                            if(industry.products.at(index).item==resource.item)
+                                                                break;
+                                                            index++;
+                                                        }
+                                                        if(index<industry.products.size())
+                                                        {
+                                                            ok=false;
+                                                            qDebug() << QString("id of item already into resource or product list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                        }
+                                                        else
+                                                            industry.resources << resource;
+                                                    }
+                                                }
                                             }
                                             else
                                             {
@@ -1075,7 +1126,37 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                                     qDebug() << QString("id is not into the item list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                                 }
                                                 else
-                                                    industry.products << product;
+                                                {
+                                                    int index=0;
+                                                    while(index<industry.resources.size())
+                                                    {
+                                                        if(industry.resources.at(index).item==product.item)
+                                                            break;
+                                                        index++;
+                                                    }
+                                                    if(index<industry.resources.size())
+                                                    {
+                                                        ok=false;
+                                                        qDebug() << QString("id of item already into resource or product list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                    }
+                                                    else
+                                                    {
+                                                        index=0;
+                                                        while(index<industry.products.size())
+                                                        {
+                                                            if(industry.products.at(index).item==product.item)
+                                                                break;
+                                                            index++;
+                                                        }
+                                                        if(index<industry.products.size())
+                                                        {
+                                                            ok=false;
+                                                            qDebug() << QString("id of item already into resource or product list: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                                        }
+                                                        else
+                                                            industry.products << product;
+                                                    }
+                                                }
                                             }
                                             else
                                             {

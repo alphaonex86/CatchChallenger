@@ -277,21 +277,21 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     {
         //load the material item
         item=new QListWidgetItem();
-        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.materials.at(index).itemId))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.materials.at(index).item))
         {
-            nameMaterials=DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).itemId].name;
-            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).itemId].image);
+            nameMaterials=DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].name;
+            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].image);
         }
         else
         {
-            nameMaterials=tr("Unknow item (%1)").arg(content.materials.at(index).itemId);
+            nameMaterials=tr("Unknow item (%1)").arg(content.materials.at(index).item);
             item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         }
 
         //load the quantity into the inventory
         quantity=0;
-        if(items.contains(content.materials.at(index).itemId))
-            quantity=items[content.materials.at(index).itemId];
+        if(items.contains(content.materials.at(index).item))
+            quantity=items[content.materials.at(index).item];
 
         //load the display
         item->setText(tr("Needed: %1 %2\nIn the inventory: %3 %4").arg(content.materials.at(index).quantity).arg(nameMaterials).arg(quantity).arg(nameMaterials));
@@ -323,9 +323,9 @@ void BaseWindow::on_craftingUse_clicked()
     int index=0;
     while(index<content.materials.size())
     {
-        if(!items.contains(content.materials.at(index).itemId))
+        if(!items.contains(content.materials.at(index).item))
             return;
-        if(items[content.materials.at(index).itemId]<content.materials.at(index).quantity)
+        if(items[content.materials.at(index).item]<content.materials.at(index).quantity)
             return;
         index++;
     }
@@ -334,7 +334,7 @@ void BaseWindow::on_craftingUse_clicked()
     while(index<content.materials.size())
     {
         QPair<quint32,quint32> pair;
-        pair.first=content.materials.at(index).itemId;
+        pair.first=content.materials.at(index).item;
         pair.second=content.materials.at(index).quantity;
         items[pair.first]-=pair.second;
         if(items[pair.first]==0)
