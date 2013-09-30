@@ -33,9 +33,9 @@ void LocalClientHandler::useRecipe(const quint8 &query_id,const quint32 &recipe_
     int materials_size=recipe.materials.size();
     while(index<materials_size)
     {
-        if(objectQuantity(recipe.materials.at(index).itemId)<recipe.materials.at(index).quantity)
+        if(objectQuantity(recipe.materials.at(index).item)<recipe.materials.at(index).quantity)
         {
-            emit error(QString("The player have only: %1 of item: %2, can't craft").arg(objectQuantity(recipe.materials.at(index).itemId)).arg(recipe.materials.at(index).itemId));
+            emit error(QString("The player have only: %1 of item: %2, can't craft").arg(objectQuantity(recipe.materials.at(index).item)).arg(recipe.materials.at(index).item));
             return;
         }
         index++;
@@ -49,7 +49,7 @@ void LocalClientHandler::useRecipe(const quint8 &query_id,const quint32 &recipe_
     index=0;
     while(index<materials_size)
     {
-        removeObject(recipe.materials.at(index).itemId,recipe.materials.at(index).quantity);
+        removeObject(recipe.materials.at(index).item,recipe.materials.at(index).quantity);
         index++;
     }
     //give the item

@@ -119,7 +119,6 @@ void SimpleSoloServer::is_started(bool started)
             delete internalServer;
             internalServer=NULL;
         }
-        saveTime();
         if(!isVisible())
             QCoreApplication::quit();
         else
@@ -174,4 +173,7 @@ void SimpleSoloServer::resetAll()
     if(CatchChallenger::Api_client_real::client!=NULL)
         CatchChallenger::Api_client_real::client->resetAll();
     ui->stackedWidget->setCurrentWidget(solowindow);
+    if(internalServer!=NULL)
+        internalServer->stop();
+    saveTime();
 }

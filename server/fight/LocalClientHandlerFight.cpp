@@ -215,6 +215,7 @@ void LocalClientHandlerFight::healAllMonsters()
                                  );
                 break;
             }
+            sub_index++;
         }
         index++;
     }
