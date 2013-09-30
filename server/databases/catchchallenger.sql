@@ -211,8 +211,9 @@ CREATE TABLE IF NOT EXISTS `player` (
 
 CREATE TABLE IF NOT EXISTS `player_meta` (
   `id` int(11) NOT NULL,
-  `email` text NOT NULL,
-  PRIMARY KEY (`id`)
+  `email` varchar(64) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `email` (`email`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

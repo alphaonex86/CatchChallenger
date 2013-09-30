@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>4</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -4237,7 +4237,7 @@ border-image: url(:/images/empty.png);
              <item>
               <widget class="QLabel" name="tradeOtherStat">
                <property name="text">
-                <string></string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -5318,7 +5318,7 @@ border-image: url(:/images/empty.png);
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
             </property>
-            <property name="gridSize">
+            <property name="iconSize">
              <size>
               <width>48</width>
               <height>48</height>
@@ -5326,6 +5326,9 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="viewMode">
              <enum>QListView::IconMode</enum>
+            </property>
+            <property name="uniformItemSizes">
+             <bool>true</bool>
             </property>
            </widget>
            <widget class="QListWidget" name="factoryResources">
@@ -5343,7 +5346,7 @@ border-image: url(:/images/empty.png);
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
             </property>
-            <property name="gridSize">
+            <property name="iconSize">
              <size>
               <width>48</width>
               <height>48</height>
@@ -5351,6 +5354,9 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="viewMode">
              <enum>QListView::IconMode</enum>
+            </property>
+            <property name="uniformItemSizes">
+             <bool>true</bool>
             </property>
            </widget>
            <widget class="QLabel" name="factoryStatus">

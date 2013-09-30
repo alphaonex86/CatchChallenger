@@ -977,7 +977,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
 
         //load the content
         bool ok,ok2,ok3;
-        QDomElement industryItem = root.firstChildElement("industry");
+        QDomElement industryItem = root.firstChildElement("industrialrecipe");
         while(!industryItem.isNull())
         {
             if(industryItem.isElement())
@@ -1113,7 +1113,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
             }
             else
                 qDebug() << QString("Unable to open the industries file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
-            industryItem = industryItem.nextSiblingElement("industry");
+            industryItem = industryItem.nextSiblingElement("industrialrecipe");
         }
         file_index++;
     }
@@ -1155,10 +1155,10 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
     {
         if(linkItem.isElement())
         {
-            if(linkItem.hasAttribute("industry_id") && linkItem.hasAttribute("factory_id"))
+            if(linkItem.hasAttribute("industrialrecipe") && linkItem.hasAttribute("industry"))
             {
-                quint32 industry_id=linkItem.attribute("industry_id").toUInt(&ok);
-                quint32 factory_id=linkItem.attribute("factory_id").toUInt(&ok2);
+                quint32 industry_id=linkItem.attribute("industrialrecipe").toUInt(&ok);
+                quint32 factory_id=linkItem.attribute("industry").toUInt(&ok2);
                 if(ok && ok2)
                 {
                     if(!industriesLink.contains(factory_id))
