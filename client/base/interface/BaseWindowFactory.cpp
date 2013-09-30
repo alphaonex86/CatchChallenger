@@ -187,7 +187,9 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
         item->setData(99,resources.at(index).object);
         item->setData(98,resources.at(index).price);
         if(resources.at(index).quantity>1)
-            item->setText(QString::number(resources.at(index).quantity));
+            item->setText(QString("%1 at %2$").arg(resources.at(index).quantity).arg(resources.at(index).price));
+        else
+            item->setText(QString("%1$").arg(resources.at(index).price));
         if(DatapackClientLoader::datapackLoader.itemsExtra.contains(resources.at(index).object))
         {
             item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[resources.at(index).object].image);
