@@ -32,6 +32,11 @@ SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
 
 SimpleSoloServer::~SimpleSoloServer()
 {
+    if(internalServer!=NULL)
+    {
+        delete internalServer;
+        internalServer=NULL;
+    }
     delete ui;
     if(socket!=NULL)
     {
@@ -114,11 +119,6 @@ void SimpleSoloServer::is_started(bool started)
 {
     if(!started)
     {
-        if(internalServer!=NULL)
-        {
-            delete internalServer;
-            internalServer=NULL;
-        }
         if(!isVisible())
             QCoreApplication::quit();
         else
