@@ -29,12 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
 
     socket=NULL;
+    realSocket=NULL;
     internalServer=NULL;
     reply=NULL;
-    realSocket=new QSslSocket();
-    realSocket->ignoreSslErrors();
-    realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
-    connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
@@ -82,8 +79,10 @@ MainWindow::~MainWindow()
         delete CatchChallenger::BaseWindow::baseWindow;
     if(socket!=NULL)
     {
+        socket->disconnectFromHost();
         socket->abort();
         socket->deleteLater();
+        socket=NULL;
     }
     delete ui;
 }
@@ -548,6 +547,8 @@ void MainWindow::resetAll()
 {
     if(CatchChallenger::Api_client_real::client!=NULL)
         CatchChallenger::Api_client_real::client->resetAll();
+    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
+        CatchChallenger::BaseWindow::baseWindow->resetAll();
     switch(serverMode)
     {
         case ServerMode_Internal:
@@ -562,6 +563,13 @@ void MainWindow::resetAll()
         default:
             ui->stackedWidget->setCurrentWidget(ui->mode);
         break;
+    }
+    if(socket!=NULL)
+    {
+        socket->disconnectFromHost();
+        socket->abort();
+        socket->deleteLater();
+        socket=NULL;
     }
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
@@ -636,9 +644,16 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     settings.endGroup();
     if(socket!=NULL)
     {
+        socket->disconnectFromHost();
         socket->abort();
         socket->deleteLater();
+        socket=NULL;
+        realSocket=NULL;
     }
+    realSocket=new QSslSocket();
+    realSocket->ignoreSslErrors();
+    realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
+    connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
@@ -1032,8 +1047,11 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     resetAll();
     if(socket!=NULL)
     {
+        socket->disconnectFromHost();
         socket->abort();
         socket->deleteLater();
+        socket=NULL;
+        realSocket=NULL;
     }
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+"/datapack/internal/");
