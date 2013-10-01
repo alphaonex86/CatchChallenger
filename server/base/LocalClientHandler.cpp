@@ -1881,6 +1881,7 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
             break;
         }
     }
+    GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
 }
 
 //apply on after industryStatusWithCurrentTime()
@@ -2185,9 +2186,8 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
     else
         industryStatus.products[product.item]=quantityInStock;
     removeCash(actualPrice*quantity);
-    addObject(objectId,quantity);
-    GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
     saveIndustryStatus(factoryId,industryStatus,industry);
+    addObject(objectId,quantity);
     emit postReply(query_id,outputData);
 }
 
@@ -2292,7 +2292,6 @@ void LocalClientHandler::sellFactoryObject(const quint32 &query_id,const quint32
         out << (quint8)0x02;
         out << (quint32)resourcePrice;
     }
-    GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
     removeObject(objectId,quantity);
     addCash(resourcePrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);

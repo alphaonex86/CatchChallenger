@@ -168,6 +168,8 @@ private slots:
     void botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void currentMapLoaded();
+    void factoryToProductItem(QListWidgetItem *item);
+    void factoryToResourceItem(QListWidgetItem *item);
 
     //datapack
     void haveTheDatapack();
