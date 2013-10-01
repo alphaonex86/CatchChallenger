@@ -1820,7 +1820,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
                     ui->IG_dialog->setVisible(true);
                     return;
                 }
-                text = actualBot.step[step].nextSiblingElement("text");
+                text = text.nextSiblingElement("text");
             }
         text = actualBot.step[step].firstChildElement("text");
         while(!text.isNull())
@@ -1833,7 +1833,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
                 ui->IG_dialog->setVisible(true);
                 return;
             }
-            text = actualBot.step[step].nextSiblingElement("text");
+            text = text.nextSiblingElement("text");
         }
         showTip(tr("Bot text not found, repport this error please"));
         return;
@@ -1871,7 +1871,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->shopBuy->setVisible(false);
         qDebug() << "goToBotStep(), client->getShopList(shopId): " << shopId;
         CatchChallenger::Api_client_real::client->getShopList(shopId);
-        ui->shopCash->setText(tr("Cash: %1").arg(cash));
+        ui->shopCash->setText(tr("Cash: %1$").arg(cash));
         return;
     }
     else if(actualBot.step[step].attribute("type")=="sell")
