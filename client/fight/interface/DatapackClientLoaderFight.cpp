@@ -78,7 +78,7 @@ void DatapackClientLoader::parseMonstersExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement("name");
                             }
                         if(!found)
@@ -95,7 +95,7 @@ void DatapackClientLoader::parseMonstersExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement("name");
                             }
                         }
@@ -112,9 +112,9 @@ void DatapackClientLoader::parseMonstersExtra()
                                             found=true;
                                             break;
                                     }
-                                    else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement("description");
                             }
                         if(!found)
@@ -129,9 +129,9 @@ void DatapackClientLoader::parseMonstersExtra()
                                             monsterExtraEntry.description=description.text();
                                             break;
                                     }
-                                    else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement("description");
                             }
                         }
@@ -245,7 +245,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement("name");
                             }
                         if(!found)
@@ -262,7 +262,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement("name");
                             }
                         }
@@ -281,7 +281,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement("description");
                             }
                         if(!found)
@@ -298,7 +298,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement("description");
                             }
                         }
@@ -407,7 +407,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement("name");
                             }
                         if(!found)
@@ -424,7 +424,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement("name");
                             }
                         }
@@ -443,7 +443,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement("description");
                             }
                         if(!found)
@@ -460,7 +460,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement("description");
                             }
                         }
@@ -571,7 +571,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                 start = start.nextSiblingElement("start");
                                             }
                                         if(!found)
@@ -588,7 +588,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                 start = start.nextSiblingElement("start");
                                             }
                                         }
@@ -607,7 +607,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                 win = win.nextSiblingElement("win");
                                             }
                                         if(!found)
@@ -624,7 +624,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                                 win = win.nextSiblingElement("win");
                                             }
                                         }

@@ -343,13 +343,13 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                             DebugClass::debugConsole(QString("Unable to open the xml file: %1, missing arguements (level or skill): child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(attack.tagName()).arg(attack.lineNumber()));
                                     }
                                     else
-                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(attack.tagName()).arg(attack.lineNumber()));
+                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(attack.tagName()).arg(attack.lineNumber()));
                                     attack = attack.nextSiblingElement("attack");
                                 }
                                 qSort(monster.learn);
                             }
                             else
-                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         }
                         else
                             DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -823,7 +823,7 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                     }
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, level balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 level = level.nextSiblingElement("level");
                             }
                             if(levelDef.size()==0)
@@ -1073,7 +1073,7 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                                     }
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                    DebugClass::debugConsole(QString("Unable to open the xml file: %1, level balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                                 level = level.nextSiblingElement("level");
                             }
                             quint8 index=1;
