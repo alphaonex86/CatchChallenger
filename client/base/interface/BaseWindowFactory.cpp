@@ -16,11 +16,9 @@ void BaseWindow::on_factoryBuy_clicked()
 
 void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
 {
-    quint32 quantity=1;
     quint32 id=item->data(99).toUInt();
     quint32 price=item->data(98).toUInt();
-    if(!item->text().isEmpty())
-        quantity=item->text().toUInt();
+    quint32 quantity=item->data(97).toUInt();
     if(cash<price)
     {
         QMessageBox::warning(this,tr("No cash"),tr("No bash to buy this item"));
@@ -35,12 +33,11 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
             return;
     }
     quantity-=i;
+    item->setData(97,quantity);
     if(quantity<1)
         delete item;
-    else if(quantity==1)
-        item->setText(QString());
     else
-        item->setText(QString::number(quantity));
+        factoryToProductItem(item);
     tempQuantityForBuy=quantity;
     tempItemForBuy=id;
     tempCashForBuy=i*price;
@@ -58,11 +55,9 @@ void BaseWindow::on_factorySell_clicked()
 
 void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 {
-    quint32 quantity=1;
     quint32 id=item->data(99).toUInt();
     quint32 price=item->data(98).toUInt();
-    if(!item->text().isEmpty())
-        quantity=item->text().toUInt();
+    quint32 quantity=item->data(97).toUInt();
     if(!items.contains(id))
     {
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
@@ -77,12 +72,11 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
             return;
     }
     quantity-=i;
+    item->setData(97,quantity);
     if(quantity<1)
         delete item;
-    else if(quantity==1)
-        item->setText(QString());
     else
-        item->setText(QString::number(quantity));
+        factoryToResourceItem(item);
     ItemToSellOrBuy tempItem;
     tempItem.object=id;
     tempItem.quantity=i;
@@ -176,8 +170,6 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";
     #endif
-    QFont MissingQuantity;
-    MissingQuantity.setItalic(true);
     int index;
     ui->factoryResources->clear();
     index=0;
@@ -186,31 +178,8 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
         QListWidgetItem *item=new QListWidgetItem();
         item->setData(99,resources.at(index).object);
         item->setData(98,resources.at(index).price);
-        if(resources.at(index).quantity>1)
-            item->setText(QString("%1 at %2$").arg(resources.at(index).quantity).arg(resources.at(index).price));
-        else
-            item->setText(QString("%1$").arg(resources.at(index).price));
-        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(resources.at(index).object))
-        {
-            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[resources.at(index).object].image);
-            if(resources.at(index).quantity==0)
-                item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[resources.at(index).object].name).arg(resources.at(index).price));
-            else
-                item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[resources.at(index).object].name).arg(resources.at(index).price).arg(resources.at(index).quantity));
-        }
-        else
-        {
-            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-            if(resources.at(index).quantity==0)
-                item->setToolTip(tr("Item %1\nPrice: %2$").arg(resources.at(index).object).arg(resources.at(index).price));
-            else
-                item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(resources.at(index).object).arg(resources.at(index).price).arg(resources.at(index).quantity));
-        }
-        if(!items.contains(resources.at(index).object))
-        {
-            item->setFont(MissingQuantity);
-            item->setForeground(QBrush(QColor(200,20,20)));
-        }
+        item->setData(97,resources.at(index).quantity);
+        factoryToResourceItem(item);
         ui->factoryResources->addItem(item);
         index++;
     }
@@ -221,35 +190,74 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
         QListWidgetItem *item=new QListWidgetItem();
         item->setData(99,products.at(index).object);
         item->setData(98,products.at(index).price);
-        if(products.at(index).quantity>1)
-            item->setText(QString("%1 at %2$").arg(products.at(index).quantity).arg(products.at(index).price));
-        else
-            item->setText(QString("%1$").arg(products.at(index).price));
-        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(products.at(index).object))
-        {
-            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[products.at(index).object].image);
-            if(products.at(index).quantity==0)
-                item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[products.at(index).object].name).arg(products.at(index).price));
-            else
-                item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[products.at(index).object].name).arg(products.at(index).price).arg(products.at(index).quantity));
-        }
-        else
-        {
-            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-            if(products.at(index).quantity==0)
-                item->setToolTip(tr("Item %1\nPrice: %2$").arg(products.at(index).object).arg(products.at(index).price));
-            else
-                item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(products.at(index).object).arg(products.at(index).price).arg(products.at(index).quantity));
-        }
-        if(products.at(index).price>cash)
-        {
-            item->setFont(MissingQuantity);
-            item->setForeground(QBrush(QColor(200,20,20)));
-        }
+        item->setData(97,products.at(index).quantity);
+        factoryToProductItem(item);
         ui->factoryProducts->addItem(item);
         index++;
     }
     ui->factoryStatus->setText(tr("Have the factory list"));
+}
+
+void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
+{
+    QFont MissingQuantity;
+    MissingQuantity.setItalic(true);
+    if(item->data(97).toUInt()>1)
+        item->setText(QString("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
+    else
+        item->setText(QString("%1$").arg(item->data(98).toUInt()));
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].image);
+        if(item->data(97).toUInt()==0)
+            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()));
+        else
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+    }
+    else
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        if(item->data(97).toUInt()==0)
+            item->setToolTip(tr("Item %1\nPrice: %2$").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()));
+        else
+            item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+    }
+    if(!items.contains(item->data(99).toUInt()))
+    {
+        item->setFont(MissingQuantity);
+        item->setForeground(QBrush(QColor(200,20,20)));
+    }
+}
+
+void BaseWindow::factoryToProductItem(QListWidgetItem *item)
+{
+    QFont MissingQuantity;
+    MissingQuantity.setItalic(true);
+    if(item->data(97).toUInt()>1)
+        item->setText(QString("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
+    else
+        item->setText(QString("%1$").arg(item->data(98).toUInt()));
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].image);
+        if(item->data(97).toUInt()==0)
+            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()));
+        else
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+    }
+    else
+    {
+        item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        if(item->data(97).toUInt()==0)
+            item->setToolTip(tr("Item %1\nPrice: %2$").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()));
+        else
+            item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+    }
+    if(item->data(98).toUInt()>cash)
+    {
+        item->setFont(MissingQuantity);
+        item->setForeground(QBrush(QColor(200,20,20)));
+    }
 }
 
 void BaseWindow::on_factoryQuit_clicked()
