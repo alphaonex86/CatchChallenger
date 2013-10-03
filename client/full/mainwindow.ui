@@ -567,8 +567,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>81</width>
-                   <height>39</height>
+                   <width>750</width>
+                   <height>292</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">

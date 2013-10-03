@@ -1831,6 +1831,7 @@ void BaseServer::stop_internal_server()
     QSetIterator<Client *> i(client_list);
      while (i.hasNext())
          i.next()->disconnectClient();
+    QFakeServer::server.disconnectedSocket();
     QFakeServer::server.close();
 
     check_if_now_stopped();
