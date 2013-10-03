@@ -61,6 +61,8 @@ private:
 
     //to send trame
     quint8 lastQueryNumber;
+protected slots:
+    virtual void socketDestroyed();
 protected:
     //have message without reply
     virtual void parseMessage(const quint8 &mainCodeType,const QByteArray &data);
