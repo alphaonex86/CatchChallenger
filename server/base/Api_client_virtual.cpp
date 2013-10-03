@@ -28,7 +28,8 @@ void Api_client_virtual::sendDatapackContent()
 
 void Api_client_virtual::tryDisconnect()
 {
-    socket->disconnectFromHost();
+    if(socket!=NULL)
+        socket->disconnectFromHost();
 }
 
 QString Api_client_virtual::get_datapack_base_name() const

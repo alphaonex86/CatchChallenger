@@ -1011,14 +1011,23 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                     industry.cycletobefull=industryItem.attribute("cycletobefull").toUShort(&ok3);
                     if(ok && ok2 && ok3)
                     {
-                        if(industry.time<60*5)
-                            qDebug() << QString("the time need be greater than 5*60 seconds to not slow down the server: %4, %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber()).arg(industry.time);
-                        else if(industry.cycletobefull<1)
-                            qDebug() << QString("cycletobefull need be greater than 0: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
-                        else if(industry.cycletobefull>10)
-                            qDebug() << QString("cycletobefull need be lower to 10 to not slow down the server, use the quantity: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
-                        else if(!industries.contains(id))
+                        if(!industries.contains(id))
                         {
+                            if(industry.time<60*5)
+                            {
+                                qDebug() << QString("the time need be greater than 5*60 seconds to not slow down the server: %4, %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber()).arg(industry.time);
+                                industry.time=60*5;
+                            }
+                            if(industry.cycletobefull<1)
+                            {
+                                qDebug() << QString("cycletobefull need be greater than 0: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                industry.cycletobefull=1;
+                            }
+                            else if(industry.cycletobefull>10)
+                            {
+                                qDebug() << QString("cycletobefull need be lower to 10 to not slow down the server, use the quantity: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
+                                industry.cycletobefull=10;
+                            }
                             //resource
                             {
                                 QDomElement resourceItem = industryItem.firstChildElement("resource");
