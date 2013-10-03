@@ -34,7 +34,7 @@ private:
 protected:
     //from the server
     void addPendingConnection(QFakeSocket * socket);
-private slots:
+public slots:
     void disconnectedSocket();
 };
 }

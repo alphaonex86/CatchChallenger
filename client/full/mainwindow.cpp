@@ -81,7 +81,7 @@ MainWindow::~MainWindow()
     {
         socket->disconnectFromHost();
         socket->abort();
-        socket->deleteLater();
+        delete socket;
         socket=NULL;
     }
     delete ui;
@@ -553,8 +553,13 @@ void MainWindow::resetAll()
     {
         case ServerMode_Internal:
             ui->stackedWidget->setCurrentWidget(solowindow);
-            if(internalServer!=NULL)
+            /* do just at game starting
+             *if(internalServer!=NULL)
+            {
                 internalServer->stop();
+                internalServer->deleteLater();
+                internalServer=NULL;
+            }*/
             saveTime();
         break;
         case ServerMode_Remote:
@@ -568,7 +573,7 @@ void MainWindow::resetAll()
     {
         socket->disconnectFromHost();
         socket->abort();
-        socket->deleteLater();
+        delete socket;
         socket=NULL;
     }
     chat_list_player_pseudo.clear();
@@ -646,7 +651,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     {
         socket->disconnectFromHost();
         socket->abort();
-        socket->deleteLater();
+        delete socket;
         socket=NULL;
         realSocket=NULL;
     }
@@ -656,10 +661,11 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
-    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
-    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected,Qt::QueuedConnection);
+    connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection);
+    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::QueuedConnection);
+    connect(socket,                                                 static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
@@ -674,7 +680,11 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
+    {
         resetAll();
+        /*if(serverMode==ServerMode_Remote)
+            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
+    }
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
         CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
 }
@@ -764,7 +774,11 @@ void MainWindow::ListEntryEnvoluedUpdate()
             datapack.at(index)->setStyleSheet("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}");
         index++;
     }
-    ui->deleteDatapack->setEnabled(selectedDatapack!=NULL && datapackPathList[selectedDatapack]!=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/internal").absoluteFilePath());
+    ui->deleteDatapack->setEnabled(selectedDatapack!=NULL &&
+            (datapackPathList[selectedDatapack]!=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/internal").absoluteFilePath()
+            ||
+            datapackPathList[selectedDatapack]!=QFileInfo(QCoreApplication::applicationDirPath()+"/datapack/Internal").absoluteFilePath())
+            );
 }
 
 void MainWindow::ListEntryEnvoluedDoubleClicked()
@@ -843,7 +857,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
         }
     if(!found)
     {
-        root.firstChildElement("name");
+        item = root.firstChildElement("name");
         while(!item.isNull())
         {
             if(item.isElement())
@@ -893,7 +907,7 @@ void MainWindow::on_manageDatapack_clicked()
         connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::ListEntryEnvoluedClicked,Qt::QueuedConnection);
         connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::ListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
         QString from;
-        if(fileInfo.fileName()=="Internal")
+        if(fileInfo.fileName()=="Internal" || fileInfo.fileName()=="internal")
             from=tr("Internal datapack");
         else
         {
@@ -1049,7 +1063,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     {
         socket->disconnectFromHost();
         socket->abort();
-        socket->deleteLater();
+        delete socket;
         socket=NULL;
         realSocket=NULL;
     }

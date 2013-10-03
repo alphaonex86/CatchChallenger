@@ -8,7 +8,7 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
 {
     this->fakeSocket=socket;
     this->sslSocket=NULL;
-    connect(socket,&QFakeSocket::destroyed,     this,&ConnectedSocket::destroyedSocket);
+    connect(socket,&QFakeSocket::destroyed,     this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
     connect(socket,&QFakeSocket::connected,     this,&ConnectedSocket::connected);
     connect(socket,&QFakeSocket::disconnected,  this,&ConnectedSocket::disconnected);
     connect(socket,static_cast<void(QFakeSocket::*)(QAbstractSocket::SocketError)>(&QFakeSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
@@ -26,7 +26,7 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket,QObject *parent) :
     connect(socket,&QSslSocket::readyRead,      this,&ConnectedSocket::readyRead,Qt::DirectConnection);
     connect(socket,&QSslSocket::encrypted,      this,&ConnectedSocket::encrypted);
     connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::connected);
-    connect(socket,&QSslSocket::destroyed,      this,&ConnectedSocket::destroyedSocket);
+    connect(socket,&QSslSocket::destroyed,      this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
     connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::startHandshake);
     connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected);
     connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
