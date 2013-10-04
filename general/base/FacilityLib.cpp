@@ -1,4 +1,5 @@
 #include "FacilityLib.h"
+#include "CommonDatapack.h"
 
 #include <QFileInfo>
 #include <QFileInfoList>
@@ -303,4 +304,124 @@ bool FacilityLib::rmpath(const QDir &dir)
         return false;
     allHaveWork=dir.rmdir(dir.absolutePath());
     return allHaveWork;
+}
+
+//apply on after FacilityLib::industryStatusWithCurrentTime()
+IndustryStatus FacilityLib::factoryCheckProductionStart(const IndustryStatus &industryStatus,const Industry &industry)
+{
+    IndustryStatus industryStatusCopy=industryStatus;
+    int index=0;
+    bool doOneProduct=true;
+    while(doOneProduct)
+    {
+        index=0;
+        if(doOneProduct)
+            while(index<industry.resources.size())
+            {
+                const Industry::Resource &resource=industry.resources.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.resources[resource.item];
+                if(resource.quantity>quantityInStock)
+                {
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+        index=0;
+        if(doOneProduct)
+            while(index<industry.products.size())
+            {
+                const Industry::Product &product=industry.products.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.products[product.item];
+                if(quantityInStock>=product.quantity*industry.cycletobefull)
+                {
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+    }
+    if(doOneProduct==true)
+        industryStatusCopy.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
+    return industryStatusCopy;
+}
+
+IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &industryStatus,const Industry &industry)
+{
+    IndustryStatus industryStatusCopy=industryStatus;
+    //do the generated item
+    quint32 timeIntervalCount=0;
+    if(industryStatus.last_update<(QDateTime::currentMSecsSinceEpoch()/1000))
+    {
+        timeIntervalCount=(QDateTime::currentMSecsSinceEpoch()/1000-industryStatus.last_update)/industry.time;
+        if(timeIntervalCount>industry.cycletobefull)
+            timeIntervalCount=industry.cycletobefull;
+    }
+    int index=0;
+    bool doOneProduct=(timeIntervalCount>0);
+    while(doOneProduct)
+    {
+        index=0;
+        if(doOneProduct)
+            while(index<industry.resources.size())
+            {
+                const Industry::Resource &resource=industry.resources.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.resources[resource.item];
+                if(resource.quantity>quantityInStock)
+                {
+                    industryStatusCopy.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+        index=0;
+        if(doOneProduct)
+            while(index<industry.products.size())
+            {
+                const Industry::Product &product=industry.products.at(index);
+                const quint32 &quantityInStock=industryStatusCopy.products[product.item];
+                if(quantityInStock>=product.quantity*industry.cycletobefull)
+                {
+                    industryStatusCopy.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
+                    doOneProduct=false;
+                    break;
+                }
+                index++;
+            }
+        if(timeIntervalCount<=0)
+            break;
+        if(doOneProduct)
+        {
+            industryStatusCopy.last_update+=industry.time;
+            index=0;
+            while(index<industry.resources.size())
+            {
+                industryStatusCopy.resources[industry.resources.at(index).item]-=industry.resources.at(index).quantity;
+                index++;
+            }
+            index=0;
+            while(index<industry.products.size())
+            {
+                industryStatusCopy.products[industry.products.at(index).item]+=industry.products.at(index).quantity;
+                index++;
+            }
+            timeIntervalCount--;
+        }
+    }
+    return industryStatusCopy;
+}
+
+quint32 FacilityLib::getFactoryResourcePrice(const quint8 &factoryPriceChange,const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry)
+{
+    quint32 max_items=resource.quantity*industry.cycletobefull;
+    quint8 price_temp_change=(max_items-quantityInStock)*(factoryPriceChange*2)/max_items;
+    return CommonDatapack::commonDatapack.items.item[resource.item].price*(100-factoryPriceChange+price_temp_change)/100;
+}
+
+quint32 FacilityLib::getFactoryProductPrice(const quint8 &factoryPriceChange,const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry)
+{
+    quint32 max_items=product.quantity*industry.cycletobefull;
+    quint8 price_temp_change=(max_items-quantityInStock)*(factoryPriceChange*2)/max_items;
+    return CommonDatapack::commonDatapack.items.item[product.item].price*(100-factoryPriceChange+price_temp_change)/100;
 }
