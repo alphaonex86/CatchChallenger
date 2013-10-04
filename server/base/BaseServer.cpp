@@ -50,6 +50,7 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.max_players                            = 1;
     GlobalServerData::serverSettings.tolerantMode                           = false;
     GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber = false;
+    GlobalServerData::serverSettings.commmonServerSettings.factoryPriceChange = 20;
 
     GlobalServerData::serverSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     GlobalServerData::serverSettings.database.sqlite.file="";
