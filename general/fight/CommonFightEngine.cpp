@@ -1495,7 +1495,17 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     if(otherMonster->skills.size()==1)
         position=0;
     else
-        position=getOneSeed(otherMonster->skills.size());
+        position=getOneSeed(otherMonster->skills.size()-1);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(position>=otherMonster->skills.size())
+    {
+        emit message(QString("Position out of range: %1 on %2 total skill(s)")
+                     .arg(position)
+                     .arg(otherMonster->skills.size())
+                     );
+        position=position%otherMonster->skills.size();
+    }
+    #endif
     const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster->skills.at(position);
     emit message(QString("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
                  .arg(otherMonsterSkill.skill)

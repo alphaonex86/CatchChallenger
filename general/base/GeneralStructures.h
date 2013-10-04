@@ -291,6 +291,9 @@ struct CommmonServerSettings
     bool chat_allow_private;
     bool chat_allow_aliance;
     bool chat_allow_clan;
+
+    //trade
+    quint8 factoryPriceChange;
 };
 
 /* mpa related */
@@ -655,6 +658,13 @@ struct MarketMonster
     quint8 level;
     quint32 price;
     double bitcoin;
+};
+
+struct IndustryStatus
+{
+    quint32 last_update;
+    QHash<quint32,quint32> resources;
+    QHash<quint32,quint32> products;
 };
 
 }

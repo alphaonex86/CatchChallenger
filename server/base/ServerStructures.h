@@ -172,13 +172,6 @@ struct CityStatus
     quint32 clan;
 };
 
-struct IndustryStatus
-{
-    quint32 last_update;
-    QHash<quint32,quint32> resources;
-    QHash<quint32,quint32> products;
-};
-
 struct MarketPlayerMonster
 {
     PlayerMonster monster;
