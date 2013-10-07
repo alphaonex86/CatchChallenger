@@ -34,26 +34,26 @@ void ProcessControler::send_settings()
     formatedServerSettings.server_ip					= settings->value("server-ip").toString();
 
     //fight
-    formatedServerSettings.commmonServerSettings.pvp			= settings->value("pvp").toBool();
-    formatedServerSettings.commmonServerSettings.sendPlayerNumber		= settings->value("sendPlayerNumber").toBool();
+    CommonSettings::commonSettings.pvp			= settings->value("pvp").toBool();
+    formatedServerSettings.sendPlayerNumber		= settings->value("sendPlayerNumber").toBool();
 
     //rates
     settings->beginGroup("rates");
-    formatedServerSettings.commmonServerSettings.rates_xp			= settings->value("xp_normal").toReal();
+    CommonSettings::commonSettings.rates_xp			= settings->value("xp_normal").toReal();
     formatedServerSettings.rates_xp_premium                         = settings->value("xp_premium").toReal();
-    formatedServerSettings.commmonServerSettings.rates_gold			= settings->value("gold_normal").toReal();
+    CommonSettings::commonSettings.rates_gold			= settings->value("gold_normal").toReal();
     formatedServerSettings.rates_gold_premium                       = settings->value("gold_premium").toReal();
-    formatedServerSettings.commmonServerSettings.rates_shiny		= settings->value("shiny_normal").toReal();
+    CommonSettings::commonSettings.rates_shiny		= settings->value("shiny_normal").toReal();
     formatedServerSettings.rates_shiny_premium                      = settings->value("shiny_premium").toReal();
     settings->endGroup();
 
     //chat allowed
     settings->beginGroup("chat");
-    formatedServerSettings.commmonServerSettings.chat_allow_all         = settings->value("allow-all").toBool();
-    formatedServerSettings.commmonServerSettings.chat_allow_local		= settings->value("allow-local").toBool();
-    formatedServerSettings.commmonServerSettings.chat_allow_private		= settings->value("allow-private").toBool();
-    formatedServerSettings.commmonServerSettings.chat_allow_aliance		= settings->value("allow-aliance").toBool();
-    formatedServerSettings.commmonServerSettings.chat_allow_clan		= settings->value("allow-clan").toBool();
+    CommonSettings::commonSettings.chat_allow_all         = settings->value("allow-all").toBool();
+    CommonSettings::commonSettings.chat_allow_local		= settings->value("allow-local").toBool();
+    CommonSettings::commonSettings.chat_allow_private		= settings->value("allow-private").toBool();
+    CommonSettings::commonSettings.chat_allow_aliance		= settings->value("allow-aliance").toBool();
+    CommonSettings::commonSettings.chat_allow_clan		= settings->value("allow-clan").toBool();
     settings->endGroup();
 
     settings->beginGroup("db");

@@ -513,38 +513,38 @@ void MainWindow::send_settings()
     formatedServerSettings.server_ip					= ui->server_ip->text();
 
     //fight
-    formatedServerSettings.commmonServerSettings.pvp			= ui->pvp->isChecked();
-    formatedServerSettings.commmonServerSettings.sendPlayerNumber		= ui->sendPlayerNumber->isChecked();
+    CommonSettings::commonSettings.pvp			= ui->pvp->isChecked();
+    formatedServerSettings.sendPlayerNumber		= ui->sendPlayerNumber->isChecked();
 
     //compression
     switch(ui->compression->currentIndex())
     {
         case 0:
-        formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_None;
+        formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
         break;
         default:
         case 1:
-        formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_Zlib;
+        formatedServerSettings.compressionType=CatchChallenger::CompressionType_Zlib;
         break;
         case 2:
-        formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_Xz;
+        formatedServerSettings.compressionType=CatchChallenger::CompressionType_Xz;
         break;
     }
 
     //rates
-    formatedServerSettings.commmonServerSettings.rates_xp			= ui->rates_xp_normal->value();
+    CommonSettings::commonSettings.rates_xp			= ui->rates_xp_normal->value();
     formatedServerSettings.rates_xp_premium					= ui->rates_xp_premium->value();
-    formatedServerSettings.commmonServerSettings.rates_gold			= ui->rates_xp_normal->value();
+    CommonSettings::commonSettings.rates_gold			= ui->rates_xp_normal->value();
     formatedServerSettings.rates_gold_premium				= ui->rates_xp_normal->value();
-    formatedServerSettings.commmonServerSettings.rates_shiny		= ui->rates_xp_normal->value();
+    CommonSettings::commonSettings.rates_shiny		= ui->rates_xp_normal->value();
     formatedServerSettings.rates_shiny_premium				= ui->rates_xp_normal->value();
 
     //chat allowed
-    formatedServerSettings.commmonServerSettings.chat_allow_all		= ui->chat_allow_all->isChecked();
-    formatedServerSettings.commmonServerSettings.chat_allow_local		= ui->chat_allow_local->isChecked();
-    formatedServerSettings.commmonServerSettings.chat_allow_private		= ui->chat_allow_private->isChecked();
-    formatedServerSettings.commmonServerSettings.chat_allow_aliance		= ui->chat_allow_aliance->isChecked();
-    formatedServerSettings.commmonServerSettings.chat_allow_clan		= ui->chat_allow_clan->isChecked();
+    CommonSettings::commonSettings.chat_allow_all		= ui->chat_allow_all->isChecked();
+    CommonSettings::commonSettings.chat_allow_local		= ui->chat_allow_local->isChecked();
+    CommonSettings::commonSettings.chat_allow_private		= ui->chat_allow_private->isChecked();
+    CommonSettings::commonSettings.chat_allow_aliance		= ui->chat_allow_aliance->isChecked();
+    CommonSettings::commonSettings.chat_allow_clan		= ui->chat_allow_clan->isChecked();
 
     switch(ui->db_type->currentIndex())
     {
