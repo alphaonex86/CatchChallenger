@@ -11,6 +11,7 @@ using namespace CatchChallenger;
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
 #include "CommonDatapack.h"
+#include "CommonSettings.h"
 #include "FacilityLib.h"
 
 //need host + port here to have datapack base
@@ -2429,6 +2430,13 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         }
                         emit cityCapture(captureRemainingTime,captureFrequencyType);
 
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the factoryPriceChange, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.factoryPriceChange;
+
                         if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
@@ -3145,6 +3153,13 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
+                    quint32 remainingProductionTime;
+                    in >> remainingProductionTime;
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
                     quint32 shopListSize;
                     quint32 index;
                     in >> shopListSize;
@@ -3187,7 +3202,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         index++;
                     }
                     haveFactoryAction=false;
-                    emit haveFactoryList(resources,products);
+                    emit haveFactoryList(remainingProductionTime,resources,products);
                 }
                 break;
                 case 0x000E:
@@ -3202,11 +3217,11 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     switch(returnCode)
                     {
                         case 0x01:
-                        case 0x02:
+                        case 0x03:
                         case 0x04:
                             emit haveBuyFactoryObject((BuyStat)returnCode,0);
                         break;
-                        case 0x03:
+                        case 0x02:
                         {
                             if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                             {
@@ -3237,11 +3252,11 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                     switch(returnCode)
                     {
                         case 0x01:
-                        case 0x02:
+                        case 0x03:
                         case 0x04:
                             emit haveSellFactoryObject((SoldStat)returnCode,0);
                         break;
-                        case 0x03:
+                        case 0x02:
                         {
                             if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
                             {
@@ -3827,7 +3842,9 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(tr("Procotol wrong or corrupted"),QString("error: remaining data: parseReplyData(%1,%2,%3), line: %4, data: %5 %6").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__)
+        parseError(tr("Procotol wrong or corrupted"),QString("error: remaining data: parseReplyData(%1,%2,%3), line: %4, data: %5 %6")
+                   .arg(mainCodeType).arg(subCodeType).arg(queryNumber)
+                   .arg(__LINE__)
                    .arg(QString(data.mid(0,in.device()->pos()).toHex()))
                    .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
                    );
@@ -4169,7 +4186,7 @@ void Api_protocol::getFactoryList(const quint32 &factoryId)
     output->packFullOutcommingQuery(0x10,0x000D,queryNumber(),outputData);
 }
 
-void Api_protocol::buyFactoryObject(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::buyFactoryProduct(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
     if(haveFactoryAction)
     {
@@ -4189,7 +4206,7 @@ void Api_protocol::buyFactoryObject(const quint32 &factoryId,const quint32 &obje
     output->packFullOutcommingQuery(0x10,0x000E,queryNumber(),outputData);
 }
 
-void Api_protocol::sellFactoryObject(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void Api_protocol::sellFactoryResource(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
     if(haveFactoryAction)
     {

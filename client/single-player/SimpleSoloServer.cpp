@@ -72,8 +72,8 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
 
     formatedServerSettings.max_players=1;
     formatedServerSettings.tolerantMode=false;
-    formatedServerSettings.commmonServerSettings.sendPlayerNumber = false;
-    formatedServerSettings.commmonServerSettings.compressionType=CatchChallenger::CompressionType_None;
+    formatedServerSettings.sendPlayerNumber = false;
+    formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
     formatedServerSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";

@@ -168,6 +168,7 @@ private slots:
     void botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void currentMapLoaded();
+    void updateFactoryStatProduction(const IndustryStatus &industryStatus,const Industry &industry);
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);
 
@@ -207,7 +208,7 @@ private slots:
     //shop
     void haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice);
     void haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice);
-    void haveFactoryList(const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products);
+    void haveFactoryList(const quint32 &remainingProductionTime, const QList<ItemToSellOrBuy> &resources, const QList<ItemToSellOrBuy> &products);
 
     //plant
     void seed_planted(const bool &ok);
