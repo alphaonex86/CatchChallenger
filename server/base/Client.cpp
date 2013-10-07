@@ -165,8 +165,8 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 
     //factory
     connect(clientNetworkRead,	&ClientNetworkRead::getFactoryList,         localClientHandler,	&LocalClientHandler::getFactoryList,        Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::buyFactoryObject,       localClientHandler,	&LocalClientHandler::buyFactoryObject,      Qt::QueuedConnection);
-    connect(clientNetworkRead,	&ClientNetworkRead::sellFactoryObject,      localClientHandler,	&LocalClientHandler::sellFactoryObject,     Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::buyFactoryObject,       localClientHandler,	&LocalClientHandler::buyFactoryProduct,      Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::sellFactoryObject,      localClientHandler,	&LocalClientHandler::sellFactoryResource,     Qt::QueuedConnection);
 
     //fight
     connect(clientNetworkRead,	&ClientNetworkRead::tryEscape,              localClientHandler,	&LocalClientHandler::tryEscape,             Qt::QueuedConnection);
@@ -303,7 +303,7 @@ void Client::disconnectNextStep()
         if(player_informations.is_logged)
         {
             GlobalServerData::serverPrivateVariables.connected_players--;
-            if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber)
+            if(GlobalServerData::serverSettings.sendPlayerNumber)
                 GlobalServerData::serverPrivateVariables.player_updater.removeConnectedPlayer();
         }
         player_informations.is_logged=false;
@@ -386,7 +386,7 @@ void Client::send_player_informations()
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(player_informations);
     this->player_informations=player_informations;
     GlobalServerData::serverPrivateVariables.connected_players++;
-    if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber)
+    if(GlobalServerData::serverSettings.sendPlayerNumber)
         GlobalServerData::serverPrivateVariables.player_updater.addConnectedPlayer();
 
     //remove the useless connection

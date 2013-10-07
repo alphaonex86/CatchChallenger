@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QDateTime>
 #include "GeneralStructures.h"
+#include "CommonSettings.h"
 
 namespace CatchChallenger {
 class FacilityLib
@@ -30,9 +31,10 @@ public:
     static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
     static bool rmpath(const QDir &dir);
     static IndustryStatus industryStatusWithCurrentTime(const IndustryStatus &industryStatus, const Industry &industry);
-    static quint32 getFactoryResourcePrice(const quint8 &factoryPriceChange,const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry);
-    static quint32 getFactoryProductPrice(const quint8 &factoryPriceChange,const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry);
+    static quint32 getFactoryResourcePrice(const quint32 &quantityInStock,const Industry::Resource &resource,const Industry &industry);
+    static quint32 getFactoryProductPrice(const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry);
     static IndustryStatus factoryCheckProductionStart(const IndustryStatus &industryStatus,const Industry &industry);
+    static bool factoryProductionStarted(const IndustryStatus &industryStatus,const Industry &industry);
 private:
     static QByteArray UTF8EmptyData;
 };

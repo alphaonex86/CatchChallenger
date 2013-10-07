@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>7</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -5370,6 +5370,19 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+           <widget class="QLabel" name="factoryStatText">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>120</y>
+              <width>111</width>
+              <height>171</height>
+             </rect>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </widget>

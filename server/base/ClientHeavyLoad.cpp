@@ -527,6 +527,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     else
         out << (quint32)0x00000000;
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
+    out << (quint8)CommonSettings::commonSettings.factoryPriceChange;
     out << FacilityLib::allowToQString(player_informations->public_and_private_informations.allow);
     out << (quint32)player_informations->public_and_private_informations.clan;
     if(player_informations->public_and_private_informations.clan!=0)

@@ -21,6 +21,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
+#include "../../general/base/CommonSettings.h"
 
 namespace CatchChallenger {
 class EventThreader;
@@ -85,13 +86,13 @@ struct Player_internal_informations
 
 struct ServerSettings
 {
+    CompressionType compressionType;
+    bool sendPlayerNumber;
+
     //the listen, implicit on the client
     quint16 server_port;
     QString server_ip;
     QString datapack_basePath;
-
-    //settings of the server shared with the client
-    CommmonServerSettings commmonServerSettings;
 
     //rates
     qreal rates_xp_premium;

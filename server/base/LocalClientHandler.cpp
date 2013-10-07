@@ -1908,6 +1908,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
     out.setVersion(QDataStream::Qt_4_4);
     if(!GlobalServerData::serverPrivateVariables.industriesStatus.contains(factoryId))
     {
+        out << (quint32)0;
         out << (quint32)industry.resources.size();
         int index=0;
         while(index<industry.resources.size())
@@ -1924,6 +1925,13 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
     {
         int index,count_item;
         const IndustryStatus &industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
+        quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
+        if(industryStatus.last_update>currentTime)
+            out << (quint32)0;
+        else if((currentTime-industryStatus.last_update)>industry.time)
+            out << (quint32)0;
+        else
+            out << (quint32)(industry.time-(currentTime-industryStatus.last_update));
         //send the resource
         count_item=0;
         index=0;
@@ -1944,7 +1952,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
             if(quantityInStock<resource.quantity*industry.cycletobefull)
             {
                 out << (quint32)resource.item;
-                out << (quint32)FacilityLib::getFactoryResourcePrice(GlobalServerData::serverSettings.commmonServerSettings.factoryPriceChange,quantityInStock,resource,industry);
+                out << (quint32)FacilityLib::getFactoryResourcePrice(quantityInStock,resource,industry);
                 out << (quint32)resource.quantity*industry.cycletobefull-quantityInStock;
             }
             index++;
@@ -1969,7 +1977,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
             if(quantityInStock>0)
             {
                 out << (quint32)product.item;
-                out << (quint32)FacilityLib::getFactoryProductPrice(GlobalServerData::serverSettings.commmonServerSettings.factoryPriceChange,quantityInStock,product,industry);
+                out << (quint32)FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
                 out << (quint32)quantityInStock;
             }
             index++;
@@ -1978,7 +1986,7 @@ void LocalClientHandler::getFactoryList(const quint32 &query_id, const quint32 &
     emit postReply(query_id,outputData);
 }
 
-void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void LocalClientHandler::buyFactoryProduct(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
     if(localClientHandlerFight.isInFight())
     {
@@ -2008,6 +2016,7 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
     const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
     IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus[factoryId],industry);
     quint32 quantityInStock=0;
+    quint32 actualPrice=0;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -2019,7 +2028,11 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
         {
             product=industry.products.at(index);
             if(product.item==objectId)
+            {
+                quantityInStock=industryStatus.products[product.item];
+                actualPrice=FacilityLib::getFactoryProductPrice(quantityInStock,product,industry);
                 break;
+            }
             index++;
         }
         if(index==industry.products.size())
@@ -2028,14 +2041,11 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
             return;
         }
     }
-    quint32 actualPrice=FacilityLib::getFactoryProductPrice(GlobalServerData::serverSettings.commmonServerSettings.factoryPriceChange,quantityInStock,product,industry);
     if(player_informations->public_and_private_informations.cash<(actualPrice*quantity))
     {
         emit error("have not the cash to buy into this factory");
         return;
     }
-    if(industryStatus.products.contains(product.item))
-        quantityInStock=industryStatus.products[product.item];
     if(quantity>quantityInStock)
     {
         out << (quint8)0x03;
@@ -2069,7 +2079,7 @@ void LocalClientHandler::buyFactoryObject(const quint32 &query_id,const quint32 
     emit postReply(query_id,outputData);
 }
 
-void LocalClientHandler::sellFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
+void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
     if(localClientHandlerFight.isInFight())
     {
@@ -2139,7 +2149,7 @@ void LocalClientHandler::sellFactoryObject(const quint32 &query_id,const quint32
                     emit postReply(query_id,outputData);
                     return;
                 }
-                resourcePrice=FacilityLib::getFactoryResourcePrice(GlobalServerData::serverSettings.commmonServerSettings.factoryPriceChange,industryStatus.resources[resource.item],resource,industry);
+                resourcePrice=FacilityLib::getFactoryResourcePrice(industryStatus.resources[resource.item],resource,industry);
                 if(price>resourcePrice)
                 {
                     out << (quint8)0x04;

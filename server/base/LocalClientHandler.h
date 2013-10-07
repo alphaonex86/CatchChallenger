@@ -150,8 +150,8 @@ public slots:
     //factory
     void saveIndustryStatus(const quint32 &factoryId,const IndustryStatus &industryStatus,const Industry &industry);
     void getFactoryList(const quint32 &query_id,const quint32 &factoryId);
-    void buyFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellFactoryObject(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void buyFactoryProduct(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellFactoryResource(const quint32 &query_id,const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
     //trade
     void tradeCanceled();
     void tradeAccepted();
