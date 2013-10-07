@@ -1313,15 +1313,15 @@ void BaseWindow::updateRXTX()
 {
     if(CatchChallenger::Api_client_real::client==NULL)
         return;
+    int updateRXTXTimeElapsed=updateRXTXTime.elapsed();
+    if(updateRXTXTimeElapsed==0)
+        return;
     quint64 RXSize=CatchChallenger::Api_client_real::client->getRXSize();
     quint64 TXSize=CatchChallenger::Api_client_real::client->getTXSize();
     if(previousRXSize>RXSize)
         previousRXSize=RXSize;
     if(previousTXSize>TXSize)
         previousTXSize=TXSize;
-    int updateRXTXTimeElapsed=updateRXTXTime.elapsed();
-    if(updateRXTXTimeElapsed==0)
-        return;
     double RXSpeed=(RXSize-previousRXSize)*1000/updateRXTXTimeElapsed;
     double TXSpeed=(TXSize-previousTXSize)*1000/updateRXTXTimeElapsed;
     if(RXSpeed<1024)
