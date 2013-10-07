@@ -23,7 +23,8 @@ SOURCES += $$PWD/base/Api_protocol.cpp \
     $$PWD/fight/FightLoader.cpp \
     $$PWD/base/DatapackGeneralLoader.cpp \
     $$PWD/base/CommonDatapack.cpp \
-    $$PWD/fight/CommonFightEngine.cpp
+    $$PWD/fight/CommonFightEngine.cpp \
+    $$PWD/base/CommonSettings.cpp
 
 HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/DebugClass.h \
@@ -42,6 +43,7 @@ HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/fight/FightLoader.h \
     $$PWD/base/DatapackGeneralLoader.h \
     $$PWD/base/CommonDatapack.h \
-    $$PWD/fight/CommonFightEngine.h
+    $$PWD/fight/CommonFightEngine.h \
+    $$PWD/base/CommonSettings.h
 
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc

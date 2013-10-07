@@ -49,30 +49,29 @@ BaseServer::BaseServer()
 
     GlobalServerData::serverSettings.max_players                            = 1;
     GlobalServerData::serverSettings.tolerantMode                           = false;
-    GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber = false;
-    GlobalServerData::serverSettings.commmonServerSettings.factoryPriceChange = 20;
+    GlobalServerData::serverSettings.sendPlayerNumber                       = true;
 
-    GlobalServerData::serverSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
-    GlobalServerData::serverSettings.database.sqlite.file="";
-    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
+    GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
+    GlobalServerData::serverSettings.database.sqlite.file                       = "";
+    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithm_none;
 
-    GlobalServerData::serverSettings.datapack_basePath		= QCoreApplication::applicationDirPath()+"/datapack/";
+    GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+"/datapack/";
     GlobalServerData::serverSettings.rates_gold_premium                         = 1;
     GlobalServerData::serverSettings.rates_shiny_premium                        = 1;
     GlobalServerData::serverSettings.rates_xp_premium                           = 1;
     GlobalServerData::serverSettings.server_ip                                  = "";
     GlobalServerData::serverSettings.server_port                                = 42489;
-    GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_Zlib;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_aliance   = true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_clan      = true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_local     = true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_all       = true;
-    GlobalServerData::serverSettings.commmonServerSettings.chat_allow_private   = true;
-    GlobalServerData::serverSettings.commmonServerSettings.pvp                  = true;
-    GlobalServerData::serverSettings.commmonServerSettings.rates_gold           = 1;
-    GlobalServerData::serverSettings.commmonServerSettings.rates_shiny          = 1;
-    GlobalServerData::serverSettings.commmonServerSettings.rates_xp             = 1;
-    GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber     = true;
+    GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
+    CommonSettings::commonSettings.chat_allow_aliance     = true;
+    CommonSettings::commonSettings.chat_allow_clan        = true;
+    CommonSettings::commonSettings.chat_allow_local       = true;
+    CommonSettings::commonSettings.chat_allow_all         = true;
+    CommonSettings::commonSettings.chat_allow_private     = true;
+    CommonSettings::commonSettings.pvp                    = true;
+    CommonSettings::commonSettings.rates_gold             = 1;
+    CommonSettings::commonSettings.rates_shiny            = 1;
+    CommonSettings::commonSettings.rates_xp               = 1;
+    CommonSettings::commonSettings.factoryPriceChange     = 20;
     GlobalServerData::serverSettings.database.type                              = ServerSettings::Database::DatabaseType_Mysql;
     GlobalServerData::serverSettings.database.fightSync                         = ServerSettings::Database::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.database.positionTeleportSync              = true;
@@ -1758,19 +1757,19 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverSettings.bitcoin.enabled=false;
     }
 
-    switch(GlobalServerData::serverSettings.commmonServerSettings.compressionType)
+    switch(GlobalServerData::serverSettings.compressionType)
     {
         case CatchChallenger::CompressionType_None:
-            GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_None;
+            GlobalServerData::serverSettings.compressionType      = CompressionType_None;
             ProtocolParsing::compressionType=ProtocolParsing::CompressionType_None;
         break;
         default:
         case CatchChallenger::CompressionType_Zlib:
-            GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_Zlib;
+            GlobalServerData::serverSettings.compressionType      = CompressionType_Zlib;
             ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Zlib;
         break;
         case CatchChallenger::CompressionType_Xz:
-            GlobalServerData::serverSettings.commmonServerSettings.compressionType      = CompressionType_Xz;
+            GlobalServerData::serverSettings.compressionType      = CompressionType_Xz;
             ProtocolParsing::compressionType=ProtocolParsing::CompressionType_Xz;
         break;
     }
