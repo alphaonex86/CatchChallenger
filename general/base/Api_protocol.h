@@ -162,7 +162,7 @@ signals:
     void haveSellObject(const SoldStat &stat,const quint32 &newPrice) const;
 
     //factory
-    void haveFactoryList(const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products) const;
+    void haveFactoryList(const quint32 &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products) const;
     void haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice) const;
     void haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice) const;
 
@@ -248,8 +248,8 @@ public slots:
 
     //factory
     void getFactoryList(const quint32 &factoryId);
-    void buyFactoryObject(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
-    void sellFactoryObject(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void buyFactoryProduct(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
+    void sellFactoryResource(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price);
 
     //fight
     void tryEscape();

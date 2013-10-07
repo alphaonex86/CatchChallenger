@@ -82,7 +82,7 @@ void PlayerUpdater::internal_removeConnectedPlayer()
 
 void PlayerUpdater::send_timer()
 {
-    if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber && sended_connected_players!=connected_players)
+    if(GlobalServerData::serverSettings.sendPlayerNumber && sended_connected_players!=connected_players)
     {
         sended_connected_players=connected_players;
         emit newConnectedPlayer(connected_players);

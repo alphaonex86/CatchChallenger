@@ -1,6 +1,8 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "DatapackClientLoader.h"
+#include "../../general/base/FacilityLib.h"
+#include "../../general/base/CommonDatapack.h"
 
 #include <QInputDialog>
 
@@ -28,7 +30,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     if(cash>=(price*2) && quantity>1)
     {
         bool ok;
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
         if(!ok || i<=0)
             return;
     }
@@ -37,12 +39,26 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     if(quantity<1)
         delete item;
     else
+    {
+        const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+        int index=0;
+        while(index<industry.resources.size())
+        {
+            const Industry::Product &product=industry.products.at(index);
+            if(product.item==id)
+            {
+                item->setData(98,FacilityLib::getFactoryProductPrice(quantity,product,CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]]));
+                break;
+            }
+            index++;
+        }
         factoryToProductItem(item);
+    }
     tempQuantityForBuy=quantity;
     tempItemForBuy=id;
     tempCashForBuy=i*price;
     removeCash(tempCashForBuy);
-    CatchChallenger::Api_client_real::client->buyFactoryObject(factoryId,id,i,price);
+    CatchChallenger::Api_client_real::client->buyFactoryProduct(factoryId,id,i,price);
 }
 
 void BaseWindow::on_factorySell_clicked()
@@ -67,7 +83,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     if(items[id]>1 && quantity>1)
     {
         bool ok;
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
         if(!ok || i<=0)
             return;
     }
@@ -76,7 +92,21 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     if(quantity<1)
         delete item;
     else
+    {
+        const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+        int index=0;
+        while(index<industry.resources.size())
+        {
+            const Industry::Resource &resource=industry.resources.at(index);
+            if(resource.item==id)
+            {
+                item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]]));
+                break;
+            }
+            index++;
+        }
         factoryToResourceItem(item);
+    }
     ItemToSellOrBuy tempItem;
     tempItem.object=id;
     tempItem.quantity=i;
@@ -85,7 +115,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     items[id]-=i;
     if(items[id]==0)
         items.remove(id);
-    CatchChallenger::Api_client_real::client->sellFactoryObject(factoryId,id,i,price);
+    CatchChallenger::Api_client_real::client->sellFactoryResource(factoryId,id,i,price);
 }
 
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice)
@@ -110,11 +140,11 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
         break;
         case BuyStat_HaveNotQuantity:
             addCash(tempCashForBuy);
-            showTip(tr("Sorry but have not the quantity of this item"));
+            QMessageBox::information(this,tr("Information"),tr("Sorry but have not the quantity of this item"));
         break;
         case BuyStat_PriceHaveChanged:
             addCash(tempCashForBuy);
-            showTip(tr("Sorry but now the price is worse"));
+            QMessageBox::information(this,tr("Information"),tr("Sorry but now the price is worse"));
         break;
         default:
             qDebug() << "haveBuyFactoryObject(stat) have unknow value";
@@ -147,7 +177,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
                 items[itemsToSell.first().object]=itemsToSell.first().quantity;
             load_inventory();
             load_plant_inventory();
-            showTip(tr("Sorry but have not the quantity of this item"));
+            QMessageBox::information(this,tr("Information"),tr("Sorry but have not the quantity of this item"));
         break;
         case SoldStat_PriceHaveChanged:
             if(items.contains(itemsToSell.first().object))
@@ -156,7 +186,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
                 items[itemsToSell.first().object]=itemsToSell.first().quantity;
             load_inventory();
             load_plant_inventory();
-            showTip(tr("Sorry but now the price is worse"));
+            QMessageBox::information(this,tr("Information"),tr("Sorry but now the price is worse"));
         break;
         default:
             qDebug() << "haveSellFactoryObject(stat) have unknow value";
@@ -165,8 +195,11 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
     itemsToSell.removeFirst();
 }
 
-void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products)
+void BaseWindow::haveFactoryList(const quint32 &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products)
 {
+    const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+    IndustryStatus industryStatus;
+    industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000+remainingProductionTime-industry.time;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";
     #endif
@@ -175,6 +208,17 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
     index=0;
     while(index<resources.size())
     {
+        int sub_index=0;
+        while(sub_index<industry.resources.size())
+        {
+            const Industry::Resource &resource=industry.resources.at(sub_index);
+            if(resource.item==resources.at(index).object)
+            {
+                industryStatus.resources[resources.at(index).object]=industry.cycletobefull*resource.quantity-resources.at(index).quantity;
+                break;
+            }
+            sub_index++;
+        }
         QListWidgetItem *item=new QListWidgetItem();
         item->setData(99,resources.at(index).object);
         item->setData(98,resources.at(index).price);
@@ -187,6 +231,7 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
     index=0;
     while(index<products.size())
     {
+        industryStatus.products[products.at(index).object]=products.at(index).quantity;
         QListWidgetItem *item=new QListWidgetItem();
         item->setData(99,products.at(index).object);
         item->setData(98,products.at(index).price);
@@ -196,6 +241,33 @@ void BaseWindow::haveFactoryList(const QList<ItemToSellOrBuy> &resources,const Q
         index++;
     }
     ui->factoryStatus->setText(tr("Have the factory list"));
+    updateFactoryStatProduction(industryStatus,industry);
+}
+
+void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatus,const Industry &industry)
+{
+    if(FacilityLib::factoryProductionStarted(industryStatus,industry))
+    {
+        #ifdef CATCHCHALLENGER_CLIENTFULL
+        QString productionTime;
+        quint32 remainingProductionTime=0;
+        if((industryStatus.last_update+industry.time)>(QDateTime::currentMSecsSinceEpoch()/1000))
+            remainingProductionTime=(QDateTime::currentMSecsSinceEpoch()/1000)-(industryStatus.last_update+industry.time);
+        if(remainingProductionTime>0)
+        {
+            productionTime=tr("Remaining time:")+"<br />";
+            if(remainingProductionTime<60)
+                productionTime+=tr("Less than a minute");
+            else
+                productionTime+=tr("%n minute(s)","",remainingProductionTime/60);
+        }
+        ui->factoryStatText->setText(QString("%1<br />%2").arg(tr("In production")).arg(productionTime));
+        #else
+        ui->factoryStatText->setText(tr("In production"));
+        #endif
+    }
+    else
+        ui->factoryStatText->setText(tr("Production stopped"));
 }
 
 void BaseWindow::factoryToResourceItem(QListWidgetItem *item)

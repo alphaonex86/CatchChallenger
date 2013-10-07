@@ -1319,8 +1319,11 @@ void BaseWindow::updateRXTX()
         previousRXSize=RXSize;
     if(previousTXSize>TXSize)
         previousTXSize=TXSize;
-    double RXSpeed=(RXSize-previousRXSize)*1000/updateRXTXTime.elapsed();
-    double TXSpeed=(TXSize-previousTXSize)*1000/updateRXTXTime.elapsed();
+    int updateRXTXTimeElapsed=updateRXTXTime.elapsed();
+    if(updateRXTXTimeElapsed==0)
+        return;
+    double RXSpeed=(RXSize-previousRXSize)*1000/updateRXTXTimeElapsed;
+    double TXSpeed=(TXSize-previousTXSize)*1000/updateRXTXTimeElapsed;
     if(RXSpeed<1024)
         ui->labelInput->setText(QString("%1B/s").arg(RXSpeed,0,'g',0));
     else if(RXSpeed<10240)

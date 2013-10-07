@@ -150,7 +150,7 @@ void DatapackClientLoader::parseItemsExtra()
                             {
                                 if(name.isElement())
                                 {
-                                    if(name.hasAttribute("lang") || name.attribute("lang")==language)
+                                    if(name.hasAttribute("lang") && name.attribute("lang")==language)
                                     {
                                         DatapackClientLoader::itemsExtra[id].name=name.text();
                                         name_found=true;

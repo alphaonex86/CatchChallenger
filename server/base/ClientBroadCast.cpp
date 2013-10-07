@@ -21,7 +21,7 @@ ClientBroadCast::~ClientBroadCast()
 void ClientBroadCast::setVariable(Player_internal_informations *player_informations)
 {
     this->player_informations=player_informations;
-    if(GlobalServerData::serverSettings.commmonServerSettings.sendPlayerNumber)
+    if(GlobalServerData::serverSettings.sendPlayerNumber)
         connect(&GlobalServerData::serverPrivateVariables.player_updater,&PlayerUpdater::newConnectedPlayer,this,&ClientBroadCast::receive_instant_player_number,Qt::QueuedConnection);
 }
 
