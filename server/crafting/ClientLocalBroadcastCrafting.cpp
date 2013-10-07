@@ -413,9 +413,10 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
     quint16 index=0;
     while(index<size)
     {
-        if(x==static_cast<MapServer *>(map)->plants.at(index).x && y==static_cast<MapServer *>(map)->plants.at(index).y)
+        const MapServerCrafting::PlantOnMap &plant=static_cast<MapServer *>(map)->plants.at(index);
+        if(x==plant.x && y==plant.y)
         {
-            if(current_time<static_cast<MapServer *>(map)->plants.at(index).mature_at)
+            if(current_time<plant.mature_at)
             {
                 QByteArray data;
                 data[0]=Plant_collect_impossible;
@@ -423,8 +424,11 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 return;
             }
             //check if owned
-            if(static_cast<MapServer *>(map)->plants.at(index).player_id==player_informations->id || current_time<static_cast<MapServer *>(map)->plants.at(index).player_owned_expire_at
-                    || player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
+            if(plant.player_id==player_informations->id ||
+                    current_time>plant.player_owned_expire_at ||
+                    player_informations->public_and_private_informations.public_informations.type==Player_type_gm ||
+                    player_informations->public_and_private_informations.public_informations.type==Player_type_dev
+                    )
             {
                 //remove plant from db
                 switch(GlobalServerData::serverSettings.database.type)
@@ -451,19 +455,19 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
                 while(sub_index<size)
                 {
-                    static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->removeSeed(static_cast<MapServer *>(map)->plants.at(index));
+                    static_cast<MapServer *>(map)->clientsForBroadcast.at(sub_index)->removeSeed(plant);
                     sub_index++;
                 }
 
                 //add into the inventory
-                float quantity=CommonDatapack::commonDatapack.plants[static_cast<MapServer *>(map)->plants.at(index).plant].fix_quantity;
-                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants[static_cast<MapServer *>(map)->plants.at(index).plant].random_quantity)
+                float quantity=CommonDatapack::commonDatapack.plants[plant.plant].fix_quantity;
+                if((rand()%RANDOM_FLOAT_PART_DIVIDER)<=CommonDatapack::commonDatapack.plants[plant.plant].random_quantity)
                     quantity++;
 
                 QByteArray data;
                 data[0]=Plant_collect_correctly_collected;
                 emit postReply(query_id,data);
-                emit addObjectAndSend(CommonDatapack::commonDatapack.plants[static_cast<MapServer *>(map)->plants.at(index).plant].itemUsed,quantity);
+                emit addObjectAndSend(CommonDatapack::commonDatapack.plants[plant.plant].itemUsed,quantity);
 
                 static_cast<MapServer *>(map)->plants.removeAt(index);
                 return;
