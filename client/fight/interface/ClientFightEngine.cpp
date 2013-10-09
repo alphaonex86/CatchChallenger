@@ -218,11 +218,29 @@ bool ClientFightEngine::internalTryEscape()
     return CommonFightEngine::internalTryEscape();
 }
 
-bool ClientFightEngine::tryCapture(const quint32 &item)
+void ClientFightEngine::tryCaptureClient(const quint32 &item)
 {
     emit message("ClientFightEngine::tryCapture(): emit tryCapture()");
     CatchChallenger::Api_client_real::client->useObject(item);
-    return CommonFightEngine::tryCapture(item);
+    PlayerMonster newMonster;
+    newMonster.buffs=wildMonsters.first().buffs;
+    newMonster.captured_with=item;
+    newMonster.egg_step=0;
+    newMonster.gender=wildMonsters.first().gender;
+    newMonster.hp=wildMonsters.first().hp;
+    newMonster.id=0;//unknown at this time
+    newMonster.level=wildMonsters.first().level;
+    newMonster.monster=wildMonsters.first().monster;
+    newMonster.remaining_xp=0;
+    newMonster.skills=wildMonsters.first().skills;
+    newMonster.sp=0;
+    playerMonster_captureInProgress << newMonster;
+}
+
+void ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
+{
+    Q_UNUSED(toStorage);
+    Q_UNUSED(newMonster);
 }
 
 Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)
@@ -438,12 +456,6 @@ bool ClientFightEngine::useSkill(const quint32 &skill)
     if(isInBattle())
         return true;
     return CommonFightEngine::useSkill(skill);
-}
-
-void ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
-{
-    Q_UNUSED(toStorage);
-    playerMonster_captureInProgress << newMonster;
 }
 
 void ClientFightEngine::captureIsDone()

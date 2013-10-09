@@ -145,6 +145,8 @@ private slots:
     void add_to_inventory(const QHash<quint32,quint32> &items, const bool &showGain=true);
     void add_to_inventory_slot(const QHash<quint32,quint32> &items);
     void remove_to_inventory(const QHash<quint32,quint32> &items);
+    void remove_to_inventory_slot(const QHash<quint32,quint32> &items);
+    void remove_to_inventory(const quint32 &itemId,const quint32 &quantity=1);
     void load_inventory();
     void load_plant_inventory();
     void load_crafting_inventory();

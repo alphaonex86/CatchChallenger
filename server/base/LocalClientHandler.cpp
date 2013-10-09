@@ -1406,13 +1406,16 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
             emit error(QString("is not in fight with wild to use trap").arg(itemId));
             return;
         }
-        localClientHandlerFight.tryCapture(itemId);
+        bool success=localClientHandlerFight.tryCapture(itemId);
         //send the network reply
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);
         out << (quint8)ObjectUsage_correctlyUsed;
-        out << (quint32)GlobalServerData::serverPrivateVariables.maxMonsterId;
+        if(success)
+            out << (quint32)GlobalServerData::serverPrivateVariables.maxMonsterId;
+        else
+            out << (quint32)0x00000000;
         emit postReply(query_id,outputData);
     }
     else
