@@ -149,27 +149,49 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelFruitsText->setText(QString());
         ui->labelPlantFruitText->setText(QString());
         ui->labelPlantDescription->setText(QString());
+        #ifdef CATCHCHALLENGER_CLIENTFULL
+        ui->labelPlantByDay->setText(QString());
+        #endif
 
         ui->plantUse->setVisible(false);
         return;
     }
     QListWidgetItem *item=items.first();
     const DatapackClientLoader::PlantExtra &contentExtra=DatapackClientLoader::datapackLoader.plantExtra[plants_items_graphical[item]];
-    const CatchChallenger::Plant &content=CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]];
+    const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]];
 
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.itemUsed))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(plant.itemUsed))
     {
-        ui->labelPlantImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].image);
-        ui->labelPlantName->setText(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].name);
-        ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].image);
-        ui->labelPlantDescription->setText(DatapackClientLoader::datapackLoader.itemsExtra[content.itemUsed].description);
+        ui->labelPlantImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].image);
+        ui->labelPlantName->setText(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].name);
+        ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].image);
+        ui->labelPlantDescription->setText(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].description);
+        #ifdef CATCHCHALLENGER_CLIENTFULL
+        if(plant.fruits_seconds>0)
+        {
+            double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
+            double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
+            if(CommonDatapack::commonDatapack.items.item.contains(plant.itemUsed))
+                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0))+", "+tr("income by day: %1").arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.items.item[plant.itemUsed].price,'f',0)));
+            else
+                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
+        }
+        #endif
     }
     else
     {
         ui->labelPlantImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-        ui->labelPlantName->setText(tr("Unknow plant (%1)").arg(content.itemUsed));
+        ui->labelPlantName->setText(tr("Unknow plant (%1)").arg(plant.itemUsed));
         ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->labelPlantDescription->setText(tr("This plant and these effects are unknown"));
+        #ifdef CATCHCHALLENGER_CLIENTFULL
+        if(plant.fruits_seconds>0)
+        {
+            double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
+            double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
+            ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
+        }
+        #endif
     }
 
     ui->labelPlantedImage->setPixmap(contentExtra.tileset->tileAt(0)->image().scaled(32,64));
@@ -179,11 +201,11 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     ui->labelFruitsImage->setPixmap(contentExtra.tileset->tileAt(4)->image().scaled(32,64));
 
     ui->labelPlantedText->setText(FacilityLib::secondsToString(0));
-    ui->labelSproutedText->setText(FacilityLib::secondsToString(content.sprouted_seconds));
-    ui->labelTallerText->setText(FacilityLib::secondsToString(content.taller_seconds));
-    ui->labelFloweringText->setText(FacilityLib::secondsToString(content.flowering_seconds));
-    ui->labelFruitsText->setText(FacilityLib::secondsToString(content.fruits_seconds));
-    ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((float)content.fix_quantity+((float)content.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
+    ui->labelSproutedText->setText(FacilityLib::secondsToString(plant.sprouted_seconds));
+    ui->labelTallerText->setText(FacilityLib::secondsToString(plant.taller_seconds));
+    ui->labelFloweringText->setText(FacilityLib::secondsToString(plant.flowering_seconds));
+    ui->labelFruitsText->setText(FacilityLib::secondsToString(plant.fruits_seconds));
+    ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((float)plant.fix_quantity+((float)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
 
     ui->plantUse->setVisible(inSelection);
 }
