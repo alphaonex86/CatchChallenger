@@ -257,6 +257,7 @@ void SoloWindow::NewProfile_finished()
                 CatchChallenger::PlayerMonster::PlayerSkill temp;
                 temp.level=attack[sub_index].learnSkillLevel;
                 temp.skill=attack[sub_index].learnSkill;
+                temp.endurance=0;
                 skills << temp;
             }
             sub_index++;

@@ -164,6 +164,7 @@ bool CommonFightEngine::learnSkill(const quint32 &monsterId,const quint32 &skill
                             PlayerMonster::PlayerSkill temp;
                             temp.skill=skill;
                             temp.level=1;
+                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).endurance;
                             player_informations->playerMonster[index].skills << temp;
                         }
                         else
@@ -261,12 +262,24 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     }
     if(!monsterFound)
     {
-        emit error(QString("error: no wild monster selected"));
-        *ok=false;
-        playerMonster.monster=0;
-        playerMonster.level=0;
-        playerMonster.gender=Gender_Unknown;
-        return playerMonster;
+        emit error(QString("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+        if(monsterList.isEmpty())
+        {
+            *ok=false;
+            playerMonster.monster=0;
+            playerMonster.level=0;
+            playerMonster.gender=Gender_Unknown;
+            return playerMonster;
+        }
+        else
+        {
+            playerMonster.monster=monsterList.first().id;
+            //select the level
+            if(monsterList.at(index).maxLevel==monsterList.first().minLevel)
+                playerMonster.level=monsterList.first().minLevel;
+            else
+                playerMonster.level=getOneSeed(monsterList.first().maxLevel-monsterList.first().minLevel+1)+monsterList.first().minLevel;
+        }
     }
     Monster monsterDef=CommonDatapack::commonDatapack.monsters[playerMonster.monster];
     if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
@@ -302,6 +315,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
             PlayerMonster::PlayerSkill temp;
             temp.level=monsterDef.learn.at(index).learnSkillLevel;
             temp.skill=monsterDef.learn.at(index).learnSkill;
+            temp.endurance=CommonDatapack::commonDatapack.monsterSkills[temp.skill].level.at(temp.level-1).endurance;
             playerMonster.skills << temp;
         }
         index--;
