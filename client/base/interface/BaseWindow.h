@@ -407,6 +407,8 @@ private:
     QString clanName;
     bool haveClanInformations;
     quint32 factoryId;
+    IndustryStatus industryStatus;
+    bool factoryInProduction;
     ObjectType waitedObjectType;
     quint32 datapackCount;
 
