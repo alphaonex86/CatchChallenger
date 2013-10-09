@@ -1456,6 +1456,8 @@ void BaseWindow::displayTrap()
                     );
     else
         ui->labelFightTrap->move(ui->labelFightMonsterTop->pos().x(),ui->labelFightMonsterTop->pos().y());
+    if(!CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.isEmpty())
+        return;
     if((quint32)updateTrapTime.elapsed()>animationTime)
     {
         updateTrapTime.restart();
@@ -1745,19 +1747,42 @@ void CatchChallenger::BaseWindow::useTrap(const quint32 &itemId)
     updateTrapTime.restart();
     displayTrapProgression=0;
     trapItemId=itemId;
-    trapSuccess=CatchChallenger::ClientFightEngine::fightEngine.tryCapture(itemId);
+    CatchChallenger::ClientFightEngine::fightEngine.tryCaptureClient(itemId);
     displayTrap();
+    remove_to_inventory(itemId);
 }
 
 void CatchChallenger::BaseWindow::monsterCatch(const quint32 &newMonsterId)
 {
-    CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first().id=newMonsterId;
-    if(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().count()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
-        warehouse_playerMonster << CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first();
+    if(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.isEmpty())
+    {
+        emit error("Internal bug: cupture monster list is emtpy");
+        return;
+    }
+    if(newMonsterId==0x00000000)
+    {
+        ui->labelFightTrap->hide();
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("capture is failed"));
+        #endif
+        CatchChallenger::ClientFightEngine::fightEngine.generateOtherAttack();
+        CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
+        displayAttack();
+    }
     else
     {
-        CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first());
-        load_monsters();
+        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        emit message(QString("capture is success"));
+        #endif
+        CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first().id=newMonsterId;
+        if(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().count()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+            warehouse_playerMonster << CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first();
+        else
+        {
+            CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first());
+            load_monsters();
+        }
+        CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
+        displayTrap();
     }
-    CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
 }

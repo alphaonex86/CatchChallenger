@@ -441,20 +441,23 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                             PlayerMonster::PlayerSkill temp;
                             temp.skill=skill;
                             temp.level=1;
+                            temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[temp.skill].level.first().endurance;
                             player_informations->public_and_private_informations.playerMonster[index].skills << temp;
                             switch(GlobalServerData::serverSettings.database.type)
                             {
                                 default:
                                 case ServerSettings::Database::DatabaseType_Mysql:
-                                    emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level) VALUES(%1,%2,1);")
+                                    emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,1,%3);")
                                                  .arg(monsterId)
-                                                 .arg(skill)
+                                                 .arg(temp.skill)
+                                                 .arg(temp.endurance)
                                                  );
                                 break;
                                 case ServerSettings::Database::DatabaseType_SQLite:
-                                    emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level) VALUES(%1,%2,1);")
+                                    emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,1,%3);")
                                                  .arg(monsterId)
-                                                 .arg(skill)
+                                                 .arg(temp.skill)
+                                                 .arg(temp.endurance)
                                                  );
                                 break;
                             }
@@ -981,17 +984,30 @@ bool LocalClientHandlerFight::dropKOOtherMonster()
 
 void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
+    int position=999999;
+    GlobalServerData::serverPrivateVariables.maxMonsterId++;
+    if(toStorage)
+    {
+        player_informations->public_and_private_informations.warehouse_playerMonster << newMonster;
+        player_informations->public_and_private_informations.warehouse_playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+        position=player_informations->public_and_private_informations.warehouse_playerMonster.size();
+    }
+    else
+    {
+        player_informations->public_and_private_informations.playerMonster << newMonster;
+        player_informations->public_and_private_informations.playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+        position=player_informations->public_and_private_informations.playerMonster.size();
+    }
     QString place;
     if(toStorage)
-        place="warehouse";
+        place="'warehouse'";
     else
-        place="wear";
-    GlobalServerData::serverPrivateVariables.maxMonsterId++;
+        place="'wear'";
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place) VALUES(%1,%2);")
+            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place,position) VALUES(%1,%2);")
                          .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                               .arg(newMonster.hp)
@@ -1003,15 +1019,16 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                               .arg(newMonster.captured_with)
                               .arg(FacilityLib::genderToString(newMonster.gender))
                               )
-                         .arg(QString("%1,%2,%3")
+                         .arg(QString("%1,%2,%3,%4")
                               .arg(newMonster.egg_step)
                               .arg(player_informations->id)
                               .arg(place)
+                              .arg(position)
                               )
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place) VALUES(%1,%2);")
+            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place,position) VALUES(%1,%2);")
                          .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                               .arg(newMonster.hp)
@@ -1023,10 +1040,11 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                               .arg(newMonster.captured_with)
                               .arg(FacilityLib::genderToString(newMonster.gender))
                               )
-                         .arg(QString("%1,%2,%3")
+                         .arg(QString("%1,%2,%3,%4")
                               .arg(newMonster.egg_step)
                               .arg(player_informations->id)
                               .arg(place)
+                              .arg(position)
                               )
                          );
         break;
@@ -1038,17 +1056,19 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level) VALUES(%1,%2,%3);")
+                emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
                              .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                              .arg(newMonster.skills.at(index).skill)
                              .arg(newMonster.skills.at(index).level)
+                             .arg(newMonster.skills.at(index).endurance)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level) VALUES(%1,%2,%3);")
+                emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
                              .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                              .arg(newMonster.skills.at(index).skill)
                              .arg(newMonster.skills.at(index).level)
+                             .arg(newMonster.skills.at(index).endurance)
                              );
             break;
         }
@@ -1076,16 +1096,6 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
             break;
         }
         index++;
-    }
-    if(toStorage)
-    {
-        player_informations->public_and_private_informations.warehouse_playerMonster << newMonster;
-        player_informations->public_and_private_informations.warehouse_playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
-    }
-    else
-    {
-        player_informations->public_and_private_informations.playerMonster << newMonster;
-        player_informations->public_and_private_informations.playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
     }
     wildMonsters.removeFirst();
 }

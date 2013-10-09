@@ -82,8 +82,11 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     int i=1;
     if(items[id]>1 && quantity>1)
     {
+        quint32 quantityToSell=quantity;
+        if(items[id]<quantityToSell)
+            quantityToSell=items[id];
         bool ok;
-        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra[id].name), 0, 0, quantityToSell, 1, &ok);
         if(!ok || i<=0)
             return;
     }

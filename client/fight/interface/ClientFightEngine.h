@@ -48,7 +48,7 @@ public:
     bool haveBattleOtherMonster() const;
     virtual bool useSkill(const quint32 &skill);
     bool dropKOOtherMonster();
-    bool tryCapture(const quint32 &item);
+    void tryCaptureClient(const quint32 &item);
     virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
     void captureIsDone();
     bool doTheOtherMonsterTurn();

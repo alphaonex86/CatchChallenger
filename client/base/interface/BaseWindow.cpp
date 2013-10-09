@@ -189,7 +189,7 @@ void BaseWindow::connectAllSignals()
     //inventory
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_inventory,     this,&BaseWindow::have_inventory);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::add_to_inventory,   this,&BaseWindow::add_to_inventory_slot);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_to_inventory,this,&BaseWindow::remove_to_inventory);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_to_inventory,this,&BaseWindow::remove_to_inventory_slot);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::monsterCatch,       this,&BaseWindow::monsterCatch);
 
     //chat
@@ -899,6 +899,18 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool
     load_inventory();
     load_plant_inventory();
     on_listCraftingList_itemSelectionChanged();
+}
+
+void BaseWindow::remove_to_inventory(const quint32 &itemId,const quint32 &quantity)
+{
+    QHash<quint32,quint32> items;
+    items[itemId]=quantity;
+    remove_to_inventory(items);
+}
+
+void BaseWindow::remove_to_inventory_slot(const QHash<quint32,quint32> &items)
+{
+    remove_to_inventory(items);
 }
 
 void BaseWindow::remove_to_inventory(const QHash<quint32,quint32> &items)
@@ -2208,6 +2220,11 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
 {
+    if(objectInUsing.isEmpty())
+    {
+        emit error("No object usage to validate");
+        return;
+    }
     switch(objectUsage)
     {
         case ObjectUsage_correctlyUsed:
@@ -2217,8 +2234,12 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
             CatchChallenger::Api_client_real::client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes[objectInUsing.first()]);
             load_crafting_inventory();
         }
+        else if(CommonDatapack::commonDatapack.items.trap.contains(objectInUsing.first()))
+        {
+        }
         else
             qDebug() << "BaseWindow::objectUsed(): unknow object type";
+
         break;
         case ObjectUsage_failed:
         break;
@@ -2770,6 +2791,10 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                         item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name).arg(playerSkill.level));
                     else
                         item=new QListWidgetItem(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name);
+                    item->setText(item->text()+", "+tr("endurance: %1/%2")
+                            .arg(playerSkill.endurance)
+                            .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerSkill.skill].level.at(playerSkill.level-1).endurance)
+                            );
                     item->setText(item->text()+"\n"+DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                     item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                 }
