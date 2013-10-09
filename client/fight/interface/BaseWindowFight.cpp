@@ -1766,8 +1766,6 @@ void CatchChallenger::BaseWindow::monsterCatch(const quint32 &newMonsterId)
         emit message(QString("capture is failed"));
         #endif
         CatchChallenger::ClientFightEngine::fightEngine.generateOtherAttack();
-        CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
-        displayAttack();
     }
     else
     {
@@ -1782,7 +1780,7 @@ void CatchChallenger::BaseWindow::monsterCatch(const quint32 &newMonsterId)
             CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first());
             load_monsters();
         }
-        CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
-        displayTrap();
     }
+    CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
+    displayTrap();
 }
