@@ -500,14 +500,14 @@ void LocalClientHandler::addWarehouseObject(const quint32 &item,const quint32 &q
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,1);")
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,place) VALUES(%1,%2,%3,'warehouse');")
                              .arg(item)
                              .arg(player_informations->id)
                              .arg(quantity)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,warehouse) VALUES(%1,%2,%3,1);")
+                emit dbQuery(QString("INSERT INTO item(item_id,player_id,quantity,place) VALUES(%1,%2,%3,'warehouse');")
                          .arg(item)
                          .arg(player_informations->id)
                          .arg(quantity)

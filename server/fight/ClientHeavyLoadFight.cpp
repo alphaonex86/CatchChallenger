@@ -137,12 +137,12 @@ void ClientHeavyLoad::loadMonsters()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                    dbQuery(QString("UPDATE monster SET place='warehouse' WHERE id=%1;")
                                  .arg(playerMonster.id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("UPDATE monster SET warehouse=1 WHERE id=%1;")
+                    dbQuery(QString("UPDATE monster SET place='warehouse' WHERE id=%1;")
                                  .arg(playerMonster.id)
                                  );
                 break;
