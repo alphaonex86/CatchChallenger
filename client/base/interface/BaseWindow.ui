@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>12</number>
+        <number>15</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">

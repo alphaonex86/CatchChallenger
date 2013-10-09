@@ -783,8 +783,11 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         return true;
     if(wildMonsters.first().level>=trap.max_level)
         return false;
-    quint8 value=getOneSeed(trap.max_level-trap.min_level);
-    if(value>(trap.max_level-wildMonsters.first().level))
+
+    //use real random to prevent cheats
+    quint8 number=rand()%(trap.max_level-trap.min_level);
+
+    if(number<(trap.max_level-wildMonsters.first().level))
         return true;
     else
         return false;
