@@ -295,7 +295,7 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
                 if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance)
                 {
                     skill.endurance=CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance;
-                    emit message(QString("skill %1 for monsterId: %2 have to hight endurance").arg(skill.skill).arg(monsterId));
+                    emit message(QString("skill %1 for monsterId: %2 have too hight endurance, lowered to: %3").arg(skill.skill).arg(monsterId).arg(skill.endurance));
                 }
             }
             else
