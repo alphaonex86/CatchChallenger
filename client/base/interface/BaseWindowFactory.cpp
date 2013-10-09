@@ -125,6 +125,12 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
     {
         case BuyStat_Done:
             items[tempItemForBuy]=tempQuantityForBuy;
+            if(industryStatus.products.contains(tempItemForBuy))
+            {
+                industryStatus.products[tempItemForBuy]-=tempQuantityForBuy;
+                if(industryStatus.products[tempItemForBuy]==0)
+                    industryStatus.products.remove(tempItemForBuy);
+            }
             add_to_inventory(items);
         break;
         case BuyStat_BetterPrice:
@@ -136,6 +142,12 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
             addCash(tempCashForBuy);
             removeCash(newPrice*tempQuantityForBuy);
             items[tempItemForBuy]=tempQuantityForBuy;
+            if(industryStatus.products.contains(tempItemForBuy))
+            {
+                industryStatus.products[tempItemForBuy]-=tempQuantityForBuy;
+                if(industryStatus.products[tempItemForBuy]==0)
+                    industryStatus.products.remove(tempItemForBuy);
+            }
             add_to_inventory(items);
         break;
         case BuyStat_HaveNotQuantity:
@@ -150,6 +162,21 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
             qDebug() << "haveBuyFactoryObject(stat) have unknow value";
         break;
     }
+    switch(stat)
+    {
+        case BuyStat_Done:
+        case BuyStat_BetterPrice:
+        {
+            if(factoryInProduction)
+                break;
+            const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+            industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
+            updateFactoryStatProduction(industryStatus,industry);
+        }
+        break;
+        default:
+        break;
+    }
 }
 
 void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice)
@@ -158,6 +185,9 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
     switch(stat)
     {
         case SoldStat_Done:
+            if(!industryStatus.resources.contains(itemsToSell.first().object))
+                industryStatus.resources[itemsToSell.first().object]=0;
+            industryStatus.resources[itemsToSell.first().object]+=itemsToSell.first().quantity;
             addCash(itemsToSell.first().price*itemsToSell.first().quantity);
             showTip(tr("Item sold"));
         break;
@@ -165,8 +195,12 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
             if(newPrice==0)
             {
                 qDebug() << "haveSellFactoryObject() the price 0$ can't be better price!";
+                QMessageBox::information(this,tr("Information"),tr("Bug into returned price"));
                 return;
             }
+            if(!industryStatus.resources.contains(itemsToSell.first().object))
+                industryStatus.resources[itemsToSell.first().object]=0;
+            industryStatus.resources[itemsToSell.first().object]+=itemsToSell.first().quantity;
             addCash(newPrice*itemsToSell.first().quantity);
             showTip(tr("Item sold at better price"));
         break;
@@ -193,12 +227,28 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
         break;
     }
     itemsToSell.removeFirst();
+    switch(stat)
+    {
+        case BuyStat_Done:
+        case BuyStat_BetterPrice:
+        {
+            if(factoryInProduction)
+                break;
+            const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
+            industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
+            updateFactoryStatProduction(industryStatus,industry);
+        }
+        break;
+        default:
+        break;
+    }
 }
 
 void BaseWindow::haveFactoryList(const quint32 &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products)
 {
+    industryStatus.products.clear();
+    industryStatus.resources.clear();
     const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[factoryId]];
-    IndustryStatus industryStatus;
     industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000+remainingProductionTime-industry.time;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";
@@ -248,11 +298,16 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
 {
     if(FacilityLib::factoryProductionStarted(industryStatus,industry))
     {
+        factoryInProduction=true;
         #ifdef CATCHCHALLENGER_CLIENTFULL
         QString productionTime;
         quint32 remainingProductionTime=0;
         if((industryStatus.last_update+industry.time)>(QDateTime::currentMSecsSinceEpoch()/1000))
-            remainingProductionTime=(QDateTime::currentMSecsSinceEpoch()/1000)-(industryStatus.last_update+industry.time);
+            remainingProductionTime=(industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000);
+        else if((industryStatus.last_update+industry.time)<(QDateTime::currentMSecsSinceEpoch()/1000))
+            remainingProductionTime=((QDateTime::currentMSecsSinceEpoch()/1000)-industryStatus.last_update)%industry.time;
+        else
+            remainingProductionTime=industry.time;
         if(remainingProductionTime>0)
         {
             productionTime=tr("Remaining time:")+"<br />";
@@ -267,7 +322,10 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
         #endif
     }
     else
+    {
+        factoryInProduction=false;
         ui->factoryStatText->setText(tr("Production stopped"));
+    }
 }
 
 void BaseWindow::factoryToResourceItem(QListWidgetItem *item)

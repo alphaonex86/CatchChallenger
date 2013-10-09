@@ -91,6 +91,8 @@ void BaseWindow::resetAll()
         delete ambiance.first();
         ambiance.removeFirst();
     }
+    industryStatus.products.clear();
+    industryStatus.resources.clear();
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }

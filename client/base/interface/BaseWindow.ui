@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>14</number>
+        <number>12</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2547,6 +2547,16 @@ padding-bottom:3px;
            <string>Use</string>
           </property>
          </widget>
+         <widget class="QLabel" name="labelPlantByDay">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>350</y>
+            <width>321</width>
+            <height>21</height>
+           </rect>
+          </property>
+         </widget>
         </widget>
         <widget class="QFrame" name="framePlantsRight">
          <property name="geometry">
@@ -4574,6 +4584,16 @@ padding-bottom:3px;
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#ff0000;&quot;&gt;Validate when you have finish&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_39">

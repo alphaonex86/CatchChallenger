@@ -631,6 +631,10 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                     if(!plants.contains(id))
                     {
                         Plant plant;
+                        plant.fruits_seconds=0;
+                        plant.sprouted_seconds=0;
+                        plant.taller_seconds=0;
+                        plant.flowering_seconds=0;
                         plant.itemUsed=itemUsed;
                         ok=false;
                         QDomElement quantity = plantItem.firstChildElement("quantity");
@@ -647,13 +651,41 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                 ok=ok2;
                             }
                         }
+                        int intermediateTimeCount=0;
                         QDomElement grow = plantItem.firstChildElement("grow");
                         if(!grow.isNull())
                         {
                             if(grow.isElement())
                             {
+                                QDomElement fruits = grow.firstChildElement("fruits");
+                                if(!fruits.isNull())
+                                {
+                                    if(fruits.isElement())
+                                    {
+                                        plant.fruits_seconds=fruits.text().toUInt(&ok2)*60;
+                                        plant.sprouted_seconds=plant.fruits_seconds;
+                                        plant.taller_seconds=plant.fruits_seconds;
+                                        plant.flowering_seconds=plant.fruits_seconds;
+                                        if(!ok2)
+                                        {
+                                            qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber()).arg(fruits.text());
+                                            ok=false;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        ok=false;
+                                        qDebug() << QString("Unable to parse the plants file: %1, fruits is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber());
+                                    }
+                                }
+                                else
+                                {
+                                    ok=false;
+                                    qDebug() << QString("Unable to parse the plants file: %1, fruits is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
+                                }
                                 QDomElement sprouted = grow.firstChildElement("sprouted");
                                 if(!sprouted.isNull())
+                                {
                                     if(sprouted.isElement())
                                     {
                                         plant.sprouted_seconds=sprouted.text().toUInt(&ok2)*60;
@@ -662,13 +694,15 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                             qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(sprouted.tagName()).arg(sprouted.lineNumber()).arg(sprouted.text());
                                             ok=false;
                                         }
+                                        else
+                                            intermediateTimeCount++;
                                     }
                                     else
                                         qDebug() << QString("Unable to parse the plants file: %1, sprouted is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(sprouted.tagName()).arg(sprouted.lineNumber());
-                                else
-                                    qDebug() << QString("Unable to parse the plants file: %1, sprouted is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(sprouted.tagName()).arg(sprouted.lineNumber());
+                                }
                                 QDomElement taller = grow.firstChildElement("taller");
                                 if(!taller.isNull())
+                                {
                                     if(taller.isElement())
                                     {
                                         plant.taller_seconds=taller.text().toUInt(&ok2)*60;
@@ -677,13 +711,15 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                             qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(taller.tagName()).arg(taller.lineNumber()).arg(taller.text());
                                             ok=false;
                                         }
+                                        else
+                                            intermediateTimeCount++;
                                     }
                                     else
                                         qDebug() << QString("Unable to parse the plants file: %1, taller is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(taller.tagName()).arg(taller.lineNumber());
-                                else
-                                    qDebug() << QString("Unable to parse the plants file: %1, taller is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(taller.tagName()).arg(taller.lineNumber());
+                                }
                                 QDomElement flowering = grow.firstChildElement("flowering");
                                 if(!flowering.isNull())
+                                {
                                     if(flowering.isElement())
                                     {
                                         plant.flowering_seconds=flowering.text().toUInt(&ok2)*60;
@@ -692,27 +728,12 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                                             ok=false;
                                             qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(flowering.tagName()).arg(flowering.lineNumber()).arg(flowering.text());
                                         }
+                                        else
+                                            intermediateTimeCount++;
                                     }
                                     else
                                         qDebug() << QString("Unable to parse the plants file: %1, flowering is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(flowering.tagName()).arg(flowering.lineNumber());
-                                else
-                                    qDebug() << QString("Unable to parse the plants file: %1, flowering is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(flowering.tagName()).arg(flowering.lineNumber());
-                                QDomElement fruits = grow.firstChildElement("fruits");
-                                if(!fruits.isNull())
-                                    if(fruits.isElement())
-                                    {
-                                        plant.fruits_seconds=fruits.text().toUInt(&ok2)*60;
-                                        if(!ok2)
-                                        {
-                                            qDebug() << QString("Unable to parse the plants file: %1, sprouted is not a number: %4 child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber()).arg(fruits.text());
-                                            ok=false;
-                                        }
-                                    }
-                                    else
-                                        qDebug() << QString("Unable to parse the plants file: %1, fruits is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber());
-                                else
-                                    qDebug() << QString("Unable to parse the plants file: %1, fruits is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(fruits.tagName()).arg(fruits.lineNumber());
-
+                                }
                             }
                             else
                                 qDebug() << QString("Unable to parse the plants file: %1, grow is not an element: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
@@ -720,7 +741,40 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                         else
                             qDebug() << QString("Unable to parse the plants file: %1, grow is null: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
                         if(ok)
+                        {
+                            bool needIntermediateTimeFix=false;
+                            if(plant.flowering_seconds>=plant.fruits_seconds)
+                            {
+                                needIntermediateTimeFix=true;
+                                if(intermediateTimeCount<3)
+                                    qDebug() << QString("Warning when parse the plants file: %1, flowering_seconds>=fruits_seconds: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
+                            }
+                            if(plant.taller_seconds>=plant.flowering_seconds)
+                            {
+                                needIntermediateTimeFix=true;
+                                if(intermediateTimeCount<3)
+                                    qDebug() << QString("Warning when parse the plants file: %1, taller_seconds>=flowering_seconds: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
+                            }
+                            if(plant.sprouted_seconds>=plant.taller_seconds)
+                            {
+                                needIntermediateTimeFix=true;
+                                if(intermediateTimeCount<3)
+                                    qDebug() << QString("Warning when parse the plants file: %1, sprouted_seconds>=taller_seconds: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
+                            }
+                            if(plant.sprouted_seconds<=0)
+                            {
+                                needIntermediateTimeFix=true;
+                                if(intermediateTimeCount<3)
+                                    qDebug() << QString("Warning when parse the plants file: %1, sprouted_seconds<=0: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
+                            }
+                            if(needIntermediateTimeFix)
+                            {
+                                plant.flowering_seconds=plant.fruits_seconds*3/4;
+                                plant.taller_seconds=plant.fruits_seconds*2/4;
+                                plant.sprouted_seconds=plant.fruits_seconds*1/4;
+                            }
                             plants[id]=plant;
+                        }
                     }
                     else
                         qDebug() << QString("Unable to open the plants file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(plantItem.tagName()).arg(plantItem.lineNumber());

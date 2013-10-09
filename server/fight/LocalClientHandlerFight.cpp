@@ -981,12 +981,17 @@ bool LocalClientHandlerFight::dropKOOtherMonster()
 
 void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
+    QString place;
+    if(toStorage)
+        place="warehouse";
+    else
+        place="wear";
     GlobalServerData::serverPrivateVariables.maxMonsterId++;
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,warehouse) VALUES(%1,%2);")
+            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place) VALUES(%1,%2);")
                          .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                               .arg(newMonster.hp)
@@ -1001,12 +1006,12 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                          .arg(QString("%1,%2,%3")
                               .arg(newMonster.egg_step)
                               .arg(player_informations->id)
-                              .arg(toStorage)
+                              .arg(place)
                               )
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,warehouse) VALUES(%1,%2);")
+            emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place) VALUES(%1,%2);")
                          .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
                               .arg(newMonster.hp)
@@ -1021,7 +1026,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                          .arg(QString("%1,%2,%3")
                               .arg(newMonster.egg_step)
                               .arg(player_informations->id)
-                              .arg(toStorage)
+                              .arg(place)
                               )
                          );
         break;
