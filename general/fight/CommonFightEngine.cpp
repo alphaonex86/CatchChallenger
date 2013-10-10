@@ -510,7 +510,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffe
             quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     }
     else
-        quantity=(currentMonster->hp*effect.quantity)/100;
+        quantity=((qint64)currentMonster->hp*(qint64)effect.quantity)/(qint64)100;
     if(effect.quantity<0)
     {
         if(quantity==0)
@@ -1190,7 +1190,7 @@ QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMon
                 const Buff::Effect &effect=effects.at(sub_index);
                 if(effect.on==Buff::Effect::EffectOn_HP)
                 {
-                    qint32 quantity;
+                    qint32 quantity=0;
                     Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
                     if(effect.type==QuantityType_Quantity)
                     {
@@ -1209,7 +1209,8 @@ QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMon
                     }
                     if(effect.type==QuantityType_Percent)
                     {
-                        quantity=(player_informations->playerMonster[selectedMonster].hp*effect.quantity)/100;
+                        /// \bug quantity wrong
+                        quantity=((qint64)currentMonsterStat.hp*(qint64)effect.quantity)/(qint64)100;
                         if(effect.quantity<0)
                         {
                             if(quantity==0)

@@ -1661,7 +1661,7 @@ HP: %3/%4</translation>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1259"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1300"/>
         <source> and do buff change</source>
-        <translation>et changement de buff</translation>
+        <translation> et changement de buff</translation>
     </message>
     <message>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1283"/>

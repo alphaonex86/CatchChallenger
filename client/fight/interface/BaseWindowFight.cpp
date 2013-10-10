@@ -1360,11 +1360,11 @@ void BaseWindow::displayAttack()
             if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity!=0)
             {
                 if(applyOnOtherMonster)
-                    ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
+                    ui->progressBarFightTopHP->setValue(otherMonster->hp);
                 else
                 {
+                    ui->progressBarFightBottomHP->setValue(currentMonster->hp);
                     ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
-                    ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity);
                 }
             }
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
