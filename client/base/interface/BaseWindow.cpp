@@ -1886,7 +1886,6 @@ void BaseWindow::goToBotStep(const quint8 &step)
         ui->shopBuy->setVisible(false);
         qDebug() << "goToBotStep(), client->getShopList(shopId): " << shopId;
         CatchChallenger::Api_client_real::client->getShopList(shopId);
-        ui->shopCash->setText(tr("Cash: %1$").arg(cash));
         return;
     }
     else if(actualBot.step[step].attribute("type")=="sell")
@@ -2614,6 +2613,7 @@ void BaseWindow::addCash(const quint32 &cash)
 {
     this->cash+=cash;
     ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+    ui->shopCash->setText(tr("Cash: %1$").arg(this->cash));
     ui->tradePlayerCash->setMaximum(this->cash);
 }
 
@@ -2621,6 +2621,7 @@ void BaseWindow::removeCash(const quint32 &cash)
 {
     this->cash-=cash;
     ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+    ui->shopCash->setText(tr("Cash: %1$").arg(this->cash));
     ui->tradePlayerCash->setMaximum(this->cash);
 }
 

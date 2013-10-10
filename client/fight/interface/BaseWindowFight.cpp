@@ -474,6 +474,7 @@ void BaseWindow::updateCurrentMonsterInformation()
     fight_attacks_graphical.clear();
     ui->listWidgetFightAttack->clear();
     int index=0;
+    useTheRescueSkill=true;
     while(index<monster->skills.size())
     {
         QListWidgetItem *item=new QListWidgetItem();
@@ -491,10 +492,22 @@ void BaseWindow::updateCurrentMonsterInformation()
                     );
         item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[skill.skill].description);
         item->setData(99,skill.endurance);
+        if(skill.endurance>0)
+            useTheRescueSkill=false;
         fight_attacks_graphical[item]=skill.skill;
         ui->listWidgetFightAttack->addItem(item);
         index++;
     }
+    if(useTheRescueSkill && CommonDatapack::commonDatapack.monsterSkills.contains(0))
+        if(!CommonDatapack::commonDatapack.monsterSkills[0].level.isEmpty())
+        {
+            QListWidgetItem *item=new QListWidgetItem();
+            item->setText(QString("Rescue skill: %1").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[0].name));
+            item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[0].description);
+            item->setData(99,0);
+            fight_attacks_graphical[item]=0;
+            ui->listWidgetFightAttack->addItem(item);
+        }
     on_listWidgetFightAttack_itemSelectionChanged();
 }
 
@@ -801,7 +814,7 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         QMessageBox::warning(this,tr("Selection error"),tr("You need select an attack"));
         return;
     }
-    if(itemsList.first()->data(99).toUInt()<=0)
+    if(itemsList.first()->data(99).toUInt()<=0 && !useTheRescueSkill)
     {
         QMessageBox::warning(this,tr("No endurance"),tr("You have no more endurance to use this skill"));
         return;
@@ -816,7 +829,10 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
         return;
     }
-    CatchChallenger::ClientFightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()]);
+    if(useTheRescueSkill)
+        CatchChallenger::ClientFightEngine::fightEngine.useSkill(0);
+    else
+        CatchChallenger::ClientFightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()]);
     if(battleType!=BattleType_OtherPlayer)
         doNextAction();
     else
@@ -859,6 +875,7 @@ void BaseWindow::loose()
     CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
+    escape=false;
     doNextActionStep=DoNextActionStep_Start;
     load_monsters();
     switch(battleType)
@@ -905,6 +922,7 @@ void BaseWindow::win()
     else
         ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
+    escape=false;
     doNextActionStep=DoNextActionStep_Start;
     load_monsters();
     switch(battleType)
@@ -963,7 +981,6 @@ void BaseWindow::doNextAction()
         {//the other attack
             escape=false;//need be dropped to have text to escape
             fightTimerFinish=false;
-            CatchChallenger::ClientFightEngine::fightEngine.generateOtherAttack();
             if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
             {
                 qDebug() << "doNextAction(): escape failed: you take damage";
@@ -1736,13 +1753,13 @@ void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackRe
 }
 
 
-void CatchChallenger::BaseWindow::on_listWidgetFightAttack_itemActivated(QListWidgetItem *item)
+void BaseWindow::on_listWidgetFightAttack_itemActivated(QListWidgetItem *item)
 {
     Q_UNUSED(item);
     on_pushButtonFightAttackConfirmed_clicked();
 }
 
-void CatchChallenger::BaseWindow::useTrap(const quint32 &itemId)
+void BaseWindow::useTrap(const quint32 &itemId)
 {
     updateTrapTime.restart();
     displayTrapProgression=0;
@@ -1752,7 +1769,7 @@ void CatchChallenger::BaseWindow::useTrap(const quint32 &itemId)
     remove_to_inventory(itemId);
 }
 
-void CatchChallenger::BaseWindow::monsterCatch(const quint32 &newMonsterId)
+void BaseWindow::monsterCatch(const quint32 &newMonsterId)
 {
     if(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.isEmpty())
     {
