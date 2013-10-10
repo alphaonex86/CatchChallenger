@@ -508,6 +508,7 @@ private:
     QList<BattleInformations> battleInformationsList;
     QList<quint32> botFightList;
     QHash<quint32,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
+    bool useTheRescueSkill;
 
     //city
     QTimer nextCityCaptureTimer;
