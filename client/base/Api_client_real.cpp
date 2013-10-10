@@ -29,10 +29,13 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
 
 Api_client_real::~Api_client_real()
 {
-    socket->abort();
-    socket->disconnectFromHost();
-    if(socket->state()!=QAbstractSocket::UnconnectedState)
-        socket->waitForDisconnected();
+    if(socket!=NULL)
+    {
+        socket->abort();
+        socket->disconnectFromHost();
+        if(socket->state()!=QAbstractSocket::UnconnectedState)
+            socket->waitForDisconnected();
+    }
 }
 
 void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint16 &subCodeType,const quint8 &queryNumber,const QByteArray &data)
@@ -136,6 +139,8 @@ void Api_client_real::resetAll()
 
 void Api_client_real::tryConnect(QString host,quint16 port)
 {
+    if(socket==NULL)
+        return;
     DebugClass::debugConsole(QString("Try connect on: %1:%2").arg(host).arg(port));
     this->host=host;
     this->port=port;
@@ -212,7 +217,8 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
 
 void Api_client_real::tryDisconnect()
 {
-    socket->disconnectFromHost();
+    if(socket!=NULL)
+        socket->disconnectFromHost();
 }
 
 QString Api_client_real::getHost()
@@ -250,6 +256,8 @@ void Api_client_real::sendDatapackContent()
         out << (quint64)info.st_mtime;
         index++;
     }
+    if(output==NULL)
+        return;
     output->packFullOutcommingQuery(0x02,0x000C,datapack_content_query_number,outputData);
 }
 

@@ -75,8 +75,7 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
     if(items.contains(id))
         quantity+=items[id];
     if(change_warehouse_items.contains(id))
-        if(change_warehouse_items[id]>0)
-            quantity+=change_warehouse_items[id];
+        quantity+=change_warehouse_items[id];
     bool ok=true;
     int i;
     if(quantity==1)

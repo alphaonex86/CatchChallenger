@@ -1209,7 +1209,6 @@ QList<Skill::LifeEffectReturn> CommonFightEngine::buffLifeEffect(PublicPlayerMon
                     }
                     if(effect.type==QuantityType_Percent)
                     {
-                        /// \bug quantity wrong
                         quantity=((qint64)currentMonsterStat.hp*(qint64)effect.quantity)/(qint64)100;
                         if(effect.quantity<0)
                         {
