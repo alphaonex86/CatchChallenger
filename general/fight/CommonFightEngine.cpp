@@ -748,14 +748,9 @@ ApplyOn CommonFightEngine::invertApplyOn(const ApplyOn &applyOn)
 
 quint8 CommonFightEngine::getOneSeed(const quint8 &max)
 {
-    quint16 number=static_cast<quint8>(randomSeeds.at(0));
-    if(max!=0)
-    {
-        number*=max;
-        number/=255;
-    }
+    quint8 number=static_cast<quint8>(randomSeeds.at(0));
     randomSeeds.remove(0,1);
-    return number;
+    return number%(max+1);
 }
 
 bool CommonFightEngine::internalTryEscape()
