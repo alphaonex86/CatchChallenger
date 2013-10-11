@@ -46,7 +46,7 @@ LocalClientHandler::~LocalClientHandler()
 void LocalClientHandler::setVariable(Player_internal_informations *player_informations)
 {
     MapBasicMove::setVariable(player_informations);
-    localClientHandlerFight.setVariable(player_informations);
+    localClientHandlerFight.setVariableInternal(player_informations);
 }
 
 bool LocalClientHandler::checkCollision()
