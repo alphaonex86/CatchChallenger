@@ -26,7 +26,7 @@ public:
     virtual ~LocalClientHandlerFight();
     bool getBattleIsValidated();
     bool isInFight() const;
-    void setVariable(Player_internal_informations *player_informations);
+    void setVariableInternal(Player_internal_informations *player_informations);
     void saveCurrentMonsterStat();
     void saveMonsterStat(const PlayerMonster &monster);
     void savePosition();

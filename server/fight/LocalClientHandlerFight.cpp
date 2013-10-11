@@ -113,7 +113,7 @@ bool LocalClientHandlerFight::checkKOCurrentMonsters()
     return false;
 }
 
-void LocalClientHandlerFight::setVariable(Player_internal_informations *player_informations)
+void LocalClientHandlerFight::setVariableInternal(Player_internal_informations *player_informations)
 {
     this->player_informations=player_informations;
     CommonFightEngine::setVariable(&player_informations->public_and_private_informations);
