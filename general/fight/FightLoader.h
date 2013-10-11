@@ -15,6 +15,7 @@ public:
     static QHash<quint32,Buff> loadMonsterBuff(const QString &file);
     static QHash<quint32,BotFight> loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills);
 };
+bool operator<(const Monster::AttackToLearn &entry1, const Monster::AttackToLearn &entry2);
 }
 
 #endif // FIGHTLOADER_H

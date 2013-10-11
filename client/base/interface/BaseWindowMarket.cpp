@@ -413,7 +413,7 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
 {
-    if(!ClientFightEngine::fightEngine.getPlayerMonster().size()>CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
+    if(ClientFightEngine::fightEngine.getPlayerMonster().size()>CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
     {
         QMessageBox::warning(this,tr("Warning"),tr("You can't wear this monster more"));
         return;

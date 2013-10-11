@@ -2189,7 +2189,7 @@ void LocalClientHandler::sellFactoryResource(const quint32 &query_id,const quint
     emit postReply(query_id,outputData);
 }
 
-bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
+bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
 {
     if(monsterDrops1.item!=monsterDrops2.item)
         return false;
