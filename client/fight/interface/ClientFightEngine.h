@@ -42,7 +42,7 @@ public:
     bool firstLifeEffectQuantityChange(qint32 quantity);
     virtual PublicPlayerMonster *getOtherMonster() const;
     quint8 getOtherSelectedMonsterNumber() const;
-    void setVariable(Player_private_and_public_informations player_informations_local);
+    void setVariableContent(Player_private_and_public_informations player_informations_local);
     Skill::AttackReturn generateOtherAttack();
     bool isInBattle() const;
     bool haveBattleOtherMonster() const;

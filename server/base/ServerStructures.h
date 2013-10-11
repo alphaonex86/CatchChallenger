@@ -272,8 +272,7 @@ struct ServerPrivateVariables
     };
 };
 
-}
-
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);
+}
 
 #endif // STRUCTURES_SERVER_H

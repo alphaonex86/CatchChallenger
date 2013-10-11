@@ -1,4 +1,4 @@
-*.pro.user
+*.pro.user*
 *build-desktop*
 *.qm
 *build-Desktop-Debug*
@@ -6,3 +6,4 @@
 *Desktop-Debug*
 *Desktop*
 *build*
+*kate-swp

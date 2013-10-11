@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-bool operator<(const Monster::AttackToLearn &entry1, const Monster::AttackToLearn &entry2)
+bool CatchChallenger::operator<(const Monster::AttackToLearn &entry1, const Monster::AttackToLearn &entry2)
 {
     if(entry1.learnAtLevel!=entry2.learnAtLevel)
         return entry1.learnAtLevel < entry2.learnAtLevel;
