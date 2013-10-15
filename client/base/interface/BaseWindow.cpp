@@ -1093,10 +1093,10 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x,
         int index=0;
         while(index<map->plantList.size())
         {
-            if(map->plantList.at(index).x==x && map->plantList.at(index).y==y)
+            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
             {
                 quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                if(map->plantList.at(index).mature_at<current_time)
+                if(map->plantList.at(index)->mature_at<=current_time)
                     showTip(tr("To recolt the plant press <i>Enter</i>"));
                 else
                     showTip(tr("This plant is growing and can't be collected"));
@@ -1159,7 +1159,7 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
         int index=0;
         while(index<map->plantList.size())
         {
-            if(map->plantList.at(index).x==x && map->plantList.at(index).y==y)
+            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
             {
                 if(collectWait)
                 {
@@ -1167,7 +1167,7 @@ void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
                     return;
                 }
                 quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                if(map->plantList.at(index).mature_at<current_time)
+                if(map->plantList.at(index)->mature_at<=current_time)
                 {
                     collectWait=true;
                     addQuery(QueryType_CollectPlant);
