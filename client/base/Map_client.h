@@ -10,9 +10,19 @@
 #include <QString>
 #include <QList>
 #include <QHash>
+#include <QTimer>
 #include <QDomElement>
 
 namespace CatchChallenger {
+class ClientPlant : public QTimer
+{
+public:
+    Tiled::MapObject * mapObject;
+    quint8 x,y;
+    quint8 plant_id;
+    quint64 mature_at;
+};
+
 class Map_client : public Map
 {
 public:
@@ -24,14 +34,7 @@ public:
 
     Map_client();
 
-    struct Plant
-    {
-        Tiled::MapObject * mapObject;
-        quint8 x,y;
-        quint8 plant_id;
-        quint64 mature_at;
-    };
-    QList<Plant> plantList;
+    QList<ClientPlant *> plantList;
     QHash<QPair<quint8,quint8>,Bot> bots;
     QHash<QPair<quint8,quint8>,BotDisplay> botsDisplay;
 

@@ -31,14 +31,23 @@ private:
     };
     QList<DelayedPlantInsert> delayedPlantInsert;
     QMultiHash<QString,DelayedPlantInsert> delayedPlantInsertOnMap;
+    struct PlantTimer
+    {
+        Tiled::MapObject * mapObject;
+        quint8 plant_id;
+        quint16 seconds_to_mature;
+    };
 protected slots:
     //plant
+    void getPlantTimerEvent();
+    bool updatePlantGrowing(CatchChallenger::ClientPlant *plant);//return true if is growing
     void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
     void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     void tryLoadPlantOnMapDisplayed(const QString &fileName);
+    void updateGrowing();
 public slots:
     virtual void datapackParsed();
     virtual void reinject_signals();

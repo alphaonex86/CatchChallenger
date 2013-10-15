@@ -746,25 +746,25 @@ QHash<quint8, Plant> DatapackGeneralLoader::loadPlants(const QString &file)
                             if(plant.flowering_seconds>=plant.fruits_seconds)
                             {
                                 needIntermediateTimeFix=true;
-                                if(intermediateTimeCount<3)
+                                if(intermediateTimeCount>=3)
                                     qDebug() << QString("Warning when parse the plants file: %1, flowering_seconds>=fruits_seconds: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
                             }
                             if(plant.taller_seconds>=plant.flowering_seconds)
                             {
                                 needIntermediateTimeFix=true;
-                                if(intermediateTimeCount<3)
+                                if(intermediateTimeCount>=3)
                                     qDebug() << QString("Warning when parse the plants file: %1, taller_seconds>=flowering_seconds: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
                             }
                             if(plant.sprouted_seconds>=plant.taller_seconds)
                             {
                                 needIntermediateTimeFix=true;
-                                if(intermediateTimeCount<3)
+                                if(intermediateTimeCount>=3)
                                     qDebug() << QString("Warning when parse the plants file: %1, sprouted_seconds>=taller_seconds: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
                             }
                             if(plant.sprouted_seconds<=0)
                             {
                                 needIntermediateTimeFix=true;
-                                if(intermediateTimeCount<3)
+                                if(intermediateTimeCount>=3)
                                     qDebug() << QString("Warning when parse the plants file: %1, sprouted_seconds<=0: child.tagName(): %2 (at line: %3)").arg(plantsFile.fileName()).arg(grow.tagName()).arg(grow.lineNumber());
                             }
                             if(needIntermediateTimeFix)
