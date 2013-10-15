@@ -43,7 +43,7 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
     int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {
-        if(map_full->logicalMap.plantList.at(index).x==x && map_full->logicalMap.plantList.at(index).y==y)
+        if(map_full->logicalMap.plantList.at(index)->x==x && map_full->logicalMap.plantList.at(index)->y==y)
         {
             qDebug() << "map have already an item at this point, remove it";
             remove_plant(mapId,x,y);
@@ -52,36 +52,74 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
             index++;
     }
     quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    CatchChallenger::Map_client::Plant plant;
-    plant.mapObject=new Tiled::MapObject();
-    Tiled::Cell cell=plant.mapObject->cell();
-    if(seconds_to_mature==0)
-        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(4);
-    else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].flowering_seconds))
-        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(3);
-    else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].taller_seconds))
-        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(2);
-    else if(seconds_to_mature<(CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id].sprouted_seconds))
-        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(1);
-    else
-        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant_id].tileset->tileAt(0);
-    plant.mapObject->setCell(cell);
+    CatchChallenger::ClientPlant *plant=new CatchChallenger::ClientPlant();
+    plant->setSingleShot(true);
+    plant->mapObject=new Tiled::MapObject();
+    plant->x=x;
+    plant->y=y;
+    plant->plant_id=plant_id;
+    plant->mature_at=current_time+seconds_to_mature;
+    if(updatePlantGrowing(plant))
+        connect(plant,&QTimer::timeout,this,&MapController::getPlantTimerEvent);
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    plant.mapObject->setPosition(QPoint(x,y+1));
-    plant.x=x;
-    plant.y=y;
-    plant.plant_id=plant_id;
-    plant.mature_at=current_time+seconds_to_mature;
+    plant->mapObject->setPosition(QPoint(x,y+1));
 
     map_full->logicalMap.plantList << plant;
     #ifdef DEBUG_CLIENT_PLANTS
     qDebug() << QString("insert_plant(), map: %1 at: %2,%3").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
     #endif
     if(ObjectGroupItem::objectGroupLink.contains(all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup))
-        ObjectGroupItem::objectGroupLink[all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant.mapObject);
+        ObjectGroupItem::objectGroupLink[all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant->mapObject);
     else
         qDebug() << QString("insert_plant(), all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup not contains current_map->objectGroup");
-    MapObjectItem::objectLink[plant.mapObject]->setZValue(y);
+    MapObjectItem::objectLink[plant->mapObject]->setZValue(y);
+}
+
+void MapController::getPlantTimerEvent()
+{
+    QTimer *clientPlantTimer=qobject_cast<QTimer *>(QObject::sender());
+    if(clientPlantTimer==NULL)
+        return;
+    updatePlantGrowing(static_cast<CatchChallenger::ClientPlant *>(clientPlantTimer));
+}
+
+//return true if is growing
+bool MapController::updatePlantGrowing(CatchChallenger::ClientPlant *plant)
+{
+    quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
+    Tiled::Cell cell=plant->mapObject->cell();
+    if(plant->mature_at<=currentTime)
+    {
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant->plant_id].tileset->tileAt(4);
+        plant->mapObject->setCell(cell);
+        return false;
+    }
+    int seconds_to_mature=plant->mature_at-currentTime;
+    int floweringDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].flowering_seconds;
+    int tallerDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].taller_seconds;
+    int sproutedDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].sprouted_seconds;
+    if(seconds_to_mature<floweringDiff)
+    {
+        plant->start(seconds_to_mature*1000);
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant->plant_id].tileset->tileAt(3);
+    }
+    else if(seconds_to_mature<tallerDiff)
+    {
+        plant->start((seconds_to_mature-floweringDiff)*1000);
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant->plant_id].tileset->tileAt(2);
+    }
+    else if(seconds_to_mature<sproutedDiff)
+    {
+        plant->start((seconds_to_mature-tallerDiff)*1000);
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant->plant_id].tileset->tileAt(1);
+    }
+    else
+    {
+        plant->start((seconds_to_mature-sproutedDiff)*1000);
+        cell.tile=DatapackClientLoader::datapackLoader.plantExtra[plant->plant_id].tileset->tileAt(0);
+    }
+    plant->mapObject->setCell(cell);
+    return true;
 }
 
 void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y)
@@ -130,19 +168,24 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
     int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {
-        if(map_full->logicalMap.plantList.at(index).x==x && map_full->logicalMap.plantList.at(index).y==y)
+        if(map_full->logicalMap.plantList.at(index)->x==x && map_full->logicalMap.plantList.at(index)->y==y)
         {
             //unload the player sprite
-            if(ObjectGroupItem::objectGroupLink.contains(map_full->logicalMap.plantList.at(index).mapObject->objectGroup()))
-                ObjectGroupItem::objectGroupLink[map_full->logicalMap.plantList.at(index).mapObject->objectGroup()]->removeObject(map_full->logicalMap.plantList.at(index).mapObject);
+            if(ObjectGroupItem::objectGroupLink.contains(map_full->logicalMap.plantList.at(index)->mapObject->objectGroup()))
+                ObjectGroupItem::objectGroupLink[map_full->logicalMap.plantList.at(index)->mapObject->objectGroup()]->removeObject(map_full->logicalMap.plantList.at(index)->mapObject);
             else
                 qDebug() << QString("remove_plant(), ObjectGroupItem::objectGroupLink not contains map_full->logicalMap.plantList.at(index).mapObject->objectGroup()");
-            delete map_full->logicalMap.plantList.at(index).mapObject;
+            delete map_full->logicalMap.plantList.at(index)->mapObject;
+            delete map_full->logicalMap.plantList.at(index);
             map_full->logicalMap.plantList.removeAt(index);
         }
         else
             index++;
     }
+}
+
+void MapController::updateGrowing()
+{
 }
 
 void MapController::seed_planted(const bool &ok)
