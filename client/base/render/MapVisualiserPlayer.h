@@ -80,8 +80,6 @@ protected slots:
     void transformLookToMove();
 
     //grass
-    virtual void startGrassAnimation(const CatchChallenger::Direction &direction);
-    virtual void stopGrassAnimation();
     void loadGrassTile();
     //call after enter on new map
     virtual void loadPlayerFromCurrentMap();
@@ -90,7 +88,7 @@ protected slots:
     virtual void parseStop();
     virtual void parseAction();
 
-    void setAnimationTilset(QString animationTilset);
+    //void setAnimationTilset(QString animationTilset);
     virtual void resetAll();
     void setSpeed(const SPEED_TYPE &speed);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);

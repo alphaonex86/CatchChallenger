@@ -46,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
+    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
@@ -219,4 +220,12 @@ void MainWindow::have_current_player_info(const CatchChallenger::Player_private_
 void MainWindow::on_languages_clicked()
 {
     LanguagesSelect::languagesSelect->exec();
+}
+
+void MainWindow::newError(QString error,QString detailedError)
+{
+    qDebug() << detailedError.toLocal8Bit();
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        CatchChallenger::Api_client_real::client->tryDisconnect();
+    QMessageBox::critical(this,tr("Error"),error);
 }

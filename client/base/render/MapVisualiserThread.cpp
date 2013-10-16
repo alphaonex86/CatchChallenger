@@ -271,7 +271,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         {
             if(tileLayer->name()=="Grass")
             {
-                grass = tempMapObject->tiledMap->takeLayerAt(index);
+                /*grass = tempMapObject->tiledMap->takeLayerAt(index);
                 if(tempMapObject->objectGroupIndex-1<=0)
                     tempMapObject->tiledMap->insertLayer(0,grass);
                 else
@@ -320,7 +320,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                      else
                          qDebug() << "Unable to open the tsx file:" << tsxFile.fileName() << ", error:" << tsxFile.errorString();
                      ++i;
-                 }
+                 }*/
             }
         }
         index++;
