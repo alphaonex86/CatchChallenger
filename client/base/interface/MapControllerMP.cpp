@@ -779,14 +779,15 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     this->x=x;
     this->y=y;
 
-    hideNotloadedMap();
     unloadPlayerFromCurrentMap();
+    current_map=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
     passMapIntoOld();
-    QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
-    current_map=mapPath;
-    if(!haveMapInMemory(mapPath))
+    if(!haveMapInMemory(current_map))
         emit inWaitingOfMap();
-    loadOtherMap(mapPath);
+    loadOtherMap(current_map);
+    hideNotloadedMap();
+    removeUnusedMap();
+    loadPlayerFromCurrentMap();
     CatchChallenger::Api_client_real::client->teleportDone();
 }
 
