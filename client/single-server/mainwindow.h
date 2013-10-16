@@ -42,6 +42,7 @@ private slots:
     void needQuit();
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
     void on_languages_clicked();
+    void newError(QString error,QString detailedError);
 
 private:
     QSslSocket *realSocket;
