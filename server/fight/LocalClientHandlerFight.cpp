@@ -34,13 +34,18 @@ bool LocalClientHandlerFight::tryEscape()
     if(escapeSuccess)//check if is in fight
         saveCurrentMonsterStat();
     else
-    {
-        if(checkKOCurrentMonsters())
-            checkLoose();
-        else
-            checkKOOtherMonstersForGain();
-    }
+        finishTheTurn(false);
     return escapeSuccess;
+}
+
+bool LocalClientHandlerFight::tryCapture(const quint32 &item)
+{
+    bool captureSuccess=CommonFightEngine::tryCapture(item);
+    if(captureSuccess)//check if is in fight
+        saveCurrentMonsterStat();
+    else
+        finishTheTurn(false);
+    return captureSuccess;
 }
 
 bool LocalClientHandlerFight::getBattleIsValidated()
@@ -844,56 +849,62 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
     return haveChangeOfLevel;
 }
 
+bool LocalClientHandlerFight::finishTheTurn(const bool &isBot)
+{
+    bool win=!currentMonsterIsKO() && otherMonsterIsKO();
+    if(currentMonsterIsKO() || otherMonsterIsKO())
+    {
+        dropKOCurrentMonster();
+        dropKOOtherMonster();
+        checkLoose();
+    }
+    syncForEndOfTurn();
+    if(!isInFight())
+    {
+        if(win)
+        {
+            if(isBot)
+            {
+                if(!isInCityCapture)
+                {
+                    addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
+                    player_informations->public_and_private_informations.bot_already_beaten << botFightId;
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                         .arg(player_informations->id)
+                                         .arg(botFightId)
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
+                                         .arg(player_informations->id)
+                                         .arg(botFightId)
+                                         );
+                        break;
+                    }
+                }
+                emit fightOrBattleFinish(win,botFightId);
+                emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
+            }
+            else
+                emit message(QString("Have win agains a wild monster"));
+        }
+        emit fightOrBattleFinish(win,0);
+    }
+    return win;
+}
+
 bool LocalClientHandlerFight::useSkill(const quint32 &skill)
 {
     emit message(QString("use the skill: %1").arg(skill));
     if(!isInBattle())//wild or bot
     {
         bool isBot=!botFightMonsters.isEmpty();
-        bool win=CommonFightEngine::useSkill(skill);
-        if(currentMonsterIsKO() || otherMonsterIsKO())
-        {
-            dropKOCurrentMonster();
-            dropKOOtherMonster();
-            checkLoose();
-        }
-        syncForEndOfTurn();
-        if(!isInFight())
-        {
-            if(win)
-            {
-                if(isBot)
-                {
-                    if(!isInCityCapture)
-                    {
-                        addCash(CommonDatapack::commonDatapack.botFights[botFightId].cash);
-                        player_informations->public_and_private_informations.bot_already_beaten << botFightId;
-                        switch(GlobalServerData::serverSettings.database.type)
-                        {
-                            default:
-                            case ServerSettings::Database::DatabaseType_Mysql:
-                                emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                             .arg(player_informations->id)
-                                             .arg(botFightId)
-                                             );
-                            break;
-                            case ServerSettings::Database::DatabaseType_SQLite:
-                                emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                             .arg(player_informations->id)
-                                             .arg(botFightId)
-                                             );
-                            break;
-                        }
-                    }
-                    emit fightOrBattleFinish(win,botFightId);
-                    emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
-                }
-                else
-                    emit message(QString("Have win agains a wild monster"));
-            }
-            emit fightOrBattleFinish(win,0);
-        }
-        return win;
+        CommonFightEngine::useSkill(skill);
+        return finishTheTurn(isBot);
     }
     else
     {
@@ -1282,6 +1293,12 @@ void LocalClientHandlerFight::saveMonsterPosition(const quint32 &monsterId,const
 bool LocalClientHandlerFight::changeOfMonsterInFight(const quint32 &monsterId)
 {
     bool doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
+
+    //save for sync at end of the battle
+    PlayerMonster * monster=getCurrentMonster();
+    if(monster!=NULL)
+        saveMonsterStat(*monster);
+
     if(!CommonFightEngine::changeOfMonsterInFight(monsterId))
         return false;
     if(isInBattle())

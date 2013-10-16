@@ -1398,12 +1398,12 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
     {
         if(!localClientHandlerFight.isInFight())
         {
-            emit error(QString("is not in fight to use trap").arg(itemId));
+            emit error(QString("is not in fight to use trap: %1").arg(itemId));
             return;
         }
         if(!localClientHandlerFight.isInFightWithWild())
         {
-            emit error(QString("is not in fight with wild to use trap").arg(itemId));
+            emit error(QString("is not in fight with wild to use trap: %1").arg(itemId));
             return;
         }
         bool success=localClientHandlerFight.tryCapture(itemId);

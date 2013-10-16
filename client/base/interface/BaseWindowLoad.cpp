@@ -85,6 +85,8 @@ void BaseWindow::resetAll()
     marketWithdrawObjectList.clear();
     marketWithdrawMonsterList.clear();
     datapackCount=0;
+    escape=false;
+    escapeSuccess=false;
     while(!ambiance.isEmpty())
     {
         ambiance.first()->stop();

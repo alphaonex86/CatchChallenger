@@ -116,7 +116,6 @@ private slots:
     void disconnected(QString reason);
     void notLogged(QString reason);
     void protocol_is_good();
-    void newError(QString error,QString detailedError);
     void error(QString error);
     void errorWithTheCurrentMap();
 
@@ -227,6 +226,7 @@ private slots:
 
     //fight
     void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void prepareFight();
     void botFight(const quint32 &fightId);
     void botFightFull(const quint32 &fightId);
     bool fightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
@@ -537,6 +537,7 @@ private:
     QList<QOggSimplePlayer*> ambiance;
     QThread audioReadThread;
 signals:
+    void newError(QString error,QString detailedError);
     //datapack
     void parseDatapack(const QString &datapackPath);
     void sendsetMultiPlayer(const bool & multiplayer);

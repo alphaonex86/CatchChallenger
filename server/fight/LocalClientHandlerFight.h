@@ -35,6 +35,7 @@ public:
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
     void getRandomNumberIfNeeded() const;
     bool tryEscape();
+    bool tryCapture(const quint32 &item);
     bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(LocalClientHandlerFight * otherPlayerBattle);
@@ -45,6 +46,7 @@ public:
     void battleFinished();
     void battleFinishedReset();
     LocalClientHandlerFight * getOtherPlayerBattle() const;
+    bool finishTheTurn(const bool &isBot);
     virtual bool useSkill(const quint32 &skill);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     void requestFight(const quint32 &fightId);

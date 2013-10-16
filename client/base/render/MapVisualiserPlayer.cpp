@@ -113,7 +113,7 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -140,7 +140,7 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -167,7 +167,7 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -194,7 +194,7 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -396,7 +396,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         //playerMapObject->set
         centerOn(MapObjectItem::objectLink[playerMapObject]);
     }
-    stopGrassAnimation();
+    //stopGrassAnimation();
 
     if(haveStopTileAction())
         return;
@@ -423,7 +423,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         }
         moveStep=0;
         moveTimer.start();
-        startGrassAnimation(direction);
+        //startGrassAnimation(direction);
         return;
     }
 
@@ -449,7 +449,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
     }
     else if(keyPressed.contains(Qt::Key_Right))
@@ -473,7 +473,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
     }
     else if(keyPressed.contains(Qt::Key_Up))
@@ -497,7 +497,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
     }
     else if(keyPressed.contains(Qt::Key_Down))
@@ -521,7 +521,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
     }
     //now stop walking, no more arrow key is pressed
@@ -653,7 +653,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         break;
         case CatchChallenger::Direction_look_at_right:
@@ -664,7 +664,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         break;
         case CatchChallenger::Direction_look_at_top:
@@ -675,7 +675,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
@@ -686,7 +686,7 @@ void MapVisualiserPlayer::transformLookToMove()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            startGrassAnimation(direction);
+            //startGrassAnimation(direction);
         }
         break;
         default:
@@ -772,17 +772,9 @@ CatchChallenger::Direction MapVisualiserPlayer::getDirection()
     return direction;
 }
 
-void MapVisualiserPlayer::setAnimationTilset(QString animationTilset)
-{
-    animationTileset->loadFromImage(QImage(":/images/player_default/animation.png"),":/images/player_default/animation.png");
-    if(QFile::exists(animationTilset))
-        if(!animationTileset->loadFromImage(QImage(animationTilset),animationTilset))
-            qDebug() << "Unable the load the datapack animation tileset: " << animationTilset;
-}
-
 void MapVisualiserPlayer::resetAll()
 {
-    stopGrassAnimation();
+    //stopGrassAnimation();
     unloadPlayerFromCurrentMap();
     timer.stop();
     moveTimer.stop();
@@ -877,7 +869,7 @@ void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
         qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 }
 
-void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &direction)
+/*void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &direction)
 {
     switch(direction)
     {
@@ -941,7 +933,7 @@ void MapVisualiserPlayer::stopGrassAnimation()
         ObjectGroupItem::objectGroupLink[nextCurrentObject->objectGroup()]->removeObject(nextCurrentObject);
         haveNextCurrentObject=false;
     }
-}
+}*/
 
 void MapVisualiserPlayer::loadGrassTile()
 {

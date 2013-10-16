@@ -373,77 +373,6 @@ void BaseWindow::battleRequested(const QString &pseudo, const quint8 &skinInt)
     CatchChallenger::Api_client_real::client->battleAccepted();
 }
 
-void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
-{
-    BattleInformations battleInformations;
-    battleInformations.pseudo=pseudo;
-    battleInformations.skinId=skinId;
-    battleInformations.stat=stat;
-    battleInformations.monsterPlace=monsterPlace;
-    battleInformations.publicPlayerMonster=publicPlayerMonster;
-    battleInformationsList << battleInformations;
-    if(battleInformationsList.size()>1 || !botFightList.isEmpty())
-        return;
-    battleAcceptedByOtherFull(battleInformations);
-}
-
-void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInformations)
-{
-    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
-    {
-        qDebug() << "already in fight";
-        CatchChallenger::Api_client_real::client->battleRefused();
-        return;
-    }
-    battleType=BattleType_OtherPlayer;
-    ui->stackedWidget->setCurrentWidget(ui->page_battle);
-
-    //skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
-    QPixmap otherFrontImage=getFrontSkin(battleInformations.skinId);
-
-    //reset the other player info
-    ui->labelFightMonsterTop->setPixmap(otherFrontImage);
-    //ui->battleOtherPseudo->setText(lastBattleQuery.first().first);
-    ui->frameFightTop->hide();
-    ui->frameFightBottom->hide();
-    ui->labelFightMonsterBottom->setPixmap(playerBackImage);
-    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-    ui->labelFightEnter->setText(tr("%1 wish fight with you").arg(battleInformations.pseudo));
-    ui->pushButtonFightEnterNext->hide();
-
-    resetPosition(true);
-    moveType=MoveType_Enter;
-    battleStep=BattleStep_Presentation;
-    moveFightMonsterBoth();
-    CatchChallenger::ClientFightEngine::fightEngine.setBattleMonster(battleInformations.stat,battleInformations.monsterPlace,battleInformations.publicPlayerMonster);
-}
-
-void BaseWindow::battleCanceledByOther()
-{
-    CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
-    showTip(tr("The other player have canceled the battle"));
-    load_monsters();
-    if(battleInformationsList.isEmpty())
-    {
-        emit error("battle info not found at collision");
-        return;
-    }
-    battleInformationsList.removeFirst();
-    if(!battleInformationsList.isEmpty())
-    {
-        const BattleInformations &battleInformations=battleInformationsList.first();
-        battleInformationsList.removeFirst();
-        battleAcceptedByOtherFull(battleInformations);
-    }
-    else if(!botFightList.isEmpty())
-    {
-        quint32 fightId=botFightList.first();
-        botFightList.removeFirst();
-        botFight(fightId);
-    }
-}
-
 QString BaseWindow::lastLocation() const
 {
     return MapController::mapController->lastLocation();
@@ -932,19 +861,9 @@ void BaseWindow::remove_to_inventory(const QHash<quint32,quint32> &items)
     load_plant_inventory();
 }
 
-void BaseWindow::newError(QString error,QString detailedError)
-{
-    qDebug() << detailedError.toLocal8Bit();
-    if(socketState!=QAbstractSocket::ConnectedState)
-        return;
-    CatchChallenger::Api_client_real::client->tryDisconnect();
-    resetAll();
-    QMessageBox::critical(this,tr("Error"),error);
-}
-
 void BaseWindow::error(QString error)
 {
-    newError(tr("Error with the protocol"),error);
+    emit newError(tr("Error with the protocol"),error);
 }
 
 void BaseWindow::errorWithTheCurrentMap()
@@ -2648,10 +2567,11 @@ void BaseWindow::on_toolButton_monster_list_quit_clicked()
     {
         switch(waitedObjectType)
         {
+            case ObjectType_MonsterToFightKO:
+            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
             case ObjectType_MonsterToTrade:
             case ObjectType_MonsterToLearn:
             case ObjectType_MonsterToFight:
-            case ObjectType_MonsterToFightKO:
             objectSelection(false);
             return;
             default:

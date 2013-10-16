@@ -881,8 +881,6 @@ void MapControllerMP::datapackParsed()
 
     skinFolderList=CatchChallenger::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
-    setAnimationTilset(datapackPath+DATAPACK_BASE_PATH_ANIMATION+"animation.png");
-
     if(player_informations_is_set)
         reinject_signals();
 }

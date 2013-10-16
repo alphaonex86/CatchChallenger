@@ -23,6 +23,7 @@ SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
+    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&SimpleSoloServer::newError,Qt::QueuedConnection);
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->addWidget(solowindow);
     ui->stackedWidget->setCurrentWidget(solowindow);
@@ -176,4 +177,12 @@ void SimpleSoloServer::resetAll()
     if(internalServer!=NULL)
         internalServer->stop();
     saveTime();
+}
+
+void SimpleSoloServer::newError(QString error,QString detailedError)
+{
+    qDebug() << detailedError.toLocal8Bit();
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        CatchChallenger::Api_client_real::client->tryDisconnect();
+    QMessageBox::critical(this,tr("Error"),error);
 }

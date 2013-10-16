@@ -163,6 +163,7 @@ void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quin
 {
     if(!fightCollision(map,x,y))
         return;
+    prepareFight();
     battleType=BattleType_Wild;
     PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
     if(otherMonster==NULL)
@@ -177,6 +178,12 @@ void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const quin
     battleStep=BattleStep_Presentation;
     resetPosition(true);
     moveFightMonsterBoth();
+}
+
+void BaseWindow::prepareFight()
+{
+    escape=false;
+    escapeSuccess=false;
 }
 
 void BaseWindow::botFight(const quint32 &fightId)
@@ -194,6 +201,7 @@ void BaseWindow::botFight(const quint32 &fightId)
 
 void BaseWindow::botFightFull(const quint32 &fightId)
 {
+    prepareFight();
     ui->frameFightTop->setVisible(false);
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
     ui->labelFightEnter->setText(DatapackClientLoader::datapackLoader.botFightsExtra[fightId].start);
@@ -412,10 +420,21 @@ void BaseWindow::moveFightMonsterBottom()
             CatchChallenger::ClientFightEngine::fightEngine.dropKOCurrentMonster();
             if(CatchChallenger::ClientFightEngine::fightEngine.haveAnotherMonsterOnThePlayerToFight())
             {
-                #ifdef DEBUG_CLIENT_BATTLE
-                qDebug() << "Your current monster is KO, select another";
-                #endif
-                selectObject(ObjectType_MonsterToFight);
+                if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
+                {
+                    #ifdef DEBUG_CLIENT_BATTLE
+                    qDebug() << "Your current monster is KO, select another";
+                    #endif
+                    selectObject(ObjectType_MonsterToFightKO);
+                }
+                else
+                {
+                    #ifdef DEBUG_CLIENT_BATTLE
+                    qDebug() << "You win";
+                    #endif
+                    displayText(tr("You win!"));
+                    doNextActionStep=DoNextActionStep_Win;
+                }
             }
             else
             {
@@ -1010,10 +1029,10 @@ void BaseWindow::doNextAction()
     //apply the effect
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
     {
+        PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
         if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success==false)
         {
             qDebug() << "doNextAction(): attack have failed";
-            PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
             if(otherMonster==NULL)
             {
                 emit error("NULL pointer for other monster at doNextAction()");
@@ -1049,8 +1068,13 @@ void BaseWindow::doNextAction()
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
             return;
         }
-        qDebug() << "doNextAction(): apply the effect and display it";
-        displayAttack();
+        if(otherMonster)
+        {
+            qDebug() << "doNextAction(): apply the effect and display it";
+            displayAttack();
+        }
+        else
+            emit newError(tr("Internal bug"),"No other monster to display attack");
         return;
     }
 
@@ -1505,10 +1529,12 @@ void BaseWindow::displayTrap()
         else
         {
             if(trapSuccess)
+            {
+                CatchChallenger::ClientFightEngine::fightEngine.captureIsDone();//why? do at the screen change to return on the map, not here!
                 displayText(QString("You have captured the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+            }
             else
                 displayText(QString("You have failed the capture of the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
-            CatchChallenger::ClientFightEngine::fightEngine.captureIsDone();
             ui->labelFightTrap->hide();
             return;
         }
@@ -1778,7 +1804,7 @@ void BaseWindow::monsterCatch(const quint32 &newMonsterId)
     }
     if(newMonsterId==0x00000000)
     {
-        ui->labelFightTrap->hide();
+        trapSuccess=false;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("capture is failed"));
         #endif
@@ -1786,6 +1812,7 @@ void BaseWindow::monsterCatch(const quint32 &newMonsterId)
     }
     else
     {
+        trapSuccess=false;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("capture is success"));
         #endif
@@ -1800,4 +1827,76 @@ void BaseWindow::monsterCatch(const quint32 &newMonsterId)
     }
     CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
     displayTrap();
+}
+
+void BaseWindow::battleAcceptedByOther(const QString &pseudo,const quint8 &skinId,const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+{
+    BattleInformations battleInformations;
+    battleInformations.pseudo=pseudo;
+    battleInformations.skinId=skinId;
+    battleInformations.stat=stat;
+    battleInformations.monsterPlace=monsterPlace;
+    battleInformations.publicPlayerMonster=publicPlayerMonster;
+    battleInformationsList << battleInformations;
+    if(battleInformationsList.size()>1 || !botFightList.isEmpty())
+        return;
+    battleAcceptedByOtherFull(battleInformations);
+}
+
+void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInformations)
+{
+    if(CatchChallenger::ClientFightEngine::fightEngine.isInFight())
+    {
+        qDebug() << "already in fight";
+        CatchChallenger::Api_client_real::client->battleRefused();
+        return;
+    }
+    prepareFight();
+    battleType=BattleType_OtherPlayer;
+    ui->stackedWidget->setCurrentWidget(ui->page_battle);
+
+    //skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
+    QPixmap otherFrontImage=getFrontSkin(battleInformations.skinId);
+
+    //reset the other player info
+    ui->labelFightMonsterTop->setPixmap(otherFrontImage);
+    //ui->battleOtherPseudo->setText(lastBattleQuery.first().first);
+    ui->frameFightTop->hide();
+    ui->frameFightBottom->hide();
+    ui->labelFightMonsterBottom->setPixmap(playerBackImage);
+    ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+    ui->labelFightEnter->setText(tr("%1 wish fight with you").arg(battleInformations.pseudo));
+    ui->pushButtonFightEnterNext->hide();
+
+    resetPosition(true);
+    moveType=MoveType_Enter;
+    battleStep=BattleStep_Presentation;
+    moveFightMonsterBoth();
+    CatchChallenger::ClientFightEngine::fightEngine.setBattleMonster(battleInformations.stat,battleInformations.monsterPlace,battleInformations.publicPlayerMonster);
+}
+
+void BaseWindow::battleCanceledByOther()
+{
+    CatchChallenger::ClientFightEngine::fightEngine.fightFinished();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("The other player have canceled the battle"));
+    load_monsters();
+    if(battleInformationsList.isEmpty())
+    {
+        emit error("battle info not found at collision");
+        return;
+    }
+    battleInformationsList.removeFirst();
+    if(!battleInformationsList.isEmpty())
+    {
+        const BattleInformations &battleInformations=battleInformationsList.first();
+        battleInformationsList.removeFirst();
+        battleAcceptedByOtherFull(battleInformations);
+    }
+    else if(!botFightList.isEmpty())
+    {
+        quint32 fightId=botFightList.first();
+        botFightList.removeFirst();
+        botFight(fightId);
+    }
 }

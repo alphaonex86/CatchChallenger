@@ -25,6 +25,7 @@ public slots:
     void is_started(bool started);
     void saveTime();
     void resetAll();
+    void newError(QString error,QString detailedError);
 private:
     Ui::SimpleSoloServer *ui;
     SoloWindow *solowindow;
