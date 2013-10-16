@@ -834,6 +834,11 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, C
 //call after enter on new map
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
+    if(!all_map.contains(current_map))
+    {
+        qDebug() << QString("all_map have not the current map: %1").arg(current_map);
+        return;
+    }
     Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
     if(currentGroup!=NULL)
     {
