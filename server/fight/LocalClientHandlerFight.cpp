@@ -161,69 +161,87 @@ bool LocalClientHandlerFight::checkLoose()
 
 void LocalClientHandlerFight::healAllMonsters()
 {
-    CommonFightEngine::healAllMonsters();
+    int sub_index;
     int index=0;
-    int size=player_informations->public_and_private_informations.playerMonster.size();
-    while(index<size)
+    while(index<player_informations->public_and_private_informations.playerMonster.size())
     {
-        if(player_informations->public_and_private_informations.playerMonster[index].egg_step==0)
+        if(player_informations->public_and_private_informations.playerMonster.at(index).egg_step==0)
         {
-            switch(GlobalServerData::serverSettings.database.type)
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[player_informations->public_and_private_informations.playerMonster.at(index).monster],player_informations->public_and_private_informations.playerMonster.at(index).level);
+            if(player_informations->public_and_private_informations.playerMonster[index].hp!=stat.hp)
             {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                 );
-                break;
+                player_informations->public_and_private_informations.playerMonster[index].hp=stat.hp;
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                     .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                     );
+                    break;
+                }
             }
-            switch(GlobalServerData::serverSettings.database.type)
+            if(!player_informations->public_and_private_informations.playerMonster[index].buffs.isEmpty())
             {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
-                             .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                             );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
-                             .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                             );
-                break;
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 );
+                    break;
+                }
+                player_informations->public_and_private_informations.playerMonster[index].buffs.clear();
             }
-        }
-        int sub_index=0;
-        while(sub_index<player_informations->public_and_private_informations.playerMonster[index].skills.size())
-        {
-            switch(GlobalServerData::serverSettings.database.type)
+            sub_index=0;
+            while(sub_index<player_informations->public_and_private_informations.playerMonster[index].skills.size())
             {
-                default:
-                case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
-                                 );
-                break;
-                case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
-                                 );
-                break;
+                int endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[
+                        player_informations->public_and_private_informations.playerMonster[index].skills.at(sub_index).skill
+                        ]
+                        .level.at(player_informations->public_and_private_informations.playerMonster[index].skills.at(sub_index).level-1).endurance;
+                if(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance!=endurance)
+                {
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
+                                         );
+                        break;
+                    }
+                    player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance=endurance;
+                }
+                sub_index++;
             }
-            sub_index++;
         }
         index++;
     }
+    if(!isInBattle())
+        updateCanDoFight();
 }
 
 void LocalClientHandlerFight::fightFinished()
