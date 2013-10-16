@@ -55,6 +55,7 @@ private slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();
+    void newError(QString error,QString detailedError);
     void message(QString message);
     void disconnected(QString reason);
     void protocol_is_good();

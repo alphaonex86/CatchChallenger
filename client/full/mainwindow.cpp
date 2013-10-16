@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
+    connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
     //connect(CatchChallenger::BaseWindow::baseWindow,                &CatchChallenger::BaseWindow::needQuit,             this,&MainWindow::needQuit);
 
     stopFlood.setSingleShot(false);
@@ -729,6 +730,14 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     default:
         QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError));
     }
+}
+
+void MainWindow::newError(QString error,QString detailedError)
+{
+    qDebug() << detailedError.toLocal8Bit();
+    if(CatchChallenger::Api_client_real::client!=NULL)
+        CatchChallenger::Api_client_real::client->tryDisconnect();
+    QMessageBox::critical(this,tr("Error"),error);
 }
 
 void MainWindow::haveNewError()
