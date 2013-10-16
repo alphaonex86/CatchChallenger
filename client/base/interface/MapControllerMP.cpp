@@ -775,6 +775,8 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
         return;
     }
 
+    CatchChallenger::Api_client_real::client->teleportDone();
+
     //position
     this->x=x;
     this->y=y;
@@ -783,12 +785,15 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
     current_map=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
     passMapIntoOld();
     if(!haveMapInMemory(current_map))
+    {
         emit inWaitingOfMap();
+        loadOtherMap(current_map);
+        return;//because the rest is wrong
+    }
     loadOtherMap(current_map);
     hideNotloadedMap();
     removeUnusedMap();
     loadPlayerFromCurrentMap();
-    CatchChallenger::Api_client_real::client->teleportDone();
 }
 
 void MapControllerMP::finalPlayerStep()
