@@ -1316,6 +1316,22 @@ void BaseWindow::displayAttack()
                     else
                         qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
                 }
+                else
+                {
+                    QString fileAnimation=skillAnimation+QString("%1.gif").arg(attackId);
+                    if(QFile(fileAnimation).exists())
+                    {
+                        movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightMonsterAttackTop);
+                        movie->setScaledSize(QSize(ui->labelFightMonsterAttackTop->width(),ui->labelFightMonsterAttackTop->height()));
+                        if(movie->isValid())
+                        {
+                            ui->labelFightMonsterAttackTop->setMovie(movie);
+                            movie->start();
+                        }
+                        else
+                            qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+                    }
+                }
             }
         }
         else
@@ -1356,6 +1372,22 @@ void BaseWindow::displayAttack()
                     }
                     else
                         qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+                }
+                else
+                {
+                    QString fileAnimation=skillAnimation+QString("%1.gif").arg(attackId);
+                    if(QFile(fileAnimation).exists())
+                    {
+                        movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightMonsterAttackBottom);
+                        movie->setScaledSize(QSize(ui->labelFightMonsterAttackBottom->width(),ui->labelFightMonsterAttackBottom->height()));
+                        if(movie->isValid())
+                        {
+                            ui->labelFightMonsterAttackBottom->setMovie(movie);
+                            movie->start();
+                        }
+                        else
+                            qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+                    }
                 }
             }
         }
@@ -1471,15 +1503,34 @@ void BaseWindow::displayTrap()
         }
         QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_ITEM;
         QString fileAnimation=skillAnimation+QString("%1.mng").arg(trapItemId);
-        movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
-        movie->setScaledSize(QSize(ui->labelFightTrap->width(),ui->labelFightTrap->height()));
-        if(movie->isValid())
+        if(QFile(fileAnimation).exists())
         {
-            ui->labelFightTrap->setMovie(movie);
-            movie->start();
+            movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
+            movie->setScaledSize(QSize(ui->labelFightTrap->width(),ui->labelFightTrap->height()));
+            if(movie->isValid())
+            {
+                ui->labelFightTrap->setMovie(movie);
+                movie->start();
+            }
+            else
+                qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
         }
         else
-            qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+        {
+            fileAnimation=skillAnimation+QString("%1.gif").arg(trapItemId);
+            if(QFile(fileAnimation).exists())
+            {
+                movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
+                movie->setScaledSize(QSize(ui->labelFightTrap->width(),ui->labelFightTrap->height()));
+                if(movie->isValid())
+                {
+                    ui->labelFightTrap->setMovie(movie);
+                    movie->start();
+                }
+                else
+                    qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+            }
+        }
         ui->labelFightEnter->setText(QString("Try capture the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         displayTrapProgression=1;
@@ -1516,15 +1567,37 @@ void BaseWindow::displayTrap()
                 fileAnimation=skillAnimation+QString("%1_success.mng").arg(trapItemId);
             else
                 fileAnimation=skillAnimation+QString("%1_failed.mng").arg(trapItemId);
-            movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
-            movie->setScaledSize(QSize(ui->labelFightTrap->width(),ui->labelFightTrap->height()));
-            if(movie->isValid())
+            if(QFile(fileAnimation).exists())
             {
-                ui->labelFightTrap->setMovie(movie);
-                movie->start();
+                movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
+                movie->setScaledSize(QSize(ui->labelFightTrap->width(),ui->labelFightTrap->height()));
+                if(movie->isValid())
+                {
+                    ui->labelFightTrap->setMovie(movie);
+                    movie->start();
+                }
+                else
+                    qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
             }
             else
-                qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+            {
+                if(trapSuccess)
+                    fileAnimation=skillAnimation+QString("%1_success.gif").arg(trapItemId);
+                else
+                    fileAnimation=skillAnimation+QString("%1_failed.gif").arg(trapItemId);
+                if(QFile(fileAnimation).exists())
+                {
+                    movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightTrap);
+                    movie->setScaledSize(QSize(ui->labelFightTrap->width(),ui->labelFightTrap->height()));
+                    if(movie->isValid())
+                    {
+                        ui->labelFightTrap->setMovie(movie);
+                        movie->start();
+                    }
+                    else
+                        qDebug() << QString("movie loaded is not valid for: %1").arg(fileAnimation);
+                }
+            }
         }
         else
         {

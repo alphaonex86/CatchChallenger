@@ -116,7 +116,7 @@ struct ItemFull
 struct Industry
 {
     quint32 time;//should not be too short
-    quint8 cycletobefull;
+    quint32 cycletobefull;
     struct Resource
     {
         quint32 item;
@@ -600,7 +600,7 @@ struct Bot
 {
     QHash<quint8,QDomElement> step;
     QHash<QString,QString> properties;
-    quint8 botId;//id into the file
+    quint32 botId;//id need be unique for the quests, then 32Bits
     QString skin;
 };
 

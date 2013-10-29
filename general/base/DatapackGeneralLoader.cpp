@@ -1062,7 +1062,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                     Industry industry;
                     quint32 id=industryItem.attribute("id").toUInt(&ok);
                     industry.time=industryItem.attribute("time").toUInt(&ok2);
-                    industry.cycletobefull=industryItem.attribute("cycletobefull").toUShort(&ok3);
+                    industry.cycletobefull=industryItem.attribute("cycletobefull").toUInt(&ok3);
                     if(ok && ok2 && ok3)
                     {
                         if(!industries.contains(id))
@@ -1077,7 +1077,7 @@ QHash<quint32,Industry> DatapackGeneralLoader::loadIndustries(const QString &fol
                                 qDebug() << QString("cycletobefull need be greater than 0: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                 industry.cycletobefull=1;
                             }
-                            else if(industry.cycletobefull>10)
+                            else if(industry.cycletobefull>65535)
                             {
                                 qDebug() << QString("cycletobefull need be lower to 10 to not slow down the server, use the quantity: %1: child.tagName(): %2 (at line: %3)").arg(industryFile.fileName()).arg(industryItem.tagName()).arg(industryItem.lineNumber());
                                 industry.cycletobefull=10;

@@ -1,4 +1,6 @@
-LIBS += -lvorbis -lvorbisfile -ltiled
+include(../tiled/tiled.pri)
+
+LIBS += -lvorbis -lvorbisfile
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QT       += script multimedia opengl
 

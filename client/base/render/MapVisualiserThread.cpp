@@ -7,7 +7,7 @@
 
 MapVisualiserThread::MapVisualiserThread()
 {
-    //moveToThread(this);
+    moveToThread(this);
     start(QThread::IdlePriority);
     hideTheDoors=true;
 }
@@ -46,8 +46,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     tempMapObject->objectGroup=NULL;
     tempMapObject->objectGroupIndex=0;
 
-    Tiled::Layer *grass;
-    Tiled::Layer *grassOver;
+    /*Tiled::Layer *grass;
+    Tiled::Layer *grassOver;*/
 
     //load the map
     tempMapObject->tiledMap = reader.readMap(resolvedFileName);
@@ -503,7 +503,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                     }
                                     if(property_parsed.contains("file") && property_parsed.contains("id"))
                                     {
-                                        quint8 botId=property_parsed["id"].toUShort(&ok);
+                                        quint32 botId=property_parsed["id"].toUInt(&ok);
                                         if(ok)
                                         {
                                             QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+"/"+property_parsed["file"]).absoluteFilePath();
@@ -598,28 +598,33 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
             CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
-            quint8 id=child.attribute("id").toUShort(&ok);
+            quint32 botId=child.attribute("id").toUInt(&ok);
             if(ok)
             {
-                QDomElement step = child.firstChildElement("step");
-                while(!step.isNull())
+                if(botFiles[fileName].contains(botId))
+                    CatchChallenger::DebugClass::debugConsole(QString("bot already found with this id: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+                else
                 {
-                    if(!step.hasAttribute("id"))
-                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
-                    else if(!step.hasAttribute("type"))
-                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
-                    else if(!step.isElement())
-                        CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber())));
-                    else
+                    QDomElement step = child.firstChildElement("step");
+                    while(!step.isNull())
                     {
-                        quint8 stepId=step.attribute("id").toUShort(&ok);
-                        if(ok)
-                            botFiles[fileName][id].step[stepId]=step;
+                        if(!step.hasAttribute("id"))
+                            CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                        else if(!step.hasAttribute("type"))
+                            CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                        else if(!step.isElement())
+                            CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber())));
+                        else
+                        {
+                            quint8 stepId=step.attribute("id").toUShort(&ok);
+                            if(ok)
+                                botFiles[fileName][botId].step[stepId]=step;
+                        }
+                        step = step.nextSiblingElement("step");
                     }
-                    step = step.nextSiblingElement("step");
+                    if(!botFiles[fileName][botId].step.contains(1))
+                        botFiles[fileName].remove(botId);
                 }
-                if(!botFiles[fileName][id].step.contains(1))
-                    botFiles[fileName].remove(id);
             }
             else
                 CatchChallenger::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
