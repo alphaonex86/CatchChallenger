@@ -5,5 +5,3 @@ include(../../general/general.pri)
 include(specific.pri)
 
 TARGET = catchchallenger-full
-
-
