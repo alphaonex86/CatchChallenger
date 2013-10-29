@@ -120,11 +120,23 @@ void NormalServer::start_internal_server()
 {
     if(!QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() && !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
     {
-        DebugClass::debugConsole(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
-        stat=Down;
-        emit is_started(false);
-        emit error(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
-        return;
+        QStringList args;
+        args << "req" << "-newkey" << "rsa:4096" << "-sha512" << "-x509" << "-nodes" << "-days" << "3560" << "-out" << QCoreApplication::applicationDirPath()+"/server.crt"
+                << "-keyout" << QCoreApplication::applicationDirPath()+"/server.key" << "-subj" << "/C=FR/ST=South-West/L=Paris/O=Catchchallenger/OU=Developer Department/CN=*"
+                   << "-extensions usr_cert";
+        #ifdef Q_OS_WIN32
+        QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl.exe";
+        #else
+        QString opensslAppPath="openssl";
+        #endif
+        if(QProcess::execute(opensslAppPath,args)!=0 || !QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
+        {
+            DebugClass::debugConsole(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+            stat=Down;
+            emit is_started(false);
+            emit error(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+            return;
+        }
     }
 
     if(sslKey!=NULL)

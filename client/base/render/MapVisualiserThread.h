@@ -6,15 +6,15 @@
 #include <QString>
 #include <QHash>
 
-#include <tiled/isometricrenderer.h>
-#include <tiled/map.h>
-#include <tiled/mapobject.h>
-#include <tiled/mapreader.h>
-#include <tiled/objectgroup.h>
-#include <tiled/orthogonalrenderer.h>
-#include <tiled/tilelayer.h>
-#include <tiled/tileset.h>
-#include <tiled/tile.h>
+#include "../../tiled/isometricrenderer.h"
+#include "../../tiled/map.h"
+#include "../../tiled/mapobject.h"
+#include "../../tiled/mapreader.h"
+#include "../../tiled/objectgroup.h"
+#include "../../tiled/orthogonalrenderer.h"
+#include "../../tiled/tilelayer.h"
+#include "../../tiled/tileset.h"
+#include "../../tiled/tile.h"
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/Map.h"
@@ -65,7 +65,7 @@ public slots:
     virtual void resetAll();
 private:
     Tiled::MapReader reader;
-    QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
+    QHash<QString/*name*/,QHash<quint32/*bot id*/,CatchChallenger::Bot> > botFiles;
 };
 
 #endif // MAPVISUALISERTHREAD_H

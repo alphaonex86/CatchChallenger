@@ -62,10 +62,11 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
     if(OpenGL)
     {
-        QGLFormat format(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
+        QGLFormat format=QGLFormat::defaultFormat();//(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
         //setSampleBuffers
         format.setRgba(true);
-        format.setAlpha(true);
+        //format.setAlpha(true);
+        //format.setProfile(QGLFormat::CompatibilityProfile);
 
         QGLWidget *widgetOpenGL=new QGLWidget(format);// | QGL::IndirectRendering -> do a crash
         if(widgetOpenGL==NULL)

@@ -11,7 +11,7 @@
 
 #include "../../general/base/GeneralStructures.h"
 
-#include <tiled/tileset.h>
+#include "../../tiled/tileset.h"
 
 class DatapackClientLoader : public QThread
 {
@@ -116,6 +116,7 @@ private slots:
     void parseBotFightsExtra();
     void parseAudioAmbiance();
     void parseZoneExtra();
+    void parseTileset();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

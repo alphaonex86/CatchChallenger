@@ -4,6 +4,8 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/DatapackGeneralLoader.h"
 #include "../LanguagesSelect.h"
+#include "../../tiled/tileset.h"
+#include "../../tiled/mapreader.h"
 
 #include <QDebug>
 #include <QFile>
@@ -71,6 +73,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parsePlantsExtra();
     parseAudioAmbiance();
     parseZoneExtra();
+    parseTileset();
     inProgress=false;
     emit datapackParsed();
 }
@@ -276,22 +279,32 @@ void DatapackClientLoader::resetAll()
     maps.clear();
     skins.clear();
 
-    QHashIterator<quint8,PlantExtra> i(plantExtra);
-     while (i.hasNext()) {
-         i.next();
-         delete i.value().tileset;
-     }
-     plantExtra.clear();
-     itemToPlants.clear();
-     questsExtra.clear();
-     questsText.clear();
-     botToQuestStart.clear();
-     botFightsExtra.clear();
-     monsterExtra.clear();
-     monsterBuffsExtra.clear();
-     monsterSkillsExtra.clear();
-     audioAmbiance.clear();
-     zonesExtra.clear();
+    {
+        QHashIterator<quint8,PlantExtra> i(plantExtra);
+        while (i.hasNext()) {
+            i.next();
+            delete i.value().tileset;
+        }
+    }
+    plantExtra.clear();
+    itemToPlants.clear();
+    questsExtra.clear();
+    questsText.clear();
+    botToQuestStart.clear();
+    botFightsExtra.clear();
+    monsterExtra.clear();
+    monsterBuffsExtra.clear();
+    monsterSkillsExtra.clear();
+    audioAmbiance.clear();
+    zonesExtra.clear();
+    {
+         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
+         while (i.hasNext()) {
+             i.next();
+             delete i.value();
+         }
+         Tiled::Tileset::preloadedTileset.clear();
+    }
 }
 
 void DatapackClientLoader::parseQuestsExtra()
@@ -767,4 +780,35 @@ void DatapackClientLoader::parseZoneExtra()
     }
 
     qDebug() << QString("%1 zone(s) extra loaded").arg(zonesExtra.size());
+}
+
+void DatapackClientLoader::parseTileset()
+{
+    QStringList fileList=CatchChallenger::FacilityLib::listFolder(datapackPath+DATAPACK_BASE_PATH_MAP);
+    int index=0;
+    while(index<fileList.size())
+    {
+        const QString &filePath=fileList.at(index);
+        if(filePath.endsWith(".tsx"))
+        {
+            const QString &source=QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP+filePath).absolutePath();
+            QFile file(source);
+            if(file.open(QIODevice::ReadOnly))
+            {
+                Tiled::MapReader mapReader;
+                Tiled::Tileset *tileset = mapReader.readTileset(&file, source);
+                if (tileset)
+                {
+                    tileset->setFileName(source);
+                    Tiled::Tileset::preloadedTileset[source]=tileset;
+                }
+                file.close();
+            }
+            else
+                qDebug() << QString("%1 can't be open: %2").arg(file.errorString());
+        }
+        index++;
+    }
+
+    qDebug() << QString("%1 tileset(s) loaded").arg(Tiled::Tileset::preloadedTileset.size());
 }
