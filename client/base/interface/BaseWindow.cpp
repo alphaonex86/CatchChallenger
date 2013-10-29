@@ -1853,16 +1853,23 @@ void BaseWindow::goToBotStep(const quint8 &step)
     else if(actualBot.step[step].attribute("type")=="quests")
     {
         QString textToShow;
-        textToShow+="<ul>";
         QList<QPair<quint32,QString> > quests=BaseWindow::getQuestList(actualBot.botId);
-        int index=0;
-        while(index<quests.size())
+        if(quests.isEmpty())
+            textToShow+="No quests at the moment or you don't meat the requirements";
+        else
         {
-            QPair<quint32,QString> quest=quests.at(index);
-            textToShow+=QString("<a href=\"quest_%1\">%2</a>").arg(quest.first).arg(quest.second);
-            index++;
+            textToShow+="<ul>";
+            int index=0;
+            while(index<quests.size())
+            {
+                QPair<quint32,QString> quest=quests.at(index);
+                textToShow+=QString("<a href=\"quest_%1\">%2</a>").arg(quest.first).arg(quest.second);
+                index++;
+            }
+            if(quests.isEmpty())
+                textToShow+="No quests at the moment or you don't meat the requirements";
+            textToShow+="</ul>";
         }
-        textToShow+="</ul>";
         ui->IG_dialog_text->setText(textToShow);
         ui->IG_dialog->setVisible(true);
         return;

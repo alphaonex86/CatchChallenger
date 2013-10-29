@@ -1146,7 +1146,7 @@ QString Map_loader::resolvRelativeMap(const QString &fileName,const QString &lin
         #endif
         return newPath;
     }
-    DebugClass::debugConsole(QString("map link not resolved: %1").arg(link));
+    DebugClass::debugConsole(QString("map link not resolved: %1, full path: %2, newPath: %3, datapackPath: %4").arg(link).arg(currentPath+QDir::separator()+link).arg(newPath).arg(datapackPath));
     return link;
 }
 
