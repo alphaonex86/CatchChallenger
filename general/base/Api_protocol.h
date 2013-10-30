@@ -41,7 +41,6 @@ public:
     virtual void tryDisconnect() = 0;
     virtual QString get_datapack_base_name() const;
 
-    bool getHavePlantAction();
     bool getHaveShopAction();
     bool getHaveFactoryAction();
 
@@ -95,7 +94,6 @@ protected:
     //datapack
     QString datapack_base_name;
 
-    bool havePlantAction;
     bool haveShopAction;
     bool haveFactoryAction;
 
@@ -122,17 +120,17 @@ signals:
     void random_seeds(const QByteArray &data) const;
 
     //map move
-    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) const;
+    void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
     void move_player(const quint16 &id,const QList<QPair<quint8,CatchChallenger::Direction> > &movement) const;
     void remove_player(const quint16 &id) const;
     void reinsert_player(const quint16 &id,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
     void full_reinsert_player(const quint16 &id,const quint32 &mapId,const quint8 &x,const quint8 y,const CatchChallenger::Direction &direction) const;
     void dropAllPlayerOnTheMap() const;
-    void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) const;
+    void teleportTo(const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
 
     //plant
-    void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature) const;
-    void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y) const;
+    void insert_plant(const quint32 &mapId,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature) const;
+    void remove_plant(const quint32 &mapId,const quint8 &x,const quint8 &y) const;
     void seed_planted(const bool &ok) const;
     void plant_collected(const CatchChallenger::Plant_collect &stat) const;
     //crafting

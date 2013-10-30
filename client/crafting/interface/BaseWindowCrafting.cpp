@@ -14,27 +14,79 @@
 
 using namespace CatchChallenger;
 
+void BaseWindow::insert_plant(const quint32 &mapId, const quint8 &x, const quint8 &y, const quint8 &plant_id, const quint16 &seconds_to_mature)
+{
+    Q_UNUSED(plant_id);
+    Q_UNUSED(seconds_to_mature);
+    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    {
+        qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        return;
+    }
+    cancelAllPlantQuery(MapController::mapController->mapIdToString(mapId),x,y);
+}
+
+void BaseWindow::remove_plant(const quint32 &mapId,const quint8 &x,const quint8 &y)
+{
+    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    {
+        qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        return;
+    }
+    cancelAllPlantQuery(MapController::mapController->mapIdToString(mapId),x,y);
+}
+
+void BaseWindow::cancelAllPlantQuery(const QString map,const quint8 x,const quint8 y)
+{
+    int index;
+    index=0;
+    while(index<seed_in_waiting.size())
+    {
+        const SeedInWaiting &seedInWaiting=seed_in_waiting.at(index);
+        if(seedInWaiting.map==map && seedInWaiting.x==x && seedInWaiting.y==y)
+        {
+            seed_in_waiting[index].map=QString();
+            seed_in_waiting[index].x=0;
+            seed_in_waiting[index].y=0;
+        }
+        index++;
+    }
+    index=0;
+    while(index<plant_collect_in_waiting.size())
+    {
+        const ClientPlantInCollecting &clientPlantInCollecting=plant_collect_in_waiting.at(index);
+        if(clientPlantInCollecting.map==map && clientPlantInCollecting.x==x && clientPlantInCollecting.y==y)
+        {
+            plant_collect_in_waiting[index].map=QString();
+            plant_collect_in_waiting[index].x=0;
+            plant_collect_in_waiting[index].y=0;
+        }
+        index++;
+    }
+}
+
 void BaseWindow::seed_planted(const bool &ok)
 {
     removeQuery(QueryType_Seed);
-    seedWait=false;
     if(ok)
         /// \todo add to the map here, and don't send on the server
         showTip(tr("Seed correctly planted"));
     else
     {
-        if(items.contains(seed_in_waiting))
-            items[seed_in_waiting]++;
-        else
-            items[seed_in_waiting]=1;
+        if(!seed_in_waiting.first().map.isEmpty())
+        {
+            MapController::mapController->remove_plant_full(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
+            cancelAllPlantQuery(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
+        }
+        add_to_inventory(seed_in_waiting.first().seed,1,false);
         showTip(tr("Seed cannot be planted"));
         load_inventory();
     }
+    seed_in_waiting.removeFirst();
 }
 
 void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
 {
-    collectWait=false;
     removeQuery(QueryType_CollectPlant);
     switch(stat)
     {
@@ -46,14 +98,19 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
         break;
         case Plant_collect_owned_by_another_player:
             showTip(tr("This plant had been planted recently by another player"));
+            MapController::mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
+            cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
         break;
         case Plant_collect_impossible:
             showTip(tr("This plant can't be collected"));
+            MapController::mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
+            cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
         break;
         default:
-        qDebug() << "BaseWindow::plant_collected(): unkonw return";
-        return;
+            qDebug() << "BaseWindow::plant_collected(): unknown return";
+        break;
     }
+    plant_collect_in_waiting.removeFirst();
 }
 
 void BaseWindow::load_plant_inventory()

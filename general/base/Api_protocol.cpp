@@ -2943,7 +2943,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    havePlantAction=false;
                     quint8 returnCode;
                     in >> returnCode;
                     if(returnCode==0x01)
@@ -2965,7 +2964,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    havePlantAction=false;
                     quint8 returnCode;
                     in >> returnCode;
                     switch(returnCode)
@@ -3852,11 +3850,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
     }
 }
 
-bool Api_protocol::getHavePlantAction()
-{
-    return havePlantAction;
-}
-
 bool Api_protocol::getHaveShopAction()
 {
     return haveShopAction;
@@ -4016,12 +4009,6 @@ void Api_protocol::teleportDone()
 
 void Api_protocol::useSeed(const quint8 &plant_id)
 {
-    if(havePlantAction)
-    {
-        emit newError(tr("Internal problem"),QString("Is already in plant action"));
-        return;
-    }
-    havePlantAction=true;
     QByteArray outputData;
     outputData[0]=plant_id;
     if(output==NULL)
@@ -4511,12 +4498,6 @@ void Api_protocol::withdrawMarketMonster(const quint32 &monsterId)
 
 void Api_protocol::collectMaturePlant()
 {
-    if(havePlantAction)
-    {
-        emit newError(tr("Internal problem"),QString("Is already in plant action"));
-        return;
-    }
-    havePlantAction=true;
     if(output==NULL)
         return;
     output->packFullOutcommingQuery(0x10,0x0007,queryNumber(),QByteArray());
@@ -4705,7 +4686,6 @@ void Api_protocol::resetAll()
     have_receive_protocol=false;
     max_player=65535;
     number_of_map=0;
-    havePlantAction=false;
     player_informations.recipes.clear();
     player_informations.playerMonster.clear();
     player_informations.items.clear();
