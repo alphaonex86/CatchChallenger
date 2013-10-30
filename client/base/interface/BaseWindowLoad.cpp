@@ -41,8 +41,6 @@ void BaseWindow::resetAll()
     ui->persistant_tip->setVisible(false);
     ui->gain->setVisible(false);
     ui->IG_dialog->setVisible(false);
-    seedWait=false;
-    collectWait=false;
     inSelection=false;
     isInQuest=false;
     displayAttackProgression=0;
