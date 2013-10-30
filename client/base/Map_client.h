@@ -14,7 +14,7 @@
 #include <QDomElement>
 
 namespace CatchChallenger {
-class ClientPlant : public QTimer
+class ClientPlantWithTimer : public QTimer
 {
 public:
     Tiled::MapObject * mapObject;
@@ -34,7 +34,7 @@ public:
 
     Map_client();
 
-    QList<ClientPlant *> plantList;
+    QList<ClientPlantWithTimer *> plantList;
     QHash<QPair<quint8,quint8>,Bot> bots;
     QHash<QPair<quint8,quint8>,BotDisplay> botsDisplay;
 

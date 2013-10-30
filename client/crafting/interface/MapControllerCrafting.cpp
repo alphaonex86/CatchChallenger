@@ -2,8 +2,19 @@
 #include "../../../general/base/CommonDatapack.h"
 #include "../base/interface/DatapackClientLoader.h"
 
+
+QString MapController::mapIdToString(const quint32 &mapId) const
+{
+    if(mapId>=(quint32)DatapackClientLoader::datapackLoader.maps.size())
+    {
+        qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
+        return QString();
+    }
+    return QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
+}
+
 //plant
-void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature)
+void MapController::insert_plant(const quint32 &mapId, const quint8 &x, const quint8 &y, const quint8 &plant_id, const quint16 &seconds_to_mature)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -21,38 +32,43 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    if(!CatchChallenger::CommonDatapack::commonDatapack.plants.contains(plant_id))
+    const QString &map=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
+    if(!haveMapInMemory(map) || !mapItem->haveMap(all_map[map]->tiledMap))
     {
-        qDebug() << "plant_id don't exists";
-        return;
-    }
-    QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
-    if(!haveMapInMemory(mapPath) || !mapItem->haveMap(all_map[mapPath]->tiledMap))
-    {
-        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
+        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(map);
         DelayedPlantInsert tempItem;
         tempItem.mapId=mapId;
         tempItem.x=x;
         tempItem.y=y;
         tempItem.plant_id=plant_id;
         tempItem.seconds_to_mature=seconds_to_mature;
-        delayedPlantInsertOnMap.insert(mapPath,tempItem);
+        delayedPlantInsertOnMap.insert(map,tempItem);
         return;
     }
-    MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
+    insert_plant_full(map,x,y,plant_id,seconds_to_mature);
+}
+
+void MapController::insert_plant_full(const QString &map,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature)
+{
+    if(!CatchChallenger::CommonDatapack::commonDatapack.plants.contains(plant_id))
+    {
+        qDebug() << "plant_id don't exists";
+        return;
+    }
+    MapVisualiserThread::Map_full * map_full=all_map[map];
     int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {
         if(map_full->logicalMap.plantList.at(index)->x==x && map_full->logicalMap.plantList.at(index)->y==y)
         {
             qDebug() << "map have already an item at this point, remove it";
-            remove_plant(mapId,x,y);
+            remove_plant_full(map,x,y);
         }
         else
             index++;
     }
     quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-    CatchChallenger::ClientPlant *plant=new CatchChallenger::ClientPlant();
+    CatchChallenger::ClientPlantWithTimer *plant=new CatchChallenger::ClientPlantWithTimer();
     plant->setSingleShot(true);
     plant->mapObject=new Tiled::MapObject();
     plant->x=x;
@@ -66,12 +82,12 @@ void MapController::insert_plant(const quint32 &mapId,const quint16 &x,const qui
 
     map_full->logicalMap.plantList << plant;
     #ifdef DEBUG_CLIENT_PLANTS
-    qDebug() << QString("insert_plant(), map: %1 at: %2,%3").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
+    qDebug() << QString("insert_plant(), map: %1 at: %2,%3").arg(map).arg(x).arg(y);
     #endif
-    if(ObjectGroupItem::objectGroupLink.contains(all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup))
-        ObjectGroupItem::objectGroupLink[all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup]->addObject(plant->mapObject);
+    if(ObjectGroupItem::objectGroupLink.contains(all_map[map]->objectGroup))
+        ObjectGroupItem::objectGroupLink[all_map[map]->objectGroup]->addObject(plant->mapObject);
     else
-        qDebug() << QString("insert_plant(), all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]]->objectGroup not contains current_map->objectGroup");
+        qDebug() << QString("insert_plant(), all_map[map]->objectGroup not contains current_map->objectGroup");
     MapObjectItem::objectLink[plant->mapObject]->setZValue(y);
 }
 
@@ -80,11 +96,11 @@ void MapController::getPlantTimerEvent()
     QTimer *clientPlantTimer=qobject_cast<QTimer *>(QObject::sender());
     if(clientPlantTimer==NULL)
         return;
-    updatePlantGrowing(static_cast<CatchChallenger::ClientPlant *>(clientPlantTimer));
+    updatePlantGrowing(static_cast<CatchChallenger::ClientPlantWithTimer *>(clientPlantTimer));
 }
 
 //return true if is growing
-bool MapController::updatePlantGrowing(CatchChallenger::ClientPlant *plant)
+bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *plant)
 {
     quint64 currentTime=QDateTime::currentMSecsSinceEpoch()/1000;
     Tiled::Cell cell=plant->mapObject->cell();
@@ -122,7 +138,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlant *plant)
     return true;
 }
 
-void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y)
+void MapController::remove_plant(const quint32 &mapId, const quint8 &x, const quint8 &y)
 {
     if(!mHaveTheDatapack)
     {
@@ -144,11 +160,15 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
         qDebug() << "MapController::remove_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
+    remove_plant_full(QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath(),x,y);
+}
+
+void MapController::remove_plant_full(const QString &map, const quint8 &x, const quint8 &y)
+{
     #ifdef DEBUG_CLIENT_PLANTS
     qDebug() << QString("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
     #endif
-    QString mapPath=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
-    if(!all_map.contains(mapPath))
+    if(!all_map.contains(map))
     {
         QStringList map_list;
         QHashIterator<QString, MapVisualiserThread::Map_full *> i(all_map);
@@ -156,15 +176,15 @@ void MapController::remove_plant(const quint32 &mapId,const quint16 &x,const qui
             i.next();
             map_list << i.key();
         }
-        qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).arg(map_list.join(";"));
+        qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(map).arg(map_list.join(";"));
         return;
     }
-    if(!mapItem->haveMap(all_map[mapPath]->tiledMap))
+    if(!mapItem->haveMap(all_map[map]->tiledMap))
     {
-        qDebug() << QString("map (%1) not show, ignore it").arg(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]);
+        qDebug() << QString("map (%1) not show, ignore it").arg(map);
         return;
     }
-    MapVisualiserThread::Map_full * map_full=all_map[datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]];
+    MapVisualiserThread::Map_full * map_full=all_map[map];
     int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {

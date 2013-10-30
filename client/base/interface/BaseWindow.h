@@ -164,6 +164,7 @@ private slots:
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
+    qint32 havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 y) const;//return -1 if not found, else the index
     void actionOn(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y);
@@ -212,6 +213,9 @@ private slots:
     void haveFactoryList(const quint32 &remainingProductionTime, const QList<ItemToSellOrBuy> &resources, const QList<ItemToSellOrBuy> &products);
 
     //plant
+    void insert_plant(const quint32 &mapId,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
+    void remove_plant(const quint32 &mapId, const quint8 &x, const quint8 &y);
+    void cancelAllPlantQuery(const QString map, const quint8 x, const quint8 y);//without ref because after reset them self will failed all reset
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     //crafting
@@ -415,8 +419,22 @@ private:
     quint32 datapackCount;
 
     //plant seed in waiting
-    quint32 seed_in_waiting;
-    bool seedWait,collectWait;
+    struct SeedInWaiting
+    {
+        quint32 seed;
+        quint8 x,y;
+        QString map;
+    };
+    QList<SeedInWaiting> seed_in_waiting;
+    struct ClientPlantInCollecting
+    {
+        QString map;
+        quint8 x,y;
+        quint8 plant_id;
+        quint16 seconds_to_mature;
+    };
+    QList<ClientPlantInCollecting> plant_collect_in_waiting;
+    //bool seedWait,collectWait;
 
     QTime updateRXTXTime;
     QTimer updateRXTXTimer;

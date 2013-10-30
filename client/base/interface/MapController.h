@@ -19,13 +19,15 @@ public:
     static MapController *mapController;
     virtual void connectAllSignals();
     virtual void resetAll();
+    QString mapIdToString(const quint32 &mapId) const;
+    void remove_plant_full(const QString &map,const quint8 &x,const quint8 &y);
+    void insert_plant_full(const QString &map,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
 private:
     //the delayed action
     struct DelayedPlantInsert
     {
         quint32 mapId;
-        quint16 x;
-        quint16 y;
+        quint8 x,y;
         quint8 plant_id;
         quint16 seconds_to_mature;
     };
@@ -40,9 +42,9 @@ private:
 protected slots:
     //plant
     void getPlantTimerEvent();
-    bool updatePlantGrowing(CatchChallenger::ClientPlant *plant);//return true if is growing
-    void insert_plant(const quint32 &mapId,const quint16 &x,const quint16 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
-    void remove_plant(const quint32 &mapId,const quint16 &x,const quint16 &y);
+    bool updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *plant);//return true if is growing
+    void insert_plant(const quint32 &mapId,const quint8 &x,const quint8 &y,const quint8 &plant_id,const quint16 &seconds_to_mature);
+    void remove_plant(const quint32 &mapId,const quint8 &x,const quint8 &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::Map map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
