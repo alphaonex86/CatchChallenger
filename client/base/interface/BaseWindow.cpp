@@ -199,6 +199,8 @@ void BaseWindow::connectAllSignals()
     //plants
     connect(this,&BaseWindow::useSeed,              CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::useSeed);
     connect(this,&BaseWindow::collectMaturePlant,   CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::collectMaturePlant);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_plant,   this,&BaseWindow::insert_plant);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_plant,   this,&BaseWindow::remove_plant);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::seed_planted,   this,&BaseWindow::seed_planted);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::plant_collected,this,&BaseWindow::plant_collected);
     //crafting
@@ -697,6 +699,13 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
         }
         break;
         case ObjectType_Seed:
+        {
+            if(havePlant(&MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap,MapController::mapController->getX(),MapController::mapController->getY())>=0)
+            {
+                qDebug() << "Too slow to select a seed, have plant now";
+                showTip(QString("Sorry, but now the dirt is not free to plant"));
+                return;
+            }
             ui->stackedWidget->setCurrentWidget(ui->page_map);
             ui->inventoryUse->setText(tr("Select"));
             ui->plantUse->setVisible(false);
@@ -710,18 +719,25 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             items[itemId]--;
             if(items[itemId]==0)
                 items.remove(itemId);
-            seed_in_waiting=itemId;
+            SeedInWaiting seedInWaiting;
+            seedInWaiting.map=MapController::mapController->current_map;
+            seedInWaiting.x=MapController::mapController->getX();
+            seedInWaiting.y=MapController::mapController->getY();
+            seedInWaiting.seed=itemId;
+            seed_in_waiting << seedInWaiting;
+            const quint8 &plant=DatapackClientLoader::datapackLoader.itemToPlants[itemId];
+            insert_plant(MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plant,CommonDatapack::commonDatapack.plants[plant].fruits_seconds);
             addQuery(QueryType_Seed);
-            seedWait=true;
             if(DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
                 load_plant_inventory();
                 load_inventory();
-                qDebug() << QString("send seed for: %1").arg(DatapackClientLoader::datapackLoader.itemToPlants[itemId]);
-                emit useSeed(DatapackClientLoader::datapackLoader.itemToPlants[itemId]);
+                qDebug() << QString("send seed for: %1").arg(plant);
+                emit useSeed(plant);
             }
             else
                 qDebug() << QString("seed not found for item: %1").arg(itemId);
+        }
         break;
         case ObjectType_UseInFight:
         {
@@ -1069,41 +1085,46 @@ bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map,
     return true;
 }
 
+//return -1 if not found, else the index
+qint32 BaseWindow::havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 y) const
+{
+    int index=0;
+    while(index<map->plantList.size())
+    {
+        if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
+            return index;
+        index++;
+    }
+    return -1;
+}
+
 void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
 {
     if(actionOnCheckBot(map,x,y))
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
     {
-        int index=0;
-        while(index<map->plantList.size())
+        int index=havePlant(map,x,y);
+        if(index>=0)
         {
-            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
+            quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+            if(map->plantList.at(index)->mature_at<=current_time)
             {
-                if(collectWait)
-                {
-                    showTip(tr("Wait to finish to collect the previous plant"));
-                    return;
-                }
-                quint64 current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                if(map->plantList.at(index)->mature_at<=current_time)
-                {
-                    collectWait=true;
-                    addQuery(QueryType_CollectPlant);
-                    emit collectMaturePlant();
-                }
-                else
-                    showTip(tr("This plant is growing and can't be collected"));
-                return;
+                ClientPlantInCollecting clientPlantInCollecting;
+                clientPlantInCollecting.map=map->map_file;
+                clientPlantInCollecting.plant_id=map->plantList.at(index)->plant_id;
+                clientPlantInCollecting.seconds_to_mature=0;
+                clientPlantInCollecting.x=map->plantList.at(index)->x;
+                clientPlantInCollecting.y=map->plantList.at(index)->y;
+                plant_collect_in_waiting << clientPlantInCollecting;
+                addQuery(QueryType_CollectPlant);
+                emit collectMaturePlant();
             }
-            index++;
+            else
+                showTip(tr("This plant is growing and can't be collected"));
         }
-        if(seedWait)
-        {
-            showTip(tr("Wait to finish to plant the previous seed"));
-            return;
-        }
-        selectObject(ObjectType_Seed);
+        else
+            selectObject(ObjectType_Seed);
         return;
     }
     else
