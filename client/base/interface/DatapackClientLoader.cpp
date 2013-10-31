@@ -4,8 +4,8 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/DatapackGeneralLoader.h"
 #include "../LanguagesSelect.h"
-#include "../../tiled/tileset.h"
-#include "../../tiled/mapreader.h"
+#include "../../tiled/tiled_tileset.h"
+#include "../../tiled/tiled_mapreader.h"
 
 #include <QDebug>
 #include <QFile>

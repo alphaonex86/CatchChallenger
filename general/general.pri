@@ -17,7 +17,7 @@ SOURCES += $$PWD/base/Api_protocol.cpp \
     $$PWD/base/ProtocolParsing.cpp \
     $$PWD/base/MoveOnTheMap.cpp \
     $$PWD/base/Map_loader.cpp \
-    $$PWD/base/Map.cpp \
+    $$PWD/base/CommonMap.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/ConnectedSocket.cpp \
     $$PWD/fight/FightLoader.cpp \
@@ -35,7 +35,7 @@ HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/ProtocolParsing.h \
     $$PWD/base/MoveOnTheMap.h \
     $$PWD/base/Map_loader.h \
-    $$PWD/base/Map.h \
+    $$PWD/base/CommonMap.h \
     $$PWD/base/GeneralVariable.h \
     $$PWD/base/QFakeSocket.h \
     $$PWD/base/FacilityLib.h \
