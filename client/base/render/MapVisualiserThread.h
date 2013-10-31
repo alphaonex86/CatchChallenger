@@ -6,18 +6,18 @@
 #include <QString>
 #include <QHash>
 
-#include "../../tiled/isometricrenderer.h"
-#include "../../tiled/map.h"
-#include "../../tiled/mapobject.h"
-#include "../../tiled/mapreader.h"
-#include "../../tiled/objectgroup.h"
-#include "../../tiled/orthogonalrenderer.h"
-#include "../../tiled/tilelayer.h"
-#include "../../tiled/tileset.h"
-#include "../../tiled/tile.h"
+#include "../../tiled/tiled_isometricrenderer.h"
+#include "../../tiled/tiled_map.h"
+#include "../../tiled/tiled_mapobject.h"
+#include "../../tiled/tiled_mapreader.h"
+#include "../../tiled/tiled_objectgroup.h"
+#include "../../tiled/tiled_orthogonalrenderer.h"
+#include "../../tiled/tiled_tilelayer.h"
+#include "../../tiled/tiled_tileset.h"
+#include "../../tiled/tiled_tile.h"
 
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "../../client/base/Map_client.h"
 #include "../../client/base/DisplayStructures.h"
 #include "../../general/base/Map_loader.h"

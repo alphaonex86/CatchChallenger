@@ -13,8 +13,8 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/MoveOnTheMap.h"
 #include "../../general/base/DebugClass.h"
-#include "../../tiled/tile.h"
-#include "../../general/base/Map.h"
+#include "../../tiled/tiled_tile.h"
+#include "../../general/base/CommonMap.h"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
 void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)

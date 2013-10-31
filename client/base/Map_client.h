@@ -1,9 +1,9 @@
 #ifndef CATCHCHALLENGER_MAP_CLIENT_H
 #define CATCHCHALLENGER_MAP_CLIENT_H
 
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../tiled/mapobject.h"
+#include "../tiled/tiled_mapobject.h"
 #include "ClientStructures.h"
 #include "DisplayStructures.h"
 

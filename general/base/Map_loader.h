@@ -15,7 +15,7 @@
 
 #include "DebugClass.h"
 #include "GeneralStructures.h"
-#include "Map.h"
+#include "CommonMap.h"
 
 namespace CatchChallenger {
 class Map_loader : public QObject

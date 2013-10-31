@@ -1,5 +1,5 @@
 #include "MoveOnTheMap.h"
-#include "Map.h"
+#include "CommonMap.h"
 #include "DebugClass.h"
 
 using namespace CatchChallenger;

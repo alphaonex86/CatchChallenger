@@ -3,7 +3,7 @@
 
 #include "ClientMapManagement.h"
 #include "../MapServer.h"
-#include "../../../general/base/Map.h"
+#include "../../../general/base/CommonMap.h"
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_None : public ClientMapManagement

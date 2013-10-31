@@ -4,7 +4,7 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "SqlFunction.h"
 #include "LocalClientHandler.h"
 
