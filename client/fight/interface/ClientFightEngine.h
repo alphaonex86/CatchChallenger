@@ -8,7 +8,7 @@
 #include <QPixmap>
 
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "../../general/fight/CommonFightEngine.h"
 #include "../../general/base/Api_protocol.h"
 

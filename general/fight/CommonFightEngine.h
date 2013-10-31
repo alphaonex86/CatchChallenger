@@ -7,7 +7,7 @@
 #include <QString>
 
 #include "../base/GeneralStructures.h"
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "../base/Api_protocol.h"
 
 namespace CatchChallenger {

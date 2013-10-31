@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVER_H
 #define CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVER_H
 
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "../crafting/MapServerCrafting.h"
 
 #include <QSet>

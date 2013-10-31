@@ -2,7 +2,7 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/DebugClass.h"
-#include "../../general/base/Map.h"
+#include "../../general/base/CommonMap.h"
 #include "../../general/fight/FightLoader.h"
 #include "../base/GlobalServerData.h"
 #include "../VariableServer.h"

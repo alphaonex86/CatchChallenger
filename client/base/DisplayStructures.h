@@ -4,8 +4,8 @@
 #include <QHash>
 #include <QDomElement>
 
-#include "../tiled/mapobject.h"
-#include "../tiled/tileset.h"
+#include "../tiled/tiled_mapobject.h"
+#include "../tiled/tiled_tileset.h"
 
 namespace CatchChallenger {
 
