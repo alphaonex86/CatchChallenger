@@ -216,7 +216,7 @@ void MainWindow::on_itemListDelete_clicked()
     }
     bool ok;
     //load the bots
-    QDomElement child = domDocument.documentElement().firstChildElement("bot");
+    QDomElement child = domDocument.documentElement().firstChildElement("item");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -237,7 +237,7 @@ void MainWindow::on_itemListDelete_clicked()
             else
                 qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
-        child = child.nextSiblingElement("bot");
+        child = child.nextSiblingElement("item");
     }
     items.remove(id);
     updateItemList();
