@@ -41,6 +41,9 @@ private slots:
     void on_levelRemove_clicked();
     void on_levelEdit_clicked();
     void on_level_itemDoubleClicked(QListWidgetItem *item);
+    void updateBuffList();
+    void updateLifeList();
+    void updateLevelList();
     QDomElement getCurrentLevelInfo();
     QDomElement getCurrentBuffInfo();
     QDomElement getCurrentLifeInfo();
@@ -62,6 +65,10 @@ private slots:
     void on_level_level_editingFinished();
     void on_level_sp_editingFinished();
     void on_level_endurance_editingFinished();
+    void on_skillLifeEffectAdd_clicked();
+    void on_skillLifeEffectDelete_clicked();
+    void on_skillBuffEffectAdd_clicked();
+    void on_skillBuffEffectDelete_clicked();
 private:
     Ui::MainWindow *ui;
     QHash<quint32,QDomElement> skills;
