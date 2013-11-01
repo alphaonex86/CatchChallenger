@@ -123,7 +123,47 @@ void MainWindow::updateItemList()
 void MainWindow::on_itemList_itemDoubleClicked(QListWidgetItem *item)
 {
     loadingTheInformations=true;
+    updateLevelList();
     quint32 selectedItem=item->data(99).toUInt();
+    //load name
+    {
+        ui->nameEditLanguageList->clear();
+        QDomElement name = skills[selectedItem].firstChildElement("name");
+        while(!name.isNull())
+        {
+            if(!name.hasAttribute("lang"))
+                ui->nameEditLanguageList->addItem("en");
+            else
+                ui->nameEditLanguageList->addItem(name.attribute("lang"));
+            name = name.nextSiblingElement("name");
+        }
+    }
+    //load description
+    {
+        ui->descriptionEditLanguageList->clear();
+        QDomElement description = skills[selectedItem].firstChildElement("description");
+        while(!description.isNull())
+        {
+            if(!description.hasAttribute("lang"))
+                ui->descriptionEditLanguageList->addItem("en");
+            else
+                ui->descriptionEditLanguageList->addItem(description.attribute("lang"));
+            description = description.nextSiblingElement("description");
+        }
+    }
+    ui->stackedWidget->setCurrentWidget(ui->page_edit);
+    ui->tabWidget->setCurrentWidget(ui->tabGeneral);
+    loadingTheInformations=false;
+    on_nameEditLanguageList_currentIndexChanged(ui->nameEditLanguageList->currentIndex());
+    on_descriptionEditLanguageList_currentIndexChanged(ui->descriptionEditLanguageList->currentIndex());
+}
+
+void MainWindow::updateLevelList()
+{
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
     //load level
     {
         bool ok;
@@ -160,37 +200,6 @@ void MainWindow::on_itemList_itemDoubleClicked(QListWidgetItem *item)
             }
         }
     }
-    //load name
-    {
-        ui->nameEditLanguageList->clear();
-        QDomElement name = skills[selectedItem].firstChildElement("name");
-        while(!name.isNull())
-        {
-            if(!name.hasAttribute("lang"))
-                ui->nameEditLanguageList->addItem("en");
-            else
-                ui->nameEditLanguageList->addItem(name.attribute("lang"));
-            name = name.nextSiblingElement("name");
-        }
-    }
-    //load description
-    {
-        ui->descriptionEditLanguageList->clear();
-        QDomElement description = skills[selectedItem].firstChildElement("description");
-        while(!description.isNull())
-        {
-            if(!description.hasAttribute("lang"))
-                ui->descriptionEditLanguageList->addItem("en");
-            else
-                ui->descriptionEditLanguageList->addItem(description.attribute("lang"));
-            description = description.nextSiblingElement("description");
-        }
-    }
-    ui->stackedWidget->setCurrentWidget(ui->page_edit);
-    ui->tabWidget->setCurrentWidget(ui->tabGeneral);
-    loadingTheInformations=false;
-    on_nameEditLanguageList_currentIndexChanged(ui->nameEditLanguageList->currentIndex());
-    on_descriptionEditLanguageList_currentIndexChanged(ui->descriptionEditLanguageList->currentIndex());
 }
 
 void MainWindow::on_itemListAdd_clicked()
@@ -207,7 +216,7 @@ void MainWindow::on_itemListAdd_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Id already taken"));
         return;
     }
-    QDomElement newXmlElement=domDocument.createElement("item");
+    QDomElement newXmlElement=domDocument.createElement("skill");
     newXmlElement.setAttribute("id",index);
     domDocument.documentElement().appendChild(newXmlElement);
     skills[index]=newXmlElement;
@@ -238,7 +247,7 @@ void MainWindow::on_itemListDelete_clicked()
     }
     bool ok;
     //load the bots
-    QDomElement child = domDocument.documentElement().firstChildElement("bot");
+    QDomElement child = domDocument.documentElement().firstChildElement("skill");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -259,7 +268,7 @@ void MainWindow::on_itemListDelete_clicked()
             else
                 qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
-        child = child.nextSiblingElement("bot");
+        child = child.nextSiblingElement("skill");
     }
     skills.remove(id);
     updateItemList();
@@ -532,10 +541,55 @@ void MainWindow::on_descriptionEditLanguageRemove_clicked()
 
 void MainWindow::on_levelAdd_clicked()
 {
+    bool ok;
+    QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
+    if(itemsUI.size()!=1)
+        return;
+    quint32 selectedItem=itemsUI.first()->data(99).toUInt();
+    if(!skills.contains(selectedItem))
+        return;
+    quint32 maxLevel=1;
+    QDomElement effect = skills[selectedItem].firstChildElement("effect");
+    if(!effect.isNull() && effect.isElement())
+    {
+        QDomElement level = effect.firstChildElement("level");
+        while(!level.isNull())
+        {
+            if(!level.hasAttribute("number"))
+                level.parentNode().removeChild(level);
+            else
+            {
+                quint32 level_number=level.attribute("number").toUInt(&ok);
+                if(ok)
+                {
+                    if(level_number>=maxLevel)
+                        maxLevel=level_number+1;
+                }
+                else
+                    level.parentNode().removeChild(level);
+            }
+            level = level.nextSiblingElement("level");
+        }
+    }
+    else
+    {
+        QDomElement effect=domDocument.createElement("effect");
+        skills[selectedItem].appendChild(effect);
+    }
+    QDomElement newXmlElement=domDocument.createElement("level");
+    newXmlElement.setAttribute("number",maxLevel);
+    domDocument.documentElement().appendChild(newXmlElement);
+    updateLevelList();
 }
 
 void MainWindow::on_levelRemove_clicked()
 {
+    QList<QListWidgetItem *> itemsLevelUI=ui->level->selectedItems();
+    if(itemsLevelUI.size()!=1)
+        return;
+    QDomElement currentLevelInfo=getCurrentLevelInfo();
+    currentLevelInfo.parentNode().removeChild(currentLevelInfo);
+    updateLevelList();
 }
 
 void MainWindow::on_levelEdit_clicked()
@@ -591,67 +645,13 @@ void MainWindow::on_level_itemDoubleClicked(QListWidgetItem *item)
         if(!ok)
             ui->level_endurance->setValue(1);
     }
-    //life
-    {
-        ui->level_life->clear();
-        int index=0;
-        QDomElement child = level.firstChildElement("life");
-        while(!child.isNull())
-        {
-            if(!child.hasAttribute("quantity"))
-                qDebug() << QString("Has not attribute \"quantity\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
-            else if(!child.isElement())
-                qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
-            else
-            {
-                int success=100;
-                if(child.hasAttribute("success"))
-                {
-                    bool ok;
-                    QString successText=child.attribute("success");
-                    successText.remove("%");
-                    success=successText.toUShort(&ok);
-                    if(!ok)
-                    {
-                        qDebug() << QString("success not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
-                        success=100;
-                    }
-                    else if(success<=0 || success>100)
-                    {
-                        qDebug() << QString("success not in range >0 && <=100: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
-                        success=100;
-                    }
-                }
-                QString applyOn="aloneEnemy";
-                if(child.hasAttribute("applyOn"))
-                {
-                    applyOn=child.attribute("applyOn");
-                    if(applyOn=="aloneEnemy")
-                        child.removeAttribute("applyOn");
-                    else if(applyOn=="themself")
-                    {}
-                    else if(applyOn=="allEnemy")
-                    {}
-                    else if(applyOn=="allAlly")
-                    {}
-                    else
-                    {
-                        child.removeAttribute("applyOn");
-                        qDebug() << QString("Attribute \"applyOn\" wrong: %3 child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(applyOn);
-                        applyOn="aloneEnemy";
-                    }
-                }
-                QListWidgetItem *item=new QListWidgetItem();
-                item->setText(tr("%1 on %2").arg(child.attribute("quantity")).arg(applyOn));
-                if(success!=100)
-                    item->setText(" ("+tr("success: %1%").arg(success)+")");
-                item->setData(99,index);
-                ui->level_life->addItem(item);
-            }
-            index++;
-            child = child.nextSiblingElement("life");
-        }
-    }
+    updateBuffList();
+    updateLifeList();
+}
+
+void MainWindow::updateBuffList()
+{
+    const QDomElement &level=getCurrentLevelInfo();
     //buff
     {
         ui->level_buff->clear();
@@ -725,6 +725,72 @@ void MainWindow::on_level_itemDoubleClicked(QListWidgetItem *item)
             }
             index++;
             child = child.nextSiblingElement("buff");
+        }
+    }
+}
+
+void MainWindow::updateLifeList()
+{
+    const QDomElement &level=getCurrentLevelInfo();
+    //life
+    {
+        ui->level_life->clear();
+        int index=0;
+        QDomElement child = level.firstChildElement("life");
+        while(!child.isNull())
+        {
+            if(!child.hasAttribute("quantity"))
+                qDebug() << QString("Has not attribute \"quantity\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            else if(!child.isElement())
+                qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            else
+            {
+                int success=100;
+                if(child.hasAttribute("success"))
+                {
+                    bool ok;
+                    QString successText=child.attribute("success");
+                    successText.remove("%");
+                    success=successText.toUShort(&ok);
+                    if(!ok)
+                    {
+                        qDebug() << QString("success not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                        success=100;
+                    }
+                    else if(success<=0 || success>100)
+                    {
+                        qDebug() << QString("success not in range >0 && <=100: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                        success=100;
+                    }
+                }
+                QString applyOn="aloneEnemy";
+                if(child.hasAttribute("applyOn"))
+                {
+                    applyOn=child.attribute("applyOn");
+                    if(applyOn=="aloneEnemy")
+                        child.removeAttribute("applyOn");
+                    else if(applyOn=="themself")
+                    {}
+                    else if(applyOn=="allEnemy")
+                    {}
+                    else if(applyOn=="allAlly")
+                    {}
+                    else
+                    {
+                        child.removeAttribute("applyOn");
+                        qDebug() << QString("Attribute \"applyOn\" wrong: %3 child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(applyOn);
+                        applyOn="aloneEnemy";
+                    }
+                }
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(tr("%1 on %2").arg(child.attribute("quantity")).arg(applyOn));
+                if(success!=100)
+                    item->setText(" ("+tr("success: %1%").arg(success)+")");
+                item->setData(99,index);
+                ui->level_life->addItem(item);
+            }
+            index++;
+            child = child.nextSiblingElement("life");
         }
     }
 }
@@ -1078,4 +1144,42 @@ void MainWindow::on_level_endurance_editingFinished()
 {
     QDomElement currentLevelInfo=getCurrentLevelInfo();
     currentLevelInfo.setAttribute("endurance",ui->level_endurance->value());
+}
+
+void MainWindow::on_skillLifeEffectAdd_clicked()
+{
+    QDomElement currentLevelInfo=getCurrentLevelInfo();
+    QDomElement newXmlElement=domDocument.createElement("life");
+    newXmlElement.setAttribute("quantity",1);
+    currentLevelInfo.appendChild(newXmlElement);
+    updateLifeList();
+}
+
+void MainWindow::on_skillLifeEffectDelete_clicked()
+{
+    QList<QListWidgetItem *> itemsLevelUI=ui->level_life->selectedItems();
+    if(itemsLevelUI.size()!=1)
+        return;
+    QDomElement currentLifeInfo=getCurrentLifeInfo();
+    currentLifeInfo.parentNode().removeChild(currentLifeInfo);
+    updateLifeList();
+}
+
+void MainWindow::on_skillBuffEffectAdd_clicked()
+{
+    QDomElement currentLevelInfo=getCurrentLevelInfo();
+    QDomElement newXmlElement=domDocument.createElement("buff");
+    newXmlElement.setAttribute("id",1);
+    currentLevelInfo.appendChild(newXmlElement);
+    updateBuffList();
+}
+
+void MainWindow::on_skillBuffEffectDelete_clicked()
+{
+    QList<QListWidgetItem *> itemsLevelUI=ui->level_buff->selectedItems();
+    if(itemsLevelUI.size()!=1)
+        return;
+    QDomElement currentBuffInfo=getCurrentBuffInfo();
+    currentBuffInfo.parentNode().removeChild(currentBuffInfo);
+    updateBuffList();
 }
