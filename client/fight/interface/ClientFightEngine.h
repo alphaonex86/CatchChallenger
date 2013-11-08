@@ -49,7 +49,7 @@ public:
     virtual bool useSkill(const quint32 &skill);
     bool dropKOOtherMonster();
     void tryCaptureClient(const quint32 &item);
-    virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    virtual quint32 captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
     void captureIsDone();
     bool doTheOtherMonsterTurn();
 private:

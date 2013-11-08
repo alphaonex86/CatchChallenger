@@ -18,6 +18,7 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/MapItem.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/interface/BaseWindow.cpp \
+    $$PWD/interface/BaseWindowCharacter.cpp \
     $$PWD/interface/BaseWindowCity.cpp \
     $$PWD/interface/BaseWindowClan.cpp \
     $$PWD/interface/BaseWindowFactory.cpp \
@@ -43,7 +44,9 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/render/MapVisualiserThread.cpp \
     $$PWD/interface/QuestJS.cpp \
     $$PWD/interface/GetPrice.cpp \
-    $$PWD/LanguagesSelect.cpp
+    $$PWD/LanguagesSelect.cpp \
+    $$PWD/interface/NewProfile.cpp \
+    $$PWD/interface/NewGame.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/audio/QOggAudioBuffer.h \
@@ -71,13 +74,17 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/render/MapVisualiserThread.h \
     $$PWD/interface/QuestJS.h \
     $$PWD/interface/GetPrice.h \
-    $$PWD/LanguagesSelect.h
+    $$PWD/LanguagesSelect.h \
+    $$PWD/interface/NewProfile.h \
+    $$PWD/interface/NewGame.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
     $$PWD/interface/WithAnotherPlayer.ui \
     $$PWD/interface/GetPrice.ui \
-    $$PWD/LanguagesSelect.ui
+    $$PWD/LanguagesSelect.ui \
+    $$PWD/interface/NewProfile.ui \
+    $$PWD/interface/NewGame.ui
 
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
 

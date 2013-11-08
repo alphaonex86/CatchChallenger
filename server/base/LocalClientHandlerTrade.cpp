@@ -137,13 +137,13 @@ void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QString("UPDATE monster SET player=%2 WHERE id=%1;")
                              .arg(tradeMonster.at(index).id)
-                             .arg(player_informations->id)
+                             .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QString("UPDATE monster SET player=%2 WHERE id=%1;")
                              .arg(tradeMonster.at(index).id)
-                             .arg(player_informations->id)
+                             .arg(player_informations->character_id)
                              );
             break;
         }

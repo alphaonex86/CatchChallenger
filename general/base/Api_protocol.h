@@ -39,7 +39,7 @@ public:
 
     virtual void sendDatapackContent() = 0;
     virtual void tryDisconnect() = 0;
-    virtual QString get_datapack_base_name() const;
+    virtual QString get_datapack_base() const;
 
     bool getHaveShopAction();
     bool getHaveFactoryAction();
@@ -92,7 +92,7 @@ protected:
     QList<quint32> lastObjectUsed;
 
     //datapack
-    QString datapack_base_name;
+    QString mDatapack;
 
     bool haveShopAction;
     bool haveFactoryAction;
@@ -112,12 +112,16 @@ signals:
     //protocol/connection info
     void disconnected(const QString &reason) const;
     void notLogged(const QString &reason) const;
-    void logged() const;
+    void logged(const QList<CharacterEntry> &characterEntryList) const;
     void protocol_is_good() const;
 
     //general info
     void number_of_player(const quint16 &number,const quint16 &max_player) const;
     void random_seeds(const QByteArray &data) const;
+
+    //character
+    void newCharacterId(const quint32 &characterId) const;
+    void haveCharacter() const;
 
     //map move
     void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction) const;
@@ -213,6 +217,11 @@ public slots:
     void sendChatText(const CatchChallenger::Chat_type &chatType,const QString &text);
     void sendPM(const QString &text,const QString &pseudo);
     void teleportDone();
+
+    //character
+    bool addCharacter(const quint8 &profileIndex,const QString &pseudo,const QString &skin);
+    bool removeCharacter(const quint32 &characterId);
+    bool selectCharacter(const quint32 &characterId);
 
     //plant, can do action only if the previous is finish
     void useSeed(const quint8 &plant_id);

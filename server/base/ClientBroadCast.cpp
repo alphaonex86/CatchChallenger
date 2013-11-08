@@ -189,7 +189,7 @@ void ClientBroadCast::send_player_informations()
 
 void ClientBroadCast::receive_instant_player_number(qint32 connected_players)
 {
-    if(!player_informations->is_logged)
+    if(!player_informations->character_loaded)
         return;
     if(this->connected_players==connected_players)
         return;

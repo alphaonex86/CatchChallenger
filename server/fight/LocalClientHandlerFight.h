@@ -35,7 +35,7 @@ public:
     bool learnSkillInternal(const quint32 &monsterId,const quint32 &skill);
     void getRandomNumberIfNeeded() const;
     bool tryEscape();
-    bool tryCapture(const quint32 &item);
+    quint32 tryCapture(const quint32 &item);
     bool botFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     bool checkFightCollision(Map *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(LocalClientHandlerFight * otherPlayerBattle);
@@ -89,7 +89,7 @@ protected:
     bool bothRealPlayerIsReady() const;
     bool checkIfCanDoTheTurn();
     bool dropKOOtherMonster();
-    void captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    quint32 captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
     bool haveCurrentSkill() const;
     quint32 getCurrentSkill() const;
     bool haveMonsterChange() const;

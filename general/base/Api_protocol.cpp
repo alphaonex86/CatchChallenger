@@ -2379,31 +2379,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         }
                         in >> max_player;
                         setMaxPlayers(max_player);
-                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                        {
-                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id, line: %1").arg(__LINE__));
-                            return;
-                        }
-                        else if(max_player<=255)
-                        {
-                            quint8 tempSize;
-                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
-                            {
-                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id, line: %1").arg(__LINE__));
-                                return;
-                            }
-                            in >> tempSize;
-                            player_informations.public_informations.simplifiedId=tempSize;
-                        }
-                        else
-                        {
-                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
-                            {
-                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player id, line: %1").arg(__LINE__));
-                                return;
-                            }
-                            in >> player_informations.public_informations.simplifiedId;
-                        }
 
                         quint32 captureRemainingTime;
                         quint8 captureFrequencyType;
@@ -2432,19 +2407,202 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
 
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the max_character, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.max_character;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the min_character, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.min_character;
+                        if(CommonSettings::commonSettings.max_character<CommonSettings::commonSettings.min_character)
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("max_character<min_character, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the max_pseudo_size, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.max_pseudo_size;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(float))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the rates_xp, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.rates_xp;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(float))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the rates_gold, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.rates_gold;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.chat_allow_all;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the chat_allow_local, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.chat_allow_local;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the chat_allow_private, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.chat_allow_private;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the chat_allow_clan, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.chat_allow_clan;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the factoryPriceChange, line: %1").arg(__LINE__));
                             return;
                         }
                         in >> CommonSettings::commonSettings.factoryPriceChange;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the characterListSize, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        quint8 characterListSize;
+                        in >> characterListSize;
 
+                        QList<CharacterEntry> characterEntryList;
+                        int index=0;
+                        while(index<characterListSize)
+                        {
+                            CharacterEntry characterEntry;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the character_id, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> characterEntry.character_id;
+                            if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                                return;
+                            }
+                            in >> characterEntry.pseudo;
+                            if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                                return;
+                            }
+                            in >> characterEntry.skin;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the delete_time_left, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> characterEntry.delete_time_left;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the played_time, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> characterEntry.played_time;
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the last_connect, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> characterEntry.last_connect;
+                            if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                                return;
+                            }
+                            in >> characterEntry.map;
+                            characterEntryList << characterEntry;
+                            index++;
+                        }
+                        emit logged(characterEntryList);
+                    }
+                    else
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("bad return code: %1, line: %2").arg(returnCode).arg(__LINE__));
+                        return;
+                    }
+                }
+                break;
+                //Get the character id return
+                case 0x0003:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint32)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint32 characterId;
+                    in >> characterId;
+                    emit newCharacterId(characterId);
+                }
+                break;
+                //get the character selection return
+                case 0x0005:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
+                        return;
+                    }
+                    quint8 returnCode;
+                    in >> returnCode;
+                    if(returnCode==0x01)
+                    {
                         if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, subCodeType:%2, and queryNumber: %3").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
+                        QString string;
+                        in >> string;
+                        DebugClass::debugConsole("selected character not found, reason: "+string);
+                        emit notLogged(string);
+                        return;
+                    }
+                    else if(returnCode==0x02)
+                    {
+                        if(max_player<=255)
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player clan, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            quint8 simplifiedId;
+                            in >> simplifiedId;
+                            player_informations.public_informations.simplifiedId=simplifiedId;
+                        }
+                        else
+                        {
+                            if((in.device()->size()-in.device()->pos())<(int)sizeof(quint16))
+                            {
+                                parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player clan, line: %1").arg(__LINE__));
+                                return;
+                            }
+                            in >> player_informations.public_informations.simplifiedId;
+                        }
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                            return;
+                        }
                         QString tempAllow;
                         in >> tempAllow;
-                        player_informations.allow=FacilityLib::QStringToAllow(tempAllow);
+                        player_informations.allow=FacilityLib::StringToAllow(tempAllow);
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the player clan, line: %1").arg(__LINE__));
@@ -2886,13 +3044,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             player_informations.bot_already_beaten << bot_already_beaten;
                             index++;
                         }
-
                         is_logged=true;
-                        emit logged();
+                        emit haveCharacter();
                     }
                     else
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("bad return code: %1, line: %2").arg(returnCode).arg(__LINE__));
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong return code: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
                 }
@@ -3928,13 +4085,13 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
         return false;
     }
     QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);
-    quint8 query_number=queryNumber();
-    out << login;
     QCryptographicHash hash(QCryptographicHash::Sha512);
-    hash.addData(pass.toUtf8());
+    hash.addData(login.toUtf8());
     outputData+=hash.result();
+    QCryptographicHash hash2(QCryptographicHash::Sha512);
+    hash2.addData(pass.toUtf8());
+    outputData+=hash2.result();
+    const quint8 &query_number=queryNumber();
     if(output==NULL)
         return false;
     output->packFullOutcommingQuery(0x02,0x0002,query_number,outputData);
@@ -4005,6 +4162,44 @@ void Api_protocol::teleportDone()
         return;
     output->postReplyData(teleportList.first(),QByteArray());
     teleportList.removeFirst();
+}
+
+bool Api_protocol::addCharacter(const quint8 &profileIndex, const QString &pseudo, const QString &skin)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)profileIndex;
+    out << pseudo;
+    out << skin;
+    if(output==NULL)
+        return false;
+    output->packFullOutcommingQuery(0x02,0x0003,queryNumber(),outputData);
+    return true;
+}
+
+bool Api_protocol::removeCharacter(const quint32 &characterId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << characterId;
+    if(output==NULL)
+        return false;
+    output->packFullOutcommingQuery(0x02,0x0004,queryNumber(),outputData);
+    return true;
+}
+
+bool Api_protocol::selectCharacter(const quint32 &characterId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << characterId;
+    if(output==NULL)
+        return false;
+    output->packFullOutcommingQuery(0x02,0x0005,queryNumber(),outputData);
+    return true;
 }
 
 void Api_protocol::useSeed(const quint8 &plant_id)
@@ -4707,7 +4902,7 @@ void Api_protocol::startReadData()
     canStartReadData=true;
 }
 
-QString Api_protocol::get_datapack_base_name() const
+QString Api_protocol::get_datapack_base() const
 {
-    return datapack_base_name;
+    return mDatapack;
 }

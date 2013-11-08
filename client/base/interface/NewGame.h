@@ -19,14 +19,12 @@ public:
     QString skin();
     bool haveSkin();
     void updateSkin();
-    QString gameName();
 private slots:
     void on_ok_clicked();
     void on_pseudo_textChanged(const QString &arg1);
     void on_pseudo_returnPressed();
     void on_nextSkin_clicked();
     void on_previousSkin_clicked();
-    void on_gameName_textChanged(const QString &arg1);
 private:
     QStringList forcedSkin;
     Ui::NewGame *ui;

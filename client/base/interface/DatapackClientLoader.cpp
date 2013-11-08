@@ -791,7 +791,7 @@ void DatapackClientLoader::parseTileset()
         const QString &filePath=fileList.at(index);
         if(filePath.endsWith(".tsx"))
         {
-            const QString &source=QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP+filePath).absolutePath();
+            const QString &source=QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP+filePath).absoluteFilePath();
             QFile file(source);
             if(file.open(QIODevice::ReadOnly))
             {
@@ -805,7 +805,7 @@ void DatapackClientLoader::parseTileset()
                 file.close();
             }
             else
-                qDebug() << QString("%1 can't be open: %2").arg(file.errorString());
+                qDebug() << QString("Tileset: %1 can't be open: %2").arg(source).arg(file.errorString());
         }
         index++;
     }

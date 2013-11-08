@@ -188,7 +188,7 @@ QString FacilityLib::genderToString(const Gender &gender)
     return "unknown";
 }
 
-QString FacilityLib::allowToQString(const QSet<ActionAllow> &allowList)
+QString FacilityLib::allowToString(const QSet<ActionAllow> &allowList)
 {
     QStringList allowString;
     QSetIterator<ActionAllow> i(allowList);
@@ -204,7 +204,7 @@ QString FacilityLib::allowToQString(const QSet<ActionAllow> &allowList)
     return allowString.join(";");
 }
 
-QSet<ActionAllow> FacilityLib::QStringToAllow(const QString &string)
+QSet<ActionAllow> FacilityLib::StringToAllow(const QString &string)
 {
     QSet<ActionAllow> allowList;
     const QStringList &allowStringList=string.split(";");
@@ -422,4 +422,17 @@ quint32 FacilityLib::getFactoryProductPrice(const quint32 &quantityInStock, cons
     else
         price_temp_change=((max_items-quantityInStock)*CommonSettings::commonSettings.factoryPriceChange*2)/max_items;
     return CommonDatapack::commonDatapack.items.item[product.item].price*(100-CommonSettings::commonSettings.factoryPriceChange+price_temp_change)/100;
+}
+
+
+QString FacilityLib::timeToString(const quint32 &time)
+{
+    if(time>=3600*24*10)
+        return QObject::tr("%n day(s)","",time/(3600*24));
+    else if(time>=3600*24)
+        return QObject::tr("%n day(s) and %1","",time/(3600*24)).arg(QObject::tr("%n hour(s)","",(time%(3600*24))/3600));
+    else if(time>=3600)
+        return QObject::tr("%n hour(s) and %1","",time/3600).arg(QObject::tr("%n minute(s)","",(time%3600)/60));
+    else
+        return QObject::tr("%n minute(s) and %1","",time/60).arg(QObject::tr("%n second(s)","",time%60));
 }

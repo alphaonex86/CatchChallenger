@@ -12,6 +12,7 @@ using namespace CatchChallenger;
 
 BaseServer::BaseServer()
 {
+    dataLoaded=false;
     ProtocolParsing::initialiseTheVariable();
 
     qRegisterMetaType<Chat_type>("Chat_type");
@@ -47,9 +48,11 @@ BaseServer::BaseServer()
 
     GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove.start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
 
+    GlobalServerData::serverSettings.automatic_account_creation             = false;
     GlobalServerData::serverSettings.max_players                            = 1;
     GlobalServerData::serverSettings.tolerantMode                           = false;
     GlobalServerData::serverSettings.sendPlayerNumber                       = true;
+    GlobalServerData::serverSettings.pvp                                    = true;
 
     GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
     GlobalServerData::serverSettings.database.sqlite.file                       = "";
@@ -62,16 +65,17 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.server_ip                                  = "";
     GlobalServerData::serverSettings.server_port                                = 42489;
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
-    CommonSettings::commonSettings.chat_allow_aliance     = true;
     CommonSettings::commonSettings.chat_allow_clan        = true;
     CommonSettings::commonSettings.chat_allow_local       = true;
     CommonSettings::commonSettings.chat_allow_all         = true;
     CommonSettings::commonSettings.chat_allow_private     = true;
-    CommonSettings::commonSettings.pvp                    = true;
-    CommonSettings::commonSettings.rates_gold             = 1;
-    CommonSettings::commonSettings.rates_shiny            = 1;
-    CommonSettings::commonSettings.rates_xp               = 1;
+    CommonSettings::commonSettings.max_character          = 16;
+    CommonSettings::commonSettings.min_character          = 0;
+    CommonSettings::commonSettings.max_pseudo_size        = 20;
+    CommonSettings::commonSettings.rates_gold             = 1.0;
+    CommonSettings::commonSettings.rates_xp               = 1.0;
     CommonSettings::commonSettings.factoryPriceChange     = 20;
+    GlobalServerData::serverSettings.character_delete_time                      = 604800; // 7 day
     GlobalServerData::serverSettings.database.type                              = ServerSettings::Database::DatabaseType_Mysql;
     GlobalServerData::serverSettings.database.fightSync                         = ServerSettings::Database::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.database.positionTeleportSync              = true;
@@ -89,7 +93,7 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.bitcoin.workingPath                        = "%application_path%/bitcoin-storage/";
     #else
     GlobalServerData::serverSettings.bitcoin.binaryPath                         = "/usr/bin/bitcoind";
-    GlobalServerData::serverSettings.bitcoin.workingPath                        = QDir::homePath()+"/.config/CatchChallenger/server/bitoin/";
+    GlobalServerData::serverSettings.bitcoin.workingPath                        = QDir::homePath()+"/.config/CatchChallenger/server/bitcoin/";
     #endif
     GlobalServerData::serverSettings.bitcoin.enabled                            = false;
     GlobalServerData::serverSettings.bitcoin.fee                                = 1.0;
@@ -148,6 +152,9 @@ void BaseServer::initAll()
 
 void BaseServer::preload_the_data()
 {
+    if(dataLoaded)
+        return;
+    dataLoaded=true;
     GlobalServerData::serverPrivateVariables.stopIt=false;
 
     CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
@@ -167,6 +174,10 @@ void BaseServer::preload_the_data()
     preload_industries();
     preload_market_monsters();
     preload_market_items();
+    if(GlobalServerData::serverSettings.automatic_account_creation)
+        load_account_max_id();
+    if(CommonSettings::commonSettings.max_character)
+        load_character_max_id();
 }
 
 void BaseServer::preload_zone()
@@ -450,10 +461,10 @@ void BaseServer::preload_market_monsters()
      {
          default:
          case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,player,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
          break;
          case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,player,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
          break;
      }
      bool ok;
@@ -600,10 +611,10 @@ void BaseServer::preload_market_items()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT item_id,quantity,player_id,market_price,market_bitcoin FROM item WHERE place='market'");
+            queryText=QString("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT item_id,quantity,player_id,market_price,market_bitcoin FROM item WHERE place='market'");
+            queryText=QString("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
         break;
     }
     bool ok;
@@ -1535,6 +1546,7 @@ void BaseServer::loadBotFile(const QString &fileName)
 
 void BaseServer::unload_the_data()
 {
+    dataLoaded=false;
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
     unload_market();
@@ -1933,18 +1945,78 @@ void BaseServer::load_clan_max_id()
             queryText=QString("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
         break;
     }
-    QSqlQuery maxMonsterIdQuery(*GlobalServerData::serverPrivateVariables.db);
-    if(!maxMonsterIdQuery.exec(queryText))
-        DebugClass::debugConsole(maxMonsterIdQuery.lastQuery()+": "+maxMonsterIdQuery.lastError().text());
+    QSqlQuery maxClanIdQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!maxClanIdQuery.exec(queryText))
+        DebugClass::debugConsole(maxClanIdQuery.lastQuery()+": "+maxClanIdQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.maxClanId=0;
-    while(maxMonsterIdQuery.next())
+    while(maxClanIdQuery.next())
     {
         bool ok;
-        GlobalServerData::serverPrivateVariables.maxClanId=maxMonsterIdQuery.value(0).toUInt(&ok);
+        GlobalServerData::serverPrivateVariables.maxClanId=maxClanIdQuery.value(0).toUInt(&ok);
         if(!ok)
         {
             DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
             GlobalServerData::serverPrivateVariables.maxClanId=0;
+            continue;
+        }
+    }
+}
+
+void BaseServer::load_account_max_id()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
+        break;
+    }
+    QSqlQuery maxAccountIdQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!maxAccountIdQuery.exec(queryText))
+        DebugClass::debugConsole(maxAccountIdQuery.lastQuery()+": "+maxAccountIdQuery.lastError().text());
+    GlobalServerData::serverPrivateVariables.maxAccountId=0;
+    while(maxAccountIdQuery.next())
+    {
+        bool ok;
+        GlobalServerData::serverPrivateVariables.maxAccountId=maxAccountIdQuery.value(0).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
+            GlobalServerData::serverPrivateVariables.maxAccountId=0;
+            continue;
+        }
+    }
+}
+
+void BaseServer::load_character_max_id()
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
+        break;
+    }
+    QSqlQuery maxCharacterIdQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!maxCharacterIdQuery.exec(queryText))
+        DebugClass::debugConsole(maxCharacterIdQuery.lastQuery()+": "+maxCharacterIdQuery.lastError().text());
+    GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+    while(maxCharacterIdQuery.next())
+    {
+        bool ok;
+        GlobalServerData::serverPrivateVariables.maxCharacterId=maxCharacterIdQuery.value(0).toUInt(&ok);
+        if(!ok)
+        {
+            DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
+            GlobalServerData::serverPrivateVariables.maxCharacterId=0;
             continue;
         }
     }

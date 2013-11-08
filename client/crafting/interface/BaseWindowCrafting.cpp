@@ -272,11 +272,11 @@ void BaseWindow::on_toolButton_quit_plants_clicked()
     ui->listPlantList->reset();
     if(inSelection)
     {
-        ui->stackedWidget->setCurrentIndex(1);
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
         objectSelection(false,0);
     }
     else
-        ui->stackedWidget->setCurrentIndex(3);
+        ui->stackedWidget->setCurrentWidget(ui->page_inventory);
     on_listPlantList_itemSelectionChanged();
 }
 
@@ -305,13 +305,13 @@ void BaseWindow::on_listPlantList_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_pushButton_interface_crafting_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(6);
+    ui->stackedWidget->setCurrentWidget(ui->page_crafting);
 }
 
 void BaseWindow::on_toolButton_quit_crafting_clicked()
 {
     ui->listCraftingList->reset();
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
     on_listCraftingList_itemSelectionChanged();
 }
 

@@ -70,11 +70,7 @@ private slots:
     void on_pvp_stateChanged(int arg1);
     void on_server_port_valueChanged(int arg1);
     void on_rates_xp_normal_valueChanged(double arg1);
-    void on_rates_xp_premium_valueChanged(double arg1);
     void on_rates_gold_normal_valueChanged(double arg1);
-    void on_rates_gold_premium_valueChanged(double arg1);
-    void on_rates_shiny_normal_valueChanged(double arg1);
-    void on_rates_shiny_premium_valueChanged(double arg1);
     void on_chat_allow_all_toggled(bool checked);
     void on_chat_allow_local_toggled(bool checked);
     void on_chat_allow_private_toggled(bool checked);

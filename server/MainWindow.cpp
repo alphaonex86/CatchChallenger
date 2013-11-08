@@ -334,20 +334,12 @@ void MainWindow::load_settings()
     }
 
     settings->beginGroup("rates");
-    double rates_xp_normal=settings->value("xp_normal").toReal();
-    double rates_xp_premium=settings->value("xp_premium").toReal();
-    double rates_gold_normal=settings->value("gold_normal").toReal();
-    double rates_gold_premium=settings->value("gold_premium").toReal();
-    double rates_shiny_normal=settings->value("shiny_normal").toReal();
-    double rates_shiny_premium=settings->value("shiny_premium").toReal();
+    double rates_xp_normal=settings->value("xp_normal").toFloat();
+    double rates_gold_normal=settings->value("gold_normal").toFloat();
     settings->endGroup();
 
     ui->rates_xp_normal->setValue(rates_xp_normal);
-    ui->rates_xp_premium->setValue(rates_xp_premium);
     ui->rates_gold_normal->setValue(rates_gold_normal);
-    ui->rates_gold_premium->setValue(rates_gold_premium);
-    ui->rates_shiny_normal->setValue(rates_shiny_normal);
-    ui->rates_shiny_premium->setValue(rates_shiny_premium);
 
     settings->beginGroup("chat");
     bool chat_allow_all=settings->value("allow-all").toBool();
@@ -513,7 +505,7 @@ void MainWindow::send_settings()
     formatedServerSettings.server_ip					= ui->server_ip->text();
 
     //fight
-    CommonSettings::commonSettings.pvp			= ui->pvp->isChecked();
+    formatedServerSettings.pvp			= ui->pvp->isChecked();
     formatedServerSettings.sendPlayerNumber		= ui->sendPlayerNumber->isChecked();
 
     //compression
@@ -533,17 +525,12 @@ void MainWindow::send_settings()
 
     //rates
     CommonSettings::commonSettings.rates_xp			= ui->rates_xp_normal->value();
-    formatedServerSettings.rates_xp_premium					= ui->rates_xp_premium->value();
     CommonSettings::commonSettings.rates_gold			= ui->rates_xp_normal->value();
-    formatedServerSettings.rates_gold_premium				= ui->rates_xp_normal->value();
-    CommonSettings::commonSettings.rates_shiny		= ui->rates_xp_normal->value();
-    formatedServerSettings.rates_shiny_premium				= ui->rates_xp_normal->value();
 
     //chat allowed
     CommonSettings::commonSettings.chat_allow_all		= ui->chat_allow_all->isChecked();
     CommonSettings::commonSettings.chat_allow_local		= ui->chat_allow_local->isChecked();
     CommonSettings::commonSettings.chat_allow_private		= ui->chat_allow_private->isChecked();
-    CommonSettings::commonSettings.chat_allow_aliance		= ui->chat_allow_aliance->isChecked();
     CommonSettings::commonSettings.chat_allow_clan		= ui->chat_allow_clan->isChecked();
 
     switch(ui->db_type->currentIndex())
@@ -695,38 +682,10 @@ void MainWindow::on_rates_xp_normal_valueChanged(double arg1)
     settings->endGroup();
 }
 
-void MainWindow::on_rates_xp_premium_valueChanged(double arg1)
-{
-    settings->beginGroup("rates");
-    settings->setValue("xp_premium",arg1);
-    settings->endGroup();
-}
-
 void MainWindow::on_rates_gold_normal_valueChanged(double arg1)
 {
     settings->beginGroup("rates");
     settings->setValue("gold_normal",arg1);
-    settings->endGroup();
-}
-
-void MainWindow::on_rates_gold_premium_valueChanged(double arg1)
-{
-    settings->beginGroup("rates");
-    settings->setValue("gold_premium",arg1);
-    settings->endGroup();
-}
-
-void MainWindow::on_rates_shiny_normal_valueChanged(double arg1)
-{
-    settings->beginGroup("rates");
-    settings->setValue("shiny_normal",arg1);
-    settings->endGroup();
-}
-
-void MainWindow::on_rates_shiny_premium_valueChanged(double arg1)
-{
-    settings->beginGroup("rates");
-    settings->setValue("shiny_premium",arg1);
     settings->endGroup();
 }
 
