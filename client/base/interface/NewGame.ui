@@ -30,34 +30,6 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label">
-       <property name="styleSheet">
-        <string notr="true">background-image: url(:/images/empty.png);</string>
-       </property>
-       <property name="text">
-        <string>Game name:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="gameName">
-       <property name="styleSheet">
-        <string notr="true">background-image: url(:/images/light-white.png);
-border-image: url(:/images/empty.png);</string>
-       </property>
-       <property name="text">
-        <string>New game</string>
-       </property>
-       <property name="placeholderText">
-        <string>game name</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="2">
       <spacer name="verticalSpacer_2">

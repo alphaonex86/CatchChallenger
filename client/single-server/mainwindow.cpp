@@ -66,7 +66,7 @@ void MainWindow::resetAll()
 {
     CatchChallenger::Api_client_real::client->resetAll();
     CatchChallenger::BaseWindow::baseWindow->resetAll();
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->stackedWidget->setCurrentWidget(page_login);
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
@@ -137,7 +137,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     QString host=SERVER_DNS_OR_IP;
     quint16 port=SERVER_PORT;
 
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(host,port);
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
 }

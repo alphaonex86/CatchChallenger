@@ -671,7 +671,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(serverConnexion[selectedServer]->host,serverConnexion[selectedServer]->port);
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
     serverConnexion[selectedServer]->connexionCounter++;
     serverConnexion[selectedServer]->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
     saveConnexionInfoList();
@@ -1084,7 +1084,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
@@ -1178,6 +1178,10 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 {
     CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
+    CommonSettings::commonSettings.max_character=1;
+    CommonSettings::commonSettings.min_character=1;
+
+    formatedServerSettings.automatic_account_creation=true;
     formatedServerSettings.max_players=1;
     formatedServerSettings.tolerantMode=false;
     formatedServerSettings.sendPlayerNumber = false;
@@ -1187,7 +1191,7 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
     formatedServerSettings.bitcoin.enabled=false;
-    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->get_datapack_base_name();
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->get_datapack_base();
 
     internalServer->setSettings(formatedServerSettings);
 }

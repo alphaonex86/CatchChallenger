@@ -237,10 +237,11 @@ void ClientFightEngine::tryCaptureClient(const quint32 &item)
     playerMonster_captureInProgress << newMonster;
 }
 
-void ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
+quint32 ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
     Q_UNUSED(toStorage);
     Q_UNUSED(newMonster);
+    return 0;
 }
 
 Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const quint32 &skill,const quint8 &skillLevel)

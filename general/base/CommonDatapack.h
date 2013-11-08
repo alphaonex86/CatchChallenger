@@ -34,6 +34,7 @@ public:
     ItemFull items;
     QHash<quint32,Industry> industries;
     QHash<quint32,quint32> industriesLink;
+    QList<Profile> profileList;
 private:
     QMutex inProgress;
     bool isParsed;
@@ -49,6 +50,7 @@ private slots:
     void parseMonsters();
     void parseReputation();
     void parseBotFights();
+    void parseProfileList();
 };
 }
 

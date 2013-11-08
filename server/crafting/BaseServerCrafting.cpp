@@ -25,10 +25,10 @@ void BaseServerCrafting::preload_the_plant_on_map()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT map,x,y,plant,player_id,plant_timestamps FROM plant");
+            queryText=QString("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT map,x,y,plant,player_id,plant_timestamps FROM plant");
+            queryText=QString("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
         break;
     }
     QSqlQuery plantOnMapQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -79,7 +79,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
             remove_plant_on_map(map,x,y);
             continue;
         }
-        quint32 player_id=plantOnMapQuery.value(4).toUInt(&ok);
+        quint32 character=plantOnMapQuery.value(4).toUInt(&ok);
         if(!ok)
             continue;
         if(!MoveOnTheMap::isDirt(*GlobalServerData::serverPrivateVariables.map_list[map],x,y))
@@ -99,7 +99,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
         plantOnMap.x=x;
         plantOnMap.y=y;
         plantOnMap.plant=plant;
-        plantOnMap.player_id=player_id;
+        plantOnMap.character=character;
         plantOnMap.mature_at=plant_timestamps+CommonDatapack::commonDatapack.plants[plant].fruits_seconds;
         plantOnMap.player_owned_expire_at=plant_timestamps+CommonDatapack::commonDatapack.plants[plant].fruits_seconds+60*60*24;
         static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->plants << plantOnMap;
@@ -107,7 +107,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
         DebugClass::debugConsole(QString("put on the map: %1 (%2,%3) the plant: %4, owned by played id: %5, mature at: %6 (%7+%8)")
                                  .arg(map).arg(x).arg(y)
                                  .arg(plant)
-                                 .arg(player_id)
+                                 .arg(character)
                                  .arg(plantOnMap.mature_at).arg(plant_timestamps).arg(CommonDatapack::commonDatapack.plants[plant].fruits_seconds)
                                  );
         #endif

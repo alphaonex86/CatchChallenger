@@ -14,7 +14,7 @@ Api_client_virtual::Api_client_virtual(ConnectedSocket *socket, const QString &f
     Api_protocol(socket)
 {
     this->forcedDatapack=forcedDatapack;
-    datapack_base_name=QString("%1/datapack/").arg(QCoreApplication::applicationDirPath());
+    mDatapack=QString("%1/datapack/").arg(QCoreApplication::applicationDirPath());
 }
 
 Api_client_virtual::~Api_client_virtual()
@@ -32,7 +32,7 @@ void Api_client_virtual::tryDisconnect()
         socket->disconnectFromHost();
 }
 
-QString Api_client_virtual::get_datapack_base_name() const
+QString Api_client_virtual::get_datapack_base() const
 {
     return forcedDatapack;
 }

@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_CLIENT_STRUCTURES_H
 #define CATCHCHALLENGER_CLIENT_STRUCTURES_H
 
-#include <QHash>
+#include <QString>
 
 namespace CatchChallenger {
 }
