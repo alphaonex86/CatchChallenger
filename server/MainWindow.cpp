@@ -302,6 +302,12 @@ void MainWindow::load_settings()
         ui->compression->setCurrentIndex(2);
     else
         ui->compression->setCurrentIndex(1);
+    ui->min_character->setValue(settings->value("min_character").toUInt());
+    ui->max_character->setValue(settings->value("max_character").toUInt());
+    ui->max_pseudo_size->setValue(settings->value("max_pseudo_size").toUInt());
+    ui->character_delete_time->setValue(settings->value("character_delete_time").toUInt()/3600);
+    ui->min_character->setMaximum(ui->max_character->value());
+    ui->max_character->setMinimum(ui->min_character->value());
 
     quint32 tempValue=0;
     settings->beginGroup("MapVisibilityAlgorithm");
@@ -499,6 +505,12 @@ void MainWindow::load_settings()
 void MainWindow::send_settings()
 {
     ServerSettings formatedServerSettings=server.getSettings();
+
+    //common var
+    CommonSettings::commonSettings.min_character					= ui->min_character->value();
+    CommonSettings::commonSettings.max_character					= ui->max_character->value();
+    CommonSettings::commonSettings.max_pseudo_size					= ui->max_pseudo_size->value();
+    CommonSettings::commonSettings.character_delete_time			= ui->character_delete_time->value()*3600;
 
     //the listen
     formatedServerSettings.server_port					= ui->server_port->value();
@@ -1029,4 +1041,26 @@ void CatchChallenger::MainWindow::on_compression_currentIndexChanged(int index)
         settings->setValue("compression","xz");
         break;
     }
+}
+
+void CatchChallenger::MainWindow::on_min_character_editingFinished()
+{
+    settings->setValue("min_character",ui->min_character->value());
+    ui->max_character->setMinimum(ui->min_character->value());
+}
+
+void CatchChallenger::MainWindow::on_max_character_editingFinished()
+{
+    settings->setValue("max_character",ui->max_character->value());
+    ui->min_character->setMaximum(ui->max_character->value());
+}
+
+void CatchChallenger::MainWindow::on_max_pseudo_size_editingFinished()
+{
+    settings->setValue("max_pseudo_size",ui->max_pseudo_size->value());
+}
+
+void CatchChallenger::MainWindow::on_character_delete_time_editingFinished()
+{
+    settings->setValue("character_delete_time",ui->character_delete_time->value()*3600);
 }

@@ -105,7 +105,10 @@ private slots:
     void on_bitcoin_workingpath_browse_clicked();
     void on_bitcoin_binarypath_browse_clicked();
     void on_compression_currentIndexChanged(int index);
-
+    void on_min_character_editingFinished();
+    void on_max_character_editingFinished();
+    void on_max_pseudo_size_editingFinished();
+    void on_character_delete_time_editingFinished();
 signals:
     void record_latency();
 };

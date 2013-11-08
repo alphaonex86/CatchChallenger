@@ -115,7 +115,23 @@ void BaseWindow::on_character_select_clicked()
 
 void BaseWindow::on_character_remove_clicked()
 {
-
+    QList<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const quint32 &character_id=selectedItems.first()->data(99).toUInt();
+    CatchChallenger::Api_client_real::client->removeCharacter(character_id);
+    int index=0;
+    while(index<characterEntryList.size())
+    {
+        const CharacterEntry &characterEntry=characterEntryList.at(index);
+        if(characterEntry.character_id==character_id)
+        {
+            characterEntryList[index].delete_time_left=CommonSettings::commonSettings.character_delete_time;
+            break;
+        }
+        index++;
+    }
+    QMessageBox::information(this,tr("Information"),tr("Your charater will be deleted into %1").arg(FacilityLib::timeToString(CommonSettings::commonSettings.character_delete_time)));
 }
 
 void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)

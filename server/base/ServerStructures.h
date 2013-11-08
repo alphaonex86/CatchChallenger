@@ -93,17 +93,11 @@ struct ServerSettings
     //fight
     bool pvp;
     quint16 max_players;//not common because if null info not send
-    quint32 character_delete_time;//in seconds
 
     //the listen, implicit on the client
     quint16 server_port;
     QString server_ip;
     QString datapack_basePath;
-
-    //rates
-    qreal rates_xp_premium;
-    qreal rates_gold_premium;
-    qreal rates_shiny_premium;
 
     struct Database
     {
