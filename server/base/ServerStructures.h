@@ -66,8 +66,10 @@ struct Player_internal_informations
 {
     Player_private_and_public_informations public_and_private_informations;
     bool isFake;
-    bool is_logged;
-    quint32 id;
+    quint32 account_id;//0 if not logged
+    quint8 number_of_character;
+    bool character_loaded;
+    quint32 character_id;
     quint64 market_cash;
     double market_bitcoin;
     QByteArray rawPseudo;
@@ -88,6 +90,10 @@ struct ServerSettings
 {
     CompressionType compressionType;
     bool sendPlayerNumber;
+    //fight
+    bool pvp;
+    quint16 max_players;//not common because if null info not send
+    quint32 character_delete_time;//in seconds
 
     //the listen, implicit on the client
     quint16 server_port;
@@ -147,8 +153,8 @@ struct ServerSettings
     Bitcoin bitcoin;
 
     //connection
-    quint16 max_players;
     bool tolerantMode;
+    bool automatic_account_creation;
 
     //visibility algorithm
     struct MapVisibility
@@ -207,6 +213,7 @@ struct ServerPrivateVariables
     //fight
     QMultiHash<quint32,MonsterDrops> monsterDrops;
     quint32 maxMonsterId;
+    QMutex monsterIdMutex;
     QHash<QString,QList<quint32> > captureFightIdList;
     QHash<QString,CityStatus> cityStatusList;
     QHash<quint32,QString> cityStatusListReverse;
@@ -220,6 +227,8 @@ struct ServerPrivateVariables
     QTimer *timer_player_map;
     bool stopIt;
     quint32 maxClanId;
+    quint32 maxAccountId;
+    quint32 maxCharacterId;
     QTimer *timer_city_capture;
     QDateTime time_city_capture;
 

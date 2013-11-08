@@ -62,11 +62,15 @@ signals:
     //normal signals
     void isReadyToStop() const;
     //packet parsed (heavy)
-    void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash) const;
+    void askLogin(const quint8 &query_id,const QByteArray &login,const QByteArray &hash) const;
     void datapackList(const quint8 &query_id,const QStringList &files,const QList<quint64> &timestamps) const;
     //packet parsed (map management)
     void moveThePlayer(const quint8 &previousMovedUnit,const Direction &direction) const;
     void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation) const;
+    //character
+    void addCharacter(const quint8 &query_id, const quint8 &profileIndex,const QString &pseudo,const QString &skin) const;
+    void removeCharacter(const quint8 &query_id, const quint32 &characterId) const;
+    void selectCharacter(const quint8 &query_id, const quint32 &characterId) const;
     //trade
     void tradeCanceled() const;
     void tradeAccepted() const;

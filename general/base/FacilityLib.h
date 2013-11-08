@@ -25,8 +25,8 @@ public:
     static PlayerMonster botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster, const Monster::Stat &stat);
     static bool rectTouch(QRect r1,QRect r2);
     static QString genderToString(const Gender &gender);
-    static QString allowToQString(const QSet<ActionAllow> &allowList);
-    static QSet<ActionAllow> QStringToAllow(const QString &string);
+    static QString allowToString(const QSet<ActionAllow> &allowList);
+    static QSet<ActionAllow> StringToAllow(const QString &string);
     static QDateTime nextCaptureTime(const City &city);
     static QByteArray privateMonsterToBinary(const PlayerMonster &monster);
     static bool rmpath(const QDir &dir);
@@ -35,6 +35,7 @@ public:
     static quint32 getFactoryProductPrice(const quint32 &quantityInStock,const Industry::Product &product,const Industry &industry);
     static IndustryStatus factoryCheckProductionStart(const IndustryStatus &industryStatus,const Industry &industry);
     static bool factoryProductionStarted(const IndustryStatus &industryStatus,const Industry &industry);
+    static QString timeToString(const quint32 &time);
 private:
     static QByteArray UTF8EmptyData;
 };

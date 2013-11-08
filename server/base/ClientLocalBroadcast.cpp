@@ -41,7 +41,7 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
 void ClientLocalBroadcast::receiveChatText(const QString &text,const Player_internal_informations *sender_informations)
 {
     /* Multiple message when multiple player connected
-    emit message(QString("receiveChatText(), text: %1, sender_player_id: %2, to player: %3").arg(text).arg(sender_player_id).arg(player_informations.id)); */
+    emit message(QString("receiveChatText(), text: %1, sender_character: %2, to player: %3").arg(text).arg(sender_character).arg(player_informations.id)); */
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);

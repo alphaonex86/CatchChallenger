@@ -20,6 +20,7 @@
 #include "../audio/QOggSimplePlayer.h"
 #include "MapController.h"
 #include "Chat.h"
+#include "NewProfile.h"
 
 #ifndef CATCHCHALLENGER_BASEWINDOW_H
 #define CATCHCHALLENGER_BASEWINDOW_H
@@ -135,7 +136,7 @@ private slots:
     void updateTheWareHouseContent();
     QListWidgetItem * itemToGraphic(const quint32 &id, const quint32 &quantity);
     //player
-    void logged();
+    void logged(const QList<CharacterEntry> &characterEntryList);
     void updatePlayerImage();
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
@@ -384,6 +385,14 @@ private slots:
     void on_marketPutObject_clicked();
     void on_marketPutMonster_clicked();
     void on_audioVolume_valueChanged(int value);
+    void newProfileFinished();
+    void updateCharacterList();
+    void newCharacterId(const quint32 &characterId);
+    void on_character_add_clicked();
+    void on_character_back_clicked();
+    void on_character_select_clicked();
+    void on_character_remove_clicked();
+    void on_characterEntryList_itemDoubleClicked(QListWidgetItem *item);
 protected slots:
     //datapack
     void datapackParsed();
@@ -417,6 +426,9 @@ private:
     bool factoryInProduction;
     ObjectType waitedObjectType;
     quint32 datapackCount;
+    QList<CharacterEntry> characterEntryList,characterEntryListInWaiting;
+    bool isLogged;
+    NewProfile *newProfile;
 
     //plant seed in waiting
     struct SeedInWaiting

@@ -38,7 +38,7 @@ bool LocalClientHandlerFight::tryEscape()
     return escapeSuccess;
 }
 
-bool LocalClientHandlerFight::tryCapture(const quint32 &item)
+quint32 LocalClientHandlerFight::tryCapture(const quint32 &item)
 {
     bool captureSuccess=CommonFightEngine::tryCapture(item);
     if(captureSuccess)//check if is in fight
@@ -891,14 +891,14 @@ bool LocalClientHandlerFight::finishTheTurn(const bool &isBot)
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                         .arg(player_informations->id)
+                            emit dbQuery(QString("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2);")
+                                         .arg(player_informations->character_id)
                                          .arg(botFightId)
                                          );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("INSERT INTO bot_already_beaten(player_id,botfight_id) VALUES(%1,%2);")
-                                         .arg(player_informations->id)
+                            emit dbQuery(QString("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2);")
+                                         .arg(player_informations->character_id)
                                          .arg(botFightId)
                                          );
                         break;
@@ -1011,20 +1011,25 @@ bool LocalClientHandlerFight::dropKOOtherMonster()
     return commonReturn || battleReturn;
 }
 
-void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
+quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
     int position=999999;
-    GlobalServerData::serverPrivateVariables.maxMonsterId++;
+    quint32 monster_id;
+    {
+        QMutexLocker(&GlobalServerData::serverPrivateVariables.monsterIdMutex);
+        GlobalServerData::serverPrivateVariables.maxMonsterId++;
+        monster_id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+    }
     if(toStorage)
     {
         player_informations->public_and_private_informations.warehouse_playerMonster << newMonster;
-        player_informations->public_and_private_informations.warehouse_playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+        player_informations->public_and_private_informations.warehouse_playerMonster.last().id=monster_id;
         position=player_informations->public_and_private_informations.warehouse_playerMonster.size();
     }
     else
     {
         player_informations->public_and_private_informations.playerMonster << newMonster;
-        player_informations->public_and_private_informations.playerMonster.last().id=GlobalServerData::serverPrivateVariables.maxMonsterId;
+        player_informations->public_and_private_informations.playerMonster.last().id=monster_id;
         position=player_informations->public_and_private_informations.playerMonster.size();
     }
     QString place;
@@ -1038,9 +1043,9 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         case ServerSettings::Database::DatabaseType_Mysql:
             emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place,position) VALUES(%1,%2);")
                          .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
-                              .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                              .arg(monster_id)
                               .arg(newMonster.hp)
-                              .arg(player_informations->id)
+                              .arg(player_informations->character_id)
                               .arg(newMonster.monster)
                               .arg(newMonster.level)
                               .arg(newMonster.remaining_xp)
@@ -1050,7 +1055,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                               )
                          .arg(QString("%1,%2,%3,%4")
                               .arg(newMonster.egg_step)
-                              .arg(player_informations->id)
+                              .arg(player_informations->character_id)
                               .arg(place)
                               .arg(position)
                               )
@@ -1059,9 +1064,9 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         case ServerSettings::Database::DatabaseType_SQLite:
             emit dbQuery(QString("INSERT INTO monster(id,hp,player,monster,level,xp,sp,captured_with,gender,egg_step,player_origin,place,position) VALUES(%1,%2);")
                          .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
-                              .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                              .arg(monster_id)
                               .arg(newMonster.hp)
-                              .arg(player_informations->id)
+                              .arg(player_informations->character_id)
                               .arg(newMonster.monster)
                               .arg(newMonster.level)
                               .arg(newMonster.remaining_xp)
@@ -1071,7 +1076,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
                               )
                          .arg(QString("%1,%2,%3,%4")
                               .arg(newMonster.egg_step)
-                              .arg(player_informations->id)
+                              .arg(player_informations->character_id)
                               .arg(place)
                               .arg(position)
                               )
@@ -1086,7 +1091,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
-                             .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                             .arg(monster_id)
                              .arg(newMonster.skills.at(index).skill)
                              .arg(newMonster.skills.at(index).level)
                              .arg(newMonster.skills.at(index).endurance)
@@ -1094,7 +1099,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
-                             .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                             .arg(monster_id)
                              .arg(newMonster.skills.at(index).skill)
                              .arg(newMonster.skills.at(index).level)
                              .arg(newMonster.skills.at(index).endurance)
@@ -1111,14 +1116,14 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
                 emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                             .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                             .arg(monster_id)
                              .arg(newMonster.buffs.at(index).buff)
                              .arg(newMonster.buffs.at(index).level)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
-                             .arg(GlobalServerData::serverPrivateVariables.maxMonsterId)
+                             .arg(monster_id)
                              .arg(newMonster.buffs.at(index).buff)
                              .arg(newMonster.buffs.at(index).level)
                              );
@@ -1127,6 +1132,7 @@ void LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMo
         index++;
     }
     wildMonsters.removeFirst();
+    return monster_id;
 }
 
 bool LocalClientHandlerFight::haveCurrentSkill() const

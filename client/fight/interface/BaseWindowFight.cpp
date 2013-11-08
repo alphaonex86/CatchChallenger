@@ -89,9 +89,11 @@ bool BaseWindow::check_monsters()
 void BaseWindow::load_monsters()
 {
     const QList<PlayerMonster> &playerMonsters=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
-    const PlayerMonster * currentMonster=ClientFightEngine::fightEngine.getCurrentMonster();
     ui->monsterList->clear();
     monsters_items_graphical.clear();
+    if(playerMonsters.isEmpty())
+        return;
+    const PlayerMonster * currentMonster=ClientFightEngine::fightEngine.getCurrentMonster();
     int index=0;
     int size=playerMonsters.size();
     while(index<size)

@@ -43,12 +43,13 @@ BaseWindow::BaseWindow() :
 
     MapController::mapController=new MapController(true,false,true,false);
     if(CatchChallenger::Api_client_real::client!=NULL)
-        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
+        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
     Chat::chat=new Chat(ui->page_map);
     escape=false;
     movie=NULL;
+    newProfile=NULL;
 
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
@@ -140,6 +141,11 @@ BaseWindow::BaseWindow() :
 
 BaseWindow::~BaseWindow()
 {
+    if(newProfile!=NULL)
+    {
+        delete newProfile;
+        newProfile=NULL;
+    }
     while(!ambiance.isEmpty())
     {
         delete ambiance.first();
@@ -191,6 +197,10 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::add_to_inventory,   this,&BaseWindow::add_to_inventory_slot);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_to_inventory,this,&BaseWindow::remove_to_inventory_slot);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::monsterCatch,       this,&BaseWindow::monsterCatch);
+
+    //character
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::newCharacterId,     this,&BaseWindow::newCharacterId);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::haveCharacter,     this,&BaseWindow::have_current_player_info);
 
     //chat
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::new_chat_text,  Chat::chat,&Chat::new_chat_text);
@@ -2430,7 +2440,7 @@ void BaseWindow::getTextEntryPoint()
     }
     QScriptEngine engine;
 
-    QString client_logic=CatchChallenger::Api_client_real::client->get_datapack_base_name()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
+    QString client_logic=CatchChallenger::Api_client_real::client->get_datapack_base()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
         showTip(tr("Client file missing"));

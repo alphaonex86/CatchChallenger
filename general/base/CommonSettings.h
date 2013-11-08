@@ -6,19 +6,18 @@
 class CommonSettings
 {
 public:
-    //fight
-    bool pvp;
+    quint8 max_character;//if 0, not allowed, else the character max allowed
+    quint8 min_character;
+    quint8 max_pseudo_size;
 
     //rates
-    qreal rates_xp;
-    qreal rates_gold;
-    qreal rates_shiny;
+    float rates_xp;
+    float rates_gold;
 
     //chat allowed
     bool chat_allow_all;
     bool chat_allow_local;
     bool chat_allow_private;
-    bool chat_allow_aliance;
     bool chat_allow_clan;
 
     //trade
