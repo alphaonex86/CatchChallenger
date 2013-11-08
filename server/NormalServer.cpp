@@ -623,6 +623,14 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("tolerantMode",false);
     if(!settings->contains("compression"))
         settings->setValue("compression","zlib");
+    if(!settings->contains("character_delete_time"))
+        settings->setValue("character_delete_time",604800);
+    if(!settings->contains("max_pseudo_size"))
+        settings->setValue("max_pseudo_size",20);
+    if(!settings->contains("max_character"))
+        settings->setValue("max_character",3);
+    if(!settings->contains("min_character"))
+        settings->setValue("min_character",1);
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))

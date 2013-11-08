@@ -5,7 +5,6 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonMap.h"
-#include "../fight/interface/ClientFightEngine.h"
 #include "SqlFunction.h"
 #include "LocalClientHandler.h"
 
@@ -128,6 +127,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     out << (quint8)CommonSettings::commonSettings.max_character;
     out << (quint8)CommonSettings::commonSettings.min_character;
     out << (quint8)CommonSettings::commonSettings.max_pseudo_size;
+    out << (quint32)CommonSettings::commonSettings.character_delete_time;
     out << (float)CommonSettings::commonSettings.rates_xp;
     out << (float)CommonSettings::commonSettings.rates_gold;
     out << (quint8)CommonSettings::commonSettings.chat_allow_all;
@@ -360,7 +360,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             else
                 gender="male";
         }
-        CatchChallenger::Monster::Stat stat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
+        CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
         QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
         QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].learn;
         int sub_index=0;
