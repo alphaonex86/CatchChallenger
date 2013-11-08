@@ -2428,6 +2428,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> CommonSettings::commonSettings.max_pseudo_size;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the max_pseudo_size, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.character_delete_time;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(float))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the rates_xp, line: %1").arg(__LINE__));

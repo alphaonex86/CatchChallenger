@@ -59,9 +59,6 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithm_none;
 
     GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+"/datapack/";
-    GlobalServerData::serverSettings.rates_gold_premium                         = 1;
-    GlobalServerData::serverSettings.rates_shiny_premium                        = 1;
-    GlobalServerData::serverSettings.rates_xp_premium                           = 1;
     GlobalServerData::serverSettings.server_ip                                  = "";
     GlobalServerData::serverSettings.server_port                                = 42489;
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
@@ -75,7 +72,7 @@ BaseServer::BaseServer()
     CommonSettings::commonSettings.rates_gold             = 1.0;
     CommonSettings::commonSettings.rates_xp               = 1.0;
     CommonSettings::commonSettings.factoryPriceChange     = 20;
-    GlobalServerData::serverSettings.character_delete_time                      = 604800; // 7 day
+    CommonSettings::commonSettings.character_delete_time  = 604800; // 7 day
     GlobalServerData::serverSettings.database.type                              = ServerSettings::Database::DatabaseType_Mysql;
     GlobalServerData::serverSettings.database.fightSync                         = ServerSettings::Database::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.database.positionTeleportSync              = true;
@@ -1677,6 +1674,11 @@ ServerSettings BaseServer::getSettings()
 
 void BaseServer::loadAndFixSettings()
 {
+    if(CommonSettings::commonSettings.max_character<CommonSettings::commonSettings.min_character)
+        CommonSettings::commonSettings.max_character=CommonSettings::commonSettings.min_character;
+    if(CommonSettings::commonSettings.character_delete_time<=0)
+        CommonSettings::commonSettings.character_delete_time=7*24*3600;
+
     //check the settings here
     if(GlobalServerData::serverSettings.max_players<1)
         GlobalServerData::serverSettings.max_players=200;

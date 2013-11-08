@@ -29,22 +29,28 @@ void ProcessControler::send_settings()
 {
     CatchChallenger::ServerSettings formatedServerSettings=server.getSettings();;
 
+    //common var
+    CommonSettings::commonSettings.min_character					= settings->value("min_character").toUInt();
+    CommonSettings::commonSettings.max_character					= settings->value("max_character").toUInt();
+    CommonSettings::commonSettings.max_pseudo_size					= settings->value("max_pseudo_size").toUInt();
+    CommonSettings::commonSettings.character_delete_time			= settings->value("character_delete_time").toUInt();
+
     //the listen
     formatedServerSettings.server_port					= settings->value("server-port").toUInt();
     formatedServerSettings.server_ip					= settings->value("server-ip").toString();
 
     //fight
-    CommonSettings::commonSettings.pvp			= settings->value("pvp").toBool();
+    //CommonSettings::commonSettings.pvp			= settings->value("pvp").toBool();
     formatedServerSettings.sendPlayerNumber		= settings->value("sendPlayerNumber").toBool();
 
     //rates
     settings->beginGroup("rates");
     CommonSettings::commonSettings.rates_xp			= settings->value("xp_normal").toReal();
-    formatedServerSettings.rates_xp_premium                         = settings->value("xp_premium").toReal();
+    //formatedServerSettings.rates_xp_premium                         = settings->value("xp_premium").toReal();
     CommonSettings::commonSettings.rates_gold			= settings->value("gold_normal").toReal();
-    formatedServerSettings.rates_gold_premium                       = settings->value("gold_premium").toReal();
-    CommonSettings::commonSettings.rates_shiny		= settings->value("shiny_normal").toReal();
-    formatedServerSettings.rates_shiny_premium                      = settings->value("shiny_premium").toReal();
+    //formatedServerSettings.rates_gold_premium                       = settings->value("gold_premium").toReal();
+    /*CommonSettings::commonSettings.rates_shiny		= settings->value("shiny_normal").toReal();
+    formatedServerSettings.rates_shiny_premium                      = settings->value("shiny_premium").toReal();*/
     settings->endGroup();
 
     //chat allowed
@@ -52,7 +58,7 @@ void ProcessControler::send_settings()
     CommonSettings::commonSettings.chat_allow_all         = settings->value("allow-all").toBool();
     CommonSettings::commonSettings.chat_allow_local		= settings->value("allow-local").toBool();
     CommonSettings::commonSettings.chat_allow_private		= settings->value("allow-private").toBool();
-    CommonSettings::commonSettings.chat_allow_aliance		= settings->value("allow-aliance").toBool();
+    //CommonSettings::commonSettings.chat_allow_aliance		= settings->value("allow-aliance").toBool();
     CommonSettings::commonSettings.chat_allow_clan		= settings->value("allow-clan").toBool();
     settings->endGroup();
 
