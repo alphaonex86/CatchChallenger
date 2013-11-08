@@ -1,56 +1,89 @@
-PRAGMA foreign_keys=OFF;
-BEGIN TRANSACTION;
-CREATE TABLE plant (
-    "map" TEXT,
-    "x" INTEGER,
-    "y" INTEGER,
-    "plant" INTEGER,
-    "player_id" INTEGER
-, "plant_timestamps" INTEGER);
-CREATE TABLE "recipes" (
-    "player" INTEGER,
-    "recipe" INTEGER
-);
-CREATE TABLE reputation (
-    "player" INTEGER,
-    "type" TEXT,
-    "point" INTEGER
-, "level" INTEGER);
+CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE "monster_buff" (
     "monster" INTEGER,
     "buff" INTEGER,
     "level" INTEGER
 );
-CREATE TABLE "quest" (
-    "player" INTEGER,
-    "quest" INTEGER,
-    "finish_one_time" INTEGER,
-    "step" INTEGER
-);
-CREATE TABLE "bot_already_beaten" (
-    "player_id" INTEGER,
-    "botfight_id" INTEGER
-);
+CREATE UNIQUE INDEX "monster_buff_2" on monster_buff (monster ASC, buff ASC);
 CREATE TABLE "city" (
     "city" TEXT,
     "clan" INTEGER
 );
+CREATE UNIQUE INDEX "cityindex" on city (city ASC);
 CREATE TABLE factory (
     "id" INTEGER,
     "resources" TEXT,
     "products" TEXT,
     "last_update" INTEGER
 );
+CREATE TABLE clan (
+    "id" INTEGER,
+    "name" TEXT,
+    "cash" INTEGER
+, "date" INTEGER);
+CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
+CREATE TABLE monster_skill (
+    "monster" INTEGER,
+    "skill" INTEGER,
+    "level" INTEGER
+, "endurance" INTEGER);
+CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
+CREATE TABLE account (
+    "id" INTEGER NOT NULL,
+    "login" TEXT,
+    "password" TEXT,
+    "date" INTEGER
+);
+CREATE UNIQUE INDEX "index_account" on account (id ASC);
+CREATE UNIQUE INDEX "login_account" on account (login ASC);
 CREATE TABLE bitcoin_history (
-    "player_id" INTEGER,
+    "character" INTEGER,
     "date" INTEGER,
     "change" REAL,
     "reason" TEXT
 );
+CREATE TABLE bot_already_beaten (
+    "character" INTEGER,
+    "botfight_id" INTEGER
+);
+CREATE TABLE item (
+    "item" INTEGER,
+    "character" INTEGER,
+    "quantity" INTEGER,
+    "place" TEXT,
+    "market_price" INTEGER,
+    "market_bitcoin" REAL
+);
+CREATE INDEX "item_place" on item (place ASC);
+CREATE TABLE plant (
+    "map" TEXT,
+    "x" INTEGER,
+    "y" INTEGER,
+    "plant" INTEGER,
+    "character" INTEGER,
+    "plant_timestamps" INTEGER
+);
+CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
+CREATE TABLE quest (
+    "character" INTEGER,
+    "quest" INTEGER,
+    "finish_one_time" INTEGER,
+    "step" INTEGER
+);
+CREATE TABLE recipes (
+    "character" INTEGER,
+    "recipe" INTEGER
+);
+CREATE TABLE reputation (
+    "character" INTEGER,
+    "type" TEXT,
+    "point" INTEGER,
+    "level" INTEGER
+);
 CREATE TABLE monster (
     "id" INTEGER,
     "hp" INTEGER,
-    "player" INTEGER,
+    "character" INTEGER,
     "monster" INTEGER,
     "level" INTEGER,
     "xp" INTEGER,
@@ -58,29 +91,24 @@ CREATE TABLE monster (
     "captured_with" INTEGER,
     "gender" TEXT,
     "egg_step" INTEGER,
-    "player_origin" INTEGER,
+    "character_origin" INTEGER,
     "place" TEXT,
-    "position" INTEGER
-, "market_price" INTEGER, "market_bitcoin" REAL);
-CREATE TABLE item (
-    "item_id" INTEGER,
-    "player_id" INTEGER,
-    "quantity" INTEGER,
-    "place" TEXT
-, "market_price" INTEGER, "market_bitcoin" REAL);
-CREATE TABLE player (
+    "position" INTEGER,
+    "market_price" INTEGER,
+    "market_bitcoin" REAL
+);
+CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
+CREATE INDEX "monster_place" on monster (place ASC);
+CREATE TABLE character (
     "id" INTEGER,
-    "login" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
     "pseudo" TEXT NOT NULL,
     "skin" TEXT NOT NULL,
-    "position_x" INTEGER,
-    "position_y" INTEGER,
+    "x" INTEGER,
+    "y" INTEGER,
     "orientation" TEXT NOT NULL,
-    "map_name" TEXT NOT NULL,
+    "map" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "clan" INTEGER,
-    "cash" INTEGER,
     "rescue_map" TEXT,
     "rescue_x" INTEGER,
     "rescue_y" INTEGER,
@@ -89,52 +117,20 @@ CREATE TABLE player (
     "unvalidated_rescue_x" INTEGER,
     "unvalidated_rescue_y" INTEGER,
     "unvalidated_rescue_orientation" TEXT,
-    "warehouse_cash" INTEGER,
     "allow" TEXT,
     "clan_leader" INTEGER,
+    "date" INTEGER,
+    "account" INTEGER,
     "bitcoin_offset" REAL,
-    "market_cash" INTEGER,
-    "market_bitcoin" REAL
-, "date" INTEGER);
-CREATE TABLE clan (
-    "id" INTEGER,
-    "name" TEXT,
-    "cash" INTEGER
-, "date" INTEGER);
-CREATE TABLE monster_skill (
-    "monster" INTEGER,
-    "skill" INTEGER,
-    "level" INTEGER
-, "endurance" INTEGER);
-CREATE TABLE "player_skill" (
-    "player" INTEGER,
-    "skill" INTEGER,
-    "level" INTEGER
-);
-CREATE UNIQUE INDEX "plant_index_map" on plant (map ASC, x ASC, y ASC);
-CREATE UNIQUE INDEX "player_recipe" on recipes (player ASC, recipe ASC);
-CREATE INDEX "player_recipe_list" on recipes (player ASC);
-CREATE UNIQUE INDEX "reputation_index" on reputation (player ASC, type ASC);
-CREATE UNIQUE INDEX "monster_buff_2" on monster_buff (monster ASC, buff ASC);
-CREATE UNIQUE INDEX "player_unique_quest" on quest (player ASC, quest ASC);
-CREATE INDEX "player_quest" on quest (player ASC);
-CREATE UNIQUE INDEX "bot_already_beaten_index" on bot_already_beaten (player_id ASC, botfight_id ASC);
-CREATE INDEX "bot_already_beaten_by_player" on bot_already_beaten (player_id ASC);
-CREATE UNIQUE INDEX "cityindex" on city (city ASC);
-CREATE INDEX "monster_by_player" on monster (player ASC);
-CREATE UNIQUE INDEX "monster_index_key" on monster (id ASC);
-CREATE INDEX "monster_place" on monster (place ASC);
-CREATE INDEX "player_item_index" on item (player_id ASC);
-CREATE INDEX "item_place" on item (place ASC);
-CREATE UNIQUE INDEX "itemplayerplace" on item (item_id ASC, player_id ASC, place ASC);
-CREATE UNIQUE INDEX "id" on player (id ASC);
-CREATE UNIQUE INDEX "login/pseudo" on player (login ASC, password ASC);
-CREATE UNIQUE INDEX "bypseudoandclan" on player (pseudo ASC, clan ASC);
-CREATE INDEX "byclan" on player (clan ASC);
-CREATE UNIQUE INDEX "player_unique_login" on player (login ASC);
-CREATE UNIQUE INDEX "player_unique_pseudo" on player (pseudo ASC);
-CREATE UNIQUE INDEX "clan_index" on clan (id ASC);
-CREATE UNIQUE INDEX "monster_skill_2" on monster_skill (monster ASC, skill ASC);
-CREATE UNIQUE INDEX "player_skill_unique" on player_skill (player ASC, skill ASC);
-CREATE INDEX "player_skill_list" on player_skill (player ASC);
-COMMIT;
+    "market_bitcoin" REAL,
+    "cash" INTEGER,
+    "warehouse_cash" INTEGER,
+    "time_to_delete" INTEGER,
+    "played_time" INTEGER,
+    "last_connect" INTEGER
+, "market_cash" INTEGER);
+CREATE UNIQUE INDEX "id" on "character" (id ASC);
+CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
+CREATE INDEX "byclan" on "character" (clan ASC);
+CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
+CREATE INDEX "player_link_account" on "character" (account ASC);

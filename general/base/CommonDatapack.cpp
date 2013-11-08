@@ -38,6 +38,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseQuests();
     parseBotFights();
     parseIndustries();
+    parseProfileList();
     isParsed=true;
 }
 
@@ -106,6 +107,12 @@ void CommonDatapack::parseBotFights()
     qDebug() << QString("%1 bot fight(s) loaded").arg(botFights.size());
 }
 
+void CommonDatapack::parseProfileList()
+{
+    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+DATAPACK_BASE_PATH_PLAYER+"start.xml").second;
+    qDebug() << QString("%1 profile(s) loaded").arg(profileList.size());
+}
+
 void CommonDatapack::unload()
 {
     QMutexLocker mutexLocker(&inProgress);
@@ -123,6 +130,7 @@ void CommonDatapack::unload()
     items.item.clear();
     items.trap.clear();
     industries.clear();
+    profileList.clear();
     isParsed=false;
 }
 

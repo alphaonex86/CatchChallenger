@@ -802,7 +802,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         return false;
 }
 
-bool CommonFightEngine::tryCapture(const quint32 &item)
+quint32 CommonFightEngine::tryCapture(const quint32 &item)
 {
     doTurnIfChangeOfMonster=true;
     if(internalTryCapture(CommonDatapack::commonDatapack.items.trap[item]))
@@ -822,8 +822,7 @@ bool CommonFightEngine::tryCapture(const quint32 &item)
         newMonster.remaining_xp=0;
         newMonster.skills=wildMonsters.first().skills;
         newMonster.sp=0;
-        captureAWild(player_informations->playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
-        return true;
+        return captureAWild(player_informations->playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
     }
     else
     {
@@ -831,7 +830,7 @@ bool CommonFightEngine::tryCapture(const quint32 &item)
         emit message(QString("capture is failed"));
         #endif
         generateOtherAttack();//Skill::AttackReturn attackReturn=
-        return false;
+        return 0;
     }
 }
 

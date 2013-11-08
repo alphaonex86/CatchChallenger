@@ -3,6 +3,9 @@
 
 #include <QHash>
 #include <QString>
+#include <QPair>
+#include <QList>
+#include <QDomElement>
 #include "GeneralStructures.h"
 
 namespace CatchChallenger {
@@ -17,6 +20,7 @@ public:
     static ItemFull loadItems(const QString &folder);
     static QHash<quint32,Industry> loadIndustries(const QString &folder,const QHash<quint32, Item> &items);
     static QHash<quint32,quint32> loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries);
+    static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file);
 };
 }
 

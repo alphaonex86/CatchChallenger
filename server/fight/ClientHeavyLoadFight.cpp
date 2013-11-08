@@ -15,10 +15,10 @@ void ClientHeavyLoad::loadMonsters()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE character=%1 ORDER BY position ASC").arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE player=%1 ORDER BY position ASC").arg(player_informations->id);
+            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE character=%1 ORDER BY position ASC").arg(player_informations->character_id);
         break;
     }
 
@@ -330,12 +330,12 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player_id=%1")
-                .arg(player_informations->id);
+        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE character=%1")
+                .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE player_id=%1")
-                .arg(player_informations->id);
+        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE character=%1")
+                .arg(player_informations->character_id);
         break;
     }
     bool ok;

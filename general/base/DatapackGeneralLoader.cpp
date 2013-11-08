@@ -837,12 +837,12 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                     if(ok)
                     {
                         if(tempShort>100)
-                            qDebug() << QString("preload_crafting_recipes() success can't be greater than 100 for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                            qDebug() << QString("preload_crafting_recipes() success can't be greater than 100 for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                         else
                             success=tempShort;
                     }
                     else
-                        qDebug() << QString("preload_crafting_recipes() success in not an number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                        qDebug() << QString("preload_crafting_recipes() success in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                 }
                 quint16 quantity=1;
                 if(recipeItem.hasAttribute("quantity"))
@@ -851,12 +851,12 @@ QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > DatapackGeneralLoade
                     if(ok)
                     {
                         if(tempShort>65535)
-                            qDebug() << QString("preload_crafting_recipes() quantity can't be greater than 65535 for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                            qDebug() << QString("preload_crafting_recipes() quantity can't be greater than 65535 for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                         else
                             quantity=tempShort;
                     }
                     else
-                        qDebug() << QString("preload_crafting_recipes() quantity in not an number for crafting recipe file: %1, id number already set: child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
+                        qDebug() << QString("preload_crafting_recipes() quantity in not an number for crafting recipe file: %1, child.tagName(): %2 (at line: %3)").arg(craftingRecipesFile.fileName()).arg(recipeItem.tagName()).arg(recipeItem.lineNumber());
                 }
 
                 quint32 id=recipeItem.attribute("id").toUInt(&ok);
@@ -1435,4 +1435,221 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
         item = item.nextSiblingElement("item");
     }
     return items;
+}
+
+QPair<QList<QDomElement>, QList<Profile> > DatapackGeneralLoader::loadProfileList(const QString &datapackPath, const QString &file)
+{
+    QPair<QList<QDomElement>, QList<Profile> > returnVar;
+    //open and quick check the file
+    QFile xmlFile(file);
+    QByteArray xmlContent;
+    if(!xmlFile.open(QIODevice::ReadOnly))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file to have new profile: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
+        return returnVar;
+    }
+    xmlContent=xmlFile.readAll();
+    xmlFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return returnVar;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="list")
+    {
+        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(xmlFile.fileName()));
+        return returnVar;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement startItem = root.firstChildElement("start");
+    while(!startItem.isNull())
+    {
+        if(startItem.isElement())
+        {
+            Profile profile;
+            QDomElement map = startItem.firstChildElement("map");
+            if(!map.isNull() && map.isElement() && map.hasAttribute("file") && map.hasAttribute("x") && map.hasAttribute("y"))
+            {
+                profile.map=map.attribute("file");
+                if(!QFile::exists(datapackPath+DATAPACK_BASE_PATH_MAP+profile.map))
+                {
+                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, map don't exists %2: child.tagName(): %3 (at line: %4)").arg(xmlFile.fileName()).arg(profile.map).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    startItem = startItem.nextSiblingElement("start");
+                    continue;
+                }
+                profile.x=map.attribute("x").toUShort(&ok);
+                if(!ok)
+                {
+                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, map x is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    startItem = startItem.nextSiblingElement("start");
+                    continue;
+                }
+                profile.y=map.attribute("y").toUShort(&ok);
+                if(!ok)
+                {
+                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, map y is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    startItem = startItem.nextSiblingElement("start");
+                    continue;
+                }
+            }
+            else
+            {
+                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, no correct map configuration: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                startItem = startItem.nextSiblingElement("start");
+                continue;
+            }
+            QDomElement forcedskin = startItem.firstChildElement("forcedskin");
+            if(!forcedskin.isNull() && forcedskin.isElement() && forcedskin.hasAttribute("value"))
+            {
+                profile.forcedskin=forcedskin.attribute("value").split(";");
+                int index=0;
+                while(index<profile.forcedskin.size())
+                {
+                    if(!QFile::exists(datapackPath+DATAPACK_BASE_PATH_SKIN+profile.forcedskin.at(index)))
+                    {
+                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, skin %4 don't exists: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()).arg(profile.forcedskin.at(index)));
+                        profile.forcedskin.removeAt(index);
+                    }
+                    else
+                        index++;
+                }
+            }
+            profile.cash=0;
+            QDomElement cash = startItem.firstChildElement("cash");
+            if(!cash.isNull() && cash.isElement() && cash.hasAttribute("value"))
+            {
+                profile.cash=cash.attribute("value").toULongLong(&ok);
+                if(!ok)
+                {
+                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, cash is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                    profile.cash=0;
+                }
+            }
+            QDomElement monstersElement = startItem.firstChildElement("monster");
+            while(!monstersElement.isNull())
+            {
+                Profile::Monster monster;
+                if(monstersElement.isElement() && monstersElement.hasAttribute("id") && monstersElement.hasAttribute("level") && monstersElement.hasAttribute("captured_with"))
+                {
+                    monster.id=monstersElement.attribute("id").toUInt(&ok);
+                    if(!ok)
+                    {
+                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, monster id is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        monstersElement = monstersElement.nextSiblingElement("monster");
+                        continue;
+                    }
+                    monster.level=monstersElement.attribute("level").toUShort(&ok);
+                    if(!ok)
+                    {
+                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, monster level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        monstersElement = monstersElement.nextSiblingElement("monster");
+                        continue;
+                    }
+                    if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                    {
+                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, monster level is not into the range: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        monstersElement = monstersElement.nextSiblingElement("monster");
+                        continue;
+                    }
+                    monster.captured_with=monstersElement.attribute("captured_with").toUInt(&ok);
+                    if(!ok)
+                    {
+                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, captured_with is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        monstersElement = monstersElement.nextSiblingElement("monster");
+                        continue;
+                    }
+                    profile.monsters << monster;
+                }
+                monstersElement = monstersElement.nextSiblingElement("monster");
+            }
+            if(profile.monsters.empty())
+            {
+                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, not monster to load: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                startItem = startItem.nextSiblingElement("start");
+                continue;
+            }
+            QDomElement reputationElement = startItem.firstChildElement("reputation");
+            while(!reputationElement.isNull())
+            {
+                Profile::Reputation reputationTemp;
+                if(reputationElement.isElement() && reputationElement.hasAttribute("type") && reputationElement.hasAttribute("level"))
+                {
+                    reputationTemp.type=reputationElement.attribute("type");
+                    reputationTemp.level=reputationElement.attribute("level").toShort(&ok);
+                    if(!ok)
+                    {
+                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, reputation level is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        reputationElement = reputationElement.nextSiblingElement("reputation");
+                        continue;
+                    }
+                    reputationTemp.point=0;
+                    if(reputationElement.hasAttribute("point"))
+                    {
+                        reputationTemp.point=reputationElement.attribute("point").toInt(&ok);
+                        if(!ok)
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, reputation point is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            reputationElement = reputationElement.nextSiblingElement("reputation");
+                            continue;
+                        }
+                        if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, reputation point is not negative/positive like the level: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            reputationElement = reputationElement.nextSiblingElement("reputation");
+                            continue;
+                        }
+                    }
+                    profile.reputation << reputationTemp;
+                }
+                reputationElement = reputationElement.nextSiblingElement("reputation");
+            }
+            QDomElement itemElement = startItem.firstChildElement("item");
+            while(!itemElement.isNull())
+            {
+                Profile::Item itemTemp;
+                if(itemElement.isElement() && itemElement.hasAttribute("id"))
+                {
+                    itemTemp.id=itemElement.attribute("id").toUInt(&ok);
+                    if(!ok)
+                    {
+                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, item id is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                        itemElement = itemElement.nextSiblingElement("item");
+                        continue;
+                    }
+                    itemTemp.quantity=0;
+                    if(itemElement.hasAttribute("quantity"))
+                    {
+                        itemTemp.quantity=itemElement.attribute("quantity").toUInt(&ok);
+                        if(!ok)
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, item quantity is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            itemElement = itemElement.nextSiblingElement("item");
+                            continue;
+                        }
+                        if(itemTemp.quantity==0)
+                        {
+                            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, item quantity is null: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+                            itemElement = itemElement.nextSiblingElement("item");
+                            continue;
+                        }
+                    }
+                    profile.items << itemTemp;
+                }
+                itemElement = itemElement.nextSiblingElement("item");
+            }
+            returnVar.second << profile;
+            returnVar.first << startItem;
+
+        }
+        else
+            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(startItem.tagName()).arg(startItem.lineNumber()));
+        startItem = startItem.nextSiblingElement("start");
+    }
+    return returnVar;
 }

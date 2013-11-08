@@ -20,7 +20,7 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
 {
     host="localhost";
     port=42489;
-    datapack_base_name=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
+    mDatapack=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
     connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
     connect(this,   &Api_client_real::newFile,      this,&Api_client_real::writeNewFile);
     disconnected();
@@ -81,8 +81,8 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         {
                             if(boolList.first())
                             {
-                                DebugClass::debugConsole(QString("remove the file: %1").arg(datapack_base_name+"/"+datapackFilesList.at(index)));
-                                QFile file(datapack_base_name+"/"+datapackFilesList.at(index));
+                                DebugClass::debugConsole(QString("remove the file: %1").arg(mDatapack+"/"+datapackFilesList.at(index)));
+                                QFile file(mDatapack+"/"+datapackFilesList.at(index));
                                 if(!file.remove())
                                     DebugClass::debugConsole(QString("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
                                 //emit removeFile(datapackFilesList.at(index));
@@ -145,7 +145,7 @@ void Api_client_real::tryConnect(QString host,quint16 port)
     this->host=host;
     this->port=port;
     socket->connectToHost(host,port);
-    datapack_base_name=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
+    mDatapack=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
 }
 
 void Api_client_real::disconnected()
@@ -158,7 +158,7 @@ void Api_client_real::disconnected()
 
 void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &data,const quint64 &mtime)
 {
-    QFile file(datapack_base_name+"/"+fileName);
+    QFile file(mDatapack+"/"+fileName);
     QFileInfo fileInfo(file);
 
     QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
@@ -239,8 +239,8 @@ void Api_client_real::sendDatapackContent()
         return;
     }
     wait_datapack_content=true;
-    datapack_base_name=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
-    QDir(datapack_base_name).mkpath(datapack_base_name);
+    mDatapack=QString("%1/datapack/%2-%3/").arg(QApplication::applicationDirPath()).arg(host).arg(port);
+    QDir(mDatapack).mkpath(mDatapack);
     quint8 datapack_content_query_number=queryNumber();
     datapackFilesList=listDatapack("");
     QByteArray outputData;
@@ -252,7 +252,7 @@ void Api_client_real::sendDatapackContent()
     {
         out << datapackFilesList.at(index);
         struct stat info;
-        stat(QString(datapack_base_name+datapackFilesList.at(index)).toLatin1().data(),&info);
+        stat(QString(mDatapack+datapackFilesList.at(index)).toLatin1().data(),&info);
         out << (quint64)info.st_mtime;
         index++;
     }
@@ -264,7 +264,7 @@ void Api_client_real::sendDatapackContent()
 const QStringList Api_client_real::listDatapack(QString suffix)
 {
     QStringList returnFile;
-    QDir finalDatapackFolder(datapack_base_name+suffix);
+    QDir finalDatapackFolder(mDatapack+suffix);
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
@@ -281,7 +281,7 @@ const QStringList Api_client_real::listDatapack(QString suffix)
             else
             {
                 DebugClass::debugConsole(QString("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
-                QFile file(datapack_base_name+suffix+fileInfo.fileName());
+                QFile file(mDatapack+suffix+fileInfo.fileName());
                 if(!file.remove())
                     DebugClass::debugConsole(QString("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
             }
@@ -292,7 +292,7 @@ const QStringList Api_client_real::listDatapack(QString suffix)
 
 void Api_client_real::cleanDatapack(QString suffix)
 {
-    QDir finalDatapackFolder(datapack_base_name+suffix);
+    QDir finalDatapackFolder(mDatapack+suffix);
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
@@ -305,5 +305,5 @@ void Api_client_real::cleanDatapack(QString suffix)
     }
     entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     if(entryList.size()==0)
-        finalDatapackFolder.rmpath(datapack_base_name+suffix);
+        finalDatapackFolder.rmpath(mDatapack+suffix);
 }

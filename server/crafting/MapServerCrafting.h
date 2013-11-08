@@ -13,7 +13,7 @@ public:
         quint8 x;
         quint8 y;
         quint8 plant;//plant id
-        quint32 player_id;//player id
+        quint32 character;//player id
         quint64 mature_at;//timestamp when is mature
         quint64 player_owned_expire_at;//timestamp when is mature
     };

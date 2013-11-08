@@ -18,7 +18,10 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
 {
     this->socket			= socket;
     player_informations.isFake=isFake;
-    player_informations.is_logged=false;
+    player_informations.character_loaded=false;
+    player_informations.character_id=0;
+    player_informations.account_id=0;
+    player_informations.number_of_character=0;
     player_informations.isConnected=true;
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -93,6 +96,10 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientHeavyLoad,	&ClientHeavyLoad::postReply,        clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
     connect(clientLocalBroadcast,&ClientLocalBroadcast::postReply,  clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
     connect(localClientHandler,&LocalClientHandler::postReply,      clientNetworkWrite,&ClientNetworkWrite::postReply,Qt::QueuedConnection);
+
+    connect(clientNetworkRead,	 &ClientNetworkRead::addCharacter,      clientHeavyLoad,&ClientHeavyLoad::addCharacter,              Qt::QueuedConnection);
+    connect(clientNetworkRead,	 &ClientNetworkRead::removeCharacter,   clientHeavyLoad,&ClientHeavyLoad::removeCharacter,           Qt::QueuedConnection);
+    connect(clientNetworkRead,	 &ClientNetworkRead::selectCharacter,   clientHeavyLoad,&ClientHeavyLoad::selectCharacter,           Qt::QueuedConnection);
 
     connect(localClientHandler,  &LocalClientHandler::dbQuery,      clientHeavyLoad,&ClientHeavyLoad::dbQuery,              Qt::QueuedConnection);
     connect(clientLocalBroadcast,&ClientLocalBroadcast::dbQuery,    clientHeavyLoad,&ClientHeavyLoad::dbQuery,              Qt::QueuedConnection);
@@ -283,8 +290,9 @@ void Client::disconnectClient()
     if(socket!=NULL)
     {
         socket->disconnectFromHost();
-        if(socket->state()!=QAbstractSocket::UnconnectedState)
-            socket->waitForDisconnected();
+        //commented because if in closing state, block in waitForDisconnected
+        /*if(socket->state()!=QAbstractSocket::UnconnectedState)
+            socket->waitForDisconnected();*/
         socket=NULL;
     }
     clientNetworkRead->stopRead();
@@ -300,13 +308,13 @@ void Client::disconnectNextStep()
     if(stopped_object==OBJECTTOSTOP)
     {
         //remove the player
-        if(player_informations.is_logged)
+        if(player_informations.character_loaded)
         {
             GlobalServerData::serverPrivateVariables.connected_players--;
             if(GlobalServerData::serverSettings.sendPlayerNumber)
                 GlobalServerData::serverPrivateVariables.player_updater.removeConnectedPlayer();
         }
-        player_informations.is_logged=false;
+        player_informations.character_loaded=false;
 
         emit askIfIsReadyToStop();
         return;
@@ -342,7 +350,7 @@ void Client::disconnectNextStep()
 //* do the message by the general broadcast */
 void Client::errorOutput(const QString &errorString)
 {
-    if(player_informations.is_logged)
+    if(player_informations.character_loaded)
         clientBroadCast->sendSystemMessage(player_informations.public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
     normalOutput("Kicked by: "+errorString);
@@ -381,7 +389,7 @@ void Client::normalOutput(const QString &message)
 void Client::send_player_informations()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QString("load the normal player id: %1, simplified id: %2").arg(player_informations.id).arg(player_informations.public_and_private_informations.public_informations.simplifiedId));
+    normalOutput(QString("load the normal player id: %1, simplified id: %2").arg(player_informations.character_id).arg(player_informations.public_and_private_informations.public_informations.simplifiedId));
     #endif
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(player_informations);
     this->player_informations=player_informations;

@@ -159,37 +159,29 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                     emit error("send login before the protocol");
                     return;
                 }
-                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                if((data.size()-in.device()->pos())!=(64*2))
+                    parseError(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainCodeType).arg(data.size()-in.device()->pos()));
+                else if(is_logging_in_progess)
                 {
-                    parseError("wrong size");
-                    return;
+                    out << (quint8)1;
+                    emit postReply(queryNumber,outputData);
+                    emit error("Loggin in progress");
                 }
-                if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
-                    return;
+                else if(player_informations->character_loaded)
                 {
-                    QString login;
-                    in >> login;
-                    if((data.size()-in.device()->pos())!=64)
-                        parseError(QString("wrong size with the main ident: %1, because %2 != 20").arg(mainCodeType).arg(data.size()-in.device()->pos()));
-                    else if(is_logging_in_progess)
-                    {
-                        out << (quint8)1;
-                        emit postReply(queryNumber,outputData);
-                        emit error("Loggin in progress");
-                    }
-                    else if(player_informations->is_logged)
-                    {
-                        out << (quint8)1;
-                        emit postReply(queryNumber,outputData);
-                        emit error("Already logged");
-                    }
-                    else
-                    {
-                        is_logging_in_progess=true;
-                        QByteArray hash;
-                        hash=data.right(data.size()-in.device()->pos());
-                        emit askLogin(queryNumber,login,hash);
-                    }
+                    out << (quint8)1;
+                    emit postReply(queryNumber,outputData);
+                    emit error("Already logged");
+                }
+                else
+                {
+                    is_logging_in_progess=true;
+                    QByteArray data_extracted;
+                    data_extracted=data.right(data.size()-in.device()->pos());
+                    QByteArray hash,login;
+                    login=data_extracted.mid(0,64);
+                    hash=data_extracted.mid(63,64);
+                    emit askLogin(queryNumber,login,hash);
                     return;
                 }
             break;
@@ -213,7 +205,7 @@ void ClientNetworkRead::parseMessage(const quint8 &mainCodeType,const QByteArray
 {
     if(stopIt)
         return;
-    if(!player_informations->is_logged)
+    if(!player_informations->character_loaded)
     {
         parseError(QString("is not logged, parseMessage(%1)").arg(mainCodeType));
         return;
@@ -277,7 +269,7 @@ void ClientNetworkRead::parseFullMessage(const quint8 &mainCodeType,const quint1
 {
     if(stopIt)
         return;
-    if(!player_informations->is_logged)
+    if(!player_informations->character_loaded)
     {
         parseError(QString("is not logged, parseMessage(%1,%2)").arg(mainCodeType).arg(subCodeType));
         return;
@@ -857,7 +849,7 @@ void ClientNetworkRead::parseQuery(const quint8 &mainCodeType,const quint8 &quer
     if(stopIt)
         return;
     Q_UNUSED(data);
-    if(!player_informations->is_logged)
+    if(!player_informations->character_loaded)
     {
         parseError(QString("is not logged, parseQuery(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
@@ -871,7 +863,12 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
 {
     if(stopIt)
         return;
-    if(!player_informations->is_logged)
+    const bool goodQueryBeforeCharacterLoaded=mainCodeType==0x02 &&
+            (subCodeType==0x03 ||
+             subCodeType==0x04 ||
+             subCodeType==0x05
+                );
+    if(player_informations->account_id==0 || (!player_informations->character_loaded && !goodQueryBeforeCharacterLoaded))
     {
         parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
         return;
@@ -887,6 +884,59 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
         case 0x02:
         switch(subCodeType)
         {
+            //Add character
+            case 0x0003:
+            {
+                quint8 profileIndex;
+                QString pseudo;
+                QString skin;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                in >> profileIndex;
+                if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                {
+                    parseError(QString("error to get pseudo with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                in >> pseudo;
+                if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                {
+                    parseError(QString("error to get skin with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                in >> skin;
+                emit addCharacter(queryNumber,profileIndex,pseudo,skin);
+            }
+            break;
+            //Remove character
+            case 0x0004:
+            {
+                quint32 characterId;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                in >> characterId;
+                emit removeCharacter(queryNumber,characterId);
+            }
+            break;
+            //Select character
+            case 0x0005:
+            {
+                quint32 characterId;
+                if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                {
+                    parseError(QString("wrong size with the main ident: %1, data: %2").arg(mainCodeType).arg(QString(data.toHex())));
+                    return;
+                }
+                in >> characterId;
+                emit selectCharacter(queryNumber,characterId);
+            }
+            break;
             //Send datapack file list
             case 0x000C:
             {
@@ -1383,7 +1433,7 @@ void ClientNetworkRead::parseReplyData(const quint8 &mainCodeType,const quint8 &
     if(stopIt)
         return;
     Q_UNUSED(data);
-    if(!player_informations->is_logged)
+    if(!player_informations->character_loaded)
     {
         parseError(QString("is not logged, parseReplyData(%1,%2)").arg(mainCodeType).arg(queryNumber));
         return;
@@ -1398,14 +1448,14 @@ void ClientNetworkRead::parseFullReplyData(const quint8 &mainCodeType,const quin
     if(stopIt)
         return;
     Q_UNUSED(data);
-    if(!player_informations->is_logged)
+    if(!player_informations->character_loaded)
     {
         parseError(QString("is not logged, parseReplyData(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
         return;
     }
     if(stopIt)
         return;
-    if(!player_informations->is_logged)
+    if(!player_informations->character_loaded)
     {
         parseInputBeforeLogin(mainCodeType,subCodeType,queryNumber,data);
         return;

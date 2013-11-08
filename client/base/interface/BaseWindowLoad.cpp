@@ -25,7 +25,9 @@ void BaseWindow::resetAll()
     havePlayerInformations=false;
     DatapackClientLoader::datapackLoader.resetAll();
     haveInventory=false;
+    isLogged=false;
     datapackIsParsed=false;
+    characterEntryList.clear();
     ui->inventory->clear();
     ui->shopItemList->clear();
     items_graphical.clear();
@@ -93,6 +95,11 @@ void BaseWindow::resetAll()
     }
     industryStatus.products.clear();
     industryStatus.resources.clear();
+    if(newProfile!=NULL)
+    {
+        delete newProfile;
+        newProfile=NULL;
+    }
 
     CatchChallenger::ClientFightEngine::fightEngine.resetAll();
 }
@@ -129,10 +136,19 @@ void BaseWindow::notLogged(QString reason)
     QMessageBox::information(this,tr("Unable to login"),tr("Unable to login: %1").arg(reason));
 }
 
-void BaseWindow::logged()
+void BaseWindow::logged(const QList<CharacterEntry> &characterEntryList)
 {
-    updateConnectingStatus();
     CatchChallenger::Api_client_real::client->sendDatapackContent();
+    this->characterEntryList=characterEntryList;
+    isLogged=true;
+    updateConnectingStatus();
+    ui->character_add->setEnabled(CommonSettings::commonSettings.max_character<characterEntryList.size());
+    ui->character_remove->setEnabled(CommonSettings::commonSettings.min_character>characterEntryList.size());
+    if(characterEntryList.isEmpty())
+    {
+        if(CommonSettings::commonSettings.max_character==0)
+            emit message("Can't create character but the list is empty");
+    }
 }
 
 void BaseWindow::protocol_is_good()
@@ -215,7 +231,7 @@ void BaseWindow::haveTheDatapack()
         return;
     haveDatapack=true;
 
-    emit parseDatapack(CatchChallenger::Api_client_real::client->get_datapack_base_name());
+    emit parseDatapack(CatchChallenger::Api_client_real::client->get_datapack_base());
 }
 
 void BaseWindow::newDatapackFile()
@@ -303,23 +319,43 @@ void BaseWindow::datapackParsed()
     #endif
     datapackIsParsed=true;
     updateConnectingStatus();
-    updatePlayerImage();
+    //updatePlayerImage();
 }
 
 void BaseWindow::updateConnectingStatus()
 {
+    if(isLogged && datapackIsParsed && !havePlayerInformations)
+    {
+        ui->stackedWidget->setCurrentWidget(ui->page_character);
+        updateCharacterList();
+        if(characterEntryList.isEmpty() && CommonSettings::commonSettings.max_character>0)
+        {
+            if(CommonSettings::commonSettings.min_character>0)
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_init);
+                ui->label_connecting_status->setText(QString());
+            }
+            on_character_add_clicked();
+        }
+        if(characterEntryList.size()==1 && CommonSettings::commonSettings.min_character>=characterEntryList.size() && CommonSettings::commonSettings.max_character<=characterEntryList.size())
+        {
+            ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
+            on_character_select_clicked();
+        }
+        return;
+    }
     QStringList waitedData;
     if(!haveInventory || !havePlayerInformations)
-        waitedData << tr("loading the player informations");
+        waitedData << tr("Loading the player informations");
     if(!haveDatapack)
     {
         if(datapackCount==0)
-            waitedData << tr("loading the datapack");
+            waitedData << tr("Loading the datapack");
         else
             waitedData << tr("Loaded datapack file: %1").arg(datapackCount);
     }
     else if(!datapackIsParsed)
-        waitedData << tr("opening the datapack");
+        waitedData << tr("Opening the datapack");
     if(waitedData.isEmpty())
     {
         Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
@@ -457,11 +493,11 @@ void BaseWindow::show_reputation()
 
 QPixmap BaseWindow::getFrontSkin(const QString &skinName) const
 {
-    QPixmap skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png");
+    QPixmap skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png");
     if(skin.isNull())
     {
         skin=QPixmap(":/images/player_default/front.png");
-        qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png";
+        qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png";
     }
     return skin;
 }
@@ -488,11 +524,11 @@ QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
     //back image
     if(skinId<(quint32)skinFolderList.size())
     {
-        skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png");
+        skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png");
         if(skin.isNull())
         {
             skin=QPixmap(":/images/player_default/back.png");
-            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png";
+            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png";
         }
     }
     else

@@ -127,16 +127,27 @@ void NormalServer::start_internal_server()
         #ifdef Q_OS_WIN32
         QString opensslAppPath=QCoreApplication::applicationDirPath()+"/openssl.exe";
         #else
-        QString opensslAppPath="openssl";
+        QString opensslAppPath="/usr/bin/openssl";
         #endif
-        if(QProcess::execute(opensslAppPath,args)!=0 || !QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
+        QProcess process;
+        process.start(opensslAppPath,args);
+        process.waitForFinished();
+        process.setWorkingDirectory(QCoreApplication::applicationDirPath());
+        if(process.exitCode()!=0 || !QFile(QCoreApplication::applicationDirPath()+"/server.key").exists() || !QFile(QCoreApplication::applicationDirPath()+"/server.crt").exists())
         {
+            if(process.exitCode()!=0)
+            {
+                DebugClass::debugConsole(QString("return code: %1, output: %2, error: %3, error string: %4, exitStatus: %5").arg(process.exitCode()).arg(QString::fromLocal8Bit(process.readAll())).arg(process.error()).arg(process.errorString()).arg(process.exitStatus()));
+                DebugClass::debugConsole(QString("for start: %1 %2").arg(opensslAppPath).arg(args.join(" ")));
+            }
+            process.kill();
             DebugClass::debugConsole(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
             stat=Down;
             emit is_started(false);
             emit error(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
             return;
         }
+        process.kill();
     }
 
     if(sslKey!=NULL)
@@ -210,14 +221,14 @@ void NormalServer::start_internal_server()
     stat=InUp;
     load_settings();
     QHostAddress address = QHostAddress::Any;
-    if(!server_ip.isEmpty())
+    if(!GlobalServerData::serverSettings.server_ip.isEmpty())
         address.setAddress(GlobalServerData::serverSettings.server_ip);
     if(!server->listen(address,GlobalServerData::serverSettings.server_port))
     {
-        DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
+        DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         stat=Down;
         emit is_started(false);
-        emit error(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
+        emit error(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         return;
     }
     if(!QFakeServer::server.listen())
@@ -229,10 +240,10 @@ void NormalServer::start_internal_server()
         return;
     }
 
-    if(server_ip.isEmpty())
+    if(GlobalServerData::serverSettings.server_ip.isEmpty())
         DebugClass::debugConsole(QString("Listen *:%1").arg(GlobalServerData::serverSettings.server_port));
     else
-        DebugClass::debugConsole("Listen "+server_ip+":"+QString::number(GlobalServerData::serverSettings.server_port));
+        DebugClass::debugConsole("Listen "+GlobalServerData::serverSettings.server_ip+":"+QString::number(GlobalServerData::serverSettings.server_port));
 
     if(!initialize_the_database())
     {
@@ -628,16 +639,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
     settings->beginGroup("rates");
     if(!settings->contains("xp_normal"))
         settings->setValue("xp_normal",1.0);
-    if(!settings->contains("xp_premium"))
-        settings->setValue("xp_premium",1.0);
     if(!settings->contains("gold_normal"))
         settings->setValue("gold_normal",1.0);
-    if(!settings->contains("gold_premium"))
-        settings->setValue("gold_premium",1.0);
-    if(!settings->contains("shiny_normal"))
-        settings->setValue("shiny_normal",0.0001);
-    if(!settings->contains("shiny_premium"))
-        settings->setValue("shiny_premium",0.0002);
     settings->endGroup();
 
     settings->beginGroup("chat");
@@ -647,8 +650,6 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("allow-local",true);
     if(!settings->contains("allow-private"))
         settings->setValue("allow-private",true);
-    if(!settings->contains("allow-aliance"))
-        settings->setValue("allow-aliance",true);
     if(!settings->contains("allow-clan"))
         settings->setValue("allow-clan",true);
     settings->endGroup();

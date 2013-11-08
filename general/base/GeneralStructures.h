@@ -269,6 +269,17 @@ enum PacketModeTransmission
     PacketModeTransmission_Client=0x01
 };
 
+struct CharacterEntry
+{
+    quint32 character_id;
+    QString pseudo;
+    QString skin;
+    quint32 delete_time_left;
+    quint32 played_time;
+    quint32 last_connect;
+    QString map;
+};
+
 /* mpa related */
 struct Map_semi_border_content_top_bottom
 {
@@ -638,6 +649,34 @@ struct IndustryStatus
     quint32 last_update;
     QHash<quint32,quint32> resources;
     QHash<quint32,quint32> products;
+};
+
+struct Profile
+{
+    struct Reputation
+    {
+        QString type;
+        qint8 level;
+        qint32 point;
+    };
+    struct Monster
+    {
+        quint32 id;
+        qint8 level;
+        qint32 captured_with;
+    };
+    struct Item
+    {
+        quint32 id;
+        quint32 quantity;
+    };
+    QString map;
+    quint8 x,y;
+    QStringList forcedskin;
+    quint64 cash;
+    QList<Monster> monsters;
+    QList<Reputation> reputation;
+    QList<Item> items;
 };
 
 }

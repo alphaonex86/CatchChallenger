@@ -17,7 +17,6 @@
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
 #include "InternalServer.h"
-#include "NewProfile.h"
 
 namespace Ui {
     class SoloWindow;
@@ -41,7 +40,6 @@ private slots:
     void SoloWindowListEntryEnvoluedClicked();
     void SoloWindowListEntryEnvoluedDoubleClicked();
     void SoloWindowListEntryEnvoluedUpdate();
-    void NewProfile_finished();
     void closeDb(QSqlDatabase *db);
 /*private slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
@@ -64,7 +62,7 @@ private slots:
 private:
     Ui::SoloWindow *ui;
     void resetAll();
-    bool rmpath(const QDir &dir);
+    //bool rmpath(const QDir &dir);
     QString getMapName(const QString &file);
     QString getMapZone(const QString &file);
     QString getZoneName(const QString &zone);
@@ -73,7 +71,6 @@ private:
     QHash<ListEntryEnvolued *,bool> savegameWithMetaData;
     ListEntryEnvolued * selectedSavegame;
     bool datapackPathExists;
-    NewProfile *newProfile;
     bool standAlone;
     QSpacerItem *spacer;
     QString datapackPath;

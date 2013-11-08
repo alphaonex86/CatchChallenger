@@ -59,7 +59,6 @@ private:
     //internal usefull function
     QString listenIpAndPort(QString server_ip,quint16 server_port);
     //store about the network
-    QString server_ip;
     QSslServer *server;
     //store benchmark related
     bool in_benchmark_mode;

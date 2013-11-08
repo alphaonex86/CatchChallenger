@@ -66,7 +66,7 @@ public:
     virtual bool doTheOtherMonsterTurn();
     void doTheTurn(const quint32 &skill,const quint8 &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
-    virtual bool tryCapture(const quint32 &item);
+    virtual quint32 tryCapture(const quint32 &item);
     virtual bool changeOfMonsterInFight(const quint32 &monsterId);
     int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     void removeBuffEffectFull(const Skill::BuffEffect &effect);
@@ -86,7 +86,7 @@ protected:
     virtual bool giveXPSP(int xp,int sp);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const quint32 &skill, const quint8 &skillLevel);
-    virtual void captureAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
+    virtual quint32 captureAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
     virtual void startTheFight();
 signals:
     void error(const QString &error) const;

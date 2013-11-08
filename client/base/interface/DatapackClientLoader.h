@@ -72,6 +72,11 @@ public:
             QString description;
         };
     };
+    struct ProfileText
+    {
+        QString name;
+        QString description;
+    };
     QHash<quint32,MonsterExtra> monsterExtra;
     QHash<quint32,MonsterExtra::Buff> monsterBuffsExtra;
     QHash<quint32,MonsterExtra::Skill> monsterSkillsExtra;
@@ -86,6 +91,7 @@ public:
     QHash<quint32,BotFightExtra> botFightsExtra;
     QHash<QString,ZoneExtra> zonesExtra;
     QHash<QString,QString> audioAmbiance;
+    QHash<quint32,ProfileText> profileTextList;
     QStringList maps,skins;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();

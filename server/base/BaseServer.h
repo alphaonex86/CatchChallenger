@@ -40,6 +40,8 @@ public:
     virtual bool isStopped();
     virtual void stop();
     void load_clan_max_id();
+    void load_account_max_id();
+    void load_character_max_id();
     void start();
 protected slots:
     virtual void start_internal_server();
@@ -125,6 +127,7 @@ protected:
 
     //to keep client list, QSet because it will have lot of more disconnecion than server closing
     QSet<Client *> client_list;
+    bool dataLoaded;
 
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
 };

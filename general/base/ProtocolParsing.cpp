@@ -200,6 +200,7 @@ void ProtocolParsing::initialiseTheVariable()
     /** \note previously send by: sizeMultipleCodePacketClientToServer */
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x000C;
     replyComressionMultipleCodePacketServerToClient[0x02] << 0x0002;
+    replyComressionMultipleCodePacketServerToClient[0x02] << 0x0005;
 
     //main code for query with reply
     ProtocolParsing::mainCode_IsQueryClientToServer << 0x02 << 0x10 << 0x20 << 0x30;
@@ -215,6 +216,7 @@ void ProtocolParsing::initialiseTheVariable()
     qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
     qRegisterMetaType<QList<Skill::AttackReturn> >("QList<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
     qRegisterMetaType<QList<MarketMonster> >("QList<MarketMonster>");
+    qRegisterMetaType<QList<CharacterEntry> >("QList<CharacterEntry>");
 }
 
 void ProtocolParsing::setMaxPlayers(const quint16 &maxPlayers)

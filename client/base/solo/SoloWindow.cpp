@@ -1,6 +1,5 @@
 #include "SoloWindow.h"
 #include "ui_solowindow.h"
-#include "NewGame.h"
 
 #include <QSettings>
 #include <QInputDialog>
@@ -42,8 +41,6 @@ SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString
     ui->SaveGame_Back->setVisible(!standAlone);
     ui->languages->setVisible(standAlone);
     ui->SaveGame_New->setEnabled(datapackPathExists);
-
-    newProfile=NULL;
 }
 
 SoloWindow::~SoloWindow()
@@ -53,35 +50,17 @@ SoloWindow::~SoloWindow()
 
 void SoloWindow::on_SaveGame_New_clicked()
 {
-    //load the information
-    if(newProfile!=NULL)
-        delete newProfile;
-    newProfile=new NewProfile(datapackPath,this);
-    connect(newProfile,&NewProfile::finished,this,&SoloWindow::NewProfile_finished);
-}
-
-void SoloWindow::NewProfile_finished()
-{
-    if(newProfile->profileListSize()>1)
-        if(!newProfile->ok)
-            return;
-    newProfile->ok=false;
-    NewProfile::Profile profile=newProfile->getProfile();
-    newProfile->deleteLater();
-    newProfile=NULL;
-    NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,profile.forcedskin,this);
-    if(!nameGame.haveSkin())
+    bool ok;
+    QString gameName=QInputDialog::getText(this,tr("Game name"),tr("Give the game name"),QLineEdit::Normal,QString(),&ok);
+    if(!ok)
+        return;
+    if(gameName.isEmpty())
     {
-        QMessageBox::critical(this,tr("Error"),QString("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
+        QMessageBox::critical(this,tr("Error"),tr("The game name can't be empty"));
         return;
     }
-    nameGame.exec();
-    if(!nameGame.haveTheInformation())
-        return;
-
-    int index=0;
-
     //locate the new folder and create it
+    int index=0;
     while(QDir().exists(savegamePath+QString::number(index)))
         index++;
     QString savegamesPath=savegamePath+QString::number(index)+"/";
@@ -92,42 +71,44 @@ void SoloWindow::NewProfile_finished()
     }
 
     //initialize the db
-    QFile dbSource(":/catchchallenger.db.sqlite");
-    if(!dbSource.open(QIODevice::ReadOnly))
+    QByteArray dbData;
     {
-        QMessageBox::critical(this,tr("Error"),QString("Unable to open the db model: %1").arg(savegamesPath));
-        rmpath(savegamesPath);
-        return;
+        QFile dbSource(":/catchchallenger.db.sqlite");
+        if(!dbSource.open(QIODevice::ReadOnly))
+        {
+            QMessageBox::critical(this,tr("Error"),QString("Unable to open the db model: %1").arg(savegamesPath));
+            CatchChallenger::FacilityLib::rmpath(savegamesPath);
+            return;
+        }
+        dbData=dbSource.readAll();
+        if(dbData.isEmpty())
+        {
+            QMessageBox::critical(this,tr("Error"),QString("Unable to read the db model: %1").arg(savegamesPath));
+            CatchChallenger::FacilityLib::rmpath(savegamesPath);
+            return;
+        }
+        dbSource.close();
     }
-    QByteArray dbData=dbSource.readAll();
-    if(dbData.isEmpty())
     {
-        QMessageBox::critical(this,tr("Error"),QString("Unable to read the db model: %1").arg(savegamesPath));
-        rmpath(savegamesPath);
-        return;
-    }
-    dbSource.close();
-    QFile dbDestination(savegamesPath+"catchchallenger.db.sqlite");
-    if(!dbDestination.open(QIODevice::WriteOnly))
-    {
-        QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
-        rmpath(savegamesPath);
-        return;
-    }
-    if(!dbDestination.write(dbData))
-    {
+        QFile dbDestination(savegamesPath+"catchchallenger.db.sqlite");
+        if(!dbDestination.open(QIODevice::WriteOnly))
+        {
+            QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
+            CatchChallenger::FacilityLib::rmpath(savegamesPath);
+            return;
+        }
+        if(dbDestination.write(dbData)<0)
+        {
+            dbDestination.close();
+            QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
+            CatchChallenger::FacilityLib::rmpath(savegamesPath);
+            return;
+        }
         dbDestination.close();
-        QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
-        rmpath(savegamesPath);
-        return;
     }
-    dbDestination.close();
 
     //initialise the pass
     QString pass=CatchChallenger::FacilityLib::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",32);
-    QCryptographicHash hash(QCryptographicHash::Sha512);
-    hash.addData(pass.toUtf8());
-    QByteArray passHash=hash.result();
 
     //initialise the meta data
     bool settingOk=false;
@@ -137,7 +118,7 @@ void SoloWindow::NewProfile_finished()
         {
             if(metaData.status()==QSettings::NoError)
             {
-                metaData.setValue("title",nameGame.gameName());
+                metaData.setValue("title",gameName);
                 metaData.setValue("location","");
                 metaData.setValue("time_played",0);
                 metaData.setValue("pass",pass);
@@ -152,210 +133,9 @@ void SoloWindow::NewProfile_finished()
     if(!settingOk)
     {
         QMessageBox::critical(this,tr("Error"),QString("Unable to write savegame into: %1").arg(savegamesPath));
-        rmpath(savegamesPath);
+        CatchChallenger::FacilityLib::rmpath(savegamesPath);
         return;
     }
-
-    /// \warning in pointer to remove the object and don't keep open the file
-    QSqlDatabase *db = new QSqlDatabase();
-    *db=QSqlDatabase::addDatabase("QSQLITE","init");
-    db->setDatabaseName(savegamesPath+"catchchallenger.db.sqlite");
-    if(!db->open())
-    {
-        QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nError: open database: %1").arg(db->lastError().text()));
-        rmpath(savegamesPath);
-        return;
-    }
-
-    //empty the player db and put the new player into it
-    int player_id,size;
-    do
-    {
-        QSqlQuery sqlQuery(*db);
-        player_id=rand();
-        if(!sqlQuery.exec(QString("SELECT * FROM \"player\" WHERE id=%1").arg(player_id)))
-        {
-            closeDb(db);
-            db=NULL;
-            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-            rmpath(savegamesPath);
-            return;
-        }
-        size=sqlQuery.size();
-    } while(size>0);
-    {
-        QString textQuery=QString("INSERT INTO \"player\"(\"id\",\"login\",\"password\",\"pseudo\",\"skin\",\"position_x\",\"position_y\",\"orientation\",\"map_name\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\",\"market_cash\",\"market_bitcoin\",\"date\",\"warehouse_cash\",\"allow\",\"clan_leader\",\"bitcoin_offset\") VALUES(%1,'admin','%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0);")
-                .arg(player_id)
-                .arg(QString(passHash.toHex()))
-                .arg(nameGame.pseudo())
-                .arg(nameGame.skin())
-                .arg(profile.x)
-                .arg(profile.y)
-                .arg(profile.map)
-                .arg(profile.cash)
-                .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y));
-        QSqlQuery sqlQuery(*db);
-        if(!sqlQuery.exec(textQuery))
-        {
-            closeDb(db);
-            db=NULL;
-            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-            rmpath(savegamesPath);
-            return;
-        }
-    }
-    index=0;
-    int monster_position=1;
-    while(index<profile.monsters.size())
-    {
-        int monster_id=0;
-        /* drop the random to do the correct increment
-        do
-        {
-            monster_id=rand();
-            QSqlQuery sqlQuery(*db);
-            if(!sqlQuery.exec(QString("SELECT * FROM \"monster\" WHERE id=%1").arg(monster_id)))
-            {
-                closeDb(db);
-                db=NULL;
-                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-                rmpath(savegamesPath);
-                return;
-            }
-            size=sqlQuery.size();
-        } while(size>0);*/
-        do
-        {
-            monster_id++;
-            QSqlQuery sqlQuery(*db);
-            if(!sqlQuery.exec(QString("SELECT * FROM \"monster\" WHERE id=%1").arg(monster_id)))
-            {
-                closeDb(db);
-                db=NULL;
-                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-                rmpath(savegamesPath);
-                return;
-            }
-            size=sqlQuery.size();
-        } while(size>0);
-        QString gender="unknown";
-        if(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender!=-1)
-        {
-            if(rand()%101<CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender)
-                gender="female";
-            else
-                gender="male";
-        }
-        CatchChallenger::Monster::Stat stat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
-        QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
-        QList<CatchChallenger::Monster::AttackToLearn> attack=CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].learn;
-        int sub_index=0;
-        while(sub_index<attack.size())
-        {
-            if(attack[sub_index].learnAtLevel<=profile.monsters.at(index).level)
-            {
-                CatchChallenger::PlayerMonster::PlayerSkill temp;
-                temp.level=attack[sub_index].learnSkillLevel;
-                temp.skill=attack[sub_index].learnSkill;
-                temp.endurance=0;
-                skills << temp;
-            }
-            sub_index++;
-        }
-        while(skills.size()>4)
-            skills.removeFirst();
-        {
-            QSqlQuery sqlQuery(*db);
-            if(!sqlQuery.exec(
-                   QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"player\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"player_origin\",\"place\",\"position\",\"market_price\",\"market_bitcoin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\",%8,0,0);")
-                   .arg(monster_id)
-                   .arg(stat.hp)
-                   .arg(player_id)
-                   .arg(profile.monsters.at(index).id)
-                   .arg(profile.monsters.at(index).level)
-                   .arg(profile.monsters.at(index).captured_with)
-                   .arg(gender)
-                   .arg(monster_position)
-                        ))
-            {
-                closeDb(db);
-                db=NULL;
-                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-                rmpath(savegamesPath);
-                return;
-            }
-            monster_position++;
-        }
-        sub_index=0;
-        while(sub_index<skills.size())
-        {
-            quint8 endurance=0;
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(skills[sub_index].skill))
-                if(skills[sub_index].level<=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.size() && skills[sub_index].level>0)
-                    endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[skills[sub_index].skill].level.at(skills[sub_index].level-1).endurance;
-            QSqlQuery sqlQuery(*db);
-            if(!sqlQuery.exec(
-                   QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\",\"endurance\") VALUES(%1,%2,%3,%4);")
-                   .arg(monster_id)
-                   .arg(skills[sub_index].skill)
-                   .arg(skills[sub_index].level)
-                   .arg(endurance)
-                        ))
-            {
-                closeDb(db);
-                db=NULL;
-                QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-                rmpath(savegamesPath);
-                return;
-            }
-            sub_index++;
-        }
-        index++;
-    }
-    index=0;
-    while(index<profile.reputation.size())
-    {
-        QSqlQuery sqlQuery(*db);
-        if(!sqlQuery.exec(
-               QString("INSERT INTO \"reputation\"(\"player\",\"type\",\"point\",\"level\") VALUES(%1,\"%2\",%3,%4);")
-               .arg(player_id)
-               .arg(profile.reputation.at(index).type)
-               .arg(profile.reputation.at(index).point)
-               .arg(profile.reputation.at(index).level)
-                    ))
-        {
-            closeDb(db);
-            db=NULL;
-            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-            rmpath(savegamesPath);
-            return;
-        }
-        index++;
-    }
-    index=0;
-    while(index<profile.items.size())
-    {
-        QSqlQuery sqlQuery(*db);
-        if(!sqlQuery.exec(
-               QString("INSERT INTO \"item\"(\"item_id\",\"player_id\",\"quantity\",\"place\") VALUES(%1,%2,%3,\"wear\");")
-               .arg(profile.items.at(index).id)
-               .arg(player_id)
-               .arg(profile.items.at(index).quantity)
-                    ))
-        {
-            closeDb(db);
-            db=NULL;
-            QMessageBox::critical(this,tr("Error"),QString("Unable to initialize the savegame\nerror: initialize the entry: %1\n%2").arg(sqlQuery.lastError().text()).arg(sqlQuery.lastQuery()));
-            rmpath(savegamesPath);
-            return;
-        }
-        index++;
-    }
-
-    closeDb(db);
-    db=NULL;
-
-    updateSavegameList();
 
     emit play(savegamesPath);
 }
@@ -401,7 +181,7 @@ void SoloWindow::SoloWindowListEntryEnvoluedUpdate()
     ui->SaveGame_Delete->setEnabled(selectedSavegame!=NULL);
 }
 
-bool SoloWindow::rmpath(const QDir &dir)
+/*bool SoloWindow::CatchChallenger::FacilityLib::rmpath(const QDir &dir)
 {
     if(!dir.exists())
         return true;
@@ -421,7 +201,7 @@ bool SoloWindow::rmpath(const QDir &dir)
         else
         {
             //return the fonction for scan the new folder
-            if(!rmpath(dir.absolutePath()+'/'+fileInfo.fileName()+'/'))
+            if(!CatchChallenger::FacilityLib::rmpath(dir.absolutePath()+'/'+fileInfo.fileName()+'/'))
                 allHaveWork=false;
         }
     }
@@ -433,7 +213,7 @@ bool SoloWindow::rmpath(const QDir &dir)
         return false;
     }
     return true;
-}
+}*/
 
 void SoloWindow::updateSavegameList()
 {
@@ -490,15 +270,8 @@ void SoloWindow::updateSavegameList()
                         QString time_played;
                         if(!ok || time_played_number>3600*24*365*50)
                             time_played="Time player: bug";
-                        else if(time_played_number>=3600*24*10)
-                            time_played=QObject::tr("%n day(s) played","",time_played_number/(3600*24));
-                        else if(time_played_number>=3600*24)
-                            time_played=QObject::tr("%n day(s) and %1 played","",time_played_number/(3600*24)).arg(QObject::tr("%n hour(s)","",(time_played_number%(3600*24))/3600));
-                        else if(time_played_number>=3600)
-                            time_played=QObject::tr("%n hour(s) and %1 played","",time_played_number/3600).arg(QObject::tr("%n minute(s)","",(time_played_number%3600)/60));
                         else
-                            time_played=QObject::tr("%n minute(s) and %1 played","",time_played_number/60).arg(QObject::tr("%n second(s)","",time_played_number%60));
-
+                            time_played=QString("%1 played").arg(CatchChallenger::FacilityLib::timeToString(time_played_number));
                         //load the map name
                         QString mapName;
                         QString map=metaData.value("location").toString();
@@ -531,6 +304,14 @@ void SoloWindow::updateSavegameList()
                                           .arg(lastLine)
                                           );
                     }
+                    else if(metaData.contains("title"))
+                        newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span></span>")
+                                          .arg(metaData.value("title").toString())
+                                          );
+                    else
+                        newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span></span>")
+                                          .arg(tr("Unknown title"))
+                                          );
                 }
                 else
                     newEntry->setText(QString("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>Bug</span>").arg(metaData.value("title").toString()).arg(dateString));
@@ -702,7 +483,7 @@ void SoloWindow::on_SaveGame_Delete_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    if(!rmpath(savegamePathList[selectedSavegame]))
+    if(!CatchChallenger::FacilityLib::rmpath(savegamePathList[selectedSavegame]))
     {
         QMessageBox::critical(this,tr("Error"),QString("Unable to remove the savegame"));
         return;
@@ -752,13 +533,13 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     }
     if(!QFile::copy(savegamesPath+"metadata.conf",destinationPath+"metadata.conf"))
     {
-        rmpath(destinationPath);
+        CatchChallenger::FacilityLib::rmpath(destinationPath);
         QMessageBox::critical(this,tr("Error"),QString("Unable to write another savegame (Error: metadata.conf)"));
         return;
     }
     if(!QFile::copy(savegamesPath+"catchchallenger.db.sqlite",destinationPath+"catchchallenger.db.sqlite"))
     {
-        rmpath(destinationPath);
+        CatchChallenger::FacilityLib::rmpath(destinationPath);
         QMessageBox::critical(this,tr("Error"),QString("Unable to write another savegame (Error: catchchallenger.db.sqlite)"));
         return;
     }
@@ -797,7 +578,7 @@ void SoloWindow::on_SaveGame_Play_clicked()
         internalServer->stop();
     CatchChallenger::Api_client_real::client->resetAll();
     CatchChallenger::BaseWindow::baseWindow->resetAll();
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->stackedWidget->setCurrentWidget();
     lastMessageSend="";
     if(internalServer!=NULL)
         internalServer->deleteLater();
@@ -895,7 +676,7 @@ void SoloWindow::try_stop_server()
 void SoloWindow::play(const QString &savegamesPath)
 {
     resetAll();
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget();
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
     QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
     if(!metaData.contains("pass"))

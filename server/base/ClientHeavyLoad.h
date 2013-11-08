@@ -39,7 +39,7 @@ public:
     static QSet<QString> compressedExtension;
     static QHash<quint32,quint16> clanConnectedCount;
 public slots:
-    virtual void askLogin(const quint8 &query_id,const QString &login,const QByteArray &hash);
+    virtual void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
     virtual void askLoginBot(const quint8 &query_id);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
@@ -49,6 +49,10 @@ public slots:
     void sendCompressedFileContent();
     void dbQuery(const QString &queryText);
     void askedRandomNumber();
+    //character
+    void addCharacter(const quint8 &query_id, const quint8 &profileIndex,const QString &pseudo,const QString &skin);
+    void removeCharacter(const quint8 &query_id, const quint32 &characterId);
+    void selectCharacter(const quint8 &query_id, const quint32 &characterId);
     //normal slots
     void askIfIsReadyToStop();
 private:
@@ -58,16 +62,17 @@ private:
     // ------------------------------
     Player_internal_informations *player_informations;
     bool loadTheRawUTF8String();
-    void loginIsRight(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation);
-    void loginIsRightWithParsedRescue(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
-                      Map* rescue_map,const /*COORD_TYPE*/ quint8 &rescue_x,const /*COORD_TYPE*/ quint8 &rescue_y,const Orientation &rescue_orientation,
-                      Map* unvalidated_rescue_map,const /*COORD_TYPE*/ quint8 &unvalidated_rescue_x,const /*COORD_TYPE*/ quint8 &unvalidated_rescue_y,const Orientation &unvalidated_rescue_orientation
+    void loginIsRight(const quint8 &query_id, quint32 characterId, Map* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation);
+    void loginIsRightWithParsedRescue(const quint8 &query_id, quint32 characterId, Map* map, const /*COORD_TYPE*/ quint8 &x, const /*COORD_TYPE*/ quint8 &y, const Orientation &orientation,
+                      Map* rescue_map, const /*COORD_TYPE*/ quint8 &rescue_x, const /*COORD_TYPE*/ quint8 &rescue_y, const Orientation &rescue_orientation,
+                      Map* unvalidated_rescue_map, const /*COORD_TYPE*/ quint8 &unvalidated_rescue_x, const /*COORD_TYPE*/ quint8 &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                       );
-    void loginIsRightWithRescue(const quint8 &query_id,quint32 id,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
+    void loginIsRightWithRescue(const quint8 &query_id,quint32 characterId,Map* map,const /*COORD_TYPE*/ quint8 &x,const /*COORD_TYPE*/ quint8 &y,const Orientation &orientation,
                       const QVariant &rescue_map,const QVariant &rescue_x,const QVariant &rescue_y,const QVariant &rescue_orientation,
                       const QVariant &unvalidated_rescue_map,const QVariant &unvalidated_rescue_x,const QVariant &unvalidated_rescue_y,const QVariant &unvalidated_rescue_orientation
                       );
     void loginIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage);
+    void characterSelectionIsWrong(const quint8 &query_id,const QString &messageToSend,const QString &debugMessage);
     //load linked data (like item, quests, ...)
     void loadLinkedData();
     void loadItems();

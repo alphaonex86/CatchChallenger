@@ -15,10 +15,10 @@ void ClientHeavyLoad::loadRecipes()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT recipe FROM recipes WHERE player=%1").arg(player_informations->id);
+            queryText=QString("SELECT recipe FROM recipes WHERE character=%1").arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT recipe FROM recipes WHERE player=%1").arg(player_informations->id);
+            queryText=QString("SELECT recipe FROM recipes WHERE character=%1").arg(player_informations->character_id);
         break;
     }
     bool ok;
@@ -49,12 +49,12 @@ void ClientHeavyLoad::loadItems()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT item_id,quantity,place FROM item WHERE player_id=%1")
-                .arg(player_informations->id);
+            queryText=QString("SELECT item,quantity,place FROM item WHERE character=%1")
+                .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT item_id,quantity,place FROM item WHERE player_id=%1")
-                .arg(player_informations->id);
+            queryText=QString("SELECT item,quantity,place FROM item WHERE character=%1")
+                .arg(player_informations->character_id);
         break;
     }
     bool ok;
@@ -92,7 +92,7 @@ void ClientHeavyLoad::loadItems()
                 continue;
             else
             {
-                emit message(QString("unknow wear type: %1 for item %2 and player %3").arg(itemQuery.value(9).toString()).arg(id).arg(player_informations->id));
+                emit message(QString("unknow wear type: %1 for item %2 and player %3").arg(itemQuery.value(9).toString()).arg(id).arg(player_informations->character_id));
                 continue;
             }
         }
@@ -103,14 +103,14 @@ void ClientHeavyLoad::loadItems()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND place='%3'")
-                                         .arg(player_informations->id)
+                    queryText=QString("DELETE FROM item WHERE character=%1 AND item=%2 AND place='%3'")
+                                         .arg(player_informations->character_id)
                                          .arg(id)
                                          .arg(itemQuery.value(2).toString());
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2 AND place='%3'")
-                                         .arg(player_informations->id)
+                    queryText=QString("DELETE FROM item WHERE character=%1 AND item=%2 AND place='%3'")
+                                         .arg(player_informations->character_id)
                                          .arg(id)
                                          .arg(itemQuery.value(2).toString());
                 break;

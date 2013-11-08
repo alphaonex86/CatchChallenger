@@ -159,7 +159,7 @@ void ClientLocalBroadcast::seedValidated()
     plantOnMap.x=plant_list_in_waiting.first().x;
     plantOnMap.y=plant_list_in_waiting.first().y;
     plantOnMap.plant=plant_list_in_waiting.first().plant_id;
-    plantOnMap.player_id=player_informations->id;
+    plantOnMap.character=player_informations->character_id;
     plantOnMap.mature_at=current_time+CommonDatapack::commonDatapack.plants[plantOnMap.plant].fruits_seconds;
     plantOnMap.player_owned_expire_at=current_time+CommonDatapack::commonDatapack.plants[plantOnMap.plant].fruits_seconds+CATCHCHALLENGER_SERVER_OWNER_TIMEOUT;
     static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants << plantOnMap;
@@ -172,7 +172,7 @@ void ClientLocalBroadcast::seedValidated()
                          .arg(plantOnMap.x)
                          .arg(plantOnMap.y)
                          .arg(plantOnMap.plant)
-                         .arg(player_informations->id)
+                         .arg(player_informations->character_id)
                          .arg(current_time)
                          );
         break;
@@ -182,7 +182,7 @@ void ClientLocalBroadcast::seedValidated()
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
                      .arg(plantOnMap.plant)
-                     .arg(player_informations->id)
+                     .arg(player_informations->character_id)
                      .arg(current_time)
                      );
         break;
@@ -424,7 +424,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 return;
             }
             //check if owned
-            if(plant.player_id==player_informations->id ||
+            if(plant.character==player_informations->character_id ||
                     current_time>plant.player_owned_expire_at ||
                     player_informations->public_and_private_informations.public_informations.type==Player_type_gm ||
                     player_informations->public_and_private_informations.public_informations.type==Player_type_dev

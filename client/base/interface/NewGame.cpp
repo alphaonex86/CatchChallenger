@@ -1,5 +1,6 @@
 #include "NewGame.h"
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/CommonSettings.h"
 #include "ui_NewGame.h"
 
 #include <QDir>
@@ -31,6 +32,7 @@ NewGame::NewGame(const QString &skinPath,const QStringList &forcedSkin,QWidget *
         index++;
     }
 
+    ui->pseudo->setMaxLength(CommonSettings::commonSettings.max_pseudo_size);
     ui->previousSkin->setVisible(skinList.size()>=2);
     ui->nextSkin->setVisible(skinList.size()>=2);
 
@@ -71,11 +73,6 @@ void NewGame::updateSkin()
     skinLoaded=true;
 }
 
-QString NewGame::gameName()
-{
-    return ui->gameName->text();
-}
-
 bool NewGame::haveTheInformation()
 {
     return okCanBeEnabled() && ok;
@@ -83,7 +80,7 @@ bool NewGame::haveTheInformation()
 
 bool NewGame::okCanBeEnabled()
 {
-    return !ui->pseudo->text().isEmpty() && skinLoaded && !ui->gameName->text().isEmpty();
+    return !ui->pseudo->text().isEmpty() && skinLoaded;
 }
 
 QString NewGame::pseudo()
@@ -134,9 +131,4 @@ void NewGame::on_previousSkin_clicked()
         return;
     currentSkin--;
     updateSkin();
-}
-
-void NewGame::on_gameName_textChanged(const QString &)
-{
-    ui->ok->setEnabled(okCanBeEnabled());
 }
