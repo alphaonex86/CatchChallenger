@@ -406,14 +406,13 @@ private:
     QList<QueryType> queryList;
     quint32 shopId;
     QHash<quint32,ItemToSellOrBuy> itemsIntoTheShop;
-    quint64 tempCashForBuy,cash,warehouse_cash;
+    quint64 cash,warehouse_cash;
     double bitcoin;
     qint64 temp_warehouse_cash;// if >0 then Withdraw
-    quint32 tempQuantityForBuy,tempItemForBuy;
     //selection of quantity
     quint32 tempQuantityForSell;
     bool waitToSell;
-    QList<ItemToSellOrBuy> itemsToSell;
+    QList<ItemToSellOrBuy> itemsToSell,itemsToBuy;
     QPixmap playerFrontImage,playerBackImage;
     quint32 clan;
     bool clan_leader;

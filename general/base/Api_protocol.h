@@ -41,9 +41,6 @@ public:
     virtual void tryDisconnect() = 0;
     virtual QString get_datapack_base() const;
 
-    bool getHaveShopAction();
-    bool getHaveFactoryAction();
-
     //to reset all
     void resetAll();
 
@@ -94,9 +91,6 @@ protected:
 
     //datapack
     QString mDatapack;
-
-    bool haveShopAction;
-    bool haveFactoryAction;
 
     //teleport list query id
     QList<quint8> teleportList;
