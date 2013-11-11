@@ -93,6 +93,7 @@ void ProcessControler::send_settings()
     settings->endGroup();
 
     //connection
+    formatedServerSettings.automatic_account_creation   = settings->value("automatic_account_creation").toBool();
     formatedServerSettings.max_players					= settings->value("max-players").toUInt();
     formatedServerSettings.tolerantMode                 = settings->value("tolerantMode").toBool();
 
