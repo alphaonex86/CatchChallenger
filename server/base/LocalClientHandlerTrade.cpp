@@ -135,13 +135,13 @@ void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE monster SET player=%2 WHERE id=%1;")
+                emit dbQuery(QString("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;")
                              .arg(tradeMonster.at(index).id)
                              .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET player=%2 WHERE id=%1;")
+                emit dbQuery(QString("UPDATE monster SET character=%2 WHERE id=%1;")
                              .arg(tradeMonster.at(index).id)
                              .arg(player_informations->character_id)
                              );
@@ -306,7 +306,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                        emit dbQuery(QString("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)
                                      );

@@ -30,7 +30,7 @@ void BaseServerFight::load_monsters_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");
+            queryText=QString("SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;");

@@ -25,7 +25,7 @@ void BaseServerCrafting::preload_the_plant_on_map()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
+            queryText=QString("SELECT `map`,`x`,`y`,`plant`,`character`,`plant_timestamps` FROM `plant`");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT map,x,y,plant,character,plant_timestamps FROM plant");
@@ -210,7 +210,7 @@ void BaseServerCrafting::remove_plant_on_map(const QString &map,const quint8 &x,
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("DELETE FROM plant WHERE map=\"%1\" AND x=%2 AND y=%3")
+            queryText=QString("DELETE FROM `plant` WHERE `map`=\"%1\" AND `x`=%2 AND `y`=%3")
                 .arg(SqlFunction::quoteSqlVariable(map))
                 .arg(x)
                 .arg(y);

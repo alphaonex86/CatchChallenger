@@ -71,6 +71,10 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
 {
     CatchChallenger::ServerSettings formatedServerSettings=internalServer->getSettings();
 
+    CommonSettings::commonSettings.max_character=1;
+    CommonSettings::commonSettings.min_character=1;
+
+    formatedServerSettings.automatic_account_creation=true;
     formatedServerSettings.max_players=1;
     formatedServerSettings.tolerantMode=false;
     formatedServerSettings.sendPlayerNumber = false;

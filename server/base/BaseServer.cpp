@@ -264,7 +264,7 @@ void BaseServer::preload_zone()
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
+                queryText=QString("SELECT `clan` FROM `city` WHERE `city`='%1';").arg(zoneCodeName);
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 queryText=QString("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
@@ -298,7 +298,7 @@ void BaseServer::preload_industries()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,resources,products,last_update FROM factory");
+            queryText=QString("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT id,resources,products,last_update FROM factory");
@@ -438,7 +438,7 @@ void BaseServer::preload_industries()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QString("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
+                    queryText=QString("DELETE FROM `industries` WHERE `id`='%1'").arg(industryStatusQuery.value(0).toString());
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
                     queryText=QString("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
@@ -458,7 +458,7 @@ void BaseServer::preload_market_monsters()
      {
          default:
          case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
+            queryText=QString("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price`,`market_bitcoin` FROM `monster` WHERE `place`='market' ORDER BY `position` ASC");
          break;
          case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
@@ -608,7 +608,7 @@ void BaseServer::preload_market_items()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
+            queryText=QString("SELECT `item`,`quantity`,`character`,`market_price`,`market_bitcoin` FROM `item` WHERE `place`='market'");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
@@ -671,7 +671,7 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
+            queryText=QString("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(monsterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
@@ -729,7 +729,7 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
+            queryText=QString("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(monsterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
@@ -1941,7 +1941,7 @@ void BaseServer::load_clan_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
+            queryText=QString("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
@@ -1971,7 +1971,7 @@ void BaseServer::load_account_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
+            queryText=QString("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
@@ -2001,7 +2001,7 @@ void BaseServer::load_character_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
+            queryText=QString("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");

@@ -90,9 +90,10 @@ void BaseWindow::updateCharacterList()
         const CharacterEntry &characterEntry=characterEntryList.at(index);
         QListWidgetItem * item=new QListWidgetItem();
         item->setData(99,characterEntry.character_id);
+        item->setData(98,characterEntry.delete_time_left);
         QString text=characterEntry.pseudo+"\n"+QString("%1 played").arg(FacilityLib::timeToString(characterEntry.played_time));
         if(characterEntry.delete_time_left>0)
-            text+="\n"+tr("%1 to be deleted").arg(FacilityLib::timeToString(characterEntry.played_time));
+            text+="\n"+tr("%1 to be deleted").arg(FacilityLib::timeToString(characterEntry.delete_time_left));
         item->setText(text);
         item->setIcon(QIcon(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+characterEntry.skin+"/front.png"));
         ui->characterEntryList->addItem(item);
@@ -119,6 +120,12 @@ void BaseWindow::on_character_remove_clicked()
     if(selectedItems.size()!=1)
         return;
     const quint32 &character_id=selectedItems.first()->data(99).toUInt();
+    const quint32 &delete_time_left=selectedItems.first()->data(98).toUInt();
+    if(delete_time_left>0)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Deleting already planned"));
+        return;
+    }
     CatchChallenger::Api_client_real::client->removeCharacter(character_id);
     int index=0;
     while(index<characterEntryList.size())

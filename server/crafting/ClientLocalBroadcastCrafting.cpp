@@ -167,7 +167,7 @@ void ClientLocalBroadcast::seedValidated()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("INSERT INTO plant(map,x,y,plant,player_id,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QString("INSERT INTO `plant`(`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES('%1',%2,%3,%4,%5,%6);")
                          .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
                          .arg(plantOnMap.x)
                          .arg(plantOnMap.y)
@@ -177,7 +177,7 @@ void ClientLocalBroadcast::seedValidated()
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("INSERT INTO plant(map,x,y,plant,player_id,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QString("INSERT INTO plant(map,x,y,plant,characterplant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
                      .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
@@ -435,7 +435,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
+                        emit dbQuery(QString("DELETE FROM `plant` WHERE `map`=\'%1\' AND `x`=%2 AND `y`=%3")
                                      .arg(SqlFunction::quoteSqlVariable(map->map_file))
                                      .arg(x)
                                      .arg(y)
