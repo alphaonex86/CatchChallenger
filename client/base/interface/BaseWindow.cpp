@@ -1110,6 +1110,11 @@ qint32 BaseWindow::havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 
 
 void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
 {
+    if(ui->IG_dialog->isVisible())
+    {
+        ui->IG_dialog->setVisible(false);
+        return;
+    }
     if(actionOnCheckBot(map,x,y))
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
@@ -1805,11 +1810,6 @@ void BaseWindow::goToBotStep(const quint8 &step)
     }
     else if(actualBot.step[step].attribute("type")=="shop")
     {
-        if(CatchChallenger::Api_client_real::client->getHaveShopAction())
-        {
-            showTip(tr("Already in shop action"));
-            return;
-        }
         if(!actualBot.step[step].hasAttribute("shop"))
         {
             showTip(tr("The shop call, but missing informations"));
@@ -1859,11 +1859,6 @@ void BaseWindow::goToBotStep(const quint8 &step)
             pixmap=QPixmap(":/images/player_default/front.png");
         pixmap=pixmap.scaled(160,160);
         ui->shopSellerImage->setPixmap(pixmap);
-        if(CatchChallenger::Api_client_real::client->getHaveShopAction())
-        {
-            showTip(tr("Already in shop action"));
-            return;
-        }
         waitToSell=true;
         selectObject(ObjectType_Sell);
         return;
@@ -1951,11 +1946,6 @@ void BaseWindow::goToBotStep(const quint8 &step)
     }
     else if(actualBot.step[step].attribute("type")=="industry")
     {
-        if(CatchChallenger::Api_client_real::client->getHaveFactoryAction())
-        {
-            showTip(tr("Already in shop action"));
-            return;
-        }
         if(!actualBot.step[step].hasAttribute("industry"))
         {
             showTip(tr("The shop call, but missing informations"));

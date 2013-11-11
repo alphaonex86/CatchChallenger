@@ -38,6 +38,8 @@ public:
     QString site_page;
     QString unique_code;
     bool operator<(const ConnexionInfo &connexionInfo) const;
+    QString proxyHost;
+    quint16 proxyPort;
 };
 
 class MainWindow : public QMainWindow

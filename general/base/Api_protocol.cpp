@@ -3232,7 +3232,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         items << item;
                         index++;
                     }
-                    haveShopAction=false;
                     emit haveShopList(items);
                 }
                 break;
@@ -3269,7 +3268,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    haveShopAction=false;
                 }
                 break;
                 //Sell object
@@ -3305,7 +3303,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    haveShopAction=false;
                 }
                 break;
                 case 0x000D:
@@ -3363,7 +3360,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         products << item;
                         index++;
                     }
-                    haveFactoryAction=false;
                     emit haveFactoryList(remainingProductionTime,resources,products);
                 }
                 break;
@@ -3399,7 +3395,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    haveFactoryAction=false;
                 }
                 break;
                 case 0x000F:
@@ -3434,7 +3429,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                         parseError(tr("Procotol wrong or corrupted"),QString("unknow return code with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(__LINE__));
                         return;
                     }
-                    haveFactoryAction=false;
                 }
                 break;
                 case 0x0010:
@@ -4014,16 +4008,6 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
     }
 }
 
-bool Api_protocol::getHaveShopAction()
-{
-    return haveShopAction;
-}
-
-bool Api_protocol::getHaveFactoryAction()
-{
-    return haveFactoryAction;
-}
-
 void Api_protocol::parseError(const QString &userMessage,const QString &errorString)
 {
     if(tolerantMode)
@@ -4305,12 +4289,6 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,
 
 void Api_protocol::getShopList(const quint32 &shopId)
 {
-    if(haveShopAction)
-    {
-        DebugClass::debugConsole("already have shop action");
-        return;
-    }
-    haveShopAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4322,12 +4300,6 @@ void Api_protocol::getShopList(const quint32 &shopId)
 
 void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
-    if(haveShopAction)
-    {
-        DebugClass::debugConsole("already have shop action");
-        return;
-    }
-    haveShopAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4342,12 +4314,6 @@ void Api_protocol::buyObject(const quint32 &shopId,const quint32 &objectId,const
 
 void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
-    if(haveShopAction)
-    {
-        DebugClass::debugConsole("already have shop action");
-        return;
-    }
-    haveShopAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4362,12 +4328,6 @@ void Api_protocol::sellObject(const quint32 &shopId,const quint32 &objectId,cons
 
 void Api_protocol::getFactoryList(const quint32 &factoryId)
 {
-    if(haveFactoryAction)
-    {
-        DebugClass::debugConsole("already have shop action");
-        return;
-    }
-    haveFactoryAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4377,12 +4337,6 @@ void Api_protocol::getFactoryList(const quint32 &factoryId)
 
 void Api_protocol::buyFactoryProduct(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
-    if(haveFactoryAction)
-    {
-        DebugClass::debugConsole("already have shop action");
-        return;
-    }
-    haveFactoryAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4397,12 +4351,6 @@ void Api_protocol::buyFactoryProduct(const quint32 &factoryId,const quint32 &obj
 
 void Api_protocol::sellFactoryResource(const quint32 &factoryId,const quint32 &objectId,const quint32 &quantity,const quint32 &price)
 {
-    if(haveFactoryAction)
-    {
-        DebugClass::debugConsole("already have shop action");
-        return;
-    }
-    haveFactoryAction=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -4894,8 +4842,6 @@ void Api_protocol::resetAll()
     player_informations.items.clear();
     player_informations.reputation.clear();
     player_informations.quests.clear();
-    haveShopAction=false;
-    haveFactoryAction=false;
     isInTrade=false;
     tradeRequestId.clear();
     isInBattle=false;

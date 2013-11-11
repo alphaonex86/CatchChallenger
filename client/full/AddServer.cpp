@@ -30,6 +30,18 @@ quint16 AddServer::port() const
     return ui->port->value();
 }
 
+QString AddServer::proxyServer() const
+{
+    if(!ui->proxy->isChecked())
+        return QString();
+    return ui->proxyServer->text();
+}
+
+quint16 AddServer::proxyPort() const
+{
+    return ui->proxyPort->value();
+}
+
 QString AddServer::name() const
 {
     return ui->name->text();
