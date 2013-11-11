@@ -17,6 +17,8 @@ public:
     QString server() const;
     quint16 port() const;
     QString name() const;
+    QString proxyServer() const;
+    quint16 proxyPort() const;
     bool isOk() const;
 private slots:
     void on_ok_clicked();

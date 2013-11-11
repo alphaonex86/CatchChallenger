@@ -54,10 +54,12 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         }
         factoryToProductItem(item);
     }
-    tempQuantityForBuy=quantity;
-    tempItemForBuy=id;
-    tempCashForBuy=i*price;
-    removeCash(tempCashForBuy);
+    ItemToSellOrBuy itemToSellOrBuy;
+    itemToSellOrBuy.quantity=quantity;
+    itemToSellOrBuy.object=id;
+    itemToSellOrBuy.price=i*price;
+    itemsToBuy << itemToSellOrBuy;
+    removeCash(itemToSellOrBuy.object);
     CatchChallenger::Api_client_real::client->buyFactoryProduct(factoryId,id,i,price);
 }
 
@@ -123,16 +125,17 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPrice)
 {
+    const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
     QHash<quint32,quint32> items;
     switch(stat)
     {
         case BuyStat_Done:
-            items[tempItemForBuy]=tempQuantityForBuy;
-            if(industryStatus.products.contains(tempItemForBuy))
+            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
+            if(industryStatus.products.contains(itemToSellOrBuy.object))
             {
-                industryStatus.products[tempItemForBuy]-=tempQuantityForBuy;
-                if(industryStatus.products[tempItemForBuy]==0)
-                    industryStatus.products.remove(tempItemForBuy);
+                industryStatus.products[itemToSellOrBuy.object]-=itemToSellOrBuy.quantity;
+                if(industryStatus.products[itemToSellOrBuy.object]==0)
+                    industryStatus.products.remove(itemToSellOrBuy.object);
             }
             add_to_inventory(items);
         break;
@@ -142,23 +145,23 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
                 qDebug() << "haveBuyFactoryObject() Can't buy at 0$!";
                 return;
             }
-            addCash(tempCashForBuy);
-            removeCash(newPrice*tempQuantityForBuy);
-            items[tempItemForBuy]=tempQuantityForBuy;
-            if(industryStatus.products.contains(tempItemForBuy))
+            addCash(itemToSellOrBuy.price);
+            removeCash(newPrice*itemToSellOrBuy.quantity);
+            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
+            if(industryStatus.products.contains(itemToSellOrBuy.object))
             {
-                industryStatus.products[tempItemForBuy]-=tempQuantityForBuy;
-                if(industryStatus.products[tempItemForBuy]==0)
-                    industryStatus.products.remove(tempItemForBuy);
+                industryStatus.products[itemToSellOrBuy.object]-=itemToSellOrBuy.quantity;
+                if(industryStatus.products[itemToSellOrBuy.object]==0)
+                    industryStatus.products.remove(itemToSellOrBuy.object);
             }
             add_to_inventory(items);
         break;
         case BuyStat_HaveNotQuantity:
-            addCash(tempCashForBuy);
+            addCash(itemToSellOrBuy.object);
             QMessageBox::information(this,tr("Information"),tr("Sorry but have not the quantity of this item"));
         break;
         case BuyStat_PriceHaveChanged:
-            addCash(tempCashForBuy);
+            addCash(itemToSellOrBuy.object);
             QMessageBox::information(this,tr("Information"),tr("Sorry but now the price is worse"));
         break;
         default:
@@ -180,6 +183,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const quint32 &newPric
         default:
         break;
     }
+    itemsToBuy.removeFirst();
 }
 
 void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPrice)

@@ -2,6 +2,7 @@
 #include "AddServer.h"
 #include "ui_mainwindow.h"
 #include <QStandardPaths>
+#include <QNetworkProxy>
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -95,8 +96,11 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
     QStringList nameList;
     QStringList connexionCounterList;
     QStringList lastConnexionList;
+    QStringList proxyList;
     if(settings.contains("connexionList"))
         connexionList=settings.value("connexionList").toStringList();
+    if(settings.contains("proxyList"))
+        proxyList=settings.value("proxyList").toStringList();
     if(settings.contains("nameList"))
         nameList=settings.value("nameList").toStringList();
     if(settings.contains("connexionCounterList"))
@@ -107,10 +111,14 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
         nameList.clear();
     if(connexionCounterList.size()!=connexionList.size())
         connexionCounterList.clear();
+    if(proxyList.size()!=connexionList.size())
+        proxyList.clear();
     if(lastConnexionList.size()!=connexionList.size())
         lastConnexionList.clear();
     while(nameList.size()<connexionList.size())
         nameList << QString();
+    while(proxyList.size()<connexionList.size())
+        proxyList << QString();
     while(connexionCounterList.size()<connexionList.size())
         connexionCounterList << QString();
     while(lastConnexionList.size()<connexionList.size())
@@ -122,6 +130,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
         QString name=nameList.at(index);
         QString connexionCounter=connexionCounterList.at(index);
         QString lastConnexion=lastConnexionList.at(index);
+        QString proxy=proxyList.at(index);
         if(connexion.contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
         {
             QString host=connexion;
@@ -144,6 +153,20 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                     connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
                 if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
                     connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                if(proxy.contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$")))
+                {
+                    QString host=proxy;
+                    host.remove(QRegularExpression(":[0-9]{1,5}$"));
+                    QString proxy_port_string=proxy;
+                    proxy_port_string.remove(QRegularExpression("^.*:"));
+                    bool ok;
+                    quint16 proxy_port=proxy_port_string.toInt(&ok);
+                    if(ok)
+                    {
+                        connexionInfo.proxyHost=host;
+                        connexionInfo.proxyPort=proxy_port;
+                    }
+                }
                 returnedVar << connexionInfo;
             }
         }
@@ -278,6 +301,21 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                     }
                     else
                         connexionInfo.connexionCounter=0;
+
+                    //proxy
+                    if(settings.contains("proxyPort"))
+                    {
+                        connexionInfo.proxyPort=settings.value("proxyPort").toUInt(&ok);
+                        if(!ok)
+                            connexionInfo.proxyPort=9050;
+                    }
+                    else
+                        connexionInfo.proxyPort=9050;
+                    if(settings.contains("proxyHost"))
+                        connexionInfo.proxyHost=settings.value("proxyHost").toString();
+                    else
+                        connexionInfo.proxyHost=QString();
+
                     if(settings.contains("lastConnexion"))
                     {
                         connexionInfo.lastConnexion=settings.value("lastConnexion").toUInt(&ok);
@@ -506,6 +544,7 @@ void MainWindow::saveConnexionInfoList()
     QStringList nameList;
     QStringList connexionCounterList;
     QStringList lastConnexionList;
+    QStringList proxyList;
     int index;
     index=0;
     while(index<mergedConnexionInfoList.size())
@@ -513,10 +552,16 @@ void MainWindow::saveConnexionInfoList()
         const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
         if(connexionInfo.unique_code.isEmpty())
         {
+            QString proxy;
+            if(connexionInfo.proxyHost.isEmpty())
+                proxy=QString("%1:%2").arg(connexionInfo.proxyHost).arg(connexionInfo.proxyPort);
+            else
+                proxy=QString();
             connexionList << QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
             nameList << connexionInfo.name;
             connexionCounterList << QString::number(connexionInfo.connexionCounter);
             lastConnexionList << QString::number(connexionInfo.lastConnexion);
+            proxyList << proxy;
         }
         else
         {
@@ -659,6 +704,14 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     realSocket=new QSslSocket();
     realSocket->ignoreSslErrors();
     realSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
+    if(!serverConnexion[selectedServer]->proxyHost.isEmpty())
+    {
+        QNetworkProxy proxy=realSocket->proxy();
+        proxy.setType(QNetworkProxy::Socks5Proxy);
+        proxy.setHostName(serverConnexion[selectedServer]->proxyHost);
+        proxy.setPort(serverConnexion[selectedServer]->proxyPort);
+        realSocket->setProxy(proxy);
+    }
     connect(realSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainWindow::sslErrors,Qt::QueuedConnection);
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);

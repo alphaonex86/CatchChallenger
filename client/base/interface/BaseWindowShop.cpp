@@ -16,8 +16,6 @@ void BaseWindow::on_toolButton_quit_shop_clicked()
 
 void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 {
-    if(CatchChallenger::Api_client_real::client->getHaveShopAction())
-        return;
     if(!waitToSell)
     {
         if(cash<itemsIntoTheShop[shop_items_graphical[item]].price)
@@ -26,17 +24,18 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
             return;
         }
         bool ok=true;
+        ItemToSellOrBuy itemToSellOrBuy;
         if(cash/itemsIntoTheShop[shop_items_graphical[item]].price>1)
-            tempQuantityForBuy=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
+            itemToSellOrBuy.quantity=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop[shop_items_graphical[item]].price,1,&ok);
         else
-            tempQuantityForBuy=1;
+            itemToSellOrBuy.quantity=1;
         if(!ok)
             return;
-        tempItemForBuy=shop_items_graphical[item];
-        CatchChallenger::Api_client_real::client->buyObject(shopId,tempItemForBuy,tempQuantityForBuy,itemsIntoTheShop[tempItemForBuy].price);
-        ui->stackedWidget->setCurrentWidget(ui->page_map);
-        tempCashForBuy=itemsIntoTheShop[tempItemForBuy].price*tempQuantityForBuy;
-        removeCash(tempCashForBuy);
+        itemToSellOrBuy.object=shop_items_graphical[item];
+        CatchChallenger::Api_client_real::client->buyObject(shopId,itemToSellOrBuy.object,itemToSellOrBuy.quantity,itemsIntoTheShop[itemToSellOrBuy.object].price);
+        itemToSellOrBuy.price=itemsIntoTheShop[itemToSellOrBuy.object].price*itemToSellOrBuy.quantity;
+        itemsToBuy << itemToSellOrBuy;
+        removeCash(itemToSellOrBuy.price);
         showTip(tr("Buying the object..."));
     }
     else
@@ -56,7 +55,6 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
         if(items[objectItem]<tempQuantityForSell)
             return;
         objectSelection(true,objectItem,tempQuantityForSell);
-        ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Selling the object..."));
     }
 }
@@ -183,11 +181,12 @@ void BaseWindow::displaySellList()
 
 void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
 {
+    const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
     QHash<quint32,quint32> items;
     switch(stat)
     {
         case BuyStat_Done:
-            items[tempItemForBuy]=tempQuantityForBuy;
+            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
             add_to_inventory(items);
         break;
         case BuyStat_BetterPrice:
@@ -196,23 +195,24 @@ void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
                 qDebug() << "haveSellObject() Can't buy at 0$!";
                 return;
             }
-            addCash(tempCashForBuy);
-            removeCash(newPrice*tempQuantityForBuy);
-            items[tempItemForBuy]=tempQuantityForBuy;
+            addCash(itemToSellOrBuy.price);
+            removeCash(newPrice*itemToSellOrBuy.quantity);
+            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
             add_to_inventory(items);
         break;
         case BuyStat_HaveNotQuantity:
-            addCash(tempCashForBuy);
+            addCash(itemToSellOrBuy.price);
             showTip(tr("Sorry but have not the quantity of this item"));
         break;
         case BuyStat_PriceHaveChanged:
-            addCash(tempCashForBuy);
+            addCash(itemToSellOrBuy.price);
             showTip(tr("Sorry but now the price is worse"));
         break;
         default:
             qDebug() << "haveBuyObject(stat) have unknow value";
         break;
     }
+    itemsToBuy.removeFirst();
 }
 
 void BaseWindow::haveSellObject(const SoldStat &stat,const quint32 &newPrice)
