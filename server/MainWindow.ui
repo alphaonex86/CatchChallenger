@@ -349,6 +349,13 @@
           </property>
          </widget>
         </item>
+        <item row="13" column="1">
+         <widget class="QCheckBox" name="automatic_account_creation">
+          <property name="text">
+           <string>Automatic account creation</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="city">
@@ -629,13 +636,6 @@
          <widget class="QCheckBox" name="chat_allow_private">
           <property name="text">
            <string>Private</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="chat_allow_aliance">
-          <property name="text">
-           <string>Aliance</string>
           </property>
          </widget>
         </item>

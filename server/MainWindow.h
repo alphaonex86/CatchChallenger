@@ -74,7 +74,6 @@ private slots:
     void on_chat_allow_all_toggled(bool checked);
     void on_chat_allow_local_toggled(bool checked);
     void on_chat_allow_private_toggled(bool checked);
-    void on_chat_allow_aliance_toggled(bool checked);
     void on_chat_allow_clan_toggled(bool checked);
     void on_db_mysql_host_editingFinished();
     void on_db_mysql_login_editingFinished();
@@ -109,6 +108,7 @@ private slots:
     void on_max_character_editingFinished();
     void on_max_pseudo_size_editingFinished();
     void on_character_delete_time_editingFinished();
+    void on_automatic_account_creation_clicked();
 signals:
     void record_latency();
 };
