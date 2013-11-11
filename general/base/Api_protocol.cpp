@@ -812,7 +812,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
 {
     if(!is_logged)
     {
-        parseError(tr("Procotol wrong or corrupted"),QString("is not logged with main ident: %1").arg(mainCodeType));
+        parseError(tr("Procotol wrong or corrupted"),QString("is not logged with main ident: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
         return;
     }
     QDataStream in(data);
@@ -2534,6 +2534,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             characterEntryList << characterEntry;
                             index++;
                         }
+                        is_logged=true;
                         emit logged(characterEntryList);
                     }
                     else
@@ -3050,7 +3051,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             player_informations.bot_already_beaten << bot_already_beaten;
                             index++;
                         }
-                        is_logged=true;
+                        character_selected=true;
                         emit haveCharacter();
                     }
                     else
@@ -4883,6 +4884,7 @@ void Api_protocol::resetAll()
 {
     //status for the query
     is_logged=false;
+    character_selected=false;
     have_send_protocol=false;
     have_receive_protocol=false;
     max_player=65535;

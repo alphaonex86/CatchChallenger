@@ -54,6 +54,7 @@ public:
 private:
     //status for the query
     bool is_logged;
+    bool character_selected;
     bool have_send_protocol;
     bool have_receive_protocol;
     bool tolerantMode;

@@ -266,13 +266,13 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE quest SET step=0,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE `quest` SET `step`=0,`finish_one_time`=1 WHERE `character`=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE quest SET step=0,finish_one_time=1 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=0,finish_one_time=1 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              );
@@ -308,14 +308,14 @@ bool LocalClientHandler::nextStepQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND `quest`=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(player_informations->public_and_private_informations.quests[quest.id].step)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(player_informations->public_and_private_informations.quests[quest.id].step)
@@ -335,7 +335,7 @@ bool LocalClientHandler::startQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO quest(player,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);")
+                emit dbQuery(QString("INSERT INTO `quest`(`character`,`quest`,`finish_one_time`,`step`) VALUES(%1,%2,%3,%4);")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(0)
@@ -343,7 +343,7 @@ bool LocalClientHandler::startQuest(const Quest &quest)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO quest(player,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);")
+                emit dbQuery(QString("INSERT INTO quest(character,quest,finish_one_time,step) VALUES(%1,%2,%3,%4);")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(0)
@@ -360,14 +360,14 @@ bool LocalClientHandler::startQuest(const Quest &quest)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE `quest` SET `step`=%3 WHERE `character`=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(1)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE player=%1 AND quest=%2;")
+                emit dbQuery(QString("UPDATE quest SET step=%3 WHERE character=%1 AND quest=%2;")
                              .arg(player_informations->character_id)
                              .arg(quest.id)
                              .arg(1)

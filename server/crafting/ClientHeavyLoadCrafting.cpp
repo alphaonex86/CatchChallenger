@@ -15,7 +15,7 @@ void ClientHeavyLoad::loadRecipes()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT recipe FROM recipes WHERE character=%1").arg(player_informations->character_id);
+            queryText=QString("SELECT `recipe` FROM `recipes` WHERE `character`=%1").arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
             queryText=QString("SELECT recipe FROM recipes WHERE character=%1").arg(player_informations->character_id);
@@ -49,7 +49,7 @@ void ClientHeavyLoad::loadItems()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT item,quantity,place FROM item WHERE character=%1")
+            queryText=QString("SELECT `item`,`quantity`,`place` FROM `item` WHERE `character`=%1")
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
@@ -103,7 +103,7 @@ void ClientHeavyLoad::loadItems()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QString("DELETE FROM item WHERE character=%1 AND item=%2 AND place='%3'")
+                    queryText=QString("DELETE FROM `item` WHERE `character`=%1 AND `item`=%2 AND `place`='%3'")
                                          .arg(player_informations->character_id)
                                          .arg(id)
                                          .arg(itemQuery.value(2).toString());

@@ -237,7 +237,7 @@ Client::~Client()
 {
     disconnectClient();
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Destroyed client");
+    //normalOutput("Destroyed client");
     #endif
     disconnect(this);
     if(socket!=NULL)
