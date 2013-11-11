@@ -41,6 +41,7 @@ public:
 public slots:
     virtual void askLogin(const quint8 &query_id, const QByteArray &login_org, const QByteArray &pass_org);
     virtual void askLoginBot(const quint8 &query_id);
+    virtual void deleteCharacterNow(const quint32 &characterId);
     //check each element of the datapack, determine if need be removed, updated, add as new file all the missing file
     void datapackList(const quint8 &query_id, const QStringList &files, const QList<quint64> &timestamps);
     void addDatapackListReply(const bool &fileRemove);

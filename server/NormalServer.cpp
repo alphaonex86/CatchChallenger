@@ -631,6 +631,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("max_character",3);
     if(!settings->contains("min_character"))
         settings->setValue("min_character",1);
+    if(!settings->contains("automatic_account_creation"))
+        settings->setValue("automatic_account_creation",false);
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))

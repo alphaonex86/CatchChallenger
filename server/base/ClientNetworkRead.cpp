@@ -866,6 +866,7 @@ void ClientNetworkRead::parseFullQuery(const quint8 &mainCodeType,const quint16 
     const bool goodQueryBeforeCharacterLoaded=mainCodeType==0x02 &&
             (subCodeType==0x03 ||
              subCodeType==0x04 ||
+             subCodeType==0x0C ||
              subCodeType==0x05
                 );
     if(player_informations->account_id==0 || (!player_informations->character_loaded && !goodQueryBeforeCharacterLoaded))

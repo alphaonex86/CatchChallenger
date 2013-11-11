@@ -98,6 +98,16 @@ void LocalClientHandler::extraStop()
 
     if(!player_informations->character_loaded || player_informations->isFake)
         return;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1").arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE `character` SET `played_time`=`played_time`+%2 WHERE `id`=%1").arg(player_informations->character_id).arg(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000-player_informations->connectedSince.toMSecsSinceEpoch()/1000));
+        break;
+    }
     //save the monster
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle && localClientHandlerFight.isInFight())
         localClientHandlerFight.saveCurrentMonsterStat();
@@ -111,7 +121,7 @@ void LocalClientHandler::extraStop()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1;")
+                    emit dbQuery(QString("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1;")
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                  .arg(player_informations->character_id)
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
@@ -209,13 +219,13 @@ void LocalClientHandler::savePosition()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            updateMapPositionQuery=QString("UPDATE character SET map=\"%1\",x=%2,y=%3,orientation=\"%4\",%5 WHERE id=%6")
+            updateMapPositionQuery=QString("UPDATE `character` SET `map`=\"%1\",`x`=%2,`y`=%3,`orientation`=\"%4\",%5 WHERE `id`=%6")
                 .arg(SqlFunction::quoteSqlVariable(map->map_file))
                 .arg(x)
                 .arg(y)
                 .arg(directionToStringToSave(getLastDirection()))
                 .arg(
-                        QString("rescue_map=\"%1\",rescue_x=%2,rescue_y=%3,rescue_orientation=\"%4\",unvalidated_rescue_map=\"%5\",unvalidated_rescue_x=%6,unvalidated_rescue_y=%7,unvalidated_rescue_orientation=\"%8\"")
+                        QString("`rescue_map`=\"%1\",`rescue_x`=%2,`rescue_y`=%3,`rescue_orientation`=\"%4\",`unvalidated_rescue_map`=\"%5\",`unvalidated_rescue_x`=%6,`unvalidated_rescue_y`=%7,`unvalidated_rescue_orientation`=\"%8\"")
                         .arg(player_informations->rescue.map->map_file)
                         .arg(player_informations->rescue.x)
                         .arg(player_informations->rescue.y)
@@ -431,7 +441,7 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
+                emit dbQuery(QString("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='wear';")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->character_id)
@@ -452,7 +462,7 @@ void LocalClientHandler::addObject(const quint32 &item,const quint32 &quantity)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO item(item,character,quantity,place) VALUES(%1,%2,%3,'wear');")
+                emit dbQuery(QString("INSERT INTO `item`(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'wear');")
                              .arg(item)
                              .arg(player_informations->character_id)
                              .arg(quantity)
@@ -479,7 +489,7 @@ void LocalClientHandler::addWarehouseObject(const quint32 &item,const quint32 &q
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='warehouse';")
+                emit dbQuery(QString("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND place='warehouse';")
                              .arg(player_informations->public_and_private_informations.warehouse_items[item])
                              .arg(item)
                              .arg(player_informations->character_id)
@@ -500,7 +510,7 @@ void LocalClientHandler::addWarehouseObject(const quint32 &item,const quint32 &q
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO item(item,character,quantity,place) VALUES(%1,%2,%3,'warehouse');")
+                emit dbQuery(QString("INSERT INTO item(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'warehouse');")
                              .arg(item)
                              .arg(player_informations->character_id)
                              .arg(quantity)
@@ -529,7 +539,7 @@ quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quin
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='warehouse';")
+                    emit dbQuery(QString("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='warehouse';")
                                  .arg(player_informations->public_and_private_informations.warehouse_items[item])
                                  .arg(item)
                                  .arg(player_informations->character_id)
@@ -553,7 +563,7 @@ quint32 LocalClientHandler::removeWarehouseObject(const quint32 &item,const quin
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM item WHERE item=%1 AND character=%2 AND place='warehouse'")
+                    emit dbQuery(QString("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2 AND `place`='warehouse'")
                                  .arg(item)
                                  .arg(player_informations->character_id)
                                  );
@@ -580,7 +590,7 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
+                emit dbQuery(QString("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='wear';")
                              .arg(player_informations->public_and_private_informations.items[item])
                              .arg(item)
                              .arg(player_informations->character_id)
@@ -601,7 +611,7 @@ void LocalClientHandler::saveObjectRetention(const quint32 &item)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("DELETE FROM item WHERE item=%1 AND character=%2 AND place='wear'")
+                emit dbQuery(QString("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2 AND `place`='wear'")
                              .arg(item)
                              .arg(player_informations->character_id)
                              );
@@ -627,7 +637,7 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='wear';")
+                    emit dbQuery(QString("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='wear';")
                                  .arg(player_informations->public_and_private_informations.items[item])
                                  .arg(item)
                                  .arg(player_informations->character_id)
@@ -651,7 +661,7 @@ quint32 LocalClientHandler::removeObject(const quint32 &item,const quint32 &quan
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM item WHERE item=%1 AND character=%2 AND place='wear'")
+                    emit dbQuery(QString("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2 AND `place`='wear'")
                                  .arg(item)
                                  .arg(player_informations->character_id)
                                  );
@@ -708,7 +718,7 @@ void LocalClientHandler::addCash(const quint64 &cash, const bool &forceSave)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET cash=%1 WHERE id=%2;")
+            emit dbQuery(QString("UPDATE `character` SET `cash`=%1 WHERE `id`=%2;")
                          .arg(player_informations->public_and_private_informations.cash)
                          .arg(player_informations->character_id)
                          );
@@ -731,7 +741,7 @@ void LocalClientHandler::removeCash(const quint64 &cash)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET cash=%1 WHERE id=%2;")
+            emit dbQuery(QString("UPDATE `character` SET `cash`=%1 WHERE `id`=%2;")
                          .arg(player_informations->public_and_private_informations.cash)
                          .arg(player_informations->character_id)
                          );
@@ -754,7 +764,7 @@ void LocalClientHandler::addBitcoin(const double &bitcoin)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET bitcoin=%1 WHERE id=%2;")
+            emit dbQuery(QString("UPDATE `character` SET `bitcoin`=%1 WHERE `id`=%2;")
                          .arg(player_informations->public_and_private_informations.bitcoin)
                          .arg(player_informations->character_id)
                          );
@@ -777,7 +787,7 @@ void LocalClientHandler::removeBitcoin(const double &bitcoin)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET bitcoin=%1 WHERE id=%2;")
+            emit dbQuery(QString("UPDATE `character` SET `bitcoin`=%1 WHERE `id`=%2;")
                          .arg(player_informations->public_and_private_informations.bitcoin)
                          .arg(player_informations->character_id)
                          );
@@ -800,7 +810,7 @@ void LocalClientHandler::addWarehouseCash(const quint64 &cash, const bool &force
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
+            emit dbQuery(QString("UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2;")
                          .arg(player_informations->public_and_private_informations.warehouse_cash)
                          .arg(player_informations->character_id)
                          );
@@ -823,7 +833,7 @@ void LocalClientHandler::removeWarehouseCash(const quint64 &cash)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET warehouse_cash=%1 WHERE id=%2;")
+            emit dbQuery(QString("UPDATE `character` SET `warehouse_cash`=%1 WHERE `id`=%2;")
                          .arg(player_informations->public_and_private_informations.warehouse_cash)
                          .arg(player_informations->character_id)
                          );
@@ -885,7 +895,7 @@ void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<qu
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE monster SET place='wear',position=%2 WHERE id=%1;")
+                            emit dbQuery(QString("UPDATE `monster` SET `place`='wear',`position`=%2 WHERE `id`=%1;")
                                         .arg(withdrawMonsters.at(index))
                                         .arg(player_informations->public_and_private_informations.playerMonster.size()+1)
                                         );
@@ -921,7 +931,7 @@ void LocalClientHandler::wareHouseStore(const qint64 &cash, const QList<QPair<qu
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE monster SET place='warehouse',position=%2 WHERE id=%1;")
+                            emit dbQuery(QString("UPDATE `monster` SET `place`='warehouse',`position`=%2 WHERE `id`=%1;")
                                         .arg(withdrawMonsters.at(index))
                                         .arg(player_informations->public_and_private_informations.warehouse_playerMonster.size()+1)
                                         );
@@ -1380,7 +1390,7 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO recipes(character,recipe) VALUES(%1,%2);")
+                emit dbQuery(QString("INSERT INTO `recipes`(`character`,`recipe`) VALUES(%1,%2);")
                          .arg(player_informations->character_id)
                          .arg(recipeId)
                          );
@@ -1844,7 +1854,7 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4);")
+                emit dbQuery(QString("INSERT INTO `factory`(`id`,`resources`,`products`,`last_update`) VALUES(%1,'%2','%3',%4);")
                              .arg(factoryId)
                              .arg(resourcesStringList.join(";"))
                              .arg(productsStringList.join(";"))
@@ -1867,7 +1877,7 @@ void LocalClientHandler::saveIndustryStatus(const quint32 &factoryId,const Indus
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE factory SET resources='%2',products='%3',last_update=%4 WHERE id=%1")
+                emit dbQuery(QString("UPDATE `factory` SET `resources`='%2',`products`='%3',`last_update`=%4 WHERE `id`=%1")
                              .arg(factoryId)
                              .arg(resourcesStringList.join(";"))
                              .arg(productsStringList.join(";"))
@@ -2224,7 +2234,7 @@ void LocalClientHandler::updateAllow()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET allow='%1' WHERE id=%2;")
+            emit dbQuery(QString("UPDATE `character` SET `allow`='%1' WHERE `id`=%2;")
                          .arg(FacilityLib::allowToString(player_informations->public_and_private_informations.allow))
                          .arg(player_informations->character_id)
                          );
@@ -2310,7 +2320,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("INSERT INTO reputation(character,type,point,level) VALUES(%1,\"%2\",%3,%4);")
+            emit dbQuery(QString("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,\"%2\",%3,%4);")
                              .arg(player_informations->character_id)
                              .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
@@ -2333,7 +2343,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=\"%2\";")
+                emit dbQuery(QString("UPDATE `reputation` SET `point`=%3,`level`=%4 WHERE `character`=%1 AND `type`=\"%2\";")
                              .arg(player_informations->character_id)
                              .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
@@ -2341,7 +2351,7 @@ void LocalClientHandler::appendReputationPoint(const QString &type,const qint32 
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE player=%1 AND type=\"%2\";")
+                emit dbQuery(QString("UPDATE reputation SET point=%3,level=%4 WHERE character=%1 AND type=\"%2\";")
                              .arg(player_informations->character_id)
                              .arg(SqlFunction::quoteSqlVariable(type))
                              .arg(playerReputation.point)
@@ -2604,7 +2614,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("INSERT INTO clan(id,name,date) VALUES(%1,\"%2\",%3);")
+                    emit dbQuery(QString("INSERT INTO `clan`(`id`,`name`,`date`) VALUES(%1,\"%2\",%3);")
                              .arg(GlobalServerData::serverPrivateVariables.maxClanId)
                              .arg(SqlFunction::quoteSqlVariable(text))
                              .arg(QDateTime::currentMSecsSinceEpoch()/1000)
@@ -2646,7 +2656,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE character SET clan=0 WHERE id=%1;")
+                    emit dbQuery(QString("UPDATE `character` SET `clan`=0 WHERE `id`=%1;")
                              .arg(player_informations->character_id)
                              );
                 break;
@@ -2690,7 +2700,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE character SET clan=0 WHERE id=%1;")
+                        emit dbQuery(QString("UPDATE `character` SET `clan`=0 WHERE `id`=%1;")
                                  .arg(players.at(index)->getPlayerId())
                                  );
                     break;
@@ -2706,7 +2716,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM clan WHERE id=%1")
+                    emit dbQuery(QString("DELETE FROM `clan` WHERE `id`=%1")
                                  .arg(player_informations->public_and_private_informations.clan)
                                  );
                 break;
@@ -2720,7 +2730,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("DELETE FROM city WHERE city='%1'")
+                    emit dbQuery(QString("DELETE FROM `city` WHERE `city`='%1'")
                                  .arg(clan->capturedCity)
                                  );
                 break;
@@ -2832,7 +2842,7 @@ void LocalClientHandler::clanAction(const quint8 &query_id,const quint8 &action,
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE character SET clan=0 WHERE pseudo=%1 AND clan=%2;")
+                        emit dbQuery(QString("UPDATE `character` SET `clan`=0 WHERE `pseudo`=%1 AND `clan`=%2;")
                                  .arg(text)
                                  .arg(player_informations->public_and_private_informations.clan)
                                  );
@@ -2951,7 +2961,7 @@ void LocalClientHandler::insertIntoAClan(const quint32 &clanId)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;")
+            emit dbQuery(QString("UPDATE `character` SET `clan`=%1,`clan_leader`=%2 WHERE `id`=%3;")
                      .arg(clanId)
                      .arg(clan_leader)
                      .arg(player_informations->character_id)
@@ -2976,7 +2986,7 @@ void LocalClientHandler::ejectToClan()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE character SET clan=0 WHERE id=%1;")
+            emit dbQuery(QString("UPDATE `character` SET `clan`=0 WHERE `id`=%1;")
                      .arg(player_informations->character_id)
                      );
         break;
@@ -3350,7 +3360,7 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                         {
                             default:
                             case ServerSettings::Database::DatabaseType_Mysql:
-                                emit dbQuery(QString("DELETE FROM city WHERE city='%1'")
+                                emit dbQuery(QString("DELETE FROM `city` WHERE `city`='%1'")
                                              .arg(clan->capturedCity)
                                              );
                             break;
@@ -3367,7 +3377,7 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                             {
                                 default:
                                 case ServerSettings::Database::DatabaseType_Mysql:
-                                    emit dbQuery(QString("UPDATE city SET clan=%1 WHERE city='%2';")
+                                    emit dbQuery(QString("UPDATE `city` SET `clan`=%1 WHERE `city`='%2';")
                                                  .arg(clan->clanId)
                                                  .arg(clan->captureCityInProgress)
                                                  );
@@ -3384,7 +3394,7 @@ void LocalClientHandler::fightOrBattleFinish(const bool &win, const quint32 &fig
                             {
                                 default:
                                 case ServerSettings::Database::DatabaseType_Mysql:
-                                    emit dbQuery(QString("INSERT INTO city(clan,city) VALUES(%1,'%2');")
+                                    emit dbQuery(QString("INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');")
                                                  .arg(clan->clanId)
                                                  .arg(clan->captureCityInProgress)
                                                  );
@@ -3674,7 +3684,7 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("DELETE FROM item WHERE item=%1 AND character=%2 AND place='market'")
+                        emit dbQuery(QString("DELETE FROM `item` WHERE `item`=%1 AND `character`=%2 AND `place`='market'")
                                      .arg(marketItem.item)
                                      .arg(marketItem.player)
                                      );
@@ -3695,7 +3705,7 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='market'")
+                        emit dbQuery(QString("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='market'")
                                      .arg(marketItem.quantity-quantity)
                                      .arg(marketItem.item)
                                      .arg(marketItem.player)
@@ -3722,7 +3732,7 @@ void LocalClientHandler::buyMarketObject(const quint32 &query_id,const quint32 &
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE character SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                    emit dbQuery(QString("UPDATE `character` SET `market_cash`=`market_cash`+%1,`market_bitcoin`=`market_bitcoin`+%2 WHERE `id`=%3")
                                  .arg(quantity*marketItem.cash)
                                  .arg(quantity*marketItem.bitcoin)
                                  .arg(marketItem.player)
@@ -3812,7 +3822,7 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE character SET market_cash=market_cash+%1,market_bitcoin=market_bitcoin+%2 WHERE id=%3")
+                    emit dbQuery(QString("UPDATE `character` SET `market_cash`=`market_cash`+%1,`market_bitcoin`=`market_bitcoin`+%2 WHERE `id`=%3")
                                  .arg(marketPlayerMonster.cash)
                                  .arg(marketPlayerMonster.bitcoin)
                                  .arg(marketPlayerMonster.player)
@@ -3831,14 +3841,14 @@ void LocalClientHandler::buyMarketMonster(const quint32 &query_id,const quint32 
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE character SET place='wear',player=%1,position=%2 WHERE id=%3")
+                    emit dbQuery(QString("UPDATE `monster` SET `place`='wear',`character`=%1,`position`=%2 WHERE `id`=%3")
                                  .arg(player_informations->character_id)
                                  .arg(localClientHandlerFight.getPlayerMonster().size())
                                  .arg(marketPlayerMonster.monster.id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE character SET place='wear',player=%1,position=%2 WHERE id=%3")
+                    emit dbQuery(QString("UPDATE monster SET place='wear',character=%1,position=%2 WHERE id=%3")
                                  .arg(player_informations->character_id)
                                  .arg(localClientHandlerFight.getPlayerMonster().size())
                                  .arg(marketPlayerMonster.monster.id)
@@ -3898,7 +3908,7 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE item SET quantity=%1,market_price=%2,market_bitcoin=%3 WHERE item=%4 AND character=%5 AND place='market';")
+                    emit dbQuery(QString("UPDATE item SET `quantity`=%1,`market_price`=%2,`market_bitcoin`=%3 WHERE `item`=%4 AND `character`=%5 AND `place`='market';")
                                  .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
                                  .arg(price)
                                  .arg(bitcoin)
@@ -3933,7 +3943,7 @@ void LocalClientHandler::putMarketObject(const quint32 &query_id,const quint32 &
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("INSERT INTO item(item,character,quantity,place,market_price,market_bitcoin) VALUES(%1,%2,%3,'market',%4,%5);")
+            emit dbQuery(QString("INSERT INTO `item`(`item`,`character`,`quantity`,`place`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,'market',%4,%5);")
                          .arg(objectId)
                          .arg(player_informations->character_id)
                          .arg(quantity)
@@ -4003,7 +4013,7 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET place='market',market_price=%1,market_bitcoin=%2 WHERE id=%3;")
+                    emit dbQuery(QString("UPDATE `monster` SET `place`='market',`market_price`=%1,`market_bitcoin`=%2 WHERE `id`=%3;")
                                  .arg(price)
                                  .arg(bitcoin)
                                  .arg(monsterId)
@@ -4024,7 +4034,7 @@ void LocalClientHandler::putMarketMonster(const quint32 &query_id,const quint32 
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                        emit dbQuery(QString("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)
                                      );
@@ -4082,7 +4092,7 @@ void LocalClientHandler::recoverMarketCash(const quint32 &query_id)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE character SET cash=%1,bitcoin=%2,market_cash=0,market_bitcoin=0 WHERE id=%3;")
+                emit dbQuery(QString("UPDATE `character` SET `cash`=%1,`bitcoin`=%2,`market_cash`=0,`market_bitcoin`=0 WHERE `id`=%3;")
                              .arg(player_informations->public_and_private_informations.cash)
                              .arg(player_informations->public_and_private_informations.bitcoin)
                              .arg(player_informations->character_id)
@@ -4101,7 +4111,7 @@ void LocalClientHandler::recoverMarketCash(const quint32 &query_id)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE character SET cash=%1,market_cash=0,market_bitcoin=0 WHERE id=%2;")
+                emit dbQuery(QString("UPDATE `character` SET `cash`=%1,`market_cash`=0,`market_bitcoin`=0 WHERE `id`=%2;")
                              .arg(player_informations->public_and_private_informations.cash)
                              .arg(player_informations->character_id)
                              );
@@ -4162,7 +4172,7 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("DELETE FROM item WHERE item=%1 AND character=%2 AND place='market'")
+                        emit dbQuery(QString("DELETE FROM `item` WHERE `item`=%1 AND `characterè=%2 AND `place`='market'")
                                      .arg(objectId)
                                      .arg(player_informations->character_id)
                                      );
@@ -4181,7 +4191,7 @@ void LocalClientHandler::withdrawMarketObject(const quint32 &query_id,const quin
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE item SET quantity=%1 WHERE item=%2 AND character=%3 AND place='market'")
+                        emit dbQuery(QString("UPDATE `item` SET `quantity`=%1 WHERE `item`=%2 AND `character`=%3 AND `place`='market'")
                                      .arg(GlobalServerData::serverPrivateVariables.marketItemList[index].quantity)
                                      .arg(objectId)
                                      .arg(player_informations->character_id)
@@ -4240,7 +4250,7 @@ void LocalClientHandler::withdrawMarketMonster(const quint32 &query_id,const qui
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE monster SET place='wear',position=%1 WHERE id=%2;")
+                    emit dbQuery(QString("UPDATE `monster` SET `place`='wear',`position`=%1 WHERE `id`=%2;")
                                  .arg(player_informations->public_and_private_informations.playerMonster.size())
                                  .arg(player_informations->public_and_private_informations.playerMonster.last().id)
                                  );

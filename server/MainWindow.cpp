@@ -306,6 +306,7 @@ void MainWindow::load_settings()
     ui->max_character->setValue(settings->value("max_character").toUInt());
     ui->max_pseudo_size->setValue(settings->value("max_pseudo_size").toUInt());
     ui->character_delete_time->setValue(settings->value("character_delete_time").toUInt()/3600);
+    ui->automatic_account_creation->setChecked(settings->value("automatic_account_creation").toBool());
     ui->min_character->setMaximum(ui->max_character->value());
     ui->max_character->setMinimum(ui->min_character->value());
 
@@ -351,14 +352,12 @@ void MainWindow::load_settings()
     bool chat_allow_all=settings->value("allow-all").toBool();
     bool chat_allow_local=settings->value("allow-local").toBool();
     bool chat_allow_private=settings->value("allow-private").toBool();
-    bool chat_allow_aliance=settings->value("allow-aliance").toBool();
     bool chat_allow_clan=settings->value("allow-clan").toBool();
     settings->endGroup();
 
     ui->chat_allow_all->setChecked(chat_allow_all);
     ui->chat_allow_local->setChecked(chat_allow_local);
     ui->chat_allow_private->setChecked(chat_allow_private);
-    ui->chat_allow_aliance->setChecked(chat_allow_aliance);
     ui->chat_allow_clan->setChecked(chat_allow_clan);
 
     settings->beginGroup("db");
@@ -573,6 +572,7 @@ void MainWindow::send_settings()
     formatedServerSettings.database.secondToPositionSync=ui->secondToPositionSync->value();
 
     //connection
+    formatedServerSettings.automatic_account_creation   = ui->automatic_account_creation->isChecked();
     formatedServerSettings.max_players					= ui->max_player->value();
     formatedServerSettings.tolerantMode                 = ui->tolerantMode->isChecked();
 
@@ -719,13 +719,6 @@ void MainWindow::on_chat_allow_private_toggled(bool checked)
 {
     settings->beginGroup("chat");
     settings->setValue("allow-private",checked);
-    settings->endGroup();
-}
-
-void MainWindow::on_chat_allow_aliance_toggled(bool checked)
-{
-    settings->beginGroup("chat");
-    settings->setValue("allow-aliance",checked);
     settings->endGroup();
 }
 
@@ -1063,4 +1056,9 @@ void CatchChallenger::MainWindow::on_max_pseudo_size_editingFinished()
 void CatchChallenger::MainWindow::on_character_delete_time_editingFinished()
 {
     settings->setValue("character_delete_time",ui->character_delete_time->value()*3600);
+}
+
+void CatchChallenger::MainWindow::on_automatic_account_creation_clicked()
+{
+    settings->setValue("automatic_account_creation",ui->automatic_account_creation->isChecked());
 }

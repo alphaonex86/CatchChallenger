@@ -63,10 +63,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT id,password FROM account WHERE login=\"%1\"").arg(QString(login.toHex()));
+                queryText=QString("SELECT `id`,`password` FROM `account` WHERE `login`='%1'").arg(QString(login.toHex()));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                queryText=QString("SELECT id,password FROM account WHERE login=\"%1\"").arg(QString(login.toHex()));
+                queryText=QString("SELECT id,password FROM account WHERE login='%1'").arg(QString(login.toHex()));
             break;
         }
         QSqlQuery accountQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -79,7 +79,16 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
             {
                 GlobalServerData::serverPrivateVariables.maxAccountId++;
                 player_informations->account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
-                dbQuery(QString("INSERT INTO account(id,login,password,date) VALUES(%1,\"%2\",\"%3\",%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        dbQuery(QString("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        dbQuery(QString("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+                    break;
+                }
             }
             else
             {
@@ -145,7 +154,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
+                queryText=QString("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
                 queryText=QString("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
@@ -182,22 +191,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
                     characterEntry.last_connect=current_time;
                 }
                 if(current_time>=time_to_delete && time_to_delete!=0)
-                {
-                    switch(GlobalServerData::serverSettings.database.type)
-                    {
-                        default:
-                        case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("DELETE FROM character WHERE id=%1")
-                                         .arg(characterEntry.character_id)
-                                         );
-                        break;
-                        case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("DELETE FROM character WHERE id=%1")
-                                         .arg(characterEntry.character_id)
-                                         );
-                        break;
-                    }
-                }
+                    deleteCharacterNow(characterEntry.character_id);
                 else
                 {
                     if(time_to_delete==0)
@@ -240,6 +234,84 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     }
 
     emit postReply(query_id,outputData);
+}
+
+void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
+{
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT `id` FROM `monster` WHERE `character`=%1").arg(characterId);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id FROM monster WHERE character=%1").arg(characterId);
+        break;
+    }
+    bool ok;
+    QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!monstersQuery.exec(queryText))
+        emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
+    while(monstersQuery.next())
+    {
+        const quint32 &monsterId=monstersQuery.value(0).toUInt(&ok);
+        if(ok)
+        {
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    dbQuery(QString("DELETE FROM `monster_buff` WHERE monster=%1")
+                                 .arg(monsterId)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                                 .arg(monsterId)
+                                 );
+                break;
+            }
+            switch(GlobalServerData::serverSettings.database.type)
+            {
+                default:
+                case ServerSettings::Database::DatabaseType_Mysql:
+                    dbQuery(QString("DELETE FROM `monster_skill` WHERE monster=%1")
+                                 .arg(monsterId)
+                                 );
+                break;
+                case ServerSettings::Database::DatabaseType_SQLite:
+                    dbQuery(QString("DELETE FROM monster_skill WHERE monster=%1")
+                                 .arg(monsterId)
+                                 );
+                break;
+            }
+        }
+    }
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            dbQuery(QString("DELETE FROM `bot_already_beaten` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `character` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `item` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `monster` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `plant` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `quest` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `recipes` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `reputation` WHERE `character`=%1").arg(characterId));
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            dbQuery(QString("DELETE FROM `bot_already_beaten` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `character` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `item` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `monster` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `plant` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `quest` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `recipes` WHERE `character`=%1").arg(characterId));
+            dbQuery(QString("DELETE FROM `reputation` WHERE `character`=%1").arg(characterId));
+        break;
+    }
 }
 
 void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
@@ -323,7 +395,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(QString("INSERT INTO \"character\"(\"id\",\"account\",\"pseudo\",\"skin\",\"x\",\"y\",\"orientation\",\"map\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\",\"market_cash\",\"market_bitcoin\",\"date\",\"warehouse_cash\",\"allow\",\"clan_leader\",\"bitcoin_offset\",\"time_to_delete\",\"played_time\",\"last_connect\") VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+");")
+                dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+");")
                         .arg(characterId)
                         .arg(player_informations->account_id)
                         .arg(pseudo)
@@ -336,7 +408,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("INSERT INTO \"character\"(\"id\",\"account\",\"pseudo\",\"skin\",\"x\",\"y\",\"orientation\",\"map\",\"type\",\"clan\",\"cash\",\"rescue_map\",\"rescue_x\",\"rescue_y\",\"rescue_orientation\",\"unvalidated_rescue_map\",\"unvalidated_rescue_x\",\"unvalidated_rescue_y\",\"unvalidated_rescue_orientation\",\"market_cash\",\"market_bitcoin\",\"date\",\"warehouse_cash\",\"allow\",\"clan_leader\",\"bitcoin_offset\",\"time_to_delete\",\"played_time\",\"last_connect\") VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+");")
+                dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+");")
                         .arg(characterId)
                         .arg(player_informations->account_id)
                         .arg(pseudo)
@@ -389,7 +461,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"character\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"character_origin\",\"place\",\"position\",\"market_price\",\"market_bitcoin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\",%8,0,0);")
+                    dbQuery(QString("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
                        .arg(monster_id)
                        .arg(stat.hp)
                        .arg(characterId)
@@ -401,7 +473,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("INSERT INTO \"monster\"(\"id\",\"hp\",\"character\",\"monster\",\"level\",\"xp\",\"sp\",\"captured_with\",\"gender\",\"egg_step\",\"character_origin\",\"place\",\"position\",\"market_price\",\"market_bitcoin\") VALUES(%1,%2,%3,%4,%5,0,0,%6,\"%7\",0,%3,\"wear\",%8,0,0);")
+                    dbQuery(QString("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
                        .arg(monster_id)
                        .arg(stat.hp)
                        .arg(characterId)
@@ -426,7 +498,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\",\"endurance\") VALUES(%1,%2,%3,%4);")
+                    dbQuery(QString("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
                        .arg(monster_id)
                        .arg(skills[sub_index].skill)
                        .arg(skills[sub_index].level)
@@ -434,7 +506,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                             );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("INSERT INTO \"monster_skill\"(\"monster\",\"skill\",\"level\",\"endurance\") VALUES(%1,%2,%3,%4);")
+                    dbQuery(QString("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
                        .arg(monster_id)
                        .arg(skills[sub_index].skill)
                        .arg(skills[sub_index].level)
@@ -453,7 +525,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(QString("INSERT INTO \"reputation\"(\"character\",\"type\",\"point\",\"level\") VALUES(%1,\"%2\",%3,%4);")
+                dbQuery(QString("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
                    .arg(characterId)
                    .arg(profile.reputation.at(index).type)
                    .arg(profile.reputation.at(index).point)
@@ -461,7 +533,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("INSERT INTO \"reputation\"(\"character\",\"type\",\"point\",\"level\") VALUES(%1,\"%2\",%3,%4);")
+                dbQuery(QString("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
                    .arg(characterId)
                    .arg(profile.reputation.at(index).type)
                    .arg(profile.reputation.at(index).point)
@@ -478,14 +550,14 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(QString("INSERT INTO \"item\"(\"item\",\"character\",\"quantity\",\"place\") VALUES(%1,%2,%3,\"wear\");")
+                dbQuery(QString("INSERT INTO `item`(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'wear');")
                    .arg(profile.items.at(index).id)
                    .arg(characterId)
                    .arg(profile.items.at(index).quantity)
                         );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("INSERT INTO \"item\"(\"item\",\"character\",\"quantity\",\"place\") VALUES(%1,%2,%3,\"wear\");")
+                dbQuery(QString("INSERT INTO `item`(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'wear');")
                    .arg(profile.items.at(index).id)
                    .arg(characterId)
                    .arg(profile.items.at(index).quantity)
@@ -505,6 +577,61 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
 
 void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &characterId)
 {
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT `account``time_to_delete` FROM `character` WHERE `id`=%1").arg(characterId);
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT account,time_to_delete FROM character WHERE id=%1").arg(characterId);
+        break;
+    }
+    QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!characterQuery.exec(queryText))
+    {
+        characterSelectionIsWrong(query_id,"Character not found",characterQuery.lastQuery()+": "+characterQuery.lastError().text());
+        return;
+    }
+    if(!characterQuery.next())
+    {
+        characterSelectionIsWrong(query_id,"Character not found","Result return query wrong");
+        return;
+    }
+    bool ok;
+    const quint32 &account_id=characterQuery.value(0).toUInt(&ok);
+    if(!ok)
+    {
+        characterSelectionIsWrong(query_id,"Character not found",QString("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
+        return;
+    }
+    if(player_informations->account_id!=account_id)
+    {
+        characterSelectionIsWrong(query_id,"Character not found",QString("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
+        return;
+    }
+    const quint32 &time_to_delete=characterQuery.value(1).toUInt(&ok);
+    if(ok && time_to_delete>0)
+    {
+        characterSelectionIsWrong(query_id,"Already in deleting",QString("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(player_informations->account_id));
+        return;
+    }
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            dbQuery(QString("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1").arg(characterId).arg(CommonSettings::commonSettings.character_delete_time));
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            dbQuery(QString("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1").arg(characterId).arg(CommonSettings::commonSettings.character_delete_time));
+        break;
+    }
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint8)0x02;
+    emit postReply(query_id,outputData);
 }
 
 void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &characterId)
@@ -519,10 +646,10 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader,bitcoin_offset,market_cash,market_bitcoin FROM character WHERE id=\"%1\"").arg(characterId);
+            queryText=QString("SELECT `account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`market_cash`,`market_bitcoin`,`time_to_delete` FROM `character` WHERE `id`=%1").arg(characterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader,bitcoin_offset,market_cash,market_bitcoin FROM character WHERE id=\"%1\"").arg(characterId);
+            queryText=QString("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader,bitcoin_offset,market_cash,market_bitcoin,time_to_delete FROM character WHERE id=%1").arg(characterId);
         break;
     }
     QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -564,18 +691,28 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         return;
     }
     const quint32 &time_to_delete=characterQuery.value(24).toUInt(&ok);
-    if(ok && time_to_delete>0)
+    if(!ok || time_to_delete>0)
     {
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE character SET time_to_delete=0 WHERE id=%1").arg(characterId));
+                dbQuery(QString("UPDATE `character` SET `time_to_delete`=0 WHERE `id`=%1").arg(characterId));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE character SET time_to_delete=0 WHERE id=%1").arg(characterId));
+                dbQuery(QString("UPDATE character SET time_to_delete=0 WHERE id=%1").arg(characterId));
             break;
         }
+    }
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            dbQuery(QString("UPDATE `character` SET `last_connect`=%2 WHERE `id`=%1").arg(characterId).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            dbQuery(QString("UPDATE character SET last_connect=%2 WHERE id=%1").arg(characterId).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+        break;
     }
 
     player_informations->public_and_private_informations.clan=characterQuery.value(8).toUInt(&ok);
@@ -952,6 +1089,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     player_informations->public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.first();
     simplifiedIdList.removeFirst();
     player_informations->character_loaded=true;
+    player_informations->connectedSince=QDateTime::currentDateTime();
 
     //send the network reply
     QByteArray outputData;
@@ -978,7 +1116,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
+                queryText=QString("SELECT `name`,`cash` FROM `clan` WHERE `id`=%1")
                         .arg(player_informations->public_and_private_informations.clan);
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
@@ -1446,7 +1584,7 @@ void ClientHeavyLoad::loadReputation()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT `type`,`point`,level FROM reputation WHERE character=%1")
+        queryText=QString("SELECT `type`,`point`,`level` FROM `reputation` WHERE `character`=%1")
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
@@ -1539,7 +1677,7 @@ void ClientHeavyLoad::loadQuests()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT quest,finish_one_time,step FROM quest WHERE character=%1")
+        queryText=QString("SELECT `quest`,`finish_one_time`,`step` FROM `quest` WHERE `character`=%1")
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
