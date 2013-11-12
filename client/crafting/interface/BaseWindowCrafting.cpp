@@ -206,7 +206,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelFruitsText->setText(QString());
         ui->labelPlantFruitText->setText(QString());
         ui->labelPlantDescription->setText(QString());
-        #ifdef CATCHCHALLENGER_CLIENTFULL
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         ui->labelPlantByDay->setText(QString());
         #endif
 
@@ -223,7 +223,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantName->setText(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].name);
         ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].image);
         ui->labelPlantDescription->setText(DatapackClientLoader::datapackLoader.itemsExtra[plant.itemUsed].description);
-        #ifdef CATCHCHALLENGER_CLIENTFULL
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         if(plant.fruits_seconds>0)
         {
             double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
@@ -241,7 +241,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantName->setText(tr("Unknow plant (%1)").arg(plant.itemUsed));
         ui->labelPlantFruitImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->labelPlantDescription->setText(tr("This plant and these effects are unknown"));
-        #ifdef CATCHCHALLENGER_CLIENTFULL
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         if(plant.fruits_seconds>0)
         {
             double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
