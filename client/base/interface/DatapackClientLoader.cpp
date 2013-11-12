@@ -324,6 +324,14 @@ void DatapackClientLoader::parseQuestsExtra()
             index++;
             continue;
         }
+        bool ok;
+        quint32 id=entryList.at(index).fileName().toUInt(&ok);
+        if(!ok)
+        {
+            qDebug() << QString("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
+            index++;
+            continue;
+        }
         QFile itemsFile(entryList.at(index).absoluteFilePath()+"/definition.xml");
         QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
@@ -351,21 +359,7 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
 
-        //load the content
-        bool ok;
-
-        if(!root.hasAttribute("id"))
-        {
-            index++;
-            continue;
-        }
         DatapackClientLoader::QuestExtra quest;
-        quint32 id=root.attribute("id").toUInt(&ok);
-        if(!ok)
-        {
-            index++;
-            continue;
-        }
 
         //load name
         QDomElement name = root.firstChildElement("name");
