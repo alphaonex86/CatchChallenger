@@ -58,6 +58,7 @@ private slots:
     */
     void on_SaveGame_Back_clicked();
     void on_languages_clicked();
+    void newUpdate(const QString &version);
 
 private:
     Ui::SoloWindow *ui;

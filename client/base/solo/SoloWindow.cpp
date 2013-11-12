@@ -11,6 +11,7 @@
 #include "../fight/interface/ClientFightEngine.h"
 #include "../../general/base/DebugClass.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../InternetUpdater.h"
 
 SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString &savegamePath,const bool &standAlone) :
     QMainWindow(parent),
@@ -36,8 +37,13 @@ SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString
 
     updateSavegameList();
 
+    ui->update->setVisible(false);
     if(standAlone)
+    {
         ui->horizontalLayout_main->removeItem(ui->horizontalSpacer_Back);
+        InternetUpdater::internetUpdater=new InternetUpdater();
+        connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&SoloWindow::newUpdate);
+    }
     ui->SaveGame_Back->setVisible(!standAlone);
     ui->languages->setVisible(standAlone);
     ui->SaveGame_New->setEnabled(datapackPathExists);
@@ -725,4 +731,10 @@ void SoloWindow::on_SaveGame_Back_clicked()
 void SoloWindow::on_languages_clicked()
 {
     LanguagesSelect::languagesSelect->exec();
+}
+
+void SoloWindow::newUpdate(const QString &version)
+{
+    ui->update->setText(InternetUpdater::getText(version));
+    ui->update->setVisible(true);
 }

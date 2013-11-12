@@ -4,6 +4,7 @@
 #define PROTOCOL_HEADER "catchchallenger-0.2.0.0"
 #define CATCHCHALLENGER_VERSION "0.2.0.0"
 #define CATCHCHALLENGER_SERVER_LIST_URL "http://catchchallenger.first-world.info/server_list.xml"
+#define CATCHCHALLENGER_UPDATER_URL "http://catchchallenger.first-world.info/updater.php"
 
 #define CATCHCHALLENGER_EXTRA_CHECK
 

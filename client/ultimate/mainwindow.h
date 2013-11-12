@@ -97,6 +97,7 @@ private slots:
     void saveTime();
     void serverError(const QString &error);
     void on_languages_clicked();
+    void newUpdate(const QString &version);
 private:
     enum ServerMode
     {

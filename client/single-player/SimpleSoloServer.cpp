@@ -84,7 +84,7 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
     formatedServerSettings.bitcoin.enabled=false;
-    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->get_datapack_base_name();
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->get_datapack_base();
 
     internalServer->setSettings(formatedServerSettings);
 }
