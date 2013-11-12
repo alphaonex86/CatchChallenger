@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "AddServer.h"
 #include "ui_mainwindow.h"
+#include "../base/InternetUpdater.h"
 #include <QStandardPaths>
 #include <QNetworkProxy>
 
@@ -36,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent) :
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
+    ui->update->setVisible(false);
+    InternetUpdater::internetUpdater=new InternetUpdater();
+    connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/internal/",QCoreApplication::applicationDirPath()+"/savegames/",false);
     connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
     connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
@@ -61,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
-    setWindowTitle("CatchChallenger");
+    setWindowTitle("CatchChallenger Ultimate");
     downloadFile();
 }
 
@@ -484,6 +488,8 @@ void MainWindow::on_server_add_clicked()
     connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
     connexionInfo.name=addServer.name();
     connexionInfo.port=addServer.port();
+    connexionInfo.proxyHost=addServer.proxyServer();
+    connexionInfo.proxyPort=addServer.proxyPort();
     mergedConnexionInfoList << connexionInfo;
     saveConnexionInfoList();
     displayServerList();
@@ -553,7 +559,7 @@ void MainWindow::saveConnexionInfoList()
         if(connexionInfo.unique_code.isEmpty())
         {
             QString proxy;
-            if(connexionInfo.proxyHost.isEmpty())
+            if(!connexionInfo.proxyHost.isEmpty())
                 proxy=QString("%1:%2").arg(connexionInfo.proxyHost).arg(connexionInfo.proxyPort);
             else
                 proxy=QString();
@@ -582,6 +588,7 @@ void MainWindow::saveConnexionInfoList()
     settings.setValue("nameList",nameList);
     settings.setValue("connexionCounterList",connexionCounterList);
     settings.setValue("lastConnexionList",lastConnexionList);
+    settings.setValue("proxyList",proxyList);
 }
 
 void MainWindow::serverListEntryEnvoluedDoubleClicked()
@@ -595,6 +602,7 @@ void MainWindow::resetAll()
         CatchChallenger::Api_client_real::client->resetAll();
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
         CatchChallenger::BaseWindow::baseWindow->resetAll();
+    setWindowTitle("CatchChallenger Ultimate");
     switch(serverMode)
     {
         case ServerMode_Internal:
@@ -1264,4 +1272,10 @@ void MainWindow::on_solo_clicked()
 void MainWindow::on_languages_clicked()
 {
     LanguagesSelect::languagesSelect->exec();
+}
+
+void MainWindow::newUpdate(const QString &version)
+{
+    ui->update->setText(InternetUpdater::getText(version));
+    ui->update->setVisible(true);
 }

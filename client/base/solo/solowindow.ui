@@ -357,6 +357,18 @@ QLabel { padding:2px; }</string>
          </spacer>
         </item>
         <item>
+         <widget class="QLabel" name="update">
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(255, 255, 163);
+border: 1px solid rgb(255, 221, 50);
+border-radius:5px;</string>
+          </property>
+          <property name="openExternalLinks">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
            <widget class="QToolButton" name="languages">

@@ -13,4 +13,4 @@ RESOURCES += ../base/resources/client-resources-multi.qrc
 TRANSLATIONS    = $$PWD/languages/en/specific.ts \
     $$PWD/languages/fr/specific.ts
 
-DEFINES += CATCHCHALLENGER_CLIENTFULL
+DEFINES += CATCHCHALLENGER_VERSION_ULTIMATE
