@@ -1081,8 +1081,6 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
                   Map *unvalidated_rescue_map, const quint8 &unvalidated_rescue_x, const quint8 &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                   )
 {
-    loadLinkedData();
-
     //load the variables
     player_informations->character_id=characterId;
     GlobalServerData::serverPrivateVariables.connected_players_id_list << characterId;
@@ -1090,6 +1088,8 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     simplifiedIdList.removeFirst();
     player_informations->character_loaded=true;
     player_informations->connectedSince=QDateTime::currentDateTime();
+
+    loadLinkedData();
 
     //send the network reply
     QByteArray outputData;
