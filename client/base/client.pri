@@ -46,7 +46,10 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/interface/GetPrice.cpp \
     $$PWD/LanguagesSelect.cpp \
     $$PWD/interface/NewProfile.cpp \
-    $$PWD/interface/NewGame.cpp
+    $$PWD/interface/NewGame.cpp \
+    $$PWD/InternetUpdater.cpp \
+    $$PWD/ExtraSocket.cpp \
+    $$PWD/LocalListener.cpp
 
 HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/audio/QOggAudioBuffer.h \
@@ -76,7 +79,10 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/interface/GetPrice.h \
     $$PWD/LanguagesSelect.h \
     $$PWD/interface/NewProfile.h \
-    $$PWD/interface/NewGame.h
+    $$PWD/interface/NewGame.h \
+    $$PWD/InternetUpdater.h \
+    $$PWD/ExtraSocket.h \
+    $$PWD/LocalListener.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

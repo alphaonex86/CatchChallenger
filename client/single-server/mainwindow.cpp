@@ -3,6 +3,7 @@
 
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/LanguagesSelect.h"
+#include "../base/InternetUpdater.h"
 
 #define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
 //#define SERVER_DNS_OR_IP "localhost"
@@ -24,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent) :
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     ui->setupUi(this);
+    ui->update->setVisible(false);
+    InternetUpdater::internetUpdater=new InternetUpdater();
+    connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     if(settings.contains("login"))
@@ -66,7 +70,7 @@ void MainWindow::resetAll()
 {
     CatchChallenger::Api_client_real::client->resetAll();
     CatchChallenger::BaseWindow::baseWindow->resetAll();
-    ui->stackedWidget->setCurrentWidget(page_login);
+    ui->stackedWidget->setCurrentWidget(ui->page_login);
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
@@ -139,7 +143,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(host,port);
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base_name());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -228,4 +232,10 @@ void MainWindow::newError(QString error,QString detailedError)
     if(CatchChallenger::Api_client_real::client!=NULL)
         CatchChallenger::Api_client_real::client->tryDisconnect();
     QMessageBox::critical(this,tr("Error"),error);
+}
+
+void MainWindow::newUpdate(const QString &version)
+{
+    ui->update->setText(InternetUpdater::getText(version));
+    ui->update->setVisible(true);
 }

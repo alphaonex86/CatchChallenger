@@ -306,7 +306,7 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
     if(FacilityLib::factoryProductionStarted(industryStatus,industry))
     {
         factoryInProduction=true;
-        #ifdef CATCHCHALLENGER_CLIENTFULL
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         QString productionTime;
         quint32 remainingProductionTime=0;
         if((industryStatus.last_update+industry.time)>(QDateTime::currentMSecsSinceEpoch()/1000))
