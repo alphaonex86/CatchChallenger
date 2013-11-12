@@ -6,6 +6,28 @@
 #include <QNetworkRequest>
 #include <QUrl>
 
+#ifdef Q_OS_UNIX
+    #include <unistd.h>
+    #include <sys/types.h>
+#endif
+#ifdef Q_OS_WIN32
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    #include <windows.h>
+    #include <tchar.h>
+    #include <stdio.h>
+    #include <strsafe.h>
+    typedef void (WINAPI *PGNSI) (LPSYSTEM_INFO);
+    typedef BOOL (WINAPI *PGPI) (DWORD, DWORD, DWORD, DWORD, PDWORD);
+#endif
+#ifdef Q_OS_MAC
+#include <QStringList>
+#include <QFile>
+#include <QDomDocument>
+#include <QDomElement>
+#endif
+
 InternetUpdater *InternetUpdater::internetUpdater=NULL;
 
 InternetUpdater::InternetUpdater()

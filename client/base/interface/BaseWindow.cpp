@@ -2515,7 +2515,7 @@ void BaseWindow::getTextEntryPoint()
         return;
     }
     QScriptValue returnValue=getTextEntryPoint.call();
-    quint32 textEntryPoint=returnValue.toNumber();
+    quint32 textEntryPoint=(quint32)returnValue.toInt32();
     if(returnValue.isError())
     {
         qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
