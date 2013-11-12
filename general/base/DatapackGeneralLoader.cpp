@@ -193,6 +193,7 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
 
 QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
 {
+    bool ok;
     QHash<quint32, Quest> quests;
     //open and quick check the file
     QFileInfoList entryList=QDir(folder).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
@@ -209,16 +210,22 @@ QHash<quint32, Quest> DatapackGeneralLoader::loadQuests(const QString &folder)
             index++;
             continue;
         }
-        //add it, all seam ok
-        QPair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath()+"/definition.xml");
-        if(returnedQuest.first==true)
+        quint32 questId=entryList.at(index).fileName().toUInt(&ok);
+        if(ok)
         {
-            if(quests.contains(returnedQuest.second.id))
-                qDebug() << QString("The quest with id: %1 is already found, disable: %2").arg(returnedQuest.second.id).arg(entryList.at(index).absoluteFilePath()+"/definition.xml");
-            else
-                quests[returnedQuest.second.id]=returnedQuest.second;
+            //add it, all seam ok
+            QPair<bool,Quest> returnedQuest=loadSingleQuest(entryList.at(index).absoluteFilePath()+"/definition.xml");
+            if(returnedQuest.first==true)
+            {
+                returnedQuest.second.id=questId;
+                if(quests.contains(returnedQuest.second.id))
+                    qDebug() << QString("The quest with id: %1 is already found, disable: %2").arg(returnedQuest.second.id).arg(entryList.at(index).absoluteFilePath()+"/definition.xml");
+                else
+                    quests[returnedQuest.second.id]=returnedQuest.second;
+            }
         }
-
+        else
+            DebugClass::debugConsole(QString("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName()));
         index++;
     }
     return quests;
@@ -253,18 +260,8 @@ QPair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const QString &file)
 
     //load the content
     bool ok;
-    if(!root.hasAttribute("id"))
-    {
-        qDebug() << QString("Unable to open the file: %1, \"quest\" root balise have not the id attribute").arg(itemsFile.fileName());
-        return QPair<bool,Quest>(false,quest);
-    }
     QList<quint32> defaultBots;
-    quest.id=root.attribute("id").toUInt(&ok);
-    if(!ok)
-    {
-        qDebug() << QString("Unable to open the file: %1, \"quest\" root balise id attribute is not a number").arg(itemsFile.fileName());
-        return QPair<bool,Quest>(false,quest);
-    }
+    quest.id=0;
     quest.repeatable=false;
     if(root.hasAttribute("repeatable"))
         if(root.attribute("repeatable")=="yes" || root.attribute("repeatable")=="true")
