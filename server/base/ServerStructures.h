@@ -99,6 +99,7 @@ struct ServerSettings
     quint16 server_port;
     QString server_ip;
     QString datapack_basePath;
+    bool anonymous;
 
     struct Database
     {

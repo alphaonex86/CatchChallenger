@@ -271,7 +271,7 @@ void NormalServer::start_internal_server()
 }
 
 //start without real player possibility
-void NormalServer::start_internal_benchmark(quint16 second,quint16 number_of_client,const bool &benchmark_map)
+void NormalServer::start_internal_benchmark(quint16 second,quint16 number_of_client)
 {
     if(oneInstanceRunning)
     {
@@ -633,6 +633,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("min_character",1);
     if(!settings->contains("automatic_account_creation"))
         settings->setValue("automatic_account_creation",false);
+    if(!settings->contains("anonymous"))
+        settings->setValue("anonymous",false);
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))
