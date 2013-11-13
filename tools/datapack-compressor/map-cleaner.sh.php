@@ -48,13 +48,7 @@ function clean_map($file)
 			//
 		}
 	}*/
-	filewrite($file,$content);
+	echo $content;
 }
 
-if ($dh = opendir($dir)) {
-    while (($file = readdir($dh)) !== false) {
-	if(preg_match('#-?[0-9]{1,2}.-?[0-9]{1,2}\.tmx#',$file))
-		clean_map($file);
-    }
-    closedir($dh);
-}
+clean_map($argv[1]);
