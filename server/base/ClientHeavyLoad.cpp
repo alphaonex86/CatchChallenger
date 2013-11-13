@@ -680,7 +680,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         characterSelectionIsWrong(query_id,"Already logged","character_loaded already to true");
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.connected_players_id_list.contains(account_id))
+    if(GlobalServerData::serverPrivateVariables.connected_players_id_list.contains(characterId))
     {
         characterSelectionIsWrong(query_id,"Already logged","Already logged");
         return;
@@ -690,6 +690,18 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         characterSelectionIsWrong(query_id,"Not free id to login","Not free id to login");
         return;
     }
+    if(!loadTheRawUTF8String())
+    {
+        if(GlobalServerData::serverSettings.anonymous)
+            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8 for character id: %1").arg(player_informations->character_id));
+        else
+            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+        return;
+    }
+    if(GlobalServerData::serverSettings.anonymous)
+        emit message(QString("Charater id is logged: %1").arg(characterId));
+    else
+        emit message(QString("Charater is logged: %1").arg(characterQuery.value(1).toString()));
     const quint32 &time_to_delete=characterQuery.value(24).toUInt(&ok);
     if(!ok || time_to_delete>0)
     {
