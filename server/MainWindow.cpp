@@ -307,6 +307,7 @@ void MainWindow::load_settings()
     ui->max_pseudo_size->setValue(settings->value("max_pseudo_size").toUInt());
     ui->character_delete_time->setValue(settings->value("character_delete_time").toUInt()/3600);
     ui->automatic_account_creation->setChecked(settings->value("automatic_account_creation").toBool());
+    ui->anonymous->setChecked(settings->value("anonymous").toBool());
     ui->min_character->setMaximum(ui->max_character->value());
     ui->max_character->setMinimum(ui->min_character->value());
 
@@ -514,6 +515,7 @@ void MainWindow::send_settings()
     //the listen
     formatedServerSettings.server_port					= ui->server_port->value();
     formatedServerSettings.server_ip					= ui->server_ip->text();
+    formatedServerSettings.anonymous					= ui->anonymous->isChecked();
 
     //fight
     formatedServerSettings.pvp			= ui->pvp->isChecked();
@@ -1061,4 +1063,10 @@ void CatchChallenger::MainWindow::on_character_delete_time_editingFinished()
 void CatchChallenger::MainWindow::on_automatic_account_creation_clicked()
 {
     settings->setValue("automatic_account_creation",ui->automatic_account_creation->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_anonymous_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    settings->setValue("anonymous",ui->anonymous->isChecked());
 }

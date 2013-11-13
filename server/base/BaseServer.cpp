@@ -62,6 +62,7 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.server_ip                                  = "";
     GlobalServerData::serverSettings.server_port                                = 42489;
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
+    GlobalServerData::serverSettings.anonymous                                  = false;
     CommonSettings::commonSettings.chat_allow_clan        = true;
     CommonSettings::commonSettings.chat_allow_local       = true;
     CommonSettings::commonSettings.chat_allow_all         = true;

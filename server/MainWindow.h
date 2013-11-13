@@ -109,6 +109,7 @@ private slots:
     void on_max_pseudo_size_editingFinished();
     void on_character_delete_time_editingFinished();
     void on_automatic_account_creation_clicked();
+    void on_anonymous_toggled(bool checked);
 signals:
     void record_latency();
 };

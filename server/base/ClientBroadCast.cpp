@@ -74,10 +74,14 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
     if(!playerByPseudo.contains(pseudo))
     {
         receiveSystemText(QString("unable to found the connected player: pseudo: \"%1\"").arg(pseudo),false);
-        emit message(QString("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
+        if(GlobalServerData::serverSettings.anonymous)
+            emit message(QString("%1 have try send message to not connected user").arg(this->player_informations->character_id));
+        else
+            emit message(QString("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
         return;
     }
-    emit message(QString("[chat PM]: %1 -> %2: %3").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
+    if(!GlobalServerData::serverSettings.anonymous)
+        emit message(QString("[chat PM]: %1 -> %2: %3").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QString("to %1: %2").arg(pseudo).arg(text));
     playerByPseudo[pseudo]->receiveChatText(Chat_type_pm,text,this->player_informations);
 }
@@ -127,7 +131,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
             emit error("Unable to chat with clan, you have not clan");
         else
         {
-            emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(clan).arg(text));
+            if(!GlobalServerData::serverSettings.anonymous)
+                emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(clan).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(clan);
             int size=playerWithSameClan.size();
@@ -146,7 +151,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     {
         if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
         {
-            emit message(QString("[chat] %1: To the system chat: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+            if(!GlobalServerData::serverSettings.anonymous)
+                emit message(QString("[chat] %1: To the system chat: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             QSetIterator<ClientBroadCast *> i(clientBroadCastList);
             while (i.hasNext())
@@ -162,7 +168,8 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     }*/
     else
     {
-        emit message(QString("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+        if(!GlobalServerData::serverSettings.anonymous)
+            emit message(QString("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
         int size=clientBroadCastList.size();
         int index=0;

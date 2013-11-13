@@ -366,7 +366,12 @@ void Client::kicked()
 void Client::normalOutput(const QString &message)
 {
     if(!player_informations.public_and_private_informations.public_informations.pseudo.isEmpty())
-        DebugClass::debugConsole(QString("%1: %2").arg(player_informations.public_and_private_informations.public_informations.pseudo).arg(message));
+    {
+        if(GlobalServerData::serverSettings.anonymous)
+            DebugClass::debugConsole(QString("%1: %2").arg(player_informations.character_id).arg(message));
+        else
+            DebugClass::debugConsole(QString("%1: %2").arg(player_informations.public_and_private_informations.public_informations.pseudo).arg(message));
+    }
     else
     {
         QString ip;
@@ -382,7 +387,14 @@ void Client::normalOutput(const QString &message)
             else
                 ip=QString("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
         }
-        DebugClass::debugConsole(QString("%1: %2").arg(ip).arg(message));
+        if(GlobalServerData::serverSettings.anonymous)
+        {
+            QCryptographicHash hash(QCryptographicHash::Sha1);
+            hash.addData(ip.toUtf8());
+            DebugClass::debugConsole(QString("%1: %2").arg(QString(hash.result().toHex())).arg(message));
+        }
+        else
+            DebugClass::debugConsole(QString("%1: %2").arg(ip).arg(message));
     }
 }
 
