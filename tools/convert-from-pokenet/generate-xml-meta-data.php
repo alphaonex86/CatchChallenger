@@ -351,8 +351,6 @@ if ($dh = opendir($dir)) {
 		preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
 		foreach($empty_layer as $layer_content)
 			$content=str_replace($layer_content,'',$content);
-		if($file=='0.0.tmx')
-			exit;
 		filewrite($filexml,$xmlcontent);
 		filewrite($file,$content);
 		unset($property);
