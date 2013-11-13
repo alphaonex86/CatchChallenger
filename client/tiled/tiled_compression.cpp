@@ -127,7 +127,7 @@ QByteArray Tiled::compress(const QByteArray &data, CompressionMethod method)
 
     const int windowBits = (method == Gzip) ? 15 + 16 : 15;
 
-    err = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, windowBits,
+    err = deflateInit2(&strm, Z_BEST_COMPRESSION, Z_DEFLATED, windowBits,
                        8, Z_DEFAULT_STRATEGY);
     if (err != Z_OK) {
         logZlibError(err);
