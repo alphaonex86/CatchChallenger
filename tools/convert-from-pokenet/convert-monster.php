@@ -9,6 +9,31 @@ if level is 0, it's base attack, default: attack_level=\"1\"
 -->
 <list>\n";
 
+
+$file=file_get_contents('../items/items2.xml');
+preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
+$general_items_list=array();
+foreach($entry_list[1] as $entry)
+{
+	if(!preg_match('#<m_id>[0-9]+</m_id>#isU',$entry))
+		continue;
+	$id=preg_replace('#^.*<m_id>([0-9]+)</m_id>.*$#isU','$1',$entry);
+	if(file_exists('../items/'.$id.'.png'))
+	{
+		if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
+			continue;
+		$name=preg_replace('#^.*<m_name>([^<]+)</m_name>.*$#isU','$1',$entry);
+		if(!preg_match('#<m_description>[^<]+</m_description>#isU',$entry))
+			continue;
+		$description=preg_replace('#^.*<m_description>([^<]+)</m_description>.*$#isU','$1',$entry);
+		$description=preg_replace("#[\n\r\t]+.*$#isU",'',$description);
+		if(!preg_match('#<m_price>[0-9]+</m_price>#isU',$entry))
+			continue;
+		$price=preg_replace('#^.*<m_price>([0-9]+)</m_price>.*$#isU','$1',$entry);
+		$general_items_list[$id]=array('name'=>$name,'description'=>$description,'price'=>$price);
+	}
+}
+
 $file=file_get_contents('species.xml');
 preg_match_all('#<pokemonSpecies>(.*)</pokemonSpecies>#isU',$file,$entry_list);
 $species=array();
@@ -265,7 +290,11 @@ foreach($entry_list[1] as $entry)
 
 foreach($species as $id=>$specie)
 {
-	if(isset($specie['name']) && isset($specie['height']))
+	if(isset($specie['name']) && isset($specie['height'])
+ && (file_exists($id.'/small.png') || file_exists($id.'/small.gif'))
+ && (file_exists($id.'/front.png') || file_exists($id.'/front.gif'))
+ && (file_exists($id.'/back.png') || file_exists($id.'/back.gif'))
+)
 	{
 	?>
 	<monster id="<?php echo $id; ?>"<?php
@@ -284,11 +313,16 @@ while($index<count($specie['type']))
 		hp="<?php echo $specie['base_hp']*5.0; ?>" attack="<?php echo $specie['base_attack']*5.0; ?>" defense="<?php echo $specie['base_defense']*5.0; ?>" special_attack="<?php echo $specie['base_spattack']*5.0; ?>" special_defense="<?php echo $specie['base_spdefense']*5.0; ?>" speed="<?php echo $specie['base_speed']*5.0; ?>" give_sp="100" give_xp="110" pow="1.2">
 		<attack_list>
 <?php
+$temp_attack_list_duplicate=array();
 $temp_move=$specie['moves'];
 foreach($temp_move as $move)
 {
 	if(isset($movetypes_name_to_id[$move[1]]))
-		echo '			<attack level="'.$move[0].'" id="'.$movetypes_name_to_id[$move[1]].'" />'."\n";
+		if(!isset($temp_attack_list_duplicate[$movetypes_name_to_id[$move[1]]]))
+		{
+			$temp_attack_list_duplicate[$movetypes_name_to_id[$move[1]]]=0;
+			echo '			<attack level="'.$move[0].'" id="'.$movetypes_name_to_id[$move[1]].'" />'."\n";
+		}
 }
 ?>
 		</attack_list>
@@ -300,7 +334,8 @@ if(isset($specie['drops']))
 <?php
 $temp_drops=$specie['drops'];
 foreach($temp_drops as $item=>$luck)
-	echo '			<drop item="'.$item.'" luck="'.$luck.'" />'."\n";
+	if(isset($general_items_list[$item]))
+		echo '			<drop item="'.$item.'" luck="'.$luck.'" />'."\n";
 ?>
 		</drops>
 <?php

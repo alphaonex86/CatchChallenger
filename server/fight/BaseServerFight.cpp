@@ -257,7 +257,7 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                             if(!items.contains(dropVar.item))
                                             {
                                                 ok=false;
-                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, the item is not into the item list: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, the item %4 is not into the item list: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(dropVar.item));
                                             }
                                         }
                                         if(ok)
