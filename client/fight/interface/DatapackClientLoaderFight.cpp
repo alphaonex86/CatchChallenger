@@ -141,13 +141,25 @@ void DatapackClientLoader::parseMonstersExtra()
                             monsterExtraEntry.description=tr("Unknown");
                         monsterExtraEntry.front=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("front.png"));
                         if(monsterExtraEntry.front.isNull())
-                            monsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
+                        {
+                            monsterExtraEntry.front=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("front.gif"));
+                            if(monsterExtraEntry.front.isNull())
+                                monsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
+                        }
                         monsterExtraEntry.back=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("back.png"));
                         if(monsterExtraEntry.back.isNull())
-                            monsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
+                        {
+                            monsterExtraEntry.back=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("back.gif"));
+                            if(monsterExtraEntry.back.isNull())
+                                monsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
+                        }
                         monsterExtraEntry.thumb=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("small.png"));
                         if(monsterExtraEntry.thumb.isNull())
-                            monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
+                        {
+                            monsterExtraEntry.thumb=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("small.gif"));
+                            if(monsterExtraEntry.thumb.isNull())
+                                monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
+                        }
                         DatapackClientLoader::datapackLoader.monsterExtra[id]=monsterExtraEntry;
                     }
                 }
@@ -308,6 +320,8 @@ void DatapackClientLoader::parseBuffExtra()
                             monsterBuffExtraEntry.description=tr("Unknown");
                         if(QFile(datapackPath+DATAPACK_BASE_PATH_BUFFICON+QString("%1.png").arg(id)).exists())
                             monsterBuffExtraEntry.icon=QIcon(datapackPath+DATAPACK_BASE_PATH_BUFFICON+QString("%1.png").arg(id));
+                        else if(QFile(datapackPath+DATAPACK_BASE_PATH_BUFFICON+QString("%1.gif").arg(id)).exists())
+                            monsterBuffExtraEntry.icon=QIcon(datapackPath+DATAPACK_BASE_PATH_BUFFICON+QString("%1.gif").arg(id));
                         QList<QSize> availableSizes=monsterBuffExtraEntry.icon.availableSizes();
                         if(monsterBuffExtraEntry.icon.isNull() || availableSizes.isEmpty())
                             monsterBuffExtraEntry.icon=QIcon(":/images/interface/buff.png");
