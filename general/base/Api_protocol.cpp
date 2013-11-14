@@ -2607,6 +2607,12 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             emit newError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
                             return;
                         }
+                        in >> player_informations.public_informations.pseudo;
+                        if(!checkStringIntegrity(data.right(data.size()-in.device()->pos())))
+                        {
+                            emit newError(tr("Procotol wrong or corrupted"),QString("wrong text with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                            return;
+                        }
                         QString tempAllow;
                         in >> tempAllow;
                         player_informations.allow=FacilityLib::StringToAllow(tempAllow);
