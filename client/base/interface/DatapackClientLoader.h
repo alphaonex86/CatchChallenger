@@ -77,6 +77,11 @@ public:
         QString name;
         QString description;
     };
+    struct TypeText
+    {
+        QString name;
+    };
+    QHash<quint32,TypeText> typeExtra;
     QHash<quint32,MonsterExtra> monsterExtra;
     QHash<quint32,MonsterExtra::Buff> monsterBuffsExtra;
     QHash<quint32,MonsterExtra::Skill> monsterSkillsExtra;
@@ -112,6 +117,7 @@ private slots:
     void parsePlantsExtra();
     void parseItemsExtra();
     void parseMaps();
+    void parseTypesExtra();
     void parseMonstersExtra();
     void parseBuffExtra();
     void parseSkillsExtra();

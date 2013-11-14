@@ -192,6 +192,102 @@ void DatapackClientLoader::parseMonstersExtra()
     qDebug() << QString("%1 monster(s) extra loaded").arg(DatapackClientLoader::datapackLoader.monsterExtra.size());
 }
 
+void DatapackClientLoader::parseTypesExtra()
+{
+    //open and quick check the file
+    QFile itemsFile(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml");
+    QByteArray xmlContent;
+    if(!itemsFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        return;
+    }
+    xmlContent=itemsFile.readAll();
+    itemsFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="types")
+    {
+        qDebug() << QString("Unable to open the file: %1, \"list\" root balise not found for the xml file").arg(itemsFile.fileName());
+        return;
+    }
+
+    //load the content
+    {
+        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        QSet<QString> duplicate;
+        QDomElement typeItem = root.firstChildElement("type");
+        while(!typeItem.isNull())
+        {
+            if(typeItem.isElement())
+            {
+                if(typeItem.hasAttribute("name"))
+                {
+                    QString name=typeItem.attribute("name");
+                    if(!duplicate.contains(name))
+                    {
+                        duplicate << name;
+                        TypeText type;
+                        bool found=false;
+                        QDomElement nameItem = typeItem.firstChildElement("name");
+                        if(!language.isEmpty() && language!="en")
+                            while(!nameItem.isNull())
+                            {
+                                if(nameItem.isElement())
+                                {
+                                    if(nameItem.hasAttribute("lang") && nameItem.attribute("lang")==language)
+                                    {
+                                        type.name=nameItem.text();
+                                        found=true;
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
+                                nameItem = nameItem.nextSiblingElement("name");
+                            }
+                        if(!found)
+                        {
+                            nameItem = typeItem.firstChildElement("name");
+                            while(!nameItem.isNull())
+                            {
+                                if(nameItem.isElement())
+                                {
+                                    if(!nameItem.hasAttribute("lang") || nameItem.attribute("lang")=="en")
+                                    {
+                                        type.name=nameItem.text();
+                                        break;
+                                    }
+                                }
+                                else
+                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
+                                nameItem = nameItem.nextSiblingElement("name");
+                            }
+                        }
+                        DatapackClientLoader::datapackLoader.typeExtra[DatapackClientLoader::datapackLoader.typeExtra.size()]=type;
+                    }
+                    else
+                        qDebug() << QString("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                }
+                else
+                    qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+            }
+            else
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+            typeItem = typeItem.nextSiblingElement("type");
+        }
+    }
+
+    qDebug() << QString("%1 type(s) extra loaded").arg(DatapackClientLoader::datapackLoader.typeExtra.size());
+}
+
 void DatapackClientLoader::parseBuffExtra()
 {
     //open and quick check the file
