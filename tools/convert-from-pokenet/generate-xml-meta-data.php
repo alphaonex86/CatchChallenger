@@ -192,6 +192,7 @@ if ($dh = opendir($dir)) {
 		$water=array();
 		$grass=array();
 		$grassNight=array();
+		$fish=array();
 		$content=file_get_contents($file);
 		preg_match_all('#<property name="([^"]+)" value="([^"]+)"#isU',$content,$entry_list);
 		$property=array();
@@ -412,7 +413,7 @@ if ($dh = opendir($dir)) {
 		}
 		$xmlcontent.='</map>';
 		$filexml=str_replace('.tmx','.xml',$file);
-		preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+(".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."|".preg_quote('eJztwQEBAAAAgiD/r25IQAEAAPBoDhAAAQ==').")[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
+		preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+(".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."|".preg_quote('eJztwQEBAAAAgiD/r25IQAEAAPBoDhAAAQ==')."|".preg_quote('eNrtwTEBAAAAwqD1T20MH6AAAAAAvgYQoAAB').")[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
 		foreach($empty_layer as $layer_content)
 			$content=str_replace($layer_content,'',$content);
 		filewrite($filexml,$xmlcontent);

@@ -25,8 +25,8 @@ function cut_layer($layer,$width,$height)
 function clean_map($file)
 {
 	$content=file_get_contents($file);
-	preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+(".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."|".preg_quote('eJztwQEBAAAAgiD/r25IQAEAAPBoDhAAAQ==').")[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
-	$content=preg_replace('#<properties>.*</properties>#isU','',$content);
+	preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+(".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."|".preg_quote('eJztwQEBAAAAgiD/r25IQAEAAPBoDhAAAQ==')."|".preg_quote('eNrtwTEBAAAAwqD1T20MH6AAAAAAvgYQoAAB').")[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
+	$content=preg_replace('#(tileheight="[0-9]+">[ \r\n\t]+)<properties>.*</properties>([ \r\n\t]+<tileset)#isU','$1$2',$content);
 	foreach($empty_layer as $layer_content)
 		$content=str_replace($layer_content,'',$content);
 	/*$width=preg_replace('#^.*<map version="1.0" orientation="orthogonal" width="([0-9]+)" height="([0-9]+)".*$#isU','$1',$content);

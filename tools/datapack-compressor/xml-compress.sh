@@ -1,20 +1,24 @@
 #!/bin/bash
 if [ -x /usr/bin/php ]
 then
-	for VARIABLE in `find ./ -name '*.xml' -type f`
+	TEMPRANDOM=`< /dev/urandom tr -dc A-Za-z0-9 | head -c16`
+	for VARIABLE in `find ./ -name '*.xml' -and ! -name '* *' -type f`
 	do
-		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file
-		mv /tmp/file "${VARIABLE}"
+		echo "compress the file ${VARIABLE}"
+		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file${TEMPRANDOM}
+		mv /tmp/file${TEMPRANDOM} "${VARIABLE}"
 	done
-	for VARIABLE in `find ./ -name '*.tmx' -type f`
+	for VARIABLE in `find ./ -name '*.tmx' -and ! -name '* *' -type f`
 	do
-		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file
-		mv /tmp/file "${VARIABLE}"
+		echo "compress the file ${VARIABLE}"
+		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file${TEMPRANDOM}
+		mv /tmp/file${TEMPRANDOM} "${VARIABLE}"
 	done
-	for VARIABLE in `find ./ -name '*.tsx' -type f`
+	for VARIABLE in `find ./ -name '*.tsx' -and ! -name '* *' -type f`
 	do
-		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file
-		mv /tmp/file "${VARIABLE}"
+		echo "compress the file ${VARIABLE}"
+		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file${TEMPRANDOM}
+		mv /tmp/file${TEMPRANDOM} "${VARIABLE}"
 	done
 fi
 

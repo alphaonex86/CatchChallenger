@@ -128,16 +128,19 @@ int createBorder(QString file)
         {
             offset=mapHeight[mapBorderFile]-map->height();
             offset/=2;
-            qDebug() << file << x << y << "bigger than" << mapBorderFile << "(border left) of" << offset;
         }
-        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",QPointF(0,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset),QSizeF(1,1));
-        mapObject->setProperty("map",mapBorderFile);
-        Tiled::Cell cell=mapObject->cell();
-        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-        if(cell.tile==NULL)
-            qDebug() << "Tile not found";
-        mapObject->setCell(cell);
-        map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        QPointF point(0,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
+        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+        {
+            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
+            mapObject->setProperty("map",mapBorderFile);
+            Tiled::Cell cell=mapObject->cell();
+            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+            if(cell.tile==NULL)
+                qDebug() << "Tile not found";
+            mapObject->setCell(cell);
+            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        }
     }
     //check the right map
     mapBorderFile=QString("%1.%2.tmx").arg(x+1).arg(y);
@@ -148,16 +151,19 @@ int createBorder(QString file)
         {
             offset=mapHeight[mapBorderFile]-map->height();
             offset/=2;
-            qDebug() << file << x << y << "bigger than" << mapBorderFile << "(border right) of" << offset;
         }
-        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",QPointF(map->width()-1,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset),QSizeF(1,1));
-        mapObject->setProperty("map",mapBorderFile);
-        Tiled::Cell cell=mapObject->cell();
-        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-        if(cell.tile==NULL)
-            qDebug() << "Tile not found";
-        mapObject->setCell(cell);
-        map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        QPointF point(map->width()-1,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
+        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+        {
+            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
+            mapObject->setProperty("map",mapBorderFile);
+            Tiled::Cell cell=mapObject->cell();
+            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+            if(cell.tile==NULL)
+                qDebug() << "Tile not found";
+            mapObject->setCell(cell);
+            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        }
     }
     //check the top map
     mapBorderFile=QString("%1.%2.tmx").arg(x).arg(y-1);
@@ -168,16 +174,19 @@ int createBorder(QString file)
         {
             offset=mapWidth[mapBorderFile]-map->width();
             offset/=2;
-            qDebug() << file << x << y << "bigger than" << mapBorderFile << "(border top) of" << offset;
         }
-        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",QPointF(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,0+1),QSizeF(1,1));
-        mapObject->setProperty("map",mapBorderFile);
-        Tiled::Cell cell=mapObject->cell();
-        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-        if(cell.tile==NULL)
-            qDebug() << "Tile not found";
-        mapObject->setCell(cell);
-        map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,0+1);
+        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+        {
+            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
+            mapObject->setProperty("map",mapBorderFile);
+            Tiled::Cell cell=mapObject->cell();
+            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+            if(cell.tile==NULL)
+                qDebug() << "Tile not found";
+            mapObject->setCell(cell);
+            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        }
     }
     //check the bottom map
     mapBorderFile=QString("%1.%2.tmx").arg(x).arg(y+1);
@@ -188,16 +197,19 @@ int createBorder(QString file)
         {
             offset=mapWidth[mapBorderFile]-map->width();
             offset/=2;
-            qDebug() << file << x << y << "bigger than" << mapBorderFile << "(border bottom) of" << offset;
         }
-        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",QPointF(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,map->height()-1+1),QSizeF(1,1));
-        mapObject->setProperty("map",mapBorderFile);
-        Tiled::Cell cell=mapObject->cell();
-        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-        if(cell.tile==NULL)
-            qDebug() << "Tile not found";
-        mapObject->setCell(cell);
-        map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,map->height()-1+1);
+        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height()
+        {
+            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
+            mapObject->setProperty("map",mapBorderFile);
+            Tiled::Cell cell=mapObject->cell();
+            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+            if(cell.tile==NULL)
+                qDebug() << "Tile not found";
+            mapObject->setCell(cell);
+            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+        }
     }
     write.writeMap(map,file);
     return 0;
