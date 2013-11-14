@@ -826,23 +826,36 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
             {
                 if(monsters.isElement())
                 {
-                    if(monsters.hasAttribute("id") && monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel") && monsters.hasAttribute("luck"))
+                    if(monsters.hasAttribute("id") && ((monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel")) || monsters.hasAttribute("level")) && monsters.hasAttribute("luck"))
                     {
                         MapMonster mapMonster;
                         mapMonster.id=monsters.attribute("id").toUInt(&ok);
                         if(!ok)
                             qDebug() << QString("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                        if(ok)
+                        if(monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel"))
                         {
-                            mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
-                            if(!ok)
-                                qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            if(ok)
+                            {
+                                mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
+                                if(!ok)
+                                    qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
+                            if(ok)
+                            {
+                                mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
+                                if(!ok)
+                                    qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
                         }
-                        if(ok)
+                        else
                         {
-                            mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
-                            if(!ok)
-                                qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            if(ok)
+                            {
+                                mapMonster.maxLevel=monsters.attribute("level").toUShort(&ok);
+                                mapMonster.minLevel=mapMonster.maxLevel;
+                                if(!ok)
+                                    qDebug() << QString("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
                         }
                         if(ok)
                         {
@@ -913,7 +926,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
     }
     if(tempGrassLuckTotal!=100 && !map_to_send.grassMonster.isEmpty())
     {
-        qDebug() << QString("total luck is not egal to 100, monsters dropped: child.tagName(): %1 (at line: %2)").arg(grass.tagName()).arg(grass.lineNumber());
+        qDebug() << QString("total luck is not egal to 100 (%3) for grass into %4, monsters dropped: child.tagName(): %1 (at line: %2)").arg(grass.tagName()).arg(grass.lineNumber()).arg(tempGrassLuckTotal).arg(fileName);
         map_to_send.grassMonster.clear();
     }
 
@@ -1016,7 +1029,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
     }
     if(tempWaterLuckTotal!=100 && !map_to_send.waterMonster.isEmpty())
     {
-        qDebug() << QString("total luck is not egal to 100, monsters dropped: child.tagName(): %1 (at line: %2)").arg(water.tagName()).arg(water.lineNumber());
+        qDebug() << QString("total luck is not egal to 100 (%3) for water into %4, monsters dropped: child.tagName(): %1 (at line: %2)").arg(water.tagName()).arg(water.lineNumber()).arg(tempWaterLuckTotal).arg(fileName);
         map_to_send.waterMonster.clear();
     }
 
@@ -1119,7 +1132,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
     }
     if(tempCaveLuckTotal!=100 && !map_to_send.caveMonster.isEmpty())
     {
-        qDebug() << QString("total luck is not egal to 100, monsters dropped: child.tagName(): %1 (at line: %2)").arg(cave.tagName()).arg(cave.lineNumber());
+        qDebug() << QString("total luck is not egal to 100 (%3) for cave into %4, monsters dropped: child.tagName(): %1 (at line: %2)").arg(cave.tagName()).arg(cave.lineNumber()).arg(tempCaveLuckTotal).arg(fileName);
         map_to_send.caveMonster.clear();
     }
 
