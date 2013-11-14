@@ -119,7 +119,7 @@ void BaseWindow::setMultiPlayer(bool multiplayer)
 {
     emit sendsetMultiPlayer(multiplayer);
     //frame_main_display_right->setVisible(multiplayer);
-    ui->frame_main_display_interface_player->setVisible(multiplayer);
+    //ui->frame_main_display_interface_player->setVisible(multiplayer);//displayed when have the player connected (if have)
 }
 
 void BaseWindow::disconnected(QString reason)
