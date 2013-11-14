@@ -10,7 +10,7 @@ the id 0 is the attack when have no attack
 
 <list>\n";
 
-$file=file_get_contents('movetypes.xml');
+$file=file_get_contents('battle/movetypes.xml');
 preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
 $movetypes=array();
 $movetypes_name_to_id=array();
@@ -42,15 +42,17 @@ foreach($entry_list[1] as $entry)
 			$applyOn='themself';
 			$power='+100%';
 		}
-		if(preg_match('#<power>Varies</power>#isU',$name))
+		else if(preg_match('#<power>Varies</power>#isU',$name))
 		{
 			if($description=='')
 				$description='Touch the target multiple times';
-			$power='60';
+			$power='-60';
 		}
-		continue;
+		else
+			$power='0';
 	}
-	$power='-'.preg_replace('#^.*<power>([0-9]+)</power>.*$#isU','$1',$entry);
+	else
+		$power='-'.preg_replace('#^.*<power>([0-9]+)</power>.*$#isU','$1',$entry);
 	if(!preg_match('#<accuracy>[0-9]+</accuracy>#isU',$entry))
 		$accuracy='100';
 	else
