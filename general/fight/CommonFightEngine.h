@@ -76,7 +76,7 @@ protected:
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
     PlayerMonster getRandomMonster(const QList<MapMonster> &monsterList,bool *ok);
     static bool monsterIsKO(const PlayerMonster &playerMonter);
-    Skill::LifeEffectReturn applyLifeEffect(const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
+    Skill::LifeEffectReturn applyLifeEffect(const quint8 &type, const Skill::LifeEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster);
     virtual quint8 getOneSeed(const quint8 &max);
     virtual bool internalTryEscape();
     bool internalTryCapture(const Trap &trap);
