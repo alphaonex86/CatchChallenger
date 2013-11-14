@@ -1,10 +1,12 @@
 #!/bin/bash
 if [ -x /usr/bin/php ]
 then
-	for VARIABLE in `find ./ -name '*.tmx' -type f`
+	TEMPRANDOM=`< /dev/urandom tr -dc A-Za-z0-9 | head -c16`
+	for VARIABLE in `find ./ -name '*.tmx' -and ! -name '* *' -type f`
 	do
-		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file
-		mv /tmp/file "${VARIABLE}"
+		echo "clean of ${VARIABLE}"
+		/usr/bin/php "${BASH_SOURCE[0]}.php" "${VARIABLE}" > /tmp/file${TEMPRANDOM}
+		mv /tmp/file${TEMPRANDOM} "${VARIABLE}"
 	done
 fi
 
