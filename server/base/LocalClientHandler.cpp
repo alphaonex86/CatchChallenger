@@ -316,6 +316,13 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
         localClientHandlerFight.botFightCollision(map,x,y);
     else if(localClientHandlerFight.haveMonsters())
         localClientHandlerFight.checkLoose();
+
+    int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.server_message.size())
+    {
+        emit receiveSystemText(GlobalServerData::serverPrivateVariables.server_message.at(index));
+        index++;
+    }
 }
 
 void LocalClientHandler::createMemoryClan()

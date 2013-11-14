@@ -310,6 +310,7 @@ void MainWindow::load_settings()
     ui->anonymous->setChecked(settings->value("anonymous").toBool());
     ui->min_character->setMaximum(ui->max_character->value());
     ui->max_character->setMinimum(ui->min_character->value());
+    ui->server_message->setPlainText(settings->value("server_message").toString());
 
     quint32 tempValue=0;
     settings->beginGroup("MapVisibilityAlgorithm");
@@ -516,6 +517,7 @@ void MainWindow::send_settings()
     formatedServerSettings.server_port					= ui->server_port->value();
     formatedServerSettings.server_ip					= ui->server_ip->text();
     formatedServerSettings.anonymous					= ui->anonymous->isChecked();
+    formatedServerSettings.server_message				= ui->server_message->toPlainText();
 
     //fight
     formatedServerSettings.pvp			= ui->pvp->isChecked();
@@ -1069,4 +1071,9 @@ void CatchChallenger::MainWindow::on_anonymous_toggled(bool checked)
 {
     Q_UNUSED(checked);
     settings->setValue("anonymous",ui->anonymous->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_server_message_textChanged()
+{
+    settings->setValue("server_message",ui->server_message->toPlainText());
 }

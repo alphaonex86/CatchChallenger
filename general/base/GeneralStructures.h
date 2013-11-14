@@ -487,11 +487,12 @@ struct Skill
         quint32 sp_to_learn;
     };
     QList<Skill::SkillList> level;//first is level 1
+    quint8 type;
 };
 
 struct Monster
 {
-    QString type,type2;
+    QList<quint8> type;
     qint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
     quint8 catch_rate;///< 0 to 100
     quint32 egg_step;///< step to hatch, 0 to no egg and never hatch
@@ -677,6 +678,12 @@ struct Profile
     QList<Monster> monsters;
     QList<Reputation> reputation;
     QList<Item> items;
+};
+
+struct Type
+{
+    QString name;
+    QHash<quint8,qint8> multiplicator;//negative = divide, not multiply
 };
 
 }
