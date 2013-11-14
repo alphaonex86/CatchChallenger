@@ -690,6 +690,11 @@ void MainWindow::on_lineEditPass_returnPressed()
 
 void MainWindow::on_pushButtonTryLogin_clicked()
 {
+    if(ui->lineEditPass->text().size()<6)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
+        return;
+    }
     serverMode=ServerMode_Remote;
     if(customServerConnexion.contains(selectedServer))
         settings.beginGroup(QString("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
