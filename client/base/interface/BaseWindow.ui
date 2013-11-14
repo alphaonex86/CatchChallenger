@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>16</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -5872,6 +5872,22 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
+            </property>
+           </widget>
+           <widget class="QLabel" name="monsterDetailsType">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>360</y>
+              <width>201</width>
+              <height>21</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string notr="true">Type: </string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </widget>
