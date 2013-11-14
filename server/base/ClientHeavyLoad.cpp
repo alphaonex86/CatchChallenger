@@ -1112,6 +1112,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         out << (quint8)player_informations->public_and_private_informations.public_informations.simplifiedId;
     else
         out << (quint16)player_informations->public_and_private_informations.public_informations.simplifiedId;
+    out << player_informations->public_and_private_informations.public_informations.pseudo;
     out << FacilityLib::allowToString(player_informations->public_and_private_informations.allow);
     out << (quint32)player_informations->public_and_private_informations.clan;
     if(player_informations->public_and_private_informations.clan!=0)
