@@ -14,7 +14,7 @@ function filewrite($file,$content)
 
 $dir = "./";
 
-$file=file_get_contents('species.xml');
+$file=file_get_contents('../monsters/species.xml');
 preg_match_all('#<pokemonSpecies>(.*)</pokemonSpecies>#isU',$file,$entry_list);
 $species=array();
 $name_to_id=array();
@@ -74,7 +74,7 @@ foreach($entry_list[1] as $entry)
 	);
 }
 
-$file=file_get_contents('polrdb.xml');
+$file=file_get_contents('../monsters/polrdb.xml');
 preg_match_all('#<POLRDataEntry>(.*)</POLRDataEntry>#isU',$file,$entry_list);
 foreach($entry_list[1] as $entry)
 {
@@ -317,6 +317,46 @@ if ($dh = opendir($dir)) {
 					$water[0]['luck']+=100-$total_luck;
 			}
 		}
+		if(isset($property['fishPokemonLevels']) && isset($property['fishPokemonChances']))
+		{
+			$fishPokemonLevelsList=preg_split('#;#',$property['fishPokemonLevels']);
+			$fishPokemonChancesList=preg_split('#;#',$property['fishPokemonChances']);
+			if(count($fishPokemonLevelsList)>0 && count($fishPokemonLevelsList)==count($fishPokemonChancesList))
+			{
+				$total_luck=0;
+				$index=0;
+				while($index<count($fishPokemonLevelsList))
+				{
+					$tempSplit=$tempSplit=preg_split('#-#',$fishPokemonLevelsList[$index]);
+					if(count($tempSplit)!=2)
+					{
+						$index++;
+						continue;
+					}
+					$minLevel=$tempSplit[0];
+					$maxLevel=$tempSplit[1];
+					$tempSplit=$tempSplit=preg_split('#,#',$fishPokemonChancesList[$index]);
+					if(count($tempSplit)!=2)
+					{
+						$index++;
+						continue;
+					}
+					$name=$tempSplit[0];
+					$luck=$tempSplit[1];
+					if(!isset($name_to_id[$name]))
+					{
+						$index++;
+						continue;
+					}
+					$id=$name_to_id[$name];
+					$total_luck+=$luck;
+					$fish[]=array('minLevel'=>$minLevel,'maxLevel'=>$maxLevel,'id'=>$id,'luck'=>$luck);
+					$index++;
+				}
+				if(count($fish)>0 && $total_luck!=100)
+					$fish[0]['luck']+=100-$total_luck;
+			}
+		}
 		if(isset($property['pvp']) && $property['pvp']=='disabled')
 			$type='city';
 		else
@@ -358,9 +398,21 @@ if ($dh = opendir($dir)) {
 			}
 			$xmlcontent.='	</water>'."\n";
 		}
+		if(count($fish)>0)
+		{
+			$xmlcontent.='	<fish>'."\n";
+			foreach($fish as $monster)
+			{
+				if($monster['minLevel']==$monster['maxLevel'])
+					$xmlcontent.='		<monster level="'.$monster['minLevel'].'" luck="'.$monster['luck'].'" id="'.$monster['id'].'" />'."\n";
+				else
+					$xmlcontent.='		<monster minLevel="'.$monster['minLevel'].'" maxLevel="'.$monster['maxLevel'].'" luck="'.$monster['luck'].'" id="'.$monster['id'].'" />'."\n";
+			}
+			$xmlcontent.='	</fish>'."\n";
+		}
 		$xmlcontent.='</map>';
 		$filexml=str_replace('.tmx','.xml',$file);
-		preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
+		preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+(".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."|".preg_quote('eJztwQEBAAAAgiD/r25IQAEAAPBoDhAAAQ==').")[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
 		foreach($empty_layer as $layer_content)
 			$content=str_replace($layer_content,'',$content);
 		filewrite($filexml,$xmlcontent);

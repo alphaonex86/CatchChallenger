@@ -7,7 +7,14 @@ foreach($entry_list[1] as $entry)
 	if(!preg_match('#<m_id>[0-9]+</m_id>#isU',$entry))
 		continue;
 	$id=preg_replace('#^.*<m_id>([0-9]+)</m_id>.*$#isU','$1',$entry);
-	if(file_exists($id.'.png'))
+	if(!preg_match('#<m_category>[^<]+</m_category>#isU',$entry))
+		continue;
+	$category=preg_replace('#^.*<m_category>([^<]+)</m_category>.*$#isU','$1',$entry);
+	if($category!='TM')
+		$image=$id.'.png';
+	else
+		$image='TM.png';
+	if(file_exists($image))
 	{
 		if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
 			continue;
@@ -20,7 +27,7 @@ foreach($entry_list[1] as $entry)
 			continue;
 		$price=preg_replace('#^.*<m_price>([0-9]+)</m_price>.*$#isU','$1',$entry);
 		?>
-    <item id="<?php echo $id; ?>" image="<?php echo $id; ?>.png" price="<?php echo $price; ?>">
+    <item id="<?php echo $id; ?>" image="<?php echo $image; ?>" price="<?php echo $price; ?>">
         <name><?php echo $name; ?></name>
         <description><?php echo $description; ?></description>
     </item>
