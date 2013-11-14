@@ -1675,6 +1675,18 @@ ServerSettings BaseServer::getSettings()
 
 void BaseServer::loadAndFixSettings()
 {
+    GlobalServerData::serverPrivateVariables.server_message=GlobalServerData::serverSettings.server_message.split(QRegularExpression("[\n\r]+"));
+    while(GlobalServerData::serverPrivateVariables.server_message.size()>16)
+        GlobalServerData::serverPrivateVariables.server_message.removeLast();
+    int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.server_message.size())
+    {
+        GlobalServerData::serverPrivateVariables.server_message[index].truncate(128);
+        index++;
+    }
+    while(GlobalServerData::serverPrivateVariables.server_message.last().isEmpty())
+        GlobalServerData::serverPrivateVariables.server_message.removeLast();
+
     if(CommonSettings::commonSettings.max_character<CommonSettings::commonSettings.min_character)
         CommonSettings::commonSettings.max_character=CommonSettings::commonSettings.min_character;
     if(CommonSettings::commonSettings.character_delete_time<=0)

@@ -35,11 +35,13 @@ public:
     QHash<quint32,Industry> industries;
     QHash<quint32,quint32> industriesLink;
     QList<Profile> profileList;
+    QList<Type> types;
 private:
     QMutex inProgress;
     bool isParsed;
     QString datapackPath;
 private slots:
+    void parseTypes();
     void parseItems();
     void parseIndustries();
     void parseQuests();

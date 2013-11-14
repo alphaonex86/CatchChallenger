@@ -483,7 +483,7 @@ bool CommonFightEngine::monsterIsKO(const PlayerMonster &playerMonter)
     return playerMonter.hp<=0 || playerMonter.egg_step>0;
 }
 
-Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffect &effect,PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster)
+Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,const Skill::LifeEffect &effect,PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster)
 {
     qint32 quantity;
     Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
@@ -508,6 +508,24 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const Skill::LifeEffe
             quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
         else if(effect.quantity>0)//ignore the def for heal
             quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        const QList<quint8> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster].type;
+        if(type!=255 && !typeList.isEmpty())
+        {
+            int index=0;
+            while(index<typeList.size())
+            {
+                const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
+                if(typeDefinition.multiplicator.contains(type))
+                {
+                    const qint8 &multiplicator=typeDefinition.multiplicator[type];
+                    if(multiplicator>=0)
+                        quantity*=multiplicator;
+                    else
+                        quantity/=-multiplicator;
+                }
+                index++;
+            }
+        }
     }
     else
         quantity=((qint64)currentMonster->hp*(qint64)effect.quantity)/(qint64)100;
@@ -1535,7 +1553,8 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     attackReturn.doByTheCurrentMonster=true;
     attackReturn.attack=skill;
     attackReturn.success=false;
-    const Skill::SkillList &skillList=CommonDatapack::commonDatapack.monsterSkills[skill].level.at(skillLevel-1);
+    const Skill &skillDef=CommonDatapack::commonDatapack.monsterSkills[skill];
+    const Skill::SkillList &skillList=skillDef.level.at(skillLevel-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
     emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
     #endif
@@ -1557,7 +1576,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                 attackReturn.success=true;//the attack have work because at less have a buff
                 Skill::LifeEffectReturn lifeEffectReturn;
                 lifeEffectReturn.on=life.effect.on;
-                lifeEffectReturn.quantity=applyLifeEffect(life.effect,currentMonster,otherMonster).quantity;
+                lifeEffectReturn.quantity=applyLifeEffect(skillDef.type,life.effect,currentMonster,otherMonster).quantity;
                 attackReturn.lifeEffectMonster << lifeEffectReturn;
             }
             index++;

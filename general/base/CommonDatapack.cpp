@@ -28,6 +28,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     if(isParsed)
         return;
     this->datapackPath=datapackPath;
+    parseTypes();
     parseItems();
     parsePlants();
     parseCraftingRecipes();
@@ -40,6 +41,13 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseIndustries();
     parseProfileList();
     isParsed=true;
+}
+
+
+void CommonDatapack::parseTypes()
+{
+    types=FightLoader::loadTypes(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"types.xml");
+    qDebug() << QString("%1 type(s) loaded").arg(types.size());
 }
 
 void CommonDatapack::parseItems()
@@ -91,13 +99,13 @@ void CommonDatapack::parseBuff()
 
 void CommonDatapack::parseSkills()
 {
-    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"skill.xml",monsterBuffs);
+    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"skill.xml",monsterBuffs,types);
     qDebug() << QString("%1 monster skill(s) loaded").arg(monsterSkills.size());
 }
 
 void CommonDatapack::parseMonsters()
 {
-    monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",monsterSkills);
+    monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",monsterSkills,types);
     qDebug() << QString("%1 monster(s) loaded").arg(monsters.size());
 }
 
@@ -131,6 +139,7 @@ void CommonDatapack::unload()
     items.trap.clear();
     industries.clear();
     profileList.clear();
+    types.clear();
     isParsed=false;
 }
 

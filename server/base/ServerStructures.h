@@ -100,6 +100,7 @@ struct ServerSettings
     QString server_ip;
     QString datapack_basePath;
     bool anonymous;
+    QString server_message;
 
     struct Database
     {
@@ -242,6 +243,7 @@ struct ServerPrivateVariables
     quint16 connected_players;
     PlayerUpdater player_updater;
     QSet<quint32> connected_players_id_list;
+    QStringList server_message;
 
     //bot
     struct BotSpawn
