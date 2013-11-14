@@ -2678,6 +2678,24 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
             const DatapackClientLoader::MonsterExtra &monsterExtraInfo=DatapackClientLoader::datapackLoader.monsterExtra[monster.monster];
             const Monster &monsterGeneralInfo=CommonDatapack::commonDatapack.monsters[monster.monster];
             const Monster::Stat &stat=CommonFightEngine::getStat(monsterGeneralInfo,monster.level);
+            if(monsterGeneralInfo.type.isEmpty())
+                ui->monsterDetailsType->setText(QString());
+            else
+            {
+                QStringList typeList;
+                int sub_index=0;
+                while(sub_index<monsterGeneralInfo.type.size())
+                {
+                    if(DatapackClientLoader::datapackLoader.typeExtra.contains(monsterGeneralInfo.type.at(sub_index)))
+                        if(!DatapackClientLoader::datapackLoader.typeExtra[monsterGeneralInfo.type.at(sub_index)].name.isEmpty())
+                            typeList << DatapackClientLoader::datapackLoader.typeExtra[monsterGeneralInfo.type.at(sub_index)].name;
+                    sub_index++;
+                }
+                if(typeList.isEmpty())
+                    ui->monsterDetailsType->setText(QString());
+                else
+                    ui->monsterDetailsType->setText(tr("Type: %1").arg(typeList.join(", ")));
+            }
             ui->monsterDetailsName->setText(monsterExtraInfo.name);
             {
                 QPixmap front=monsterExtraInfo.front;
@@ -2740,10 +2758,15 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                         item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name).arg(playerSkill.level));
                     else
                         item=new QListWidgetItem(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name);
+                    const Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerSkill.skill];
                     item->setText(item->text()+", "+tr("endurance: %1/%2")
                             .arg(playerSkill.endurance)
-                            .arg(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerSkill.skill].level.at(playerSkill.level-1).endurance)
+                            .arg(skill.level.at(playerSkill.level-1).endurance)
                             );
+                    if(skill.type!=255)
+                        if(DatapackClientLoader::datapackLoader.typeExtra.contains(skill.type))
+                            if(!DatapackClientLoader::datapackLoader.typeExtra[skill.type].name.isEmpty())
+                                item->setText(item->text()+", "+DatapackClientLoader::datapackLoader.typeExtra[skill.type].name);
                     item->setText(item->text()+"\n"+DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                     item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
                 }

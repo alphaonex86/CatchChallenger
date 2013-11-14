@@ -60,6 +60,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(":/images/inventory/unknow-object.png");
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
+    parseTypesExtra();
     parseItemsExtra();
     parseMaps();
     parseSkins();
@@ -297,6 +298,7 @@ void DatapackClientLoader::resetAll()
     monsterSkillsExtra.clear();
     audioAmbiance.clear();
     zonesExtra.clear();
+    typeExtra.clear();
     {
          QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
          while (i.hasNext()) {
