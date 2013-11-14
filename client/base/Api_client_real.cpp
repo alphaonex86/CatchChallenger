@@ -163,6 +163,11 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
 
     QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
 
+    if(!file.remove())
+    {
+        DebugClass::debugConsole(QString("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+        return;
+    }
     if(!file.open(QIODevice::WriteOnly))
     {
         DebugClass::debugConsole(QString("Can't open: %1: %2").arg(fileName).arg(file.errorString()));

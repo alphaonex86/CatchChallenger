@@ -203,6 +203,7 @@ if ($dh = opendir($dir)) {
 			$dayPokemonChancesList=preg_split('#;#',$property['dayPokemonChances']);
 			if(count($dayPokemonLevelsList)>0 && count($dayPokemonLevelsList)==count($dayPokemonChancesList))
 			{
+				$total_luck=0;
 				$index=0;
 				while($index<count($dayPokemonLevelsList))
 				{
@@ -228,9 +229,12 @@ if ($dh = opendir($dir)) {
 						continue;
 					}
 					$id=$name_to_id[$name];
+					$total_luck+=$luck;
 					$grass[]=array('minLevel'=>$minLevel,'maxLevel'=>$maxLevel,'id'=>$id,'luck'=>$luck);
 					$index++;
 				}
+				if(count($grass)>0 && $total_luck!=100)
+					$grass[0]['luck']+=100-$total_luck;
 			}
 		}
 		if(isset($property['nightPokemonLevels']) && isset($property['nightPokemonChances']))
@@ -239,6 +243,7 @@ if ($dh = opendir($dir)) {
 			$nightPokemonChancesList=preg_split('#;#',$property['nightPokemonChances']);
 			if(count($nightPokemonLevelsList)>0 && count($nightPokemonLevelsList)==count($nightPokemonChancesList))
 			{
+				$total_luck=0;
 				$index=0;
 				while($index<count($nightPokemonLevelsList))
 				{
@@ -264,9 +269,12 @@ if ($dh = opendir($dir)) {
 						continue;
 					}
 					$id=$name_to_id[$name];
+					$total_luck+=$luck;
 					$grassNight[]=array('minLevel'=>$minLevel,'maxLevel'=>$maxLevel,'id'=>$id,'luck'=>$luck);
 					$index++;
 				}
+				if(count($grassNight)>0 && $total_luck!=100)
+					$grassNight[0]['luck']+=100-$total_luck;
 			}
 		}
 		if(isset($property['waterPokemonLevels']) && isset($property['waterPokemonChances']))
@@ -275,6 +283,7 @@ if ($dh = opendir($dir)) {
 			$waterPokemonChancesList=preg_split('#;#',$property['waterPokemonChances']);
 			if(count($waterPokemonLevelsList)>0 && count($waterPokemonLevelsList)==count($waterPokemonChancesList))
 			{
+				$total_luck=0;
 				$index=0;
 				while($index<count($waterPokemonLevelsList))
 				{
@@ -300,9 +309,12 @@ if ($dh = opendir($dir)) {
 						continue;
 					}
 					$id=$name_to_id[$name];
+					$total_luck+=$luck;
 					$water[]=array('minLevel'=>$minLevel,'maxLevel'=>$maxLevel,'id'=>$id,'luck'=>$luck);
 					$index++;
 				}
+				if(count($water)>0 && $total_luck!=100)
+					$water[0]['luck']+=100-$total_luck;
 			}
 		}
 		if(isset($property['pvp']) && $property['pvp']=='disabled')
