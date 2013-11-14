@@ -132,6 +132,11 @@ void MainWindow::on_lineEditPass_returnPressed()
 
 void MainWindow::on_pushButtonTryLogin_clicked()
 {
+    if(ui->lineEditPass->text().size()<6)
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
+        return;
+    }
     settings.setValue("login",ui->lineEditLogin->text());
     if(ui->checkBoxRememberPassword->isChecked())
         settings.setValue("pass",ui->lineEditPass->text());
