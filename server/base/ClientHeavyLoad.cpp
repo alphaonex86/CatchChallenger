@@ -120,7 +120,15 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
     out << (quint8)02;
-    out << (quint16)GlobalServerData::serverSettings.max_players;
+    if(GlobalServerData::serverSettings.sendPlayerNumber)
+        out << (quint16)GlobalServerData::serverSettings.max_players;
+    else
+    {
+        if(GlobalServerData::serverSettings.max_players<=255)
+            out << (quint16)255;
+        else
+            out << (quint16)65535;
+    }
     if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
         out << (quint32)0x00000000;
     else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
