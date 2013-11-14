@@ -635,6 +635,8 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("automatic_account_creation",false);
     if(!settings->contains("anonymous"))
         settings->setValue("anonymous",false);
+    if(!settings->contains("server_message"))
+        settings->setValue("server_message",QString());
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))

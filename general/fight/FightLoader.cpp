@@ -19,8 +19,141 @@ bool CatchChallenger::operator<(const Monster::AttackToLearn &entry1, const Mons
         return entry1.learnSkill < entry2.learnSkill;
 }
 
-QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash<quint32, Skill> &monsterSkills)
+QList<Type> FightLoader::loadTypes(const QString &file)
 {
+    QHash<QString,quint8> nameToId;
+    QList<Type> types;
+    //open and quick check the file
+    QFile itemsFile(file);
+    QByteArray xmlContent;
+    if(!itemsFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        return types;
+    }
+    xmlContent=itemsFile.readAll();
+    itemsFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        return types;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="types")
+    {
+        qDebug() << QString("Unable to open the file: %1, \"list\" root balise not found for the xml file").arg(itemsFile.fileName());
+        return types;
+    }
+
+    //load the content
+    bool ok;
+    {
+        QSet<QString> duplicate;
+        QDomElement typeItem = root.firstChildElement("type");
+        while(!typeItem.isNull())
+        {
+            if(typeItem.isElement())
+            {
+                if(typeItem.hasAttribute("name"))
+                {
+                    QString name=typeItem.attribute("name");
+                    if(!duplicate.contains(name))
+                    {
+                        duplicate << name;
+                        Type type;
+                        type.name=name;
+                        nameToId[type.name]=types.size();
+                        types << type;
+                    }
+                    else
+                        qDebug() << QString("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                }
+                else
+                    qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+            }
+            else
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+            typeItem = typeItem.nextSiblingElement("type");
+        }
+    }
+    {
+        QSet<QString> duplicate;
+        QDomElement typeItem = root.firstChildElement("type");
+        while(!typeItem.isNull())
+        {
+            if(typeItem.isElement())
+            {
+                if(typeItem.hasAttribute("name"))
+                {
+                    QString name=typeItem.attribute("name");
+                    if(!duplicate.contains(name))
+                    {
+                        duplicate << name;
+                        QDomElement multiplicator = typeItem.firstChildElement("multiplicator");
+                        while(!multiplicator.isNull())
+                        {
+                            if(multiplicator.isElement())
+                            {
+                                if(multiplicator.hasAttribute("number") && multiplicator.hasAttribute("to"))
+                                {
+                                    float number=multiplicator.attribute("number").toFloat(&ok);
+                                    QStringList to=multiplicator.attribute("to").split(";");
+                                    if(ok && (number==2.0 || number==0.5 || number==0.0))
+                                    {
+                                        int index=0;
+                                        while(index<to.size())
+                                        {
+                                            if(nameToId.contains(to.at(index)))
+                                            {
+                                                if(number==0)
+                                                    types[nameToId[to.at(index)]].multiplicator[nameToId[to.at(index)]]=0;
+                                                else if(number>1)
+                                                    types[nameToId[to.at(index)]].multiplicator[nameToId[to.at(index)]]=number;
+                                                else
+                                                    types[nameToId[to.at(index)]].multiplicator[nameToId[to.at(index)]]=-(1.0/number);
+                                            }
+                                            else
+                                                qDebug() << QString("Unable to open the file: %1, name is not into list: %4 is not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber()).arg(to.at(index));
+                                            index++;
+                                        }
+                                    }
+                                    else
+                                        qDebug() << QString("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                                }
+                                else
+                                    qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                            }
+                            else
+                                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                            multiplicator = multiplicator.nextSiblingElement("multiplicator");
+                        }
+                    }
+                    else
+                        qDebug() << QString("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                }
+                else
+                    qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+            }
+            else
+                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+            typeItem = typeItem.nextSiblingElement("type");
+        }
+    }
+    return types;
+}
+
+QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash<quint32, Skill> &monsterSkills,const QList<Type> &types)
+{
+    QHash<QString,quint8> typeNameToId;
+    int index=0;
+    while(index<types.size())
+    {
+        typeNameToId[types.at(index).name]=index;
+        index++;
+    }
     QHash<quint32,Monster> monsters;
     //open and quick check the file
     QFile xmlFile(file);
@@ -128,6 +261,20 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                     #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                     DebugClass::debugConsole(QString("monster loading: %1").arg(id));
                     #endif
+                    if(item.hasAttribute("type"))
+                    {
+                        if(typeNameToId.contains(item.attribute("type")))
+                            monster.type << typeNameToId[item.attribute("type")];
+                        else
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
+                    }
+                    if(item.hasAttribute("type2"))
+                    {
+                        if(typeNameToId.contains(item.attribute("type2")))
+                            monster.type << typeNameToId[item.attribute("type2")];
+                        else
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
+                    }
                     qreal pow=3;
                     if(ok)
                     {
@@ -449,7 +596,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                 while(entryValid && !monster.isNull())
                                 {
                                     if(!monster.hasAttribute("id"))
-                                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(monster.tagName()).arg(monster.lineNumber()));
+                                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"id\": bot.tagName(): %1 (at line: %2)").arg(monster.tagName()).arg(monster.lineNumber()));
                                     else if(!monster.isElement())
                                         CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(monster.tagName().arg(monster.attribute("type")).arg(monster.lineNumber())));
                                     else
@@ -586,8 +733,15 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
     return botFightList;
 }
 
-QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QHash<quint32, Buff> &monsterBuffs)
+QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QHash<quint32, Buff> &monsterBuffs, const QList<Type> &types)
 {
+    QHash<QString,quint8> typeNameToId;
+    int index=0;
+    while(index<types.size())
+    {
+        typeNameToId[types.at(index).name]=index;
+        index++;
+    }
     QHash<quint32,Skill> monsterSkills;
     //open and quick check the file
     QFile xmlFile(file);
@@ -829,6 +983,17 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                             }
                             if(levelDef.size()==0)
                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, 0 level found: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                            else
+                            {
+                                monsterSkills[id].type=255;
+                                if(item.hasAttribute("type"))
+                                {
+                                    if(typeNameToId.contains(item.attribute("type")))
+                                        monsterSkills[id].type=typeNameToId[item.attribute("type")];
+                                    else
+                                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, type not found: %4: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
+                                }
+                            }
                             //order by level to learn
                             quint8 index=1;
                             while(levelDef.contains(index))
