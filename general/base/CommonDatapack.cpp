@@ -46,7 +46,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
 
 void CommonDatapack::parseTypes()
 {
-    types=FightLoader::loadTypes(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"types.xml");
+    types=FightLoader::loadTypes(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml");
     qDebug() << QString("%1 type(s) loaded").arg(types.size());
 }
 
