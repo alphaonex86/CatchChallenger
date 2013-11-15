@@ -392,6 +392,40 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         emit error(QString("skin provided: %1 is not into skin listed").arg(skin));
         return;
     }
+
+    //check
+    QString queryText;
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            queryText=QString("SELECT `id` FROM `character` WHERE `pseudo`='%1'").arg(SqlFunction::quoteSqlVariable(pseudo));
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            queryText=QString("SELECT id FROM character WHERE pseudo='%1'").arg(SqlFunction::quoteSqlVariable(pseudo));
+        break;
+    }
+    QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
+    if(!monstersQuery.exec(queryText))
+    {
+        emit message(monstersQuery.lastQuery()+": "+monstersQuery.lastError().text());
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint32)0x00000000;
+        emit postReply(query_id,outputData);
+        return;
+    }
+    if(monstersQuery.next())
+    {
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint32)0x00000000;
+        emit postReply(query_id,outputData);
+        return;
+    }
+
     player_informations->number_of_character++;
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
 

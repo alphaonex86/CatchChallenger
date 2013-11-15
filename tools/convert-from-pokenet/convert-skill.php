@@ -28,7 +28,7 @@ foreach($entry_list[1] as $entry)
 	$description=preg_replace('#^.*<description>([^<]*)</description>.*$#isU','$1',$entry);
 	if(!preg_match('#<type>[^<]+</type>#isU',$entry))
 		continue;
-	$type=preg_replace('#^.*<type>([^<]+)</type>.*$#isU','$1',$entry);
+	$type=strtolower(preg_replace('#^.*<type>([^<]+)</type>.*$#isU','$1',$entry));
 	if(!preg_match('#<category>[^<]+</category>#isU',$entry))
 		continue;
 	$category=preg_replace('#^.*<category>([^<]+)</category>.*$#isU','$1',$entry);
