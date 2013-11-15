@@ -561,8 +561,16 @@ if ($dh = opendir($dir)) {
 						$grass[]=array('minLevel'=>$minLevel,'maxLevel'=>$maxLevel,'id'=>$id,'luck'=>$luck);
 					$index++;
 				}
-				if(count($grass)>0 && $total_luck!=100)
-					$grass[0]['luck']+=100-$total_luck;
+				if(isset($property['isCave']) && $property['isCave']=='true')
+				{
+					if(count($cave)>0 && $total_luck!=100)
+						$cave[0]['luck']+=100-$total_luck;
+				}
+				else
+				{
+					if(count($grass)>0 && $total_luck!=100)
+						$grass[0]['luck']+=100-$total_luck;
+				}
 			}
 		}
 		if(isset($property['nightPokemonLevels']) && isset($property['nightPokemonChances']))
