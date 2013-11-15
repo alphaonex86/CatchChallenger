@@ -71,14 +71,19 @@ void BaseWindow::newCharacterId(const quint32 &characterId)
 {
     CharacterEntry characterEntry=characterEntryListInWaiting.first();
     characterEntryListInWaiting.removeFirst();
-    characterEntry.character_id=characterId;
-    characterEntryList << characterEntry;
-    updateCharacterList();
-    ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
-    //if(characterEntryList.size()>=CommonSettings::commonSettings.min_character && characterEntryList.size()<=CommonSettings::commonSettings.max_character)
-        on_character_select_clicked();
-/*    else
-        ui->stackedWidget->setCurrentWidget(ui->page_character);*/
+    if(characterId>0)
+    {
+        characterEntry.character_id=characterId;
+        characterEntryList << characterEntry;
+        updateCharacterList();
+        ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
+        //if(characterEntryList.size()>=CommonSettings::commonSettings.min_character && characterEntryList.size()<=CommonSettings::commonSettings.max_character)
+            on_character_select_clicked();
+    /*    else
+            ui->stackedWidget->setCurrentWidget(ui->page_character);*/
+    }
+    else
+        QMessageBox::warning(this,tr("Error"),tr("Unable to create the character, try with another pseudo"));
 }
 
 void BaseWindow::updateCharacterList()
