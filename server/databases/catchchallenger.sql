@@ -24,6 +24,23 @@ CREATE TABLE IF NOT EXISTS `account` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `account_register`
+--
+
+CREATE TABLE IF NOT EXISTS `account_register` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `login` varchar(128) NOT NULL,
+  `password` varchar(128) NOT NULL,
+  `email` varchar(64) NOT NULL,
+  `key` text NOT NULL,
+  `date` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `login_2` (`login`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `bitcoin_history`
 --
 
@@ -219,31 +236,6 @@ CREATE TABLE IF NOT EXISTS `plant` (
   `plant_timestamps` int(11) NOT NULL,
   PRIMARY KEY (`map`,`x`,`y`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `player_register`
---
-
-CREATE TABLE IF NOT EXISTS `player_register` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `login` varchar(32) NOT NULL,
-  `password` varchar(128) NOT NULL,
-  `pseudo` varchar(255) NOT NULL,
-  `skin` varchar(16) NOT NULL,
-  `x` int(11) NOT NULL,
-  `y` int(11) NOT NULL,
-  `orientation` enum('top','bottom','left','right') NOT NULL,
-  `map` text NOT NULL,
-  `cash` bigint(20) NOT NULL,
-  `email` varchar(64) NOT NULL,
-  `key` text NOT NULL,
-  `date` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `login_2` (`login`),
-  UNIQUE KEY `pseudo_2` (`pseudo`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
