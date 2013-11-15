@@ -508,23 +508,131 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     return false;
                 }
                 if(name=="Walkable")
-                    Walkable=data;
+                {
+                    if(Walkable.isEmpty())
+                        Walkable=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<Walkable.size())
+                        {
+                            Walkable[index]=Walkable[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="Collisions")
-                    Collisions=data;
+                {
+                    if(Collisions.isEmpty())
+                        Collisions=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<Collisions.size())
+                        {
+                            Collisions[index]=Collisions[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="Water")
-                    Water=data;
+                {
+                    if(Water.isEmpty())
+                        Water=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<Water.size())
+                        {
+                            Water[index]=Water[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="Grass")
-                    Grass=data;
+                {
+                    if(Grass.isEmpty())
+                        Grass=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<Grass.size())
+                        {
+                            Grass[index]=Grass[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="Dirt")
-                    Dirt=data;
+                {
+                    if(Dirt.isEmpty())
+                        Dirt=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<Dirt.size())
+                        {
+                            Dirt[index]=Dirt[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="LedgesRight")
-                    LedgesRight=data;
+                {
+                    if(LedgesRight.isEmpty())
+                        LedgesRight=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<LedgesRight.size())
+                        {
+                            LedgesRight[index]=LedgesRight[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="LedgesLeft")
-                    LedgesLeft=data;
+                {
+                    if(LedgesLeft.isEmpty())
+                        LedgesLeft=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<LedgesLeft.size())
+                        {
+                            LedgesLeft[index]=LedgesLeft[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="LedgesBottom")
-                    LedgesBottom=data;
+                {
+                    if(LedgesBottom.isEmpty())
+                        LedgesBottom=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<LedgesBottom.size())
+                        {
+                            LedgesBottom[index]=LedgesBottom[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
                 else if(name=="LedgesTop")
-                    LedgesTop=data;
+                {
+                    if(LedgesTop.isEmpty())
+                        LedgesTop=data;
+                    else
+                    {
+                        int index=0;
+                        while(index<LedgesTop.size())
+                        {
+                            LedgesTop[index]=LedgesTop[index] || data[index];
+                            index++;
+                        }
+                    }
+                }
             }
         }
         child = child.nextSiblingElement("layer");
