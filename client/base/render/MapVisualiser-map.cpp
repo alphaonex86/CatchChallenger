@@ -126,7 +126,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
             if(i.value().properties.contains("skin"))
                 skin=i.value().properties["skin"];
             else
-                skin="empty";
+                skin=QString();
             QString direction;
             if(i.value().properties.contains("lookAt"))
                 direction=i.value().properties["lookAt"];
