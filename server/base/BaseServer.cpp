@@ -1684,8 +1684,15 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverPrivateVariables.server_message[index].truncate(128);
         index++;
     }
-    while(GlobalServerData::serverPrivateVariables.server_message.last().isEmpty())
-        GlobalServerData::serverPrivateVariables.server_message.removeLast();
+    bool removeTheLastList;
+    do
+    {
+        removeTheLastList=!GlobalServerData::serverPrivateVariables.server_message.isEmpty();
+        if(removeTheLastList)
+            removeTheLastList=GlobalServerData::serverPrivateVariables.server_message.last().isEmpty();
+        if(removeTheLastList)
+            GlobalServerData::serverPrivateVariables.server_message.removeLast();
+    } while(removeTheLastList);
 
     if(CommonSettings::commonSettings.max_character<CommonSettings::commonSettings.min_character)
         CommonSettings::commonSettings.max_character=CommonSettings::commonSettings.min_character;
