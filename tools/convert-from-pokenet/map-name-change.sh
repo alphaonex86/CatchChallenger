@@ -15,7 +15,7 @@
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/(6)/-6/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/(7)/-7/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/(8)/-8/g" {} \;
-/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/.PNG/.png/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i 's/.PNG"/.png"/g' {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Sinnoh /Sinnoh-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Land /Land-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Sea /Sea-/g" {} \;
@@ -49,6 +49,10 @@
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Gyms /Gyms-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Gym /Gym-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Oreburgh /Oreburgh-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Realgam /Realgam-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Tower /Tower-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Fire /Fire-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tsx' -exec sed -i "s/Red /Red-/g" {} \;
 
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Tileset /Tileset-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/ 1.tsx/-1.tsx/g" {} \;
@@ -66,7 +70,6 @@
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/(6)/-6/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/(7)/-7/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/(8)/-8/g" {} \;
-/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/.PNG/.png/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Sinnoh /Sinnoh-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Land /Land-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Sea /Sea-/g" {} \;
@@ -100,3 +103,7 @@
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Gyms /Gyms-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Gym /Gym-/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Oreburgh /Oreburgh-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Realgam /Realgam-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Tower /Tower-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Fire /Fire-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Red /Red-/g" {} \;
