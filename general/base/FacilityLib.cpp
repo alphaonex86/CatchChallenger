@@ -59,7 +59,7 @@ QString FacilityLib::randomPassword(const QString& string,const quint8& length)
 QStringList FacilityLib::skinIdList(const QString& skinPath)
 {
     QStringList skinFolderList;
-    QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    QFileInfoList entryList=QDir(skinPath).entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
     {

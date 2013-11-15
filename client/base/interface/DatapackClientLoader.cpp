@@ -267,7 +267,7 @@ void DatapackClientLoader::parseSkins()
 {
     skins=CatchChallenger::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
-    qDebug() << QString("%1 skin(s) loaded").arg(maps.size());
+    qDebug() << QString("%1 skin(s) loaded").arg(skins.size());
 }
 
 void DatapackClientLoader::resetAll()
