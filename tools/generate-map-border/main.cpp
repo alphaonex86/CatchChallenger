@@ -15,6 +15,7 @@
 
 QHash<QString,int> mapWidth,mapHeight;
 QHash<QString,int> xOffsetModifier,yOffsetModifier;
+QHash<QString,int> mapX,mapY;
 
 int readMap(QString file)
 {
@@ -54,6 +55,8 @@ int readMap(QString file)
         else
             qDebug() << "Source can't be open" << file << tempFile.errorString();
         file.replace(".tmx",".xml");
+        QFile::rename(file,"outofmap/"+file);
+        file.replace(".xml","-bots.xml");
         QFile::rename(file,"outofmap/"+file);
         return 0;
     }
@@ -123,92 +126,157 @@ int createBorder(QString file)
     mapBorderFile=QString("%1.%2.tmx").arg(x-1).arg(y);
     if(mapHeight.contains(mapBorderFile))
     {
-        int offset=0;
-        if(map->height()>mapHeight[mapBorderFile])
+        if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
         {
-            offset=mapHeight[mapBorderFile]-map->height();
-            offset/=2;
+            /*//if is the bigger, do the calcule
+            if(map->height()>mapHeight[mapBorderFile])
+            {
+                quint32 yOnBorderMap=mapHeight[mapBorderFile]/2+1;
+                QPointF point(0,yOnBorderMap+(mapY[file]-mapY[mapBorderFile]));
+                if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                {
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
+                    mapObject->setProperty("map",mapBorderFile);
+                    Tiled::Cell cell=mapObject->cell();
+                    cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                    if(cell.tile==NULL)
+                        qDebug() << "Tile not found";
+                    mapObject->setCell(cell);
+                    map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+                }
+            }
+            //if is the smaller, just put at the middle
+            else
+            {
+                QPointF point(0,map->height()/2+1);
+                if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                {
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
+                    mapObject->setProperty("map",mapBorderFile);
+                    Tiled::Cell cell=mapObject->cell();
+                    cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                    if(cell.tile==NULL)
+                        qDebug() << "Tile not found";
+                    mapObject->setCell(cell);
+                    map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+                }
+            }*/
         }
-        QPointF point(0,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
-        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+        else
         {
-            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
-            mapObject->setProperty("map",mapBorderFile);
-            Tiled::Cell cell=mapObject->cell();
-            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-            if(cell.tile==NULL)
-                qDebug() << "Tile not found";
-            mapObject->setCell(cell);
-            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            int offset=0;
+            if(map->height()>mapHeight[mapBorderFile])
+            {
+                offset=mapHeight[mapBorderFile]-map->height();
+                offset/=2;
+            }
+            QPointF point(0,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                point=QPointF(0,map->height()/2+1);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+            {
+                Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
+                mapObject->setProperty("map",mapBorderFile);
+                Tiled::Cell cell=mapObject->cell();
+                cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                if(cell.tile==NULL)
+                    qDebug() << "Tile not found";
+                mapObject->setCell(cell);
+                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            }
         }
     }
     //check the right map
     mapBorderFile=QString("%1.%2.tmx").arg(x+1).arg(y);
     if(mapHeight.contains(mapBorderFile))
     {
-        int offset=0;
-        if(map->height()>mapHeight[mapBorderFile])
+        if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
         {
-            offset=mapHeight[mapBorderFile]-map->height();
-            offset/=2;
         }
-        QPointF point(map->width()-1,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
-        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+        else
         {
-            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
-            mapObject->setProperty("map",mapBorderFile);
-            Tiled::Cell cell=mapObject->cell();
-            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-            if(cell.tile==NULL)
-                qDebug() << "Tile not found";
-            mapObject->setCell(cell);
-            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            int offset=0;
+            if(map->height()>mapHeight[mapBorderFile])
+            {
+                offset=mapHeight[mapBorderFile]-map->height();
+                offset/=2;
+            }
+            QPointF point(map->width()-1,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                point=QPointF(map->width()-1,map->height()/2+1);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+            {
+                Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
+                mapObject->setProperty("map",mapBorderFile);
+                Tiled::Cell cell=mapObject->cell();
+                cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                if(cell.tile==NULL)
+                    qDebug() << "Tile not found";
+                mapObject->setCell(cell);
+                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            }
         }
     }
     //check the top map
     mapBorderFile=QString("%1.%2.tmx").arg(x).arg(y-1);
     if(mapWidth.contains(mapBorderFile))
     {
-        int offset=0;
-        if(map->width()>mapWidth[mapBorderFile])
+        if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
         {
-            offset=mapWidth[mapBorderFile]-map->width();
-            offset/=2;
         }
-        QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,0+1);
-        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+        else
         {
-            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
-            mapObject->setProperty("map",mapBorderFile);
-            Tiled::Cell cell=mapObject->cell();
-            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-            if(cell.tile==NULL)
-                qDebug() << "Tile not found";
-            mapObject->setCell(cell);
-            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            int offset=0;
+            if(map->width()>mapWidth[mapBorderFile])
+            {
+                offset=mapWidth[mapBorderFile]-map->width();
+                offset/=2;
+            }
+            QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,0+1);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                point=QPointF(map->width()/2,0+1);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+            {
+                Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
+                mapObject->setProperty("map",mapBorderFile);
+                Tiled::Cell cell=mapObject->cell();
+                cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                if(cell.tile==NULL)
+                    qDebug() << "Tile not found";
+                mapObject->setCell(cell);
+                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            }
         }
     }
     //check the bottom map
     mapBorderFile=QString("%1.%2.tmx").arg(x).arg(y+1);
     if(mapWidth.contains(mapBorderFile))
     {
-        int offset=0;
-        if(map->width()>mapWidth[mapBorderFile])
+        if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
         {
-            offset=mapWidth[mapBorderFile]-map->width();
-            offset/=2;
         }
-        QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,map->height()-1+1);
-        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height()
+        else
         {
-            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
-            mapObject->setProperty("map",mapBorderFile);
-            Tiled::Cell cell=mapObject->cell();
-            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-            if(cell.tile==NULL)
-                qDebug() << "Tile not found";
-            mapObject->setCell(cell);
-            map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            int offset=0;
+            if(map->width()>mapWidth[mapBorderFile])
+            {
+                offset=mapWidth[mapBorderFile]-map->width();
+                offset/=2;
+            }
+            QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,map->height()-1+1);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                point=QPointF(map->width()/2,map->height()-1+1);
+            if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+            {
+                Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
+                mapObject->setProperty("map",mapBorderFile);
+                Tiled::Cell cell=mapObject->cell();
+                cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                if(cell.tile==NULL)
+                    qDebug() << "Tile not found";
+                mapObject->setCell(cell);
+                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+            }
         }
     }
     write.writeMap(map,file);
@@ -218,6 +286,43 @@ int createBorder(QString file)
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    if(!QFile("invisible.tsx").exists())
+    {
+        qDebug() << "Tileset invisible.tsx not found";
+        return 90;
+    }
+    bool okX,okY;
+    QHash<QString,QString> fileToName;
+    QFile mapNames("../language/english/_MAPNAMES.txt");
+    if(mapNames.open(QIODevice::ReadWrite))
+    {
+        while (!mapNames.atEnd()) {
+            QStringList values=QString::fromUtf8(mapNames.readLine()).split(",");
+            if(values.size()==3)
+                fileToName[QString("%1.%2.tmx").arg(values.at(0)).arg(values.at(1))]=values.at(2);
+        }
+        mapNames.close();
+    }
+    QFile mapPos("../language/english/UI/_MAP.txt");
+    if(mapPos.open(QIODevice::ReadWrite))
+    {
+        while (!mapPos.atEnd()) {
+            QStringList values=QString::fromUtf8(mapPos.readLine()).split(",");
+            if(values.size()==5)
+                if(fileToName.contains(values.at(0)))
+                {
+                    qint32 x=values.at(3).toInt(&okX);
+                    qint32 y=values.at(4).toInt(&okY);
+                    if(okX && okY)
+                    {
+                        mapX[fileToName[values.at(0)]]=x;
+                        mapY[fileToName[values.at(0)]]=y;
+                    }
+                }
+        }
+        mapPos.close();
+    }
 
     QDir("./").mkpath("outofmap");
     QDir dir("./");

@@ -13,6 +13,7 @@ function filewrite($file,$content)
 }
 
 $dir = "map/";
+$bot_id=1;
 
 $file=file_get_contents('items/items.xml');
 preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
@@ -760,6 +761,32 @@ if ($dh = opendir($dir)) {
 			$content=str_replace($layer_content,'',$content);
 		filewrite($dir.$filexml,$xmlcontent);
 		filewrite($dir.$file,$content);
+		$temptxtfile='language/english/NPC/'.str_replace('.tmx','.txt',$file);
+		if(file_exists($temptxtfile))
+		{
+			$content=preg_split("#[\r\n]+#isU",file_get_contents($temptxtfile),-1,PREG_SPLIT_NO_EMPTY);
+			if(count($content)>0)
+			{
+				$xmlcontent="<bots>\n";
+				$index=0;
+				while($index<count($content))
+				{
+					$text=$content[$index];
+					$text=preg_replace("#[\r\t\n]+#isU",' ',$text);
+					$text=preg_replace("#[\r\t\n ]+$#isU",'',$text);
+					$text=preg_replace('# +#',' ',$text);
+					$xmlcontent.='	<bot id="'.$bot_id.'">'."\n";
+					$xmlcontent.='		<step id="1" type="text">'."\n";
+					$xmlcontent.='			<text><![CDATA['.$text.']]></text>'."\n";
+					$xmlcontent.='		</step>'."\n";
+					$xmlcontent.='	</bot>'."\n";
+					$bot_id++;
+					$index++;
+				}
+				$xmlcontent.='</bots>';
+				filewrite($dir.''.str_replace('.tmx','-bots.xml',$file),$xmlcontent);
+			}
+		}
 		unset($property);
 	}
     }
