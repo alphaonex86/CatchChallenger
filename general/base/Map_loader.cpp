@@ -1050,23 +1050,36 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
             {
                 if(monsters.isElement())
                 {
-                    if(monsters.hasAttribute("id") && monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel") && monsters.hasAttribute("luck"))
+                    if(monsters.hasAttribute("id") && ((monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel")) || monsters.hasAttribute("level")) && monsters.hasAttribute("luck"))
                     {
                         MapMonster mapMonster;
                         mapMonster.id=monsters.attribute("id").toUInt(&ok);
                         if(!ok)
                             qDebug() << QString("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                        if(ok)
+                        if(monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel"))
                         {
-                            mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
-                            if(!ok)
-                                qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            if(ok)
+                            {
+                                mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
+                                if(!ok)
+                                    qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
+                            if(ok)
+                            {
+                                mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
+                                if(!ok)
+                                    qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
                         }
-                        if(ok)
+                        else
                         {
-                            mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
-                            if(!ok)
-                                qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            if(ok)
+                            {
+                                mapMonster.maxLevel=monsters.attribute("level").toUShort(&ok);
+                                mapMonster.minLevel=mapMonster.maxLevel;
+                                if(!ok)
+                                    qDebug() << QString("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
                         }
                         if(ok)
                         {
@@ -1153,23 +1166,36 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
             {
                 if(monsters.isElement())
                 {
-                    if(monsters.hasAttribute("id") && monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel") && monsters.hasAttribute("luck"))
+                    if(monsters.hasAttribute("id") && ((monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel")) || monsters.hasAttribute("level")) && monsters.hasAttribute("luck"))
                     {
                         MapMonster mapMonster;
                         mapMonster.id=monsters.attribute("id").toUInt(&ok);
                         if(!ok)
                             qDebug() << QString("id is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                        if(ok)
+                        if(monsters.hasAttribute("minLevel") && monsters.hasAttribute("maxLevel"))
                         {
-                            mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
-                            if(!ok)
-                                qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            if(ok)
+                            {
+                                mapMonster.minLevel=monsters.attribute("minLevel").toUShort(&ok);
+                                if(!ok)
+                                    qDebug() << QString("minLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
+                            if(ok)
+                            {
+                                mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
+                                if(!ok)
+                                    qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
                         }
-                        if(ok)
+                        else
                         {
-                            mapMonster.maxLevel=monsters.attribute("maxLevel").toUShort(&ok);
-                            if(!ok)
-                                qDebug() << QString("maxLevel is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            if(ok)
+                            {
+                                mapMonster.maxLevel=monsters.attribute("level").toUShort(&ok);
+                                mapMonster.minLevel=mapMonster.maxLevel;
+                                if(!ok)
+                                    qDebug() << QString("level is not a number: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
+                            }
                         }
                         if(ok)
                         {
