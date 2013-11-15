@@ -1199,6 +1199,11 @@ QByteArray Map_loader::decompress(const QByteArray &data, int expectedSize)
     }
 
     if (ret != Z_STREAM_END) {
+        if(out.size()>16*1024*1024)
+        {
+            logZlibError(Z_STREAM_ERROR);
+            return QByteArray();
+        }
         int oldSize = out.size();
         out.resize(out.size() * 2);
 
