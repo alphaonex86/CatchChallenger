@@ -4,6 +4,8 @@
 #include <QDir>
 #include <QFileInfoList>
 #include <QRegularExpression>
+#include <QDomDocument>
+#include <QDomElement>
 
 #include "../../client/tiled/tiled_mapreader.h"
 #include "../../client/tiled/tiled_mapwriter.h"
@@ -16,7 +18,9 @@
 QHash<QString,int> mapWidth,mapHeight;
 QHash<QString,int> xOffsetModifier,yOffsetModifier;
 QHash<QString,int> mapX,mapY;
+QHash<QString,int> monsterNameToMonsterId;
 int botId;
+int fightid;
 
 struct BotDescriptor
 {
@@ -26,6 +30,17 @@ struct BotDescriptor
     int x;
     int y;
     QStringList text;
+    QList<int> fightMonsterId;
+    QList<int> fightMonsterLevel;
+};
+
+struct FightDescriptor
+{
+    quint32 id;
+    QString start;
+    QString win;
+    QList<int> fightMonsterId;
+    QList<int> fightMonsterLevel;
 };
 
 struct WarpDescriptor
@@ -317,6 +332,7 @@ int createBorder(QString file)
 
     QList<BotDescriptor> botList;
     QHash<QPair<int,int>,WarpDescriptor> warpList;
+    QList<FightDescriptor> fightList;
     QStringList textList;
     {
         QString npcFile=file;
@@ -385,10 +401,33 @@ int createBorder(QString file)
                                 botDescriptor.text << textList.at(tempIndex);
                                 index++;
                             }
+                            QStringList textIndexMonster=values.at(5).split(",");
+                            if(textIndexMonster.size()>0)
+                            {
+                                if((textIndexMonster.size()%2)==0)
+                                {
+                                    int fightIndex=0;
+                                    while(fightIndex<textIndexMonster.size())
+                                    {
+                                        if(monsterNameToMonsterId.contains(textIndexMonster.at(fightIndex)))
+                                        {
+                                            bool ok;
+                                            quint32 level=textIndexMonster.at(fightIndex+1).toUInt(&ok);
+                                            if(ok)
+                                            {
+                                                botDescriptor.fightMonsterId << monsterNameToMonsterId[textIndexMonster.at(fightIndex)];
+                                                botDescriptor.fightMonsterLevel << level;
+                                            }
+                                        }
+                                        fightIndex+=2;
+                                    }
+                                }
+                            }
                             if(index==textIndex.size())
                             {
-                                if(values.at(9)=="false")
+                                if(values.at(0)=="NULL")
                                 {
+                                    botDescriptor.name=QString();
                                     botDescriptor.skin=QString();
                                     botDescriptor.orientation=QString();
                                 }
@@ -466,11 +505,33 @@ int createBorder(QString file)
             while(index<botList.size())
             {
                 tempFile.write(QString("  <bot id=\"%1\">\n").arg(botId).toUtf8());
-                int sub_index=0;
-                while(sub_index<botList.at(index).text.size())
+                if(botList.at(index).fightMonsterId.isEmpty())
                 {
-                    tempFile.write(QString("    <step id=\"%1\" type=\"text\"><text><![CDATA[%2]]></text></step>\n").arg(sub_index+1).arg(botList.at(index).text.at(sub_index)).toUtf8());
-                    sub_index++;
+                    int sub_index=0;
+                    while(sub_index<botList.at(index).text.size())
+                    {
+                        tempFile.write(QString("    <step id=\"%1\" type=\"text\"><text><![CDATA[%2]]></text></step>\n").arg(sub_index+1).arg(botList.at(index).text.at(sub_index)).toUtf8());
+                        sub_index++;
+                    }
+                }
+                else
+                {
+                    tempFile.write(QString("    <step type=\"fight\" id=\"%1\" fightid=\"%1\">\n").arg(fightid).toUtf8());
+                    FightDescriptor fightDescriptor;
+                    if(botList.at(index).text.size()>=1)
+                        fightDescriptor.start=botList.at(index).text.first();
+                    if(botList.at(index).text.size()>=2)
+                        fightDescriptor.win=botList.at(index).text.last();
+                    int sub_sub_index=0;
+                    while(sub_sub_index<botList.at(index).fightMonsterId.size())
+                    {
+                        fightDescriptor.fightMonsterId << botList.at(index).fightMonsterId.at(sub_sub_index);
+                        fightDescriptor.fightMonsterLevel << botList.at(index).fightMonsterLevel.at(sub_sub_index);
+                        sub_sub_index++;
+                    }
+                    fightDescriptor.id=fightid;
+                    fightList << fightDescriptor;
+                    fightid++;
                 }
                 tempFile.write(QString("  </bot>\n").toUtf8());
                 {
@@ -505,6 +566,37 @@ int createBorder(QString file)
             tempFile.close();
         }
     }
+
+    if(!fightList.isEmpty())
+    {
+        QString fightsFile=file;
+        fightsFile.replace(".tmx",".xml");
+        QFile tempFile("../fight/"+fightsFile);
+        if(tempFile.open(QIODevice::WriteOnly))
+        {
+            tempFile.write(QString("<fights>\n").toUtf8());
+            int index=0;
+            while(index<fightList.size())
+            {
+                tempFile.write(QString("  <fight id=\"%1\">\n").arg(fightList.at(index).id).toUtf8());
+                if(!fightList.at(index).start.isEmpty())
+                    tempFile.write(QString("    <start><![CDATA[%1]]></start>\n").arg(fightList.at(index).start).toUtf8());
+                if(!fightList.at(index).win.isEmpty())
+                    tempFile.write(QString("    <win><![CDATA[%1]]></win>\n").arg(fightList.at(index).win).toUtf8());
+                int sub_index=0;
+                while(sub_index<fightList.at(index).fightMonsterId.size())
+                {
+                    tempFile.write(QString("    <monster id=\"%1\" level=\"%2\" />\n").arg(fightList.at(index).fightMonsterId.at(sub_index)).arg(fightList.at(index).fightMonsterLevel.at(sub_index)).toUtf8());
+                    sub_index++;
+                }
+                tempFile.write(QString("  </fight>\n").toUtf8());
+                index++;
+            }
+            tempFile.write(QString("</fights>").toUtf8());
+            tempFile.close();
+        }
+    }
+
     QHashIterator<QPair<int,int>, WarpDescriptor> i(warpList);
     while (i.hasNext()) {
         i.next();
@@ -540,11 +632,62 @@ int createBorder(QString file)
     return 0;
 }
 
+void loadMonster()
+{
+    //open and quick check the file
+    QFile xmlFile("../monsters/monster.xml");
+    QByteArray xmlContent;
+    if(!xmlFile.open(QIODevice::ReadOnly))
+        return;
+    xmlContent=xmlFile.readAll();
+    xmlFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        return;
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="list")
+        return;
+
+    //load the content
+    bool ok;
+    QDomElement item = root.firstChildElement("monster");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+        {
+            if(item.hasAttribute("id"))
+            {
+                quint32 id=item.attribute("id").toUInt(&ok);
+                if(ok)
+                {
+                    QDomElement itemName = item.firstChildElement("name");
+                    while(!itemName.isNull())
+                    {
+                        if(itemName.isElement())
+                        {
+                            monsterNameToMonsterId[itemName.text()]=id;
+                            break;
+                        }
+                        itemName = itemName.nextSiblingElement("name");
+                    }
+                }
+            }
+        }
+        item = item.nextSiblingElement("monster");
+    }
+}
+
+
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    loadMonster();
     botId=1;
+    fightid=1;
     if(!QFile("invisible.tsx").exists())
     {
         qDebug() << "Tileset invisible.tsx not found";

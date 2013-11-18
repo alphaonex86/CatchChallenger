@@ -211,6 +211,26 @@ Map2Png::~Map2Png()
     delete tiledRender;*/
 }
 
+Tiled::Tileset * Map2Png::getTileset(Tiled::Map * map,const QString &file)
+{
+    Tiled::Tileset *tileset = new Tiled::Tileset(file,16,24,0,0);
+    QImage image(file);
+    if(image.isNull())
+    {
+        qDebug() << "Unable to open the tilset image" << file;
+        return NULL;
+    }
+    tileset->loadFromImage(image,file);
+    if(!tileset)
+    {
+        qDebug() << "Unable to open the tilset" << reader.errorString();
+        return NULL;
+    }
+    else
+        map->addTileset(tileset);
+    return tileset;
+}
+
 QString Map2Png::loadOtherMap(const QString &fileName)
 {
     Map_full *tempMapObject=new Map_full();
@@ -240,7 +260,58 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                     tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObject(objects.at(index2));
                 index2++;
             }
-            break;
+        }
+        if(tempMapObject->tiledMap->layerAt(index)->name()=="Object" && tempMapObject->tiledMap->layerAt(index)->isObjectGroup())
+        {
+            QList<MapObject *> objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
+            int index2=0;
+            while(index2<objects.size())
+            {
+                if(objects.at(index2)->type()=="bot")
+                {
+                    if(objects.at(index2)->property("skin").isEmpty())
+                    {
+                        tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
+                        objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
+                        index2--;
+                    }
+                    else
+                    {
+                        Tiled::Tileset * tileset=NULL;
+                        QString tilesetPath=QString("%2/../skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
+                        if(QFile(tilesetPath).exists())
+                            tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
+                        else
+                        {
+                            tilesetPath=QString("%2/../skin/bot/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
+                            if(QFile(tilesetPath).exists())
+                                tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
+                        }
+                        if(tileset!=NULL)
+                        {
+                            QString lookAt=objects.at(index2)->property("lookAt");
+                            QPointF position=objects.at(index2)->position();
+                            objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
+                            tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
+                            MapObject *object=new MapObject("","",position,QSizeF(1,1));
+                            tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->addObject(object);
+                            objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
+                            index2--;
+                            Cell cell=object->cell();
+                            if(lookAt=="top")
+                                cell.tile=tileset->tileAt(1);
+                            else if(lookAt=="right")
+                                cell.tile=tileset->tileAt(4);
+                            else if(lookAt=="left")
+                                cell.tile=tileset->tileAt(10);
+                            else
+                                cell.tile=tileset->tileAt(7);
+                            object->setCell(cell);
+                        }
+                    }
+                }
+                index2++;
+            }
         }
         index++;
     }

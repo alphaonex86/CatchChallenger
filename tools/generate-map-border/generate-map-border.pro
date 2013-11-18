@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets
+QT       += core gui widgets xml
 
 include(../../client/tiled/tiled.pri)
 
