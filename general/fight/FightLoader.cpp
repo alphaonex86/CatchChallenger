@@ -551,9 +551,9 @@ QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint32 &
             temp.level=attack[index].learnSkillLevel;
             temp.skill=attack[index].learnSkill;
             temp.endurance=0;
-            if(monsterSkills.contains(skills[index].skill))
-                if(skills[index].level<=monsterSkills[skills[index].skill].level.size() && skills[index].level>0)
-                    temp.endurance=monsterSkills[skills[index].skill].level.at(skills[index].level-1).endurance;
+            if(monsterSkills.contains(temp.skill))
+                if(temp.level<=monsterSkills[temp.skill].level.size() && temp.level>0)
+                    temp.endurance=monsterSkills[temp.skill].level.at(temp.level-1).endurance;
             skills << temp;
         }
         index++;
