@@ -538,6 +538,31 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
     return monsters;
 }
 
+QList<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const quint32 &monsterId,const quint8 &level, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills)
+{
+    QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
+    QList<CatchChallenger::Monster::AttackToLearn> attack=monsters[monsterId].learn;
+    int index=0;
+    while(index<attack.size())
+    {
+        if(attack[index].learnAtLevel<=level)
+        {
+            CatchChallenger::PlayerMonster::PlayerSkill temp;
+            temp.level=attack[index].learnSkillLevel;
+            temp.skill=attack[index].learnSkill;
+            temp.endurance=0;
+            if(monsterSkills.contains(skills[index].skill))
+                if(skills[index].level<=monsterSkills[skills[index].skill].level.size() && skills[index].level>0)
+                    temp.endurance=monsterSkills[skills[index].skill].level.at(skills[index].level-1).endurance;
+            skills << temp;
+        }
+        index++;
+    }
+    while(skills.size()>4)
+        skills.removeFirst();
+    return skills;
+}
+
 QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills)
 {
     QHash<quint32,BotFight> botFightList;
@@ -675,6 +700,8 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                                 }
                                                 attack = attack.nextSiblingElement("attack");
                                             }
+                                            if(botFightMonster.attacks.isEmpty())
+                                                botFightMonster.attacks=loadDefaultAttack(botFightMonster.id,botFightMonster.level,monsters,monsterSkills);
                                             if(botFightMonster.attacks.isEmpty())
                                             {
                                                 CatchChallenger::DebugClass::debugConsole(QString("Empty attack list: bot.tagName(): %1, type: %2 (at line: %3)").arg(attack.tagName()).arg(attack.attribute("type")).arg(attack.lineNumber()));
