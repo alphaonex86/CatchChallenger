@@ -185,6 +185,23 @@ foreach($entry_list[1] as $entry)
 	}
 }
 
+$map_file_to_name=array();
+if(file_exists('../language/english/_MAPNAMES.txt'))
+{
+	$content=preg_split("#[\r\n]+#isU",file_get_contents('../language/english/_MAPNAMES.txt'));
+	$index=0;
+	while($index<count($content))
+	{
+		$values=preg_split('#,#',$content[$index]);
+		if(count($values)==3)
+		{
+			$values[2]=str_replace('Route ','Road ',$values[2]);
+			$map_file_to_name[$values[0].'.'.$values[1].'.tmx']=$values[2];
+		}
+		$index++;
+	}
+}
+
 if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {
 	if(preg_match('#-?[0-9]{1,2}.-?[0-9]{1,2}\.tmx#',$file))
@@ -363,6 +380,8 @@ if ($dh = opendir($dir)) {
 		else
 			$type='outdoor';
 		$xmlcontent='<map type="'.$type.'">'."\n";
+		if(isset($map_file_to_name[$file]))
+			$xmlcontent.='	<name>'.$map_file_to_name[$file].'</name>'."\n";
 		if(count($grass)>0)
 		{
 			$xmlcontent.='	<grass>'."\n";
