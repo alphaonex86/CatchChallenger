@@ -127,8 +127,9 @@ CREATE TABLE character (
     "warehouse_cash" INTEGER,
     "time_to_delete" INTEGER,
     "played_time" INTEGER,
-    "last_connect" INTEGER
-, "market_cash" INTEGER);
+    "last_connect" INTEGER,
+    "market_cash" INTEGER
+, "starter" INTEGER);
 CREATE UNIQUE INDEX "id" on "character" (id ASC);
 CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on "character" (clan ASC);

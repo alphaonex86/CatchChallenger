@@ -437,7 +437,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+");")
+            dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+","+QString::number(profileIndex)+");")
                         .arg(characterId)
                         .arg(player_informations->account_id)
                         .arg(pseudo)
@@ -450,7 +450,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+");")
+                dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+","+QString::number(profileIndex)+");")
                         .arg(characterId)
                         .arg(player_informations->account_id)
                         .arg(pseudo)
