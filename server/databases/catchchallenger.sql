@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `login` varchar(128) NOT NULL,
   `password` varchar(128) NOT NULL,
-  `date` int(11) NOT NULL,
+  `date` int(11) unsigned NOT NULL,
   `email` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login` (`login`)
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `account_register` (
   `password` varchar(128) NOT NULL,
   `email` varchar(64) NOT NULL,
   `key` text NOT NULL,
-  `date` int(11) NOT NULL,
+  `date` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `login_2` (`login`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
@@ -75,31 +75,32 @@ CREATE TABLE IF NOT EXISTS `character` (
   `account` int(11) NOT NULL,
   `pseudo` varchar(20) NOT NULL,
   `skin` varchar(16) NOT NULL,
-  `x` int(11) NOT NULL,
-  `y` int(11) NOT NULL,
+  `x` tinyint(3) unsigned NOT NULL,
+  `y` tinyint(3) unsigned NOT NULL,
   `orientation` enum('top','bottom','left','right') NOT NULL,
   `map` text NOT NULL,
   `type` enum('normal','premium','gm','dev') NOT NULL,
   `clan` int(11) NOT NULL,
   `rescue_map` text NOT NULL,
-  `rescue_x` int(11) NOT NULL,
-  `rescue_y` int(11) NOT NULL,
+  `rescue_x` tinyint(3) unsigned NOT NULL,
+  `rescue_y` tinyint(3) unsigned NOT NULL,
   `rescue_orientation` enum('top','bottom','left','right') NOT NULL,
   `unvalidated_rescue_map` text NOT NULL,
-  `unvalidated_rescue_x` int(11) NOT NULL,
-  `unvalidated_rescue_y` int(11) NOT NULL,
+  `unvalidated_rescue_x` tinyint(3) unsigned NOT NULL,
+  `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_orientation` enum('top','bottom','left','right') NOT NULL,
   `allow` text NOT NULL,
   `clan_leader` tinyint(1) NOT NULL,
-  `date` int(11) NOT NULL,
+  `date` int(11) unsigned NOT NULL,
   `bitcoin_offset` double NOT NULL,
   `market_bitcoin` double NOT NULL,
-  `cash` bigint(20) NOT NULL,
-  `warehouse_cash` bigint(20) NOT NULL,
-  `market_cash` bigint(20) NOT NULL,
-  `time_to_delete` int(11) NOT NULL,
-  `played_time` int(11) NOT NULL,
-  `last_connect` int(11) NOT NULL,
+  `cash` bigint(20) unsigned NOT NULL,
+  `warehouse_cash` bigint(20) unsigned NOT NULL,
+  `market_cash` bigint(20) unsigned NOT NULL,
+  `time_to_delete` int(11) unsigned NOT NULL,
+  `played_time` int(11) unsigned NOT NULL,
+  `last_connect` int(11) unsigned NOT NULL,
+  `starter` tinyint(4) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pseudo` (`pseudo`,`clan`),
   UNIQUE KEY `pseudo_2` (`pseudo`),
@@ -128,8 +129,8 @@ CREATE TABLE IF NOT EXISTS `city` (
 CREATE TABLE IF NOT EXISTS `clan` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` text NOT NULL,
-  `cash` bigint(20) NOT NULL,
-  `date` int(11) NOT NULL,
+  `cash` bigint(20) unsigned NOT NULL,
+  `date` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -143,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `factory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `resources` text NOT NULL,
   `products` text NOT NULL,
-  `last_update` int(11) NOT NULL,
+  `last_update` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -154,12 +155,12 @@ CREATE TABLE IF NOT EXISTS `factory` (
 --
 
 CREATE TABLE IF NOT EXISTS `item` (
-  `item` int(11) NOT NULL,
+  `item` int(11) unsigned NOT NULL,
   `character` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL,
+  `quantity` int(11) unsigned NOT NULL,
   `place` enum('wear','warehouse','market') NOT NULL,
-  `market_price` bigint(20) NOT NULL,
-  `market_bitcoin` double NOT NULL,
+  `market_price` bigint(20) unsigned NOT NULL,
+  `market_bitcoin` double unsigned NOT NULL,
   PRIMARY KEY (`item`,`character`,`place`),
   KEY `player_id` (`character`),
   KEY `place` (`place`)
@@ -173,20 +174,20 @@ CREATE TABLE IF NOT EXISTS `item` (
 
 CREATE TABLE IF NOT EXISTS `monster` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `hp` int(11) NOT NULL,
+  `hp` smallint(5) unsigned NOT NULL,
   `character` int(11) NOT NULL,
-  `monster` int(11) NOT NULL,
-  `level` int(11) NOT NULL,
-  `xp` int(11) NOT NULL,
-  `sp` int(11) NOT NULL,
-  `captured_with` int(11) NOT NULL,
+  `monster` smallint(5) unsigned NOT NULL,
+  `level` tinyint(3) unsigned NOT NULL,
+  `xp` int(11) unsigned NOT NULL,
+  `sp` int(11) unsigned NOT NULL,
+  `captured_with` int(11) unsigned NOT NULL,
   `gender` enum('unknown','male','female') NOT NULL,
-  `egg_step` int(11) NOT NULL,
+  `egg_step` int(11) unsigned NOT NULL,
   `character_origin` int(11) NOT NULL,
   `place` enum('wear','warehouse','market') NOT NULL,
-  `position` int(11) NOT NULL,
-  `market_price` bigint(20) NOT NULL,
-  `market_bitcoin` double NOT NULL,
+  `position` tinyint(3) unsigned NOT NULL,
+  `market_price` bigint(20) unsigned NOT NULL,
+  `market_bitcoin` double unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `player` (`character`),
   KEY `place` (`place`)
@@ -200,8 +201,8 @@ CREATE TABLE IF NOT EXISTS `monster` (
 
 CREATE TABLE IF NOT EXISTS `monster_buff` (
   `monster` int(11) NOT NULL,
-  `buff` int(11) NOT NULL,
-  `level` int(11) NOT NULL,
+  `buff` smallint(5) unsigned NOT NULL,
+  `level` tinyint(3) unsigned NOT NULL,
   PRIMARY KEY (`monster`,`buff`),
   KEY `monster` (`monster`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -214,9 +215,9 @@ CREATE TABLE IF NOT EXISTS `monster_buff` (
 
 CREATE TABLE IF NOT EXISTS `monster_skill` (
   `monster` int(11) NOT NULL,
-  `skill` int(11) NOT NULL,
-  `level` int(11) NOT NULL,
-  `endurance` int(11) NOT NULL,
+  `skill` smallint(6) NOT NULL,
+  `level` tinyint(4) NOT NULL,
+  `endurance` tinyint(4) NOT NULL,
   PRIMARY KEY (`monster`,`skill`),
   KEY `monster` (`monster`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -228,12 +229,12 @@ CREATE TABLE IF NOT EXISTS `monster_skill` (
 --
 
 CREATE TABLE IF NOT EXISTS `plant` (
-  `map` varchar(64) NOT NULL,
-  `x` int(11) NOT NULL,
-  `y` int(11) NOT NULL,
-  `plant` int(11) NOT NULL,
+  `map` varchar(32) NOT NULL,
+  `x` tinyint(3) unsigned NOT NULL,
+  `y` tinyint(3) unsigned NOT NULL,
+  `plant` tinyint(3) unsigned NOT NULL,
   `character` int(11) NOT NULL,
-  `plant_timestamps` int(11) NOT NULL,
+  `plant_timestamps` int(11) unsigned NOT NULL,
   PRIMARY KEY (`map`,`x`,`y`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
@@ -245,9 +246,9 @@ CREATE TABLE IF NOT EXISTS `plant` (
 
 CREATE TABLE IF NOT EXISTS `quest` (
   `character` int(11) NOT NULL,
-  `quest` int(11) NOT NULL,
+  `quest` smallint(5) unsigned NOT NULL,
   `finish_one_time` tinyint(1) NOT NULL,
-  `step` int(11) NOT NULL,
+  `step` tinyint(3) unsigned NOT NULL,
   PRIMARY KEY (`character`,`quest`),
   KEY `player` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -260,7 +261,7 @@ CREATE TABLE IF NOT EXISTS `quest` (
 
 CREATE TABLE IF NOT EXISTS `recipes` (
   `character` int(11) NOT NULL,
-  `recipe` int(11) NOT NULL,
+  `recipe` smallint(5) unsigned NOT NULL,
   PRIMARY KEY (`character`,`recipe`),
   KEY `player` (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -273,8 +274,8 @@ CREATE TABLE IF NOT EXISTS `recipes` (
 
 CREATE TABLE IF NOT EXISTS `reputation` (
   `character` int(11) NOT NULL,
-  `type` varchar(32) NOT NULL,
+  `type` varchar(16) NOT NULL,
   `point` bigint(20) NOT NULL,
-  `level` int(11) NOT NULL,
+  `level` tinyint(4) NOT NULL,
   PRIMARY KEY (`character`,`type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

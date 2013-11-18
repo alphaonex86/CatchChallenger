@@ -27,7 +27,7 @@ int fixLayer(QString file)
                 map->layerAt(index)->asTileLayer()->resize(QSize(map->width(),map->height()),QPoint(0,0));
         index++;
     }
-    write.setLayerDataFormat(Tiled::Map::Base64Gzip);
+    //write.setLayerDataFormat(Tiled::Map::Base64Gzip);
     if(!write.writeMap(map,file))
     {
         qDebug() << "Can't write" << file << write.errorString();
