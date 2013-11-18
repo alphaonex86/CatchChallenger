@@ -1382,44 +1382,72 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     tempDatapackListReplySize=0;
     QHash<QString,quint64> filesList=GlobalServerData::serverPrivateVariables.filesList;
 
-    int loopIndex=0;
     int loop_size=files.size();
-    //validate, remove or update the file actualy on the client
-    while(loopIndex<loop_size)
+    //send the size to download on the client
     {
-        QString fileName=files.at(loopIndex);
-        quint32 mtime=timestamps.at(loopIndex);
-        if(fileName.contains("./") || fileName.contains("\\") || fileName.contains("//"))
+        int index=0;
+        quint32 datapckFileNumber=0;
+        quint32 datapckFileSize=0;
+        while(index<loop_size)
         {
-            emit error(QString("file name contains illegale char: %1").arg(fileName));
-            return;
-        }
-        if(fileName.contains(QRegularExpression("^[a-zA-Z]:/")) || fileName.startsWith("/"))
-        {
-            emit error(QString("start with wrong string: %1").arg(fileName));
-            return;
-        }
-        if(!filesList.contains(fileName))
-            addDatapackListReply(true);//to delete
-        //the file on the client is already updated
-        else
-        {
-            if(filesList[fileName]==mtime)
-                addDatapackListReply(false);//found
-            else
+            QString fileName=files.at(index);
+            quint32 mtime=timestamps.at(index);
+            if(fileName.contains("./") || fileName.contains("\\") || fileName.contains("//"))
             {
-                if(sendFile(fileName,filesList[fileName]))
-                    addDatapackListReply(false);//found but updated
-                else
+                emit error(QString("file name contains illegale char: %1").arg(fileName));
+                return;
+            }
+            if(fileName.contains(QRegularExpression("^[a-zA-Z]:/")) || fileName.startsWith("/"))
+            {
+                emit error(QString("start with wrong string: %1").arg(fileName));
+                return;
+            }
+            if(filesList.contains(fileName))
+            {
+                if(filesList[fileName]!=mtime)
                 {
-                    //disconnect to prevent desync of datapack
-                    emit error("Unable to open datapack file, disconnect to prevent desync of datapack");
-                    return;
+                    datapckFileNumber++;
+                    datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
                 }
             }
-            filesList.remove(fileName);
+            index++;
         }
-        loopIndex++;
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint32)datapckFileNumber;
+        out << (quint32)datapckFileSize;
+        emit sendFullPacket(0xC2,0x000C,outputData);
+    }
+    //validate, remove or update the file actualy on the client
+    {
+        int loopIndex=0;
+        while(loopIndex<loop_size)
+        {
+            QString fileName=files.at(loopIndex);
+            quint32 mtime=timestamps.at(loopIndex);
+            if(!filesList.contains(fileName))
+                addDatapackListReply(true);//to delete
+            //the file on the client is already updated
+            else
+            {
+                if(filesList[fileName]==mtime)
+                    addDatapackListReply(false);//found
+                else
+                {
+                    if(sendFile(fileName,filesList[fileName]))
+                        addDatapackListReply(false);//found but updated
+                    else
+                    {
+                        //disconnect to prevent desync of datapack
+                        emit error("Unable to open datapack file, disconnect to prevent desync of datapack");
+                        return;
+                    }
+                }
+                filesList.remove(fileName);
+            }
+            loopIndex++;
+        }
     }
     if(tempDatapackListReplyTestCount!=files.size())
     {
