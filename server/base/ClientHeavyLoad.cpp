@@ -1385,6 +1385,7 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     int loop_size=files.size();
     //send the size to download on the client
     {
+        QHash<QString,quint64> filesList=GlobalServerData::serverPrivateVariables.filesList;
         int index=0;
         quint32 datapckFileNumber=0;
         quint32 datapckFileSize=0;
@@ -1409,8 +1410,15 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
                     datapckFileNumber++;
                     datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
                 }
+                filesList.remove(fileName);
             }
             index++;
+        }
+        QHashIterator<QString,quint64> i(filesList);
+        while (i.hasNext()) {
+            i.next();
+            datapckFileNumber++;
+            datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+i.key()).size();
         }
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
