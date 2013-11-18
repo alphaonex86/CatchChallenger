@@ -1029,6 +1029,26 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                     emit clanInvite(clanId,name);
                 }
                 break;
+                //Send datapack send size
+                case 0x000C:
+                {
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint32 datapckFileNumber;
+                    in >> datapckFileNumber;
+                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint32))
+                    {
+                        parseError(tr("Procotol wrong or corrupted"),QString("wrong string for reason with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
+                        return;
+                    }
+                    quint32 datapckFileSize;
+                    in >> datapckFileSize;
+                    emit datapackSize(datapckFileNumber,datapckFileSize);
+                }
+                break;
                 default:
                 parseError(tr("Procotol wrong or corrupted"),QString("unknow subCodeType main code: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                 return;
