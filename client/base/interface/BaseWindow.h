@@ -177,7 +177,8 @@ private slots:
 
     //datapack
     void haveTheDatapack();
-    void newDatapackFile();
+    void newDatapackFile(const quint32 &size);
+    void datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize);
 
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
@@ -424,10 +425,13 @@ private:
     IndustryStatus industryStatus;
     bool factoryInProduction;
     ObjectType waitedObjectType;
-    quint32 datapackCount;
+    quint32 datapackDownloadedCount;
+    quint32 datapackDownloadedSize;
     QList<CharacterEntry> characterEntryList,characterEntryListInWaiting;
     bool isLogged;
     NewProfile *newProfile;
+    quint32 datapckFileNumber;
+    quint32 datapckFileSize;
 
     //plant seed in waiting
     struct SeedInWaiting

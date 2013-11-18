@@ -84,9 +84,12 @@ void BaseWindow::resetAll()
     marketWithdrawInSuspend=false;
     marketWithdrawObjectList.clear();
     marketWithdrawMonsterList.clear();
-    datapackCount=0;
+    datapackDownloadedCount=0;
+    datapackDownloadedSize=0;
     escape=false;
     escapeSuccess=false;
+    datapckFileNumber=0;
+    datapckFileSize=0;
     while(!ambiance.isEmpty())
     {
         ambiance.first()->stop();
@@ -234,9 +237,17 @@ void BaseWindow::haveTheDatapack()
     emit parseDatapack(CatchChallenger::Api_client_real::client->get_datapack_base());
 }
 
-void BaseWindow::newDatapackFile()
+void BaseWindow::datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize)
 {
-    datapackCount++;
+    this->datapckFileNumber=datapckFileNumber;
+    this->datapckFileSize=datapckFileSize;
+    updateConnectingStatus();
+}
+
+void BaseWindow::newDatapackFile(const quint32 &size)
+{
+    datapackDownloadedCount++;
+    datapackDownloadedSize+=size;
     updateConnectingStatus();
 }
 
@@ -345,14 +356,14 @@ void BaseWindow::updateConnectingStatus()
         return;
     }
     QStringList waitedData;
-    if(!haveInventory || !havePlayerInformations)
+    if(haveDatapack && (!haveInventory || !havePlayerInformations))
         waitedData << tr("Loading the player informations");
     if(!haveDatapack)
     {
-        if(datapackCount==0)
+        if(datapckFileSize==0)
             waitedData << tr("Loading the datapack");
         else
-            waitedData << tr("Loaded datapack file: %1").arg(datapackCount);
+            waitedData << tr("Loaded datapack file: %1%").arg(datapackDownloadedSize*100/datapckFileSize);
     }
     else if(!datapackIsParsed)
         waitedData << tr("Opening the datapack");
