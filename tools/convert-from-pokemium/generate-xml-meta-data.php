@@ -504,7 +504,10 @@ while($index<count($content))
 {
 	$values=preg_split('#,#',$content[$index]);
 	if(count($values)==3)
+	{
+		$values[2]=str_replace('Route ','Road ',$values[2]);
 		$map_file_to_name[$values[0].'.'.$values[1].'.tmx']=$values[2];
+	}
 	$index++;
 }
 

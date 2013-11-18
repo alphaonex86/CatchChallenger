@@ -17,9 +17,16 @@ while($x<3)
 	$y=0;
 	while($y<4)
 	{
-		imagecopyresized($dst,$image,$x*16,$y*24,8+$x*(32+6),$y*(48+4)-4,16,24,32,48);
+		$tempY=$y*(48+4)-4;
+		//if($tempY<0)
+		//	$tempY=0;
+		imagecopyresized($dst,$image,$x*16,$y*24,8+$x*(32+6),$tempY,16,24,32,48);
 		$y++;
 	}
 	$x++;
 }
+imagealphablending($dst, false);
+imagefilledrectangle($dst,0,0,imagesx($image),1,$col);
+imagecolordeallocate($dst,$col);
+imagealphablending($dst, true);
 imagepng($dst);

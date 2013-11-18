@@ -109,14 +109,14 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         qDebug() << "The current map is not set, crash prevented";
         return;
     }
-    QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+    QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
     //if the new map touch the current map
     if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
     {
         //display a new map now visible
         if(!mapItem->haveMap(tempMapObject->tiledMap))
             mapItem->addMap(tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
-        mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->x_pixel,tempMapObject->y_pixel);
+        mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->relative_x_pixel,tempMapObject->relative_y_pixel);
         emit mapDisplayed(tempMapObject->logicalMap.map_file);
         //display the bot
         QHashIterator<QPair<quint8,quint8>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
@@ -184,10 +184,10 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
         if(tempMapObject->logicalMap.map_file==current_map)
         {
             tempMapObject->displayed=true;
-            tempMapObject->x=0;
-            tempMapObject->y=0;
-            tempMapObject->x_pixel=0;
-            tempMapObject->y_pixel=0;
+            tempMapObject->relative_x=0;
+            tempMapObject->relative_y=0;
+            tempMapObject->relative_x_pixel=0;
+            tempMapObject->relative_y_pixel=0;
             loadTeleporter(tempMapObject);
             asyncDetectBorder(tempMapObject);
         }
@@ -205,17 +205,17 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
                         {
-                            int offset=tempMapObject->logicalMap.border_semi.top.x_offset-border_map->logicalMap.border_semi.bottom.x_offset;
-                            int offset_pixel=tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth();
-                            tempMapObject->x=border_map->x+offset;
-                            tempMapObject->y=border_map->y+border_map->logicalMap.height;
-                            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-                            tempMapObject->y_pixel=border_map->y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
+                            int offset=border_map->logicalMap.border_semi.bottom.x_offset-tempMapObject->logicalMap.border_semi.top.x_offset;
+                            int offset_pixel=border_map->logicalMap.border_semi.bottom.x_offset*border_map->tiledMap->tileWidth()-tempMapObject->logicalMap.border_semi.top.x_offset*tempMapObject->tiledMap->tileWidth();
+                            tempMapObject->relative_x=border_map->relative_x+offset;
+                            tempMapObject->relative_y=border_map->relative_y+border_map->logicalMap.height;
+                            tempMapObject->relative_x_pixel=border_map->relative_x_pixel+offset_pixel;
+                            tempMapObject->relative_y_pixel=border_map->relative_y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
                             tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.top.x_offset=offset;
                             border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.bottom.x_offset=-offset;
-                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
@@ -234,17 +234,17 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
                         {
-                            int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-border_map->logicalMap.border_semi.top.x_offset;
-                            int offset_pixel=tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth()-border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth();
-                            tempMapObject->x=border_map->x+offset;
-                            tempMapObject->y=border_map->y-tempMapObject->logicalMap.height;
-                            tempMapObject->x_pixel=border_map->x_pixel+offset_pixel;
-                            tempMapObject->y_pixel=border_map->y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
+                            int offset=border_map->logicalMap.border_semi.top.x_offset-tempMapObject->logicalMap.border_semi.bottom.x_offset;
+                            int offset_pixel=border_map->logicalMap.border_semi.top.x_offset*border_map->tiledMap->tileWidth()-tempMapObject->logicalMap.border_semi.bottom.x_offset*tempMapObject->tiledMap->tileWidth();
+                            tempMapObject->relative_x=border_map->relative_x+offset;
+                            tempMapObject->relative_y=border_map->relative_y-tempMapObject->logicalMap.height;
+                            tempMapObject->relative_x_pixel=border_map->relative_x_pixel+offset_pixel;
+                            tempMapObject->relative_y_pixel=border_map->relative_y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
                             tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.bottom.x_offset=offset;
                             border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.top.x_offset=-offset;
-                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
@@ -263,17 +263,17 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
                         {
-                            int offset=tempMapObject->logicalMap.border_semi.right.y_offset-border_map->logicalMap.border_semi.left.y_offset;
-                            int offset_pixel=tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight();
-                            tempMapObject->x=border_map->x-tempMapObject->logicalMap.width;
-                            tempMapObject->y=border_map->y+offset;
-                            tempMapObject->x_pixel=border_map->x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
-                            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+                            int offset=border_map->logicalMap.border_semi.left.y_offset-tempMapObject->logicalMap.border_semi.right.y_offset;
+                            int offset_pixel=border_map->logicalMap.border_semi.left.y_offset*border_map->tiledMap->tileHeight()-tempMapObject->logicalMap.border_semi.right.y_offset*tempMapObject->tiledMap->tileHeight();
+                            tempMapObject->relative_x=border_map->relative_x-tempMapObject->logicalMap.width;
+                            tempMapObject->relative_y=border_map->relative_y+offset;
+                            tempMapObject->relative_x_pixel=border_map->relative_x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
+                            tempMapObject->relative_y_pixel=border_map->relative_y_pixel+offset_pixel;
                             tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.right.y_offset=offset;
                             border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.left.y_offset=-offset;
-                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
@@ -292,17 +292,17 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
                         {
-                            int offset=tempMapObject->logicalMap.border_semi.left.y_offset-border_map->logicalMap.border_semi.right.y_offset;
-                            int offset_pixel=tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight()-border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight();
-                            tempMapObject->x=border_map->x+border_map->logicalMap.width;
-                            tempMapObject->y=border_map->y+offset;
-                            tempMapObject->x_pixel=border_map->x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
-                            tempMapObject->y_pixel=border_map->y_pixel+offset_pixel;
+                            int offset=border_map->logicalMap.border_semi.right.y_offset-tempMapObject->logicalMap.border_semi.left.y_offset;
+                            int offset_pixel=border_map->logicalMap.border_semi.right.y_offset*border_map->tiledMap->tileHeight()-tempMapObject->logicalMap.border_semi.left.y_offset*tempMapObject->tiledMap->tileHeight();
+                            tempMapObject->relative_x=border_map->relative_x+border_map->logicalMap.width;
+                            tempMapObject->relative_y=border_map->relative_y+offset;
+                            tempMapObject->relative_x_pixel=border_map->relative_x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
+                            tempMapObject->relative_y_pixel=border_map->relative_y_pixel+offset_pixel;
                             tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.left.y_offset=offset;
                             border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.right.y_offset=-offset;
-                            QRect map_rect(tempMapObject->x,tempMapObject->y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
+                            QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLib::rectTouch(current_map_rect,map_rect))
                             {
                                 tempMapObject->displayed=true;
@@ -320,7 +320,10 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
     }
     if(asyncMap.removeOne(fileName))
         if(asyncMap.isEmpty())
+        {
+            hideNotloadedMap();//hide the mpa loaded by mistake
             removeUnusedMap();
+        }
     return true;
 }
 

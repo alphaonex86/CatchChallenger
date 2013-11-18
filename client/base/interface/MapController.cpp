@@ -95,7 +95,15 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject=new Tiled::MapObject();
     parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset=new Tiled::Tileset("bot",16,24);
     QString skinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+"/"+skin+"/trainer.png";
-    if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(skinPath),skinPath))
+    if(!QFile(skinPath).exists())
+        skinPath=datapackPath+DATAPACK_BASE_PATH_SKINBOT+"/"+skin+"/trainer.png";
+    if(!QFile(skinPath).exists())
+    {
+        qDebug() << "Unable the load the bot tileset (not found):" << skinPath;
+        if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
+            qDebug() << "Unable the load the default bot tileset";
+    }
+    else if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(skinPath),skinPath))
     {
         qDebug() << "Unable the load the bot tileset";
         if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))

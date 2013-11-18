@@ -16,6 +16,26 @@
 QHash<QString,int> mapWidth,mapHeight;
 QHash<QString,int> xOffsetModifier,yOffsetModifier;
 QHash<QString,int> mapX,mapY;
+int botId;
+
+struct BotDescriptor
+{
+    QString name;
+    QString orientation;
+    QString skin;
+    int x;
+    int y;
+    QStringList text;
+};
+
+struct WarpDescriptor
+{
+    int x;
+    int y;
+    int destX;
+    int destY;
+    QString destMap;
+};
 
 int readMap(QString file)
 {
@@ -34,7 +54,7 @@ int readMap(QString file)
         qDebug() << "Can't read" << file << reader.errorString();
         return 86;
     }
-    if(x>30 || x<-30 || y>30 || y<-30/*file!="0.0.tmx" && map->property("xOffsetModifier")=="0" && map->property("yOffsetModifier")=="0"*/)
+    /*if(x>30 || x<-30 || y>30 || y<-30)//file!="0.0.tmx" && map->property("xOffsetModifier")=="0" && map->property("yOffsetModifier")=="0"
     {
         QFile tempFile(file);
         if(tempFile.open(QIODevice::ReadWrite))
@@ -59,7 +79,7 @@ int readMap(QString file)
         file.replace(".xml","-bots.xml");
         QFile::rename(file,"outofmap/"+file);
         return 0;
-    }
+    }*/
     mapWidth[file]=map->width();
     mapHeight[file]=map->height();
     xOffsetModifier[file]=map->property("xOffsetModifier").toInt()/map->tileWidth();
@@ -71,6 +91,7 @@ int createBorder(QString file)
 {
     if(!QFile(file).exists())
         return 0;
+
     Tiled::MapReader reader;
     Tiled::MapWriter write;
     Tiled::Map *map=reader.readMap(file);
@@ -86,6 +107,16 @@ int createBorder(QString file)
     int x=xString.toInt();
     int y=yString.toInt();
 
+    {
+        int index=0;
+        while(index<map->layerCount())
+        {
+            if(map->layerAt(index)->isTileLayer())
+                if(map->layerAt(index)->asTileLayer()->width()!=map->width() || map->layerAt(index)->asTileLayer()->height()!=map->height())
+                    map->layerAt(index)->asTileLayer()->resize(QSize(map->width(),map->height()),QPoint(0,0));
+            index++;
+        }
+    }
     //add the tileset if needed
     int indexTileset=0;
     while(indexTileset<map->tilesetCount())
@@ -107,16 +138,16 @@ int createBorder(QString file)
     }
 
     //add the move layer if needed
-    int indexLayer=0;
-    while(indexLayer<map->layerCount())
+    int indexLayerMoving=0;
+    while(indexLayerMoving<map->layerCount())
     {
-        if(map->layerAt(indexLayer)->isObjectGroup() && map->layerAt(indexLayer)->name()=="Moving")
+        if(map->layerAt(indexLayerMoving)->isObjectGroup() && map->layerAt(indexLayerMoving)->name()=="Moving")
             break;
-        indexLayer++;
+        indexLayerMoving++;
     }
-    if(indexLayer>=map->layerCount())
+    if(indexLayerMoving>=map->layerCount())
     {
-        indexLayer=map->layerCount();
+        indexLayerMoving=map->layerCount();
         Tiled::ObjectGroup *objectGroup=new Tiled::ObjectGroup("Moving",0,0,map->width(),map->height());
         map->addLayer(objectGroup);
     }
@@ -182,7 +213,7 @@ int createBorder(QString file)
                 if(cell.tile==NULL)
                     qDebug() << "Tile not found";
                 mapObject->setCell(cell);
-                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+                map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
             }
         }
     }
@@ -213,7 +244,7 @@ int createBorder(QString file)
                 if(cell.tile==NULL)
                     qDebug() << "Tile not found";
                 mapObject->setCell(cell);
-                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+                map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
             }
         }
     }
@@ -244,7 +275,7 @@ int createBorder(QString file)
                 if(cell.tile==NULL)
                     qDebug() << "Tile not found";
                 mapObject->setCell(cell);
-                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+                map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
             }
         }
     }
@@ -275,10 +306,232 @@ int createBorder(QString file)
                 if(cell.tile==NULL)
                     qDebug() << "Tile not found";
                 mapObject->setCell(cell);
-                map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
+                map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
             }
         }
     }
+
+    QList<BotDescriptor> botList;
+    QHash<QPair<int,int>,WarpDescriptor> warpList;
+    QStringList textList;
+    {
+        QString npcFile=file;
+        npcFile.replace(".tmx",".txt");
+        QFile tempFile("../language/english/NPC/"+npcFile);
+        if(tempFile.open(QIODevice::ReadOnly))
+        {
+            while (!tempFile.atEnd()) {
+                QString line=QString::fromUtf8(tempFile.readLine());
+                line.replace("\n","");
+                line.replace("\r","");
+                line.replace("\t","");
+                line.replace("Route ","Road ");
+                line.replace(QRegularExpression(" +$"),"");
+                textList << line;
+            }
+            tempFile.close();
+        }
+    }
+    bool ok;
+    {
+        QString npcFile=file;
+        npcFile.replace(".tmx",".txt");
+        QFile tempFile(npcFile);
+        if(tempFile.open(QIODevice::ReadOnly))
+        {
+            QStringList values;
+            QString balise,baliseEnd;
+            while (!tempFile.atEnd()) {
+                QString line=QString::fromUtf8(tempFile.readLine());
+                line.replace("\n","");
+                line.replace("\r","");
+                line.replace("\t","");
+                if(!baliseEnd.isEmpty() && baliseEnd==line)
+                {
+                    if(balise=="[npc]")
+                    {
+                        if(values.count()==12)
+                        {
+                            BotDescriptor botDescriptor;
+                            botDescriptor.name=values.at(0);
+                            botDescriptor.orientation=values.at(1);
+                            botDescriptor.skin=values.at(2);
+                            botDescriptor.x=values.at(3).toInt(&ok);
+                            if(!ok)
+                            {
+                                continue;
+                                values.clear();
+                            }
+                            botDescriptor.y=values.at(4).toInt(&ok);
+                            if(!ok)
+                            {
+                                continue;
+                                values.clear();
+                            }
+                            QStringList textIndex=values.at(8).split(",");
+                            int index=0;
+                            while(index<textIndex.size())
+                            {
+                                bool ok;
+                                quint32 tempIndex=textIndex.at(index).toUInt(&ok);
+                                if(!ok)
+                                    break;
+                                if((int)tempIndex>=textList.size())
+                                    break;
+                                botDescriptor.text << textList.at(tempIndex);
+                                index++;
+                            }
+                            if(index==textIndex.size())
+                            {
+                                if(values.at(9)=="false")
+                                {
+                                    botDescriptor.skin=QString();
+                                    botDescriptor.orientation=QString();
+                                }
+                                botList << botDescriptor;
+                            }
+                            values.clear();
+                        }
+                        else
+                            qDebug() << file << "wrong npc count values";
+                    }
+                    if(balise=="[warp]")
+                    {
+                        if(values.count()==7)
+                        {
+                            WarpDescriptor warpDescriptor;
+                            warpDescriptor.x=values.at(0).toInt(&ok);
+                            if(!ok)
+                                continue;
+                            warpDescriptor.y=values.at(1).toInt(&ok);
+                            if(!ok)
+                                continue;
+                            warpDescriptor.destX=values.at(2).toInt(&ok);
+                            if(!ok)
+                                continue;
+                            warpDescriptor.destY=values.at(3).toInt(&ok);
+                            if(!ok)
+                                continue;
+                            warpDescriptor.destMap=QString("%1.%2.tmx").arg(values.at(4)).arg(values.at(5));
+                            if(!warpList.contains(QPair<int,int>(warpDescriptor.x,warpDescriptor.y)))
+                                warpList[QPair<int,int>(warpDescriptor.x,warpDescriptor.y)]=warpDescriptor;
+                            values.clear();
+                        }
+                        else
+                            qDebug() << file << "wrong warp count values";
+                    }
+                    balise.clear();
+                    baliseEnd.clear();
+                }
+                else if(!balise.isEmpty())
+                    values << line;
+                else if(line.contains(QRegularExpression("^\\[[a-z]+\\]$")))
+                {
+                    balise=line;
+                    baliseEnd=balise;
+                    baliseEnd.replace("[","[/");
+                }
+            }
+            tempFile.close();
+        }
+    }
+    if(!botList.isEmpty())
+    {
+        //add the move layer if needed
+        int indexLayerObject=0;
+        while(indexLayerObject<map->layerCount())
+        {
+            if(map->layerAt(indexLayerObject)->isObjectGroup() && map->layerAt(indexLayerObject)->name()=="Object")
+                break;
+            indexLayerObject++;
+        }
+        if(indexLayerObject>=map->layerCount())
+        {
+            indexLayerObject=map->layerCount();
+            Tiled::ObjectGroup *objectGroup=new Tiled::ObjectGroup("Object",0,0,map->width(),map->height());
+            map->addLayer(objectGroup);
+        }
+
+        QString botsFile=file;
+        botsFile.replace(".tmx","-bots.xml");
+        QFile tempFile(botsFile);
+        if(tempFile.open(QIODevice::WriteOnly))
+        {
+            tempFile.write(QString("<bots>\n").toUtf8());
+            int index=0;
+            while(index<botList.size())
+            {
+                tempFile.write(QString("  <bot id=\"%1\">\n").arg(botId).toUtf8());
+                int sub_index=0;
+                while(sub_index<botList.at(index).text.size())
+                {
+                    tempFile.write(QString("    <step id=\"%1\" type=\"text\"><text><![CDATA[%2]]></text></step>\n").arg(sub_index+1).arg(botList.at(index).text.at(sub_index)).toUtf8());
+                    sub_index++;
+                }
+                tempFile.write(QString("  </bot>\n").toUtf8());
+                {
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botList.at(index).x,botList.at(index).y+1),QSizeF(1,1));
+                    mapObject->setProperty("file",botsFile);
+                    mapObject->setProperty("id",QString::number(botId));
+                    if(!botList.at(index).skin.isEmpty())
+                    {
+                        mapObject->setProperty("skin",botList.at(index).skin);
+                        if(botList.at(index).orientation=="bottom" || botList.at(index).orientation=="down")
+                            mapObject->setProperty("lookAt","bottom");
+                        else if(botList.at(index).orientation=="top" || botList.at(index).orientation=="up")
+                            mapObject->setProperty("lookAt","top");
+                        else if(botList.at(index).orientation=="right")
+                            mapObject->setProperty("lookAt","right");
+                        else if(botList.at(index).orientation=="left")
+                            mapObject->setProperty("lookAt","left");
+                        else
+                            mapObject->setProperty("lookAt","bottom");
+                    }
+                    Tiled::Cell cell=mapObject->cell();
+                    cell.tile=map->tilesetAt(indexTileset)->tileAt(0);
+                    if(cell.tile==NULL)
+                        qDebug() << "Tile not found";
+                    mapObject->setCell(cell);
+                    map->layerAt(indexLayerObject)->asObjectGroup()->addObject(mapObject);
+                }
+                botId++;
+                index++;
+            }
+            tempFile.write(QString("</bots>").toUtf8());
+            tempFile.close();
+        }
+    }
+    QHashIterator<QPair<int,int>, WarpDescriptor> i(warpList);
+    while (i.hasNext()) {
+        i.next();
+        Tiled::MapObject *mapObject=new Tiled::MapObject("","door",QPointF(i.key().first,i.key().second+1),QSizeF(1,1));
+        mapObject->setProperty("map",i.value().destMap);
+        mapObject->setProperty("x",QString::number(i.value().destX));
+        mapObject->setProperty("y",QString::number(i.value().destY+1));
+        Tiled::Cell cell=mapObject->cell();
+        cell.tile=map->tilesetAt(indexTileset)->tileAt(2);
+        if(cell.tile==NULL)
+            qDebug() << "Tile not found";
+        mapObject->setCell(cell);
+        map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+    }
+    {
+        int indexLayer=0;
+        while(indexLayer<map->layerCount())
+        {
+            if(map->layerAt(indexLayer)->layerType()==Tiled::Layer::TileLayerType)
+            {
+                Tiled::TileLayer *tileLayer=map->layerAt(indexLayer)->asTileLayer();
+                if(tileLayer->isEmpty())
+                {
+                    delete map->takeLayerAt(indexLayer);
+                    indexLayer--;
+                }
+            }
+            indexLayer++;
+        }
+    }
+
     write.writeMap(map,file);
     return 0;
 }
@@ -287,6 +540,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    botId=1;
     if(!QFile("invisible.tsx").exists())
     {
         qDebug() << "Tileset invisible.tsx not found";
@@ -295,7 +549,7 @@ int main(int argc, char *argv[])
     bool okX,okY;
     QHash<QString,QString> fileToName;
     QFile mapNames("../language/english/_MAPNAMES.txt");
-    if(mapNames.open(QIODevice::ReadWrite))
+    if(mapNames.open(QIODevice::ReadOnly))
     {
         while (!mapNames.atEnd()) {
             QStringList values=QString::fromUtf8(mapNames.readLine()).split(",");
@@ -305,7 +559,7 @@ int main(int argc, char *argv[])
         mapNames.close();
     }
     QFile mapPos("../language/english/UI/_MAP.txt");
-    if(mapPos.open(QIODevice::ReadWrite))
+    if(mapPos.open(QIODevice::ReadOnly))
     {
         while (!mapPos.atEnd()) {
             QStringList values=QString::fromUtf8(mapPos.readLine()).split(",");
@@ -324,7 +578,8 @@ int main(int argc, char *argv[])
         mapPos.close();
     }
 
-    QDir("./").mkpath("outofmap");
+
+    //QDir("./").mkpath("outofmap");
     QDir dir("./");
     QFileInfoList fileInfoList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int index;
@@ -346,6 +601,5 @@ int main(int argc, char *argv[])
                 createBorder(fileInfoList.at(index).fileName());
         index++;
     }
-    qDebug() << "Done";
     return 0;
 }

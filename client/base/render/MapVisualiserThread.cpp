@@ -37,10 +37,10 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     MapVisualiserThread::Map_full *tempMapObject=new MapVisualiserThread::Map_full();
 
     tempMapObject->displayed=false;
-    tempMapObject->x=0;
-    tempMapObject->y=0;
-    tempMapObject->x_pixel=0;
-    tempMapObject->y_pixel=0;
+    tempMapObject->relative_x=0;
+    tempMapObject->relative_y=0;
+    tempMapObject->relative_x_pixel=0;
+    tempMapObject->relative_y_pixel=0;
     tempMapObject->tiledMap=NULL;
     tempMapObject->tiledRender=NULL;
     tempMapObject->objectGroup=NULL;

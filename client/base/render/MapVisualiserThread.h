@@ -40,8 +40,8 @@ public:
         Tiled::ObjectGroup * objectGroup;
         QHash<quint16,Map_animation> animatedObject;
         int objectGroupIndex;
-        int x,y;//needed for the async load
-        int x_pixel,y_pixel;
+        int relative_x,relative_y;//needed for the async load
+        int relative_x_pixel,relative_y_pixel;
         bool displayed;
     };
     explicit MapVisualiserThread();
