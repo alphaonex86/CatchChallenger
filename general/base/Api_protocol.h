@@ -152,6 +152,7 @@ signals:
     void haveTheDatapack() const;
     void newFile(const QString &fileName,const QByteArray &data,const quint64 &mtime) const;
     void removeFile(const QString &fileName) const;
+    void datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize) const;
 
     //shop
     void haveShopList(const QList<ItemToSellOrBuy> &items) const;
