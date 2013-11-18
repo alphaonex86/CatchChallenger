@@ -104,6 +104,7 @@ private:
 
     QHash<QString,Map_full *> other_map;
 private slots:
+    Tiled::Tileset * getTileset(Tiled::Map * map,const QString &file);
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap(const QString &fileName,qint32 x, qint32 y);
 };
