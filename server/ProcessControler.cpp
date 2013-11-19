@@ -40,6 +40,8 @@ void ProcessControler::send_settings()
     formatedServerSettings.server_ip					= settings->value("server-ip").toString();
     formatedServerSettings.anonymous					= settings->value("anonymous").toBool();
     formatedServerSettings.server_message				= settings->value("server_message").toString();
+    formatedServerSettings.proxy					    = settings->value("proxy").toString();
+    formatedServerSettings.proxy_port					= settings->value("proxy_port").toUInt();
 
     //fight
     //CommonSettings::commonSettings.pvp			= settings->value("pvp").toBool();

@@ -220,9 +220,18 @@ void BaseWindow::have_current_player_info()
     }
     CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());
     DebugClass::debugConsole(QString("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
-    updatePlayerImage();
     updateConnectingStatus();
     updateClanDisplay();
+}
+
+void BaseWindow::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction)
+{
+    Q_UNUSED(player);
+    Q_UNUSED(mapId);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(direction);
+    updatePlayerImage();
 }
 
 void BaseWindow::haveTheDatapack()
@@ -357,11 +366,11 @@ void BaseWindow::updateConnectingStatus()
     }
     QStringList waitedData;
     if(haveDatapack && (!haveInventory || !havePlayerInformations))
-        waitedData << tr("Loading the player informations");
+        waitedData << tr("Loading of the player informations");
     if(!haveDatapack)
     {
         if(datapckFileSize==0)
-            waitedData << tr("Loading the datapack");
+            waitedData << tr("Loading of the datapack");
         else
             waitedData << tr("Loaded datapack file: %1%").arg(datapackDownloadedSize*100/datapckFileSize);
     }

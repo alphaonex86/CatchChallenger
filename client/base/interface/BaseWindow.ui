@@ -5878,9 +5878,9 @@ border-image: url(:/images/empty.png);
             <property name="geometry">
              <rect>
               <x>10</x>
-              <y>360</y>
+              <y>330</y>
               <width>201</width>
-              <height>21</height>
+              <height>81</height>
              </rect>
             </property>
             <property name="text">
