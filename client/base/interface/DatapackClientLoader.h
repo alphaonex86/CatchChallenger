@@ -57,6 +57,8 @@ public:
     {
         QString name;
         QString description;
+        QString kind;
+        QString habitat;
         QPixmap front;
         QPixmap back;
         QPixmap thumb;

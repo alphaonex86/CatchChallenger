@@ -2,6 +2,7 @@
 #include "base/GlobalServerData.h"
 #include "../general/base/FacilityLib.h"
 #include <QSslSocket>
+#include <QNetworkProxy>
 
 /*
   When disconnect the fake client, stop the benchmark
@@ -223,6 +224,14 @@ void NormalServer::start_internal_server()
     QHostAddress address = QHostAddress::Any;
     if(!GlobalServerData::serverSettings.server_ip.isEmpty())
         address.setAddress(GlobalServerData::serverSettings.server_ip);
+    if(!GlobalServerData::serverSettings.proxy.isEmpty())
+    {
+        QNetworkProxy proxy=server->proxy();
+        proxy.setType(QNetworkProxy::Socks5Proxy);
+        proxy.setHostName(GlobalServerData::serverSettings.proxy);
+        proxy.setPort(GlobalServerData::serverSettings.proxy_port);
+        server->setProxy(proxy);
+    }
     if(!server->listen(address,GlobalServerData::serverSettings.server_port))
     {
         DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
@@ -637,6 +646,10 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("anonymous",false);
     if(!settings->contains("server_message"))
         settings->setValue("server_message",QString());
+    if(!settings->contains("proxy"))
+        settings->setValue("proxy","");
+    if(!settings->contains("proxy_port"))
+        settings->setValue("proxy_port",9050);
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))

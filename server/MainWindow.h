@@ -111,6 +111,10 @@ private slots:
     void on_automatic_account_creation_clicked();
     void on_anonymous_toggled(bool checked);
     void on_server_message_textChanged();
+    void on_proxy_editingFinished();
+
+    void on_proxy_port_editingFinished();
+
 signals:
     void record_latency();
 };

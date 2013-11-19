@@ -177,7 +177,7 @@ void ClientLocalBroadcast::seedValidated()
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("INSERT INTO plant(map,x,y,plant,characterplant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QString("INSERT INTO plant(map,x,y,plant,character,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
                      .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)

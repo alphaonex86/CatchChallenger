@@ -257,6 +257,9 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::number_of_player,this,&BaseWindow::number_of_player);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::random_seeds,&ClientFightEngine::fightEngine,&ClientFightEngine::newRandomNumber);
+
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection);
+
     CatchChallenger::Api_client_real::client->startReadData();
 }
 
@@ -2657,134 +2660,6 @@ void BaseWindow::on_selectMonster_clicked()
     if(selectedMonsters.size()!=1)
         return;
     on_monsterList_itemActivated(selectedMonsters.first());
-}
-
-void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
-{
-    if(!monsters_items_graphical.contains(item))
-        return;
-    quint32 monsterId=monsters_items_graphical[item];
-    if(inSelection)
-    {
-       objectSelection(true,monsterId);
-       return;
-    }
-    QList<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
-    int index=0;
-    int size=playerMonster.size();
-    while(index<size)
-    {
-        const PlayerMonster &monster=playerMonster.at(index);
-        if(monster.id==monsterId)
-        {
-            const DatapackClientLoader::MonsterExtra &monsterExtraInfo=DatapackClientLoader::datapackLoader.monsterExtra[monster.monster];
-            const Monster &monsterGeneralInfo=CommonDatapack::commonDatapack.monsters[monster.monster];
-            const Monster::Stat &stat=CommonFightEngine::getStat(monsterGeneralInfo,monster.level);
-            if(monsterGeneralInfo.type.isEmpty())
-                ui->monsterDetailsType->setText(QString());
-            else
-            {
-                QStringList typeList;
-                int sub_index=0;
-                while(sub_index<monsterGeneralInfo.type.size())
-                {
-                    if(DatapackClientLoader::datapackLoader.typeExtra.contains(monsterGeneralInfo.type.at(sub_index)))
-                        if(!DatapackClientLoader::datapackLoader.typeExtra[monsterGeneralInfo.type.at(sub_index)].name.isEmpty())
-                            typeList << DatapackClientLoader::datapackLoader.typeExtra[monsterGeneralInfo.type.at(sub_index)].name;
-                    sub_index++;
-                }
-                if(typeList.isEmpty())
-                    ui->monsterDetailsType->setText(QString());
-                else
-                    ui->monsterDetailsType->setText(tr("Type: %1").arg(typeList.join(", ")));
-            }
-            ui->monsterDetailsName->setText(monsterExtraInfo.name);
-            {
-                QPixmap front=monsterExtraInfo.front;
-                front=front.scaled(160,160);
-                ui->monsterDetailsImage->setPixmap(front);
-            }
-            {
-                QPixmap capture;
-                if(DatapackClientLoader::datapackLoader.itemsExtra.contains(monster.captured_with))
-                {
-                    capture=DatapackClientLoader::datapackLoader.itemsExtra[monster.captured_with].image;
-                    ui->monsterDetailsCaptured->setToolTip(tr("Captured with %1").arg(DatapackClientLoader::datapackLoader.itemsExtra[monster.captured_with].name));
-                }
-                else
-                {
-                    capture=DatapackClientLoader::datapackLoader.defaultInventoryImage();
-                    ui->monsterDetailsCaptured->setToolTip(tr("Captured with unknown item: %1").arg(monster.captured_with));
-                }
-                capture=capture.scaled(48,48);
-                ui->monsterDetailsCaptured->setPixmap(capture);
-            }
-            if(monster.gender==Gender_Male)
-            {
-                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/male.png").scaled(48,48));
-                ui->monsterDetailsGender->setToolTip(tr("Gender: %1").arg(tr("Male")));
-            }
-            else if(monster.gender==Gender_Female)
-            {
-                ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/female.png").scaled(48,48));
-                ui->monsterDetailsGender->setToolTip(tr("Gender: %1").arg(tr("Female")));
-            }
-            else
-            {
-                ui->monsterDetailsGender->setPixmap(QPixmap());
-                ui->monsterDetailsGender->setToolTip(QString());
-            }
-            ui->monsterDetailsLevel->setText(tr("Level: %1").arg(monster.level));
-            ui->monsterDetailsStatHeal->setText(tr("Heal: %1/%2").arg(monster.hp).arg(stat.hp));
-            ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
-            ui->monsterDetailsStatXp->setText(tr("Xp: %1").arg(monster.remaining_xp));
-            ui->monsterDetailsStatAttack->setText(tr("Attack: %1").arg(stat.attack));
-            ui->monsterDetailsStatDefense->setText(tr("Defense: %1").arg(stat.defense));
-            ui->monsterDetailsStatXpBar->setValue(monster.remaining_xp);
-            ui->monsterDetailsStatXpBar->setMaximum(monsterGeneralInfo.level_to_xp.at(monster.level-1));
-            ui->monsterDetailsStatAttackSpe->setText(tr("Special attack: %1").arg(stat.special_attack));
-            ui->monsterDetailsStatDefenseSpe->setText(tr("Special defense: %1").arg(stat.special_defense));
-            ui->monsterDetailsStatSp->setText(tr("Skill point: %1").arg(monster.sp));
-            //skill
-            ui->monsterDetailsSkills->clear();
-            int index=0;
-            while(index<monster.skills.size())
-            {
-                const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(index);
-                QListWidgetItem *item;
-                if(!DatapackClientLoader::datapackLoader.monsterSkillsExtra.contains(playerSkill.skill))
-                    item=new QListWidgetItem(tr("Unknown skill"));
-                else
-                {
-                    if(playerSkill.level>1)
-                        item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name).arg(playerSkill.level));
-                    else
-                        item=new QListWidgetItem(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name);
-                    const Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerSkill.skill];
-                    item->setText(item->text()+", "+tr("endurance: %1/%2")
-                            .arg(playerSkill.endurance)
-                            .arg(skill.level.at(playerSkill.level-1).endurance)
-                            );
-                    if(skill.type!=255)
-                        if(DatapackClientLoader::datapackLoader.typeExtra.contains(skill.type))
-                            if(!DatapackClientLoader::datapackLoader.typeExtra[skill.type].name.isEmpty())
-                                item->setText(item->text()+", "+DatapackClientLoader::datapackLoader.typeExtra[skill.type].name);
-                    item->setText(item->text()+"\n"+DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
-                    item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
-                }
-                ui->monsterDetailsSkills->addItem(item);
-                index++;
-            }
-            ui->stackedWidget->setCurrentWidget(ui->page_monsterdetails);
-            return;
-        }
-        index++;
-    }
-    if(index==size)
-    {
-        QMessageBox::warning(this,tr("Error"),tr("No details on the selected monster found"));
-        return;
-    }
 }
 
 void BaseWindow::on_close_IG_dialog_clicked()

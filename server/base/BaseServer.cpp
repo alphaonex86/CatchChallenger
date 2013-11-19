@@ -1699,6 +1699,11 @@ void BaseServer::loadAndFixSettings()
     if(CommonSettings::commonSettings.character_delete_time<=0)
         CommonSettings::commonSettings.character_delete_time=7*24*3600;
 
+    if(GlobalServerData::serverSettings.server_port<=0)
+        GlobalServerData::serverSettings.server_port=42489;
+    if(GlobalServerData::serverSettings.proxy_port<=0)
+        GlobalServerData::serverSettings.proxy=QString();
+
     //check the settings here
     if(GlobalServerData::serverSettings.max_players<1)
         GlobalServerData::serverSettings.max_players=200;

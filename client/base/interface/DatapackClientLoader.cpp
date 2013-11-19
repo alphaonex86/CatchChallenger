@@ -145,85 +145,90 @@ void DatapackClientLoader::parseItemsExtra()
                         // base size: 24x24
                         DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra[id].image.scaled(72,72);//then zoom: 3x
 
-                        //load the name
                         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-                        bool name_found=false;
-                        QDomElement name = item.firstChildElement("name");
-                        if(!language.isEmpty() && language!="en")
-                            while(!name.isNull())
-                            {
-                                if(name.isElement())
-                                {
-                                    if(name.hasAttribute("lang") && name.attribute("lang")==language)
-                                    {
-                                        DatapackClientLoader::itemsExtra[id].name=name.text();
-                                        name_found=true;
-                                        break;
-                                    }
-                                }
-                                name = name.nextSiblingElement("name");
-                            }
-                        if(!name_found)
+
+                        //load the name
                         {
-                            name = item.firstChildElement("name");
-                            while(!name.isNull())
-                            {
-                                if(name.isElement())
+                            bool name_found=false;
+                            QDomElement name = item.firstChildElement("name");
+                            if(!language.isEmpty() && language!="en")
+                                while(!name.isNull())
                                 {
-                                    if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                                    if(name.isElement())
                                     {
-                                        DatapackClientLoader::itemsExtra[id].name=name.text();
-                                        name_found=true;
-                                        break;
+                                        if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                                        {
+                                            DatapackClientLoader::itemsExtra[id].name=name.text();
+                                            name_found=true;
+                                            break;
+                                        }
                                     }
+                                    name = name.nextSiblingElement("name");
                                 }
-                                name = name.nextSiblingElement("name");
+                            if(!name_found)
+                            {
+                                name = item.firstChildElement("name");
+                                while(!name.isNull())
+                                {
+                                    if(name.isElement())
+                                    {
+                                        if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                                        {
+                                            DatapackClientLoader::itemsExtra[id].name=name.text();
+                                            name_found=true;
+                                            break;
+                                        }
+                                    }
+                                    name = name.nextSiblingElement("name");
+                                }
                             }
-                        }
-                        if(!name_found)
-                        {
-                            DatapackClientLoader::itemsExtra[id].name=tr("Unknown object");
-                            qDebug() << QString("English name not found for the item with id: %1").arg(id);
+                            if(!name_found)
+                            {
+                                DatapackClientLoader::itemsExtra[id].name=tr("Unknown object");
+                                qDebug() << QString("English name not found for the item with id: %1").arg(id);
+                            }
                         }
 
                         //load the description
-                        bool description_found=false;
-                        QDomElement description = item.firstChildElement("description");
-                        if(!language.isEmpty() && language!="en")
-                            while(!description.isNull())
-                            {
-                                if(description.isElement())
-                                {
-                                    if(description.hasAttribute("lang") && name.attribute("lang")==language)
-                                    {
-                                        DatapackClientLoader::itemsExtra[id].description=description.text();
-                                        description_found=true;
-                                        break;
-                                    }
-                                }
-                                description = description.nextSiblingElement("description");
-                            }
-                        if(!description_found)
                         {
-                            description = item.firstChildElement("description");
-                            while(!description.isNull())
-                            {
-                                if(description.isElement())
+                            bool description_found=false;
+                            QDomElement description = item.firstChildElement("description");
+                            if(!language.isEmpty() && language!="en")
+                                while(!description.isNull())
                                 {
-                                    if(!description.hasAttribute("lang") || name.attribute("lang")=="en")
+                                    if(description.isElement())
                                     {
-                                        DatapackClientLoader::itemsExtra[id].description=description.text();
-                                        description_found=true;
-                                        break;
+                                        if(description.hasAttribute("lang") && description.attribute("lang")==language)
+                                        {
+                                            DatapackClientLoader::itemsExtra[id].description=description.text();
+                                            description_found=true;
+                                            break;
+                                        }
                                     }
+                                    description = description.nextSiblingElement("description");
                                 }
-                                description = description.nextSiblingElement("description");
+                            if(!description_found)
+                            {
+                                description = item.firstChildElement("description");
+                                while(!description.isNull())
+                                {
+                                    if(description.isElement())
+                                    {
+                                        if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
+                                        {
+                                            DatapackClientLoader::itemsExtra[id].description=description.text();
+                                            description_found=true;
+                                            break;
+                                        }
+                                    }
+                                    description = description.nextSiblingElement("description");
+                                }
                             }
-                        }
-                        if(!description_found)
-                        {
-                            DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
-                            qDebug() << QString("English description not found for the item with id: %1").arg(id);
+                            if(!description_found)
+                            {
+                                DatapackClientLoader::itemsExtra[id].description=tr("This object is not listed as know object. The information can't be found.");
+                                qDebug() << QString("English description not found for the item with id: %1").arg(id);
+                            }
                         }
                     }
                     else
