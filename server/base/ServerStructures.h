@@ -98,6 +98,8 @@ struct ServerSettings
     //the listen, implicit on the client
     quint16 server_port;
     QString server_ip;
+    QString proxy;
+    quint16 proxy_port;
     QString datapack_basePath;
     bool anonymous;
     QString server_message;
