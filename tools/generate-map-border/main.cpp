@@ -507,16 +507,13 @@ int createBorder(QString file)
                 tempFile.write(QString("  <bot id=\"%1\">\n").arg(botId).toUtf8());
                 if(botList.at(index).fightMonsterId.isEmpty())
                 {
-                    int sub_index=0;
-                    while(sub_index<botList.at(index).text.size())
-                    {
-                        tempFile.write(QString("    <step id=\"%1\" type=\"text\"><text><![CDATA[%2]]></text></step>\n").arg(sub_index+1).arg(botList.at(index).text.at(sub_index)).toUtf8());
-                        sub_index++;
-                    }
+                    tempFile.write(QString("    <step id=\"1\" type=\"text\">\n").toUtf8());
+                    tempFile.write(QString("      <text><![CDATA[%1]]></text>\n").arg(botList.at(index).text.join("<br />")).toUtf8());
+                    tempFile.write(QString("    </step>\n").toUtf8());
                 }
                 else
                 {
-                    tempFile.write(QString("    <step type=\"fight\" id=\"%1\" fightid=\"%1\">\n").arg(fightid).toUtf8());
+                    tempFile.write(QString("    <step type=\"fight\" id=\"1\" fightid=\"%1\" />\n").arg(fightid).toUtf8());
                     FightDescriptor fightDescriptor;
                     if(botList.at(index).text.size()>=1)
                         fightDescriptor.start=botList.at(index).text.first();
@@ -728,7 +725,7 @@ int main(int argc, char *argv[])
 
     //QDir("./").mkpath("outofmap");
     QDir dir("./");
-    QFileInfoList fileInfoList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    QFileInfoList fileInfoList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot,QDir::Name);
     int index;
     index=0;
     while(index<fileInfoList.size())
