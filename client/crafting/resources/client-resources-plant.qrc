@@ -6,5 +6,6 @@
 	<file>images/interface/plants-left.png</file>
 	<file>images/interface/plants-right.png</file>
 	<file>images/interface/option-craft.png</file>
+	<file>qml/crafting-animation.qml</file>
     </qresource>
 </RCC>

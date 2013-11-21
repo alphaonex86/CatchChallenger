@@ -220,19 +220,29 @@ void DatapackClientLoader::parseMonstersExtra()
                             monsterExtraEntry.name=tr("Unknown");
                         if(monsterExtraEntry.description.isEmpty())
                             monsterExtraEntry.description=tr("Unknown");
-                        monsterExtraEntry.front=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("front.png"));
+                        monsterExtraEntry.frontPath=QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("front.png");
+                        monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                         if(monsterExtraEntry.front.isNull())
                         {
-                            monsterExtraEntry.front=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("front.gif"));
+                            monsterExtraEntry.frontPath=QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("front.gif");
+                            monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                             if(monsterExtraEntry.front.isNull())
-                                monsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
+                            {
+                                monsterExtraEntry.frontPath=":/images/monsters/default/front.png";
+                                monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
+                            }
                         }
-                        monsterExtraEntry.back=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("back.png"));
+                        monsterExtraEntry.backPath=QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("back.png");
+                        monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                         if(monsterExtraEntry.back.isNull())
                         {
-                            monsterExtraEntry.back=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("back.gif"));
+                            monsterExtraEntry.backPath=QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("back.gif");
+                            monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                             if(monsterExtraEntry.back.isNull())
-                                monsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
+                            {
+                                monsterExtraEntry.backPath=":/images/monsters/default/back.png";
+                                monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
+                            }
                         }
                         monsterExtraEntry.thumb=QPixmap(QString("%1/%2/%3/%4").arg(datapackPath).arg(DATAPACK_BASE_PATH_MONSTERS).arg(id).arg("small.png"));
                         if(monsterExtraEntry.thumb.isNull())

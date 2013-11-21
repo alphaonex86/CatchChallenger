@@ -35,6 +35,10 @@ void ProcessControler::send_settings()
     CommonSettings::commonSettings.max_pseudo_size					= settings->value("max_pseudo_size").toUInt();
     CommonSettings::commonSettings.character_delete_time			= settings->value("character_delete_time").toUInt();
 
+    CommonSettings::commonSettings.forcedSpeed                      = settings->value("forcedSpeed").toUInt();
+    CommonSettings::commonSettings.dontSendPseudo					= settings->value("dontSendPseudo").toBool();
+    formatedServerSettings.dontSendPlayerType                       = settings->value("dontSendPlayerType").toBool();
+
     //the listen
     formatedServerSettings.server_port					= settings->value("server-port").toUInt();
     formatedServerSettings.server_ip					= settings->value("server-ip").toString();

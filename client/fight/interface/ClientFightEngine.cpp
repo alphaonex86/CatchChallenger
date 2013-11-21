@@ -470,3 +470,59 @@ bool ClientFightEngine::doTheOtherMonsterTurn()
         return CommonFightEngine::doTheOtherMonsterTurn();
     return true;
 }
+
+void ClientFightEngine::levelUp(const quint8 &level, const quint8 &monsterIndex)
+{
+    const PlayerMonster &monster=player_informations->playerMonster.at(monsterIndex);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster.monster];
+    int index=0;
+    while(index<monsterInformations.evolutions.size())
+    {
+        const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
+        if(evolution.type==Monster::EvolutionType_Level && evolution.level==level)//the current monster is not updated
+        {
+            mEvolutionByLevelUp << monsterIndex;
+            return;
+        }
+        index++;
+    }
+}
+
+PlayerMonster * ClientFightEngine::evolutionByLevelUp()
+{
+    if(mEvolutionByLevelUp.isEmpty())
+        return NULL;
+    quint8 monsterIndex=mEvolutionByLevelUp.first();
+    mEvolutionByLevelUp.removeFirst();
+    return &player_informations->playerMonster[monsterIndex];
+}
+
+void ClientFightEngine::confirmEvolution(const quint32 &monterId)
+{
+    CatchChallenger::Api_client_real::client->confirmEvolution(monterId);
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        if(player_informations->playerMonster.at(index).id==monterId)
+        {
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[player_informations->playerMonster.at(index).monster];
+            int sub_index=0;
+            while(sub_index<monsterInformations.evolutions.size())
+            {
+                if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
+                {
+                    player_informations->playerMonster[index].monster=monsterInformations.evolutions.at(sub_index).evolveTo;
+                    Monster::Stat stat=getStat(monsterInformations,player_informations->playerMonster[index].level);
+                    if(player_informations->playerMonster[index].hp>stat.hp)
+                        player_informations->playerMonster[index].hp=stat.hp;
+                    return;
+                }
+                sub_index++;
+            }
+            qDebug() << "Evolution not found";
+            return;
+        }
+        index++;
+    }
+    qDebug() << "Monster for evolution not found";
+}

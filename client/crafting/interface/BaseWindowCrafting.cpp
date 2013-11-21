@@ -1,5 +1,6 @@
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/DatapackClientLoader.h"
+#include "../base/Api_client_real.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../../general/base/CommonDatapack.h"
@@ -9,6 +10,7 @@
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QQmlContext>
 
 /* show only the plant into the inventory */
 
@@ -398,6 +400,9 @@ void BaseWindow::on_craftingUse_clicked()
     QListWidgetItem *selectedItem=displayedItems.first();
     const CatchChallenger::CrafingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[crafting_recipes_items_graphical[selectedItem]];
 
+    QStringList mIngredients;
+    QString mRecipe;
+    QString mProduct;
     //load the materials
     int index=0;
     while(index<content.materials.size())
@@ -406,6 +411,12 @@ void BaseWindow::on_craftingUse_clicked()
             return;
         if(items[content.materials.at(index).item]<content.materials.at(index).quantity)
             return;
+        quint32 sub_index=0;
+        while(sub_index<content.materials.at(index).quantity)
+        {
+            mIngredients << "file://"+DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].imagePath;
+            sub_index++;
+        }
         index++;
     }
     index=0;
@@ -427,12 +438,44 @@ void BaseWindow::on_craftingUse_clicked()
     pair.first=content.doItemId;
     pair.second=content.quantity;
     productOfRecipeInUsing << pair;
+    mProduct="file://"+DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].imagePath;
+    mRecipe="file://"+DatapackClientLoader::datapackLoader.itemsExtra[content.itemToLearn].imagePath;
     //update the UI
     load_inventory();
     load_plant_inventory();
     on_listCraftingList_itemSelectionChanged();
     //send to the network
     CatchChallenger::Api_client_real::client->useRecipe(crafting_recipes_items_graphical[selectedItem]);
+    //create animation widget
+    if(animationWidget!=NULL)
+        delete animationWidget;
+    if(qQuickViewContainer!=NULL)
+        delete qQuickViewContainer;
+    animationWidget=new QQuickView();
+    qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
+    qQuickViewContainer->setMinimumSize(QSize(800,600));
+    qQuickViewContainer->setMaximumSize(QSize(800,600));
+    qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
+    ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
+    //show the animation
+    previousAnimationWidget=ui->stackedWidget->currentWidget();
+    ui->stackedWidget->setCurrentWidget(ui->page_animation);
+    if(craftingAnimationObject!=NULL)
+        delete craftingAnimationObject;
+    craftingAnimationObject=new CraftingAnimation(mIngredients,mRecipe,mProduct,"file://"+playerBackImagePath);
+    animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
+    animationWidget->rootContext()->setContextProperty("craftingAnimationObject",craftingAnimationObject);
+    const QString datapackQmlFile=CatchChallenger::Api_client_real::client->get_datapack_base()+"qml/crafting-animation.qml";
+    if(QFile(datapackQmlFile).exists())
+        animationWidget->setSource(QStringLiteral("file://")+datapackQmlFile);
+    else
+        animationWidget->setSource(QStringLiteral("qrc:/qml/crafting-animation.qml"));
+}
+
+void BaseWindow::on_listCraftingMaterials_itemActivated(QListWidgetItem *item)
+{
+    Q_UNUSED(item);
+    ui->craftingUse->clicked();
 }
 
 void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)

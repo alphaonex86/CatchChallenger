@@ -52,12 +52,16 @@ public:
     virtual quint32 captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
     void captureIsDone();
     bool doTheOtherMonsterTurn();
+    PlayerMonster * evolutionByLevelUp();
+    void confirmEvolution(const quint32 &monterId);
 private:
+    QList<int> mEvolutionByLevelUp;
     QList<Skill::AttackReturn> attackReturnList;
     Player_private_and_public_informations player_informations_local;
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();
+    void levelUp(const quint8 &level,const quint8 &monsterIndex);
     void addXPSP();
 private:
     explicit ClientFightEngine();

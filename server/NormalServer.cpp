@@ -650,6 +650,12 @@ void NormalServer::checkSettingsFile(QSettings *settings)
         settings->setValue("proxy","");
     if(!settings->contains("proxy_port"))
         settings->setValue("proxy_port",9050);
+    if(!settings->contains("forcedSpeed"))
+        settings->setValue("forcedSpeed",200);
+    if(!settings->contains("dontSendPseudo"))
+        settings->setValue("dontSendPseudo",false);
+    if(!settings->contains("dontSendPlayerType"))
+        settings->setValue("dontSendPlayerType",false);
 
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))
