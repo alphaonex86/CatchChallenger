@@ -265,6 +265,7 @@ public slots:
     void learnSkill(const quint32 &monsterId,const quint32 &skill);
     void monsterMoveDown(const quint8 &number);
     void monsterMoveUp(const quint8 &number);
+    void confirmEvolution(const quint32 &monterId);
 
     //quest
     void startQuest(const quint32 &questId);

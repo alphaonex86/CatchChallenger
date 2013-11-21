@@ -133,14 +133,19 @@ void DatapackClientLoader::parseItemsExtra()
                             {
                                 qDebug() << QString("Unable to open the items image: %1: child.tagName(): %2 (at line: %3)").arg(datapackPath+DATAPACK_BASE_PATH_ITEM+item.attribute("image")).arg(item.tagName()).arg(item.lineNumber());
                                 DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
+                                DatapackClientLoader::itemsExtra[id].imagePath=":/images/inventory/unknow-object.png";
                             }
                             else
+                            {
+                                DatapackClientLoader::itemsExtra[id].imagePath=QFileInfo(datapackPath+DATAPACK_BASE_PATH_ITEM+item.attribute("image")).absoluteFilePath();
                                 DatapackClientLoader::itemsExtra[id].image=image;
+                            }
                         }
                         else
                         {
                             qDebug() << QString("For parse item: Have not image attribute: child.tagName(): %1 (%2 at line: %3)").arg(item.tagName()).arg(itemsFile.fileName()).arg(item.lineNumber());
                             DatapackClientLoader::itemsExtra[id].image=*mDefaultInventoryImage;
+                            DatapackClientLoader::itemsExtra[id].imagePath=":/images/inventory/unknow-object.png";
                         }
                         // base size: 24x24
                         DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra[id].image.scaled(72,72);//then zoom: 3x

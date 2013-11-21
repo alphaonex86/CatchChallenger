@@ -103,6 +103,7 @@ struct ServerSettings
     QString datapack_basePath;
     bool anonymous;
     QString server_message;
+    bool dontSendPlayerType;
 
     struct Database
     {

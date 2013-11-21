@@ -193,34 +193,43 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                     public_informations.type=playerType;
 
                     //the speed
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    if(CommonSettings::commonSettings.forcedSpeed==0)
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                        return;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                            return;
+                        }
+                        in >> public_informations.speed;
+                        public_informations.speed=CommonSettings::commonSettings.forcedSpeed;
                     }
-                    in >> public_informations.speed;
 
-                    //the pseudo
-                    if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                    if(!CommonSettings::commonSettings.dontSendPseudo)
                     {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                        return;
+                        //the pseudo
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                            return;
+                        }
+                        quint8 pseudoSize;
+                        in >> pseudoSize;
+                        if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
+                            return;
+                        }
+                        QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                        public_informations.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
+                        in.device()->seek(in.device()->pos()+rawText.size());
+                        if(public_informations.pseudo.isEmpty())
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed for pseudo: %1, rawData: %2, line: %3").arg(mainCodeType).arg(QString(rawText.toHex())).arg(__LINE__));
+                            return;
+                        }
                     }
-                    quint8 pseudoSize;
-                    in >> pseudoSize;
-                    if((in.device()->size()-in.device()->pos())<(int)pseudoSize)
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("wrong size with main ident: %1, line: %2").arg(mainCodeType).arg(__LINE__));
-                        return;
-                    }
-                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
-                    public_informations.pseudo=QString::fromUtf8(rawText.data(),rawText.size());
-                    in.device()->seek(in.device()->pos()+rawText.size());
-                    if(public_informations.pseudo.isEmpty())
-                    {
-                        parseError(tr("Procotol wrong or corrupted"),QString("UTF8 decoding failed for pseudo: %1, rawData: %2, line: %3").arg(mainCodeType).arg(QString(rawText.toHex())).arg(__LINE__));
-                        return;
-                    }
+                    else
+                        public_informations.pseudo=QString();
 
                     //the skin
                     if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
@@ -2430,6 +2439,18 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the max_character, line: %1").arg(__LINE__));
                             return;
                         }
+                        in >> CommonSettings::commonSettings.forcedSpeed;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the max_character, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.dontSendPseudo;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QString("wrong size to get the max_character, line: %1").arg(__LINE__));
+                            return;
+                        }
                         in >> CommonSettings::commonSettings.max_character;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
@@ -4238,6 +4259,17 @@ void Api_protocol::monsterMoveUp(const quint8 &number)
     if(output==NULL)
         return;
     output->packFullOutcommingData(0x60,0x0008,outputData);
+}
+
+void Api_protocol::confirmEvolution(const quint32 &monterId)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << (quint32)monterId;
+    if(output==NULL)
+        return;
+    output->packFullOutcommingData(0x60,0x000A,outputData);
 }
 
 void Api_protocol::monsterMoveDown(const quint8 &number)
