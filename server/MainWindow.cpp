@@ -313,6 +313,19 @@ void MainWindow::load_settings()
     ui->server_message->setPlainText(settings->value("server_message").toString());
     ui->proxy->setText(settings->value("proxy").toString());
     ui->proxy_port->setValue(settings->value("proxy_port").toUInt());
+    if(settings->value("forcedSpeed")==0)
+    {
+        ui->forceSpeed->setChecked(true);
+        ui->speed->setEnabled(false);
+    }
+    else
+    {
+        ui->forceSpeed->setChecked(false);
+        ui->speed->setValue(settings->value("forcedSpeed"));
+        ui->speed->setEnabled(true);
+    }
+    ui->dontSendPseudo->setChecked(settings->value("dontSendPseudo"));
+    ui->dontSendPlayerType->setChecked(settings->value("dontSendPlayerType"));
 
     quint32 tempValue=0;
     settings->beginGroup("MapVisibilityAlgorithm");
@@ -515,6 +528,13 @@ void MainWindow::send_settings()
     CommonSettings::commonSettings.max_pseudo_size					= ui->max_pseudo_size->value();
     CommonSettings::commonSettings.character_delete_time			= ui->character_delete_time->value()*3600;
 
+    if(!ui->forceSpeed->isChecked())
+        CommonSettings::commonSettings.forcedSpeed					= 0;
+    else
+        CommonSettings::commonSettings.forcedSpeed					= ui->speed->value();
+    CommonSettings::commonSettings.dontSendPlayerType				= ui->dontSendPlayerType->isChecked();
+    CommonSettings::commonSettings.dontSendPseudo					= ui->dontSendPseudo->isChecked();
+
     //the listen
     formatedServerSettings.server_port					= ui->server_port->value();
     formatedServerSettings.server_ip					= ui->server_ip->text();
@@ -522,6 +542,8 @@ void MainWindow::send_settings()
     formatedServerSettings.server_message				= ui->server_message->toPlainText();
     formatedServerSettings.proxy    					= ui->proxy->text();
     formatedServerSettings.proxy_port					= ui->proxy_port->value();
+
+
 
     //fight
     formatedServerSettings.pvp			= ui->pvp->isChecked();
@@ -1090,4 +1112,35 @@ void CatchChallenger::MainWindow::on_proxy_editingFinished()
 void CatchChallenger::MainWindow::on_proxy_port_editingFinished()
 {
     settings->setValue("proxy_port",ui->proxy_port->value());
+}
+
+void CatchChallenger::MainWindow::on_forceSpeed_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    ui->speed->setEnabled(ui->forceSpeed->isChecked());
+    if(!ui->forceSpeed->isChecked())
+        settings->setValue("forcedSpeed",0);
+    else
+        settings->setValue("forcedSpeed",ui->speed->value());
+}
+
+void CatchChallenger::MainWindow::on_speed_editingFinished()
+{
+    ui->speed->setEnabled(ui->forceSpeed->isChecked());
+    if(!ui->forceSpeed->isChecked())
+        settings->setValue("forcedSpeed",0);
+    else
+        settings->setValue("forcedSpeed",ui->speed->value());
+}
+
+void CatchChallenger::MainWindow::on_dontSendPseudo_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    settings->setValue("dontSendPseudo",ui->dontSendPseudo->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_dontSendPlayerType_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    settings->setValue("dontSendPlayerType",ui->dontSendPlayerType->isChecked());
 }

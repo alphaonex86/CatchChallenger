@@ -6,6 +6,7 @@ luck is in percent
 ratio_gender: 0% only male, 100% only female, -1 no gender
 second line is stat at level 100
 if level is 0, it's base attack, default: attack_level=\"1\"
+evolution type can be: level (attribute level is the level), item (attribute level is the item id), trade (attribute level is useless)
 -->
 <list>\n";
 
@@ -421,6 +422,64 @@ foreach($entry_list[1] as $entry)
 				$m_evolveTo=$name_upper_to_name[$entry_list_evolutions[$index]];
 			else
 				$m_evolveTo=ucfirst(strtolower($entry_list_evolutions[$index]));
+			if($m_type=='Level')
+			{
+				$m_type='level';
+				if($m_level>100)
+				{
+					$index+=3;
+					continue;
+				}
+			}
+			else if($m_type=='Item')
+			{
+				$m_type='item';
+				if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
+				{
+					$index+=3;
+					continue;
+				}
+				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
+				$m_level=str_replace(' ','',strtolower($m_level));
+				if(!isset($item_name_to_id[$m_level]))
+				{
+					$index+=3;
+					continue;
+				}
+				$m_level=$item_name_to_id[$m_level];
+			}
+			else if($m_type=='Trade')
+			{
+				$m_type='trade';
+				$m_level='0';
+			}
+			/*else if($m_type=='TradeItem')
+			{
+				$m_type='tradeWithItem';
+				if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
+				{
+					$index+=3;
+					continue;
+				}
+				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
+				$m_level=str_replace(' ','',strtolower($m_level));
+				if(!isset($item_name_to_id[$m_level]))
+				{
+					$index+=3;
+					continue;
+				}
+				$m_level=$item_name_to_id[$m_level];
+			}*/
+			/*else if($m_type=='Happiness' || $m_type=='HappinessDay' || $m_type=='HappinessNight')
+			{
+				$m_type='happiness';
+				$m_level='3';
+			}*/
+			else
+			{
+				$index+=3;
+				continue;
+			}
 			$evolutions[]=array(
 				'type'=>$m_type,
 				'level'=>$m_level,
@@ -541,6 +600,28 @@ foreach($temp_drops as $item=>$luck)
 		echo '			<drop item="'.$item.'" luck="'.$luck.'" />'."\n";
 ?>
 		</drops>
+<?php
+}
+?>
+<?php
+if(isset($specie['evolutions']) && count($specie['evolutions'])>0)
+{
+?>
+		<evolutions>
+<?php
+$temp_evolutions=$specie['evolutions'];
+foreach($temp_evolutions as $evolution)
+{
+	$level='';
+	if($evolution['type']!='trade')
+		$level=' level="'.$evolution['level'].'"';
+	if(isset($name_to_id[$evolution['evolveTo']]))
+		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$name_to_id[$evolution['evolveTo']].'" />'."\n";
+	else
+		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$evolution['evolveTo'].'" />'."\n";
+}
+?>
+		</evolutions>
 <?php
 }
 ?>

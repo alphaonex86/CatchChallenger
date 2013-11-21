@@ -292,11 +292,18 @@ void LocalClientHandler::put_on_the_map(Map *map,const COORD_TYPE &x,const COORD
     }
     out << x;
     out << y;
-    out << quint8((quint8)orientation|(quint8)player_informations->public_and_private_informations.public_informations.type);
-    out << player_informations->public_and_private_informations.public_informations.speed;
+    if(GlobalServerData::serverSettings.dontSendPlayerType)
+        out << quint8((quint8)orientation | (quint8)Player_type_normal);
+    else
+        out << quint8((quint8)orientation | (quint8)player_informations->public_and_private_informations.public_informations.type);
+    if(CommonSettings::commonSettings.forcedSpeed==0)
+        out << player_informations->public_and_private_informations.public_informations.speed;
 
-    outputData+=player_informations->rawPseudo;
-    out.device()->seek(out.device()->pos()+player_informations->rawPseudo.size());
+    if(!CommonSettings::commonSettings.dontSendPseudo)
+    {
+        outputData+=player_informations->rawPseudo;
+        out.device()->seek(out.device()->pos()+player_informations->rawPseudo.size());
+    }
     out << player_informations->public_and_private_informations.public_informations.skinId;
 
     emit sendPacket(0xC0,outputData);
@@ -4280,3 +4287,7 @@ void LocalClientHandler::withdrawMarketMonster(const quint32 &query_id,const qui
     emit postReply(query_id,outputData);
 }
 
+void LocalClientHandler::confirmEvolution(const quint32 &monterId)
+{
+    localClientHandlerFight.confirmEvolution(monterId);
+}

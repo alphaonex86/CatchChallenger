@@ -11,6 +11,7 @@
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QQmlContext>
 
 /* show only the plant into the inventory */
 
@@ -62,6 +63,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                 ui->monsterDetailsType->setText(extraInfo.join("<br />"));
             }
             ui->monsterDetailsName->setText(monsterExtraInfo.name);
+            ui->monsterDetailsDescription->setText(monsterExtraInfo.description);
             {
                 QPixmap front=monsterExtraInfo.front;
                 front=front.scaled(160,160);
@@ -622,9 +624,10 @@ void BaseWindow::updateCurrentMonsterInformation()
     ui->labelFightMonsterBottom->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].back.scaled(160,160));
     ui->frameFightBottom->setVisible(true);
     ui->frameFightBottom->show();
-    const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[monster->monster];
-    ui->progressBarFightBottomExp->setMaximum(currentmonster.level_to_xp.at(monster->level-1));
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster->monster];
+    ui->progressBarFightBottomExp->setMaximum(monsterInformations.level_to_xp.at(monster->level-1));
     ui->progressBarFightBottomExp->setValue(monster->remaining_xp);
+    ui->labelFightBottomLevel->setText(tr("Level: %1").arg(monster->level));
     //list the attack
     fight_attacks_graphical.clear();
     ui->listWidgetFightAttack->clear();
@@ -735,7 +738,10 @@ void BaseWindow::moveFightMonsterTop()
                 {
                     PlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
                     if(currentMonster!=NULL)
+                    {
                         ui->progressBarFightBottomExp->setValue(currentMonster->remaining_xp);
+                        ui->labelFightBottomLevel->setText(tr("Level: %1").arg(currentMonster->level));
+                    }
                     displayText(tr("You win!"));
                 }
                 else
@@ -1018,9 +1024,67 @@ void BaseWindow::on_listWidgetFightAttack_itemSelectionChanged()
     ui->labelFightAttackDetails->setText(DatapackClientLoader::datapackLoader.monsterSkillsExtra[skillId].description);
 }
 
+void BaseWindow::checkEvolution()
+{
+    PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.evolutionByLevelUp();
+    if(monster!=NULL)
+    {
+        const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster->monster];
+        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra[monster->monster];
+        int index=0;
+        while(index<monsterInformations.evolutions.size())
+        {
+            const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
+            if(evolution.type==Monster::EvolutionType_Level && evolution.level==monster->level)
+            {
+                idMonsterEvolution=monster->id;
+                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters[evolution.evolveTo];
+                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra[evolution.evolveTo];
+                //create animation widget
+                if(animationWidget!=NULL)
+                    delete animationWidget;
+                if(qQuickViewContainer!=NULL)
+                    delete qQuickViewContainer;
+                animationWidget=new QQuickView();
+                qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
+                qQuickViewContainer->setMinimumSize(QSize(800,600));
+                qQuickViewContainer->setMaximumSize(QSize(800,600));
+                qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
+                ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
+                //show the animation
+                ui->stackedWidget->setCurrentWidget(ui->page_animation);
+                previousAnimationWidget=ui->page_map;
+                if(baseMonsterEvolution!=NULL)
+                    delete baseMonsterEvolution;
+                if(targetMonsterEvolution!=NULL)
+                    delete targetMonsterEvolution;
+                baseMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformations,monsterInformationsExtra);
+                targetMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                if(evolutionControl!=NULL)
+                    delete evolutionControl;
+                evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                connect(evolutionControl,&EvolutionControl::cancel,this,&BaseWindow::evolutionCanceled,Qt::QueuedConnection);
+                animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
+                animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
+                animationWidget->rootContext()->setContextProperty("canBeCanceled",true);
+                animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
+                animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
+                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->get_datapack_base()+"qml/evolution-animation.qml";
+                if(QFile(datapackQmlFile).exists())
+                    animationWidget->setSource(QStringLiteral("file://")+datapackQmlFile);
+                else
+                    animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
+                return;
+            }
+            index++;
+        }
+    }
+}
+
 void BaseWindow::finalFightTextQuit()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+    checkEvolution();
 }
 
 void BaseWindow::loose()
@@ -1067,6 +1131,7 @@ void BaseWindow::loose()
         botFightList.removeFirst();
         botFight(fightId);
     }
+    checkEvolution();
 }
 
 void BaseWindow::win()
@@ -1124,6 +1189,7 @@ void BaseWindow::win()
         botFightList.removeFirst();
         botFight(fightId);
     }
+    checkEvolution();
 }
 
 void BaseWindow::doNextAction()

@@ -35,6 +35,7 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     parseBuff();
     parseSkills();
     parseMonsters();
+    parseMonstersEvolutionItems();
     parseReputation();
     parseQuests();
     parseBotFights();
@@ -105,8 +106,14 @@ void CommonDatapack::parseSkills()
 
 void CommonDatapack::parseMonsters()
 {
-    monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",monsterSkills,types);
+    monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",monsterSkills,types,items.item);
     qDebug() << QString("%1 monster(s) loaded").arg(monsters.size());
+}
+
+void CommonDatapack::parseMonstersEvolutionItems()
+{
+    items.evolutionItem=FightLoader::loadMonsterEvolutionItems(monsters);
+    qDebug() << QString("%1 monster evolution items(s) loaded").arg(items.evolutionItem.size());
 }
 
 void CommonDatapack::parseBotFights()

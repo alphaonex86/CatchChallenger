@@ -141,6 +141,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     out << (quint8)GlobalServerData::serverSettings.city.capture.frenquency;
 
     //common settings
+    out << (quint8)CommonSettings::commonSettings.forcedSpeed;
+    out << (quint8)CommonSettings::commonSettings.dontSendPseudo;
     out << (quint8)CommonSettings::commonSettings.max_character;
     out << (quint8)CommonSettings::commonSettings.min_character;
     out << (quint8)CommonSettings::commonSettings.max_pseudo_size;

@@ -11,6 +11,7 @@
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QQmlContext>
 
 using namespace CatchChallenger;
 
@@ -53,6 +54,7 @@ void BaseWindow::resetAll()
     ui->inventoryDestroy->setVisible(false);
     previousRXSize=0;
     previousTXSize=0;
+    previousAnimationWidget=NULL;
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);
     waitToSell=false;
@@ -90,6 +92,10 @@ void BaseWindow::resetAll()
     escapeSuccess=false;
     datapckFileNumber=0;
     datapckFileSize=0;
+    baseMonsterEvolution=NULL;
+    targetMonsterEvolution=NULL;
+    idMonsterEvolution=0;
+    evolutionControl=NULL;
     while(!ambiance.isEmpty())
     {
         ambiance.first()->stop();
@@ -198,6 +204,7 @@ void BaseWindow::have_current_player_info()
     ui->tradePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->warehousePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
+    ui->shopCash->setText(tr("Cash: %1$").arg(informations.cash));
     if(informations.bitcoin>=0)
     {
         ui->label_bitcoin->setVisible(true);
@@ -513,50 +520,68 @@ void BaseWindow::show_reputation()
 
 QPixmap BaseWindow::getFrontSkin(const QString &skinName) const
 {
-    QPixmap skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png");
-    if(skin.isNull())
-    {
-        skin=QPixmap(":/images/player_default/front.png");
-        qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+"/front.png";
-    }
-    return skin;
+    const QPixmap skin(getFrontSkinPath(skinName));
+    if(!skin.isNull())
+        return skin;
+    return QPixmap(":/images/player_default/front.png");
 }
 
 QPixmap BaseWindow::getFrontSkin(const quint32 &skinId) const
 {
-    QPixmap skin;
-    QStringList skinFolderList=DatapackClientLoader::datapackLoader.skins;
-    //front image
-    if(skinId<(quint32)skinFolderList.size())
-        skin=getFrontSkin(skinFolderList.at(skinId));
-    else
-    {
-        skin=QPixmap(":/images/player_default/front.png");
-        qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
-    }
-    return skin;
+    const QPixmap skin(getFrontSkinPath(skinId));
+    if(!skin.isNull())
+        return skin;
+    return QPixmap(":/images/player_default/front.png");
 }
 
 QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
 {
-    QPixmap skin;
-    QStringList skinFolderList=DatapackClientLoader::datapackLoader.skins;
-    //back image
+    const QPixmap skin(getBackSkinPath(skinId));
+    if(!skin.isNull())
+        return skin;
+    return QPixmap(":/images/player_default/back.png");
+}
+
+QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) const
+{
+    {
+        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.png").arg(type));
+        if(pnfFile.exists())
+            return pnfFile.absoluteFilePath();
+    }
+    {
+        QFileInfo gifFile(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.gif").arg(type));
+        if(gifFile.exists())
+            return gifFile.absoluteFilePath();
+    }
+    return QString();
+}
+
+QString BaseWindow::getFrontSkinPath(const quint32 &skinId) const
+{
+    const QStringList &skinFolderList=DatapackClientLoader::datapackLoader.skins;
+    //front image
     if(skinId<(quint32)skinFolderList.size())
-    {
-        skin=QPixmap(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png");
-        if(skin.isNull())
-        {
-            skin=QPixmap(":/images/player_default/back.png");
-            qDebug() << "Unable to load the player image: "+CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(skinId)+"/back.png";
-        }
-    }
+        return getSkinPath(skinFolderList.at(skinId),"front");
     else
-    {
-        skin=QPixmap(":/images/player_default/back.png");
         qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
-    }
-    return skin;
+    return ":/images/player_default/front.png";
+}
+
+QString BaseWindow::getFrontSkinPath(const QString &skin) const
+{
+    return getSkinPath(skin,"front");
+}
+
+QString BaseWindow::getBackSkinPath(const quint32 &skinId) const
+{
+    const QStringList &skinFolderList=DatapackClientLoader::datapackLoader.skins;
+    //front image
+    if(skinId<(quint32)skinFolderList.size())
+        return getSkinPath(skinFolderList.at(skinId),"back");
+    else
+        qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
+    return ":/images/player_default/back.png";
 }
 
 void BaseWindow::updatePlayerImage()
@@ -566,6 +591,8 @@ void BaseWindow::updatePlayerImage()
         Player_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations().public_informations;
         playerFrontImage=getFrontSkin(informations.skinId);
         playerBackImage=getBackSkin(informations.skinId);
+        playerFrontImagePath=getFrontSkinPath(informations.skinId);
+        playerBackImagePath=getBackSkinPath(informations.skinId);
 
         //load into the UI
         ui->player_informations_front->setPixmap(playerFrontImage);
@@ -776,4 +803,78 @@ void BaseWindow::cityCapture(const quint32 &remainingTime,const quint8 &type)
     city.capture.day=(City::Capture::Day)QDateTime::currentDateTime().addSecs(remainingTime).date().dayOfWeek();
     city.capture.hour=QDateTime::currentDateTime().addSecs(remainingTime).time().hour();
     city.capture.minute=QDateTime::currentDateTime().addSecs(remainingTime).time().minute();
+}
+
+void BaseWindow::animationFinished()
+{
+    if(animationWidget!=NULL)
+    {
+        delete animationWidget;
+        animationWidget=NULL;
+    }
+    if(qQuickViewContainer!=NULL)
+    {
+        delete qQuickViewContainer;
+        qQuickViewContainer=NULL;
+    }
+    if(previousAnimationWidget==ui->page_crafting)
+    {
+        ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
+        craftingAnimationObject->deleteLater();
+        craftingAnimationObject=NULL;
+    }
+    else if(previousAnimationWidget==ui->page_map)
+    {
+        ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
+        if(idMonsterEvolution!=0)
+        {
+            if(baseMonsterEvolution!=NULL)
+            {
+                delete baseMonsterEvolution;
+                baseMonsterEvolution=NULL;
+            }
+            if(targetMonsterEvolution!=NULL)
+            {
+                delete targetMonsterEvolution;
+                targetMonsterEvolution=NULL;
+            }
+            CatchChallenger::ClientFightEngine::fightEngine.confirmEvolution(idMonsterEvolution);
+            idMonsterEvolution=0;
+            load_monsters();
+        }
+    }
+    else
+        qDebug() << "Unknown animation quit";
+}
+
+void BaseWindow::evolutionCanceled()
+{
+    if(animationWidget!=NULL)
+    {
+        delete animationWidget;
+        animationWidget=NULL;
+    }
+    if(qQuickViewContainer!=NULL)
+    {
+        delete qQuickViewContainer;
+        qQuickViewContainer=NULL;
+    }
+    ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
+    if(baseMonsterEvolution!=NULL)
+    {
+        delete baseMonsterEvolution;
+        baseMonsterEvolution=NULL;
+    }
+    if(targetMonsterEvolution!=NULL)
+    {
+        delete targetMonsterEvolution;
+        targetMonsterEvolution=NULL;
+    }
+    if(evolutionControl!=NULL)
+    {
+        delete evolutionControl;
+        evolutionControl=NULL;
+    }
+    idMonsterEvolution=0;
+    checkEvolution();
 }

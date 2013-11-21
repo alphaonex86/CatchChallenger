@@ -20,6 +20,7 @@
 #include <QRegularExpression>
 #include <QScriptValue>
 #include <QScriptEngine>
+#include <QtQml>
 
 //do buy queue
 //do sell queue
@@ -38,6 +39,8 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<QHash<quint32,quint32> >("CatchChallenger::Plant_collect");
     qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
+    qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
+    qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
 
     socketState=QAbstractSocket::UnconnectedState;
 
@@ -46,10 +49,13 @@ BaseWindow::BaseWindow() :
         MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
+    animationWidget=NULL;
+    qQuickViewContainer=NULL;
     Chat::chat=new Chat(ui->page_map);
     escape=false;
     movie=NULL;
     newProfile=NULL;
+    craftingAnimationObject=NULL;
 
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
@@ -109,6 +115,7 @@ BaseWindow::BaseWindow() :
     connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout);
     connect(&nextCityCaptureTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
     connect(&updater_page_zonecapture,&QTimer::timeout, this,&BaseWindow::updatePageZonecapture);
+    connect(&animationControl,&AnimationControl::finished,this,&BaseWindow::animationFinished,Qt::QueuedConnection);
 
     renderFrame = new QFrame(ui->page_map);
     renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
@@ -141,6 +148,11 @@ BaseWindow::BaseWindow() :
 
 BaseWindow::~BaseWindow()
 {
+    /*if(craftingAnimationObject!=NULL)
+    {
+        craftingAnimationObject->deleteLater();
+        craftingAnimationObject=NULL;
+    }*/
     if(newProfile!=NULL)
     {
         delete newProfile;

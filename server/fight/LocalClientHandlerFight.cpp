@@ -1424,3 +1424,51 @@ quint8 LocalClientHandlerFight::decreaseSkillEndurance(const quint32 &skill)
     }
     return newEndurance;
 }
+
+void LocalClientHandlerFight::confirmEvolution(const quint32 &monterId)
+{
+    int index=0;
+    while(index<player_informations->public_and_private_informations.playerMonster.size())
+    {
+        if(player_informations->public_and_private_informations.playerMonster.at(index).id==monterId)
+        {
+            const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[player_informations->public_and_private_informations.playerMonster.at(index).monster];
+            int sub_index=0;
+            while(sub_index<monsterInformations.evolutions.size())
+            {
+                if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
+                {
+                    player_informations->public_and_private_informations.playerMonster[index].monster=monsterInformations.evolutions.at(sub_index).evolveTo;
+                    Monster::Stat stat=getStat(monsterInformations,player_informations->public_and_private_informations.playerMonster[index].level);
+                    if(player_informations->public_and_private_informations.playerMonster[index].hp>stat.hp)
+                        player_informations->public_and_private_informations.playerMonster[index].hp=stat.hp;
+                    switch(GlobalServerData::serverSettings.database.type)
+                    {
+                        default:
+                        case ServerSettings::Database::DatabaseType_Mysql:
+                            emit dbQuery(QString("UPDATE `monster` SET `hp`=%1,`monster`=%2 WHERE `id`=%3")
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].monster)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                         );
+                        break;
+                        case ServerSettings::Database::DatabaseType_SQLite:
+                            emit dbQuery(QString("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3;")
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].monster)
+                                         .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                         );
+                        break;
+                    }
+                    return;
+                }
+                sub_index++;
+            }
+            qDebug() << "Evolution not found";
+            return;
+        }
+        index++;
+    }
+    qDebug() << "Monster for evolution not found";
+}
+

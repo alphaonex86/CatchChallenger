@@ -47,5 +47,6 @@
         <file>languages/en/flag.png</file>
         <file>languages/en/translation.qm</file>
         <file>languages/en/informations.xml</file>
+	<file>qml/star.png</file>
     </qresource>
 </RCC>

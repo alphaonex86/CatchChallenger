@@ -1005,23 +1005,25 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
 bool CommonFightEngine::giveXPSP(int xp,int sp)
 {
     bool haveChangeOfLevel=false;
-    const Monster &currentmonster=CommonDatapack::commonDatapack.monsters[getCurrentMonster()->monster];
-    quint32 remaining_xp=getCurrentMonster()->remaining_xp;
-    quint32 level=getCurrentMonster()->level;
+    PlayerMonster * monster=getCurrentMonster();
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster->monster];
+    quint32 remaining_xp=monster->remaining_xp;
+    quint8 level=monster->level;
     if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
     {
         remaining_xp=0;
         xp=0;
     }
-    while(currentmonster.level_to_xp.at(level-1)<(remaining_xp+xp))
+    while(monsterInformations.level_to_xp.at(level-1)<(remaining_xp+xp))
     {
-        quint32 old_max_hp=currentmonster.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-        quint32 new_max_hp=currentmonster.stat.hp*(level+1)/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-        xp-=currentmonster.level_to_xp.at(level-1)-remaining_xp;
+        quint32 old_max_hp=monsterInformations.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        quint32 new_max_hp=monsterInformations.stat.hp*(level+1)/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+        xp-=monsterInformations.level_to_xp.at(level-1)-remaining_xp;
         remaining_xp=0;
         level++;
+        levelUp(level,getCurrentSelectedMonsterNumber());
         haveChangeOfLevel=true;
-        getCurrentMonster()->hp+=new_max_hp-old_max_hp;
+        monster->hp+=new_max_hp-old_max_hp;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
         emit message(QString("You pass to the level %1").arg(level));
         #endif
@@ -1032,12 +1034,18 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
         }
     }
     remaining_xp+=xp;
-    getCurrentMonster()->remaining_xp=remaining_xp;
+    monster->remaining_xp=remaining_xp;
     if(haveChangeOfLevel)
-        getCurrentMonster()->level=level;
-    getCurrentMonster()->sp+=sp;
+        monster->level=level;
+    monster->sp+=sp;
 
     return haveChangeOfLevel;
+}
+
+void CommonFightEngine::levelUp(const quint8 &level,const quint8 &monsterIndex)
+{
+    Q_UNUSED(level);
+    Q_UNUSED(monsterIndex);
 }
 
 bool CommonFightEngine::tryEscape()

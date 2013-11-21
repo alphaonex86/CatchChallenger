@@ -10,6 +10,7 @@
 #include <QSet>
 #include <QVariant>
 #include <QDomElement>
+#include <QMultiHash>
 
 #define COORD_TYPE quint8
 #define SIMPLIFIED_PLAYER_ID_TYPE quint16
@@ -109,6 +110,7 @@ struct Trap
 
 struct ItemFull
 {
+    QMultiHash<quint32, quint32> evolutionItem;
     QHash<quint32, Item> item;
     QHash<quint32, Trap> trap;
 };
@@ -492,6 +494,19 @@ struct Skill
 
 struct Monster
 {
+    enum EvolutionType
+    {
+        EvolutionType_Level,
+        EvolutionType_Item,
+        EvolutionType_Trade
+    };
+    struct Evolution
+    {
+        EvolutionType type;
+        qint32 level;
+        quint32 evolveTo;
+    };
+
     QList<quint8> type;
     qint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
     quint8 catch_rate;///< 0 to 100
@@ -518,6 +533,7 @@ struct Monster
         quint8 learnSkillLevel;
     };
     QList<AttackToLearn> learn;
+    QList<Evolution> evolutions;
 };
 
 struct ItemToSellOrBuy

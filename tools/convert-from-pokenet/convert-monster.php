@@ -6,6 +6,7 @@ luck is in percent
 ratio_gender: 0% only male, 100% only female, -1 no gender
 second line is stat at level 100
 if level is 0, it's base attack, default: attack_level=\"1\"
+evolution type can be: level (attribute level is the level), item (attribute level is the item id), trade (attribute level is useless)
 -->
 <list>\n";
 
@@ -31,6 +32,38 @@ foreach($entry_list[1] as $entry)
 			continue;
 		$price=preg_replace('#^.*<m_price>([0-9]+)</m_price>.*$#isU','$1',$entry);
 		$general_items_list[$id]=array('name'=>$name,'description'=>$description,'price'=>$price);
+	}
+}
+
+$item_name_to_id=array();
+$file=file_get_contents('../item/items2.xml');
+preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
+echo "<items>\n";
+foreach($entry_list[1] as $entry)
+{
+	if(!preg_match('#<m_id>[0-9]+</m_id>#isU',$entry))
+		continue;
+	$id=preg_replace('#^.*<m_id>([0-9]+)</m_id>.*$#isU','$1',$entry);
+	if(!preg_match('#<m_category>[^<]+</m_category>#isU',$entry))
+		continue;
+	$category=preg_replace('#^.*<m_category>([^<]+)</m_category>.*$#isU','$1',$entry);
+	if($category!='TM')
+		$image=$id.'.png';
+	else
+		$image='TM.png';
+	if(file_exists($image))
+	{
+		if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
+			continue;
+		$name=preg_replace('#^.*<m_name>([^<]+)</m_name>.*$#isU','$1',$entry);
+		if(!preg_match('#<m_description>[^<]+</m_description>#isU',$entry))
+			continue;
+		$description=preg_replace('#^.*<m_description>([^<]+)</m_description>.*$#isU','$1',$entry);
+		$description=preg_replace("#[\n\r\t]+.*$#isU",'',$description);
+		if(!preg_match('#<m_price>[0-9]+</m_price>#isU',$entry))
+			continue;
+		$price=preg_replace('#^.*<m_price>([0-9]+)</m_price>.*$#isU','$1',$entry);
+		$item_name_to_id[str_replace(' ','',strtolower($name))]=$id;
 	}
 }
 
@@ -174,6 +207,46 @@ foreach($entry_list[1] as $entry)
 				continue;
 			$m_level=preg_replace('#^.*<m_level>([0-9]+)</m_level>.*$#isU','$1',$evolution_text);
 			if(!preg_match('#<m_evolveTo>[^<]+</m_evolveTo>#isU',$evolution_text))
+				continue;
+			if($m_type=='Level')
+			{
+				$m_type='level';
+				if($m_level>100)
+					continue;
+			}
+			else if($m_type=='Item')
+			{
+				$m_type='item';
+				if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
+					continue;
+				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
+				$m_level=str_replace(' ','',strtolower($m_level));
+				if(!isset($item_name_to_id[$m_level]))
+					continue;
+				$m_level=$item_name_to_id[$m_level];
+			}
+			else if($m_type=='Trade')
+			{
+				$m_type='trade';
+				$m_level='0';
+			}
+			/*else if($m_type=='TradeItem')
+			{
+				$m_type='tradeWithItem';
+				if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
+					continue;
+				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
+				$m_level=str_replace(' ','',strtolower($m_level));
+				if(!isset($item_name_to_id[$m_level]))
+					continue;
+				$m_level=$item_name_to_id[$m_level];
+			}*/
+			/*else if($m_type=='Happiness' || $m_type=='HappinessDay' || $m_type=='HappinessNight')
+			{
+				$m_type='happiness';
+				$m_level='3';
+			}*/
+			else
 				continue;
 			$m_evolveTo=preg_replace('#^.*<m_evolveTo>([^<]+)</m_evolveTo>.*$#isU','$1',$evolution_text);
 			$evolutions[]=array(
@@ -327,7 +400,7 @@ foreach($temp_move as $move)
 ?>
 		</attack_list>
 <?php
-if(isset($specie['drops']))
+if(isset($specie['drops']) && count($specie['drops'])>0)
 {
 ?>
 		<drops>
@@ -338,6 +411,28 @@ foreach($temp_drops as $item=>$luck)
 		echo '			<drop item="'.$item.'" luck="'.$luck.'" />'."\n";
 ?>
 		</drops>
+<?php
+}
+?>
+<?php
+if(isset($specie['evolutions']) && count($specie['evolutions'])>0)
+{
+?>
+		<evolutions>
+<?php
+$temp_evolutions=$specie['evolutions'];
+foreach($temp_evolutions as $evolution)
+{
+	$level='';
+	if($evolution['type']!='trade')
+		$level=' level="'.$evolution['level'].'"';
+	if(isset($name_to_id[$evolution['evolveTo']]))
+		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$name_to_id[$evolution['evolveTo']].'" />'."\n";
+	else
+		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$evolution['evolveTo'].'" />'."\n";
+}
+?>
+		</evolutions>
 <?php
 }
 ?>

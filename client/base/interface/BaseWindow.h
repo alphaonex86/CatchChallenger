@@ -12,7 +12,9 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QMovie>
+#include <QQuickView>
 
+#include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../base/Api_client_real.h"
@@ -21,6 +23,9 @@
 #include "MapController.h"
 #include "Chat.h"
 #include "NewProfile.h"
+#include "../QmlInterface/AnimationControl.h"
+#include "../../fight/interface/QmlInterface/QmlMonsterGeneralInformations.h"
+#include "../../fight/interface/QmlInterface/EvolutionControl.h"
 
 #ifndef CATCHCHALLENGER_BASEWINDOW_H
 #define CATCHCHALLENGER_BASEWINDOW_H
@@ -161,6 +166,10 @@ private slots:
     QPixmap getFrontSkin(const QString &skinName) const;
     QPixmap getFrontSkin(const quint32 &skinId) const;
     QPixmap getBackSkin(const quint32 &skinId) const;
+    QString getSkinPath(const QString &skinName, const QString &type) const;
+    QString getFrontSkinPath(const quint32 &skinId) const;
+    QString getFrontSkinPath(const QString &skin) const;
+    QString getBackSkinPath(const quint32 &skinId) const;
     void monsterCatch(const quint32 &newMonsterId);
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y);
@@ -175,6 +184,8 @@ private slots:
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);
     void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint8 &x,const quint8 &y,const CatchChallenger::Direction &direction);
+    void animationFinished();
+    void evolutionCanceled();
 
     //datapack
     void haveTheDatapack();
@@ -260,6 +271,7 @@ private slots:
     void init_other_monster_display();
     void useTrap(const quint32 &itemId);
     void displayTrap();
+    void checkEvolution();
 
     //clan/city
     void cityCapture(const quint32 &remainingTime,const quint8 &type);
@@ -395,6 +407,7 @@ private slots:
     void on_character_select_clicked();
     void on_character_remove_clicked();
     void on_characterEntryList_itemDoubleClicked(QListWidgetItem *item);
+    void on_listCraftingMaterials_itemActivated(QListWidgetItem *item);
 protected slots:
     //datapack
     void datapackParsed();
@@ -416,6 +429,7 @@ private:
     bool waitToSell;
     QList<ItemToSellOrBuy> itemsToSell,itemsToBuy;
     QPixmap playerFrontImage,playerBackImage;
+    QString playerFrontImagePath,playerBackImagePath;
     quint32 clan;
     bool clan_leader;
     QSet<ActionAllow> allow;
@@ -433,6 +447,15 @@ private:
     NewProfile *newProfile;
     quint32 datapckFileNumber;
     quint32 datapckFileSize;
+    AnimationControl animationControl;
+    EvolutionControl *evolutionControl;
+    QWidget *previousAnimationWidget;
+    QQuickView *animationWidget;
+    CraftingAnimation *craftingAnimationObject;
+    QWidget *qQuickViewContainer;
+    QmlMonsterGeneralInformations *baseMonsterEvolution;
+    QmlMonsterGeneralInformations *targetMonsterEvolution;
+    quint32 idMonsterEvolution;
 
     //plant seed in waiting
     struct SeedInWaiting
