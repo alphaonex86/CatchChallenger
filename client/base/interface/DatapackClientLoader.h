@@ -23,6 +23,7 @@ public:
     //static items
     struct ItemExtra
     {
+        QString imagePath;
         QPixmap image;
         QString name;
         QString description;
@@ -73,6 +74,7 @@ public:
             QString name;
             QString description;
         };
+        QString frontPath,backPath;
     };
     struct ProfileText
     {

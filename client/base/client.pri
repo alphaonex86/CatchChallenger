@@ -1,8 +1,7 @@
 include(../tiled/tiled.pri)
 
 LIBS += -lvorbis -lvorbisfile
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT       += script multimedia opengl
+QT       += script multimedia opengl widgets qml quick
 
 win32:CONFIG   += console
 
@@ -30,6 +29,10 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/interface/MapControllerMP.cpp \
     $$PWD/interface/ListEntryEnvolued.cpp \
     $$PWD/../crafting/interface/MapControllerCrafting.cpp \
+    $$PWD/../crafting/interface/QmlInterface/CraftingAnimation.cpp \
+    $$PWD/../fight/interface/QmlInterface/QmlMonsterGeneralInformations.cpp \
+    $$PWD/../fight/interface/QmlInterface/EvolutionControl.cpp \
+    $$PWD/QmlInterface/AnimationControl.cpp \
     $$PWD/interface/MapController.cpp \
     $$PWD/interface/DatapackClientLoader.cpp \
     $$PWD/../crafting/interface/DatapackClientLoaderCrafting.cpp \
@@ -51,8 +54,7 @@ SOURCES += $$PWD/Api_client_real.cpp \
     $$PWD/ExtraSocket.cpp \
     $$PWD/LocalListener.cpp
 
-HEADERS  += $$PWD/MoveOnTheMap_Client.h \
-    $$PWD/audio/QOggAudioBuffer.h \
+HEADERS  += $$PWD/audio/QOggAudioBuffer.h \
     $$PWD/audio/QOggSimplePlayer.h \
     $$PWD/ClientStructures.h \
     $$PWD/Api_client_real.h \
@@ -68,6 +70,10 @@ HEADERS  += $$PWD/MoveOnTheMap_Client.h \
     $$PWD/interface/ListEntryEnvolued.h \
     $$PWD/interface/MapController.h \
     $$PWD/interface/DatapackClientLoader.h \
+    $$PWD/../crafting/interface/QmlInterface/CraftingAnimation.h \
+    $$PWD/../fight/interface/QmlInterface/QmlMonsterGeneralInformations.h \
+    $$PWD/../fight/interface/QmlInterface/EvolutionControl.h \
+    $$PWD/QmlInterface/AnimationControl.h \
     $$PWD/ClientVariable.h \
     $$PWD/Options.h \
     $$PWD/interface/Chat.h \

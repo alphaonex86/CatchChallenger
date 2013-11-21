@@ -112,9 +112,11 @@ private slots:
     void on_anonymous_toggled(bool checked);
     void on_server_message_textChanged();
     void on_proxy_editingFinished();
-
     void on_proxy_port_editingFinished();
-
+    void on_forceSpeed_toggled(bool checked);
+    void on_speed_editingFinished();
+    void on_dontSendPseudo_toggled(bool checked);
+    void on_dontSendPlayerType_toggled(bool checked);
 signals:
     void record_latency();
 };

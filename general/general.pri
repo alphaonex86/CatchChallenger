@@ -30,7 +30,6 @@ HEADERS  += $$PWD/base/Api_protocol.h \
     $$PWD/base/DebugClass.h \
     $$PWD/base/GeneralStructures.h \
     $$PWD/base/ChatParsing.h \
-    $$PWD/base/VariableGeneral.h \
     $$PWD/base/QFakeServer.h \
     $$PWD/base/ProtocolParsing.h \
     $$PWD/base/MoveOnTheMap.h \

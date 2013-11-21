@@ -406,11 +406,18 @@ void MapVisibilityAlgorithm_Simple::send_insert()
             out << (quint16)i_insert.key();
         out << (COORD_TYPE)i_insert.value()->x;
         out << (COORD_TYPE)i_insert.value()->y;
-        out << (quint8)((quint8)i_insert.value()->getLastDirection() | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
-        out << i_insert.value()->player_informations->public_and_private_informations.public_informations.speed;
+        if(GlobalServerData::serverSettings.dontSendPlayerType)
+            out << (quint8)((quint8)i_insert.value()->getLastDirection() | (quint8)Player_type_normal);
+        else
+            out << (quint8)((quint8)i_insert.value()->getLastDirection() | (quint8)i_insert.value()->player_informations->public_and_private_informations.public_informations.type);
+        if(CommonSettings::commonSettings.forcedSpeed==0)
+            out << i_insert.value()->player_informations->public_and_private_informations.public_informations.speed;
         //pseudo
-        purgeBuffer_outputData+=i_insert.value()->player_informations->rawPseudo;
-        out.device()->seek(out.device()->pos()+i_insert.value()->player_informations->rawPseudo.size());
+        if(!CommonSettings::commonSettings.dontSendPseudo)
+        {
+            purgeBuffer_outputData+=i_insert.value()->player_informations->rawPseudo;
+            out.device()->seek(out.device()->pos()+i_insert.value()->player_informations->rawPseudo.size());
+        }
         //skin
         out << i_insert.value()->player_informations->public_and_private_informations.public_informations.skinId;
 

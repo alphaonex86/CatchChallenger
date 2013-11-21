@@ -109,6 +109,7 @@ signals:
     void requestFight(const quint32 &fightId) const;
     void moveMonster(const bool &up,const quint8 &number) const;
     void changeOfMonsterInFight(const quint32 &monsterId) const;
+    void confirmEvolution(const quint32 &monterId);
     //quest
     void newQuestAction(const QuestAction &action,const quint32 &questId) const;
     //battle
