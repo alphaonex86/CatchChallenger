@@ -4,6 +4,7 @@
 #include "../base/InternetUpdater.h"
 #include <QStandardPaths>
 #include <QNetworkProxy>
+#include <QCoreApplication>
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -76,21 +77,43 @@ MainWindow::~MainWindow()
         CatchChallenger::BaseWindow::baseWindow->deleteLater();
         CatchChallenger::BaseWindow::baseWindow=NULL;
     }
-    if(CatchChallenger::Api_client_real::client!=NULL)
+    /*if(CatchChallenger::Api_client_real::client!=NULL)
     {
         CatchChallenger::Api_client_real::client->tryDisconnect();
         CatchChallenger::Api_client_real::client->deleteLater();
-    }
+    }*/
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
         delete CatchChallenger::BaseWindow::baseWindow;
-    if(socket!=NULL)
+    /*if(socket!=NULL)
     {
         socket->disconnectFromHost();
         socket->abort();
         delete socket;
         socket=NULL;
-    }
+    }*/
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    event->ignore();
+    hide();
+    if(socket!=NULL || internalServer!=NULL)
+    {
+        if(internalServer!=NULL)
+            internalServer->try_stop_server();
+        if(socket!=NULL)
+            socket->disconnectFromHost();
+        if(socket!=NULL)
+            socket->abort();
+        if(socket!=NULL)
+        {
+            delete socket;
+            socket=NULL;
+        }
+    }
+    else
+        QCoreApplication::quit();
 }
 
 QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
@@ -627,8 +650,6 @@ void MainWindow::resetAll()
     {
         socket->disconnectFromHost();
         socket->abort();
-        delete socket;
-        socket=NULL;
     }
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
@@ -748,6 +769,21 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
     {
+        if(!isVisible() && internalServer==NULL)
+        {
+            QCoreApplication::quit();
+            return;
+        }
+/*        if(socket!=NULL)
+        {
+            delete socket;
+            socket=NULL;
+        }
+        if(realSocket!=NULL)
+        {
+            delete realSocket;
+            realSocket=NULL;
+        }*/
         resetAll();
         /*if(serverMode==ServerMode_Remote)
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/

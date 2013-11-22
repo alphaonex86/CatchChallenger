@@ -98,6 +98,7 @@ signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void stopped_in_front_of(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void actionOn(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
+    void actionOnNothing();
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void wildFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
     void botFightCollision(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);

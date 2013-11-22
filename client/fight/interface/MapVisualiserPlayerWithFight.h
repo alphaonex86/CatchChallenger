@@ -13,6 +13,7 @@ public:
     void setBotsAlreadyBeaten(const QSet<quint32> &botAlreadyBeaten);
     void addBeatenBotFight(const quint32 &botFightId);
     bool haveBeatBot(const quint32 &botFightId) const;
+    void addRepelStep(const quint32 &repel_step);
 protected slots:
     virtual void keyPressParse();
     virtual bool haveStopTileAction();
@@ -20,6 +21,9 @@ protected slots:
     virtual void resetAll();
 protected:
     QSet<quint32> botAlreadyBeaten;
+    quint32 repel_step;
+signals:
+    void repelEffectIsOver() const;
 };
 
 #endif

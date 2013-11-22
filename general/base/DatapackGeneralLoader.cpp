@@ -1325,7 +1325,7 @@ QHash<quint32,quint32> DatapackGeneralLoader::loadIndustriesLink(const QString &
     return industriesLink;
 }
 
-ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
+ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quint32,Buff> &monsterBuffs)
 {
     ItemFull items;
     //open and quick check the file
@@ -1386,7 +1386,9 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
                                 items.item[id].price=0;
                             }
                         }
+                        bool haveAnEffect=false;
                         //load the trap
+                        if(!haveAnEffect)
                         {
                             QDomElement trap = item.firstChildElement("trap");
                             if(!trap.isNull())
@@ -1405,6 +1407,7 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
                                                 trap.min_level=min_level;
                                                 trap.max_level=max_level;
                                                 items.trap[id]=trap;
+                                                haveAnEffect=true;
                                             }
                                             else
                                                 qDebug() << QString("Unable to open the file: %1, max_level is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
@@ -1416,6 +1419,126 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder)
                                         qDebug() << QString("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
                                 }
                             }
+                        }
+                        //load the repel
+                        if(!haveAnEffect)
+                        {
+                            QDomElement repelItem = item.firstChildElement("repel");
+                            if(!repelItem.isNull())
+                            {
+                                if(repelItem.isElement())
+                                {
+                                    if(repelItem.hasAttribute("step"))
+                                    {
+                                        quint32 step=repelItem.attribute("step").toUInt(&ok);
+                                        if(ok)
+                                        {
+                                            if(step>0)
+                                            {
+                                                items.repel[id]=step;
+                                                haveAnEffect=true;
+                                            }
+                                            else
+                                                qDebug() << QString("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                        }
+                                        else
+                                            qDebug() << QString("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                    }
+                                    else
+                                        qDebug() << QString("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(repelItem.tagName()).arg(repelItem.lineNumber());
+                                }
+                            }
+                        }
+                        //load the monster effect
+                        if(!haveAnEffect)
+                        {
+                            {
+                                QDomElement hpItem = item.firstChildElement("hp");
+                                while(!hpItem.isNull())
+                                {
+                                    if(hpItem.isElement())
+                                    {
+                                        if(hpItem.hasAttribute("add"))
+                                        {
+                                            if(hpItem.attribute("add")=="all")
+                                            {
+                                                MonsterItemEffect monsterItemEffect;
+                                                monsterItemEffect.type=MonsterItemEffectType_AddHp;
+                                                monsterItemEffect.value=-1;
+                                                items.monsterItemEffect.insert(id,monsterItemEffect);
+                                            }
+                                            else
+                                            {
+                                                qint32 add=hpItem.attribute("add").toUInt(&ok);
+                                                if(ok)
+                                                {
+                                                    if(add>0)
+                                                    {
+                                                        MonsterItemEffect monsterItemEffect;
+                                                        monsterItemEffect.type=MonsterItemEffectType_AddHp;
+                                                        monsterItemEffect.value=add;
+                                                        items.monsterItemEffect.insert(id,monsterItemEffect);
+                                                    }
+                                                    else
+                                                        qDebug() << QString("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                                }
+                                                else
+                                                    qDebug() << QString("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                            }
+                                        }
+                                        else
+                                            qDebug() << QString("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(hpItem.tagName()).arg(hpItem.lineNumber());
+                                    }
+                                    hpItem = hpItem.nextSiblingElement("hp");
+                                }
+                            }
+                            {
+                                QDomElement buffItem = item.firstChildElement("buff");
+                                while(!buffItem.isNull())
+                                {
+                                    if(buffItem.isElement())
+                                    {
+                                        if(buffItem.hasAttribute("remove"))
+                                        {
+                                            if(buffItem.attribute("remove")=="all")
+                                            {
+                                                MonsterItemEffect monsterItemEffect;
+                                                monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
+                                                monsterItemEffect.value=-1;
+                                                items.monsterItemEffect.insert(id,monsterItemEffect);
+                                            }
+                                            else
+                                            {
+                                                qint32 remove=buffItem.attribute("remove").toUInt(&ok);
+                                                if(ok)
+                                                {
+                                                    if(remove>0)
+                                                    {
+                                                        if(monsterBuffs.contains(remove))
+                                                        {
+                                                            MonsterItemEffect monsterItemEffect;
+                                                            monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
+                                                            monsterItemEffect.value=remove;
+                                                            items.monsterItemEffect.insert(id,monsterItemEffect);
+                                                        }
+                                                        else
+                                                            qDebug() << QString("Unable to open the file: %1, buff item to remove is not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                    }
+                                                    else
+                                                        qDebug() << QString("Unable to open the file: %1, step is not greater than 0: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                                }
+                                                else
+                                                    qDebug() << QString("Unable to open the file: %1, step is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                            }
+                                        }
+                                        else
+                                            qDebug() << QString("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(buffItem.tagName()).arg(buffItem.lineNumber());
+                                    }
+                                    buffItem = buffItem.nextSiblingElement("buff");
+                                }
+                            }
+                            if(items.monsterItemEffect.contains(id))
+                                haveAnEffect=true;
                         }
                     }
                     else

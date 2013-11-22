@@ -17,7 +17,7 @@ public:
     static QPair<bool,Quest> loadSingleQuest(const QString &file);
     static QHash<quint8,Plant> loadPlants(const QString &file);
     static QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > loadCraftingRecipes(const QString &file, const QHash<quint32, Item> &items);
-    static ItemFull loadItems(const QString &folder);
+    static ItemFull loadItems(const QString &folder, const QHash<quint32, Buff> &monsterBuffs);
     static QHash<quint32,Industry> loadIndustries(const QString &folder,const QHash<quint32, Item> &items);
     static QHash<quint32,quint32> loadIndustriesLink(const QString &file,const QHash<quint32,Industry> &industries);
     static QPair<QList<QDomElement>, QList<Profile> > loadProfileList(const QString &datapackPath, const QString &file);

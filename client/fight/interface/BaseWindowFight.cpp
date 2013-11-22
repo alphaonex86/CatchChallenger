@@ -246,6 +246,7 @@ void BaseWindow::load_monsters()
             {
                 case ObjectType_MonsterToFight:
                 case ObjectType_MonsterToFightKO:
+                case ObjectType_ItemOnMonster:
                     if(monster.hp==0 || monster.egg_step>0)
                     {
                         index++;

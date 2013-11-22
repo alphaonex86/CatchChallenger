@@ -420,11 +420,16 @@ bool LocalClientHandler::singleMove(const Direction &direction)
     }
     if(localClientHandlerFight.botFightCollision(map,x,y))
         return true;
-    if(localClientHandlerFight.generateWildFightIfCollision(map,x,y))
+    if(player_informations->public_and_private_informations.repel_step<=0)
     {
-        emit message(QString("LocalClientHandler::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
-        return true;
+        if(localClientHandlerFight.generateWildFightIfCollision(map,x,y))
+        {
+            emit message(QString("LocalClientHandler::singleMove(), now is in front of wild monster with map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+            return true;
+        }
     }
+    else
+        player_informations->public_and_private_informations.repel_step--;
     return true;
 }
 
@@ -1367,6 +1372,25 @@ void LocalClientHandler::destroyObject(const quint32 &itemId,const quint32 &quan
     removeObject(itemId,quantity);
 }
 
+void LocalClientHandler::useObjectOnMonster(const quint32 &object,const quint32 &monster)
+{
+    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
+    emit message(QString("use the object: %1 on monster").arg(object).arg(monster));
+    #endif
+    if(!player_informations->public_and_private_informations.items.contains(object))
+    {
+        emit error(QString("can't use the object: %1 because don't have into the inventory").arg(object));
+        return;
+    }
+    if(objectQuantity(object)<1)
+    {
+        emit error(QString("have not quantity to use this object: %1").arg(object));
+        return;
+    }
+    if(localClientHandlerFight.useObjectOnMonster(object,monster))
+        removeObject(object);
+}
+
 void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -1389,7 +1413,7 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
         quint32 recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes[itemId];
         if(player_informations->public_and_private_informations.recipes.contains(recipeId))
         {
-            emit error(QString("can't use the object: %1 because recipe already registred").arg(itemId));
+            emit error(QString("can't use the object: %1").arg(itemId));
             return;
         }
         player_informations->public_and_private_informations.recipes << recipeId;
@@ -1440,6 +1464,17 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
             out << (quint32)maxMonsterId;
         else
             out << (quint32)0x00000000;
+        emit postReply(query_id,outputData);
+    }
+    //use repel into fight
+    else if(CommonDatapack::commonDatapack.items.repel.contains(itemId))
+    {
+        player_informations->public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.items.repel[itemId];
+        //send the network reply
+        QByteArray outputData;
+        QDataStream out(&outputData, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_4_4);
+        out << (quint8)ObjectUsage_correctlyUsed;
         emit postReply(query_id,outputData);
     }
     else
