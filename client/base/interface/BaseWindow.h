@@ -63,6 +63,7 @@ public:
         ObjectType_MonsterToLearn,
         ObjectType_MonsterToFight,
         ObjectType_MonsterToFightKO,
+        ObjectType_ItemOnMonster,
         ObjectType_UseInFight
     };
     enum ActionClan
@@ -124,6 +125,7 @@ private slots:
     void protocol_is_good();
     void error(QString error);
     void errorWithTheCurrentMap();
+    void repelEffectIsOver();
 
     //player UI
     void on_pushButton_interface_bag_clicked();
@@ -145,7 +147,7 @@ private slots:
     void updatePlayerImage();
     void have_current_player_info();
     void have_inventory(const QHash<quint32,quint32> &items,const QHash<quint32,quint32> &warehouse_items);
-    void add_to_inventory(const quint32 &item,const quint32 &quantity,const bool &showGain=true);
+    void add_to_inventory(const quint32 &item,const quint32 &quantity=1,const bool &showGain=true);
     void add_to_inventory(const QList<QPair<quint32,quint32> > &items,const bool &showGain=true);
     void add_to_inventory(const QHash<quint32,quint32> &items, const bool &showGain=true);
     void add_to_inventory_slot(const QHash<quint32,quint32> &items);
@@ -175,6 +177,7 @@ private slots:
     void stopped_in_front_of(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     qint32 havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 y) const;//return -1 if not found, else the index
+    void actionOnNothing();
     void actionOn(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     bool actionOnCheckBot(CatchChallenger::Map_client *map, quint8 x, quint8 y);
     void botFightCollision(CatchChallenger::Map_client *map, quint8 x, quint8 y);

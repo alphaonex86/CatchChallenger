@@ -28,11 +28,11 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
     if(isParsed)
         return;
     this->datapackPath=datapackPath;
+    parseBuff();
     parseTypes();
     parseItems();
     parsePlants();
     parseCraftingRecipes();
-    parseBuff();
     parseSkills();
     parseMonsters();
     parseMonstersEvolutionItems();
@@ -53,7 +53,7 @@ void CommonDatapack::parseTypes()
 
 void CommonDatapack::parseItems()
 {
-    items=DatapackGeneralLoader::loadItems(datapackPath+DATAPACK_BASE_PATH_ITEM);
+    items=DatapackGeneralLoader::loadItems(datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
     qDebug() << QString("%1 items(s) loaded").arg(items.item.size());
     qDebug() << QString("%1 trap(s) loaded").arg(items.trap.size());
 }
@@ -144,6 +144,9 @@ void CommonDatapack::unload()
     itemToCrafingRecipes.clear();
     items.item.clear();
     items.trap.clear();
+    items.monsterItemEffect.clear();
+    items.evolutionItem.clear();
+    items.repel.clear();
     industries.clear();
     profileList.clear();
     types.clear();

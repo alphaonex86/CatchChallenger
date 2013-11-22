@@ -21,6 +21,7 @@ QSet<QString> Api_protocol::extensionAllowed;
 Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     ProtocolParsingInput(socket,PacketModeTransmission_Client)
 {
+    player_informations.repel_step=0;
     output=new ProtocolParsingOutput(socket,PacketModeTransmission_Client);
     this->tolerantMode=tolerantMode;
 
@@ -201,8 +202,9 @@ void Api_protocol::parseMessage(const quint8 &mainCodeType,const QByteArray &dat
                             return;
                         }
                         in >> public_informations.speed;
-                        public_informations.speed=CommonSettings::commonSettings.forcedSpeed;
                     }
+                    else
+                        public_informations.speed=CommonSettings::commonSettings.forcedSpeed;
 
                     if(!CommonSettings::commonSettings.dontSendPseudo)
                     {
@@ -4308,6 +4310,19 @@ void Api_protocol::useObject(const quint32 &object)
     output->packFullOutcommingQuery(0x10,0x0009,queryNumber(),outputData);
     lastObjectUsed << object;
 }
+
+void Api_protocol::useObjectOnMonster(const quint32 &object,const quint32 &monster)
+{
+    QByteArray outputData;
+    QDataStream out(&outputData, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_4);
+    out << object;
+    out << monster;
+    if(output==NULL)
+        return;
+    output->packFullOutcommingQuery(0x60,0x000B,queryNumber(),outputData);
+}
+
 
 void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<quint32,qint32> > &items, const QList<quint32> &withdrawMonsters, const QList<quint32> &depositeMonsters)
 {

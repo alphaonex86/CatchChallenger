@@ -26,6 +26,7 @@ public slots:
     void saveTime();
     void resetAll();
     void newError(QString error,QString detailedError);
+    void closeEvent(QCloseEvent *event);
 private:
     Ui::SimpleSoloServer *ui;
     SoloWindow *solowindow;

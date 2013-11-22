@@ -78,10 +78,7 @@ BaseWindow::BaseWindow() :
     doNextActionTimer.setSingleShot(true);
     doNextActionTimer.setInterval(1500);
 
-
     connect(this,&BaseWindow::sendsetMultiPlayer,Chat::chat,&Chat::setVisible,Qt::QueuedConnection);
-
-
 
     //connect the datapack loader
     connect(&DatapackClientLoader::datapackLoader,  &DatapackClientLoader::datapackParsed,  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection);
@@ -91,9 +88,11 @@ BaseWindow::BaseWindow() :
     //render, logical part into Map_Client
     connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of);
     connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn);
+    connect(MapController::mapController,&MapController::actionOnNothing,       this,&BaseWindow::actionOnNothing);
     connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn);
     connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error);
     connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap);
+    connect(MapController::mapController,&MapController::repelEffectIsOver,     this,&BaseWindow::repelEffectIsOver);
 
     //fight
     connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision);
@@ -115,7 +114,7 @@ BaseWindow::BaseWindow() :
     connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout);
     connect(&nextCityCaptureTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
     connect(&updater_page_zonecapture,&QTimer::timeout, this,&BaseWindow::updatePageZonecapture);
-    connect(&animationControl,&AnimationControl::finished,this,&BaseWindow::animationFinished,Qt::QueuedConnection);
+    connect(&animationControl,&AnimationControl::animationFinished,this,&BaseWindow::animationFinished,Qt::QueuedConnection);
 
     renderFrame = new QFrame(ui->page_map);
     renderFrame->setObjectName(QString::fromUtf8("renderFrame"));
@@ -475,6 +474,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
         case ObjectType_MonsterToLearn:
         case ObjectType_MonsterToFight:
         case ObjectType_MonsterToFightKO:
+        case ObjectType_ItemOnMonster:
             ui->selectMonster->setVisible(true);
             ui->stackedWidget->setCurrentWidget(ui->page_monster);
             load_monsters();
@@ -504,7 +504,25 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
     inSelection=false;
     switch(waitedObjectType)
     {
+        case ObjectType_ItemOnMonster:
+        {
+            const quint32 monster=itemId;
+            const quint32 item=objectInUsing.last();
+            objectInUsing.removeLast();
+            ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+            ui->inventoryUse->setText(tr("Select"));
+            if(!ok)
+            {
+                add_to_inventory(item,false,false);
+                break;
+            }
+            showTip(tr("Using %1 on %2").arg(item).arg(monster));
+            CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monster);
+            ClientFightEngine::fightEngine.useObjectOnMonster(item,monster);
+        }
+        break;
         case ObjectType_Sell:
+        {
             ui->stackedWidget->setCurrentWidget(ui->page_map);
             ui->inventoryUse->setText(tr("Select"));
             if(!ok)
@@ -530,6 +548,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             CatchChallenger::Api_client_real::client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
             load_plant_inventory();
+        }
         break;
         case ObjectType_SellToMarket:
         {
@@ -918,6 +937,11 @@ void BaseWindow::errorWithTheCurrentMap()
     QMessageBox::critical(this,tr("Map error"),tr("The current map into the datapack is in error (not found, read failed, wrong format, corrupted, ...)\nReport the bug to the datapack maintainer."));
 }
 
+void BaseWindow::repelEffectIsOver()
+{
+    showTip(tr("The repel effect is over"));
+}
+
 void BaseWindow::on_pushButton_interface_bag_clicked()
 {
     if(inSelection)
@@ -968,8 +992,14 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                          DatapackClientLoader::datapackLoader.itemToPlants.contains(items_graphical[item])
                                          );
     ui->inventoryUse->setVisible(inSelection ||
-                                         /* is a recipe */
-                                         CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(items_graphical[item])
+                                 /* is a recipe */
+                                 CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(items_graphical[item])
+                                 ||
+                                 /* is a repel */
+                                 CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(items_graphical[item])
+                                 ||
+                                 /* is a item with monster effect */
+                                 CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.contains(items_graphical[item])
                                          );
     ui->inventoryDestroy->setVisible(!inSelection);
     ui->inventory_image->setPixmap(content.image);
@@ -1123,6 +1153,11 @@ qint32 BaseWindow::havePlant(CatchChallenger::Map_client *map, quint8 x, quint8 
         index++;
     }
     return -1;
+}
+
+void BaseWindow::actionOnNothing()
+{
+    ui->IG_dialog->setVisible(false);
 }
 
 void BaseWindow::actionOn(Map_client *map, quint8 x, quint8 y)
@@ -2171,11 +2206,22 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             return;
         }
         objectInUsing << items_graphical[item];
-        items[items_graphical[item]]--;
-        if(items[items_graphical[item]]==0)
-            items.remove(items_graphical[item]);
-        CatchChallenger::Api_client_real::client->useObject(items_graphical[item]);
-        load_inventory();
+        remove_to_inventory(objectInUsing.last());
+        CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
+    }
+    //is repel
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(items_graphical[item]))
+    {
+        MapController::mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.items.repel[items_graphical[item]]);
+        objectInUsing << items_graphical[item];
+        remove_to_inventory(objectInUsing.last());
+        CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
+    }
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.contains(items_graphical[item]))
+    {
+        objectInUsing << items_graphical[item];
+        remove_to_inventory(objectInUsing.last());
+        selectObject(ObjectType_ItemOnMonster);
     }
     else
         qDebug() << "BaseWindow::on_inventory_itemActivated(): unknow object type";
@@ -2200,6 +2246,9 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
         else if(CommonDatapack::commonDatapack.items.trap.contains(objectInUsing.first()))
         {
         }
+        else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(objectInUsing.first()))
+        {
+        }
         else
             qDebug() << "BaseWindow::objectUsed(): unknow object type";
 
@@ -2207,11 +2256,7 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
         case ObjectUsage_failed:
         break;
         case ObjectUsage_impossible:
-            if(items.contains(objectInUsing.first()))
-                items[objectInUsing.first()]++;
-            else
-                items[objectInUsing.first()]=1;
-            load_inventory();
+            add_to_inventory(objectInUsing.first());
         break;
         default:
         break;
@@ -2614,6 +2659,9 @@ void BaseWindow::on_toolButton_monster_list_quit_clicked()
         {
             case ObjectType_MonsterToFightKO:
             ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageMain);
+            objectSelection(false);
+            break;
+            case ObjectType_ItemOnMonster:
             case ObjectType_MonsterToTrade:
             case ObjectType_MonsterToLearn:
             case ObjectType_MonsterToFight:

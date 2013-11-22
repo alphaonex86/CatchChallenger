@@ -7,7 +7,7 @@ class AnimationControl : public QObject
 {
     Q_OBJECT
 signals:
-    Q_INVOKABLE void finished();
+    Q_INVOKABLE void animationFinished();
 };
 
 #endif // AnimationControl_H
