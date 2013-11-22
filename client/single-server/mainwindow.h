@@ -44,6 +44,7 @@ private slots:
     void on_languages_clicked();
     void newError(QString error,QString detailedError);
     void newUpdate(const QString &version);
+    void closeEvent(QCloseEvent *event);
 private:
     QSslSocket *realSocket;
     Ui::MainWindow *ui;

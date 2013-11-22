@@ -84,6 +84,7 @@ private slots:
     QList<ConnexionInfo> loadXmlConnexionInfoList(const QByteArray &xmlContent);
     QList<ConnexionInfo> loadXmlConnexionInfoList(const QString &file);
     QList<ConnexionInfo> loadConfigConnexionInfoList();
+    void closeEvent(QCloseEvent *event);
     void downloadFile();
     void metaDataChanged();
     void httpFinished();

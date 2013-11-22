@@ -66,6 +66,9 @@ public:
     quint8 decreaseSkillEndurance(const quint32 &skill);
     void confirmEvolution(const quint32 &monterId);
     void emitBattleWin();
+    virtual void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
+    bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
+    bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
 protected:
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();

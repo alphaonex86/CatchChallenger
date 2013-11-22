@@ -651,7 +651,7 @@ void NormalServer::checkSettingsFile(QSettings *settings)
     if(!settings->contains("proxy_port"))
         settings->setValue("proxy_port",9050);
     if(!settings->contains("forcedSpeed"))
-        settings->setValue("forcedSpeed",200);
+        settings->setValue("forcedSpeed",CATCHCHALLENGER_SERVER_NORMAL_SPEED);
     if(!settings->contains("dontSendPseudo"))
         settings->setValue("dontSendPseudo",false);
     if(!settings->contains("dontSendPlayerType"))

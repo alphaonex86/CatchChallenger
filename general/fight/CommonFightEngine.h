@@ -50,6 +50,8 @@ public:
     virtual bool moveUpMonster(const quint8 &number);
     virtual bool moveDownMonster(const quint8 &number);
     bool removeMonster(const quint32 &monsterId);
+    bool haveThisMonster(const quint32 &monsterId) const;
+    PlayerMonster * monsterById(const quint32 &monsterId) const;
     bool canEscape() const;
     virtual bool tryEscape();
     bool canDoFightAction();
@@ -70,6 +72,10 @@ public:
     virtual bool changeOfMonsterInFight(const quint32 &monsterId);
     int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     void removeBuffEffectFull(const Skill::BuffEffect &effect);
+    bool useObjectOnMonster(const quint32 &object,const quint32 &monster);
+    virtual void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
+    virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
+    virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
 public slots:
     void newRandomNumber(const QByteArray &randomData);
 protected:

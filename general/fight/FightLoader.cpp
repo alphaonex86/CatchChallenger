@@ -677,16 +677,16 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
     return monsters;
 }
 
-QMultiHash<quint32, quint32> FightLoader::loadMonsterEvolutionItems(const QHash<quint32,Monster> &monsters)
+QHash<quint32, QSet<quint32> > FightLoader::loadMonsterEvolutionItems(const QHash<quint32,Monster> &monsters)
 {
-    QMultiHash<quint32, quint32> evolutionItem;
+    QHash<quint32, QSet<quint32> > evolutionItem;
     QHash<quint32,Monster>::const_iterator i = monsters.constBegin();
     while (i != monsters.constEnd()) {
         int index=0;
         while(index<i.value().evolutions.size())
         {
             if(i.value().evolutions.at(index).type==Monster::EvolutionType_Item)
-                evolutionItem.insert(i.value().evolutions.at(index).level,i.key());
+                evolutionItem[i.value().evolutions.at(index).level] << i.key();
             index++;
         }
         ++i;

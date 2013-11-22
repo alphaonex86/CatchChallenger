@@ -141,6 +141,7 @@ public slots:
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);
     void useObject(const quint8 &query_id,const quint32 &itemId);
+    void useObjectOnMonster(const quint32 &object,const quint32 &monster);
     //teleportation
     void receiveTeleportTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);
     virtual void teleportValidatedTo(Map *map,const /*COORD_TYPE*/quint8 &x,const /*COORD_TYPE*/quint8 &y,const Orientation &orientation);

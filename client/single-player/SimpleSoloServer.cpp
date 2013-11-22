@@ -109,7 +109,14 @@ void SimpleSoloServer::message(QString message)
 void SimpleSoloServer::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(socketState==QAbstractSocket::UnconnectedState)
+    {
+        if(!isVisible() && internalServer==NULL)
+        {
+            QCoreApplication::quit();
+            return;
+        }
         resetAll();
+    }
     if(CatchChallenger::BaseWindow::baseWindow!=NULL)
         CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
 }
@@ -189,4 +196,21 @@ void SimpleSoloServer::newError(QString error,QString detailedError)
     if(CatchChallenger::Api_client_real::client!=NULL)
         CatchChallenger::Api_client_real::client->tryDisconnect();
     QMessageBox::critical(this,tr("Error"),error);
+}
+
+void SimpleSoloServer::closeEvent(QCloseEvent *event)
+{
+    event->ignore();
+    hide();
+    if(socket!=NULL || internalServer!=NULL)
+    {
+        if(internalServer!=NULL)
+            internalServer->try_stop_server();
+        if(socket!=NULL)
+            socket->disconnectFromHost();
+        if(socket!=NULL)
+            socket->abort();
+    }
+    else
+        QCoreApplication::quit();
 }
