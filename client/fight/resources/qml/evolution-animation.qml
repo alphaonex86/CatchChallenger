@@ -21,7 +21,7 @@ Rectangle {
         running: true
         triggeredOnStart: false
         onTriggered: {
-            animationControl.finised();
+            animationControl.animationFinished();
         }
     }
     Image {
@@ -65,13 +65,14 @@ Rectangle {
 	y:500;
 	font { pixelSize: 20; }
     }
-    Button {
+Button {
 	id: button
 	anchors.horizontalCenter: parent.horizontalCenter
 	y:550;
 	text: "Cancel"
 	onClicked: evolutionControl.cancel();
-    }
+	visible: canBeCanceled;
+}
     Rectangle {
         color: "black";
         anchors.fill: parent;

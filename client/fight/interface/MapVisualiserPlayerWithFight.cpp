@@ -5,6 +5,7 @@
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
 {
+    repel_step=0;
 }
 
 void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<quint32> &botAlreadyBeaten)
@@ -20,6 +21,11 @@ void MapVisualiserPlayerWithFight::addBeatenBotFight(const quint32 &botFightId)
 bool MapVisualiserPlayerWithFight::haveBeatBot(const quint32 &botFightId) const
 {
     return botAlreadyBeaten.contains(botFightId);
+}
+
+void MapVisualiserPlayerWithFight::addRepelStep(const quint32 &repel_step)
+{
+    this->repel_step+=repel_step;
 }
 
 void MapVisualiserPlayerWithFight::resetAll()
@@ -73,17 +79,26 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             index++;
         }
         //check if is in fight collision, but only if is move
-        if(inMove)
+        if(repel_step<=0)
         {
-            if(CatchChallenger::ClientFightEngine::fightEngine.generateWildFightIfCollision(&all_map[current_map]->logicalMap,x,y))
+            if(inMove)
             {
-                inMove=false;
-                emit send_player_direction(direction);
-                keyPressed.clear();
-                parseStop();
-                emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
-                return true;
+                if(CatchChallenger::ClientFightEngine::fightEngine.generateWildFightIfCollision(&all_map[current_map]->logicalMap,x,y))
+                {
+                    inMove=false;
+                    emit send_player_direction(direction);
+                    keyPressed.clear();
+                    parseStop();
+                    emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map[current_map]->logicalMap),x,y);
+                    return true;
+                }
             }
+        }
+        else
+        {
+            repel_step--;
+            if(repel_step==0)
+                emit repelEffectIsOver();
         }
     }
     else

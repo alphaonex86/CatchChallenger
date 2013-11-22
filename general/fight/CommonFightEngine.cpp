@@ -707,6 +707,85 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
     emit error("Buff not found to remove");
 }
 
+bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &monster)
+{
+    if(!CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object))
+    {
+        emit error(QString("This object can't be applyed on monster: %1").arg(object));
+        return false;
+    }
+    if(!haveThisMonster(monster))
+    {
+        emit error(QString("have not this monster: %1").arg(object));
+        return false;
+    }
+    PlayerMonster * playerMonster=monsterById(monster);
+    if(genericMonsterIsKO(playerMonster))
+    {
+        emit error(QString("can't be applyied on KO monster: %1").arg(object));
+        return false;
+    }
+    const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
+    const QList<MonsterItemEffect> monsterItemEffect = CommonDatapack::commonDatapack.items.monsterItemEffect.values(object);
+    int index=0;
+    while(index<monsterItemEffect.size())
+    {
+        const MonsterItemEffect &effect=monsterItemEffect.at(index);
+        switch(effect.type)
+        {
+            case MonsterItemEffectType_AddHp:
+                if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(quint32)effect.value)
+                    hpChange(playerMonster,playerMonster->hp+effect.value);
+                else
+                    hpChange(playerMonster,playerMonsterStat.hp);
+            break;
+            case MonsterItemEffectType_RemoveBuff:
+                if(effect.value>0)
+                    removeBuffOnMonster(playerMonster,effect.value);
+                else
+                    removeAllBuffOnMonster(playerMonster);
+            break;
+            default:
+                emit message(QString("Item %1 have unknown effect").arg(object));
+            break;
+        }
+        index++;
+    }
+    if(isInFight())
+        doTheOtherMonsterTurn();
+    return true;
+}
+
+void CommonFightEngine::hpChange(PlayerMonster * currentMonster,const quint32 &newHpValue)
+{
+    currentMonster->hp=newHpValue;
+}
+
+bool CommonFightEngine::removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId)
+{
+    int index=0;
+    while(index<currentMonster->buffs.size())
+    {
+        const PlayerBuff &playerBuff=currentMonster->buffs.at(index);
+        if(playerBuff.buff==buffId)
+        {
+            currentMonster->buffs.removeAt(index);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CommonFightEngine::removeAllBuffOnMonster(PlayerMonster * currentMonster)
+{
+    if(!currentMonster->buffs.isEmpty())
+    {
+        currentMonster->buffs.clear();
+        return true;
+    }
+    return false;
+}
+
 bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
 {
     if(!isInFight())
@@ -938,6 +1017,30 @@ bool CommonFightEngine::removeMonster(const quint32 &monsterId)
         index++;
     }
     return false;
+}
+
+bool CommonFightEngine::haveThisMonster(const quint32 &monsterId) const
+{
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        if(player_informations->playerMonster.at(index).id==monsterId)
+            return true;
+        index++;
+    }
+    return false;
+}
+
+PlayerMonster * CommonFightEngine::monsterById(const quint32 &monsterId) const
+{
+    int index=0;
+    while(index<player_informations->playerMonster.size())
+    {
+        if(player_informations->playerMonster.at(index).id==monsterId)
+            return &player_informations->playerMonster[index];
+        index++;
+    }
+    return NULL;
 }
 
 void CommonFightEngine::wildDrop(const quint32 &monster)

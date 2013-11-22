@@ -14,6 +14,7 @@ public:
     friend class QFakeServer;
 //	friend class QFakeSocket;
     explicit QFakeSocket();
+    ~QFakeSocket();
     void abort();
     void disconnectFromHost();
     void connectToHost();

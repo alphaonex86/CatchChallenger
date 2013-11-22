@@ -1438,10 +1438,11 @@ void LocalClientHandlerFight::confirmEvolution(const quint32 &monterId)
             {
                 if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
                 {
+                    const Monster::Stat oldStat=getStat(monsterInformations,player_informations->public_and_private_informations.playerMonster.at(index).level);
                     player_informations->public_and_private_informations.playerMonster[index].monster=monsterInformations.evolutions.at(sub_index).evolveTo;
-                    Monster::Stat stat=getStat(monsterInformations,player_informations->public_and_private_informations.playerMonster[index].level);
-                    if(player_informations->public_and_private_informations.playerMonster[index].hp>stat.hp)
-                        player_informations->public_and_private_informations.playerMonster[index].hp=stat.hp;
+                    const Monster::Stat stat=getStat(CommonDatapack::commonDatapack.monsters[player_informations->public_and_private_informations.playerMonster[index].monster],player_informations->public_and_private_informations.playerMonster.at(index).level);
+                    if(oldStat.hp!=stat.hp)
+                        player_informations->public_and_private_informations.playerMonster[index].hp+=(stat.hp-oldStat.hp);
                     switch(GlobalServerData::serverSettings.database.type)
                     {
                         default:
@@ -1464,11 +1465,79 @@ void LocalClientHandlerFight::confirmEvolution(const quint32 &monterId)
                 }
                 sub_index++;
             }
-            qDebug() << "Evolution not found";
+            emit error("Evolution not found");
             return;
         }
         index++;
     }
-    qDebug() << "Monster for evolution not found";
+    emit error("Monster for evolution not found");
 }
 
+void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
+{
+    CommonFightEngine::hpChange(currentMonster,newHpValue);
+    switch(GlobalServerData::serverSettings.database.type)
+    {
+        default:
+        case ServerSettings::Database::DatabaseType_Mysql:
+            emit dbQuery(QString("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2")
+                         .arg(newHpValue)
+                         .arg(currentMonster->id)
+                         );
+        break;
+        case ServerSettings::Database::DatabaseType_SQLite:
+            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2")
+                         .arg(newHpValue)
+                         .arg(currentMonster->id)
+                         );
+        break;
+    }
+}
+
+bool LocalClientHandlerFight::removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId)
+{
+    const bool returnVal=CommonFightEngine::removeBuffOnMonster(currentMonster,buffId);
+    if(returnVal)
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2")
+                             .arg(currentMonster->id)
+                             .arg(buffId)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2")
+                             .arg(currentMonster->id)
+                             .arg(buffId)
+                             );
+            break;
+        }
+    }
+    return returnVal;
+}
+
+bool LocalClientHandlerFight::removeAllBuffOnMonster(PlayerMonster * currentMonster)
+{
+    const bool returnVal=CommonFightEngine::removeAllBuffOnMonster(currentMonster);
+    if(returnVal)
+    {
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("DELETE FROM `monster_buff` WHERE `monster`=%1")
+                             .arg(currentMonster->id)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                             .arg(currentMonster->id)
+                             );
+            break;
+        }
+    }
+    return returnVal;
+}

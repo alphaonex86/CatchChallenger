@@ -633,6 +633,7 @@ void MapVisualiserPlayer::parseAction()
         }
         break;
         default:
+            emit actionOnNothing();
         break;
     }
 }

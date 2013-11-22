@@ -23,6 +23,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     player_informations.account_id=0;
     player_informations.number_of_character=0;
     player_informations.isConnected=true;
+    player_informations.public_and_private_informations.repel_step=0;
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     QTime time;
@@ -133,6 +134,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(clientNetworkRead,	&ClientNetworkRead::moveMonster,                localClientHandler,&LocalClientHandler::moveMonster,        Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::changeOfMonsterInFight,     localClientHandler,&LocalClientHandler::changeOfMonsterInFight,Qt::QueuedConnection);
     connect(clientNetworkRead,	&ClientNetworkRead::confirmEvolution,           localClientHandler,&LocalClientHandler::confirmEvolution,Qt::QueuedConnection);
+    connect(clientNetworkRead,	&ClientNetworkRead::useObjectOnMonster,         localClientHandler,&LocalClientHandler::useObjectOnMonster, Qt::QueuedConnection);
 
     //connect the player information
     connect(clientHeavyLoad,	&ClientHeavyLoad::send_player_informations,		clientBroadCast,	&ClientBroadCast::send_player_informations, Qt::QueuedConnection);

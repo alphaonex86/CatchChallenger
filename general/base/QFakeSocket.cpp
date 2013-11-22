@@ -14,6 +14,18 @@ QFakeSocket::QFakeSocket()
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
 
+QFakeSocket::~QFakeSocket()
+{
+    if(theOtherSocket!=NULL)
+    {
+        QFakeSocket *tempOtherSocket=theOtherSocket;
+        theOtherSocket=NULL;
+        tempOtherSocket->theOtherSocket=NULL;
+        tempOtherSocket->stateChanged(QAbstractSocket::UnconnectedState);
+        tempOtherSocket->disconnected();
+    }
+}
+
 void QFakeSocket::abort()
 {
     #ifdef FAKESOCKETDEBUG

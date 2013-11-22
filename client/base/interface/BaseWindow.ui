@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>10</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -1819,6 +1819,9 @@ border-image: url(:/images/empty.png);
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
            </widget>
            <widget class="QListWidget" name="inventory">
             <property name="geometry">
@@ -2860,6 +2863,9 @@ border-image: url(:/images/empty.png);
           <property name="textFormat">
            <enum>Qt::RichText</enum>
           </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
          </widget>
          <widget class="QLabel" name="label_13">
           <property name="geometry">
@@ -3137,6 +3143,9 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
            <widget class="QLabel" name="shopSellerImage">
@@ -3431,7 +3440,20 @@ border-image: url(:/images/empty.png);
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageAttack">
           <layout class="QHBoxLayout" name="horizontalLayout_23">
            <item>
-            <widget class="QListWidget" name="listWidgetFightAttack"/>
+            <widget class="QListWidget" name="listWidgetFightAttack">
+             <property name="minimumSize">
+              <size>
+               <width>500</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>500</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QLabel" name="labelFightAttackDetails">
@@ -3440,6 +3462,9 @@ border-image: url(:/images/empty.png);
                <width>200</width>
                <height>0</height>
               </size>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -4534,6 +4559,9 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="text">
              <string>Select attack to learn</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
            <widget class="QPushButton" name="learnValidate">

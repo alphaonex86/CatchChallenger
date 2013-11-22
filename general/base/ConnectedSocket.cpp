@@ -39,13 +39,15 @@ ConnectedSocket::~ConnectedSocket()
 {
     if(sslSocket!=NULL)
     {
+        QSslSocket *sslSocket=this->sslSocket;
+        this->sslSocket=NULL;
         delete sslSocket;
-        sslSocket=NULL;
     }
     if(fakeSocket!=NULL)
     {
+        QFakeSocket *fakeSocket=this->fakeSocket;
+        this->fakeSocket=NULL;
         delete fakeSocket;
-        fakeSocket=NULL;
     }
 }
 

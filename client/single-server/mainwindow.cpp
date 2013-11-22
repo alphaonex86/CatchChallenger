@@ -155,7 +155,14 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
     qDebug() << "socketState:" << (int)socketState;
     if(socketState==QAbstractSocket::UnconnectedState)
+    {
+        if(!isVisible())
+        {
+            QCoreApplication::quit();
+            return;
+        }
         resetAll();
+    }
     if(socketState==QAbstractSocket::ConnectedState)
         haveShowDisconnectionReason=false;
     CatchChallenger::BaseWindow::baseWindow->stateChanged(socketState);
@@ -243,4 +250,18 @@ void MainWindow::newUpdate(const QString &version)
 {
     ui->update->setText(InternetUpdater::getText(version));
     ui->update->setVisible(true);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    event->ignore();
+    hide();
+    if(socket!=NULL)
+    {
+        if(socket!=NULL)
+            socket->disconnectFromHost();
+        if(socket!=NULL)
+            socket->abort();
+    }
+    QCoreApplication::quit();
 }

@@ -70,6 +70,12 @@ enum Direction
     Direction_move_at_left = 8
 };
 
+enum MonsterItemEffectType
+{
+    MonsterItemEffectType_AddHp = 0x01,
+    MonsterItemEffectType_RemoveBuff = 0x02
+};
+
 enum RecipeUsage
 {
     RecipeUsage_ok=0x01,
@@ -108,9 +114,17 @@ struct Trap
     quint8 min_level,max_level;
 };
 
+struct MonsterItemEffect
+{
+    MonsterItemEffectType type;
+    qint32 value;
+};
+
 struct ItemFull
 {
-    QMultiHash<quint32, quint32> evolutionItem;
+    QMultiHash<quint32, MonsterItemEffect> monsterItemEffect;
+    QHash<quint32, QSet<quint32> > evolutionItem;
+    QHash<quint32, quint32> repel;
     QHash<quint32, Item> item;
     QHash<quint32, Trap> trap;
 };
@@ -262,6 +276,7 @@ struct Player_private_and_public_informations
     CLAN_ID_TYPE clan;
     bool clan_leader;
     QSet<ActionAllow> allow;
+    quint32 repel_step;
 };
 
 /// \brief Define the mode of transmission: client or server

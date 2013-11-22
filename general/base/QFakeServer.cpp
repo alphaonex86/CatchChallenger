@@ -27,6 +27,7 @@ void QFakeServer::addPendingConnection(QFakeSocket * socket)
     newEntry.first->RX_size=0;
     newEntry.second->RX_size=0;
     connect(newEntry.first,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket);
+    connect(newEntry.second,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket);
     emit newConnection();
 }
 

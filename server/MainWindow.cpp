@@ -313,7 +313,7 @@ void MainWindow::load_settings()
     ui->server_message->setPlainText(settings->value("server_message").toString());
     ui->proxy->setText(settings->value("proxy").toString());
     ui->proxy_port->setValue(settings->value("proxy_port").toUInt());
-    if(settings->value("forcedSpeed")==0)
+    if(settings->value("forcedSpeed").toUInt()==0)
     {
         ui->forceSpeed->setChecked(true);
         ui->speed->setEnabled(false);
@@ -321,11 +321,11 @@ void MainWindow::load_settings()
     else
     {
         ui->forceSpeed->setChecked(false);
-        ui->speed->setValue(settings->value("forcedSpeed"));
+        ui->speed->setValue(settings->value("forcedSpeed").toUInt());
         ui->speed->setEnabled(true);
     }
-    ui->dontSendPseudo->setChecked(settings->value("dontSendPseudo"));
-    ui->dontSendPlayerType->setChecked(settings->value("dontSendPlayerType"));
+    ui->dontSendPseudo->setChecked(settings->value("dontSendPseudo").toBool());
+    ui->dontSendPlayerType->setChecked(settings->value("dontSendPlayerType").toBool());
 
     quint32 tempValue=0;
     settings->beginGroup("MapVisibilityAlgorithm");
@@ -532,7 +532,7 @@ void MainWindow::send_settings()
         CommonSettings::commonSettings.forcedSpeed					= 0;
     else
         CommonSettings::commonSettings.forcedSpeed					= ui->speed->value();
-    CommonSettings::commonSettings.dontSendPlayerType				= ui->dontSendPlayerType->isChecked();
+    formatedServerSettings.dontSendPlayerType                       = ui->dontSendPlayerType->isChecked();
     CommonSettings::commonSettings.dontSendPseudo					= ui->dontSendPseudo->isChecked();
 
     //the listen
