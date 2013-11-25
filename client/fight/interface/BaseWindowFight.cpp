@@ -1072,7 +1072,7 @@ void BaseWindow::checkEvolution()
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
                 const QString datapackQmlFile=CatchChallenger::Api_client_real::client->get_datapack_base()+"qml/evolution-animation.qml";
                 if(QFile(datapackQmlFile).exists())
-                    animationWidget->setSource(QStringLiteral("file://")+datapackQmlFile);
+                    animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else
                     animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
                 return;

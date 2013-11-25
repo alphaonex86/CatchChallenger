@@ -103,13 +103,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
         if(internalServer!=NULL)
             internalServer->try_stop_server();
         if(socket!=NULL)
-            socket->disconnectFromHost();
-        if(socket!=NULL)
-            socket->abort();
-        if(socket!=NULL)
         {
-            delete socket;
-            socket=NULL;
+            socket->disconnectFromHost();
+            if(socket!=NULL)
+                socket->abort();
         }
     }
     else
@@ -429,7 +426,7 @@ void MainWindow::displayServerList()
         if(connexionInfo.name.isEmpty())
         {
             name=QString("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
-            newEntry->setText(QString("%3<span style=\"font-size:12pt;font-weight:600;\">%1:%2</span><br/><span style=\"color:#909090;\">%2:%3%6</span>")
+            newEntry->setText(QString("%3<span style=\"font-size:12pt;font-weight:600;\">%1:%2</span><br/><span style=\"color:#909090;\">%4%5</span>")
                               .arg(connexionInfo.host)
                               .arg(connexionInfo.port)
                               .arg(star)
@@ -774,7 +771,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
-/*        if(socket!=NULL)
+        if(socket!=NULL)
         {
             delete socket;
             socket=NULL;
@@ -783,7 +780,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         {
             delete realSocket;
             realSocket=NULL;
-        }*/
+        }
         resetAll();
         /*if(serverMode==ServerMode_Remote)
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
