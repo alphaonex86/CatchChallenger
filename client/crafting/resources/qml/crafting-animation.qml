@@ -46,7 +46,7 @@ Rectangle {
         running: true
         triggeredOnStart: false
         onTriggered: {
-            craftingAnimationObject.finised();
+            animationControl.animationFinished();
         }
     }
     Timer {

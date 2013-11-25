@@ -11,6 +11,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QQmlContext>
+#include <QUrl>
 
 /* show only the plant into the inventory */
 
@@ -414,7 +415,7 @@ void BaseWindow::on_craftingUse_clicked()
         quint32 sub_index=0;
         while(sub_index<content.materials.at(index).quantity)
         {
-            mIngredients << "file://"+DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].imagePath;
+            mIngredients << QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].imagePath).toEncoded();
             sub_index++;
         }
         index++;
@@ -438,8 +439,8 @@ void BaseWindow::on_craftingUse_clicked()
     pair.first=content.doItemId;
     pair.second=content.quantity;
     productOfRecipeInUsing << pair;
-    mProduct="file://"+DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].imagePath;
-    mRecipe="file://"+DatapackClientLoader::datapackLoader.itemsExtra[content.itemToLearn].imagePath;
+    mProduct=QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].imagePath).toEncoded();
+    mRecipe=QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[content.itemToLearn].imagePath).toEncoded();
     //update the UI
     load_inventory();
     load_plant_inventory();
@@ -462,12 +463,12 @@ void BaseWindow::on_craftingUse_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_animation);
     if(craftingAnimationObject!=NULL)
         delete craftingAnimationObject;
-    craftingAnimationObject=new CraftingAnimation(mIngredients,mRecipe,mProduct,"file://"+playerBackImagePath);
+    craftingAnimationObject=new CraftingAnimation(mIngredients,mRecipe,mProduct,QUrl::fromLocalFile(playerBackImagePath).toEncoded());
     animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
     animationWidget->rootContext()->setContextProperty("craftingAnimationObject",craftingAnimationObject);
     const QString datapackQmlFile=CatchChallenger::Api_client_real::client->get_datapack_base()+"qml/crafting-animation.qml";
     if(QFile(datapackQmlFile).exists())
-        animationWidget->setSource(QStringLiteral("file://")+datapackQmlFile);
+        animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
     else
         animationWidget->setSource(QStringLiteral("qrc:/qml/crafting-animation.qml"));
 }
