@@ -1,4 +1,5 @@
 #include "QmlMonsterGeneralInformations.h"
+#include <QUrl>
 
 QmlMonsterGeneralInformations::QmlMonsterGeneralInformations(const CatchChallenger::Monster &monsterInformations,
                                      const DatapackClientLoader::MonsterExtra &monsterInformationsExtra,
@@ -19,5 +20,5 @@ QString QmlMonsterGeneralInformations::image()
     if(monsterInformationsExtra.frontPath.startsWith(":/"))
         return "qrc"+monsterInformationsExtra.frontPath;
     else
-        return "file://"+monsterInformationsExtra.frontPath;
+        return QUrl::fromLocalFile(monsterInformationsExtra.frontPath).toEncoded();
 }

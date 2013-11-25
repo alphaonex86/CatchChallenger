@@ -4,6 +4,7 @@
 #include "../base/render/MapVisualiserPlayer.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/InternetUpdater.h"
+#include <QNetworkProxy>
 
 #define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
 //#define SERVER_DNS_OR_IP "localhost"
@@ -25,6 +26,36 @@ MainWindow::MainWindow(QWidget *parent) :
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     ui->setupUi(this);
+    server_name=SERVER_NAME;
+    server_dns_or_ip=SERVER_DNS_OR_IP;
+    server_port=SERVER_PORT;
+    QString settingsServerPath=QCoreApplication::applicationDirPath()+"/server.conf";
+    if(QFile(settingsServerPath).exists())
+    {
+        QSettings settingsServer(settingsServerPath,QSettings::IniFormat);
+        if(settingsServer.contains("server_dns_or_ip") && settingsServer.contains("server_port") && settingsServer.contains("proxy_port"))
+        {
+            bool ok,ok2;
+            quint16 server_port_temp=settingsServer.value("server_port").toString().toUShort(&ok);
+            quint16 proxy_port_temp=settingsServer.value("proxy_port").toString().toUShort(&ok2);
+            if(settingsServer.value("server_dns_or_ip").toString().contains(QRegularExpression("^([a-zA-Z0-9]{8}\\.onion|.*\\.i2p)$")) && ok && ok2 && server_port_temp>0 && proxy_port_temp>0)
+            {
+                server_name=tr("Hidden server");
+                if(settingsServer.contains("server_name"))
+                    server_name=settingsServer.value("server_name").toString();
+                server_dns_or_ip=settingsServer.value("server_dns_or_ip").toString();
+                proxy_dns_or_ip="localhost";
+                server_port=server_port_temp;
+                proxy_port=proxy_port_temp;
+                if(settingsServer.contains("proxy_dns_or_ip"))
+                    proxy_dns_or_ip=settingsServer.value("proxy_dns_or_ip").toString();
+                ui->label_login_register->setStyleSheet(ui->label_login_register->styleSheet()+"text-decoration:line-through;");
+                ui->label_login_website->setStyleSheet(ui->label_login_website->styleSheet()+"text-decoration:line-through;");
+                ui->label_login_register->setText(tr("Register"));
+                ui->label_login_website->setText(tr("Web site"));
+            }
+        }
+    }
     ui->update->setVisible(false);
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
@@ -54,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
-    setWindowTitle("CatchChallenger - "+SERVER_NAME);
+    setWindowTitle("CatchChallenger - "+server_name);
 }
 
 MainWindow::~MainWindow()
@@ -83,7 +114,7 @@ void MainWindow::resetAll()
     else
         ui->pushButtonTryLogin->setFocus();
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
-    setWindowTitle("CatchChallenger - "+SERVER_NAME);
+    setWindowTitle("CatchChallenger - "+server_name);
 }
 
 void MainWindow::sslErrors(const QList<QSslError> &errors)
@@ -143,10 +174,18 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     else
         settings.remove("pass");
 
-    QString host=SERVER_DNS_OR_IP;
-    quint16 port=SERVER_PORT;
+    QString host=server_dns_or_ip;
+    quint16 port=server_port;
 
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
+    if(!proxy_dns_or_ip.isEmpty())
+    {
+        QNetworkProxy proxy=realSocket->proxy();
+        proxy.setHostName(proxy_dns_or_ip);
+        proxy.setPort(proxy_port);
+        proxy.setType(QNetworkProxy::Socks5Proxy);
+        realSocket->setProxy(proxy);
+    }
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(host,port);
     MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
 }
@@ -230,7 +269,7 @@ void MainWindow::needQuit()
 
 void MainWindow::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
-    setWindowTitle(QString("CatchChallenger - %1 - %2").arg(SERVER_NAME).arg(informations.public_informations.pseudo));
+    setWindowTitle(QString("CatchChallenger - %1 - %2").arg(server_name).arg(informations.public_informations.pseudo));
 }
 
 void MainWindow::on_languages_clicked()

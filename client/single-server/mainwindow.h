@@ -60,6 +60,12 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
+
+    QString server_name;
+    QString server_dns_or_ip;
+    QString proxy_dns_or_ip;
+    quint16 server_port;
+    quint16 proxy_port;
 };
 
 #endif // MAINWINDOW_H
