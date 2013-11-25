@@ -35,3 +35,5 @@
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/(7)/-7/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/(8)/-8/g" {} \;
 /usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/Sinnoh /Sinnoh-/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/LedgesDown/LedgesBottom/g" {} \;
+/usr/bin/nice -n 19 /usr/bin/ionice -c 3 /usr/bin/find ./ -type f -name '*.tmx' -exec sed -i "s/LedgesUp/LedgesTop/g" {} \;

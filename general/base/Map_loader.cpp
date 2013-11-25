@@ -605,7 +605,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name=="LedgesBottom")
+                else if(name=="LedgesBottom" || name=="LedgesDown")
                 {
                     if(LedgesBottom.isEmpty())
                         LedgesBottom=data;
@@ -619,7 +619,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         }
                     }
                 }
-                else if(name=="LedgesTop")
+                else if(name=="LedgesTop" || name=="LedgesUp")
                 {
                     if(LedgesTop.isEmpty())
                         LedgesTop=data;

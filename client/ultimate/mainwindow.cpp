@@ -776,11 +776,11 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             delete socket;
             socket=NULL;
         }
-        if(realSocket!=NULL)
+        /*socket will do that's if(realSocket!=NULL)
         {
             delete realSocket;
             realSocket=NULL;
-        }
+        }*/
         resetAll();
         /*if(serverMode==ServerMode_Remote)
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
