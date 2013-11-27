@@ -837,8 +837,8 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
             switch(subCodeType)
             {
                 //file as input
-                case 0x0003:
-                case 0x0004:
+                case 0x0003://raw
+                case 0x0004://compressed
                 {
                     if((in.device()->size()-in.device()->pos())<(int)(int)(sizeof(quint8)))
                     {
@@ -894,6 +894,10 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         }
                         QByteArray dataFile=data.mid(in.device()->pos(),size);
                         in.device()->seek(in.device()->pos()+size);
+                        if(subCodeType==0x0003)
+                            DebugClass::debugConsole(QString("Raw file to create: %1").arg(fileName));
+                        else
+                            DebugClass::debugConsole(QString("Compressed file to create: %1").arg(fileName));
                         emit newFile(fileName,dataFile,mtime);
                         index++;
                     }
