@@ -501,7 +501,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                             }
                             else
-                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not attack_list: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         }
                         {
                             QDomElement evolutionsItem = item.firstChildElement("evolutions");
@@ -583,8 +583,6 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                                 else
                                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                             }
-                            else
-                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                         }
                         int index=0;
                         while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -1201,7 +1199,7 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                             DebugClass::debugConsole(QString("Unable to open the xml file: %1, effect balise is not an element: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     else
-                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effet balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not effect balise: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
                 }
                 else
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
