@@ -347,11 +347,13 @@ void BaseWindow::tradeValidatedByTheServer()
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
     CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
+    tradeEvolutionMonsters=tradeOtherMonsters;
     load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();
     tradeCurrentMonsters.clear();
     tradeOtherMonsters.clear();
+    checkEvolution();
 }
 
 void BaseWindow::tradeAddTradeCash(const quint64 &cash)
@@ -475,6 +477,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
         case ObjectType_MonsterToFight:
         case ObjectType_MonsterToFightKO:
         case ObjectType_ItemOnMonster:
+        case ObjectType_ItemEvolutionOnMonster:
             ui->selectMonster->setVisible(true);
             ui->stackedWidget->setCurrentWidget(ui->page_monster);
             load_monsters();
@@ -504,21 +507,74 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
     inSelection=false;
     switch(waitedObjectType)
     {
+        case ObjectType_ItemEvolutionOnMonster:
         case ObjectType_ItemOnMonster:
         {
-            const quint32 monster=itemId;
+            const quint32 monsterUniqueId=itemId;
             const quint32 item=objectInUsing.last();
             objectInUsing.removeLast();
-            ui->stackedWidget->setCurrentWidget(ui->page_inventory);
-            ui->inventoryUse->setText(tr("Select"));
             if(!ok)
             {
+                ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+                ui->inventoryUse->setText(tr("Select"));
                 add_to_inventory(item,false,false);
                 break;
             }
-            showTip(tr("Using %1 on %2").arg(item).arg(monster));
-            CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monster);
-            ClientFightEngine::fightEngine.useObjectOnMonster(item,monster);
+            if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(item))
+            {
+                const PlayerMonster &monster=*ClientFightEngine::fightEngine.monsterById(monsterUniqueId);
+                const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster.monster];
+                const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra[monster.monster];
+                idMonsterEvolution=0;
+                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters[CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem[item][monster.monster]];
+                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra[CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem[item][monster.monster]];
+                //create animation widget
+                if(animationWidget!=NULL)
+                    delete animationWidget;
+                if(qQuickViewContainer!=NULL)
+                    delete qQuickViewContainer;
+                animationWidget=new QQuickView();
+                qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
+                qQuickViewContainer->setMinimumSize(QSize(800,600));
+                qQuickViewContainer->setMaximumSize(QSize(800,600));
+                qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
+                ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
+                //show the animation
+                ui->stackedWidget->setCurrentWidget(ui->page_animation);
+                previousAnimationWidget=ui->page_map;
+                if(baseMonsterEvolution!=NULL)
+                    delete baseMonsterEvolution;
+                if(targetMonsterEvolution!=NULL)
+                    delete targetMonsterEvolution;
+                baseMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformations,monsterInformationsExtra);
+                targetMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                if(evolutionControl!=NULL)
+                    delete evolutionControl;
+                evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
+                animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
+                animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(false));
+                animationWidget->rootContext()->setContextProperty("itemEvolution",QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[item].imagePath));
+                animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
+                animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
+                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/evolution-animation.qml";
+                if(QFile(datapackQmlFile).exists())
+                    animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
+                else
+                    animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
+                CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
+                ClientFightEngine::fightEngine.useObjectOnMonster(item,monsterUniqueId);
+                load_monsters();
+                return;
+            }
+            else
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+                ui->inventoryUse->setText(tr("Select"));
+                showTip(tr("Using %1 on %2").arg(DatapackClientLoader::datapackLoader.itemsExtra[item].name).arg(DatapackClientLoader::datapackLoader.monsterExtra[monsterUniqueId].name));
+                CatchChallenger::Api_client_real::client->useObjectOnMonster(item,monsterUniqueId);
+                ClientFightEngine::fightEngine.useObjectOnMonster(item,monsterUniqueId);
+            }
         }
         break;
         case ObjectType_Sell:
@@ -1000,6 +1056,9 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                  ||
                                  /* is a item with monster effect */
                                  CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.contains(items_graphical[item])
+                                 ||
+                                 /* is a evolution item */
+                                 CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(items_graphical[item])
                                          );
     ui->inventoryDestroy->setVisible(!inSelection);
     ui->inventory_image->setPixmap(content.image);
@@ -2209,7 +2268,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         remove_to_inventory(objectInUsing.last());
         CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
     }
-    //is repel
+    //it's repel
     else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.contains(items_graphical[item]))
     {
         MapController::mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.items.repel[items_graphical[item]]);
@@ -2217,11 +2276,18 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         remove_to_inventory(objectInUsing.last());
         CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
     }
+    //it's object with monster effect
     else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.contains(items_graphical[item]))
     {
         objectInUsing << items_graphical[item];
         remove_to_inventory(objectInUsing.last());
         selectObject(ObjectType_ItemOnMonster);
+    }
+    else if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(items_graphical[item]))
+    {
+        objectInUsing << items_graphical[item];
+        remove_to_inventory(objectInUsing.last());
+        selectObject(ObjectType_ItemEvolutionOnMonster);
     }
     else
         qDebug() << "BaseWindow::on_inventory_itemActivated(): unknow object type";
@@ -2662,6 +2728,7 @@ void BaseWindow::on_toolButton_monster_list_quit_clicked()
             objectSelection(false);
             break;
             case ObjectType_ItemOnMonster:
+            case ObjectType_ItemEvolutionOnMonster:
             case ObjectType_MonsterToTrade:
             case ObjectType_MonsterToLearn:
             case ObjectType_MonsterToFight:

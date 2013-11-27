@@ -64,7 +64,8 @@ public:
     Skill::AttackReturn generateOtherAttack();
     Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     quint8 decreaseSkillEndurance(const quint32 &skill);
-    void confirmEvolution(const quint32 &monterId);
+    void confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster);
+    void confirmEvolution(const quint32 &monsterId);
     void emitBattleWin();
     virtual void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
     bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);

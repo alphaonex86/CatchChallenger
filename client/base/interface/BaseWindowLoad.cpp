@@ -826,18 +826,18 @@ void BaseWindow::animationFinished()
     else if(previousAnimationWidget==ui->page_map)
     {
         ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
+        if(baseMonsterEvolution!=NULL)
+        {
+            delete baseMonsterEvolution;
+            baseMonsterEvolution=NULL;
+        }
+        if(targetMonsterEvolution!=NULL)
+        {
+            delete targetMonsterEvolution;
+            targetMonsterEvolution=NULL;
+        }
         if(idMonsterEvolution!=0)
         {
-            if(baseMonsterEvolution!=NULL)
-            {
-                delete baseMonsterEvolution;
-                baseMonsterEvolution=NULL;
-            }
-            if(targetMonsterEvolution!=NULL)
-            {
-                delete targetMonsterEvolution;
-                targetMonsterEvolution=NULL;
-            }
             CatchChallenger::ClientFightEngine::fightEngine.confirmEvolution(idMonsterEvolution);
             idMonsterEvolution=0;
             load_monsters();

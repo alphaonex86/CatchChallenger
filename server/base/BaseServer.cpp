@@ -1584,6 +1584,7 @@ void BaseServer::unload_zone()
 
 void BaseServer::unload_market()
 {
+    GlobalServerData::serverPrivateVariables.tradedMonster.clear();
     GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.clear();
     GlobalServerData::serverPrivateVariables.marketItemList.clear();
 }

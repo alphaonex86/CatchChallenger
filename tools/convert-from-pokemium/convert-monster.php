@@ -597,9 +597,9 @@ foreach($temp_evolutions as $evolution)
 	if($evolution['type']!='trade')
 		$level=' level="'.$evolution['level'].'"';
 	if(isset($name_to_id[str_replace(' ','',strtolower($evolution['evolveTo']))]))
-		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$name_to_id[str_replace(' ','',strtolower($evolution['evolveTo']))].'" />'."\n";
+		echo '			<evolution type="'.$evolution['type'].'"'.$level.' evolveTo="'.$name_to_id[str_replace(' ','',strtolower($evolution['evolveTo']))].'" />'."\n";
 	else
-		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$evolution['evolveTo'].'" />'."\n";
+		echo '			<evolution type="'.$evolution['type'].'"'.$level.' evolveTo="'.$evolution['evolveTo'].'" />'."\n";
 }
 ?>
 		</evolutions>
