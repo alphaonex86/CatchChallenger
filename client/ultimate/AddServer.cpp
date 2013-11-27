@@ -1,6 +1,8 @@
 #include "AddServer.h"
 #include "ui_AddServer.h"
 
+#include <QMessageBox>
+
 AddServer::AddServer(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AddServer)
@@ -16,6 +18,11 @@ AddServer::~AddServer()
 
 void AddServer::on_ok_clicked()
 {
+    if(ui->name->text()=="Internal" || ui->name->text()=="internal")
+    {
+        QMessageBox::warning(this,tr("Error"),tr("The name can't be \"internal\""));
+        return;
+    }
     ok=true;
     close();
 }

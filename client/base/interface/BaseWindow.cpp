@@ -46,7 +46,7 @@ BaseWindow::BaseWindow() :
 
     MapController::mapController=new MapController(true,false,true,false);
     if(CatchChallenger::Api_client_real::client!=NULL)
-        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
+        MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
     animationWidget=NULL;
@@ -2492,7 +2492,7 @@ void BaseWindow::getTextEntryPoint()
     }
     QScriptEngine engine;
 
-    QString client_logic=CatchChallenger::Api_client_real::client->get_datapack_base()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
+    QString client_logic=CatchChallenger::Api_client_real::client->datapackPath()+"/"+DATAPACK_BASE_PATH_QUESTS+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
         showTip(tr("Client file missing"));

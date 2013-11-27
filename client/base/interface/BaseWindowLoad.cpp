@@ -250,7 +250,7 @@ void BaseWindow::haveTheDatapack()
         return;
     haveDatapack=true;
 
-    emit parseDatapack(CatchChallenger::Api_client_real::client->get_datapack_base());
+    emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPath());
 }
 
 void BaseWindow::datapackSize(const quint32 &datapckFileNumber,const quint32 &datapckFileSize)
@@ -545,12 +545,12 @@ QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
 QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) const
 {
     {
-        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.png").arg(type));
+        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.png").arg(type));
         if(pnfFile.exists())
             return pnfFile.absoluteFilePath();
     }
     {
-        QFileInfo gifFile(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.gif").arg(type));
+        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.gif").arg(type));
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }

@@ -30,7 +30,7 @@ public:
     ~Api_client_virtual();
     void sendDatapackContent();
     void tryDisconnect();
-    virtual QString get_datapack_base() const;
+    virtual QString datapackPath() const;
 protected:
     //general data
     void defineMaxPlayers(const quint16 &);

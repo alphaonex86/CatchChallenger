@@ -5,6 +5,7 @@
 #include "../base/LanguagesSelect.h"
 #include "../base/InternetUpdater.h"
 #include <QNetworkProxy>
+#include <QStandardPaths>
 
 #define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
 //#define SERVER_DNS_OR_IP "localhost"
@@ -186,8 +187,16 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         proxy.setType(QNetworkProxy::Socks5Proxy);
         realSocket->setProxy(proxy);
     }
+    QDir datapack(QString("%1/datapack/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
+    if(!datapack.exists())
+        if(!datapack.mkpath(datapack.absolutePath()))
+        {
+            disconnected(tr("Not able to create the folder %1").arg(datapack.absolutePath()));
+            return;
+        }
+    CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(host,port);
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)

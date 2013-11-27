@@ -14,6 +14,8 @@ using namespace CatchChallenger;
 #include "CommonSettings.h"
 #include "FacilityLib.h"
 
+#include <QCoreApplication>
+
 //need host + port here to have datapack base
 
 QSet<QString> Api_protocol::extensionAllowed;
@@ -4919,6 +4921,7 @@ void Api_protocol::resetAll()
     tradeRequestId.clear();
     isInBattle=false;
     battleRequestId.clear();
+    mDatapack=QString("%1/datapack/").arg(QCoreApplication::applicationDirPath());
 
     //to send trame
     lastQueryNumber=1;
@@ -4929,7 +4932,15 @@ void Api_protocol::startReadData()
     canStartReadData=true;
 }
 
-QString Api_protocol::get_datapack_base() const
+QString Api_protocol::datapackPath() const
 {
     return mDatapack;
+}
+
+void Api_protocol::setDatapackPath(const QString &datapack_path)
+{
+    if(datapack_path.endsWith("/"))
+        mDatapack=datapack_path;
+    else
+        mDatapack=datapack_path+QStringLiteral("/");
 }
