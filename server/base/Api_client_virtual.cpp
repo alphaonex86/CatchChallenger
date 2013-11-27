@@ -32,7 +32,7 @@ void Api_client_virtual::tryDisconnect()
         socket->disconnectFromHost();
 }
 
-QString Api_client_virtual::get_datapack_base() const
+QString Api_client_virtual::datapackPath() const
 {
     return forcedDatapack;
 }
