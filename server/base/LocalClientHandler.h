@@ -136,7 +136,7 @@ public slots:
     void addWarehouseObject(const quint32 &item,const quint32 &quantity=1);
     quint32 removeWarehouseObject(const quint32 &item,const quint32 &quantity=1);
 
-    void confirmEvolution(const quint32 &monterId);
+    void confirmEvolution(const quint32 &monsterId);
     void sendHandlerCommand(const QString &command,const QString &extraText);
     //inventory
     void destroyObject(const quint32 &itemId,const quint32 &quantity);

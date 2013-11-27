@@ -72,7 +72,8 @@ public:
     virtual bool changeOfMonsterInFight(const quint32 &monsterId);
     int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     void removeBuffEffectFull(const Skill::BuffEffect &effect);
-    bool useObjectOnMonster(const quint32 &object,const quint32 &monster);
+    virtual bool useObjectOnMonster(const quint32 &object,const quint32 &monster);
+    virtual void confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster);
     virtual void hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue);
     virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const quint32 &buffId);
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);

@@ -707,13 +707,26 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
     emit error("Buff not found to remove");
 }
 
+void CommonFightEngine::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster)
+{
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[playerMonster->monster];
+    const Monster::Stat oldStat=getStat(monsterInformations,playerMonster->level);
+    playerMonster->monster=monster;
+    const Monster::Stat stat=getStat(CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
+    if(oldStat.hp>stat.hp)
+    {
+        if(playerMonster->hp>stat.hp)
+            playerMonster->hp=stat.hp;
+    }
+    else if(oldStat.hp<stat.hp)
+    {
+        if(playerMonster->hp>0)
+            playerMonster->hp+=(stat.hp-oldStat.hp);
+    }
+}
+
 bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &monster)
 {
-    if(!CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object))
-    {
-        emit error(QString("This object can't be applyed on monster: %1").arg(object));
-        return false;
-    }
     if(!haveThisMonster(monster))
     {
         emit error(QString("have not this monster: %1").arg(object));
@@ -723,6 +736,21 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
     if(genericMonsterIsKO(playerMonster))
     {
         emit error(QString("can't be applyied on KO monster: %1").arg(object));
+        return false;
+    }
+    if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(object))
+    {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem[object].contains(playerMonster->monster))
+        {
+            emit error(QString("this item %1 can't be applyed on this monster %2").arg(object).arg(playerMonster->monster));
+            return false;
+        }
+        confirmEvolutionTo(playerMonster,CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem[object][playerMonster->monster]);
+        return true;
+    }
+    if(!CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object))
+    {
+        emit error(QString("This object can't be applyed on monster: %1").arg(object));
         return false;
     }
     const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);

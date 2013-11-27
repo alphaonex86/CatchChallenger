@@ -64,6 +64,7 @@ public:
         ObjectType_MonsterToFight,
         ObjectType_MonsterToFightKO,
         ObjectType_ItemOnMonster,
+        ObjectType_ItemEvolutionOnMonster,
         ObjectType_UseInFight
     };
     enum ActionClan
@@ -581,7 +582,7 @@ private:
     //trade
     TradeOtherStat tradeOtherStat;
     QHash<quint32,quint32> tradeOtherObjects,tradeCurrentObjects;
-    QList<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
+    QList<CatchChallenger::PlayerMonster> tradeEvolutionMonsters,tradeOtherMonsters,tradeCurrentMonsters;
 
     //learn
     quint32 monsterToLearn;

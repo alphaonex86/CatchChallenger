@@ -217,6 +217,7 @@ struct ServerPrivateVariables
     QHash<QString,QList<quint32> > captureFightIdList;
     QHash<QString,CityStatus> cityStatusList;
     QHash<quint32,QString> cityStatusListReverse;
+    QSet<quint32> tradedMonster;
 
     //market
     QList<MarketItem> marketItemList;

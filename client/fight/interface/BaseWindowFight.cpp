@@ -271,6 +271,23 @@ void BaseWindow::load_monsters()
             }
             switch(waitedObjectType)
             {
+                case ObjectType_ItemEvolutionOnMonster:
+                    if(monster.hp==0 || monster.egg_step>0)
+                    {
+                        index++;
+                        continue;
+                    }
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(objectInUsing.last()))
+                    {
+                        index++;
+                        continue;
+                    }
+                    if(!CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem[objectInUsing.last()].contains(monster.monster))
+                    {
+                        index++;
+                        continue;
+                    }
+                break;
                 case ObjectType_MonsterToFight:
                 case ObjectType_MonsterToFightKO:
                 case ObjectType_ItemOnMonster:
@@ -1094,7 +1111,8 @@ void BaseWindow::checkEvolution()
                 connect(evolutionControl,&EvolutionControl::cancel,this,&BaseWindow::evolutionCanceled,Qt::QueuedConnection);
                 animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
                 animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
-                animationWidget->rootContext()->setContextProperty("canBeCanceled",true);
+                animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(true));
+                animationWidget->rootContext()->setContextProperty("itemEvolution",QString());
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
                 const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/evolution-animation.qml";
@@ -1106,6 +1124,61 @@ void BaseWindow::checkEvolution()
             }
             index++;
         }
+    }
+    while(!tradeEvolutionMonsters.isEmpty())
+    {
+        const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[tradeEvolutionMonsters.first().monster];
+        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra[tradeEvolutionMonsters.first().monster];
+        int index=0;
+        while(index<monsterInformations.evolutions.size())
+        {
+            const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
+            if(evolution.type==Monster::EvolutionType_Trade)
+            {
+                idMonsterEvolution=monster->id;
+                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters[evolution.evolveTo];
+                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=DatapackClientLoader::datapackLoader.monsterExtra[evolution.evolveTo];
+                //create animation widget
+                if(animationWidget!=NULL)
+                    delete animationWidget;
+                if(qQuickViewContainer!=NULL)
+                    delete qQuickViewContainer;
+                animationWidget=new QQuickView();
+                qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
+                qQuickViewContainer->setMinimumSize(QSize(800,600));
+                qQuickViewContainer->setMaximumSize(QSize(800,600));
+                qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
+                ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
+                //show the animation
+                ui->stackedWidget->setCurrentWidget(ui->page_animation);
+                previousAnimationWidget=ui->page_map;
+                if(baseMonsterEvolution!=NULL)
+                    delete baseMonsterEvolution;
+                if(targetMonsterEvolution!=NULL)
+                    delete targetMonsterEvolution;
+                baseMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformations,monsterInformationsExtra);
+                targetMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                if(evolutionControl!=NULL)
+                    delete evolutionControl;
+                evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                connect(evolutionControl,&EvolutionControl::cancel,this,&BaseWindow::evolutionCanceled,Qt::QueuedConnection);
+                animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
+                animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
+                animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(true));
+                animationWidget->rootContext()->setContextProperty("itemEvolution",QString());
+                animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
+                animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
+                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/evolution-animation.qml";
+                if(QFile(datapackQmlFile).exists())
+                    animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
+                else
+                    animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
+                tradeEvolutionMonsters.removeFirst();
+                return;
+            }
+            index++;
+        }
+        tradeEvolutionMonsters.removeFirst();
     }
 }
 

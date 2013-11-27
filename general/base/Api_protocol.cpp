@@ -4326,7 +4326,7 @@ void Api_protocol::useObjectOnMonster(const quint32 &object,const quint32 &monst
     out << monster;
     if(output==NULL)
         return;
-    output->packFullOutcommingQuery(0x60,0x000B,queryNumber(),outputData);
+    output->packFullOutcommingData(0x60,0x000B,outputData);
 }
 
 
