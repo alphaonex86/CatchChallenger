@@ -174,8 +174,6 @@ void DatapackClientLoader::parseMonstersExtra()
                                     kind = kind.nextSiblingElement("kind");
                                 }
                             }
-                            if(!kind_found)
-                                qDebug() << QString("English kind not found for the item with id: %1").arg(id);
                         }
 
                         //load the habitat
@@ -213,8 +211,6 @@ void DatapackClientLoader::parseMonstersExtra()
                                     habitat = habitat.nextSiblingElement("habitat");
                                 }
                             }
-                            if(!habitat_found)
-                                qDebug() << QString("English habitat not found for the item with id: %1").arg(id);
                         }
                         if(monsterExtraEntry.name.isEmpty())
                             monsterExtraEntry.name=tr("Unknown");
