@@ -123,7 +123,7 @@ struct MonsterItemEffect
 struct ItemFull
 {
     QMultiHash<quint32, MonsterItemEffect> monsterItemEffect;
-    QHash<quint32, QSet<quint32> > evolutionItem;
+    QHash<quint32, QHash<quint32,quint32> > evolutionItem;
     QHash<quint32, quint32> repel;
     QHash<quint32, Item> item;
     QHash<quint32, Trap> trap;

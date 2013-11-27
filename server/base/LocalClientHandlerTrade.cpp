@@ -97,6 +97,21 @@ void LocalClientHandler::tradeFinished()
             otherPlayerTrade->saveObjectRetention(j.key());
         }
 
+        //monster evolution
+        {
+            int index=0;
+            while(index<tradeMonster.size())
+            {
+                GlobalServerData::serverPrivateVariables.tradedMonster << tradeMonster.at(index).id;
+                index++;
+            }
+            index=0;
+            while(index<otherPlayerTrade->tradeMonster.size())
+            {
+                GlobalServerData::serverPrivateVariables.tradedMonster << otherPlayerTrade->tradeMonster.at(index).id;
+                index++;
+            }
+        }
         //monster
         otherPlayerTrade->addExistingMonster(tradeMonster);
         addExistingMonster(otherPlayerTrade->tradeMonster);

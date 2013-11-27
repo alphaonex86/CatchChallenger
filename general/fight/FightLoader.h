@@ -13,7 +13,7 @@ class FightLoader
 public:
     static QList<Type> loadTypes(const QString &file);
     static QHash<quint32,Monster> loadMonster(const QString &file, const QHash<quint32,Skill> &monsterSkills, const QList<Type> &types, const QHash<quint32, Item> &items);
-    static QHash<quint32, QSet<quint32> > loadMonsterEvolutionItems(const QHash<quint32,Monster> &monsters);
+    static QHash<quint32, QHash<quint32, quint32> > loadMonsterEvolutionItems(const QHash<quint32,Monster> &monsters);
     static QHash<quint32,Skill> loadMonsterSkill(const QString &file, const QHash<quint32,Buff> &monsterBuffs, const QList<Type> &types);
     static QHash<quint32,Buff> loadMonsterBuff(const QString &file);
     static QHash<quint32,BotFight> loadFight(const QString &folder, const QHash<quint32,Monster> &monsters, const QHash<quint32, Skill> &monsterSkills);

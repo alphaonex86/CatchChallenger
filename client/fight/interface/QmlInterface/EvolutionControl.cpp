@@ -1,8 +1,8 @@
 #include "EvolutionControl.h"
 
-EvolutionControl::EvolutionControl(const CatchChallenger::Monster &fromMonsterInformations,const DatapackClientLoader::MonsterExtra &frontMonsterInformationsExtra,const CatchChallenger::Monster &toMonsterInformations,const DatapackClientLoader::MonsterExtra &toMonsterInformationsExtra) :
+EvolutionControl::EvolutionControl(const CatchChallenger::Monster &fromMonsterInformations,const DatapackClientLoader::MonsterExtra &fromMonsterInformationsExtra,const CatchChallenger::Monster &toMonsterInformations,const DatapackClientLoader::MonsterExtra &toMonsterInformationsExtra) :
     fromMonsterInformations(fromMonsterInformations),
-    frontMonsterInformationsExtra(frontMonsterInformationsExtra),
+    fromMonsterInformationsExtra(fromMonsterInformationsExtra),
     toMonsterInformations(toMonsterInformations),
     toMonsterInformationsExtra(toMonsterInformationsExtra)
 {
@@ -10,5 +10,5 @@ EvolutionControl::EvolutionControl(const CatchChallenger::Monster &fromMonsterIn
 
 QString EvolutionControl::evolutionText()
 {
-    return tr("Your %1 will evolve into %1").arg(frontMonsterInformationsExtra.name).arg(toMonsterInformationsExtra.name);
+    return tr("Your %1 will evolve into %2").arg(fromMonsterInformationsExtra.name).arg(toMonsterInformationsExtra.name);
 }

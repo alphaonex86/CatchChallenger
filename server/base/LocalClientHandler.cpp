@@ -1375,7 +1375,7 @@ void LocalClientHandler::destroyObject(const quint32 &itemId,const quint32 &quan
 void LocalClientHandler::useObjectOnMonster(const quint32 &object,const quint32 &monster)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("use the object: %1 on monster").arg(object).arg(monster));
+    emit message(QString("use the object: %1 on monster %2").arg(object).arg(monster));
     #endif
     if(!player_informations->public_and_private_informations.items.contains(object))
     {
@@ -4322,7 +4322,7 @@ void LocalClientHandler::withdrawMarketMonster(const quint32 &query_id,const qui
     emit postReply(query_id,outputData);
 }
 
-void LocalClientHandler::confirmEvolution(const quint32 &monterId)
+void LocalClientHandler::confirmEvolution(const quint32 &monsterId)
 {
-    localClientHandlerFight.confirmEvolution(monterId);
+    localClientHandlerFight.confirmEvolution(monsterId);
 }
