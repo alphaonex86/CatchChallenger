@@ -10,6 +10,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDateTime>
+#include <QSet>
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -54,6 +55,7 @@ private slots:
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();
+    QString serverToDatapachPath(ListEntryEnvolued *selectedServer) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();
@@ -138,6 +140,7 @@ private:
     QString launchedGamePath;
     bool haveLaunchedGame;
     CatchChallenger::InternalServer * internalServer;
+    QSet<QString> customServerName;
 };
 
 #endif // MAINWINDOW_H

@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>10</number>
+        <number>16</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -311,8 +311,8 @@ padding:5px;
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>20</width>
-             <height>40</height>
+             <width>0</width>
+             <height>0</height>
             </size>
            </property>
           </spacer>
@@ -417,6 +417,9 @@ border-image: url(:/images/empty.png);
                 <property name="textFormat">
                  <enum>Qt::RichText</enum>
                 </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -457,8 +460,8 @@ border-image: url(:/images/empty.png);
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>20</width>
-             <height>221</height>
+             <width>0</width>
+             <height>0</height>
             </size>
            </property>
           </spacer>
@@ -5928,6 +5931,55 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+           <widget class="QListWidget" name="monsterDetailsBuffs">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>260</y>
+              <width>205</width>
+              <height>18</height>
+             </rect>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>205</width>
+              <height>18</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>205</width>
+              <height>18</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-image: url(:/images/empty.png);</string>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="verticalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="horizontalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::NoSelection</enum>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
+            </property>
+            <property name="viewMode">
+             <enum>QListView::IconMode</enum>
+            </property>
+            <property name="uniformItemSizes">
              <bool>true</bool>
             </property>
            </widget>
