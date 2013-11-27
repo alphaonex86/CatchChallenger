@@ -39,7 +39,8 @@ public:
 
     virtual void sendDatapackContent() = 0;
     virtual void tryDisconnect() = 0;
-    virtual QString get_datapack_base() const;
+    virtual QString datapackPath() const;
+    void setDatapackPath(const QString &datapackPath);
 
     //to reset all
     void resetAll();

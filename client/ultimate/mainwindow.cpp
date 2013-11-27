@@ -169,6 +169,9 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                 connexionInfo.host=host;
                 connexionInfo.port=port;
                 connexionInfo.name=name;
+                while(customServerName.contains(connexionInfo.name))
+                    connexionInfo.name=tr("Copy of %1").arg(connexionInfo.name);
+                customServerName << name;
                 connexionInfo.connexionCounter=connexionCounter.toUInt(&ok);
                 if(!ok)
                     connexionInfo.connexionCounter=0;
@@ -502,6 +505,11 @@ void MainWindow::on_server_add_clicked()
         QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
         return;
     }
+    if(customServerName.contains(addServer.name()))
+    {
+        QMessageBox::warning(this,tr("Error"),tr("The name is already taken"));
+        return;
+    }
     ConnexionInfo connexionInfo;
     connexionInfo.connexionCounter=0;
     connexionInfo.host=addServer.server();
@@ -555,6 +563,7 @@ void MainWindow::on_server_remove_clicked()
     {
         if(serverConnexion[selectedServer]==&mergedConnexionInfoList.at(index))
         {
+            customServerName.remove(serverConnexion[selectedServer]->name);
             mergedConnexionInfoList.removeAt(index);
             saveConnexionInfoList();
             displayServerList();
@@ -754,12 +763,35 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(true);
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
+    QDir datapack(serverToDatapachPath(selectedServer));
+    if(!datapack.exists())
+        if(!datapack.mkpath(datapack.absolutePath()))
+        {
+            disconnected(tr("Not able to create the folder %1").arg(datapack.absolutePath()));
+            return;
+        }
+    CatchChallenger::Api_client_real::client->setDatapackPath(datapack.absolutePath());
     static_cast<CatchChallenger::Api_client_real *>(CatchChallenger::Api_client_real::client)->tryConnect(serverConnexion[selectedServer]->host,serverConnexion[selectedServer]->port);
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
     serverConnexion[selectedServer]->connexionCounter++;
     serverConnexion[selectedServer]->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
     saveConnexionInfoList();
     displayServerList();
+}
+
+QString MainWindow::serverToDatapachPath(ListEntryEnvolued * selectedServer) const
+{
+    QDir datapack;
+    if(customServerConnexion.contains(selectedServer))
+    {
+        if(!serverConnexion[selectedServer]->name.isEmpty())
+             datapack=QDir(QString("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion[selectedServer]->name));
+        else
+             datapack=QDir(QString("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+    }
+    else
+        datapack=QDir(QString("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion[selectedServer]->unique_code));
+    return datapack.absolutePath();
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -1183,7 +1215,8 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->get_datapack_base());
+    CatchChallenger::Api_client_real::client->setDatapackPath(QString("%1/datapack/internal/").arg(QCoreApplication::applicationDirPath()));
+    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPath());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
@@ -1290,7 +1323,7 @@ void MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
     formatedServerSettings.bitcoin.enabled=false;
-    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->get_datapack_base();
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
 
     internalServer->setSettings(formatedServerSettings);
 }

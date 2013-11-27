@@ -15,14 +15,14 @@ void BaseWindow::on_character_add_clicked()
     }
     if(newProfile!=NULL)
         delete newProfile;
-    newProfile=new NewProfile(CatchChallenger::Api_client_real::client->get_datapack_base(),this);
+    newProfile=new NewProfile(CatchChallenger::Api_client_real::client->datapackPath(),this);
     connect(newProfile,&NewProfile::finished,this,&BaseWindow::newProfileFinished);
     newProfile->show();
 }
 
 void BaseWindow::newProfileFinished()
 {
-    const QString &datapackPath=CatchChallenger::Api_client_real::client->get_datapack_base();
+    const QString &datapackPath=CatchChallenger::Api_client_real::client->datapackPath();
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         if(!newProfile->ok())
         {
@@ -100,7 +100,7 @@ void BaseWindow::updateCharacterList()
         if(characterEntry.delete_time_left>0)
             text+="\n"+tr("%1 to be deleted").arg(FacilityLib::timeToString(characterEntry.delete_time_left));
         item->setText(text);
-        item->setIcon(QIcon(CatchChallenger::Api_client_real::client->get_datapack_base()+DATAPACK_BASE_PATH_SKIN+characterEntry.skin+"/front.png"));
+        item->setIcon(QIcon(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+characterEntry.skin+"/front.png"));
         ui->characterEntryList->addItem(item);
         index++;
     }

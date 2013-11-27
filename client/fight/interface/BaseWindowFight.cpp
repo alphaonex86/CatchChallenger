@@ -115,31 +115,58 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
             int index=0;
             while(index<monster.skills.size())
             {
-                const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(index);
+                const PlayerMonster::PlayerSkill &monsterSkill=monster.skills.at(index);
                 QListWidgetItem *item;
-                if(!DatapackClientLoader::datapackLoader.monsterSkillsExtra.contains(playerSkill.skill))
+                if(!DatapackClientLoader::datapackLoader.monsterSkillsExtra.contains(monsterSkill.skill))
                     item=new QListWidgetItem(tr("Unknown skill"));
                 else
                 {
-                    if(playerSkill.level>1)
-                        item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name).arg(playerSkill.level));
+                    if(monsterSkill.level>1)
+                        item=new QListWidgetItem(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[monsterSkill.skill].name).arg(monsterSkill.level));
                     else
-                        item=new QListWidgetItem(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].name);
-                    const Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[playerSkill.skill];
+                        item=new QListWidgetItem(DatapackClientLoader::datapackLoader.monsterSkillsExtra[monsterSkill.skill].name);
+                    const Skill &skill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills[monsterSkill.skill];
                     item->setText(item->text()+QString(" (%1/%2)")
-                            .arg(playerSkill.endurance)
-                            .arg(skill.level.at(playerSkill.level-1).endurance)
+                            .arg(monsterSkill.endurance)
+                            .arg(skill.level.at(monsterSkill.level-1).endurance)
                             );
                     if(skill.type!=255)
                         if(DatapackClientLoader::datapackLoader.typeExtra.contains(skill.type))
                             if(!DatapackClientLoader::datapackLoader.typeExtra[skill.type].name.isEmpty())
                                 item->setText(item->text()+", "+tr("Type: %1").arg(DatapackClientLoader::datapackLoader.typeExtra[skill.type].name));
-                    item->setText(item->text()+"\n"+DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
-                    item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[playerSkill.skill].description);
+                    item->setText(item->text()+"\n"+DatapackClientLoader::datapackLoader.monsterSkillsExtra[monsterSkill.skill].description);
+                    item->setToolTip(DatapackClientLoader::datapackLoader.monsterSkillsExtra[monsterSkill.skill].description);
                 }
                 ui->monsterDetailsSkills->addItem(item);
                 index++;
             }
+            //do the buff
+            {
+                ui->monsterDetailsBuffs->clear();
+                int index=0;
+                while(index<monster.buffs.size())
+                {
+                    const PlayerBuff &buffEffect=monster.buffs.at(index);
+                    QListWidgetItem *item=new QListWidgetItem();
+                    if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
+                    {
+                        item->setToolTip(tr("Unknown buff"));
+                        item->setIcon(QIcon(":/images/interface/buff.png"));
+                    }
+                    else
+                    {
+                        item->setIcon(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].icon);
+                        if(buffEffect.level<=1)
+                            item->setToolTip(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].name);
+                        else
+                            item->setToolTip(tr("%1 at level %2").arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].name).arg(buffEffect.level));
+                        item->setToolTip(item->toolTip()+"\n"+DatapackClientLoader::datapackLoader.monsterBuffsExtra[buffEffect.buff].description);
+                    }
+                    ui->monsterDetailsBuffs->addItem(item);
+                    index++;
+                }
+            }
+
             ui->stackedWidget->setCurrentWidget(ui->page_monsterdetails);
             return;
         }
@@ -443,7 +470,7 @@ void BaseWindow::init_current_monster_display()
             int index=0;
             while(index<fightMonster->buffs.size())
             {
-                PlayerBuff buffEffect=fightMonster->buffs.at(index);
+                const PlayerBuff &buffEffect=fightMonster->buffs.at(index);
                 QListWidgetItem *item=new QListWidgetItem();
                 if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
                 {
@@ -905,7 +932,7 @@ void BaseWindow::updateOtherMonsterInformation()
             int index=0;
             while(index<otherMonster->buffs.size())
             {
-                PlayerBuff buffEffect=otherMonster->buffs.at(index);
+                const PlayerBuff &buffEffect=otherMonster->buffs.at(index);
                 QListWidgetItem *item=new QListWidgetItem();
                 if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(buffEffect.buff))
                 {
@@ -1070,7 +1097,7 @@ void BaseWindow::checkEvolution()
                 animationWidget->rootContext()->setContextProperty("canBeCanceled",true);
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->get_datapack_base()+"qml/evolution-animation.qml";
+                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPath()+"qml/evolution-animation.qml";
                 if(QFile(datapackQmlFile).exists())
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else

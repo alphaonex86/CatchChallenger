@@ -84,13 +84,14 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
     formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
     formatedServerSettings.bitcoin.enabled=false;
-    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->get_datapack_base();
+    formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
 
     internalServer->setSettings(formatedServerSettings);
 }
 
 void SimpleSoloServer::protocol_is_good()
 {
+    CatchChallenger::Api_client_real::client->setDatapackPath(QString("%1/datapack/").arg(QCoreApplication::applicationDirPath()));
     CatchChallenger::Api_client_real::client->tryLogin("admin",pass);
 }
 
