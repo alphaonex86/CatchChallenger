@@ -25,6 +25,26 @@ Rectangle {
         }
     }
     Image {
+	source: itemEvolution;
+	smooth: false;
+        width: (sourceSize.width * 2);
+        height: (sourceSize.height * 2);
+        sourceSize.width: 24;
+        sourceSize.height: 24;
+	visible: !canBeCanceled;
+	SequentialAnimation on opacity {
+            id: xAnim
+            // Animations on properties start running by default
+            running: true
+            loops: Animation.Infinite // The animation is set to loop indefinitely
+            NumberAnimation { from: 0; to: 1.0; duration: 500; }
+            NumberAnimation { from: 1.0; to: 0; duration: 500; }
+            PauseAnimation { duration: 50 } // This puts a bit of time between the loop
+        }
+	anchors.horizontalCenter: parent.horizontalCenter
+	y:50;
+    }
+    Image {
         id: fromMonster;
         source: baseMonsterEvolution.image();
 	smooth: false;
