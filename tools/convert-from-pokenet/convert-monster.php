@@ -38,7 +38,6 @@ foreach($entry_list[1] as $entry)
 $item_name_to_id=array();
 $file=file_get_contents('../item/items2.xml');
 preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
-echo "<items>\n";
 foreach($entry_list[1] as $entry)
 {
 	if(!preg_match('#<m_id>[0-9]+</m_id>#isU',$entry))
@@ -334,13 +333,14 @@ foreach($entry_list[1] as $entry)
 			$applyOn='themself';
 			$power='+100%';
 		}
-		if(preg_match('#<power>Varies</power>#isU',$name))
+		else if(preg_match('#<power>Varies</power>#isU',$name))
 		{
 			if($description=='')
 				$description='Touch the target multiple times';
 			$power='60';
 		}
-		continue;
+		else
+			$power='0';
 	}
 	$power='-'.preg_replace('#^.*<power>([0-9]+)</power>.*$#isU','$1',$entry);
 	if(!preg_match('#<accuracy>[0-9]+</accuracy>#isU',$entry))

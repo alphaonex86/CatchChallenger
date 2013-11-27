@@ -14,32 +14,17 @@ evolution type can be: level (attribute level is the level), item (attribute lev
 $file=file_get_contents('items/items.xml');
 preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
 $general_items_list=array();
+$item_name_to_id=array();
 foreach($entry_list[1] as $entry)
 {
 	if(!preg_match('#<m_id>[0-9]+</m_id>#isU',$entry))
 		continue;
 	$id=preg_replace('#^.*<m_id>([0-9]+)</m_id>.*$#isU','$1',$entry);
-	if(!preg_match('#<m_category>[^<]+</m_category>#isU',$entry))
+	if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
 		continue;
-	$category=preg_replace('#^.*<m_category>([^<]+)</m_category>.*$#isU','$1',$entry);
-	if($category!='TM')
-		$image=$id.'.png';
-	else
-		$image='TM.png';
-	if(file_exists($image))
-	{
-		if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
-			continue;
-		$name=preg_replace('#^.*<m_name>([^<]+)</m_name>.*$#isU','$1',$entry);
-		if(!preg_match('#<m_description>[^<]+</m_description>#isU',$entry))
-			continue;
-		$description=preg_replace('#^.*<m_description>([^<]+)</m_description>.*$#isU','$1',$entry);
-		$description=preg_replace("#[\n\r\t]+.*$#isU",'',$description);
-		if(!preg_match('#<m_price>[0-9]+</m_price>#isU',$entry))
-			continue;
-		$price=preg_replace('#^.*<m_price>([0-9]+)</m_price>.*$#isU','$1',$entry);
-		$general_items_list[$id]=array('name'=>$name,'description'=>$description,'price'=>$price);
-	}
+	$name=preg_replace('#^.*<m_name>([^<]+)</m_name>.*$#isU','$1',$entry);
+	$general_items_list[$id]=array('name'=>$name);
+	$item_name_to_id[str_replace(' ','',strtolower($name))]=$id;
 }
 
 $file=file_get_contents('battle/movetypes.xml');
@@ -434,12 +419,6 @@ foreach($entry_list[1] as $entry)
 			else if($m_type=='Item')
 			{
 				$m_type='item';
-				if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
-				{
-					$index+=3;
-					continue;
-				}
-				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
 				$m_level=str_replace(' ','',strtolower($m_level));
 				if(!isset($item_name_to_id[$m_level]))
 				{
@@ -523,6 +502,7 @@ foreach($entry_list[1] as $entry)
 		'base_spattack'=>$base_spattack,
 		'base_spdefense'=>$base_spdefense,
 	);
+	$name_to_id[str_replace(' ','',strtolower($name))]=$id;
 }
 
 $file=file_get_contents('itemdrops.txt');
@@ -537,13 +517,14 @@ foreach($entry_list as $entry)
 	$rest_list=preg_split("# +#isU",$rest);
 	if((count($rest_list)%2)!=0)
 		continue;
-	if(isset($name_to_id[$name]))
+	if(isset($name_to_id[str_replace(' ','',strtolower($name))]))
 	{
-		$species[$name_to_id[$name]]['drops']=array();
+		$monster_id=$name_to_id[str_replace(' ','',strtolower($name))];
+		$species[$monster_id]['drops']=array();
 		$index=0;
 		while($index < count($rest_list))
 		{
-			$species[$name_to_id[$name]]['drops'][$rest_list[$index]]=$rest_list[$index+1];
+			$species[$monster_id]['drops'][$rest_list[$index]]=$rest_list[$index+1];
 			$index+=2;
 		}
 	}
@@ -615,8 +596,8 @@ foreach($temp_evolutions as $evolution)
 	$level='';
 	if($evolution['type']!='trade')
 		$level=' level="'.$evolution['level'].'"';
-	if(isset($name_to_id[$evolution['evolveTo']]))
-		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$name_to_id[$evolution['evolveTo']].'" />'."\n";
+	if(isset($name_to_id[str_replace(' ','',strtolower($evolution['evolveTo']))]))
+		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$name_to_id[str_replace(' ','',strtolower($evolution['evolveTo']))].'" />'."\n";
 	else
 		echo '			<evolutions type="'.$evolution['type'].'"'.$level.' evolveTo="'.$evolution['evolveTo'].'" />'."\n";
 }

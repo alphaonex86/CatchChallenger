@@ -44,7 +44,7 @@ struct Skill
 };
 QHash<QString,Skill> skillList;
 
-bool loadMonsterInformations(const QString &path,const QString &data)
+bool loadMonsterInformations(const QString &path,const QString &data,const QString &dataClean)
 {
     MonsterInformations monsterInformations;
 
@@ -56,13 +56,11 @@ bool loadMonsterInformations(const QString &path,const QString &data)
         return false;
     if(!data.contains(QRegularExpression("<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Taux de capture</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\">[\n\r\t ]+([0-9]+)[\n\r\t ]+</td></tr>")))
         return false;
-    if(!data.contains(QRegularExpression("<dt><a [^>]+>Pokémon Émeraude</a>[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>")))
+    if(!data.contains(QRegularExpression("<img alt=\"Sprite[^\"]+\" src=\"([^\"]+Sprite_[1-5]_dos_[0-9]{1,3}(_[mf])?\\.png)\" width=\"[0-9]+\" height=\"[0-9]+\" />")))
         return false;
-    if(!data.contains(QRegularExpression("<img alt=\"Sprite[^\"]+\" src=\"([^\"]+Sprite_[1-5]_dos_[0-9]{1,3}(_[mf])?\\.png)\" width=\"96\" height=\"96\" />")))
+    if(!data.contains(QRegularExpression("<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]+Empreinte[\n\r\t ]+</th>[\n\r\t ]*<td colspan=\"3\">[\n\r\t ]*<a [^>]+><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"[0-9]+\" height=\"[0-9]+\" /></a>[\n\r\t ]*</td></tr>")))
         return false;
-    if(!data.contains(QRegularExpression("<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]+Empreinte[\n\r\t ]+</th>[\n\r\t ]*<td colspan=\"3\">[\n\r\t ]*<a [^>]+><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"22\" height=\"22\" /></a>[\n\r\t ]*</td></tr>")))
-        return false;
-    if(!data.contains(QRegularExpression("<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Forme du corps</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\"> <a href=\".*Miniat_forme_([0-9]+)[^0-9][^\"]+\" class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"32\" height=\"32\" /></a>[\n\r\t ]*</td></tr>")))
+    if(!data.contains(QRegularExpression("<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Forme du corps</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\"> <a href=\".*Miniat_forme_([0-9]+)[^0-9][^\"]+\" class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"[0-9]+\" height=\"[0-9]+\" /></a>[\n\r\t ]*</td></tr>")))
         return false;
 
 
@@ -74,23 +72,142 @@ bool loadMonsterInformations(const QString &path,const QString &data)
     monsterInformations.name.replace(QRegularExpression(".*<h1 id=\"firstHeading\" class=\"firstHeading\" lang=\"fr\"><span dir=\"auto\">([^<]+)</span></h1>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     monsterInformations.name.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     monsterInformations.name.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
+    monsterInformations.name.replace(QRegularExpression("^[^:]+:",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     monsterInformations.capture_rate=data;
     monsterInformations.capture_rate.replace(QRegularExpression(".*<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Taux de capture</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\">[\n\r\t ]+([0-9]+)[\n\r\t ]+</td></tr>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
-    monsterInformations.description=data;
-    monsterInformations.description.replace(QRegularExpression(".*<dt><a [^>]+>Pokémon Émeraude</a>[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    if(dataClean.contains(QRegularExpression("<dt>Pokémon Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pok..?mon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir et Blanc[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Noir et Blanc[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir 2 et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Noir 2 et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Noir et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or HeartGold[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Or HeartGold[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon X[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon X[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Y[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Y[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Rouge Feu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Diamant[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Diamant[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Or[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Argent[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Argent[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Jaune[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Jaune[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge et Bleu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Rouge et Bleu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or, Argent et Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Or, Argent et Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rubis, Saphir et Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Rubis, Saphir et Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Diamant, Perle et Platine[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Diamant, Perle et Platine[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or HeartGold et Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<dt>Pokémon Or HeartGold et Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<th colspan=\"2\">[\n\r\t ]*Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<th colspan=\"2\">[\n\r\t ]*Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<th colspan=\"2\">[\n\r\t ]*Génération III[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>")))
+    {
+        monsterInformations.description=dataClean;
+        monsterInformations.description.replace(QRegularExpression(".*<th colspan=\"2\">[\n\r\t ]*Génération III[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
     monsterInformations.description.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     monsterInformations.description.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     monsterInformations.backPath=data;
-    monsterInformations.backPath.replace(QRegularExpression(".*<img alt=\"Sprite[^\"]+\" src=\"([^\"]+Sprite_[1-5]_dos_[0-9]{1,3}(_[mf])?\\.png)\" width=\"96\" height=\"96\" />.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    monsterInformations.backPath.replace(QRegularExpression(".*<img alt=\"Sprite[^\"]+\" src=\"([^\"]+Sprite_[1-5]_dos_[0-9]{1,3}(_[mf])?\\.png)\" width=\"[0-9]+\" height=\"[0-9]+\" />.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     monsterInformations.backPath=QFileInfo(QFileInfo(path).absolutePath()+"/"+monsterInformations.backPath).absoluteFilePath();
     monsterInformations.empreinte=data;
-    monsterInformations.empreinte.replace(QRegularExpression(".*<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]+Empreinte[\n\r\t ]+</th>[\n\r\t ]*<td colspan=\"3\">[\n\r\t ]*<a [^>]+><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"22\" height=\"22\" /></a>[\n\r\t ]*</td></tr>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    monsterInformations.empreinte.replace(QRegularExpression(".*<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]+Empreinte[\n\r\t ]+</th>[\n\r\t ]*<td colspan=\"3\">[\n\r\t ]*<a [^>]+><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"[0-9]+\" height=\"[0-9]+\" /></a>[\n\r\t ]*</td></tr>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     monsterInformations.empreinte=QFileInfo(QFileInfo(path).absolutePath()+"/"+monsterInformations.empreinte).absoluteFilePath();
     QString formeString=data;
-    formeString.replace(QRegularExpression(".*<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Forme du corps</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\"> <a href=\".*Miniat_forme_([0-9]+)[^0-9][^\"]+\" class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"32\" height=\"32\" /></a>[\n\r\t ]*</td></tr>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    formeString.replace(QRegularExpression(".*<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Forme du corps</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\"> <a href=\".*Miniat_forme_([0-9]+)[^0-9][^\"]+\" class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"[0-9]+\" height=\"[0-9]+\" /></a>[\n\r\t ]*</td></tr>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     monsterInformations.forme=formeString.toUInt();
     QString formeImage=data;
-    formeImage.replace(QRegularExpression(".*<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Forme du corps</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\"> <a href=\".*Miniat_forme_([0-9]+)[^0-9][^\"]+\" class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"32\" height=\"32\" /></a>[\n\r\t ]*</td></tr>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\2");
+    formeImage.replace(QRegularExpression(".*<tr>[\n\r\t ]*<th colspan=\"2\">[\n\r\t ]*<a [^>]+>Forme du corps</a>[\n\r\t ]*</th>[\n\r\t ]*<td colspan=\"3\"> <a href=\".*Miniat_forme_([0-9]+)[^0-9][^\"]+\" class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"[0-9]+\" height=\"[0-9]+\" /></a>[\n\r\t ]*</td></tr>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\2");
     formeImage=QFileInfo(QFileInfo(path).absolutePath()+"/"+formeImage).absoluteFilePath();
     monsterFormeList[monsterInformations.forme].image=formeImage;
 
@@ -99,7 +216,7 @@ bool loadMonsterInformations(const QString &path,const QString &data)
     return true;
 }
 
-bool loadItems(const QString &path,const QString &data)
+bool loadItems(const QString &path,const QString &data,const QString &dataClean)
 {
     Item item;
     item.price=0;
@@ -108,28 +225,140 @@ bool loadItems(const QString &path,const QString &data)
         return false;
     if(!data.contains(QRegularExpression("<div id=\"mw-content-text\" lang=\"fr\" dir=\"ltr\" class=\"mw-content-ltr\">[\n\r\t ]*<table class=\"tableaustandard ficheinfo( #[0-9a-f]{6})?\">[\n\r\t ]*<tr>[\n\r\t ]*<th [^>]+> <a [^>]+ class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"[0-9]+\" height=\"[0-9]+\" /></a>[\n\r\t ]*</th>[\n\r\t ]*<th class=\"entêtesection\" colspan=\"3\">[\n\r\t ]*([^<]+)<br /><span lang=\"ja\"><span class=\"explain\" title=\"[^\"]*\">[^<]+</span></span>[\n\r\t ]*([^<]+)[\n\r\t ]*</th></tr>[\n\r\t ]*<tr>[\n\r\t ]*(<td colspan=\"4\" class=\"illustration\"> <a [^>]+><img [^>]+></a>[\n\r\t ]*</td></tr>[\n\r\t ]*<tr>[\n\r\t ]*<td class=\"précision\" colspan=\"4\">.*</a>[\n\r\t ]*</td></tr>[\n\r\t ]*<tr>)?[\n\r\t ]*<th>[\n\r\t ]*Nom anglais[\n\r\t ]*</th>[\n\r\t ]*<td> <span lang=\"en\">([^<]+)</span>")))
         return false;
-    if(!data.contains(QRegularExpression("<th>[\n\r\t ]*<a [^>]+>Achat</a>[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([0-9]+)[\n\r\t ]*<")))
-        return false;
 
     item.name=data;
     item.name.replace(QRegularExpression(".*<h1 id=\"firstHeading\" class=\"firstHeading\" lang=\"fr\"><span dir=\"auto\">([^<]+)</span></h1>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     item.name.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     item.name.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
-    if(data.contains(QRegularExpression("<dt><a [^>]+>Pokémon Émeraude</a>[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>")))
+    item.name.replace(QRegularExpression("^[^:]+:",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
+    if(dataClean.contains(QRegularExpression("<dt>Pokémon Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>")))
     {
-        item.description=data;
-        item.description.replace(QRegularExpression(".*<dt><a [^>]+>Pokémon Émeraude</a>[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     }
-    else if(data.contains(QRegularExpression("<dt><a [^>]+><i>Pokémon Rouge Feu</i> et <i>Vert Feuille</i></a>[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
     {
-        item.description=data;
-        item.description.replace(QRegularExpression(".*<dt><a [^>]+><i>Pok..?mon Rouge Feu</i> et <i>Vert Feuille</i></a>[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pok..?mon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir et Blanc[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Noir et Blanc[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir 2 et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Noir 2 et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Noir et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or HeartGold[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or HeartGold[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon X[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon X[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Y[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Y[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rouge Feu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Diamant[\n\r\t ]*<[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Diamant[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Argent[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Argent[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Jaune[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Jaune[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge et Bleu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rouge et Bleu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or, Argent et Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or, Argent et Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rubis, Saphir et Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rubis, Saphir et Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Diamant, Perle et Platine[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Diamant, Perle et Platine[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or HeartGold et Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or HeartGold et Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<th colspan=\"2\">[\n\r\t ]*Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<th colspan=\"2\">[\n\r\t ]*Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<th colspan=\"2\">[\n\r\t ]*Génération III[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<th colspan=\"2\">[\n\r\t ]*Génération III[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     }
     item.description.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     item.description.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
-    QString priceString=data;
-    priceString.replace(QRegularExpression(".*<th>[\n\r\t ]*<a [^>]+>Achat</a>[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([0-9]+)[\n\r\t ]*<.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
-    item.price=priceString.toUInt();
+    if(data.contains(QRegularExpression("<th>[\n\r\t ]*<a [^>]+>Achat</a>[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([0-9]+)[\n\r\t ]*<")))
+    {
+        QString priceString=data;
+        priceString.replace(QRegularExpression(".*<th>[\n\r\t ]*<a [^>]+>Achat</a>[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([0-9]+)[\n\r\t ]*<.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+        item.price=priceString.toUInt();
+    }
     item.image=data;
     item.image.replace(QRegularExpression(".*<div id=\"mw-content-text\" lang=\"fr\" dir=\"ltr\" class=\"mw-content-ltr\">[\n\r\t ]*<table class=\"tableaustandard ficheinfo( #[0-9a-f]{6})?\">[\n\r\t ]*<tr>[\n\r\t ]*<th [^>]+> <a [^>]+ class=\"image\"><img alt=\"[^\"]+\" src=\"([^\"]+)\" width=\"[0-9]+\" height=\"[0-9]+\" /></a>[\n\r\t ]*</th>[\n\r\t ]*<th class=\"entêtesection\" colspan=\"3\">[\n\r\t ]*([^<]+)<br /><span lang=\"ja\"><span class=\"explain\" title=\"[^\"]*\">[^<]+</span></span>[\n\r\t ]*([^<]+)[\n\r\t ]*</th></tr>[\n\r\t ]*<tr>[\n\r\t ]*(<td colspan=\"4\" class=\"illustration\"> <a [^>]+><img [^>]+></a>[\n\r\t ]*</td></tr>[\n\r\t ]*<tr>[\n\r\t ]*<td class=\"précision\" colspan=\"4\">.*</a>[\n\r\t ]*</td></tr>[\n\r\t ]*<tr>)?[\n\r\t ]*<th>[\n\r\t ]*Nom anglais[\n\r\t ]*</th>[\n\r\t ]*<td> <span lang=\"en\">([^<]+)</span>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\2");
     item.image=QFileInfo(QFileInfo(path).absolutePath()+"/"+item.image).absoluteFilePath();
@@ -142,41 +371,166 @@ bool loadItems(const QString &path,const QString &data)
     englishName2.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     itemList[englishName2]=item;
     item.englishName=englishName2;
+    QString englishName3=data;
+    englishName3.replace(QRegularExpression(".*title=\"([^\"]+)\" lang=\"en\".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    englishName3.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
+    itemList[englishName3]=item;
 
     qDebug() << "Item:" << path;
     return true;
 }
 
-bool loadBerry(const QString &path,const QString &data)
+bool loadBerry(const QString &path,const QString &data,const QString &dataClean)
 {
     Item item;
     item.price=0;
 
-    if(!data.contains("<div id=\"mw-content-text\" lang=\"fr\" dir=\"ltr\" class=\"mw-content-ltr\"><div style=\"border: 1px solid #88a; background: #f8f8ff; text-align: center; margin: 0.5em 0; padding: 0.5em; clear: both;\">"))
+    if(!path.contains("Baie"))
         return false;
     if(!data.contains(QRegularExpression("title=\"([^\"]+)\" lang=\"en\"")))
-        return false;
-    if(!data.contains(QRegularExpression("<th colspan=\"2\"> Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>")))
         return false;
 
     item.name=data;
     item.name.replace(QRegularExpression(".*<h1 id=\"firstHeading\" class=\"firstHeading\" lang=\"fr\"><span dir=\"auto\">([^<]+)</span></h1>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     item.name.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     item.name.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
-    item.description=data;
-    item.description.replace(QRegularExpression(".*<th colspan=\"2\"> Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    item.name.replace(QRegularExpression("^[^:]+:",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
+    if(dataClean.contains(QRegularExpression("<dt>Pokémon Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pok..?mon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir et Blanc[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Noir et Blanc[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir 2 et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Noir 2 et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Noir et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Noir et Blanc 2[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or HeartGold[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or HeartGold[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon X[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon X[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Y[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Y[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rouge Feu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Diamant[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Diamant[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Argent[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Argent[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Jaune[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Jaune[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge et Bleu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rouge et Bleu[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or, Argent et Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or, Argent et Cristal[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rubis, Saphir et Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rubis, Saphir et Émeraude[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Rouge Feu et Vert Feuille[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Diamant, Perle et Platine[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Diamant, Perle et Platine[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<dt>Pokémon Or HeartGold et Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^<]+)[\n\r\t ]*</dd>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<dt>Pokémon Or HeartGold et Argent SoulSilver[\n\r\t ]*</dt><dd>[\n\r\t ]*([^\n\r\t<]+)[\n\r\t ]*</dd>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<th colspan=\"2\">[\n\r\t ]*Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<th colspan=\"2\">[\n\r\t ]*Génération IV[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
+    else if(dataClean.contains(QRegularExpression("<th colspan=\"2\">[\n\r\t ]*Génération III[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>")))
+    {
+        item.description=dataClean;
+        item.description.replace(QRegularExpression(".*<th colspan=\"2\">[\n\r\t ]*Génération III[\n\r\t ]*</th>[\n\r\t ]*<td>[\n\r\t ]*([^<]+)[\n\r\t ]*</td>.*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    }
     item.description.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     item.description.replace(QRegularExpression("^[ \r\t\n]+",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     QString englishName1=data;
     englishName1.replace(QRegularExpression(".*title=\"([^\"]+)\" lang=\"en\".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
     englishName1.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
     itemList[englishName1]=item;
+    QString englishName2=data;
+    englishName2.replace(QRegularExpression(".*title=\"([^\"]+)\" lang=\"en\".*",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+    englishName2.replace(QRegularExpression("[ \r\t\n]+$",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"");
+    itemList[englishName2]=item;
 
     qDebug() << "Berry:" << path;
     return true;
 }
 
-bool loadSkill(const QString &path,const QString &data)
+bool loadSkill(const QString &path,const QString &data,const QString &dataClean)
 {
     Skill skill;
 
@@ -594,6 +948,8 @@ void parseSkillsExtra()
 
 int main(int argc, char *argv[])
 {
+    QByteArray endOfString;
+    endOfString[0]=0x00;
     QCoreApplication a(argc, argv);
     QStringList arguments=QCoreApplication::arguments();
     if(arguments.size()!=2)
@@ -618,8 +974,24 @@ int main(int argc, char *argv[])
     }
     datapackPath=arguments.last()+"/";
 
-    QByteArray endOfString;
-    endOfString[0]=0x00;
+    /*QFile file("Mimigalhtml.html.tmp");
+    if(file.open(QIODevice::ReadOnly))
+    {
+        QByteArray rawData=file.readAll();
+        rawData.replace(endOfString,QByteArray());
+        QString data=QString::fromUtf8(rawData);
+        file.close();
+        data.replace(QRegularExpression("<span style=\"font-variant:small-caps;\">([^<]+)</span>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
+        data.replace(QRegularExpression("<center><div style=\"background:#E8E6F8; border-width:1px 0px; border-style:dotted; border-color:#111111; padding:1em; width:66%; text-align:center\"><a href=\"/index.php/Fichier:Vieille_Carte.png\" class=\"image\"><img alt=\"Vieille Carte.png\" src=\"/images/d/db/Vieille_Carte.png\" width=\"[0-9]+\" height=\"[0-9]+\" /></a> <span style=\"font-style:italic; padding:0.5em;\"> Cet article est une <a href=\"/index.php/Aide:%C3%89bauche\" title=\"Aide:Ébauche\">ébauche à compléter</a>, vous pouvez la <span class=\"plainlinks noprint\"><b><a class=\"external text\" href=\"[^\"]*\">modifier</a></b></span> et ainsi partager vos connaissances.</span></div></center>"),"");
+        data.replace("<i>","");
+        data.replace("</i>","");
+        QString dataClean=data;
+        dataClean.replace(QRegularExpression("<a [^>]+>"),"");
+        dataClean.replace("</a>","");
+        loadMonsterInformations("Mimigalhtml.html.tmp",data,dataClean);
+    }
+    return 0;*/
+
     QDir dir(QDir::currentPath());
     const QFileInfoList &fileorFolderList=dir.entryInfoList(QDir::Files);
     int index=0;
@@ -636,11 +1008,16 @@ int main(int argc, char *argv[])
                 file.close();
                 data.replace(QRegularExpression("<span style=\"font-variant:small-caps;\">([^<]+)</span>",QRegularExpression::MultilineOption|QRegularExpression::DotMatchesEverythingOption),"\\1");
                 data.replace(QRegularExpression("<center><div style=\"background:#E8E6F8; border-width:1px 0px; border-style:dotted; border-color:#111111; padding:1em; width:66%; text-align:center\"><a href=\"/index.php/Fichier:Vieille_Carte.png\" class=\"image\"><img alt=\"Vieille Carte.png\" src=\"/images/d/db/Vieille_Carte.png\" width=\"[0-9]+\" height=\"[0-9]+\" /></a> <span style=\"font-style:italic; padding:0.5em;\"> Cet article est une <a href=\"/index.php/Aide:%C3%89bauche\" title=\"Aide:Ébauche\">ébauche à compléter</a>, vous pouvez la <span class=\"plainlinks noprint\"><b><a class=\"external text\" href=\"[^\"]*\">modifier</a></b></span> et ainsi partager vos connaissances.</span></div></center>"),"");
+                data.replace("<i>","");
+                data.replace("</i>","");
+                QString dataClean=data;
+                dataClean.replace(QRegularExpression("<a [^>]+>"),"");
+                dataClean.replace("</a>","");
                 bool used=false;
-                used|=loadMonsterInformations(fileorFolderList.at(index).absoluteFilePath(),data);
-                used|=loadItems(fileorFolderList.at(index).absoluteFilePath(),data);
-                used|=loadBerry(fileorFolderList.at(index).absoluteFilePath(),data);
-                used|=loadSkill(fileorFolderList.at(index).absoluteFilePath(),data);
+                used=used || loadMonsterInformations(fileorFolderList.at(index).absoluteFilePath(),data,dataClean);
+                used=used || loadItems(fileorFolderList.at(index).absoluteFilePath(),data,dataClean);
+                used=used || loadBerry(fileorFolderList.at(index).absoluteFilePath(),data,dataClean);
+                used=used || loadSkill(fileorFolderList.at(index).absoluteFilePath(),data,dataClean);
                 if(!used)
                     qDebug() << "Not used:" << fileorFolderList.at(index).absoluteFilePath();
             }
