@@ -251,6 +251,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
             if(attributeIsOk)
             {
                 Monster monster;
+                monster.catch_rate=100;
                 quint32 id=item.attribute("id").toUInt(&ok);
                 if(!ok)
                     DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
@@ -261,6 +262,20 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                     #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                     DebugClass::debugConsole(QString("monster loading: %1").arg(id));
                     #endif
+                    if(item.hasAttribute("catch_rate"))
+                    {
+                        bool ok2;
+                        quint32 catch_rate=item.attribute("catch_rate").toUInt(&ok2);
+                        if(ok2)
+                        {
+                            if(catch_rate<=255)
+                                monster.catch_rate=catch_rate;
+                            else
+                                DebugClass::debugConsole(QString("Unable to open the xml file: %1, catch_rate is not a number: %4 child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("catch_rate")));
+                        }
+                        else
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, catch_rate is not a number: %4 child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("catch_rate")));
+                    }
                     if(item.hasAttribute("type"))
                     {
                         if(typeNameToId.contains(item.attribute("type")))
@@ -273,7 +288,7 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                         if(typeNameToId.contains(item.attribute("type2")))
                             monster.type << typeNameToId[item.attribute("type2")];
                         else
-                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type2")));
                     }
                     qreal pow=3;
                     if(ok)
@@ -1290,6 +1305,16 @@ QHash<quint32,Buff> FightLoader::loadMonsterBuff(const QString &file)
                 {
                     Buff::Duration duration=Buff::Duration_ThisFight;
                     quint8 durationNumberOfTurn=0;
+                    float capture_bonus=1.0;
+                    if(item.hasAttribute("capture_bonus"))
+                    {
+                        capture_bonus=item.attribute("capture_bonus").toFloat(&ok);
+                        if(!ok)
+                        {
+                            DebugClass::debugConsole(QString("Unable to open the xml file: %1, capture_bonus is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                            capture_bonus=1.0;
+                        }
+                    }
                     if(item.hasAttribute("duration"))
                     {
                         if(item.attribute("duration")=="Always")

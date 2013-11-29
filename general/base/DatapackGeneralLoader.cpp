@@ -1390,33 +1390,25 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                         //load the trap
                         if(!haveAnEffect)
                         {
-                            QDomElement trap = item.firstChildElement("trap");
-                            if(!trap.isNull())
+                            QDomElement trapItem = item.firstChildElement("trap");
+                            if(!trapItem.isNull())
                             {
-                                if(trap.isElement())
+                                if(trapItem.isElement())
                                 {
-                                    if(trap.hasAttribute("min_level") && trap.hasAttribute("max_level"))
+                                    Trap trap;
+                                    trap.bonus_rate=1.0;
+                                    if(trapItem.hasAttribute("bonus_rate"))
                                     {
-                                        quint8 min_level=trap.attribute("min_level").toUShort(&ok);
+                                        float bonus_rate=trapItem.attribute("bonus_rate").toFloat(&ok);
                                         if(ok)
-                                        {
-                                            quint8 max_level=trap.attribute("max_level").toUShort(&ok);
-                                            if(ok)
-                                            {
-                                                Trap trap;
-                                                trap.min_level=min_level;
-                                                trap.max_level=max_level;
-                                                items.trap[id]=trap;
-                                                haveAnEffect=true;
-                                            }
-                                            else
-                                                qDebug() << QString("Unable to open the file: %1, max_level is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
-                                        }
+                                            trap.bonus_rate=bonus_rate;
                                         else
-                                            qDebug() << QString("Unable to open the file: %1, min_level is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
+                                            qDebug() << QString("Unable to open the file: %1, bonus_rate is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trapItem.tagName()).arg(trapItem.lineNumber());
                                     }
                                     else
-                                        qDebug() << QString("Unable to open the file: %1, trap have not the attribute min_level or max_level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trap.tagName()).arg(trap.lineNumber());
+                                        qDebug() << QString("Unable to open the file: %1, trap have not the attribute bonus_rate: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(trapItem.tagName()).arg(trapItem.lineNumber());
+                                    items.trap[id]=trap;
+                                    haveAnEffect=true;
                                 }
                             }
                         }

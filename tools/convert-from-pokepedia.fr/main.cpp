@@ -781,6 +781,8 @@ void parseMonstersExtra()
 
                     //load the name
                     {
+                        if(!item.hasAttribute("catch_rate") && monsterList.contains(id))
+                            item.setAttribute("catch_rate",monsterList[id].capture_rate);
                         bool name_found_translated=false;
                         QDomElement name = item.firstChildElement("name");
                         if(!language.isEmpty() && language!="en")

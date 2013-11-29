@@ -1171,7 +1171,7 @@ void BaseServer::preload_the_datapack()
                     if(file.open(QIODevice::ReadOnly))
                     {
                         fileName.replace("\\","/");//remplace if is under windows server
-                        GlobalServerData::serverPrivateVariables.filesList[fileName]=QFileInfo(file).lastModified().toTime_t();
+                        GlobalServerData::serverPrivateVariables.filesList << fileName;
                         file.close();
                     }
                 }
