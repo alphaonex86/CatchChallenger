@@ -111,7 +111,7 @@ struct Item
 
 struct Trap
 {
-    quint8 min_level,max_level;
+    float bonus_rate;
 };
 
 struct MonsterItemEffect
@@ -443,6 +443,7 @@ struct Buff
     {
         QList<EffectInWalk> walk;
         QList<Effect> fight;
+        float capture_bonus;
     };
     QList<GeneralEffect> level;//first entry is buff level 1
     Duration duration;
@@ -524,7 +525,7 @@ struct Monster
 
     QList<quint8> type;
     qint8 ratio_gender;///< -1 for no gender, 0 only male, 100 only female
-    quint8 catch_rate;///< 0 to 100
+    quint8 catch_rate;///< 0 to 255 (255 = very easy)
     quint32 egg_step;///< step to hatch, 0 to no egg and never hatch
     quint32 xp_for_max_level;///< xp to be level 100
     quint32 give_sp;

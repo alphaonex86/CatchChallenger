@@ -1,6 +1,8 @@
 #include "CommonFightEngine.h"
 #include "../base/CommonDatapack.h"
 
+#include <QtMath>
+
 using namespace CatchChallenger;
 
 CommonFightEngine::CommonFightEngine()
@@ -910,21 +912,52 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         return false;
     }
     const Monster::Stat &wildMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster],wildMonsters.first().level);
-    if(wildMonsterStat.hp>2)
-        if(wildMonsters.first().hp>=(wildMonsterStat.hp/2))
+
+    float bonusStat=1.0;
+    if(wildMonsters.first().buffs.size())
+    {
+        bonusStat=0;
+        int index=0;
+        while(index<wildMonsters.first().buffs.size())
+        {
+            const PlayerBuff &playerBuff=wildMonsters.first().buffs.at(index);
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.contains(playerBuff.buff))
+            {
+                const Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs[playerBuff.buff];
+                if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
+                    bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
+                else
+                {
+                    emit error(QString("Buff level for wild monter not found: %1 at level %2").arg(playerBuff.buff).arg(playerBuff.level));
+                    bonusStat+=1.0;
+                }
+            }
+            else
+            {
+                emit error(QString("Buff for wild monter not found: %1").arg(playerBuff.buff));
+                bonusStat+=1.0;
+            }
+            index++;
+        }
+        bonusStat/=wildMonsters.first().buffs.size();
+    }
+    const quint32 maxTempRate=5;
+    const quint32 minTempRate=3;
+    const quint32 tryCapture=4;
+    quint32 tempRate=((quint32)CatchChallenger::CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster].catch_rate*(wildMonsterStat.hp*maxTempRate-minTempRate*wildMonsters.first().hp)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
+    if(tempRate>255)
+        return true;
+    quint32 realRate=65535*qPow(tempRate/255,0.25);
+
+    int index=0;
+    while(index<tryCapture)
+    {
+        quint16 number=rand()%65536;
+        if(number>=realRate)
             return false;
-    if(wildMonsters.first().level<=trap.min_level)
-        return true;
-    if(wildMonsters.first().level>=trap.max_level)
-        return false;
-
-    //use real random to prevent cheats
-    quint8 number=rand()%(trap.max_level-trap.min_level);
-
-    if(number<(trap.max_level-wildMonsters.first().level))
-        return true;
-    else
-        return false;
+        index++;
+    }
+    return true;
 }
 
 quint32 CommonFightEngine::tryCapture(const quint32 &item)
