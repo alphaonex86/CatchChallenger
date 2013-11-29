@@ -1382,12 +1382,13 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
     compressedFilesCount=0;
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
-    QHash<QString,quint64> filesList=GlobalServerData::serverPrivateVariables.filesList;
+    QSet<QString> filesList=GlobalServerData::serverPrivateVariables.filesList;
+    QHash<QString,quint32> filesListInfo;
 
     int loop_size=files.size();
     //send the size to download on the client
     {
-        QHash<QString,quint64> filesList=GlobalServerData::serverPrivateVariables.filesList;
+        QSet<QString> filesList=GlobalServerData::serverPrivateVariables.filesList;
         int index=0;
         quint32 datapckFileNumber=0;
         quint32 datapckFileSize=0;
@@ -1407,7 +1408,8 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             }
             if(filesList.contains(fileName))
             {
-                if(filesList[fileName]!=mtime)
+                filesListInfo[fileName]=QFileInfo(GlobalServerData::serverSettings.datapack_basePath+fileName).lastModified().toTime_t();
+                if(filesListInfo[fileName]!=mtime)
                 {
                     datapckFileNumber++;
                     datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+fileName).size();
@@ -1416,11 +1418,10 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             }
             index++;
         }
-        QHashIterator<QString,quint64> i(filesList);
+        QSetIterator<QString> i(filesList);
         while (i.hasNext()) {
-            i.next();
             datapckFileNumber++;
-            datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+i.key()).size();
+            datapckFileSize+=QFile(GlobalServerData::serverSettings.datapack_basePath+i.next()).size();
         }
         QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1441,11 +1442,12 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             //the file on the client is already updated
             else
             {
-                if(filesList[fileName]==mtime)
+                const quint32 &fileInfoModTime=filesListInfo[fileName];
+                if(fileInfoModTime==mtime)
                     addDatapackListReply(false);//found
                 else
                 {
-                    if(sendFile(fileName,filesList[fileName]))
+                    if(sendFile(fileName,fileInfoModTime))
                         addDatapackListReply(false);//found but updated
                     else
                     {
@@ -1465,10 +1467,10 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         return;
     }
     //send not in the list
-    QHashIterator<QString,quint64> i(filesList);
+    QSetIterator<QString> i(filesList);
     while (i.hasNext()) {
+        sendFile(i.peekNext(),filesListInfo[i.peekNext()]);
         i.next();
-        sendFile(i.key(),i.value());
     }
     sendFileContent();
     sendCompressedFileContent();
