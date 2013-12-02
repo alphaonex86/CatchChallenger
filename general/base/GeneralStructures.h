@@ -256,7 +256,6 @@ struct PlayerReputation
 struct Reputation
 {
     QList<qint32> reputation_positive,reputation_negative;
-    QStringList text_positive,text_negative;
 };
 
 struct Player_private_and_public_informations

@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>16</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -941,7 +941,7 @@ border-radius: 5px;
 }</string>
              </property>
              <property name="currentIndex">
-              <number>0</number>
+              <number>2</number>
              </property>
              <widget class="QWidget" name="tabWidgetTrainerCardPage1">
               <property name="styleSheet">
@@ -3443,27 +3443,20 @@ border-image: url(:/images/empty.png);
          <widget class="QWidget" name="stackedWidgetFightBottomBarPageAttack">
           <layout class="QHBoxLayout" name="horizontalLayout_23">
            <item>
-            <widget class="QListWidget" name="listWidgetFightAttack">
-             <property name="minimumSize">
-              <size>
-               <width>500</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>500</width>
-               <height>16777215</height>
-              </size>
-             </property>
-            </widget>
+            <widget class="QListWidget" name="listWidgetFightAttack"/>
            </item>
            <item>
             <widget class="QLabel" name="labelFightAttackDetails">
              <property name="minimumSize">
               <size>
-               <width>200</width>
+               <width>300</width>
                <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>300</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="wordWrap">
