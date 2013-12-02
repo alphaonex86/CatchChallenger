@@ -697,11 +697,6 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
                 ok=false;
                 DebugClass::debugConsole(QString("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
             }
-            else if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].duration!=Buff::Duration_Always)
-            {
-                ok=false;
-                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
-            }
         }
         else
             DebugClass::debugConsole(QString("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
@@ -710,7 +705,7 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
             buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
             if(ok)
             {
-                if(buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
+                if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
                 {
                     ok=false;
                     DebugClass::debugConsole(QString("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
@@ -718,6 +713,14 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
             }
             else
                 DebugClass::debugConsole(QString("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
+        }
+        if(ok)
+        {
+            if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.at(buff.level-1).duration!=Buff::Duration_Always)
+            {
+                ok=false;
+                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
+            }
         }
         if(ok)
             buffs << buff;

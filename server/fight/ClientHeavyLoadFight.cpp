@@ -212,11 +212,6 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
                 ok=false;
                 emit message(QString("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
             }
-            else if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].duration!=Buff::Duration_Always)
-            {
-                ok=false;
-                emit message(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
-            }
         }
         else
             emit message(QString("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
@@ -233,6 +228,14 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
             }
             else
                 emit message(QString("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
+        }
+        if(ok)
+        {
+            if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.at(buff.level-1).duration!=Buff::Duration_Always)
+            {
+                ok=false;
+                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
+            }
         }
         if(ok)
             buffs << buff;

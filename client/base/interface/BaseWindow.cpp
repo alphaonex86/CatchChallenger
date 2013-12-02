@@ -2265,7 +2265,8 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             return;
         }
         objectInUsing << items_graphical[item];
-        remove_to_inventory(objectInUsing.last());
+        if(CommonDatapack::commonDatapack.items.item[objectInUsing.last()].consumeAtUse)
+            remove_to_inventory(objectInUsing.last());
         CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
     }
     //it's repel
@@ -2273,20 +2274,23 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     {
         MapController::mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.items.repel[items_graphical[item]]);
         objectInUsing << items_graphical[item];
-        remove_to_inventory(objectInUsing.last());
+        if(CommonDatapack::commonDatapack.items.item[objectInUsing.last()].consumeAtUse)
+            remove_to_inventory(objectInUsing.last());
         CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
     }
     //it's object with monster effect
     else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.contains(items_graphical[item]))
     {
         objectInUsing << items_graphical[item];
-        remove_to_inventory(objectInUsing.last());
+        if(CommonDatapack::commonDatapack.items.item[objectInUsing.last()].consumeAtUse)
+            remove_to_inventory(objectInUsing.last());
         selectObject(ObjectType_ItemOnMonster);
     }
     else if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(items_graphical[item]))
     {
         objectInUsing << items_graphical[item];
-        remove_to_inventory(objectInUsing.last());
+        if(CommonDatapack::commonDatapack.items.item[objectInUsing.last()].consumeAtUse)
+            remove_to_inventory(objectInUsing.last());
         selectObject(ObjectType_ItemEvolutionOnMonster);
     }
     else

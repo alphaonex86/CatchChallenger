@@ -594,7 +594,7 @@ int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, Public
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
-    tempBuff.remainingNumberOfTurn=CommonDatapack::commonDatapack.monsterBuffs[effect.buff].durationNumberOfTurn;
+    tempBuff.remainingNumberOfTurn=CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.at(effect.level-1).durationNumberOfTurn;
     int index=0;
     switch(effect.on)
     {
@@ -949,7 +949,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         return true;
     quint32 realRate=65535*qPow(tempRate/255,0.25);
 
-    int index=0;
+    quint32 index=0;
     while(index<tryCapture)
     {
         quint16 number=rand()%65536;
@@ -1002,7 +1002,8 @@ void CommonFightEngine::fightFinished()
         {
             if(CommonDatapack::commonDatapack.monsterBuffs.contains(player_informations->playerMonster.at(index).buffs.at(sub_index).buff))
             {
-                if(CommonDatapack::commonDatapack.monsterBuffs[player_informations->playerMonster.at(index).buffs.at(sub_index).buff].duration!=Buff::Duration_Always)
+                const PlayerBuff &playerBuff=player_informations->playerMonster.at(index).buffs.at(sub_index);
+                if(CommonDatapack::commonDatapack.monsterBuffs[playerBuff.buff].level.at(playerBuff.level-1).duration!=Buff::Duration_Always)
                     player_informations->playerMonster[index].buffs.removeAt(sub_index);
                 else
                     sub_index++;
@@ -1334,7 +1335,7 @@ QList<Skill::BuffEffect> CommonFightEngine::removeOldBuff(PublicPlayerMonster * 
         else
         {
             const Buff &buff=CommonDatapack::commonDatapack.monsterBuffs[playerBuff.buff];
-            if(buff.duration==Buff::Duration_NumberOfTurn)
+            if(buff.level.at(playerBuff.level-1).duration==Buff::Duration_NumberOfTurn)
             {
                 if(playerMonster->buffs.at(index).remainingNumberOfTurn>0)
                     playerMonster->buffs[index].remainingNumberOfTurn--;
