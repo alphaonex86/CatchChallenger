@@ -1386,6 +1386,18 @@ ItemFull DatapackGeneralLoader::loadItems(const QString &folder,const QHash<quin
                                 items.item[id].price=0;
                             }
                         }
+                        //load the consumeAtUse
+                        {
+                            if(item.hasAttribute("consumeAtUse"))
+                            {
+                                if(item.attribute("consumeAtUse")=="false")
+                                    items.item[id].consumeAtUse=false;
+                                else
+                                    items.item[id].consumeAtUse=true;
+                            }
+                            else
+                                items.item[id].consumeAtUse=true;
+                        }
                         bool haveAnEffect=false;
                         //load the trap
                         if(!haveAnEffect)

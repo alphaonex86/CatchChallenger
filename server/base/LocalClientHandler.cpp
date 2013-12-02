@@ -1388,7 +1388,10 @@ void LocalClientHandler::useObjectOnMonster(const quint32 &object,const quint32 
         return;
     }
     if(localClientHandlerFight.useObjectOnMonster(object,monster))
-        removeObject(object);
+    {
+        if(CommonDatapack::commonDatapack.items.item[object].consumeAtUse)
+            removeObject(object);
+    }
 }
 
 void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
@@ -1406,7 +1409,8 @@ void LocalClientHandler::useObject(const quint8 &query_id,const quint32 &itemId)
         emit error(QString("have not quantity to use this object: %1 because recipe already registred").arg(itemId));
         return;
     }
-    removeObject(itemId);
+    if(CommonDatapack::commonDatapack.items.item[itemId].consumeAtUse)
+        removeObject(itemId);
     //if is crafting recipe
     if(CommonDatapack::commonDatapack.itemToCrafingRecipes.contains(itemId))
     {

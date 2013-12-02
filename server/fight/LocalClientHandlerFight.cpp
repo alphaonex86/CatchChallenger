@@ -1160,7 +1160,7 @@ int LocalClientHandlerFight::addCurrentBuffEffect(const Skill::BuffEffect &effec
     const int &returnCode=CommonFightEngine::addCurrentBuffEffect(effect);
     if(returnCode==-2)
         return returnCode;
-    if(CommonDatapack::commonDatapack.monsterBuffs[effect.buff].duration==Buff::Duration_Always)
+    if(CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.at(effect.level-1).duration==Buff::Duration_Always)
     {
         if(returnCode==-1)
             switch(effect.on)
