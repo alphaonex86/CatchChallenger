@@ -108,12 +108,13 @@ QList<Type> FightLoader::loadTypes(const QString &file)
                                         {
                                             if(nameToId.contains(to.at(index)))
                                             {
+                                                const QString &typeName=to.at(index);
                                                 if(number==0)
-                                                    types[nameToId[to.at(index)]].multiplicator[nameToId[to.at(index)]]=0;
+                                                    types[nameToId[name]].multiplicator[nameToId[typeName]]=0;
                                                 else if(number>1)
-                                                    types[nameToId[to.at(index)]].multiplicator[nameToId[to.at(index)]]=number;
+                                                    types[nameToId[name]].multiplicator[nameToId[typeName]]=number;
                                                 else
-                                                    types[nameToId[to.at(index)]].multiplicator[nameToId[to.at(index)]]=-(1.0/number);
+                                                    types[nameToId[name]].multiplicator[nameToId[typeName]]=-(1.0/number);
                                             }
                                             else
                                                 qDebug() << QString("Unable to open the file: %1, name is not into list: %4 is not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(typeItem.tagName()).arg(typeItem.lineNumber()).arg(to.at(index));
@@ -1075,7 +1076,10 @@ QHash<quint32,Skill> FightLoader::loadMonsterSkill(const QString &file, const QH
                                                                 }
                                                             }
                                                             if(ok)
-                                                                levelDef[number].life << effect;
+                                                            {
+                                                                if(effect.effect.quantity!=0)
+                                                                    levelDef[number].life << effect;
+                                                            }
                                                             else
                                                                 DebugClass::debugConsole(QString("Unable to open the xml file: %1, %4 is not a number: child.tagName(): %2 (at line: %3)").arg(xmlFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(text));
                                                         }

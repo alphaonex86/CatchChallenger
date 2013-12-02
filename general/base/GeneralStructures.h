@@ -478,6 +478,8 @@ struct Skill
     {
         qint32 quantity;
         ApplyOn on;
+        bool critical;
+        float effective;
     };
     struct AttackReturn
     {
