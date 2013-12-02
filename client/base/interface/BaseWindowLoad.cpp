@@ -481,7 +481,7 @@ void BaseWindow::show_reputation()
         {
             if((i.value().level+1)==CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size())
                 html+=QString("<li>100% %1</li>")
-                    .arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].text_positive.last());
+                    .arg(DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_positive.last());
             else
             {
                 qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.at(i.value().level+1);
@@ -490,7 +490,7 @@ void BaseWindow::show_reputation()
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].text_positive.at(i.value().level);
+                QString text=DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_positive.at(i.value().level);
                 html+=QString("<li>%1% %2</li>").arg((i.value().point*100)/next_level_xp).arg(text);
             }
         }
@@ -498,7 +498,7 @@ void BaseWindow::show_reputation()
         {
             if((-i.value().level)==CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size())
                 html+=QString("<li>100% %1</li>")
-                    .arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].text_negative.last());
+                    .arg(DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_negative.last());
             else
             {
                 qint32 next_level_xp=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.at(-i.value().level);
@@ -507,7 +507,7 @@ void BaseWindow::show_reputation()
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].text_negative.at(-i.value().level-1);
+                QString text=DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_negative.at(-i.value().level-1);
                 html+=QString("<li>%1% %2</li>")
                     .arg((i.value().point*100)/next_level_xp)
                     .arg(text);
@@ -652,7 +652,131 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    ui->questDetails->setText(DatapackClientLoader::datapackLoader.questsExtra[questId].steps[quests[questId].step-1]);
+    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra[questId].steps[quests[questId].step-1]+"<br />";
+    QString stepRequirements;
+    {
+        QList<Quest::Item> items=CommonDatapack::commonDatapack.quests[questId].steps[quests[questId].step-1].requirements.items;
+        QStringList objects;
+        int index=0;
+        while(index<items.size())
+        {
+            QPixmap image;
+            QString name;
+            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).item))
+            {
+                image=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].image;
+                name=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].name;
+            }
+            else
+            {
+                image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
+                name=QString("id: %1").arg(items.at(index).item);
+            }
+
+            image=image.scaled(24,24);
+            QByteArray byteArray;
+            QBuffer buffer(&byteArray);
+            image.save(&buffer, "PNG");
+            if(objects.size()<16)
+            {
+                if(items.at(index).quantity>1)
+                    objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(items.at(index).quantity).arg(name);
+                else
+                    objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
+            }
+            index++;
+        }
+        if(objects.size()==16)
+            objects << "...";
+        stepRequirements+=tr("Step requirements: ")+QString("%1<br />").arg(objects.join(", "));
+    }
+    QString finalRewards;
+    if(DatapackClientLoader::datapackLoader.questsExtra[questId].showRewards
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+            || true
+        #endif
+            )
+    {
+        finalRewards+=tr("Final rewards: ");
+        {
+            QList<Quest::Item> items=CommonDatapack::commonDatapack.quests[questId].rewards.items;
+            QStringList objects;
+            int index=0;
+            while(index<items.size())
+            {
+                QPixmap image;
+                QString name;
+                if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).item))
+                {
+                    image=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].image;
+                    name=DatapackClientLoader::datapackLoader.itemsExtra[items.at(index).item].name;
+                }
+                else
+                {
+                    image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
+                    name=QString("id: %1").arg(items.at(index).item);
+                }
+                image=image.scaled(24,24);
+                QByteArray byteArray;
+                QBuffer buffer(&byteArray);
+                image.save(&buffer, "PNG");
+                if(objects.size()<16)
+                {
+                    if(items.at(index).quantity>1)
+                        objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(items.at(index).quantity).arg(name);
+                    else
+                        objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
+                }
+                index++;
+            }
+            if(objects.size()==16)
+                objects << "...";
+            finalRewards+=objects.join(", ")+"<br />";
+        }
+        {
+            QList<Quest::ReputationRewards> reputationRewards=CommonDatapack::commonDatapack.quests[questId].rewards.reputation;
+            QStringList reputations;
+            int index=0;
+            while(index<items.size())
+            {
+                if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputationRewards.at(index).type))
+                {
+                    if(reputationRewards.at(index).point<0)
+                        reputations << tr("Less reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra[reputationRewards.at(index).type].name);
+                    if(reputationRewards.at(index).point>0)
+                        reputations << tr("More reputation for %1").arg(DatapackClientLoader::datapackLoader.reputationExtra[reputationRewards.at(index).type].name);
+                }
+                index++;
+            }
+            if(reputations.size()>16)
+            {
+                while(reputations.size()>15)
+                    reputations.removeLast();
+                reputations << "...";
+            }
+            finalRewards+=reputations.join(", ")+"<br />";
+        }
+        {
+            QList<ActionAllow> allowRewards=CommonDatapack::commonDatapack.quests[questId].rewards.allow;
+            QStringList allows;
+            int index=0;
+            while(index<items.size())
+            {
+                if(allowRewards.contains(ActionAllow_Clan))
+                    allows << tr("Add permistion to create clan");
+                index++;
+            }
+            if(allows.size()>16)
+            {
+                while(allows.size()>15)
+                    allows.removeLast();
+                allows << "...";
+            }
+            finalRewards+=allows.join(", ")+"<br />";
+        }
+    }
+
+    ui->questDetails->setText(stepDescription+stepRequirements+finalRewards);
 }
 
 QListWidgetItem * BaseWindow::itemToGraphic(const quint32 &id,const quint32 &quantity)
