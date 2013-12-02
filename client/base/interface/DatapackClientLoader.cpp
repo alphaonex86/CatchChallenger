@@ -580,6 +580,7 @@ void DatapackClientLoader::parseQuestsExtra()
     int index=0;
     while(index<entryList.size())
     {
+        bool showRewards=false;
         if(!entryList.at(index).isDir())
         {
             index++;
@@ -628,114 +629,129 @@ void DatapackClientLoader::parseQuestsExtra()
         DatapackClientLoader::QuestExtra quest;
 
         //load name
-        QDomElement name = root.firstChildElement("name");
-        bool found=false;
-        if(!language.isEmpty() && language!="en")
-            while(!name.isNull())
-            {
-                if(name.isElement())
-                {
-                    if(name.hasAttribute("lang") && name.attribute("lang")==language)
-                    {
-                        quest.name=name.text();
-                        found=true;
-                        break;
-                    }
-                    else
-                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(name.tagName()).arg(name.lineNumber());
-                }
-                name = name.nextSiblingElement("name");
-            }
-        if(!found)
         {
-            name = root.firstChildElement("name");
-            while(!name.isNull())
-            {
-                if(name.isElement())
+            QDomElement name = root.firstChildElement("name");
+            bool found=false;
+            if(!language.isEmpty() && language!="en")
+                while(!name.isNull())
                 {
-                    if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                    if(name.isElement())
                     {
-                        quest.name=name.text();
-                        break;
+                        if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                        {
+                            quest.name=name.text();
+                            found=true;
+                            break;
+                        }
+                        else
+                            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(name.tagName()).arg(name.lineNumber());
                     }
-                    else
-                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(name.tagName()).arg(name.lineNumber());
+                    name = name.nextSiblingElement("name");
                 }
-                name = name.nextSiblingElement("name");
+            if(!found)
+            {
+                name = root.firstChildElement("name");
+                while(!name.isNull())
+                {
+                    if(name.isElement())
+                    {
+                        if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                        {
+                            quest.name=name.text();
+                            break;
+                        }
+                        else
+                            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(name.tagName()).arg(name.lineNumber());
+                    }
+                    name = name.nextSiblingElement("name");
+                }
+            }
+        }
+
+        //load showRewards
+        {
+            QDomElement rewards = root.firstChildElement("rewards");
+            if(!rewards.isNull() && rewards.isElement())
+            {
+                if(rewards.hasAttribute("show"))
+                    if(rewards.attribute("show")=="true")
+                        showRewards=true;
             }
         }
 
         QHash<quint32,QString> steps;
-        //load step
-        QDomElement step = root.firstChildElement("step");
-        while(!step.isNull())
         {
-            if(step.isElement())
+            //load step
+            QDomElement step = root.firstChildElement("step");
+            while(!step.isNull())
             {
-                if(step.hasAttribute("id"))
+                if(step.isElement())
                 {
-                    quint32 id=step.attribute("id").toULongLong(&ok);
-                    if(ok)
+                    if(step.hasAttribute("id"))
                     {
-                        CatchChallenger::Quest::Step stepObject;
-                        if(step.hasAttribute("bot"))
+                        quint32 id=step.attribute("id").toULongLong(&ok);
+                        if(ok)
                         {
-                            QStringList tempStringList=step.attribute("bot").split(";");
-                            int index=0;
-                            while(index<tempStringList.size())
+                            CatchChallenger::Quest::Step stepObject;
+                            if(step.hasAttribute("bot"))
                             {
-                                quint32 tempInt=tempStringList.at(index).toUInt(&ok);
-                                if(ok)
-                                    stepObject.bots << tempInt;
-                                index++;
-                            }
-                        }
-                        QDomElement stepItem = step.firstChildElement("text");
-                        bool found=false;
-                        if(!language.isEmpty() && language!="en")
-                        {
-                            while(!stepItem.isNull())
-                            {
-                                if(stepItem.isElement())
+                                QStringList tempStringList=step.attribute("bot").split(";");
+                                int index=0;
+                                while(index<tempStringList.size())
                                 {
-                                    if(stepItem.hasAttribute("lang") || stepItem.attribute("lang")==language)
+                                    quint32 tempInt=tempStringList.at(index).toUInt(&ok);
+                                    if(ok)
+                                        stepObject.bots << tempInt;
+                                    index++;
+                                }
+                            }
+                            QDomElement stepItem = step.firstChildElement("text");
+                            bool found=false;
+                            if(!language.isEmpty() && language!="en")
+                            {
+                                while(!stepItem.isNull())
+                                {
+                                    if(stepItem.isElement())
                                     {
-                                        found=true;
-                                        steps[id]=stepItem.text();
+                                        if(stepItem.hasAttribute("lang") || stepItem.attribute("lang")==language)
+                                        {
+                                            found=true;
+                                            steps[id]=stepItem.text();
+                                        }
                                     }
-                                }
-                                else
-                                    qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
-                                stepItem = stepItem.nextSiblingElement("text");
-                            }
-                        }
-                        if(!found)
-                        {
-                            stepItem = step.firstChildElement("text");
-                            while(!stepItem.isNull())
-                            {
-                                if(stepItem.isElement())
-                                {
-                                    if(!stepItem.hasAttribute("lang") || stepItem.attribute("lang")=="en")
-                                        steps[id]=stepItem.text();
                                     else
-                                        qDebug() << QString("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                                    stepItem = stepItem.nextSiblingElement("text");
                                 }
-                                else
-                                    qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
-                                stepItem = stepItem.nextSiblingElement("text");
+                            }
+                            if(!found)
+                            {
+                                stepItem = step.firstChildElement("text");
+                                while(!stepItem.isNull())
+                                {
+                                    if(stepItem.isElement())
+                                    {
+                                        if(!stepItem.hasAttribute("lang") || stepItem.attribute("lang")=="en")
+                                            steps[id]=stepItem.text();
+                                        else
+                                            qDebug() << QString("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                                    }
+                                    else
+                                        qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                                    stepItem = stepItem.nextSiblingElement("text");
+                                }
                             }
                         }
+                        else
+                            qDebug() << QString("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
                     }
                     else
-                        qDebug() << QString("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                        qDebug() << QString("Has attribute: %1, have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
                 }
                 else
-                    qDebug() << QString("Has attribute: %1, have not id attribute: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                    qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
+                step = step.nextSiblingElement("step");
             }
-            else
-                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(step.tagName()).arg(step.lineNumber());
-            step = step.nextSiblingElement("step");
         }
 
         //sort the step
@@ -751,6 +767,7 @@ void DatapackClientLoader::parseQuestsExtra()
         {
             //add it, all seam ok
             questsExtra[id]=quest;
+            questsExtra[id].showRewards=showRewards;
         }
         questsPathToId[entryList.at(index).absoluteFilePath()]=id;
 
