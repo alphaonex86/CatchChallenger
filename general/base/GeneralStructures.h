@@ -107,6 +107,7 @@ struct Plant
 struct Item
 {
     quint32 price;
+    bool consumeAtUse;
 };
 
 struct Trap
@@ -444,10 +445,10 @@ struct Buff
         QList<EffectInWalk> walk;
         QList<Effect> fight;
         float capture_bonus;
+        Duration duration;
+        quint8 durationNumberOfTurn;
     };
     QList<GeneralEffect> level;//first entry is buff level 1
-    Duration duration;
-    quint8 durationNumberOfTurn;
 };
 
 enum ApplyOn
