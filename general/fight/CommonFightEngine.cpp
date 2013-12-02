@@ -487,9 +487,12 @@ bool CommonFightEngine::monsterIsKO(const PlayerMonster &playerMonter)
 
 Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,const Skill::LifeEffect &effect,PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster)
 {
+    Skill::LifeEffectReturn effect_to_return;
     qint32 quantity;
-    Monster::Stat stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
-    Monster::Stat otherStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+    const Monster &commonMonster=CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster];
+    const Monster &commonOtherMonster=CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster];
+    Monster::Stat stat=getStat(commonMonster,currentMonster->level);
+    Monster::Stat otherStat=getStat(commonOtherMonster,otherMonster->level);
     switch(effect.on)
     {
         case ApplyOn_AloneEnemy:
@@ -504,29 +507,79 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
             emit error("Not apply match, can't apply the buff");
         break;
     }
-    if(effect.type==QuantityType_Quantity)
+    if(effect.quantity==0)
+        quantity=0;
+    else if(effect.type==QuantityType_Quantity)
     {
-        if(effect.quantity<0)
-            quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
-        else if(effect.quantity>0)//ignore the def for heal
-            quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-        const QList<quint8> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster].type;
-        if(type!=255 && !typeList.isEmpty())
+        if(effect.quantity>0)
+            quantity=effect.quantity;
+        else
         {
-            int index=0;
-            while(index<typeList.size())
+            float OtherMulti=1.0;
+            /*if(type==commentMonster.type)
+                OtherMulti*=1.45;*/
+            OtherMulti*=1.24;
+            effect_to_return.effective=1.0;
+            const QList<quint8> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster].type;
+            if(type!=255 && !typeList.isEmpty())
             {
-                const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
-                if(typeDefinition.multiplicator.contains(type))
+                int index=0;
+                while(index<typeList.size())
                 {
-                    const qint8 &multiplicator=typeDefinition.multiplicator[type];
-                    if(multiplicator>=0)
-                        quantity*=multiplicator;
-                    else
-                        quantity/=-multiplicator;
+                    const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
+                    if(typeDefinition.multiplicator.contains(type))
+                    {
+                        const qint8 &multiplicator=typeDefinition.multiplicator[type];
+                        if(multiplicator>0)
+                            effect_to_return.effective*=multiplicator;
+                        else
+                            effect_to_return.effective/=-multiplicator;
+                    }
+                    index++;
                 }
-                index++;
             }
+            float criticalHit=1.0;
+            effect_to_return.critical=(getOneSeed(255)<20);
+            if(effect_to_return.critical)
+                criticalHit=1.5;
+            quint32 attack;
+            quint32 defense;
+            if(type==0)
+                attack=stat.attack;
+            else
+                attack=stat.special_attack;
+            if(type==0)
+                defense=otherStat.defense;
+            else
+                defense=otherStat.special_defense;
+            if(defense<1)
+                defense=1;
+            qint32 effect_quantity=effect.quantity;
+            if(effect_quantity<0)
+                effect_quantity-=2;
+            quantity = effect_to_return.effective*(((float)currentMonster->level*(float)1.99+10.5)/(float)255*((float)attack/(float)defense)*(float)effect.quantity)*criticalHit*OtherMulti*(100-getOneSeed(17))/100;
+            /*if(effect.quantity<0)
+                quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
+            else if(effect.quantity>0)//ignore the def for heal
+                quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            const QList<quint8> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster].type;
+            if(type!=255 && !typeList.isEmpty())
+            {
+                int index=0;
+                while(index<typeList.size())
+                {
+                    const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
+                    if(typeDefinition.multiplicator.contains(type))
+                    {
+                        const qint8 &multiplicator=typeDefinition.multiplicator[type];
+                        if(multiplicator>=0)
+                            quantity*=multiplicator;
+                        else
+                            quantity/=-multiplicator;
+                    }
+                    index++;
+                }
+            }*/
         }
     }
     else
@@ -540,6 +593,17 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
     {
         if(quantity==0)
             quantity=1;
+    }
+    //check
+    if(effect.quantity<0 && quantity>0)
+    {
+        quantity=-1;
+        emit error("Wrong calculated value");
+    }
+    if(effect.quantity>0 && quantity<0)
+    {
+        quantity=1;
+        emit error("Wrong calculated value");
     }
     //kill
     if(quantity<0 && (-quantity)>=(qint32)otherMonster->hp)
@@ -556,7 +620,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
     //other life change
     else
         otherMonster->hp+=quantity;
-    Skill::LifeEffectReturn effect_to_return;
+    effect_to_return.critical=false;
     effect_to_return.on=effect.on;
     effect_to_return.quantity=quantity;
     return effect_to_return;
@@ -1739,18 +1803,20 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
         while(index<skillList.life.size())
         {
             const Skill::Life &life=skillList.life.at(index);
-            bool success;
-            if(life.success==100)
-                success=true;
-            else
-                success=(getOneSeed(100)<life.success);
-            if(success)
+            if(life.effect.quantity!=0)
             {
-                attackReturn.success=true;//the attack have work because at less have a buff
-                Skill::LifeEffectReturn lifeEffectReturn;
-                lifeEffectReturn.on=life.effect.on;
-                lifeEffectReturn.quantity=applyLifeEffect(skillDef.type,life.effect,currentMonster,otherMonster).quantity;
-                attackReturn.lifeEffectMonster << lifeEffectReturn;
+                bool success;
+                if(life.success==100)
+                    success=true;
+                else
+                    success=(getOneSeed(100)<life.success);
+                if(success)
+                {
+                    attackReturn.success=true;//the attack have work because at less have a buff
+                    Skill::LifeEffectReturn lifeEffectReturn;
+                    lifeEffectReturn=applyLifeEffect(skillDef.type,life.effect,currentMonster,otherMonster);
+                    attackReturn.lifeEffectMonster << lifeEffectReturn;
+                }
             }
             index++;
         }
