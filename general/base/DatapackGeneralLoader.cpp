@@ -63,80 +63,59 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                             QString text_val;
                             if(ok)
                             {
-                                QDomElement text = level.firstChildElement("text");
                                 ok=true;
-                                while(!text.isNull() && ok)
+                                bool found=false;
+                                int index=0;
+                                if(point>=0)
                                 {
-                                    if(text.isElement())
+                                    while(index<point_list_positive.size())
                                     {
-                                        if(text.hasAttribute("lang"))
-                                            if(text.attribute("lang")=="en" && !text.text().isEmpty())
-                                            {
-                                                text_val=text.text();
-                                                break;
-                                            }
+                                        if(point_list_positive.at(index)==point)
+                                        {
+                                            DebugClass::debugConsole(QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            found=true;
+                                            ok=false;
+                                            break;
+                                        }
+                                        if(point_list_positive.at(index)>point)
+                                        {
+                                            point_list_positive.insert(index,point);
+                                            text_positive.insert(index,text_val);
+                                            found=true;
+                                            break;
+                                        }
+                                        index++;
                                     }
-                                    else
-                                        DebugClass::debugConsole(QString("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                    text = text.nextSiblingElement("level");
+                                    if(!found)
+                                    {
+                                        point_list_positive << point;
+                                        text_positive << text_val;
+                                    }
                                 }
-                                if(text_val.isEmpty())
-                                    ok=false;
-                                if(ok)
+                                else
                                 {
-                                    bool found=false;
-                                    int index=0;
-                                    if(point>=0)
+                                    while(index<point_list_negative.size())
                                     {
-                                        while(index<point_list_positive.size())
+                                        if(point_list_negative.at(index)==point)
                                         {
-                                            if(point_list_positive.at(index)==point)
-                                            {
-                                                DebugClass::debugConsole(QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                                found=true;
-                                                ok=false;
-                                                break;
-                                            }
-                                            if(point_list_positive.at(index)>point)
-                                            {
-                                                point_list_positive.insert(index,point);
-                                                text_positive.insert(index,text_val);
-                                                found=true;
-                                                break;
-                                            }
-                                            index++;
+                                            DebugClass::debugConsole(QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            found=true;
+                                            ok=false;
+                                            break;
                                         }
-                                        if(!found)
+                                        if(point_list_negative.at(index)<point)
                                         {
-                                            point_list_positive << point;
-                                            text_positive << text_val;
+                                            point_list_negative.insert(index,point);
+                                            text_negative.insert(index,text_val);
+                                            found=true;
+                                            break;
                                         }
+                                        index++;
                                     }
-                                    else
+                                    if(!found)
                                     {
-                                        while(index<point_list_negative.size())
-                                        {
-                                            if(point_list_negative.at(index)==point)
-                                            {
-                                                DebugClass::debugConsole(QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
-                                                found=true;
-                                                ok=false;
-                                                break;
-                                            }
-                                            if(point_list_negative.at(index)<point)
-                                            {
-                                                point_list_negative.insert(index,point);
-                                                text_negative.insert(index,text_val);
-                                                found=true;
-                                                break;
-                                            }
-                                            index++;
-                                        }
-                                        if(!found)
-                                        {
-                                            point_list_negative << point;
-                                            text_negative << text_val;
-                                        }
+                                        point_list_negative << point;
+                                        text_negative << text_val;
                                     }
                                 }
                             }
@@ -176,8 +155,6 @@ QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &
                 {
                     reputation[item.attribute("type")].reputation_positive=point_list_positive;
                     reputation[item.attribute("type")].reputation_negative=point_list_negative;
-                    reputation[item.attribute("type")].text_positive=text_positive;
-                    reputation[item.attribute("type")].text_negative=text_negative;
                 }
             }
             else

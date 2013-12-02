@@ -75,6 +75,8 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parseAudioAmbiance();
     parseZoneExtra();
     parseTileset();
+    parseReputationExtra();
+    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     inProgress=false;
     emit datapackParsed();
 }
@@ -82,6 +84,259 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 QString DatapackClientLoader::getDatapackPath()
 {
     return datapackPath;
+}
+
+void DatapackClientLoader::parseReputationExtra()
+{
+    //open and quick check the file
+    QFile itemsFile(datapackPath+DATAPACK_BASE_PATH_PLAYER+"reputation.xml");
+    QByteArray xmlContent;
+    if(!itemsFile.open(QIODevice::ReadOnly))
+    {
+        qDebug() << (QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString()));
+        return;
+    }
+    xmlContent=itemsFile.readAll();
+    itemsFile.close();
+    QDomDocument domDocument;
+    QString errorStr;
+    int errorLine,errorColumn;
+    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    {
+        qDebug() << (QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
+        return;
+    }
+    QDomElement root = domDocument.documentElement();
+    if(root.tagName()!="list")
+    {
+        qDebug() << (QString("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName()));
+        return;
+    }
+
+    //load the content
+    bool ok;
+    QDomElement item = root.firstChildElement("reputation");
+    while(!item.isNull())
+    {
+        if(item.isElement())
+        {
+            if(item.hasAttribute("type"))
+            {
+                ok=true;
+
+                //load the name
+                {
+                    bool name_found=false;
+                    QDomElement name = item.firstChildElement("name");
+                    if(!language.isEmpty() && language!="en")
+                        while(!name.isNull())
+                        {
+                            if(name.isElement())
+                            {
+                                if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                                {
+                                    reputationExtra[item.attribute("type")].name=name.text();
+                                    name_found=true;
+                                    break;
+                                }
+                            }
+                            name = name.nextSiblingElement("name");
+                        }
+                    if(!name_found)
+                    {
+                        name = item.firstChildElement("name");
+                        while(!name.isNull())
+                        {
+                            if(name.isElement())
+                            {
+                                if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                                {
+                                    reputationExtra[item.attribute("type")].name=name.text();
+                                    name_found=true;
+                                    break;
+                                }
+                            }
+                            name = name.nextSiblingElement("name");
+                        }
+                    }
+                    if(!name_found)
+                    {
+                        reputationExtra[item.attribute("type")].name=tr("Unknown");
+                        qDebug() << QString("English name not found for the reputation with id: %1").arg(item.attribute("type"));
+                    }
+                }
+
+                QList<qint32> point_list_positive,point_list_negative;
+                QStringList text_positive,text_negative;
+                QDomElement level = item.firstChildElement("level");
+                ok=true;
+                while(!level.isNull() && ok)
+                {
+                    if(level.isElement())
+                    {
+                        if(level.hasAttribute("point"))
+                        {
+                            qint32 point=level.attribute("point").toInt(&ok);
+                            QString text_val;
+                            if(ok)
+                            {
+                                ok=true;
+
+                                QString text;
+                                //load the name
+                                {
+                                    bool name_found=false;
+                                    QDomElement name = level.firstChildElement("text");
+                                    if(!language.isEmpty() && language!="en")
+                                        while(!name.isNull())
+                                        {
+                                            if(name.isElement())
+                                            {
+                                                if(name.hasAttribute("lang") && name.attribute("lang")==language)
+                                                {
+                                                    text=name.text();
+                                                    name_found=true;
+                                                    break;
+                                                }
+                                            }
+                                            name = name.nextSiblingElement("text");
+                                        }
+                                    if(!name_found)
+                                    {
+                                        name = level.firstChildElement("text");
+                                        while(!name.isNull())
+                                        {
+                                            if(name.isElement())
+                                            {
+                                                if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
+                                                {
+                                                    text=name.text();
+                                                    name_found=true;
+                                                    break;
+                                                }
+                                            }
+                                            name = name.nextSiblingElement("text");
+                                        }
+                                    }
+                                    if(!name_found)
+                                    {
+                                        text=tr("Unknown");
+                                        qDebug() << QString("English name not found for the reputation with id: %1").arg(item.attribute("type"));
+                                    }
+                                }
+
+                                bool found=false;
+                                int index=0;
+                                if(point>=0)
+                                {
+                                    while(index<point_list_positive.size())
+                                    {
+                                        if(point_list_positive.at(index)==point)
+                                        {
+                                            qDebug() << (QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            found=true;
+                                            ok=false;
+                                            break;
+                                        }
+                                        if(point_list_positive.at(index)>point)
+                                        {
+                                            point_list_positive.insert(index,point);
+                                            text_positive.insert(index,text);
+                                            found=true;
+                                            break;
+                                        }
+                                        index++;
+                                    }
+                                    if(!found)
+                                    {
+                                        point_list_positive << point;
+                                        text_positive << text;
+                                    }
+                                }
+                                else
+                                {
+                                    while(index<point_list_negative.size())
+                                    {
+                                        if(point_list_negative.at(index)==point)
+                                        {
+                                            qDebug() << (QString("Unable to open the file: %1, reputation level with same number of point found!: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                                            found=true;
+                                            ok=false;
+                                            break;
+                                        }
+                                        if(point_list_negative.at(index)<point)
+                                        {
+                                            point_list_negative.insert(index,point);
+                                            text_negative.insert(index,text);
+                                            found=true;
+                                            break;
+                                        }
+                                        index++;
+                                    }
+                                    if(!found)
+                                    {
+                                        point_list_negative << point;
+                                        text_negative << text;
+                                    }
+                                }
+                            }
+                            else
+                                qDebug() << (QString("Unable to open the file: %1, point is not number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        }
+                    }
+                    else
+                        qDebug() << (QString("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                    level = level.nextSiblingElement("level");
+                }
+                if(ok)
+                    if(point_list_positive.size()<2)
+                    {
+                        qDebug() << (QString("Unable to open the file: %1, reputation have to few level: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        ok=false;
+                    }
+                if(ok)
+                    if(!point_list_positive.contains(0))
+                    {
+                        qDebug() << (QString("Unable to open the file: %1, no starting level for the positive: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        ok=false;
+                    }
+                if(ok)
+                    if(!point_list_negative.empty() && !point_list_negative.contains(-1))
+                    {
+                        qDebug() << (QString("Unable to open the file: %1, no starting level for the negative: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+                        ok=false;
+                    }
+                if(ok)
+                    if(!item.attribute("type").contains(QRegExp("^[a-z]{1,32}$")))
+                    {
+                        qDebug() << (QString("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type")));
+                        ok=false;
+                    }
+                if(ok)
+                {
+                    reputationExtra[item.attribute("type")].reputation_positive=text_positive;
+                    reputationExtra[item.attribute("type")].reputation_negative=text_negative;
+                }
+            }
+            else
+                qDebug() << (QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+        }
+        else
+            qDebug() << (QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber()));
+        item = item.nextSiblingElement("reputation");
+    }
+    QHash<QString, CatchChallenger::Reputation>::const_iterator i = CatchChallenger::CommonDatapack::commonDatapack.reputation.constBegin();
+    while (i != CatchChallenger::CommonDatapack::commonDatapack.reputation.constEnd()) {
+        if(!reputationExtra.contains(i.key()))
+            reputationExtra[i.key()].name=tr("Unknown");
+        while(reputationExtra[i.key()].reputation_negative.size()<i.value().reputation_negative.size())
+            reputationExtra[i.key()].reputation_negative << tr("Unknown");
+        while(reputationExtra[i.key()].reputation_positive.size()<i.value().reputation_positive.size())
+            reputationExtra[i.key()].reputation_positive << tr("Unknown");
+        ++i;
+    }
+
+    qDebug() << QString("%1 reputation(s) extra loaded").arg(reputationExtra.size());
 }
 
 void DatapackClientLoader::parseItemsExtra()
@@ -149,8 +404,6 @@ void DatapackClientLoader::parseItemsExtra()
                         }
                         // base size: 24x24
                         DatapackClientLoader::itemsExtra[id].image=DatapackClientLoader::itemsExtra[id].image.scaled(72,72);//then zoom: 3x
-
-                        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
 
                         //load the name
                         {
@@ -283,6 +536,7 @@ void DatapackClientLoader::parseSkins()
 void DatapackClientLoader::resetAll()
 {
     CatchChallenger::CommonDatapack::commonDatapack.unload();
+    language.clear();
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(":/images/inventory/unknow-object.png");
     datapackPath.clear();
@@ -375,7 +629,6 @@ void DatapackClientLoader::parseQuestsExtra()
 
         //load name
         QDomElement name = root.firstChildElement("name");
-        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         bool found=false;
         if(!language.isEmpty() && language!="en")
             while(!name.isNull())
@@ -566,7 +819,6 @@ void DatapackClientLoader::parseQuestsText()
                     if(ok)
                     {
                         QDomElement text = client_logic.firstChildElement("text");
-                        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
                         bool found=false;
                         if(!language.isEmpty() && language!="en")
                             while(!text.isNull())
@@ -742,7 +994,6 @@ void DatapackClientLoader::parseZoneExtra()
 
         //load name
         QDomElement name = root.firstChildElement("name");
-        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         bool found=false;
         if(!language.isEmpty() && language!="en")
             while(!name.isNull())

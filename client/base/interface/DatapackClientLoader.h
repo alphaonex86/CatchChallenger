@@ -34,12 +34,14 @@ public:
     };
     struct ReputationExtra
     {
+        QString name;
         QStringList reputation_positive,reputation_negative;
     };
     struct QuestExtra
     {
         QString name;
         QStringList steps;
+        bool showRewards;
     };
     struct ZoneExtra
     {
@@ -101,6 +103,7 @@ public:
     QHash<QString,ZoneExtra> zonesExtra;
     QHash<QString,QString> audioAmbiance;
     QHash<quint32,ProfileText> profileTextList;
+    QString language;
     QStringList maps,skins;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
@@ -133,6 +136,7 @@ private slots:
     void parseAudioAmbiance();
     void parseZoneExtra();
     void parseTileset();
+    void parseReputationExtra();
 };
 
 #endif // DATAPACKCLIENTLOADER_H
