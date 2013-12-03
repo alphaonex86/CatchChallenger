@@ -9,10 +9,10 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket,QObject *parent) :
     this->fakeSocket=socket;
     this->sslSocket=NULL;
     connect(socket,&QFakeSocket::destroyed,     this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
-    connect(socket,&QFakeSocket::connected,     this,&ConnectedSocket::connected);
-    connect(socket,&QFakeSocket::disconnected,  this,&ConnectedSocket::disconnected);
+    connect(socket,&QFakeSocket::connected,     this,&ConnectedSocket::connected,Qt::QueuedConnection);
+    connect(socket,&QFakeSocket::disconnected,  this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
     connect(socket,static_cast<void(QFakeSocket::*)(QAbstractSocket::SocketError)>(&QFakeSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
-    connect(socket,&QFakeSocket::stateChanged,   this,&ConnectedSocket::stateChanged);
+    connect(socket,&QFakeSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection);
     connect(socket,&QFakeSocket::readyRead,     this,&ConnectedSocket::readyRead,Qt::DirectConnection);
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
@@ -24,13 +24,13 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket,QObject *parent) :
     this->sslSocket=socket;
     socket->setSocketOption(QAbstractSocket::KeepAliveOption,1);
     connect(socket,&QSslSocket::readyRead,      this,&ConnectedSocket::readyRead,Qt::DirectConnection);
-    connect(socket,&QSslSocket::encrypted,      this,&ConnectedSocket::encrypted);
-    connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::connected);
+    connect(socket,&QSslSocket::encrypted,      this,&ConnectedSocket::encrypted,Qt::QueuedConnection);
+    connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::connected,Qt::QueuedConnection);
     connect(socket,&QSslSocket::destroyed,      this,&ConnectedSocket::destroyedSocket,Qt::DirectConnection);
-    connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::startHandshake);
-    connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected);
+    connect(socket,&QSslSocket::connected,      this,&ConnectedSocket::startHandshake,Qt::QueuedConnection);
+    connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection);
     connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error));
-    connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged);
+    connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection);
     encrypted();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
