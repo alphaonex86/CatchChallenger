@@ -180,7 +180,8 @@ void ClientNetworkRead::parseInputBeforeLogin(const quint8 &mainCodeType,const q
                     data_extracted=data.right(data.size()-in.device()->pos());
                     QByteArray hash,login;
                     login=data_extracted.mid(0,64);
-                    hash=data_extracted.mid(63,64);
+                    data_extracted.remove(0,64);
+                    hash=data_extracted;
                     emit askLogin(queryNumber,login,hash);
                     return;
                 }
