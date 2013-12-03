@@ -17,6 +17,7 @@ public:
     ~QFakeSocket();
     void abort();
     void disconnectFromHost();
+    void disconnectFromFakeServer();
     void connectToHost();
     qint64	bytesAvailable() const;
     void	close();
@@ -28,10 +29,11 @@ public:
     QAbstractSocket::SocketState state() const;
     bool isValid() const;
 signals:
-    void	connected();
-    void	disconnected();
-    void	error(QAbstractSocket::SocketError socketError);
-    void	stateChanged(QAbstractSocket::SocketState socketState);
+    void connected();
+    void disconnected();
+    void error(QAbstractSocket::SocketError socketError);
+    void stateChanged(QAbstractSocket::SocketState socketState);
+    void aboutToDelete();
 protected:
     QFakeSocket *theOtherSocket;
     virtual bool isSequential() const;

@@ -24,6 +24,7 @@ QFakeSocket::~QFakeSocket()
         tempOtherSocket->stateChanged(QAbstractSocket::UnconnectedState);
         tempOtherSocket->disconnected();
     }
+    emit aboutToDelete();
 }
 
 void QFakeSocket::abort()
@@ -44,6 +45,22 @@ void QFakeSocket::disconnectFromHost()
     QFakeSocket *tempOtherSocket=theOtherSocket;
     theOtherSocket=NULL;
     tempOtherSocket->disconnectFromHost();
+    {
+        QMutexLocker lock(&mutex);
+        data.clear();
+    }
+    emit stateChanged(QAbstractSocket::UnconnectedState);
+    emit disconnected();
+}
+
+void QFakeSocket::disconnectFromFakeServer()
+{
+    if(theOtherSocket==NULL)
+        return;
+    #ifdef FAKESOCKETDEBUG
+    DebugClass::debugConsole(QString("QFakeSocket::disconnectFromFakeServer()"));
+    #endif
+    theOtherSocket=NULL;
     {
         QMutexLocker lock(&mutex);
         data.clear();
