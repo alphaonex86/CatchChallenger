@@ -117,31 +117,57 @@ void LocalClientHandler::extraStop()
         int size=player_informations->public_and_private_informations.playerMonster.size();
         while(index<size)
         {
+            const PlayerMonster &playerMonster=player_informations->public_and_private_informations.playerMonster.at(index);
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
                     emit dbQuery(QString("UPDATE `monster` SET `hp`=%3,`xp`=%4,`level`=%5,`sp`=%6,`position`=%7 WHERE `id`=%1;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(playerMonster.id)
                                  .arg(player_informations->character_id)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].remaining_xp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].level)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                 .arg(playerMonster.hp)
+                                 .arg(playerMonster.remaining_xp)
+                                 .arg(playerMonster.level)
+                                 .arg(playerMonster.sp)
                                  .arg(index+1)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
                     emit dbQuery(QString("UPDATE monster SET hp=%3,xp=%4,level=%5,sp=%6,position=%7 WHERE id=%1;")
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].id)
+                                 .arg(playerMonster.id)
                                  .arg(player_informations->character_id)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].remaining_xp)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].level)
-                                 .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
+                                 .arg(playerMonster.hp)
+                                 .arg(playerMonster.remaining_xp)
+                                 .arg(playerMonster.level)
+                                 .arg(playerMonster.sp)
                                  .arg(index+1)
                                  );
                 break;
+            }
+            int sub_index=0;
+            int sub_size=playerMonster.skills.size();
+            while(sub_index<sub_size)
+            {
+                const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                                     .arg(playerSkill.endurance)
+                                     .arg(playerMonster.id)
+                                     .arg(playerSkill.skill)
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                                     .arg(playerSkill.endurance)
+                                     .arg(playerMonster.id)
+                                     .arg(playerSkill.skill)
+                                     );
+                    break;
+                }
+                sub_index++;
             }
             index++;
         }

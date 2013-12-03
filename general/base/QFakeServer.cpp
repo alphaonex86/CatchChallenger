@@ -26,8 +26,12 @@ void QFakeServer::addPendingConnection(QFakeSocket * socket)
     newEntry.second->theOtherSocket=newEntry.first;
     newEntry.first->RX_size=0;
     newEntry.second->RX_size=0;
-    connect(newEntry.first,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket);
-    connect(newEntry.second,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket);
+    connect(newEntry.first,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
+    connect(newEntry.second,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
+    connect(newEntry.first,&QFakeSocket::aboutToDelete,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
+    connect(newEntry.second,&QFakeSocket::aboutToDelete,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
+    connect(newEntry.first,&QFakeSocket::destroyed,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
+    connect(newEntry.second,&QFakeSocket::destroyed,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
     emit newConnection();
 }
 
@@ -71,27 +75,61 @@ void QFakeServer::close()
 void QFakeServer::disconnectedSocket()
 {
     QMutexLocker locker(&mutex);
-    int index=0;
-    int loop_size=m_listOfConnexion.size();
-    while(index<loop_size)
+    QFakeSocket *socket=qobject_cast<QFakeSocket *>(QObject::sender());
     {
-        if(m_listOfConnexion.at(index).first->theOtherSocket==NULL)
+        int index=0;
+        int loop_size=m_listOfConnexion.size();
+        while(index<loop_size)
         {
-            m_listOfConnexion.removeAt(index);
-            loop_size--;
+            if(m_listOfConnexion.at(index).first->theOtherSocket==socket || m_listOfConnexion.at(index).second->theOtherSocket==socket)
+            {
+                m_listOfConnexion.at(index).first->disconnectFromFakeServer();
+                m_listOfConnexion.at(index).second->disconnectFromFakeServer();
+                m_listOfConnexion.removeAt(index);
+                loop_size--;
+            }
+            else
+                index++;
         }
-        else
-            index++;
+        loop_size=m_pendingConnection.size();
+        while(index<loop_size)
+        {
+            if(m_pendingConnection.at(index).first->theOtherSocket==socket || m_pendingConnection.at(index).second->theOtherSocket==socket)
+            {
+                m_pendingConnection.at(index).first->disconnectFromFakeServer();
+                m_pendingConnection.at(index).second->disconnectFromFakeServer();
+                m_pendingConnection.removeAt(index);
+                loop_size--;
+            }
+            else
+                index++;
+        }
     }
-    loop_size=m_pendingConnection.size();
-    while(index<loop_size)
+
+    //drop the NULL co
     {
-        if(m_pendingConnection.at(index).first->theOtherSocket==NULL)
+        int index=0;
+        int loop_size=m_listOfConnexion.size();
+        while(index<loop_size)
         {
-            m_pendingConnection.removeAt(index);
-            loop_size--;
+            if(m_listOfConnexion.at(index).first->theOtherSocket==NULL || m_listOfConnexion.at(index).second->theOtherSocket==NULL)
+            {
+                m_listOfConnexion.removeAt(index);
+                loop_size--;
+            }
+            else
+                index++;
         }
-        else
-            index++;
+        loop_size=m_pendingConnection.size();
+        while(index<loop_size)
+        {
+            if(m_pendingConnection.at(index).first->theOtherSocket==NULL || m_pendingConnection.at(index).second->theOtherSocket==NULL)
+            {
+                m_pendingConnection.removeAt(index);
+                loop_size--;
+            }
+            else
+                index++;
+        }
     }
 }

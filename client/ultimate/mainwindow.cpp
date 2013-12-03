@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->update->setVisible(false);
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
-    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/internal/",QCoreApplication::applicationDirPath()+"/savegames/",false);
+    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/internal/",QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/savegames/",false);
     connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
     connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
     ui->stackedWidget->addWidget(solowindow);
@@ -98,15 +98,15 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     event->ignore();
     hide();
-    if(socket!=NULL || internalServer!=NULL)
+    if(realSocket!=NULL || internalServer!=NULL)
     {
         if(internalServer!=NULL)
             internalServer->try_stop_server();
-        if(socket!=NULL)
+        if(realSocket!=NULL)
         {
-            socket->disconnectFromHost();
-            if(socket!=NULL)
-                socket->abort();
+            realSocket->disconnectFromHost();
+            if(realSocket!=NULL)
+                realSocket->abort();
         }
     }
     else

@@ -90,6 +90,33 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
                              );
             break;
         }
+        QHash<quint32, QHash<quint32,quint32> >::const_iterator i = deferedEndurance.constBegin();
+        while (i != deferedEndurance.constEnd()) {
+            QHash<quint32,quint32>::const_iterator j = i.value().constBegin();
+            while (j != i.value().constEnd()) {
+                switch(GlobalServerData::serverSettings.database.type)
+                {
+                    default:
+                    case ServerSettings::Database::DatabaseType_Mysql:
+                        emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                                     .arg(j.value())
+                                     .arg(i.key())
+                                     .arg(j.key())
+                                     );
+                    break;
+                    case ServerSettings::Database::DatabaseType_SQLite:
+                        emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                                     .arg(j.value())
+                                     .arg(i.key())
+                                     .arg(j.key())
+                                     );
+                    break;
+                }
+                ++j;
+            }
+            ++i;
+        }
+        deferedEndurance.clear();
     }
 }
 
@@ -1404,23 +1431,31 @@ quint8 LocalClientHandlerFight::decreaseSkillEndurance(const quint32 &skill)
         return 0;
     }
     quint8 newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
-    switch(GlobalServerData::serverSettings.database.type)
+    if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtEachTurn)
     {
-        default:
-        case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                         .arg(newEndurance)
-                         .arg(currentMonster->id)
-                         .arg(skill)
-                         );
-        break;
-        case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                         .arg(newEndurance)
-                         .arg(currentMonster->id)
-                         .arg(skill)
-                         );
-        break;
+        switch(GlobalServerData::serverSettings.database.type)
+        {
+            default:
+            case ServerSettings::Database::DatabaseType_Mysql:
+                emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                             .arg(newEndurance)
+                             .arg(currentMonster->id)
+                             .arg(skill)
+                             );
+            break;
+            case ServerSettings::Database::DatabaseType_SQLite:
+                emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                             .arg(newEndurance)
+                             .arg(currentMonster->id)
+                             .arg(skill)
+                             );
+            break;
+        }
+    }
+    else
+    {
+        if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
+            deferedEndurance[currentMonster->id][skill]=newEndurance;
     }
     return newEndurance;
 }
