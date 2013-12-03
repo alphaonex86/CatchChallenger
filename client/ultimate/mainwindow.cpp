@@ -98,15 +98,17 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     event->ignore();
     hide();
-    if(realSocket!=NULL || internalServer!=NULL)
+    if(socket!=NULL || internalServer!=NULL)
     {
         if(internalServer!=NULL)
             internalServer->try_stop_server();
-        if(realSocket!=NULL)
+        else
+            QCoreApplication::quit();
+        if(socket!=NULL)
         {
-            realSocket->disconnectFromHost();
-            if(realSocket!=NULL)
-                realSocket->abort();
+            socket->disconnectFromHost();
+            if(socket!=NULL)
+                socket->abort();
         }
     }
     else

@@ -46,10 +46,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     QByteArray login,pass;
     {
         QCryptographicHash hash(QCryptographicHash::Sha512);
-        hash.addData(login_org);
+        hash.addData(login_org.toHex());
         login=hash.result();
         QCryptographicHash hash2(QCryptographicHash::Sha512);
-        hash2.addData(pass_org);
+        hash2.addData(pass_org.toHex());
         pass=hash2.result();
     }
     if(player_informations->isFake)
@@ -92,13 +92,18 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
             }
             else
             {
-                loginIsWrong(query_id,"Bad login","Bad login for: "+login.toHex()+", pass: "+pass.toHex());
+                loginIsWrong(query_id,"Bad login",QString("Bad login for: %1 (%2), pass: %3 (%4)")
+                             .arg(QString(login.toHex()))
+                             .arg(QString(login_org.toHex()))
+                              .arg(QString(pass.toHex()))
+                              .arg(QString(pass_org.toHex()))
+                              );
                 return;
             }
         }
         else if(QString(pass.toHex())!=accountQuery.value(1).toString())
         {
-            loginIsWrong(query_id,"Wrong login/pass","Password wrong");
+            loginIsWrong(query_id,"Wrong login/pass",QString("Password wrong: %1 (%2) for the login: %3").arg(QString(pass.toHex())).arg(QString(pass_org.toHex())).arg(QString(login.toHex())));
             return;
         }
         else
