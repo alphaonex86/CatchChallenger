@@ -108,6 +108,7 @@ private:
     quint32 botFightId;
     bool isInCityCapture;
     QList<Skill::AttackReturn> attackReturn;
+    QHash<quint32, QHash<quint32,quint32> > deferedEndurance;
 signals:
     void dbQuery(const QString &sqlQuery) const;
     void askRandomNumber() const;
