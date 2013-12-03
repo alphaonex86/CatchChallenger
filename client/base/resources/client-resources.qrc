@@ -48,5 +48,6 @@
         <file>languages/en/translation.qm</file>
         <file>languages/en/informations.xml</file>
 	<file>qml/star.png</file>
+	<file>images/player-select.png</file>
     </qresource>
 </RCC>

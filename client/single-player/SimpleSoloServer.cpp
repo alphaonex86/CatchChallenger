@@ -1,12 +1,13 @@
 #include "SimpleSoloServer.h"
 #include "ui_SimpleSoloServer.h"
+#include <QStandardPaths>
 
 SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SimpleSoloServer)
 {
     ui->setupUi(this);
-    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/",QCoreApplication::applicationDirPath()+"/savegames/",true);
+    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/",QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/savegames/",true);
     connect(solowindow,&SoloWindow::play,this,&SimpleSoloServer::play);
 
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());

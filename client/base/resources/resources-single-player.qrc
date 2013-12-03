@@ -1,5 +1,4 @@
 <RCC>
     <qresource prefix="/">
-        <file>images/player-select.png</file>
     </qresource>
 </RCC>
