@@ -32,8 +32,6 @@ class InternalServer : public BaseServer
 public:
     explicit InternalServer();
     virtual ~InternalServer();
-private:
-    EventThreader thread;
 private slots:
     //starting function
     void start_internal_server();

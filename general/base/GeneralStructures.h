@@ -454,9 +454,9 @@ enum ApplyOn
 {
     ApplyOn_AloneEnemy=0x01,
     ApplyOn_AllEnemy=0x02,
-    ApplyOn_Themself=0x03,
-    ApplyOn_AllAlly=0x04,
-    ApplyOn_Nobody=0x05
+    ApplyOn_Themself=0x04,
+    ApplyOn_AllAlly=0x08,
+    ApplyOn_Nobody=0x00
 };
 
 struct Skill

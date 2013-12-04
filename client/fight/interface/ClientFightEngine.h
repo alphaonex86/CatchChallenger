@@ -39,6 +39,11 @@ public:
     void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList);
     QList<Skill::AttackReturn> getAttackReturnList() const;
     void removeTheFirstLifeEffectAttackReturn();
+    void removeTheFirstBuffEffectAttackReturn();
+    void removeTheFirstAddBuffEffectAttackReturn();
+    void removeTheFirstRemoveBuffEffectAttackReturn();
+    void removeTheFirstAttackReturn();
+    bool firstAttackReturnHaveMoreEffect();
     bool firstLifeEffectQuantityChange(qint32 quantity);
     virtual PublicPlayerMonster *getOtherMonster() const;
     quint8 getOtherSelectedMonsterNumber() const;

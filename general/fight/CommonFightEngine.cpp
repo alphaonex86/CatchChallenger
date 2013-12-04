@@ -246,7 +246,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     while(index<monsterList.size())
     {
         int luck=monsterList.at(index).luck;
-        if(randomMonsterInt<luck)
+        if(randomMonsterInt<=luck)// with < it crash because randomMonsterInt can be 0
         {
             //it's this monster
             playerMonster.monster=monsterList.at(index).id;
@@ -264,9 +264,9 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     }
     if(!monsterFound)
     {
-        emit error(QString("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
         if(monsterList.isEmpty())
         {
+            emit error(QString("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
             *ok=false;
             playerMonster.monster=0;
             playerMonster.level=0;
@@ -275,9 +275,10 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
         }
         else
         {
+            emit message(QString("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
             playerMonster.monster=monsterList.first().id;
             //select the level
-            if(monsterList.at(index).maxLevel==monsterList.first().minLevel)
+            if(monsterList.first().maxLevel==monsterList.first().minLevel)
                 playerMonster.level=monsterList.first().minLevel;
             else
                 playerMonster.level=getOneSeed(monsterList.first().maxLevel-monsterList.first().minLevel+1)+monsterList.first().minLevel;
@@ -526,10 +527,10 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const quint8 &type,co
                 int index=0;
                 while(index<typeList.size())
                 {
-                    const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
-                    if(typeDefinition.multiplicator.contains(type))
+                    const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(type);
+                    if(typeDefinition.multiplicator.contains(typeList.at(index)))
                     {
-                        const qint8 &multiplicator=typeDefinition.multiplicator[type];
+                        const qint8 &multiplicator=typeDefinition.multiplicator[typeList.at(index)];
                         if(multiplicator>0)
                             effect_to_return.effective*=multiplicator;
                         else
@@ -1812,9 +1813,31 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                     success=(getOneSeed(100)<life.success);
                 if(success)
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    const quint32 currentMonsterHp=currentMonster->hp;
+                    const quint32 otherMonsterHp=otherMonster->hp;
+                    #endif
                     attackReturn.success=true;//the attack have work because at less have a buff
                     Skill::LifeEffectReturn lifeEffectReturn;
                     lifeEffectReturn=applyLifeEffect(skillDef.type,life.effect,currentMonster,otherMonster);
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(lifeEffectReturn.on==ApplyOn_AllAlly || lifeEffectReturn.on==ApplyOn_Themself)
+                    {
+                        if(currentMonster->hp!=(currentMonsterHp+lifeEffectReturn.quantity))
+                        {
+                            emit error("Returned damage don't match with the real effect");
+                            return attackReturn;
+                        }
+                    }
+                    if(lifeEffectReturn.on==ApplyOn_AllEnemy || lifeEffectReturn.on==ApplyOn_AloneEnemy)
+                    {
+                        if(otherMonster->hp!=(otherMonsterHp+lifeEffectReturn.quantity))
+                        {
+                            emit error("Returned damage don't match with the real effect");
+                            return attackReturn;
+                        }
+                    }
+                    #endif
                     attackReturn.lifeEffectMonster << lifeEffectReturn;
                 }
             }
@@ -1861,11 +1884,37 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             index++;
         }
     }
-    //apply the buff
+    //apply the effect of current buff
     if(!genericMonsterIsKO(currentMonster))
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        quint32 currentMonsterHp=currentMonster->hp;
+        quint32 otherMonsterHp=otherMonster->hp;
+        #endif
         attackReturn.removeBuffEffectMonster << removeOldBuff(currentMonster);
-        attackReturn.lifeEffectMonster << buffLifeEffect(currentMonster);
+        QList<Skill::LifeEffectReturn> lifeEffectMonster=buffLifeEffect(currentMonster);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        int index=0;
+        while(index<lifeEffectMonster.size())
+        {
+            if(lifeEffectMonster.at(index).on==ApplyOn_AllAlly || lifeEffectMonster.at(index).on==ApplyOn_Themself)
+                currentMonsterHp+=lifeEffectMonster.at(index).quantity;
+            if(lifeEffectMonster.at(index).on==ApplyOn_AllEnemy || lifeEffectMonster.at(index).on==ApplyOn_AloneEnemy)
+                otherMonsterHp+=lifeEffectMonster.at(index).quantity;
+            index++;
+        }
+        if(currentMonster->hp!=currentMonsterHp)
+        {
+            emit error("Returned damage don't match with the real effect");
+            return attackReturn;
+        }
+        if(otherMonster->hp!=otherMonsterHp)
+        {
+            emit error("Returned damage don't match with the real effect");
+            return attackReturn;
+        }
+        #endif
+        attackReturn.lifeEffectMonster << lifeEffectMonster;
     }
     if(genericMonsterIsKO(currentMonster) && !genericMonsterIsKO(otherMonster))
         doTurnIfChangeOfMonster=false;
