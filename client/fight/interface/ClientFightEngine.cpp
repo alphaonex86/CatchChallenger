@@ -415,8 +415,51 @@ void ClientFightEngine::removeTheFirstLifeEffectAttackReturn()
         return;
     if(!attackReturnList.first().lifeEffectMonster.isEmpty())
         attackReturnList.first().lifeEffectMonster.removeFirst();
-    if(attackReturnList.first().lifeEffectMonster.isEmpty())
+}
+
+void ClientFightEngine::removeTheFirstBuffEffectAttackReturn()
+{
+    if(attackReturnList.isEmpty())
+        return;
+    if(!attackReturnList.first().buffLifeEffectMonster.isEmpty())
+        attackReturnList.first().buffLifeEffectMonster.removeFirst();
+}
+
+void ClientFightEngine::removeTheFirstAddBuffEffectAttackReturn()
+{
+    if(attackReturnList.isEmpty())
+        return;
+    if(!attackReturnList.first().addBuffEffectMonster.isEmpty())
+        attackReturnList.first().addBuffEffectMonster.removeFirst();
+}
+
+void ClientFightEngine::removeTheFirstRemoveBuffEffectAttackReturn()
+{
+    if(attackReturnList.isEmpty())
+        return;
+    if(!attackReturnList.first().removeBuffEffectMonster.isEmpty())
+        attackReturnList.first().removeBuffEffectMonster.removeFirst();
+}
+
+void ClientFightEngine::removeTheFirstAttackReturn()
+{
+    if(!attackReturnList.isEmpty())
         attackReturnList.removeFirst();
+}
+
+bool ClientFightEngine::firstAttackReturnHaveMoreEffect()
+{
+    if(attackReturnList.isEmpty())
+        return false;
+    if(!attackReturnList.first().lifeEffectMonster.isEmpty())
+        return true;
+    if(!attackReturnList.first().addBuffEffectMonster.isEmpty())
+        return true;
+    if(!attackReturnList.first().removeBuffEffectMonster.isEmpty())
+        return true;
+    if(!attackReturnList.first().buffLifeEffectMonster.isEmpty())
+        return true;
+    return false;
 }
 
 bool ClientFightEngine::firstLifeEffectQuantityChange(qint32 quantity)

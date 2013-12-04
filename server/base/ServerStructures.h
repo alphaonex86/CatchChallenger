@@ -224,7 +224,7 @@ struct ServerPrivateVariables
     QList<MarketPlayerMonster> marketPlayerMonsterList;
 
     //general data
-    QList<EventThreader *> eventThreaderList;
+    QList<QThread *> eventThreaderList;
     QTimer *timer_player_map;
     bool stopIt;
     quint32 maxClanId;

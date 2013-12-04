@@ -268,6 +268,7 @@ private slots:
     void teleportTo(const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     void doNextAction();
     void displayAttack();
+    bool displayFirstAttackText(bool firstText);
     void displayText(const QString &text);
     void resetPosition(bool outOfScreen=false, bool topMonster=true, bool bottomMonster=true);
     void init_environement_display(CatchChallenger::Map_client *map, const quint8 &x, const quint8 &y);
