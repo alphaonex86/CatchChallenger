@@ -236,13 +236,13 @@ void BaseServer::preload_zone()
 
         //load capture
         QList<quint32> fightIdList;
-        QDomElement capture = root.firstChildElement("capture");
+        QDomElement capture = root.firstChildElement(QStringLiteral("capture"));
         if(!capture.isNull())
         {
-            if(capture.isElement() && capture.hasAttribute("fightId"))
+            if(capture.isElement() && capture.hasAttribute(QStringLiteral("fightId")))
             {
                 bool ok;
-                const QStringList &fightIdStringList=capture.attribute("fightId").split(";");
+                const QStringList &fightIdStringList=capture.attribute(QStringLiteral("fightId")).split(QStringLiteral(";"));
                 int sub_index=0;
                 while(sub_index<fightIdStringList.size())
                 {
@@ -268,10 +268,10 @@ void BaseServer::preload_zone()
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT `clan` FROM `city` WHERE `city`='%1';").arg(zoneCodeName);
+                queryText=QStringLiteral("SELECT `clan` FROM `city` WHERE `city`='%1';").arg(zoneCodeName);
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                queryText=QString("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
+                queryText=QStringLiteral("SELECT clan FROM city WHERE city='%1';").arg(zoneCodeName);
             break;
         }
         QSqlQuery cityStatusQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -302,10 +302,10 @@ void BaseServer::preload_industries()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
+            queryText=QStringLiteral("SELECT `id`,`resources`,`products`,`last_update` FROM `factory`");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,resources,products,last_update FROM factory");
+            queryText=QStringLiteral("SELECT id,resources,products,last_update FROM factory");
         break;
     }
     QSqlQuery industryStatusQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -328,11 +328,11 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            QStringList resourcesStringList=industryStatusQuery.value(1).toString().split(";");
+            QStringList resourcesStringList=industryStatusQuery.value(1).toString().split(QStringLiteral(";"));
             int index=0;
             while(index<resourcesStringList.size())
             {
-                QStringList itemStringList=resourcesStringList.at(index).split("->");
+                QStringList itemStringList=resourcesStringList.at(index).split(QStringLiteral("->"));
                 if(itemStringList.size()!=2)
                 {
                     DebugClass::debugConsole(QString("preload_industries: wrong entry count"));
@@ -379,11 +379,11 @@ void BaseServer::preload_industries()
         }
         if(ok)
         {
-            QStringList productsStringList=industryStatusQuery.value(2).toString().split(";");
+            QStringList productsStringList=industryStatusQuery.value(2).toString().split(QStringLiteral(";"));
             int index=0;
             while(index<productsStringList.size())
             {
-                QStringList itemStringList=productsStringList.at(index).split("->");
+                QStringList itemStringList=productsStringList.at(index).split(QStringLiteral("->"));
                 if(itemStringList.size()!=2)
                 {
                     DebugClass::debugConsole(QString("preload_industries: wrong entry count"));
@@ -442,10 +442,10 @@ void BaseServer::preload_industries()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QString("DELETE FROM `industries` WHERE `id`='%1'").arg(industryStatusQuery.value(0).toString());
+                    queryText=QStringLiteral("DELETE FROM `industries` WHERE `id`='%1'").arg(industryStatusQuery.value(0).toString());
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    queryText=QString("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
+                    queryText=QStringLiteral("DELETE FROM industries WHERE id='%1'").arg(industryStatusQuery.value(0).toString());
                 break;
             }
             QSqlQuery industryDeleteQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -462,10 +462,10 @@ void BaseServer::preload_market_monsters()
      {
          default:
          case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price`,`market_bitcoin` FROM `monster` WHERE `place`='market' ORDER BY `position` ASC");
+            queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character`,`market_price`,`market_bitcoin` FROM `monster` WHERE `place`='market' ORDER BY `position` ASC");
          break;
          case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
+            queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character,market_price,market_bitcoin FROM monster WHERE place='market' ORDER BY position ASC");
          break;
      }
      bool ok;
@@ -540,11 +540,11 @@ void BaseServer::preload_market_monsters()
          }
          if(ok)
          {
-             if(monstersQuery.value(7).toString()=="male")
+             if(monstersQuery.value(7).toString()==QStringLiteral("male"))
                  playerMonster.gender=Gender_Male;
-             else if(monstersQuery.value(7).toString()=="female")
+             else if(monstersQuery.value(7).toString()==QStringLiteral("female"))
                  playerMonster.gender=Gender_Female;
-             else if(monstersQuery.value(7).toString()=="unknown")
+             else if(monstersQuery.value(7).toString()==QStringLiteral("unknown"))
                  playerMonster.gender=Gender_Unknown;
              else
              {
@@ -612,10 +612,10 @@ void BaseServer::preload_market_items()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `item`,`quantity`,`character`,`market_price`,`market_bitcoin` FROM `item` WHERE `place`='market'");
+            queryText=QStringLiteral("SELECT `item`,`quantity`,`character`,`market_price`,`market_bitcoin` FROM `item` WHERE `place`='market'");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
+            queryText=QStringLiteral("SELECT item,quantity,character,market_price,market_bitcoin FROM item WHERE place='market'");
         break;
     }
     bool ok;
@@ -675,10 +675,10 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(monsterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
         break;
     }
 
@@ -736,10 +736,10 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(monsterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
         break;
     }
 
@@ -1248,14 +1248,14 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                     while (i.hasNext()) {
                         i.next();
                         QDomElement step = i.value();
-                        if(step.attribute("type")=="shop")
+                        if(step.attribute(QStringLiteral("type"))==QStringLiteral("shop"))
                         {
-                            if(!step.hasAttribute("shop"))
+                            if(!step.hasAttribute(QStringLiteral("shop")))
                                 CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
-                                quint32 shop=step.attribute("shop").toUInt(&ok);
+                                quint32 shop=step.attribute(QStringLiteral("shop")).toUInt(&ok);
                                 if(!ok)
                                     CatchChallenger::DebugClass::debugConsole(QString("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
@@ -1273,7 +1273,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        else if(step.attribute("type")=="learn")
+                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("learn"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QString("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -1288,7 +1288,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        else if(step.attribute("type")=="heal")
+                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("heal"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QString("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -1303,7 +1303,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
-                        else if(step.attribute("type")=="market")
+                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("market"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QString("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
@@ -1318,9 +1318,9 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 marketpoint_number++;
                             }
                         }
-                        else if(step.attribute("type")=="zonecapture")
+                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("zonecapture"))
                         {
-                            if(!step.hasAttribute("zone"))
+                            if(!step.hasAttribute(QStringLiteral("zone")))
                                 CatchChallenger::DebugClass::debugConsole(QString("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else if(static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
@@ -1336,30 +1336,30 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(step.attribute("type")=="fight")
+                        else if(step.attribute(QStringLiteral("type"))==QStringLiteral("fight"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
                                 CatchChallenger::DebugClass::debugConsole(QString("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
-                                quint32 fightid=step.attribute("fightid").toUInt(&ok);
+                                quint32 fightid=step.attribute(QStringLiteral("fightid")).toUInt(&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapack::commonDatapack.botFights.contains(fightid))
                                     {
-                                        if(bot_Semi.property_text.contains("lookAt"))
+                                        if(bot_Semi.property_text.contains(QStringLiteral("lookAt")))
                                         {
                                             Direction direction;
-                                            if(bot_Semi.property_text["lookAt"]=="left")
+                                            if(bot_Semi.property_text[QStringLiteral("lookAt")]==QStringLiteral("left"))
                                                 direction=CatchChallenger::Direction_move_at_left;
-                                            else if(bot_Semi.property_text["lookAt"]=="right")
+                                            else if(bot_Semi.property_text[QStringLiteral("lookAt")]==QStringLiteral("right"))
                                                 direction=CatchChallenger::Direction_move_at_right;
-                                            else if(bot_Semi.property_text["lookAt"]=="top")
+                                            else if(bot_Semi.property_text[QStringLiteral("lookAt")]==QStringLiteral("top"))
                                                 direction=CatchChallenger::Direction_move_at_top;
                                             else
                                             {
-                                                if(bot_Semi.property_text["lookAt"]!="bottom")
+                                                if(bot_Semi.property_text[QStringLiteral("lookAt")]!=QStringLiteral("bottom"))
                                                     CatchChallenger::DebugClass::debugConsole(QString("Wrong direction for the bot at %1 (%2,%3)")
                                                         .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                                 direction=CatchChallenger::Direction_move_at_bottom;
@@ -1409,14 +1409,14 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
         index++;
     }
 
-    DebugClass::debugConsole(QString("%1 learn point(s) on map loaded").arg(learnpoint_number));
-    DebugClass::debugConsole(QString("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
-    DebugClass::debugConsole(QString("%1 heal point(s) on map loaded").arg(healpoint_number));
-    DebugClass::debugConsole(QString("%1 market point(s) on map loaded").arg(marketpoint_number));
-    DebugClass::debugConsole(QString("%1 bot fight(s) on map loaded").arg(botfights_number));
-    DebugClass::debugConsole(QString("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
-    DebugClass::debugConsole(QString("%1 shop(s) on map loaded").arg(shops_number));
-    DebugClass::debugConsole(QString("%1 bots(s) on map loaded").arg(bots_number));
+    DebugClass::debugConsole(QStringLiteral("%1 learn point(s) on map loaded").arg(learnpoint_number));
+    DebugClass::debugConsole(QStringLiteral("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
+    DebugClass::debugConsole(QStringLiteral("%1 heal point(s) on map loaded").arg(healpoint_number));
+    DebugClass::debugConsole(QStringLiteral("%1 market point(s) on map loaded").arg(marketpoint_number));
+    DebugClass::debugConsole(QStringLiteral("%1 bot fight(s) on map loaded").arg(botfights_number));
+    DebugClass::debugConsole(QStringLiteral("%1 bot fights tigger(s) on map loaded").arg(botfightstigger_number));
+    DebugClass::debugConsole(QStringLiteral("%1 shop(s) on map loaded").arg(shops_number));
+    DebugClass::debugConsole(QStringLiteral("%1 bots(s) on map loaded").arg(bots_number));
 }
 
 void BaseServer::load_next_city_capture()
@@ -1506,35 +1506,35 @@ void BaseServer::loadBotFile(const QString &fileName)
         return;
     }
     //load the bots
-    QDomElement child = root.firstChildElement("bot");
+    QDomElement child = root.firstChildElement(QStringLiteral("bot"));
     while(!child.isNull())
     {
-        if(!child.hasAttribute("id"))
+        if(!child.hasAttribute(QStringLiteral("id")))
             CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         else if(!child.isElement())
             CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
-            quint32 id=child.attribute("id").toUInt(&ok);
+            quint32 id=child.attribute(QStringLiteral("id")).toUInt(&ok);
             if(ok)
             {
                 botFiles[fileName][id];
-                QDomElement step = child.firstChildElement("step");
+                QDomElement step = child.firstChildElement(QStringLiteral("step"));
                 while(!step.isNull())
                 {
-                    if(!step.hasAttribute("id"))
+                    if(!step.hasAttribute(QStringLiteral("id")))
                         CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
-                    else if(!step.hasAttribute("type"))
+                    else if(!step.hasAttribute(QStringLiteral("type")))
                         CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
                     else if(!step.isElement())
-                        CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber())));
+                        CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute(QStringLiteral("type"))).arg(step.lineNumber())));
                     else
                     {
-                        quint32 stepId=step.attribute("id").toUInt(&ok);
+                        quint32 stepId=step.attribute(QStringLiteral("id")).toUInt(&ok);
                         if(ok)
                             botFiles[fileName][id].step[stepId]=step;
                     }
-                    step = step.nextSiblingElement("step");
+                    step = step.nextSiblingElement(QStringLiteral("step"));
                 }
                 if(!botFiles[fileName][id].step.contains(1))
                     botFiles[fileName].remove(id);
@@ -1542,7 +1542,7 @@ void BaseServer::loadBotFile(const QString &fileName)
             else
                 CatchChallenger::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         }
-        child = child.nextSiblingElement("bot");
+        child = child.nextSiblingElement(QStringLiteral("bot"));
     }
 }
 

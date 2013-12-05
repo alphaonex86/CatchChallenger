@@ -1540,7 +1540,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         emit error("Display text for not existant attack");
         return false;
     }
-    const Skill::AttackReturn &currentAttack=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first();
+    const Skill::AttackReturn currentAttack=CatchChallenger::ClientFightEngine::fightEngine.getFirstAttackReturn();
 
     if(movie!=NULL)
     {
@@ -1617,11 +1617,11 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             {
                 if(lifeEffectReturn.quantity>0)
                     attackOwner+=tr("heal of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                         .arg(lifeEffectReturn.quantity);
                 else if(lifeEffectReturn.quantity<0)
                     attackOwner+=tr("hurt of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                         .arg(-lifeEffectReturn.quantity);
             }
             if((lifeEffectReturn.on & ApplyOn_AllAlly) || (lifeEffectReturn.on & ApplyOn_Themself))
@@ -1634,6 +1634,24 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                         .arg(-lifeEffectReturn.quantity);
             }
         }
+        if(lifeEffectReturn.effective!=1 && lifeEffectReturn.critical)
+        {
+            if(lifeEffectReturn.effective>1)
+                attackOwner+=QStringLiteral("<br />")+tr("It's very effective and critical throw");
+            else
+                attackOwner+=QStringLiteral("<br />")+tr("It's not very effective but it's critical throw");
+        }
+        else if(lifeEffectReturn.effective!=1)
+        {
+            if(lifeEffectReturn.effective>1)
+                attackOwner+=QStringLiteral("<br />")+tr("It's very effective");
+            else
+                attackOwner+=QStringLiteral("<br />")+tr("It's not very effective");
+        }
+        else if(lifeEffectReturn.critical)
+            attackOwner+=QStringLiteral("<br />")+tr("Critical throw");
+        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+        ui->labelFightEnter->setText(attackOwner);
         return true;
     }
 
@@ -1793,11 +1811,11 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             {
                 if(buffLifeEffectMonster.quantity>0)
                     attackOwner+=tr("heal of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                         .arg(buffLifeEffectMonster.quantity);
                 else if(buffLifeEffectMonster.quantity<0)
                     attackOwner+=tr("hurt of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
                         .arg(-buffLifeEffectMonster.quantity);
             }
             if((buffLifeEffectMonster.on & ApplyOn_AllAlly) || (buffLifeEffectMonster.on & ApplyOn_Themself))
@@ -1810,6 +1828,22 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                         .arg(-buffLifeEffectMonster.quantity);
             }
         }
+        if(buffLifeEffectMonster.effective!=1 && buffLifeEffectMonster.critical)
+        {
+            if(buffLifeEffectMonster.effective>1)
+                attackOwner+=QStringLiteral("<br />")+tr("It's very effective and critical throw");
+            else
+                attackOwner+=QStringLiteral("<br />")+tr("It's not very effective but it's critical throw");
+        }
+        else if(buffLifeEffectMonster.effective!=1)
+        {
+            if(buffLifeEffectMonster.effective>1)
+                attackOwner+=QStringLiteral("<br />")+tr("It's very effective");
+            else
+                attackOwner+=QStringLiteral("<br />")+tr("It's not very effective");
+        }
+        else if(buffLifeEffectMonster.critical)
+            attackOwner+=QStringLiteral("<br />")+tr("Critical throw");
         return true;
     }
     emit error("Can't display text without effect");
@@ -1853,19 +1887,23 @@ void BaseWindow::displayAttack()
 
     //if start, display text
     if(displayAttackProgression==0)
+    {
+        updateAttackTime.restart();
         if(!displayFirstAttackText(true))
             return;
+    }
 
+    const Skill::AttackReturn &attackReturn=CatchChallenger::ClientFightEngine::fightEngine.getFirstAttackReturn();
     //get the life effect to display
     Skill::LifeEffectReturn lifeEffectReturn;
-    if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
-        lifeEffectReturn=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first();
+    if(!attackReturn.lifeEffectMonster.isEmpty())
+        lifeEffectReturn=attackReturn.lifeEffectMonster.first();
     else
-        lifeEffectReturn=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffLifeEffectMonster.first();
+        lifeEffectReturn=attackReturn.buffLifeEffectMonster.first();
 
     //attack animation
     {
-        quint32 attackId=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack;
+        quint32 attackId=attackReturn.attack;
         QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_SKILLANIMATION;
         QString fileAnimation=skillAnimation+QString("%1.mng").arg(attackId);
         if(QFile(fileAnimation).exists())
@@ -1898,13 +1936,13 @@ void BaseWindow::displayAttack()
         }
     }
 
-    bool applyOnOtherMonster=true;
-    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
-        if((lifeEffectReturn.on | ApplyOn_Themself) || (lifeEffectReturn.on | ApplyOn_AllAlly))
-            applyOnOtherMonster=false;
-    if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
+    bool applyOnOtherMonster=false;
+    if(attackReturn.doByTheCurrentMonster)
         if((lifeEffectReturn.on | ApplyOn_AloneEnemy) || (lifeEffectReturn.on | ApplyOn_AllEnemy))
-            applyOnOtherMonster=false;
+            applyOnOtherMonster=true;
+    if(!attackReturn.doByTheCurrentMonster)
+        if((lifeEffectReturn.on | ApplyOn_Themself) || (lifeEffectReturn.on | ApplyOn_AllAlly))
+            applyOnOtherMonster=true;
 
     if(displayAttackProgression%100 /* each 400ms */ && attack_quantity_changed<0)
     {
@@ -1942,18 +1980,7 @@ void BaseWindow::displayAttack()
     if(updateAttackTime.elapsed()>3000 /*3000ms*/)
     {
         displayAttackProgression=0;
-        if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
-            if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity!=0)
-            {
-                if(applyOnOtherMonster)
-                    ui->progressBarFightTopHP->setValue(otherMonster->hp);
-                else
-                {
-                    ui->progressBarFightBottomHP->setValue(currentMonster->hp);
-                    ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
-                }
-            }
-        if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+        if(!attackReturn.lifeEffectMonster.isEmpty())
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         else
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstBuffEffectAttackReturn();
@@ -1985,18 +2012,18 @@ void BaseWindow::displayAttack()
     }
     else
     {
-        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty())
+        if(attackReturn.lifeEffectMonster.isEmpty())
             hp_to_change=0;
-        else if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<0)
+        else if(attackReturn.lifeEffectMonster.first().quantity<0)
         {
             hp_to_change=-hp_to_change;
-            if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity>hp_to_change)
-                hp_to_change=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
+            if(attackReturn.lifeEffectMonster.first().quantity>hp_to_change)
+                hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
         }
-        else if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity>0)
+        else if(attackReturn.lifeEffectMonster.first().quantity>0)
         {
-            if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity<hp_to_change)
-                hp_to_change=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.first().quantity;
+            if(attackReturn.lifeEffectMonster.first().quantity<hp_to_change)
+                hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
         }
         else
             hp_to_change=0;
