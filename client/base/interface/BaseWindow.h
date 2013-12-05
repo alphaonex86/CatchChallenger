@@ -255,6 +255,7 @@ private slots:
     void on_pushButtonFightEnterNext_clicked();
     void moveFightMonsterBottom();
     void updateCurrentMonsterInformation();
+    void updateCurrentMonsterInformationXp();
     void moveFightMonsterTop();
     void moveFightMonsterBoth();
     void updateOtherMonsterInformation();
@@ -276,6 +277,7 @@ private slots:
     void init_other_monster_display();
     void useTrap(const quint32 &itemId);
     void displayTrap();
+    void displayExperienceGain();
     void checkEvolution();
 
     //clan/city
@@ -461,6 +463,8 @@ private:
     QmlMonsterGeneralInformations *baseMonsterEvolution;
     QmlMonsterGeneralInformations *targetMonsterEvolution;
     quint32 idMonsterEvolution;
+    quint32 mLastGivenXP;
+    quint32 currentMonsterLevel;
 
     //plant seed in waiting
     struct SeedInWaiting
@@ -541,6 +545,7 @@ private:
     QTimer moveFightMonsterTopTimer;
     QTimer moveFightMonsterBothTimer;
     QTimer displayAttackTimer;
+    QTimer displayExpTimer;
     QTimer doNextActionTimer;
     QTime updateAttackTime;
     QTime updateTrapTime;

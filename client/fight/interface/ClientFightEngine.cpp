@@ -42,6 +42,7 @@ void ClientFightEngine::setBattleMonster(const QList<quint8> &stat,const quint8 
     battleCurrentMonster << publicPlayerMonster;
     battleStat=stat;
     battleMonsterPlace << monsterPlace;
+    mLastGivenXP=0;
 }
 
 void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters)
@@ -64,6 +65,7 @@ void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonste
         botMonstersStat << 0x01;
         index++;
     }
+    mLastGivenXP=0;
 }
 
 bool ClientFightEngine::addBattleMonster(const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
@@ -202,6 +204,8 @@ bool ClientFightEngine::isInFight() const
 
 void ClientFightEngine::resetAll()
 {
+    mLastGivenXP=0;
+
     player_informations_local.playerMonster.clear();
     attackReturnList.clear();
 
@@ -501,6 +505,7 @@ bool ClientFightEngine::haveBattleOtherMonster() const
 
 bool ClientFightEngine::useSkill(const quint32 &skill)
 {
+    mLastGivenXP=0;
     Api_client_real::client->useSkill(skill);
     if(isInBattle())
         return true;
@@ -573,4 +578,19 @@ void ClientFightEngine::confirmEvolution(const quint32 &monterId)
         index++;
     }
     qDebug() << "Monster for evolution not found";
+}
+
+//return true if change level
+bool ClientFightEngine::giveXPSP(int xp,int sp)
+{
+    bool haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
+    mLastGivenXP=xp;
+    return haveChangeOfLevel;
+}
+
+quint32 ClientFightEngine::lastGivenXP()
+{
+    quint32 tempLastGivenXP=mLastGivenXP;
+    mLastGivenXP=0;
+    return tempLastGivenXP;
 }
