@@ -140,6 +140,17 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         this->direction=direction;
         switch(direction)
         {
+            case CatchChallenger::Direction_move_at_top:
+            case CatchChallenger::Direction_move_at_right:
+            case CatchChallenger::Direction_move_at_bottom:
+            case CatchChallenger::Direction_move_at_left:
+            QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
+            return;
+            default:
+            break;
+        }
+        switch(direction)
+        {
             case CatchChallenger::Direction_look_at_top:
             case CatchChallenger::Direction_move_at_top:
             {

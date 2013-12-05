@@ -99,7 +99,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                 ui->monsterDetailsGender->setPixmap(QPixmap());
                 ui->monsterDetailsGender->setToolTip(QString());
             }
-            ui->monsterDetailsLevel->setText(tr("Level: %1").arg(monster.level));
+            ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
             ui->monsterDetailsStatHeal->setText(tr("Heal: %1/%2").arg(monster.hp).arg(stat.hp));
             ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
             ui->monsterDetailsStatXp->setText(tr("Xp: %1").arg(monster.remaining_xp));
@@ -471,7 +471,7 @@ void BaseWindow::init_current_monster_display()
         ui->pushButtonFightEnterNext->setVisible(true);
         ui->frameFightBottom->setVisible(false);
         ui->labelFightBottomName->setText(DatapackClientLoader::datapackLoader.monsterExtra[fightMonster->monster].name);
-        ui->labelFightBottomLevel->setText(tr("Level: %1").arg(fightMonster->level));
+        ui->labelFightBottomLevel->setText(tr("Level %1").arg(fightMonster->level));
         Monster::Stat fightStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[fightMonster->monster],fightMonster->level);
         ui->progressBarFightBottomHP->setMaximum(fightStat.hp);
         ui->progressBarFightBottomHP->setValue(fightMonster->hp);
@@ -575,6 +575,7 @@ void BaseWindow::moveFightMonsterBottom()
         else
         {
             updateCurrentMonsterInformation();
+            updateCurrentMonsterInformationXp();
             if(battleStep==BattleStep_Presentation)
             {
                 resetPosition(true,false,true);
@@ -649,6 +650,20 @@ void BaseWindow::teleportTo(const quint32 &mapId,const quint16 &x,const quint16 
         qDebug() << "normal tp";
 }
 
+void BaseWindow::updateCurrentMonsterInformationXp()
+{
+    PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(monster==NULL)
+    {
+        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        return;
+    }
+    ui->progressBarFightBottomExp->setValue(monster->remaining_xp);
+    ui->labelFightBottomLevel->setText(tr("Level %1").arg(monster->level));
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster->monster];
+    ui->progressBarFightBottomExp->setMaximum(monsterInformations.level_to_xp.at(monster->level-1));
+}
+
 void BaseWindow::updateCurrentMonsterInformation()
 {
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
@@ -669,10 +684,7 @@ void BaseWindow::updateCurrentMonsterInformation()
     ui->labelFightMonsterBottom->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra[monster->monster].back.scaled(160,160));
     ui->frameFightBottom->setVisible(true);
     ui->frameFightBottom->show();
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster->monster];
-    ui->progressBarFightBottomExp->setMaximum(monsterInformations.level_to_xp.at(monster->level-1));
-    ui->progressBarFightBottomExp->setValue(monster->remaining_xp);
-    ui->labelFightBottomLevel->setText(tr("Level: %1").arg(monster->level));
+    currentMonsterLevel=monster->level;
     //list the attack
     fight_attacks_graphical.clear();
     ui->listWidgetFightAttack->clear();
@@ -785,7 +797,7 @@ void BaseWindow::moveFightMonsterTop()
                     if(currentMonster!=NULL)
                     {
                         ui->progressBarFightBottomExp->setValue(currentMonster->remaining_xp);
-                        ui->labelFightBottomLevel->setText(tr("Level: %1").arg(currentMonster->level));
+                        ui->labelFightBottomLevel->setText(tr("Level %1").arg(currentMonster->level));
                     }
                     displayText(tr("You win!"));
                 }
@@ -938,7 +950,7 @@ void BaseWindow::updateOtherMonsterInformation()
         ui->frameFightTop->setVisible(true);
         ui->frameFightTop->show();
         ui->labelFightTopName->setText(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name);
-        ui->labelFightTopLevel->setText(tr("Level: %1").arg(otherMonster->level));
+        ui->labelFightTopLevel->setText(tr("Level %1").arg(otherMonster->level));
         Monster::Stat otherStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
         ui->progressBarFightTopHP->setMaximum(otherStat.hp);
         ui->progressBarFightTopHP->setValue(otherMonster->hp);
@@ -1470,11 +1482,46 @@ void BaseWindow::doNextAction()
     //if the other monster is KO
     if(CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
     {
+        quint32 returnedLastGivenXP=CatchChallenger::ClientFightEngine::fightEngine.lastGivenXP();
+        if(returnedLastGivenXP>0 || mLastGivenXP>0)
+        {
+            if(returnedLastGivenXP>0)
+                mLastGivenXP=returnedLastGivenXP;
+            displayExperienceGain();
+            return;
+        }
         if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
         {
             win();
             return;
         }
+        else
+            updateCurrentMonsterInformationXp();
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
+        {
+            PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+            PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+            if(currentMonster!=NULL)
+                if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
+                {
+                    emit error(QString("Current monster damage don't match with the internal value (end && currentMonster): %1!=%2")
+                               .arg(currentMonster->hp)
+                               .arg(ui->progressBarFightBottomHP->value())
+                               );
+                    return;
+                }
+            if(otherMonster!=NULL)
+                if((int)otherMonster->hp!=ui->progressBarFightTopHP->value())
+                {
+                    emit error(QString("Current monster damage don't match with the internal value (end && otherMonster): %1!=%2")
+                               .arg(otherMonster->hp)
+                               .arg(ui->progressBarFightTopHP->value())
+                               );
+                    return;
+                }
+        }
+        #endif
         qDebug() << "doNextAction(): remplace KO other monster";
         PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
         if(otherMonster==NULL)
@@ -1986,27 +2033,6 @@ void BaseWindow::displayAttack()
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstBuffEffectAttackReturn();
         if(!CatchChallenger::ClientFightEngine::fightEngine.firstAttackReturnHaveMoreEffect())
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
-        {
-            if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
-            {
-                emit error(QString("Current monster damage don't match with the internal value (end && currentMonster): %1!=%2")
-                           .arg(currentMonster->hp)
-                           .arg(ui->progressBarFightBottomHP->value())
-                           );
-                return;
-            }
-            if((int)otherMonster->hp!=ui->progressBarFightTopHP->value())
-            {
-                emit error(QString("Current monster damage don't match with the internal value (end && otherMonster): %1!=%2")
-                           .arg(otherMonster->hp)
-                           .arg(ui->progressBarFightTopHP->value())
-                           );
-                return;
-            }
-        }
-        #endif
         //attack is finish
         doNextAction();
     }
@@ -2041,6 +2067,67 @@ void BaseWindow::displayAttack()
         displayAttackTimer.start();
         displayAttackProgression++;
     }
+}
+
+void BaseWindow::displayExperienceGain()
+{
+    PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        mLastGivenXP=0;
+        newError(tr("Internal error"),"displayAttack(): crash: unable to get the current monster");
+        doNextAction();
+        return;
+    }
+    if(ui->progressBarFightBottomExp->value()==ui->progressBarFightBottomExp->maximum())
+        ui->progressBarFightBottomExp->setValue(0);
+    //animation finished
+    if(mLastGivenXP<=0)
+    {
+        doNextAction();
+        return;
+    }
+
+    //if start, display text
+    if(displayAttackProgression==0)
+    {
+        ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+        ui->labelFightEnter->setText(tr("Your %1 gain %2 of experience").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name).arg(mLastGivenXP));
+    }
+
+    int xp_to_change;
+    xp_to_change=ui->progressBarFightBottomExp->maximum()/200;//0.5%
+    if(xp_to_change==0)
+        xp_to_change=1;
+
+    if((ui->progressBarFightBottomExp->value()+xp_to_change)>=ui->progressBarFightBottomExp->maximum())
+    {
+        xp_to_change=ui->progressBarFightBottomExp->maximum()-ui->progressBarFightBottomExp->value();
+        const Monster::Stat &oldStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
+        currentMonsterLevel++;
+        const Monster::Stat &newStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
+        if(oldStat.hp<newStat.hp)
+        {
+            ui->progressBarFightBottomHP->setMaximum(ui->progressBarFightBottomHP->maximum()+(newStat.hp-oldStat.hp));
+            ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+(newStat.hp-oldStat.hp));
+            ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
+        }
+        ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.monsters[currentMonster->monster].level_to_xp.at(currentMonsterLevel-1));
+        ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->maximum());
+        ui->labelFightBottomLevel->setText(tr("Level %1").arg(currentMonsterLevel));
+        if(currentMonsterLevel>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+        {
+            mLastGivenXP=0;
+            doNextAction();
+            return;
+        }
+    }
+    else
+        ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->value()+xp_to_change);
+    mLastGivenXP-=xp_to_change;
+
+    displayExpTimer.start();
+    displayAttackProgression++;
 }
 
 void BaseWindow::displayTrap()

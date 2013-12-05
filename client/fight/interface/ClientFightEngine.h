@@ -60,7 +60,10 @@ public:
     bool doTheOtherMonsterTurn();
     PlayerMonster * evolutionByLevelUp();
     void confirmEvolution(const quint32 &monterId);
+    bool giveXPSP(int xp,int sp);
+    quint32 lastGivenXP();
 private:
+    quint32 mLastGivenXP;
     QList<int> mEvolutionByLevelUp;
     QList<Skill::AttackReturn> attackReturnList;
     Player_private_and_public_informations player_informations_local;
