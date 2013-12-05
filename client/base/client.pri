@@ -99,6 +99,8 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/NewGame.ui
 
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
+macx:INCLUDEPATH += /usr/local/include/
+macx:LIBS += -L/usr/local/lib/
 
 RESOURCES += $$PWD/resources/client-resources.qrc \
     $$PWD/../crafting/resources/client-resources-plant.qrc \

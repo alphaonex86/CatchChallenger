@@ -1720,7 +1720,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             }
             if((addBuffEffectMonster.on & ApplyOn_AllAlly) || (addBuffEffectMonster.on & ApplyOn_Themself))
             {
-                attackOwner+=tr("add the buff %1 on them self")
+                attackOwner+=tr("add the buff %1 on themself")
                     .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra[addBuffEffectMonster.buff].name);
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
                 listWidget=ui->bottomBuff;
@@ -1738,7 +1738,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             }
             if((addBuffEffectMonster.on & ApplyOn_AllAlly) || (addBuffEffectMonster.on & ApplyOn_Themself))
             {
-                attackOwner+=tr("add the buff %1 on them self")
+                attackOwner+=tr("add the buff %1 on themself")
                     .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra[addBuffEffectMonster.buff].name);
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
                 listWidget=ui->topBuff;
@@ -1791,7 +1791,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             }
             if((removeBuffEffectMonster.on & ApplyOn_AllAlly) || (removeBuffEffectMonster.on & ApplyOn_Themself))
             {
-                attackOwner+=tr("add the buff %1 on them self")
+                attackOwner+=tr("add the buff %1 on themself")
                     .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra[removeBuffEffectMonster.buff].name);
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
             }
@@ -1807,7 +1807,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             }
             if((removeBuffEffectMonster.on & ApplyOn_AllAlly) || (removeBuffEffectMonster.on & ApplyOn_Themself))
             {
-                attackOwner+=tr("add the buff %1 on them self")
+                attackOwner+=tr("add the buff %1 on themself")
                     .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra[removeBuffEffectMonster.buff].name);
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
             }
@@ -2092,7 +2092,7 @@ void BaseWindow::displayExperienceGain()
     if(displayAttackProgression==0)
     {
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-        ui->labelFightEnter->setText(tr("Your %1 gain %2 of experience").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name).arg(mLastGivenXP));
+        ui->labelFightEnter->setText(tr("You %1 gain %2 of experience").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name).arg(mLastGivenXP));
     }
 
     int xp_to_change;
