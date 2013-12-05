@@ -403,6 +403,11 @@ QList<Skill::AttackReturn> ClientFightEngine::getAttackReturnList() const
     return attackReturnList;
 }
 
+Skill::AttackReturn ClientFightEngine::getFirstAttackReturn() const
+{
+    return attackReturnList.first();
+}
+
 Skill::AttackReturn ClientFightEngine::generateOtherAttack()
 {
     attackReturnList << CommonFightEngine::generateOtherAttack();
