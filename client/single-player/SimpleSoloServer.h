@@ -1,14 +1,14 @@
 #ifndef SIMPLESOLOSERVER_H
 #define SIMPLESOLOSERVER_H
 
-#include <QDialog>
+#include <QMainWindow>
 #include "../base/solo/SoloWindow.h"
 
 namespace Ui {
 class SimpleSoloServer;
 }
 
-class SimpleSoloServer : public QDialog
+class SimpleSoloServer : public QMainWindow
 {
     Q_OBJECT
 public:
