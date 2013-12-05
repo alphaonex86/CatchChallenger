@@ -3,7 +3,7 @@
 #include <QStandardPaths>
 
 SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
-    QDialog(parent),
+    QMainWindow(parent),
     ui(new Ui::SimpleSoloServer)
 {
     ui->setupUi(this);
