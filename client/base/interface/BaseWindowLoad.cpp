@@ -764,7 +764,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             while(index<items.size())
             {
                 if(allowRewards.contains(ActionAllow_Clan))
-                    allows << tr("Add permistion to create clan");
+                    allows << tr("Add permission to create clan");
                 index++;
             }
             if(allows.size()>16)
