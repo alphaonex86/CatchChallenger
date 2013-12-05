@@ -34,7 +34,7 @@ function compil {
 		BASEAPPNAME="catchchallenger-${TARGET}.app"
 		ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/qmake *.pro -spec macx-g++ -config release"
 		echo "try make"
-		ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/usr/bin/make -j 3 2> /dev/null > /dev/null"
+		ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/usr/bin/make -j 3 > /dev/null"
 		RETURN_CODE=$?
 		if [ $? -ne 0 ]
 		then
@@ -65,6 +65,6 @@ function compil {
 	fi
 }
 
-compil "ultimate"
 compil "single-player"
+compil "ultimate"
 compil "single-server"
