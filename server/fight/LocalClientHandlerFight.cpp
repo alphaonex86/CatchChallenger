@@ -65,6 +65,16 @@ void LocalClientHandlerFight::saveCurrentMonsterStat()
 
 void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster],monster.level);
+        if(monster.hp>currentMonsterStat.hp)
+        {
+            emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(monster.monster).arg(monster.hp).arg(currentMonsterStat.hp));
+            return;
+        }
+    }
+    #endif
     //save into the db
     if(GlobalServerData::serverSettings.database.fightSync==ServerSettings::Database::FightSync_AtTheEndOfBattle)
     {
@@ -285,6 +295,26 @@ void LocalClientHandlerFight::syncForEndOfTurn()
 
 void LocalClientHandlerFight::saveStat()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        PublicPlayerMonster * otherMonster=getOtherMonster();
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster!=NULL)
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                return;
+            }
+        if(otherMonster!=NULL)
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                return;
+            }
+    }
+    #endif
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
@@ -1462,6 +1492,24 @@ quint8 LocalClientHandlerFight::decreaseSkillEndurance(const quint32 &skill)
 
 void LocalClientHandlerFight::confirmEvolutionTo(PlayerMonster * playerMonster,const quint32 &monster)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    PlayerMonster * currentMonster=getCurrentMonster();
+    PublicPlayerMonster * otherMonster=getOtherMonster();
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+    if(currentMonster!=NULL)
+        if(currentMonster->hp>currentMonsterStat.hp)
+        {
+            emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+            return;
+        }
+    if(otherMonster!=NULL)
+        if(otherMonster->hp>otherMonsterStat.hp)
+        {
+            emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+            return;
+        }
+    #endif
     CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
     switch(GlobalServerData::serverSettings.database.type)
     {
@@ -1515,7 +1563,47 @@ void LocalClientHandlerFight::confirmEvolution(const quint32 &monsterId)
 
 void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const quint32 &newHpValue)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        PublicPlayerMonster * otherMonster=getOtherMonster();
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster!=NULL)
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                return;
+            }
+        if(otherMonster!=NULL)
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                return;
+            }
+    }
+    #endif
     CommonFightEngine::hpChange(currentMonster,newHpValue);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        PlayerMonster * currentMonster=getCurrentMonster();
+        PublicPlayerMonster * otherMonster=getOtherMonster();
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+        if(currentMonster!=NULL)
+            if(currentMonster->hp>currentMonsterStat.hp)
+            {
+                emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                return;
+            }
+        if(otherMonster!=NULL)
+            if(otherMonster->hp>otherMonsterStat.hp)
+            {
+                emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                return;
+            }
+    }
+    #endif
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:

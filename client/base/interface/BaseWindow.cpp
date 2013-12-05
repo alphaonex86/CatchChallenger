@@ -73,6 +73,8 @@ BaseWindow::BaseWindow() :
     moveFightMonsterBothTimer.setInterval(20);
     displayAttackTimer.setSingleShot(true);
     displayAttackTimer.setInterval(50);
+    displayExpTimer.setSingleShot(true);
+    displayExpTimer.setInterval(50);
     displayTrapTimer.setSingleShot(true);
     displayTrapTimer.setInterval(50);
     doNextActionTimer.setSingleShot(true);
@@ -102,6 +104,7 @@ BaseWindow::BaseWindow() :
     connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop);
     connect(&moveFightMonsterBothTimer,     &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBoth);
     connect(&displayAttackTimer,            &QTimer::timeout,                       this,&BaseWindow::displayAttack);
+    connect(&displayExpTimer,               &QTimer::timeout,                       this,&BaseWindow::displayExperienceGain);
     connect(&displayTrapTimer,              &QTimer::timeout,                       this,&BaseWindow::displayTrap);
     connect(&doNextActionTimer,             &QTimer::timeout,                       this,&BaseWindow::doNextAction);
 

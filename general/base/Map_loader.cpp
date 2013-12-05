@@ -638,12 +638,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         child = child.nextSiblingElement(QStringLiteral("layer"));
     }
 
-    QByteArray null_data;
+    /*QByteArray null_data;
     null_data.resize(4);
     null_data[0]=0x00;
     null_data[1]=0x00;
     null_data[2]=0x00;
-    null_data[3]=0x00;
+    null_data[3]=0x00;*/
 
     if(Walkable.size()>0)
         map_to_send.parsed_layer.walkable	= new bool[map_to_send.width*map_to_send.height];
@@ -679,7 +679,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     char * LedgesBottomBin=NULL;
     char * LedgesTopBin=NULL;
     {
-        const quint32 rawSize=x*4+y*map_to_send.width*4;
+        const quint32 rawSize=map_to_send.width*map_to_send.height*4;
 
         if(rawSize==(quint32)Walkable.size())
             WalkableBin=Walkable.data();
@@ -872,6 +872,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
 #ifdef DEBUG_MESSAGE_MAP_RAW
     if(Walkable.size()>0 || Water.size()>0 || Collisions.size()>0 || Grass.size()>0 || Dirt.size()>0)
     {
+        QByteArray null_data;
+        null_data.resize(4);
+        null_data[0]=0x00;
+        null_data[1]=0x00;
+        null_data[2]=0x00;
+        null_data[3]=0x00;
         x=0;
         y=0;
         QStringList layers_name;
@@ -885,7 +891,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
             layers_name << "Grass";
         if(Dirt.size()>0)
             layers_name << "Dirt";
-        DebugClass::debugConsole("For "+fileName+": "+layers_name.join(" + ")+" = walkable");
+        if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
+            layers_name << "Ledges*";
+        DebugClass::debugConsole("For "+fileName+": "+layers_name.join(" + ")+" = Walkable");
         while(y<map_to_send.height)
         {
             QString line;
@@ -935,6 +943,16 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 while(x<map_to_send.width)
                 {
                     line += QString::number(Dirt.mid(x*4+y*map_to_send.width*4,4)!=null_data);
+                    x++;
+                }
+                line+=" ";
+            }
+            if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
+            {
+                x=0;
+                while(x<map_to_send.width)
+                {
+                    line += QString::number(map_to_send.parsed_layer.ledges[x+y*map_to_send.width]);
                     x++;
                 }
                 line+=" ";

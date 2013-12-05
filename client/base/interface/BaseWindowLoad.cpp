@@ -47,6 +47,7 @@ void BaseWindow::resetAll()
     inSelection=false;
     isInQuest=false;
     displayAttackProgression=0;
+    mLastGivenXP=0;
     fightTimerFinish=false;
     queryList.clear();
     ui->inventoryInformation->setVisible(false);

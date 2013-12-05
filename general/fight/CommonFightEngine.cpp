@@ -1526,6 +1526,20 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     else
         decreaseSkillEndurance(skill);
     doTheTurn(skill,skillLevel,currentMonsterAttackFirst(currentMonster,otherMonster));
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonster->level);
+    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
+    if(currentMonster->hp>currentMonsterStat.hp)
+    {
+        emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+        return false;
+    }
+    if(otherMonster->hp>otherMonsterStat.hp)
+    {
+        emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+        return false;
+    }
+    #endif
     return true;
 }
 
