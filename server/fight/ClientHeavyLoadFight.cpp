@@ -318,7 +318,8 @@ void ClientHeavyLoad::askedRandomNumber()
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)
     {
-        randomDataStream << quint8(rand()%256);
+        //randomDataStream << quint8(rand()%256);
+        randomDataStream << quint8(0x00);
         index++;
     }
     emit newRandomNumber(randomData);
