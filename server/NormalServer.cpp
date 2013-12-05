@@ -56,7 +56,7 @@ NormalServer::~NormalServer()
     }
     while(GlobalServerData::serverPrivateVariables.eventThreaderList.size()>0)
     {
-        EventThreader * tempThread=GlobalServerData::serverPrivateVariables.eventThreaderList.first();
+        EventThreader * tempThread=static_cast<EventThreader *>(GlobalServerData::serverPrivateVariables.eventThreaderList.first());
         GlobalServerData::serverPrivateVariables.eventThreaderList.removeFirst();
         tempThread->wait();
         delete tempThread;

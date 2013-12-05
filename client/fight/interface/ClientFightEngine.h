@@ -38,6 +38,7 @@ public:
     bool haveWin();
     void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList);
     QList<Skill::AttackReturn> getAttackReturnList() const;
+    Skill::AttackReturn getFirstAttackReturn() const;
     void removeTheFirstLifeEffectAttackReturn();
     void removeTheFirstBuffEffectAttackReturn();
     void removeTheFirstAddBuffEffectAttackReturn();
