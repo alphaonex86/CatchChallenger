@@ -101,7 +101,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if(socket!=NULL || internalServer!=NULL)
     {
         if(internalServer!=NULL)
-            internalServer->try_stop_server();
+        {
+            if(internalServer->isListen())
+                internalServer->stop();
+            else
+                QCoreApplication::quit();
+        }
         else
             QCoreApplication::quit();
         if(socket!=NULL)
