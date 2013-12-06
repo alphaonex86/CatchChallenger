@@ -18,6 +18,7 @@ function assemble {
 	if [ ! -e ${FINAL_ARCHIVE} ]; then
 		echo "creating the archive ${TARGET}..."
 		find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -iname "*.a" -exec rm {} \; > /dev/null 2>&1
+		mv ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/client/${TARGET}/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
 #		cp -Rf ${CATCHCHALLENGERSOURCESPATH}/README ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/README.txt
 #		cp -Rf ${CATCHCHALLENGERSOURCESPATH}/COPYING ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/COPYING.txt
 		upx --lzma -9 ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/catchchallenger*.exe > /dev/null 2>&1
@@ -31,18 +32,29 @@ function assemble {
 # 		cp -f ${BASE_PWD}/data/qm-translation/pl.qm ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/Languages/pl/qt.qm
 # 		cp -f ${BASE_PWD}/data/qm-translation/pt.qm ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/Languages/pt/qt.qm
 # 		cp -f ${BASE_PWD}/data/qm-translation/ru.qm ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/Languages/ru/qt.qm
+		rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/client/
+		rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/tools/
+		if [ "${TARGET}" == "single-player" ]
+		then
+			rsync -aqrt ${CATCHCHALLENGERSOURCESPATH}/../datapack/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/datapack/
+		fi
+		if [ "${TARGET}" == "ultimate" ]
+		then
+			mkdir -p ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/datapack/
+			rsync -aqrt ${CATCHCHALLENGERSOURCESPATH}/../datapack/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/datapack/internal/
+		fi
 		find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -iname "*.ts" -exec rm {} \; > /dev/null 2>&1
 		find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -type d -empty -delete > /dev/null 2>&1
 		find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -type d -empty -delete > /dev/null 2>&1
 		find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -type d -empty -delete > /dev/null 2>&1
 		
-		#zip -r -q -9 ${FINAL_ARCHIVE}.zip catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
-		7za a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on ${FINAL_ARCHIVE}.7z catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
+		#zip -r -q -9 ${FINAL_ARCHIVE}.zip catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ > /dev/null 2>&1
+		7za a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on ${FINAL_ARCHIVE}.7z catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ > /dev/null 2>&1
 		#nice -n 15 ionice -c 3 tar cpf - catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ | nice -n 15 ionice -c 3 xz -z -9 -e > ${FINAL_ARCHIVE}.tar.xz
-		if [ ! -e ${FINAL_ARCHIVE} ]; then
-			echo "${FINAL_ARCHIVE} not exists!";
-			exit;
-		fi
+# 		if [ ! -e ${FINAL_ARCHIVE} ]; then
+# 			echo "${FINAL_ARCHIVE} not exists!";
+# 			exit;
+# 		fi
 		echo "creating the archive ${TARGET}... done"
 	fi
 	FINAL_ARCHIVE="catchchallenger-${TARGET}-windows-${ARCHITECTURE}-${CATCHCHALLENGER_VERSION}-setup.exe"
