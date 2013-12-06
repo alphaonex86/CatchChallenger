@@ -661,7 +661,8 @@ void BaseWindow::updateCurrentMonsterInformationXp()
     ui->progressBarFightBottomExp->setValue(monster->remaining_xp);
     ui->labelFightBottomLevel->setText(tr("Level %1").arg(monster->level));
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[monster->monster];
-    ui->progressBarFightBottomExp->setMaximum(monsterInformations.level_to_xp.at(monster->level-1));
+    quint32 maxXp=monsterInformations.level_to_xp.at(monster->level-1);
+    ui->progressBarFightBottomExp->setMaximum(maxXp);
 }
 
 void BaseWindow::updateCurrentMonsterInformation()
@@ -1495,8 +1496,7 @@ void BaseWindow::doNextAction()
             win();
             return;
         }
-        else
-            updateCurrentMonsterInformationXp();
+        updateCurrentMonsterInformationXp();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
         {
@@ -1948,6 +1948,23 @@ void BaseWindow::displayAttack()
     else
         lifeEffectReturn=attackReturn.buffLifeEffectMonster.first();
 
+    bool applyOnOtherMonster=false;
+    if(attackReturn.doByTheCurrentMonster)
+    {
+        if((lifeEffectReturn.on==ApplyOn_AloneEnemy) || (lifeEffectReturn.on==ApplyOn_AllEnemy))
+            applyOnOtherMonster=true;
+    }
+    else
+    {
+        if((lifeEffectReturn.on==ApplyOn_Themself) || (lifeEffectReturn.on==ApplyOn_AllAlly))
+            applyOnOtherMonster=true;
+    }
+    QLabel * attackMovie;
+    if(applyOnOtherMonster)
+        attackMovie=ui->labelFightMonsterAttackTop;
+    else
+        attackMovie=ui->labelFightMonsterAttackBottom;
+
     //attack animation
     {
         quint32 attackId=attackReturn.attack;
@@ -1955,11 +1972,11 @@ void BaseWindow::displayAttack()
         QString fileAnimation=skillAnimation+QString("%1.mng").arg(attackId);
         if(QFile(fileAnimation).exists())
         {
-            movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightMonsterAttackBottom);
-            movie->setScaledSize(QSize(ui->labelFightMonsterAttackBottom->width(),ui->labelFightMonsterAttackBottom->height()));
+            movie=new QMovie(fileAnimation,QByteArray(),attackMovie);
+            movie->setScaledSize(QSize(attackMovie->width(),attackMovie->height()));
             if(movie->isValid())
             {
-                ui->labelFightMonsterAttackBottom->setMovie(movie);
+                attackMovie->setMovie(movie);
                 movie->start();
             }
             else
@@ -1970,11 +1987,11 @@ void BaseWindow::displayAttack()
             QString fileAnimation=skillAnimation+QString("%1.gif").arg(attackId);
             if(QFile(fileAnimation).exists())
             {
-                movie=new QMovie(fileAnimation,QByteArray(),ui->labelFightMonsterAttackBottom);
-                movie->setScaledSize(QSize(ui->labelFightMonsterAttackBottom->width(),ui->labelFightMonsterAttackBottom->height()));
+                movie=new QMovie(fileAnimation,QByteArray(),attackMovie);
+                movie->setScaledSize(QSize(attackMovie->width(),attackMovie->height()));
                 if(movie->isValid())
                 {
-                    ui->labelFightMonsterAttackBottom->setMovie(movie);
+                    attackMovie->setMovie(movie);
                     movie->start();
                 }
                 else
@@ -1982,14 +1999,6 @@ void BaseWindow::displayAttack()
             }
         }
     }
-
-    bool applyOnOtherMonster=false;
-    if(attackReturn.doByTheCurrentMonster)
-        if((lifeEffectReturn.on | ApplyOn_AloneEnemy) || (lifeEffectReturn.on | ApplyOn_AllEnemy))
-            applyOnOtherMonster=true;
-    if(!attackReturn.doByTheCurrentMonster)
-        if((lifeEffectReturn.on | ApplyOn_Themself) || (lifeEffectReturn.on | ApplyOn_AllAlly))
-            applyOnOtherMonster=true;
 
     if(displayAttackProgression%100 /* each 400ms */ && attack_quantity_changed<0)
     {
@@ -2026,6 +2035,40 @@ void BaseWindow::displayAttack()
         hp_to_change=1;
     if(updateAttackTime.elapsed()>3000 /*3000ms*/)
     {
+        //only if passe here before have updated all the stats
+        {
+            int hp_to_change;
+            if(applyOnOtherMonster)
+                hp_to_change=ui->progressBarFightTopHP->maximum();
+            else
+                hp_to_change=ui->progressBarFightBottomHP->maximum();
+            if(attackReturn.lifeEffectMonster.isEmpty())
+                hp_to_change=0;
+            else if(attackReturn.lifeEffectMonster.first().quantity<0)
+            {
+                hp_to_change=-hp_to_change;
+                if(attackReturn.lifeEffectMonster.first().quantity>hp_to_change)
+                    hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
+            }
+            else if(attackReturn.lifeEffectMonster.first().quantity>0)
+            {
+                if(attackReturn.lifeEffectMonster.first().quantity<hp_to_change)
+                    hp_to_change=attackReturn.lifeEffectMonster.first().quantity;
+            }
+            else
+                hp_to_change=0;
+            if(hp_to_change!=0)
+            {
+                CatchChallenger::ClientFightEngine::fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
+                if(applyOnOtherMonster)
+                    ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+hp_to_change);
+                else
+                {
+                    ui->progressBarFightBottomHP->setValue(ui->progressBarFightBottomHP->value()+hp_to_change);
+                    ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
+                }
+            }
+        }
         displayAttackProgression=0;
         if(!attackReturn.lifeEffectMonster.isEmpty())
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
@@ -2100,9 +2143,10 @@ void BaseWindow::displayExperienceGain()
     if(xp_to_change==0)
         xp_to_change=1;
 
-    if((ui->progressBarFightBottomExp->value()+xp_to_change)>=ui->progressBarFightBottomExp->maximum())
+    quint32 maxXp=ui->progressBarFightBottomExp->maximum();
+    if((ui->progressBarFightBottomExp->value()+xp_to_change)>=(qint32)maxXp)
     {
-        xp_to_change=ui->progressBarFightBottomExp->maximum()-ui->progressBarFightBottomExp->value();
+        xp_to_change=maxXp-ui->progressBarFightBottomExp->value();
         const Monster::Stat &oldStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
         currentMonsterLevel++;
         const Monster::Stat &newStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
@@ -2113,7 +2157,7 @@ void BaseWindow::displayExperienceGain()
             ui->labelFightBottomHP->setText(QString("%1/%2").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()));
         }
         ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.monsters[currentMonster->monster].level_to_xp.at(currentMonsterLevel-1));
-        ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->maximum());
+        ui->progressBarFightBottomExp->setValue(maxXp);
         ui->labelFightBottomLevel->setText(tr("Level %1").arg(currentMonsterLevel));
         if(currentMonsterLevel>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
         {

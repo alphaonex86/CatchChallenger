@@ -70,7 +70,7 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster],monster.level);
         if(monster.hp>currentMonsterStat.hp)
         {
-            emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(monster.monster).arg(monster.hp).arg(currentMonsterStat.hp));
+            emit error(QString("saveMonsterStat() The hp %1 of current monster %2 is greater than the max %3").arg(monster.hp).arg(monster.monster).arg(currentMonsterStat.hp));
             return;
         }
     }
@@ -257,14 +257,14 @@ void LocalClientHandlerFight::healAllMonsters()
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
                             emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
+                                         .arg(endurance)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
                                          );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
                             emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
-                                         .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].endurance)
+                                         .arg(endurance)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
                                          );
@@ -304,13 +304,13 @@ void LocalClientHandlerFight::saveStat()
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QString("saveStat() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
                 return;
             }
         if(otherMonster!=NULL)
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QString("saveStat() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
                 return;
             }
     }
@@ -1500,13 +1500,13 @@ void LocalClientHandlerFight::confirmEvolutionTo(PlayerMonster * playerMonster,c
     if(currentMonster!=NULL)
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+            emit error(QString("confirmEvolutionTo() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
             return;
         }
     if(otherMonster!=NULL)
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+            emit error(QString("confirmEvolutionTo() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
             return;
         }
     #endif
@@ -1572,13 +1572,13 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QString("hpChange() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
         if(otherMonster!=NULL)
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QString("hpChange() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
     }
@@ -1593,13 +1593,13 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QString("hpChange() after The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
         if(otherMonster!=NULL)
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QString("hpChange() after The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
     }
