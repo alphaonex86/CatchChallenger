@@ -19,12 +19,11 @@ SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::disconnected,       this,&SimpleSoloServer::disconnected);
     connect(CatchChallenger::Api_client_real::client,               &CatchChallenger::Api_protocol::message,            this,&SimpleSoloServer::message);
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&SimpleSoloServer::stateChanged);
-    if(CatchChallenger::BaseWindow::baseWindow!=NULL)
-        delete CatchChallenger::BaseWindow::baseWindow;
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     CatchChallenger::BaseWindow::baseWindow->connectAllSignals();
     CatchChallenger::BaseWindow::baseWindow->setMultiPlayer(false);
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&SimpleSoloServer::newError,Qt::QueuedConnection);
+    CatchChallenger::BaseWindow::baseWindow->setMinimumSize(800,600);
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     ui->stackedWidget->addWidget(solowindow);
     ui->stackedWidget->setCurrentWidget(solowindow);
@@ -207,7 +206,14 @@ void SimpleSoloServer::closeEvent(QCloseEvent *event)
     if(socket!=NULL || internalServer!=NULL)
     {
         if(internalServer!=NULL)
-            internalServer->try_stop_server();
+        {
+            if(internalServer->isListen())
+                internalServer->stop();
+            else
+                QCoreApplication::quit();
+        }
+        else
+            QCoreApplication::quit();
         if(socket!=NULL)
             socket->disconnectFromHost();
         if(socket!=NULL)

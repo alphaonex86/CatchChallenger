@@ -6,3 +6,6 @@ include(specific.pri)
 
 TARGET = catchchallenger-single-player
 
+FORMS += \
+    SimpleSoloServer.ui
+
