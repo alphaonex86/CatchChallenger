@@ -124,13 +124,13 @@ Dans l&apos;inventaire: %3 %4</translation>
     </message>
     <message>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="90"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2320"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2364"/>
         <source>Male</source>
         <translation>Male</translation>
     </message>
     <message>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="95"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2323"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2367"/>
         <source>Female</source>
         <translation>Femelle</translation>
     </message>
@@ -138,9 +138,9 @@ Dans l&apos;inventaire: %3 %4</translation>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="102"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="474"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="662"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="800"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="953"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2117"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="801"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="954"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2161"/>
         <source>Level %1</source>
         <translation>Niveau %1</translation>
     </message>
@@ -193,7 +193,7 @@ Dans l&apos;inventaire: %3 %4</translation>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="125"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="162"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="503"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="977"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="978"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1766"/>
         <source>%1 at level %2</source>
         <translation>%1 au niveau %2</translation>
@@ -201,14 +201,14 @@ Dans l&apos;inventaire: %3 %4</translation>
     <message>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="153"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="494"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="968"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="969"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1753"/>
         <source>Unknown buff</source>
         <translation>Buff inconnu</translation>
     </message>
     <message>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="177"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2355"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2399"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
@@ -238,18 +238,18 @@ HP: %3/%4</translation>
     <message>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="587"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="658"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="671"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="677"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="938"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="988"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1047"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="672"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="678"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="939"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="989"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1048"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1581"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1912"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1918"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2078"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2145"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2365"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2382"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2121"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2189"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2409"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2426"/>
         <source>Internal error</source>
         <translation>Erreur interne</translation>
     </message>
@@ -260,7 +260,7 @@ HP: %3/%4</translation>
     </message>
     <message>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="619"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="802"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="803"/>
         <source>You win!</source>
         <translation>You avez gagné!</translation>
     </message>
@@ -270,107 +270,107 @@ HP: %3/%4</translation>
         <translation>Vous avez perdu!</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="773"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="774"/>
         <source>In waiting of other monster selection</source>
         <translation>En attente de la selection d&apos;un autre monstre</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="783"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="785"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="784"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="786"/>
         <source>The other player call %1</source>
         <translation>L&apos;autre joueur appelle %1</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="785"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="786"/>
         <source>(Unknown monster)</source>
         <translation>(Monstre inconnu)</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="807"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="808"/>
         <source>Your escape is successful</source>
         <translation>Votre fuite est un succès</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="809"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="810"/>
         <source>Your escape have failed but you win</source>
         <translation>Votre fuite a échoué mais vous avez gagné</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="873"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="877"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="874"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="878"/>
         <source>The other player call %1!</source>
         <translation>L&apos;autre joueur appelle %1!</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="882"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="886"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="883"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="887"/>
         <source>You call %1!</source>
         <translation>Vous appellez %1!</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="997"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1026"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="998"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1027"/>
         <source>Sorry but the client wait more data from the server to do it</source>
         <translation>Le client attends plus de données du serveur pour faire cela</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1032"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1033"/>
         <source>Selection error</source>
         <translation>Erreur de selection</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1032"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1033"/>
         <source>You need select an attack</source>
         <translation>Vous devez selectionner une attaque</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1037"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1038"/>
         <source>No endurance</source>
         <translation>Plus d&apos;endurance</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1037"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1038"/>
         <source>You have no more endurance to use this skill</source>
         <translation>Vous n&apos;avez plus d&apos;endurance pour selectionner cette compétance</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1059"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1060"/>
         <source>In waiting of the other player action</source>
         <translation>Attente d&apos;une action de l&apos;autre joueur</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1077"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1078"/>
         <source>Select an attack</source>
         <translation>Selectionnez une attaque</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1376"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1377"/>
         <source>You have failed to escape!</source>
         <translation>Vous n&apos;avez pu vous échapper!</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1388"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1421"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1389"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1422"/>
         <source>The wild %1 can&apos;t attack</source>
         <translation>Le %1 sauvage ne peu attaquer</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1423"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1424"/>
         <source>Your %1 can&apos;t attack</source>
         <translation>Votre %1 ne peu attaquer</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1428"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1429"/>
         <source>The wild %1 have failed their attack %2</source>
         <translation>Le %1 sauvage à échoué son attaque %2</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1433"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1434"/>
         <source>Your %1 have failed their attack %2</source>
         <translation>Votre %1 à échoué son attaque %2</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1475"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1476"/>
         <source>Your %1 have lost!</source>
         <translation>Votre %1 à perdu!</translation>
     </message>
@@ -494,7 +494,7 @@ HP: %3/%4</translation>
         <translation>ajouter le buff %1 sur lui même</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2095"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2138"/>
         <source>You %1 gain %2 of experience</source>
         <translation>Votre %1 gagne %1 d&apos;expérience</translation>
     </message>
@@ -509,62 +509,62 @@ HP: %3/%4</translation>
         <translation>ajouter le buff %2 sur votre %1</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2326"/>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2339"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2370"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2383"/>
         <source>Unknown</source>
         <translation>Inconnu</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2355"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2399"/>
         <source>Select an attack to learn</source>
         <translation>Selectionnez une attaque à apprendre</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2370"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2414"/>
         <source>You can&apos;t learn this attack</source>
         <translation>Vous ne pouvez apprendre cette attaque</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2411"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2455"/>
         <source>SP: %1</source>
         <translation>SP: %1</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2450"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2494"/>
         <source>%1
 SP cost: %2</source>
         <translation>%1
 Cout en SP: %2</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2455"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2499"/>
         <source>%1 level %2
 SP cost: %3</source>
         <translation>%1 niveau %2
 Cout en SP: %3</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2464"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2508"/>
         <source>You need more sp</source>
         <translation>Vous devez avoir plus de sp</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2470"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2514"/>
         <source>No more attack to learn</source>
         <translation>Pas plus d&apos;attaque à apprendre</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2472"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2516"/>
         <source>Select attack to learn</source>
         <translation>Selectionner des attaques à apprendre</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2594"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2638"/>
         <source>%1 wish fight with you</source>
         <translation>%1 veux combatre avec vous</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2608"/>
+        <location filename="../../../fight/interface/BaseWindowFight.cpp" line="2652"/>
         <source>The other player have canceled the battle</source>
         <translation>L&apos;autre joueur à annulé le combat</translation>
     </message>
