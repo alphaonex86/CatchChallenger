@@ -2478,6 +2478,11 @@ LocalClientHandlerFight * LocalClientHandler::getLocalClientHandlerFight()
 
 void LocalClientHandler::heal()
 {
+    if(localClientHandlerFight.isInFight())
+    {
+        emit error("Try do heal action when is in fight");
+        return;
+    }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     emit message(QString("ask heal at %1 (%2,%3)").arg(this->map->map_file).arg(this->x).arg(this->y));
     #endif
