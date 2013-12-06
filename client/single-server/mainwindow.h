@@ -11,10 +11,11 @@
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
+#include "../../general/base/ConnectedSocket.h"
+#include "../base/RssNews.h"
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
-#include "../../general/base/ConnectedSocket.h"
 
 namespace Ui {
     class MainWindow;
@@ -45,6 +46,7 @@ private slots:
     void newError(QString error,QString detailedError);
     void newUpdate(const QString &version);
     void closeEvent(QCloseEvent *event);
+    void rssEntryList(const QList<RssNews::RssEntry> &entryList);
 private:
     QSslSocket *realSocket;
     Ui::MainWindow *ui;

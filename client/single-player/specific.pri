@@ -3,7 +3,7 @@ SOURCES += main.cpp \
 
 HEADERS  += SimpleSoloServer.h
 
-FORMS    +=
+FORMS    += SimpleSoloServer.ui
 
 TRANSLATIONS    = $$PWD/languages/en/specific.ts \
     $$PWD/languages/fr/specific.ts

@@ -14,7 +14,7 @@ using namespace CatchChallenger;
 
 QHash<QString, Reputation> DatapackGeneralLoader::loadReputation(const QString &file)
 {
-    QRegExp typeRegex("^[a-z]{1,32}$");
+    QRegExp typeRegex(QStringLiteral("^[a-z]{1,32}$"));
     QHash<QString, Reputation> reputation;
     //open and quick check the file
     QFile itemsFile(file);

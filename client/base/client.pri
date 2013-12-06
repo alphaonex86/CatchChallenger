@@ -99,6 +99,7 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/NewGame.ui
 
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
+ICON = $$PWD/resources/client.icns
 macx:INCLUDEPATH += /usr/local/include/
 macx:LIBS += -L/usr/local/lib/
 

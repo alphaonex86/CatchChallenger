@@ -1177,6 +1177,7 @@ void CommonFightEngine::wildDrop(const quint32 &monster)
 
 bool CommonFightEngine::checkKOOtherMonstersForGain()
 {
+    emit message(QString("checkKOOtherMonstersForGain()"));
     bool winTheTurn=false;
     if(!wildMonsters.isEmpty())
     {
@@ -1244,7 +1245,7 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
         remaining_xp=0;
         xp=0;
     }
-    while(monsterInformations.level_to_xp.at(level-1)<(remaining_xp+xp))
+    while((remaining_xp+xp)>=monsterInformations.level_to_xp.at(level-1))
     {
         quint32 old_max_hp=monsterInformations.stat.hp*level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
         quint32 new_max_hp=monsterInformations.stat.hp*(level+1)/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
@@ -1531,12 +1532,12 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
     if(currentMonster->hp>currentMonsterStat.hp)
     {
-        emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+        emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
         return false;
     }
     if(otherMonster->hp>otherMonsterStat.hp)
     {
-        emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+        emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
         return false;
     }
     #endif
