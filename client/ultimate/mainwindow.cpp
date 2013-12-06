@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
+    qRegisterMetaType<QList<RssNews::RssEntry> >("QList<RssNews::RssEntry>");
 
     socket=NULL;
     realSocket=NULL;
@@ -39,8 +40,11 @@ MainWindow::MainWindow(QWidget *parent) :
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
     ui->update->setVisible(false);
+    ui->news->setVisible(false);
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
+    RssNews::rssNews=new RssNews();
+    connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList);
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/internal/",QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/savegames/",false);
     connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
     connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
@@ -1356,4 +1360,24 @@ void MainWindow::newUpdate(const QString &version)
 {
     ui->update->setText(InternetUpdater::getText(version));
     ui->update->setVisible(true);
+}
+
+void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
+{
+    if(entryList.isEmpty())
+        return;
+    if(entryList.size()==0)
+        ui->news->setText(tr("Latest news:")+QStringLiteral(" ")+QStringLiteral("<a href=\"%1\">%2</a>").arg(entryList.at(0).link).arg(entryList.at(0).title));
+    else
+    {
+        QStringList entryHtmlList;
+        int index=0;
+        while(index<entryList.size() && index<3)
+        {
+            entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>").arg(entryList.at(index).link).arg(entryList.at(index).title);
+            index++;
+        }
+        ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
+    }
+    ui->news->setVisible(true);
 }

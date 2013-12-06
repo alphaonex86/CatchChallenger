@@ -357,6 +357,21 @@ padding: 0 5px;</string>
          </spacer>
         </item>
         <item>
+         <widget class="QLabel" name="news">
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(220, 220, 240);
+border: 1px solid rgb(100, 150, 240);
+border-radius:5px;</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="openExternalLinks">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="update">
           <property name="styleSheet">
            <string notr="true">background-color: rgb(255, 255, 163);
