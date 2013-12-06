@@ -25,6 +25,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../base/resources/client-resources.qrc">
+    <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="margin">
@@ -36,6 +40,8 @@
    </layout>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../base/resources/client-resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

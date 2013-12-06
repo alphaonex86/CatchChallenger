@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
+    qRegisterMetaType<QList<RssNews::RssEntry> >("QList<RssNews::RssEntry>");
 
     realSocket=new QSslSocket();
     realSocket->ignoreSslErrors();
@@ -27,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
     socket=new CatchChallenger::ConnectedSocket(realSocket);
     CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_real(socket);
     ui->setupUi(this);
+    ui->update->setVisible(false);
+    ui->news->setVisible(false);
     server_name=SERVER_NAME;
     server_dns_or_ip=SERVER_DNS_OR_IP;
     server_port=SERVER_PORT;
@@ -57,9 +60,10 @@ MainWindow::MainWindow(QWidget *parent) :
             }
         }
     }
-    ui->update->setVisible(false);
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
+    RssNews::rssNews=new RssNews();
+    connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList);
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
     if(settings.contains("login"))
@@ -312,4 +316,24 @@ void MainWindow::closeEvent(QCloseEvent *event)
             socket->abort();
     }
     QCoreApplication::quit();
+}
+
+void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
+{
+    if(entryList.isEmpty())
+        return;
+    if(entryList.size()==0)
+        ui->news->setText(tr("Latest news:")+QStringLiteral(" ")+QStringLiteral("<a href=\"%1\">%2</a>").arg(entryList.at(0).link).arg(entryList.at(0).title));
+    else
+    {
+        QStringList entryHtmlList;
+        int index=0;
+        while(index<entryList.size() && index<3)
+        {
+            entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>").arg(entryList.at(index).link).arg(entryList.at(index).title);
+            index++;
+        }
+        ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
+    }
+    ui->news->setVisible(true);
 }

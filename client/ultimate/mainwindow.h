@@ -15,6 +15,7 @@
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
+#include "../base/RssNews.h"
 #include "../base/Api_client_real.h"
 #include "../base/interface/MapController.h"
 #include "../base/interface/BaseWindow.h"
@@ -101,6 +102,7 @@ private slots:
     void serverError(const QString &error);
     void on_languages_clicked();
     void newUpdate(const QString &version);
+    void rssEntryList(const QList<RssNews::RssEntry> &entryList);
 private:
     enum ServerMode
     {
