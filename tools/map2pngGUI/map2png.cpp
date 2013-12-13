@@ -392,89 +392,93 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
 
     QString mapIndex;
 
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
+    const QStringList &arguments=QCoreApplication::arguments();
+    if(arguments.size()!=3)
     {
-        if(!other_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.bottom.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
+            if(!other_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
             {
-                //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
+                mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
+                //if is correctly loaded
+                if(!mapIndex.isEmpty())
                 {
-                    tempMapObject->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map[mapIndex]->logicalMap.border_semi.top.x_offset;
-                    tempMapObject->logicalMap.border.bottom.x_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y+tempMapObject->logicalMap.height);
+                    //if both border match
+                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex)
+                    {
+                        tempMapObject->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
+                        int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map[mapIndex]->logicalMap.border_semi.top.x_offset;
+                        tempMapObject->logicalMap.border.bottom.x_offset=offset;
+                        other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
+                        loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y+tempMapObject->logicalMap.height);
+                    }
                 }
             }
         }
-    }
 
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
-    {
-        if(!other_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.top.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
+            if(!other_map.contains(tempMapObject->logicalMap.border_semi.top.fileName))
             {
-                //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
+                mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
+                //if is correctly loaded
+                if(!mapIndex.isEmpty())
                 {
-                    tempMapObject->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
-                    tempMapObject->logicalMap.border.top.x_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y-other_map[mapIndex]->logicalMap.height);
+                    //if both border match
+                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex)
+                    {
+                        tempMapObject->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
+                        int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map[mapIndex]->logicalMap.border_semi.bottom.x_offset;
+                        tempMapObject->logicalMap.border.top.x_offset=offset;
+                        other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
+                        loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y-other_map[mapIndex]->logicalMap.height);
+                    }
                 }
             }
         }
-    }
 
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
-    {
-        if(!other_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.left.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
+            if(!other_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
             {
-                //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
+                mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
+                //if is correctly loaded
+                if(!mapIndex.isEmpty())
                 {
-                    tempMapObject->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map[mapIndex]->logicalMap.border_semi.right.y_offset;
-                    tempMapObject->logicalMap.border.left.y_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x-other_map[mapIndex]->logicalMap.width,tempMapObject->y+offset);
+                    //if both border match
+                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex)
+                    {
+                        tempMapObject->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
+                        int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map[mapIndex]->logicalMap.border_semi.right.y_offset;
+                        tempMapObject->logicalMap.border.left.y_offset=offset;
+                        other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
+                        loadCurrentMap(mapIndex,tempMapObject->x-other_map[mapIndex]->logicalMap.width,tempMapObject->y+offset);
+                    }
                 }
             }
         }
-    }
 
-    //if have border
-    if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
-    {
-        if(!other_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
+        //if have border
+        if(!tempMapObject->logicalMap.border_semi.right.fileName.isEmpty())
         {
-            mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
-            //if is correctly loaded
-            if(!mapIndex.isEmpty())
+            if(!other_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
             {
-                //if both border match
-                if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
+                mapIndex=loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
+                //if is correctly loaded
+                if(!mapIndex.isEmpty())
                 {
-                    tempMapObject->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
-                    int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map[mapIndex]->logicalMap.border_semi.left.y_offset;
-                    tempMapObject->logicalMap.border.right.y_offset=offset;
-                    other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
-                    loadCurrentMap(mapIndex,tempMapObject->x+tempMapObject->logicalMap.width,tempMapObject->y+offset);
+                    //if both border match
+                    if(fileName==other_map[mapIndex]->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex)
+                    {
+                        tempMapObject->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
+                        int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map[mapIndex]->logicalMap.border_semi.left.y_offset;
+                        tempMapObject->logicalMap.border.right.y_offset=offset;
+                        other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;
+                        loadCurrentMap(mapIndex,tempMapObject->x+tempMapObject->logicalMap.width,tempMapObject->y+offset);
+                    }
                 }
             }
         }
@@ -509,9 +513,26 @@ void Map2Png::viewMap(const QString &fileName)
     mScene->render(&painter);//,mScene->sceneRect()
     qDebug() << QString("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
 
-    QString destination = QFileDialog::getSaveFileName(NULL,"Save the render",QString(),"Png Images (*.png)");
-    if(destination.isEmpty() || destination.isNull() || destination=="")
-        return;
+    QString destination;
+    const QStringList &arguments=QCoreApplication::arguments();
+    {
+        int index=0;
+        while(index<arguments.size())
+        {
+            if(arguments.at(index).endsWith(".png"))
+            {
+                destination=arguments.at(index);
+                break;
+            }
+            index++;
+        }
+    }
+    if(destination.isEmpty())
+    {
+        destination = QFileDialog::getSaveFileName(NULL,"Save the render",QString(),"Png Images (*.png)");
+        if(destination.isEmpty() || destination.isNull() || destination=="")
+            return;
+    }
     qDebug() << QString("save as: %1").arg(destination);
     if(!destination.endsWith(".png"))
         destination+=".png";
