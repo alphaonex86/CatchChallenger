@@ -146,7 +146,7 @@
         <location filename="../../mainwindow.cpp" line="326"/>
         <location filename="../../mainwindow.cpp" line="336"/>
         <source>Latest news:</source>
-        <translation type="unfinished"></translation>
+        <translation>Derniéres news:</translation>
     </message>
 </context>
 </TS>

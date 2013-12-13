@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    a.setApplicationName("client-full");
+    a.setApplicationName("client-ultimate");
     a.setOrganizationName("CatchChallenger");
 
     LocalListener localListener;

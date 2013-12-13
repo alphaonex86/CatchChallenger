@@ -38,7 +38,7 @@
     </message>
     <message>
         <location filename="../../SimpleSoloServer.ui" line="26"/>
-        <source>MainWindow</source>
+        <source>CatchChallenger - Single player</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

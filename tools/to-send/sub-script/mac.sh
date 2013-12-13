@@ -41,6 +41,9 @@ function compil {
 			echo "make failed on the mac: ${RETURN_CODE}"
 			exit
 		fi
+		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/CatchChallenger/client/base/languages/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/languages/ --exclude=*.ts"
+		ssh ${SSHUSER}@${IPMAC} "rsync -art /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/languages/ /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/languages/ --exclude=*.ts"
+		ssh ${SSHUSER}@${IPMAC} "rm -Rf /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/languages/en/"
 		if [ ${TARGET} == "single-player" ]
 		then
 			ssh ${SSHUSER}@${IPMAC} "mkdir /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/"

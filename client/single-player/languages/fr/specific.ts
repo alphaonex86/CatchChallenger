@@ -38,8 +38,8 @@
     </message>
     <message>
         <location filename="../../SimpleSoloServer.ui" line="26"/>
-        <source>MainWindow</source>
-        <translation type="unfinished"></translation>
+        <source>CatchChallenger - Single player</source>
+        <translation>CatchChallenger - Jeu solo</translation>
     </message>
 </context>
 </TS>
