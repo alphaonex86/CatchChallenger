@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>9</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -750,40 +750,52 @@ border-image: url(:/images/empty.png);
              </widget>
             </item>
             <item>
-             <widget class="QToolButton" name="toolButton_interface_map">
-              <property name="minimumSize">
-               <size>
-                <width>28</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>28</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-image: url(:/images/interface/pkmnoption5.1.png);
-border-image: url(:/images/empty.png);</string>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_main_display_11">
+             <spacer name="horizontalSpacer_main_display_tools">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
-                <width>40</width>
+                <width>1</width>
                 <height>20</height>
                </size>
               </property>
              </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ultimate">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">#label_ultimate
+{
+border: 1px solid #343434;
+background-image: url(:/images/light-white.png);
+}</string>
+              </property>
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;http://catchchallenger.first-world.info/shop/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0057ae;&quot;&gt;Buy the Ultimate version&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="openExternalLinks">
+               <bool>true</bool>
+              </property>
+             </widget>
             </item>
             <item>
              <widget class="QToolButton" name="toolButton_interface_quit">
