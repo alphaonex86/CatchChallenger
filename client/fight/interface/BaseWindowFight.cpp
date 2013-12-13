@@ -1401,44 +1401,6 @@ void BaseWindow::doNextAction()
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
     {
         PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success==false)
-        {
-            qDebug() << "doNextAction(): attack have failed";
-            if(otherMonster==NULL)
-            {
-                emit error("NULL pointer for other monster at doNextAction()");
-                return;
-            }
-            PublicPlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-            if(currentMonster==NULL)
-            {
-                emit error("NULL pointer for other monster at doNextAction()");
-                return;
-            }
-            quint32 attackId=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack;
-            if(attackId==0)
-            {
-                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
-                    displayText(tr("The wild %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
-                else
-                    displayText(tr("Your %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name));
-            }
-            else
-            {
-                if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
-                    displayText(tr("The wild %1 have failed their attack %2")
-                                .arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name)
-                                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[attackId].name)
-                            );
-                else
-                    displayText(tr("Your %1 have failed their attack %2")
-                                .arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name)
-                                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra[attackId].name)
-                            );
-            }
-            CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
-            return;
-        }
         if(otherMonster)
         {
             qDebug() << "doNextAction(): apply the effect and display it";

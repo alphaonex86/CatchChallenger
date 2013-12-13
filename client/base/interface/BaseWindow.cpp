@@ -56,6 +56,9 @@ BaseWindow::BaseWindow() :
     movie=NULL;
     newProfile=NULL;
     craftingAnimationObject=NULL;
+    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    ui->label_ultimate->setVisible(false);
+    #endif
 
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();

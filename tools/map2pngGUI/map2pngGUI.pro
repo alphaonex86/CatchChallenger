@@ -1,6 +1,4 @@
-INCLUDEPATH += ../../general/libtiled/
-DEPENDPATH += ../../general/libtiled/
-LIBS *= -ltiled
+include(../../client/tiled/tiled.pri)
 
 TEMPLATE = app
 TARGET = map2pngGUI
