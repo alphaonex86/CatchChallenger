@@ -1558,6 +1558,13 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     }
     movie=NULL;
 
+    qDebug() << QString("displayFirstAttackText(): before display text, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, attackReturnList.size(): %5")
+                .arg(currentAttack.lifeEffectMonster.size())
+                .arg(currentAttack.buffLifeEffectMonster.size())
+                .arg(currentAttack.addBuffEffectMonster.size())
+                .arg(currentAttack.removeBuffEffectMonster.size())
+                .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
+
     //in case of failed
     if(!currentAttack.success)
     {
@@ -1661,6 +1668,13 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             attackOwner+=QStringLiteral("<br />")+tr("Critical throw");
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         ui->labelFightEnter->setText(attackOwner);
+        qDebug() << "display the life effect";
+        qDebug() << QString("displayFirstAttackText(): after display text, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, attackReturnList.size(): %5")
+                    .arg(currentAttack.lifeEffectMonster.size())
+                    .arg(currentAttack.buffLifeEffectMonster.size())
+                    .arg(currentAttack.addBuffEffectMonster.size())
+                    .arg(currentAttack.removeBuffEffectMonster.size())
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
         return true;
     }
 
@@ -1734,6 +1748,13 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAddBuffEffectAttackReturn();
         if(!CatchChallenger::ClientFightEngine::fightEngine.firstAttackReturnHaveMoreEffect())
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+        qDebug() << "display the add buff";
+        qDebug() << QString("displayFirstAttackText(): after display text, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, attackReturnList.size(): %5")
+                    .arg(currentAttack.lifeEffectMonster.size())
+                    .arg(currentAttack.buffLifeEffectMonster.size())
+                    .arg(currentAttack.addBuffEffectMonster.size())
+                    .arg(currentAttack.removeBuffEffectMonster.size())
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
         return false;
     }
 
@@ -1784,6 +1805,13 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstRemoveBuffEffectAttackReturn();
         if(!CatchChallenger::ClientFightEngine::fightEngine.firstAttackReturnHaveMoreEffect())
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+        qDebug() << "display the remove buff";
+        qDebug() << QString("displayFirstAttackText(): after display text, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, attackReturnList.size(): %5")
+                    .arg(currentAttack.lifeEffectMonster.size())
+                    .arg(currentAttack.buffLifeEffectMonster.size())
+                    .arg(currentAttack.addBuffEffectMonster.size())
+                    .arg(currentAttack.removeBuffEffectMonster.size())
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
         return false;
     }
 
@@ -1853,6 +1881,13 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         }
         else if(buffLifeEffectMonster.critical)
             attackOwner+=QStringLiteral("<br />")+tr("Critical throw");
+        qDebug() << "display the buff effect";
+        qDebug() << QString("displayFirstAttackText(): after display text, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, attackReturnList.size(): %5")
+                    .arg(currentAttack.lifeEffectMonster.size())
+                    .arg(currentAttack.buffLifeEffectMonster.size())
+                    .arg(currentAttack.addBuffEffectMonster.size())
+                    .arg(currentAttack.removeBuffEffectMonster.size())
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
         return true;
     }
     emit error("Can't display text without effect");
@@ -1907,8 +1942,19 @@ void BaseWindow::displayAttack()
     Skill::LifeEffectReturn lifeEffectReturn;
     if(!attackReturn.lifeEffectMonster.isEmpty())
         lifeEffectReturn=attackReturn.lifeEffectMonster.first();
-    else
+    else if(!attackReturn.buffLifeEffectMonster.isEmpty())
         lifeEffectReturn=attackReturn.buffLifeEffectMonster.first();
+    else
+    {
+        newError(tr("Internal error"),QString("displayAttack(): strange: nothing to display, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, AttackReturnList: %5")
+                    .arg(attackReturn.lifeEffectMonster.size())
+                    .arg(attackReturn.buffLifeEffectMonster.size())
+                    .arg(attackReturn.addBuffEffectMonster.size())
+                    .arg(attackReturn.removeBuffEffectMonster.size())
+                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size()));
+        doNextAction();
+        return;
+    }
 
     bool applyOnOtherMonster=false;
     if(attackReturn.doByTheCurrentMonster)
@@ -1930,7 +1976,7 @@ void BaseWindow::displayAttack()
     //attack animation
     {
         quint32 attackId=attackReturn.attack;
-        QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_SKILLANIMATION;
+        QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+QStringLiteral(DATAPACK_BASE_PATH_SKILLANIMATION);
         QString fileAnimation=skillAnimation+QString("%1.mng").arg(attackId);
         if(QFile(fileAnimation).exists())
         {
@@ -2160,7 +2206,7 @@ void BaseWindow::displayTrap()
             movie->stop();
             delete movie;
         }
-        QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_ITEM;
+        QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+QStringLiteral(DATAPACK_BASE_PATH_ITEM);
         QString fileAnimation=skillAnimation+QString("%1.mng").arg(trapItemId);
         if(QFile(fileAnimation).exists())
         {
@@ -2220,7 +2266,7 @@ void BaseWindow::displayTrap()
                 movie->stop();
                 delete movie;
             }
-            QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_ITEM;
+            QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+QStringLiteral(DATAPACK_BASE_PATH_ITEM);
             QString fileAnimation;
             if(trapSuccess)
                 fileAnimation=skillAnimation+QString("%1_success.mng").arg(trapItemId);
@@ -2587,7 +2633,7 @@ void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInfor
     battleType=BattleType_OtherPlayer;
     ui->stackedWidget->setCurrentWidget(ui->page_battle);
 
-    //skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+DATAPACK_BASE_PATH_SKIN);
+    //skinFolderList=CatchChallenger::FacilityLib::skinIdList(CatchChallenger::Api_client_real::client->get_datapack_base_name()+QStringLiteral(DATAPACK_BASE_PATH_SKIN));
     QPixmap otherFrontImage=getFrontSkin(battleInformations.skinId);
 
     //reset the other player info
