@@ -18,8 +18,8 @@ LanguagesSelect::LanguagesSelect() :
 {
     ui->setupUi(this);
     QStringList folderToParse,languageToParse;
-    folderToParse << ":/languages/";
-    folderToParse << QCoreApplication::applicationDirPath()+"/languages/";
+    folderToParse << QStringLiteral(":/languages/");
+    folderToParse << QCoreApplication::applicationDirPath()+QStringLiteral("/languages/");
     int index;
     index=0;
     while(index<folderToParse.size())
@@ -32,8 +32,8 @@ LanguagesSelect::LanguagesSelect() :
             const QFileInfo &fileInfo=fileInfoList.at(sub_index);
             if(fileInfo.isDir())
             {
-                if(QFile(fileInfo.absoluteFilePath()+"/flag.png").exists() && QFile(fileInfo.absoluteFilePath()+"/informations.xml").exists() && QFile(fileInfo.absoluteFilePath()+"/translation.qm").exists())
-                    languageToParse << fileInfo.absoluteFilePath()+"/";
+                if(QFile(fileInfo.absoluteFilePath()+QStringLiteral("/flag.png")).exists() && QFile(fileInfo.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() && QFile(fileInfo.absoluteFilePath()+QStringLiteral("/translation.qm")).exists())
+                    languageToParse << fileInfo.absoluteFilePath()+QStringLiteral("/");
             }
             sub_index++;
         }
@@ -43,11 +43,11 @@ LanguagesSelect::LanguagesSelect() :
     while(index<languageToParse.size())
     {
         //open and quick check the file
-        QFile xmlFile(languageToParse.at(index)+"informations.xml");
+        QFile xmlFile(languageToParse.at(index)+QStringLiteral("informations.xml"));
         QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << QString("Unable to open the xml monster file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString());
+            qDebug() << QStringLiteral("Unable to open the xml monster file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString());
             index++;
             continue;
         }
@@ -58,44 +58,44 @@ LanguagesSelect::LanguagesSelect() :
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            qDebug() << QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            qDebug() << QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             index++;
             continue;
         }
         QDomElement root = domDocument.documentElement();
-        if(root.tagName()!="language")
+        if(root.tagName()!=QStringLiteral("language"))
         {
-            qDebug() << QString("Unable to open the xml file: %1, \"language\" root balise not found for the xml file").arg(xmlFile.fileName());
+            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"language\" root balise not found for the xml file").arg(xmlFile.fileName());
             index++;
             continue;
         }
 
         //load the content
-        QDomElement fullName = root.firstChildElement("fullName");
+        QDomElement fullName = root.firstChildElement(QStringLiteral("fullName"));
         if(fullName.isNull() || !fullName.isElement())
         {
-            qDebug() << QString("Unable to open the xml file: %1, \"fullName\" balise not found for the xml file").arg(xmlFile.fileName());
+            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"fullName\" balise not found for the xml file").arg(xmlFile.fileName());
             index++;
             continue;
         }
 
         QString shortNameMain;
         QStringList shortNameList;
-        QDomElement shortName = root.firstChildElement("shortName");
+        QDomElement shortName = root.firstChildElement(QStringLiteral("shortName"));
         while(!shortName.isNull())
         {
             if(shortName.isElement())
             {
-                if(shortName.hasAttribute("mainCode") && shortName.attribute("mainCode")=="true")
+                if(shortName.hasAttribute(QStringLiteral("mainCode")) && shortName.attribute(QStringLiteral("mainCode"))==QStringLiteral("true"))
                     shortNameMain=shortName.text();
                 shortNameList << shortName.text();
             }
-            shortName = shortName.nextSiblingElement("shortName");
+            shortName = shortName.nextSiblingElement(QStringLiteral("shortName"));
         }
 
         if(shortNameMain.isEmpty())
         {
-            qDebug() << QString("Unable to open the xml file: %1, \"shortName\" balise with mainCode=\"true\" not found for the xml file").arg(xmlFile.fileName());
+            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"shortName\" balise with mainCode=\"true\" not found for the xml file").arg(xmlFile.fileName());
             index++;
             continue;
         }
@@ -139,7 +139,7 @@ void LanguagesSelect::updateContent()
     on_automatic_clicked();
     QHash<QString,Language>::const_iterator i = languagesByMainCode.constBegin();
     while (i != languagesByMainCode.constEnd()) {
-        QListWidgetItem *item=new QListWidgetItem(QIcon(i.value().path+"flag.png"),i.value().fullName);
+        QListWidgetItem *item=new QListWidgetItem(QIcon(i.value().path+QStringLiteral("flag.png")),i.value().fullName);
         item->setData(99,i.key());
         ui->listWidget->addItem(item);
         if(language==i.key())
@@ -196,8 +196,8 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
     QStringList fileToLoad;
     //load the language main
     QDir dir;
-    if(newLanguage=="en")
-        dir=QDir(":/Languages/en/");
+    if(newLanguage==QStringLiteral("en"))
+        dir=QDir(QStringLiteral(":/Languages/en/"));
     else
         dir=QDir(languagesByMainCode[newLanguage].path);
     QFileInfoList fileInfoList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
@@ -205,7 +205,7 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
     while(index<fileInfoList.size())
     {
         const QFileInfo &fileInfo=fileInfoList.at(index);
-        if(fileInfo.suffix()=="qm")
+        if(fileInfo.suffix()==QStringLiteral("qm"))
             fileToLoad << fileInfo.absoluteFilePath();
         index++;
     }
@@ -224,7 +224,7 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
         indexTranslationFile++;
     }
     temp=new QTranslator();
-    if(temp->load(QString("qt_")+newLanguage, QLibraryInfo::location(QLibraryInfo::TranslationsPath)) && !temp->isEmpty())
+    if(temp->load(QStringLiteral("qt_")+newLanguage, QLibraryInfo::location(QLibraryInfo::TranslationsPath)) && !temp->isEmpty())
     {
         QCoreApplication::installTranslator(temp);
         installedTranslator<<temp;

@@ -10,6 +10,8 @@ MapVisualiserThread::MapVisualiserThread()
     moveToThread(this);
     start(QThread::IdlePriority);
     hideTheDoors=true;
+    regexMs=QRegularExpression(QStringLiteral("^[0-9]{1,5}ms$"));
+    regexFrames=QRegularExpression(QStringLiteral("^[0-9]{1,3}frames$"));
 }
 
 MapVisualiserThread::~MapVisualiserThread()
@@ -20,7 +22,17 @@ MapVisualiserThread::~MapVisualiserThread()
 
 void MapVisualiserThread::loadOtherMapAsync(const QString &fileName)
 {
+    if(mapCache.contains(fileName))
+    {
+        MapVisualiserThread::Map_full *tempMapObject=new MapVisualiserThread::Map_full();
+        *tempMapObject=mapCache[fileName];
+        emit asyncMapLoaded(fileName,tempMapObject);
+        return;
+    }
     MapVisualiserThread::Map_full *tempMapObject=loadOtherMap(fileName);
+    if(mapCache.size()>200)
+        mapCache.clear();
+    mapCache[fileName]=*tempMapObject;
     emit asyncMapLoaded(fileName,tempMapObject);
 }
 
@@ -146,7 +158,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     //tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
-    tempMapObject->objectGroup = new Tiled::ObjectGroup("Dyna management",0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
+    tempMapObject->objectGroup = new Tiled::ObjectGroup(QStringLiteral("Dyna management"),0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
 
     //add a tags
     if(debugTags)
@@ -169,14 +181,14 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
             if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
             {
                 //remove the unknow layer
-                if(objectGroup->name()=="Moving")
+                if(objectGroup->name()==QStringLiteral("Moving"))
                 {
                     QList<Tiled::MapObject*> objects=objectGroup->objects();
                     int index2=0;
                     while(index2<objects.size())
                     {
                         //remove the unknow object
-                        if(objects.at(index2)->type()!="door" || hideTheDoors)
+                        if(objects.at(index2)->type()!=QStringLiteral("door") || hideTheDoors)
                         {
                             objectGroup->removeObject(objects.at(index2));
                             delete objects.at(index2);
@@ -185,14 +197,14 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                     }
                     index++;
                 }
-                else if(objectGroup->name()=="Object")
+                else if(objectGroup->name()==QStringLiteral("Object"))
                 {
                     QList<Tiled::MapObject*> objects=objectGroup->objects();
                     int index2=0;
                     while(index2<objects.size())
                     {
                         //remove the bot
-                        if(objects.at(index2)->type()!="bot")
+                        if(objects.at(index2)->type()!=QStringLiteral("bot"))
                         {
                             objectGroup->removeObject(objects.at(index2));
                             delete objects.at(index2);
@@ -219,7 +231,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     index=0;
     while(index<tempMapObject->tiledMap->layerCount())
     {
-        if(tempMapObject->tiledMap->layerAt(index)->name()=="WalkBehind")
+        if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("WalkBehind"))
         {
             tempMapObject->objectGroupIndex=index;
             tempMapObject->tiledMap->insertLayer(index,tempMapObject->objectGroup);
@@ -233,7 +245,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         index=0;
         while(index<tempMapObject->tiledMap->layerCount())
         {
-            if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
+            if(tempMapObject->tiledMap->layerAt(index)->name()==QStringLiteral("Collisions"))
             {
                 tempMapObject->objectGroupIndex=index+1;
                 tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
@@ -254,7 +266,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     {
         if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
         {
-            if(objectGroup->name()=="Moving")
+            if(objectGroup->name()==QStringLiteral("Moving"))
             {
                 Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
                 if(tempMapObject->objectGroupIndex-1<=0)
@@ -269,7 +281,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
         }
         else if(Tiled::TileLayer *tileLayer = tempMapObject->tiledMap->layerAt(index)->asTileLayer())
         {
-            if(tileLayer->name()=="Grass")
+            if(tileLayer->name()==QStringLiteral("Grass"))
             {
                 /*grass = tempMapObject->tiledMap->takeLayerAt(index);
                 if(tempMapObject->objectGroupIndex-1<=0)
@@ -341,18 +353,18 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                     Tiled::Tile *tile=cell.tile;
                     if(tile!=NULL)
                     {
-                        QString animation=tile->property("animation");
+                        QString animation=tile->property(QStringLiteral("animation"));
                         if(!animation.isEmpty())
                         {
-                            QStringList animationList=animation.split(";");
+                            QStringList animationList=animation.split(QStringLiteral(";"));
                             if(animationList.size()==2)
                             {
-                                if(animationList.at(0).contains(QRegularExpression("^[0-9]{1,5}ms$")) && animationList.at(1).contains(QRegularExpression("^[0-9]{1,3}frames$")))
+                                if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
                                 {
                                     QString msString=animationList.at(0);
                                     QString framesString=animationList.at(1);
-                                    msString.remove("ms");
-                                    framesString.remove("frames");
+                                    msString.remove(QStringLiteral("ms"));
+                                    framesString.remove(QStringLiteral("frames"));
                                     quint16 ms=msString.toUShort();
                                     quint8 frames=framesString.toUShort();
                                     if(ms>0 && frames>1)
@@ -429,7 +441,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     QFile mapFile(fileName);
     if(!mapFile.open(QIODevice::ReadOnly))
     {
-        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+        qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
         return false;
     }
     QByteArray xmlContent=mapFile.readAll();
@@ -452,35 +464,35 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     }
     bool ok,ok2;
     //load the bots (map->bots)
-    QDomElement child = root.firstChildElement("objectgroup");
+    QDomElement child = root.firstChildElement(QStringLiteral("objectgroup"));
     while(!child.isNull())
     {
-        if(!child.hasAttribute("name"))
+        if(!child.hasAttribute(QStringLiteral("name")))
             CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"name\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         else if(!child.isElement())
-            CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
+            CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute(QStringLiteral("name"))).arg(child.lineNumber())));
         else
         {
-            if(child.attribute("name")=="Object")
+            if(child.attribute(QStringLiteral("name"))==QStringLiteral("Object"))
             {
-                QDomElement bot = child.firstChildElement("object");
+                QDomElement bot = child.firstChildElement(QStringLiteral("object"));
                 while(!bot.isNull())
                 {
-                    if(!bot.hasAttribute("type"))
+                    if(!bot.hasAttribute(QStringLiteral("type")))
                         CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
-                    else if(!bot.hasAttribute("x"))
+                    else if(!bot.hasAttribute(QStringLiteral("x")))
                         CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"x\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
-                    else if(!bot.hasAttribute("y"))
+                    else if(!bot.hasAttribute(QStringLiteral("y")))
                         CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"y\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
                     else if(!bot.isElement())
                         CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(bot.tagName().arg(bot.attribute("type")).arg(bot.lineNumber())));
                     else
                     {
-                        quint32 x=bot.attribute("x").toUInt(&ok)/CLIENT_BASE_TILE_SIZE;
-                        quint32 y=(bot.attribute("y").toUInt(&ok2)/CLIENT_BASE_TILE_SIZE)-1;
-                        if(ok && ok2 && (bot.attribute("type")=="bot" || bot.attribute("type")=="botfight"))
+                        quint32 x=bot.attribute(QStringLiteral("x")).toUInt(&ok)/CLIENT_BASE_TILE_SIZE;
+                        quint32 y=(bot.attribute(QStringLiteral("y")).toUInt(&ok2)/CLIENT_BASE_TILE_SIZE)-1;
+                        if(ok && ok2 && (bot.attribute(QStringLiteral("type"))==QStringLiteral("bot") || bot.attribute(QStringLiteral("type"))==QStringLiteral("botfight")))
                         {
-                            QDomElement properties = bot.firstChildElement("properties");
+                            QDomElement properties = bot.firstChildElement(QStringLiteral("properties"));
                             while(!properties.isNull())
                             {
                                 if(!properties.isElement())
@@ -488,28 +500,28 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                 else
                                 {
                                     QHash<QString,QString> property_parsed;
-                                    QDomElement property = properties.firstChildElement("property");
+                                    QDomElement property = properties.firstChildElement(QStringLiteral("property"));
                                     while(!property.isNull())
                                     {
-                                        if(!property.hasAttribute("name"))
+                                        if(!property.hasAttribute(QStringLiteral("name")))
                                             CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"name\": property.tagName(): %1 (at line: %2)").arg(property.tagName()).arg(property.lineNumber()));
-                                        else if(!property.hasAttribute("value"))
+                                        else if(!property.hasAttribute(QStringLiteral("value")))
                                             CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"value\": property.tagName(): %1 (at line: %2)").arg(property.tagName()).arg(property.lineNumber()));
                                         else if(!property.isElement())
                                             CatchChallenger::DebugClass::debugConsole(QString("Is not an element: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
                                         else
-                                            property_parsed[property.attribute("name")]=property.attribute("value");
-                                        property = property.nextSiblingElement("property");
+                                            property_parsed[property.attribute(QStringLiteral("name"))]=property.attribute(QStringLiteral("value"));
+                                        property = property.nextSiblingElement(QStringLiteral("property"));
                                     }
-                                    if(property_parsed.contains("file") && property_parsed.contains("id"))
+                                    if(property_parsed.contains(QStringLiteral("file")) && property_parsed.contains(QStringLiteral("id")))
                                     {
-                                        quint32 botId=property_parsed["id"].toUInt(&ok);
+                                        quint32 botId=property_parsed[QStringLiteral("id")].toUInt(&ok);
                                         if(ok)
                                         {
-                                            QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+"/"+property_parsed["file"]).absoluteFilePath();
-                                            if(!botFile.endsWith(".xml"))
-                                                botFile+=".xml";
-                                            if(bot.attribute("type")=="bot")
+                                            QString botFile=QFileInfo(QFileInfo(fileName).absolutePath()+QStringLiteral("/")+property_parsed[QStringLiteral("file")]).absoluteFilePath();
+                                            if(!botFile.endsWith(QStringLiteral(".xml")))
+                                                botFile+=QStringLiteral(".xml");
+                                            if(bot.attribute(QStringLiteral("type"))==QStringLiteral("bot"))
                                             {
                                                 if(stopIt)
                                                         return false;
@@ -524,8 +536,8 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                         CatchChallenger::DebugClass::debugConsole(QString("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
                                                         #endif
                                                         parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)]=botFiles[botFile][botId];
-                                                        property_parsed.remove("file");
-                                                        property_parsed.remove("id");
+                                                        property_parsed.remove(QStringLiteral("file"));
+                                                        property_parsed.remove(QStringLiteral("id"));
                                                         parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].properties=property_parsed;
                                                         parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].botId=botId;
                                                     }
@@ -547,15 +559,15 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                             CatchChallenger::DebugClass::debugConsole(QString("Is not a number: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
                                     }
                                 }
-                                properties = properties.nextSiblingElement("properties");
+                                properties = properties.nextSiblingElement(QStringLiteral("properties"));
                             }
                         }
                     }
-                    bot = bot.nextSiblingElement("object");
+                    bot = bot.nextSiblingElement(QStringLiteral("object"));
                 }
             }
         }
-        child = child.nextSiblingElement("objectgroup");
+        child = child.nextSiblingElement(QStringLiteral("objectgroup"));
     }
     return true;
 }
@@ -568,7 +580,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
     QFile mapFile(fileName);
     if(!mapFile.open(QIODevice::ReadOnly))
     {
-        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+        qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
         return;
     }
     QByteArray xmlContent=mapFile.readAll();
@@ -583,44 +595,44 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
     }
     bool ok;
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="bots")
+    if(root.tagName()!=QStringLiteral("bots"))
     {
         qDebug() << QString("\"bots\" root balise not found for the xml file");
         return;
     }
     //load the bots
-    QDomElement child = root.firstChildElement("bot");
+    QDomElement child = root.firstChildElement(QStringLiteral("bot"));
     while(!child.isNull())
     {
-        if(!child.hasAttribute("id"))
+        if(!child.hasAttribute(QStringLiteral("id")))
             CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         else if(!child.isElement())
             CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
-            quint32 botId=child.attribute("id").toUInt(&ok);
+            quint32 botId=child.attribute(QStringLiteral("id")).toUInt(&ok);
             if(ok)
             {
                 if(botFiles[fileName].contains(botId))
                     CatchChallenger::DebugClass::debugConsole(QString("bot already found with this id: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
                 else
                 {
-                    QDomElement step = child.firstChildElement("step");
+                    QDomElement step = child.firstChildElement(QStringLiteral("step"));
                     while(!step.isNull())
                     {
-                        if(!step.hasAttribute("id"))
+                        if(!step.hasAttribute(QStringLiteral("id")))
                             CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
-                        else if(!step.hasAttribute("type"))
+                        else if(!step.hasAttribute(QStringLiteral("type")))
                             CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
                         else if(!step.isElement())
                             CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber())));
                         else
                         {
-                            quint8 stepId=step.attribute("id").toUShort(&ok);
+                            quint8 stepId=step.attribute(QStringLiteral("id")).toUShort(&ok);
                             if(ok)
                                 botFiles[fileName][botId].step[stepId]=step;
                         }
-                        step = step.nextSiblingElement("step");
+                        step = step.nextSiblingElement(QStringLiteral("step"));
                     }
                     if(!botFiles[fileName][botId].step.contains(1))
                         botFiles[fileName].remove(botId);
@@ -629,7 +641,7 @@ void MapVisualiserThread::loadBotFile(const QString &fileName)
             else
                 CatchChallenger::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         }
-        child = child.nextSiblingElement("bot");
+        child = child.nextSiblingElement(QStringLiteral("bot"));
     }
 }
 

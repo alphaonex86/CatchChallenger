@@ -40,14 +40,14 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     stepAlternance=false;
-    animationTileset=new Tiled::Tileset("animation",16,16);
+    animationTileset=new Tiled::Tileset(QStringLiteral("animation"),16,16);
     nextCurrentObject=new Tiled::MapObject();
     grassCurrentObject=new Tiled::MapObject();
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
 
     playerMapObject = new Tiled::MapObject();
-    playerTileset = new Tiled::Tileset("player",16,24);
+    playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -733,12 +733,12 @@ QString MapVisualiserPlayer::currentMapType() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map[current_map]->tiledMap->properties().contains("type"))
+    if(all_map[current_map]->tiledMap->properties().contains(QStringLiteral("type")))
         if(!all_map[current_map]->tiledMap->properties().value("type").isEmpty())
-            return all_map[current_map]->tiledMap->properties().value("type");
-    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute("type"))
-        if(!all_map[current_map]->logicalMap.xmlRoot.attribute("type").isEmpty())
-            return all_map[current_map]->logicalMap.xmlRoot.attribute("type");
+            return all_map[current_map]->tiledMap->properties().value(QStringLiteral("type"));
+    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute(QStringLiteral("type")))
+        if(!all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("type")).isEmpty())
+            return all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("type"));
     return QString();
 }
 
@@ -746,12 +746,12 @@ QString MapVisualiserPlayer::currentZone() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map[current_map]->tiledMap->properties().contains("zone"))
-        if(!all_map[current_map]->tiledMap->properties().value("zone").isEmpty())
-            return all_map[current_map]->tiledMap->properties().value("zone");
-    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute("zone"))
-        if(!all_map[current_map]->logicalMap.xmlRoot.attribute("zone").isEmpty())
-            return all_map[current_map]->logicalMap.xmlRoot.attribute("zone");
+    if(all_map[current_map]->tiledMap->properties().contains(QStringLiteral("zone")))
+        if(!all_map[current_map]->tiledMap->properties().value(QStringLiteral("zone")).isEmpty())
+            return all_map[current_map]->tiledMap->properties().value(QStringLiteral("zone"));
+    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute(QStringLiteral("zone")))
+        if(!all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("zone")).isEmpty())
+            return all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("zone"));
     return QString();
 }
 
@@ -759,12 +759,12 @@ QString MapVisualiserPlayer::currentBackgroundsound() const
 {
     if(!all_map.contains(current_map))
         return QString();
-    if(all_map[current_map]->tiledMap->properties().contains("backgroundsound"))
-        if(!all_map[current_map]->tiledMap->properties().value("backgroundsound").isEmpty())
-            return all_map[current_map]->tiledMap->properties().value("backgroundsound");
-    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute("backgroundsound"))
-        if(!all_map[current_map]->logicalMap.xmlRoot.attribute("backgroundsound").isEmpty())
-            return all_map[current_map]->logicalMap.xmlRoot.attribute("backgroundsound");
+    if(all_map[current_map]->tiledMap->properties().contains(QStringLiteral("backgroundsound")))
+        if(!all_map[current_map]->tiledMap->properties().value(QStringLiteral("backgroundsound")).isEmpty())
+            return all_map[current_map]->tiledMap->properties().value(QStringLiteral("backgroundsound"));
+    if(all_map[current_map]->logicalMap.xmlRoot.hasAttribute(QStringLiteral("backgroundsound")))
+        if(!all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound")).isEmpty())
+            return all_map[current_map]->logicalMap.xmlRoot.attribute(QStringLiteral("backgroundsound"));
     return QString();
 }
 

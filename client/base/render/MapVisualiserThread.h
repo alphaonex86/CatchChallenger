@@ -5,6 +5,7 @@
 #include <QSet>
 #include <QString>
 #include <QHash>
+#include <QRegularExpression>
 
 #include "../../tiled/tiled_isometricrenderer.h"
 #include "../../tiled/tiled_map.h"
@@ -64,6 +65,9 @@ public slots:
 public slots:
     virtual void resetAll();
 private:
+    QRegularExpression regexMs;
+    QRegularExpression regexFrames;
+    QHash<QString,MapVisualiserThread::Map_full> mapCache;
     Tiled::MapReader reader;
     QHash<QString/*name*/,QHash<quint32/*bot id*/,CatchChallenger::Bot> > botFiles;
 };

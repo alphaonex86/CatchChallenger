@@ -183,6 +183,7 @@ void BaseServer::preload_the_data()
 
 void BaseServer::preload_zone()
 {
+    QRegularExpression regexXmlFile("^[a-zA-Z0-9\\- _]+\\.xml$");
     //open and quick check the file
     QFileInfoList entryList=QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
@@ -193,43 +194,50 @@ void BaseServer::preload_zone()
             index++;
             continue;
         }
-        if(!entryList.at(index).fileName().contains(QRegularExpression("^[a-zA-Z0-9\\- _]+\\.xml$")))
+        if(!entryList.at(index).fileName().contains(regexXmlFile))
         {
-            qDebug() << QString("%1 the zone file name not match").arg(entryList.at(index).fileName());
+            qDebug() << QStringLiteral("%1 the zone file name not match").arg(entryList.at(index).fileName());
             index++;
             continue;
         }
         QString zoneCodeName=entryList.at(index).fileName();
-        zoneCodeName.remove(QRegularExpression("\\.xml$"));
-        QFile itemsFile(entryList.at(index).absoluteFilePath());
-        QByteArray xmlContent;
-        if(!itemsFile.open(QIODevice::ReadOnly))
-        {
-            qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
-            index++;
-            continue;
-        }
-        xmlContent=itemsFile.readAll();
-        itemsFile.close();
+        zoneCodeName.remove(QStringLiteral(".xml"));
         QDomDocument domDocument;
-        QString errorStr;
-        int errorLine,errorColumn;
-        if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        const QString &file=entryList.at(index).absoluteFilePath();
+        if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
+            domDocument=DatapackGeneralLoader::xmlLoadedFile[file];
+        else
         {
-            qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-            index++;
-            continue;
+            QFile itemsFile(file);
+            QByteArray xmlContent;
+            if(!itemsFile.open(QIODevice::ReadOnly))
+            {
+                qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
+                index++;
+                continue;
+            }
+            xmlContent=itemsFile.readAll();
+            itemsFile.close();
+            QString errorStr;
+            int errorLine,errorColumn;
+            if(!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+            {
+                qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+                index++;
+                continue;
+            }
+            DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
         }
         if(GlobalServerData::serverPrivateVariables.captureFightIdList.contains(zoneCodeName))
         {
-            qDebug() << QString("Unable to open the file: %1, zone code name already found");
+            qDebug() << QStringLiteral("Unable to open the file: %1, zone code name already found");
             index++;
             continue;
         }
         QDomElement root = domDocument.documentElement();
         if(root.tagName()!="zone")
         {
-            qDebug() << QString("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(itemsFile.fileName());
+            qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
             index++;
             continue;
         }
@@ -250,7 +258,7 @@ void BaseServer::preload_zone()
                     if(ok)
                     {
                         if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
-                            qDebug() << QString("bot fightId %1 not found for capture zone %2").arg(fightId).arg(zoneCodeName);
+                            qDebug() << QStringLiteral("bot fightId %1 not found for capture zone %2").arg(fightId).arg(zoneCodeName);
                         else
                             fightIdList << fightId;
                     }
@@ -261,7 +269,7 @@ void BaseServer::preload_zone()
                 break;
             }
             else
-                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(capture.tagName()).arg(capture.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(capture.tagName()).arg(capture.lineNumber());
         }
         QString queryText;
         switch(GlobalServerData::serverSettings.database.type)
@@ -287,12 +295,12 @@ void BaseServer::preload_zone()
                 GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
             }
             else
-                DebugClass::debugConsole(QString("clan id is failed to convert to number for city status"));
+                DebugClass::debugConsole(QStringLiteral("clan id is failed to convert to number for city status"));
         }
         index++;
     }
 
-    qDebug() << QString("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
+    qDebug() << QStringLiteral("%1 zone(s) loaded").arg(GlobalServerData::serverPrivateVariables.captureFightIdList.size());
 }
 
 void BaseServer::preload_industries()
@@ -317,13 +325,13 @@ void BaseServer::preload_industries()
         bool ok;
         quint32 id=industryStatusQuery.value(0).toUInt(&ok);
         if(!ok)
-            DebugClass::debugConsole(QString("preload_industries: id is not a number"));
+            DebugClass::debugConsole(QStringLiteral("preload_industries: id is not a number"));
         if(ok)
         {
             if(!CommonDatapack::commonDatapack.industriesLink.contains(id))
             {
                 ok=false;
-                DebugClass::debugConsole(QString("preload_industries: industries link not found"));
+                DebugClass::debugConsole(QStringLiteral("preload_industries: industries link not found"));
             }
         }
         if(ok)
@@ -335,25 +343,25 @@ void BaseServer::preload_industries()
                 QStringList itemStringList=resourcesStringList.at(index).split(QStringLiteral("->"));
                 if(itemStringList.size()!=2)
                 {
-                    DebugClass::debugConsole(QString("preload_industries: wrong entry count"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: wrong entry count"));
                     ok=false;
                     break;
                 }
                 quint32 item=itemStringList.first().toUInt(&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(QString("preload_industries: item is not a number"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: item is not a number"));
                     break;
                 }
                 quint32 quantity=itemStringList.last().toUInt(&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(QString("preload_industries: quantity is not a number"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: quantity is not a number"));
                     break;
                 }
                 if(industryStatus.resources.contains(item))
                 {
-                    DebugClass::debugConsole(QString("preload_industries: item already set"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: item already set"));
                     ok=false;
                     break;
                 }
@@ -367,7 +375,7 @@ void BaseServer::preload_industries()
                 }
                 if(indexItem==industry.resources.size())
                 {
-                    DebugClass::debugConsole(QString("preload_industries: item in db not found"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: item in db not found"));
                     ok=false;
                     break;
                 }
@@ -386,25 +394,25 @@ void BaseServer::preload_industries()
                 QStringList itemStringList=productsStringList.at(index).split(QStringLiteral("->"));
                 if(itemStringList.size()!=2)
                 {
-                    DebugClass::debugConsole(QString("preload_industries: wrong entry count"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: wrong entry count"));
                     ok=false;
                     break;
                 }
                 quint32 item=itemStringList.first().toUInt(&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(QString("preload_industries: item is not a number"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: item is not a number"));
                     break;
                 }
                 quint32 quantity=itemStringList.last().toUInt(&ok);
                 if(!ok)
                 {
-                    DebugClass::debugConsole(QString("preload_industries: quantity is not a number"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: quantity is not a number"));
                     break;
                 }
                 if(industryStatus.products.contains(item))
                 {
-                    DebugClass::debugConsole(QString("preload_industries: item already set"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: item already set"));
                     ok=false;
                     break;
                 }const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[id]];
@@ -417,7 +425,7 @@ void BaseServer::preload_industries()
                 }
                 if(indexItem==industry.products.size())
                 {
-                    DebugClass::debugConsole(QString("preload_industries: item in db not found"));
+                    DebugClass::debugConsole(QStringLiteral("preload_industries: item in db not found"));
                     ok=false;
                     break;
                 }
@@ -431,7 +439,7 @@ void BaseServer::preload_industries()
         {
             industryStatus.last_update=industryStatusQuery.value(3).toUInt(&ok);
             if(!ok)
-                DebugClass::debugConsole(QString("preload_industries: last_update is not a number"));
+                DebugClass::debugConsole(QStringLiteral("preload_industries: last_update is not a number"));
         }
         if(ok)
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
@@ -453,7 +461,7 @@ void BaseServer::preload_industries()
                 DebugClass::debugConsole(industryDeleteQuery.lastQuery()+": "+industryDeleteQuery.lastError().text());
         }
     }
-    qDebug() << QString("%1 industrie(s) status loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size());
+    qDebug() << QStringLiteral("%1 industrie(s) status loaded").arg(GlobalServerData::serverPrivateVariables.industriesStatus.size());
 }
 
 void BaseServer::preload_market_monsters()
@@ -478,7 +486,7 @@ void BaseServer::preload_market_monsters()
          PlayerMonster playerMonster;
          playerMonster.id=monstersQuery.value(0).toUInt(&ok);
          if(!ok)
-             DebugClass::debugConsole(QString("monsterId: %1 is not a number").arg(monstersQuery.value(0).toString()));
+             DebugClass::debugConsole(QStringLiteral("monsterId: %1 is not a number").arg(monstersQuery.value(0).toString()));
          if(ok)
          {
              playerMonster.monster=monstersQuery.value(2).toUInt(&ok);
@@ -487,11 +495,11 @@ void BaseServer::preload_market_monsters()
                  if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
                  {
                      ok=false;
-                     DebugClass::debugConsole(QString("monster: %1 is not into monster list").arg(playerMonster.monster));
+                     DebugClass::debugConsole(QStringLiteral("monster: %1 is not into monster list").arg(playerMonster.monster));
                  }
              }
              else
-                 DebugClass::debugConsole(QString("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
+                 DebugClass::debugConsole(QStringLiteral("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
          }
          if(ok)
          {
@@ -500,12 +508,12 @@ void BaseServer::preload_market_monsters()
              {
                  if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                  {
-                     DebugClass::debugConsole(QString("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+                     DebugClass::debugConsole(QStringLiteral("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
                      playerMonster.level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                  }
              }
              else
-                 DebugClass::debugConsole(QString("level: %1 is not a number").arg(monstersQuery.value(3).toString()));
+                 DebugClass::debugConsole(QStringLiteral("level: %1 is not a number").arg(monstersQuery.value(3).toString()));
          }
          if(ok)
          {
@@ -514,18 +522,18 @@ void BaseServer::preload_market_monsters()
              {
                  if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1))
                  {
-                     DebugClass::debugConsole(QString("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
+                     DebugClass::debugConsole(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
                      playerMonster.remaining_xp=0;
                  }
              }
              else
-                 DebugClass::debugConsole(QString("monster xp: %1 is not a number").arg(monstersQuery.value(4).toString()));
+                 DebugClass::debugConsole(QStringLiteral("monster xp: %1 is not a number").arg(monstersQuery.value(4).toString()));
          }
          if(ok)
          {
              playerMonster.sp=monstersQuery.value(5).toUInt(&ok);
              if(!ok)
-                 DebugClass::debugConsole(QString("monster sp: %1 is not a number").arg(monstersQuery.value(5).toString()));
+                 DebugClass::debugConsole(QStringLiteral("monster sp: %1 is not a number").arg(monstersQuery.value(5).toString()));
          }
          if(ok)
          {
@@ -533,10 +541,10 @@ void BaseServer::preload_market_monsters()
              if(ok)
              {
                  if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.captured_with))
-                     DebugClass::debugConsole(QString("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
+                     DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
              }
              else
-                 DebugClass::debugConsole(QString("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));
+                 DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));
          }
          if(ok)
          {
@@ -549,7 +557,7 @@ void BaseServer::preload_market_monsters()
              else
              {
                  playerMonster.gender=Gender_Unknown;
-                 DebugClass::debugConsole(QString("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
+                 DebugClass::debugConsole(QStringLiteral("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
                  ok=false;
              }
          }
@@ -557,7 +565,7 @@ void BaseServer::preload_market_monsters()
          {
              playerMonster.egg_step=monstersQuery.value(8).toUInt(&ok);
              if(!ok)
-                 DebugClass::debugConsole(QString("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
+                 DebugClass::debugConsole(QStringLiteral("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
          }
          if(ok)
              marketPlayerMonster.player=monstersQuery.value(9).toUInt(&ok);
@@ -574,7 +582,7 @@ void BaseServer::preload_market_monsters()
                  const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters[playerMonster.monster],playerMonster.level);
                  if(playerMonster.hp>stat.hp)
                  {
-                     DebugClass::debugConsole(QString("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
+                     DebugClass::debugConsole(QStringLiteral("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
                                   .arg(playerMonster.hp)
                                   .arg(stat.hp)
                                   .arg(playerMonster.level)
@@ -584,7 +592,7 @@ void BaseServer::preload_market_monsters()
                  }
              }
              else
-                 DebugClass::debugConsole(QString("monster hp: %1 is not a number").arg(monstersQuery.value(1).toString()));
+                 DebugClass::debugConsole(QStringLiteral("monster hp: %1 is not a number").arg(monstersQuery.value(1).toString()));
          }
          //finish it
          if(ok)
@@ -629,36 +637,36 @@ void BaseServer::preload_market_items()
         marketItem.item=itemQuery.value(0).toUInt(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("item id is not a number, skip"));
+            DebugClass::debugConsole(QStringLiteral("item id is not a number, skip"));
             continue;
         }
         marketItem.quantity=itemQuery.value(1).toUInt(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("quantity is not a number, skip"));
+            DebugClass::debugConsole(QStringLiteral("quantity is not a number, skip"));
             continue;
         }
         marketItem.player=itemQuery.value(2).toUInt(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("player id is not a number, skip"));
+            DebugClass::debugConsole(QStringLiteral("player id is not a number, skip"));
             continue;
         }
         marketItem.cash=itemQuery.value(3).toULongLong(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("cash is not a number, skip"));
+            DebugClass::debugConsole(QStringLiteral("cash is not a number, skip"));
             continue;
         }
         marketItem.bitcoin=itemQuery.value(4).toDouble(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("bitcoin is not a number, skip"));
+            DebugClass::debugConsole(QStringLiteral("bitcoin is not a number, skip"));
             continue;
         }
         if(LocalClientHandler::marketObjectIdList.isEmpty())
         {
-            DebugClass::debugConsole(QString("not more marketObjectId into the list, skip"));
+            DebugClass::debugConsole(QStringLiteral("not more marketObjectId into the list, skip"));
             return;
         }
         marketItem.marketObjectId=LocalClientHandler::marketObjectIdList.first();
@@ -695,11 +703,11 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
             if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
             {
                 ok=false;
-                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
+                DebugClass::debugConsole(QStringLiteral("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
             }
         }
         else
-            DebugClass::debugConsole(QString("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
+            DebugClass::debugConsole(QStringLiteral("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
         if(ok)
         {
             buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
@@ -708,18 +716,18 @@ QList<PlayerBuff> BaseServer::loadMonsterBuffs(const quint32 &monsterId)
                 if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
                 {
                     ok=false;
-                    DebugClass::debugConsole(QString("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
+                    DebugClass::debugConsole(QStringLiteral("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
                 }
             }
             else
-                DebugClass::debugConsole(QString("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
+                DebugClass::debugConsole(QStringLiteral("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
         }
         if(ok)
         {
             if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.at(buff.level-1).duration!=Buff::Duration_Always)
             {
                 ok=false;
-                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
+                DebugClass::debugConsole(QStringLiteral("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
             }
         }
         if(ok)
@@ -756,11 +764,11 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
             if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
             {
                 ok=false;
-                DebugClass::debugConsole(QString("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
+                DebugClass::debugConsole(QStringLiteral("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
             }
         }
         else
-            DebugClass::debugConsole(QString("skill id: %1 is not a number").arg(monsterSkillsQuery.value(0).toString()));
+            DebugClass::debugConsole(QStringLiteral("skill id: %1 is not a number").arg(monsterSkillsQuery.value(0).toString()));
         if(ok)
         {
             skill.level=monsterSkillsQuery.value(1).toUInt(&ok);
@@ -769,11 +777,11 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
                 if(skill.level>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.size())
                 {
                     ok=false;
-                    DebugClass::debugConsole(QString("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
+                    DebugClass::debugConsole(QStringLiteral("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
                 }
             }
             else
-                DebugClass::debugConsole(QString("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
+                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
         }
         if(ok)
         {
@@ -784,11 +792,11 @@ QList<PlayerMonster::PlayerSkill> BaseServer::loadMonsterSkills(const quint32 &m
                 {
                     skill.endurance=CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance;
                     ok=false;
-                    DebugClass::debugConsole(QString("endurance of skill %1 for monsterId: %2 have been fixed by lower at ").arg(skill.endurance));
+                    DebugClass::debugConsole(QStringLiteral("endurance of skill %1 for monsterId: %2 have been fixed by lower at ").arg(skill.endurance));
                 }
             }
             else
-                DebugClass::debugConsole(QString("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
+                DebugClass::debugConsole(QStringLiteral("skill level: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
         }
         if(ok)
             skills << skill;
@@ -811,7 +819,7 @@ void BaseServer::preload_the_map()
 {
     GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MAP;
     #ifdef DEBUG_MESSAGE_MAP_LOAD
-    DebugClass::debugConsole(QString("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
+    DebugClass::debugConsole(QStringLiteral("start preload the map, into: %1").arg(GlobalServerData::serverPrivateVariables.datapack_mapPath));
     #endif
     Map_loader map_temp;
     QList<Map_semi> semi_loaded_map;
@@ -823,7 +831,7 @@ void BaseServer::preload_the_map()
     int size=returnList.size();
     int index=0;
     int sub_index;
-    QRegularExpression mapFilter("\\.tmx$");
+    QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
     while(index<size)
     {
         QString fileName=returnList.at(index);
@@ -831,7 +839,7 @@ void BaseServer::preload_the_map()
         if(fileName.contains(mapFilter) && GlobalServerData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
-            DebugClass::debugConsole(QString("load the map: %1").arg(fileName));
+            DebugClass::debugConsole(QStringLiteral("load the map: %1").arg(fileName));
             #endif
             full_map_name << fileName;
             if(map_temp.tryLoadMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName))
@@ -895,7 +903,7 @@ void BaseServer::preload_the_map()
                 semi_loaded_map << map_semi;
             }
             else
-                DebugClass::debugConsole(QString("error at loading: %1, error: %2").arg(fileName).arg(map_temp.errorString()));
+                DebugClass::debugConsole(QStringLiteral("error at loading: %1, error: %2").arg(fileName).arg(map_temp.errorString()));
         }
         index++;
     }
@@ -906,22 +914,22 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(semi_loaded_map.at(index).border.bottom.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
+        if(semi_loaded_map.at(index).border.bottom.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
             semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.bottom.fileName];
         else
             semi_loaded_map[index].map->border.bottom.map=NULL;
 
-        if(semi_loaded_map.at(index).border.top.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
+        if(semi_loaded_map.at(index).border.top.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
             semi_loaded_map[index].map->border.top.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.top.fileName];
         else
             semi_loaded_map[index].map->border.top.map=NULL;
 
-        if(semi_loaded_map.at(index).border.left.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
+        if(semi_loaded_map.at(index).border.left.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
             semi_loaded_map[index].map->border.left.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.left.fileName];
         else
             semi_loaded_map[index].map->border.left.map=NULL;
 
-        if(semi_loaded_map.at(index).border.right.fileName!="" && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
+        if(semi_loaded_map.at(index).border.right.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
             semi_loaded_map[index].map->border.right.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.right.fileName];
         else
             semi_loaded_map[index].map->border.right.map=NULL;
@@ -945,7 +953,7 @@ void BaseServer::preload_the_map()
                     int virtual_position=semi_loaded_map[index].old_map.teleport.at(sub_index).source_x+semi_loaded_map[index].old_map.teleport.at(sub_index).source_y*semi_loaded_map[index].map->width;
                     if(semi_loaded_map[index].map->teleporter.contains(virtual_position))
                     {
-                        DebugClass::debugConsole(QString("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                        DebugClass::debugConsole(QStringLiteral("already found teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
                              .arg(semi_loaded_map[index].map->map_file)
                              .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
                              .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
@@ -956,7 +964,7 @@ void BaseServer::preload_the_map()
                     else
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
-                        DebugClass::debugConsole(QString("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
+                        DebugClass::debugConsole(QStringLiteral("teleporter on the map: %1(%2,%3), to %4 (%5,%6)")
                                      .arg(semi_loaded_map[index].map->map_file)
                                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
                                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
@@ -970,7 +978,7 @@ void BaseServer::preload_the_map()
                     }
                 }
                 else
-                    DebugClass::debugConsole(QString("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the tp is out of range")
+                    DebugClass::debugConsole(QStringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the tp is out of range")
                          .arg(semi_loaded_map[index].map->map_file)
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
@@ -979,7 +987,7 @@ void BaseServer::preload_the_map()
                          .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).destination_y));
             }
             else
-                DebugClass::debugConsole(QString("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the map is not found")
+                DebugClass::debugConsole(QStringLiteral("wrong teleporter on the map: %1(%2,%3), to %4 (%5,%6) because the map is not found")
                      .arg(semi_loaded_map[index].map->map_file)
                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_x)
                      .arg(semi_loaded_map[index].old_map.teleport.at(sub_index).source_y)
@@ -1002,33 +1010,33 @@ void BaseServer::preload_the_map()
         if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
             if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have bottom map: %2, the map %2 have not a top map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have bottom map: %2, the map %2 have this top map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map->border.top.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.bottom.map=NULL;
         }
         if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
             if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have top map: %2, the map %2 have not a bottom map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have top map: %2, the map %2 have this bottom map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map->border.bottom.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.top.map=NULL;
         }
         if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
             if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have left map: %2, the map %2 have not a right map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have left map: %2, the map %2 have this right map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map->border.right.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.left.map=NULL;
         }
         if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map!=NULL && GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map!=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)])
         {
             if(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map==NULL)
-                DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have right map: %2, the map %2 have not a left map").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file));
             else
-                DebugClass::debugConsole(QString("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
+                DebugClass::debugConsole(QStringLiteral("the map %1 have right map: %2, the map %2 have this left map: %3").arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->map_file).arg(GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map->border.left.map->map_file));
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map=NULL;
         }
         index++;
@@ -1134,7 +1142,7 @@ void BaseServer::preload_the_map()
         index++;
     }
 
-    DebugClass::debugConsole(QString("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 map(s) loaded").arg(GlobalServerData::serverPrivateVariables.map_list.size()));
 
     botFiles.clear();
 }
@@ -1149,14 +1157,14 @@ void BaseServer::preload_the_skin()
         index++;
     }
 
-    DebugClass::debugConsole(QString("%1 skin(s) loaded").arg(GlobalServerData::serverPrivateVariables.skinList.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 skin(s) loaded").arg(GlobalServerData::serverPrivateVariables.skinList.size()));
 }
 
 void BaseServer::preload_the_datapack()
 {
-    QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED+QString(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
+    QStringList extensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_ALLOWED+QStringLiteral(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED).split(QStringLiteral(";"));
     QSet<QString> extensionAllowed=extensionAllowedTemp.toSet();
-    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(";");
+    QStringList compressedExtensionAllowedTemp=QString(CATCHCHALLENGER_EXTENSION_COMPRESSED).split(QStringLiteral(";"));
     ClientHeavyLoad::compressedExtension=compressedExtensionAllowedTemp.toSet();
     QStringList returnList=FacilityLib::listFolder(GlobalServerData::serverSettings.datapack_basePath);
     int index=0;
@@ -1173,7 +1181,7 @@ void BaseServer::preload_the_datapack()
                 {
                     if(file.open(QIODevice::ReadOnly))
                     {
-                        fileName.replace("\\","/");//remplace if is under windows server
+                        fileName.replace(QStringLiteral("\\"),QStringLiteral("/"));//remplace if is under windows server
                         GlobalServerData::serverPrivateVariables.filesList << fileName;
                         file.close();
                     }
@@ -1182,7 +1190,7 @@ void BaseServer::preload_the_datapack()
         }
         index++;
     }
-    DebugClass::debugConsole(QString("%1 file(s) list for datapack cached").arg(GlobalServerData::serverPrivateVariables.filesList.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 file(s) list for datapack cached").arg(GlobalServerData::serverPrivateVariables.filesList.size()));
 }
 
 void BaseServer::preload_the_players()
@@ -1242,7 +1250,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                 if(botFiles[bot_Semi.file].contains(bot_Semi.id))
                 {
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
-                    CatchChallenger::DebugClass::debugConsole(QString("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Bot %1 (%2) at %3 (%4,%5)").arg(bot_Semi.file).arg(bot_Semi.id).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                     #endif
                     QHashIterator<quint8,QDomElement> i(botFiles[bot_Semi.file][bot_Semi.id].step);
                     while (i.hasNext()) {
@@ -1251,21 +1259,21 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         if(step.attribute(QStringLiteral("type"))==QStringLiteral("shop"))
                         {
                             if(!step.hasAttribute(QStringLiteral("shop")))
-                                CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"shop\": for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 quint32 shop=step.attribute(QStringLiteral("shop")).toUInt(&ok);
                                 if(!ok)
-                                    CatchChallenger::DebugClass::debugConsole(QString("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop is not a number: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else if(!GlobalServerData::serverPrivateVariables.shops.contains(shop))
-                                    CatchChallenger::DebugClass::debugConsole(QString("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop number is not valid shop: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                         .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                                 else
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                    CatchChallenger::DebugClass::debugConsole(QString("shop put at: %1 (%2,%3)")
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("shop put at: %1 (%2,%3)")
                                         .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     #endif
                                     static_cast<MapServer *>(semi_loaded_map[index].map)->shops.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),shop);
@@ -1276,12 +1284,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("learn"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->learn.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(QString("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("learn point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(QString("learn point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("learn point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->learn.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
@@ -1291,12 +1299,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("heal"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->heal.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(QString("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("heal point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(QString("heal point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("heal point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->heal.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
@@ -1306,12 +1314,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("market"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->market.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(QString("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("market point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(QString("market point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("market point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->market.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y));
@@ -1321,15 +1329,15 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("zonecapture"))
                         {
                             if(!step.hasAttribute(QStringLiteral("zone")))
-                                CatchChallenger::DebugClass::debugConsole(QString("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else if(static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(QString("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("zonecapture point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
                                 #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                CatchChallenger::DebugClass::debugConsole(QString("zonecapture point put at: %1 (%2,%3)")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("zonecapture point put at: %1 (%2,%3)")
                                     .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 #endif
                                 static_cast<MapServer *>(semi_loaded_map[index].map)->zonecapture[QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)]=step.attribute("zone");
@@ -1339,7 +1347,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                         else if(step.attribute(QStringLiteral("type"))==QStringLiteral("fight"))
                         {
                             if(static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.contains(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y)))
-                                CatchChallenger::DebugClass::debugConsole(QString("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("botsFight point already on the map: for bot id: %1 (%2), spawn at: %3 (%4,%5), for step: %6")
                                     .arg(bot_Semi.id).arg(bot_Semi.file).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(i.key()));
                             else
                             {
@@ -1360,12 +1368,12 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             else
                                             {
                                                 if(bot_Semi.property_text[QStringLiteral("lookAt")]!=QStringLiteral("bottom"))
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Wrong direction for the bot at %1 (%2,%3)")
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Wrong direction for the bot at %1 (%2,%3)")
                                                         .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                                 direction=CatchChallenger::Direction_move_at_bottom;
                                             }
                                             #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                            CatchChallenger::DebugClass::debugConsole(QString("botsFight point put at: %1 (%2,%3)")
+                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("botsFight point put at: %1 (%2,%3)")
                                                 .arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                             #endif
                                             static_cast<MapServer *>(semi_loaded_map[index].map)->botsFight.insert(QPair<quint8,quint8>(bot_Semi.point.x,bot_Semi.point.y),fightid);
@@ -1373,7 +1381,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
 
                                             //load the botsFightTrigger
                                             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
-                                            CatchChallenger::DebugClass::debugConsole(QString("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
+                                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y).arg(direction));
                                             #endif
                                             quint8 temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
                                             int index_botfight_range=0;
@@ -1393,13 +1401,13 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
                                             }
                                         }
                                         else
-                                            DebugClass::debugConsole(QString("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                            DebugClass::debugConsole(QStringLiteral("lookAt not found: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                     }
                                     else
-                                        DebugClass::debugConsole(QString("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                        DebugClass::debugConsole(QStringLiteral("fightid not found into the list: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                                 }
                                 else
-                                    DebugClass::debugConsole(QString("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
+                                    DebugClass::debugConsole(QStringLiteral("botsFight point have wrong fightid: %1 at %2(%3,%4)").arg(shops_number).arg(semi_loaded_map[index].map->map_file).arg(bot_Semi.point.x).arg(bot_Semi.point.y));
                             }
                         }
                     }
@@ -1434,7 +1442,7 @@ bool BaseServer::initialize_the_database()
 {
     if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
-        DebugClass::debugConsole(QString("Disconnected to %1 at %2 (%3), previous connection: %4")
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2 (%3), previous connection: %4")
                                  .arg(GlobalServerData::serverPrivateVariables.db_type_string)
                                  .arg(GlobalServerData::serverSettings.database.mysql.host)
                                  .arg(GlobalServerData::serverPrivateVariables.db->isOpen())
@@ -1445,7 +1453,7 @@ bool BaseServer::initialize_the_database()
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
-        DebugClass::debugConsole(QString("database type unknow"));
+        DebugClass::debugConsole(QStringLiteral("database type unknow"));
         return false;
         case ServerSettings::Database::DatabaseType_Mysql:
         GlobalServerData::serverPrivateVariables.db = new QSqlDatabase();
@@ -1466,43 +1474,49 @@ bool BaseServer::initialize_the_database()
     }
     if(!GlobalServerData::serverPrivateVariables.db->open())
     {
-        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
-        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
+        DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
+        emit error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         return false;
     }
-    DebugClass::debugConsole(QString("Connected to %1 at %2 (%3)")
+    DebugClass::debugConsole(QStringLiteral("Connected to %1 at %2 (%3)")
                              .arg(GlobalServerData::serverPrivateVariables.db_type_string)
                              .arg(GlobalServerData::serverSettings.database.mysql.host)
                              .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
     return true;
 }
 
-void BaseServer::loadBotFile(const QString &fileName)
+void BaseServer::loadBotFile(const QString &file)
 {
-    if(botFiles.contains(fileName))
+    if(botFiles.contains(file))
         return;
-    botFiles[fileName];//create the entry
-    QFile mapFile(fileName);
-    if(!mapFile.open(QIODevice::ReadOnly))
-    {
-        qDebug() << mapFile.fileName()+": "+mapFile.errorString();
-        return;
-    }
-    QByteArray xmlContent=mapFile.readAll();
-    mapFile.close();
+    botFiles[file];//create the entry
     QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    if(DatapackGeneralLoader::xmlLoadedFile.contains(file))
+        domDocument=DatapackGeneralLoader::xmlLoadedFile[file];
+    else
     {
-        qDebug() << QString("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-        return;
+        QFile mapFile(file);
+        if(!mapFile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << mapFile.fileName()+": "+mapFile.errorString();
+            return;
+        }
+        QByteArray xmlContent=mapFile.readAll();
+        mapFile.close();
+        QString errorStr;
+        int errorLine,errorColumn;
+        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+            return;
+        }
+        DatapackGeneralLoader::xmlLoadedFile[file]=domDocument;
     }
     bool ok;
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="bots")
     {
-        qDebug() << QString("\"bots\" root balise not found for the xml file");
+        qDebug() << QStringLiteral("\"bots\" root balise not found for the xml file");
         return;
     }
     //load the bots
@@ -1510,37 +1524,37 @@ void BaseServer::loadBotFile(const QString &fileName)
     while(!child.isNull())
     {
         if(!child.hasAttribute(QStringLiteral("id")))
-            CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         else if(!child.isElement())
-            CatchChallenger::DebugClass::debugConsole(QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber())));
         else
         {
             quint32 id=child.attribute(QStringLiteral("id")).toUInt(&ok);
             if(ok)
             {
-                botFiles[fileName][id];
+                botFiles[file][id];
                 QDomElement step = child.firstChildElement(QStringLiteral("step"));
                 while(!step.isNull())
                 {
                     if(!step.hasAttribute(QStringLiteral("id")))
-                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
                     else if(!step.hasAttribute(QStringLiteral("type")))
-                        CatchChallenger::DebugClass::debugConsole(QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber()));
                     else if(!step.isElement())
-                        CatchChallenger::DebugClass::debugConsole(QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute(QStringLiteral("type"))).arg(step.lineNumber())));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute(QStringLiteral("type"))).arg(step.lineNumber())));
                     else
                     {
                         quint32 stepId=step.attribute(QStringLiteral("id")).toUInt(&ok);
                         if(ok)
-                            botFiles[fileName][id].step[stepId]=step;
+                            botFiles[file][id].step[stepId]=step;
                     }
                     step = step.nextSiblingElement(QStringLiteral("step"));
                 }
-                if(!botFiles[fileName][id].step.contains(1))
-                    botFiles[fileName].remove(id);
+                if(!botFiles[file][id].step.contains(1))
+                    botFiles[file].remove(id);
             }
             else
-                CatchChallenger::DebugClass::debugConsole(QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
         }
         child = child.nextSiblingElement(QStringLiteral("bot"));
     }
@@ -1654,7 +1668,7 @@ bool BaseServer::check_if_now_stopped()
     DebugClass::debugConsole("Fully stopped");
     if(GlobalServerData::serverPrivateVariables.db!=NULL)
     {
-        DebugClass::debugConsole(QString("Disconnected to %1 at %2 (%3)")
+        DebugClass::debugConsole(QStringLiteral("Disconnected to %1 at %2 (%3)")
                                  .arg(GlobalServerData::serverPrivateVariables.db_type_string)
                                  .arg(GlobalServerData::serverSettings.database.mysql.host)
                                  .arg(GlobalServerData::serverPrivateVariables.db->isOpen()));
@@ -1845,10 +1859,10 @@ void BaseServer::start_internal_server()
     if(GlobalServerData::serverSettings.bitcoin.enabled)
     {
         GlobalServerData::serverPrivateVariables.bitcoin.process.start(GlobalServerData::serverSettings.bitcoin.binaryPath,QStringList()
-                                                                       << QString("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
-                                                                       << QString("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
-                                                                       << QString("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
-                                                                       << QString("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
+                                                                       << QStringLiteral("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
+                                                                       << QStringLiteral("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                       << QStringLiteral("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                       << QStringLiteral("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
                                                                        );
         GlobalServerData::serverPrivateVariables.bitcoin.process.waitForStarted();
         GlobalServerData::serverPrivateVariables.bitcoin.enabled=GlobalServerData::serverPrivateVariables.bitcoin.process.state()==QProcess::Running;
@@ -1937,7 +1951,7 @@ void BaseServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
-            DebugClass::debugConsole(QString("newConnection(): new client connected by fake socket"));
+            DebugClass::debugConsole(QStringLiteral("newConnection(): new client connected by fake socket"));
             connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
         }
         else
@@ -1973,10 +1987,10 @@ void BaseServer::load_clan_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;");
         break;
     }
     QSqlQuery maxClanIdQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -1989,7 +2003,7 @@ void BaseServer::load_clan_max_id()
         GlobalServerData::serverPrivateVariables.maxClanId=maxClanIdQuery.value(0).toUInt(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
+            DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
             GlobalServerData::serverPrivateVariables.maxClanId=0;
             continue;
         }
@@ -2003,10 +2017,10 @@ void BaseServer::load_account_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT id FROM account ORDER BY id DESC LIMIT 0,1;");
         break;
     }
     QSqlQuery maxAccountIdQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -2019,7 +2033,7 @@ void BaseServer::load_account_max_id()
         GlobalServerData::serverPrivateVariables.maxAccountId=maxAccountIdQuery.value(0).toUInt(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
+            DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
             GlobalServerData::serverPrivateVariables.maxAccountId=0;
             continue;
         }
@@ -2033,15 +2047,15 @@ void BaseServer::load_character_max_id()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;");
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
+            queryText=QStringLiteral("SELECT id FROM character ORDER BY id DESC LIMIT 0,1;");
         break;
     }
     QSqlQuery maxCharacterIdQuery(*GlobalServerData::serverPrivateVariables.db);
     if(!maxCharacterIdQuery.exec(queryText))
-        DebugClass::debugConsole(maxCharacterIdQuery.lastQuery()+": "+maxCharacterIdQuery.lastError().text());
+        DebugClass::debugConsole(maxCharacterIdQuery.lastQuery()+QStringLiteral(": ")+maxCharacterIdQuery.lastError().text());
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
     while(maxCharacterIdQuery.next())
     {
@@ -2049,7 +2063,7 @@ void BaseServer::load_character_max_id()
         GlobalServerData::serverPrivateVariables.maxCharacterId=maxCharacterIdQuery.value(0).toUInt(&ok);
         if(!ok)
         {
-            DebugClass::debugConsole(QString("Max monster id is failed to convert to number"));
+            DebugClass::debugConsole(QStringLiteral("Max monster id is failed to convert to number"));
             GlobalServerData::serverPrivateVariables.maxCharacterId=0;
             continue;
         }

@@ -76,8 +76,8 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     }
 
     tagTilesetIndex=0;
-    tagTileset = new Tiled::Tileset("tags",16,16);
-    tagTileset->loadFromImage(QImage(":/tags.png"),":/tags.png");
+    tagTileset = new Tiled::Tileset(QStringLiteral("tags"),16,16);
+    tagTileset->loadFromImage(QImage(QStringLiteral(":/tags.png")),QStringLiteral(":/tags.png"));
     mapVisualiserThread.tagTilesetIndex=tagTilesetIndex;
     mapVisualiserThread.tagTileset=tagTileset;
 
@@ -145,7 +145,7 @@ void MapVisualiser::paintEvent(QPaintEvent * event)
 void MapVisualiser::updateFPS()
 {
     if(FPSText!=NULL && mShowFPS)
-        FPSText->setText(QString("%1 FPS").arg((int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed()));
+        FPSText->setText(QStringLiteral("%1 FPS").arg((int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed()));
 
     frameCounter=0;
     timeUpdateFPS.restart();

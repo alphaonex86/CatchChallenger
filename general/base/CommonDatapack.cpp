@@ -47,85 +47,85 @@ void CommonDatapack::parseDatapack(const QString &datapackPath)
 
 void CommonDatapack::parseTypes()
 {
-    types=FightLoader::loadTypes(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml");
-    qDebug() << QString("%1 type(s) loaded").arg(types.size());
+    types=FightLoader::loadTypes(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("type.xml"));
+    qDebug() << QStringLiteral("%1 type(s) loaded").arg(types.size());
 }
 
 void CommonDatapack::parseItems()
 {
-    items=DatapackGeneralLoader::loadItems(datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
-    qDebug() << QString("%1 items(s) loaded").arg(items.item.size());
-    qDebug() << QString("%1 trap(s) loaded").arg(items.trap.size());
+    items=DatapackGeneralLoader::loadItems(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM),monsterBuffs);
+    qDebug() << QStringLiteral("%1 items(s) loaded").arg(items.item.size());
+    qDebug() << QStringLiteral("%1 trap(s) loaded").arg(items.trap.size());
 }
 
 void CommonDatapack::parseIndustries()
 {
-    industries=DatapackGeneralLoader::loadIndustries(datapackPath+DATAPACK_BASE_PATH_INDUSTRIES,items.item);
-    industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+DATAPACK_BASE_PATH_INDUSTRIES+"list.xml",industries);
-    qDebug() << QString("%1 industries(s) loaded").arg(industries.size());
-    qDebug() << QString("%1 industries(s) link loaded").arg(industriesLink.size());
+    industries=DatapackGeneralLoader::loadIndustries(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIES),items.item);
+    industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_INDUSTRIES)+QStringLiteral("list.xml"),industries);
+    qDebug() << QStringLiteral("%1 industries(s) loaded").arg(industries.size());
+    qDebug() << QStringLiteral("%1 industries(s) link loaded").arg(industriesLink.size());
 }
 
 void CommonDatapack::parseCraftingRecipes()
 {
-    QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items.item);
+    QPair<QHash<quint32,CrafingRecipe>,QHash<quint32,quint32> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_CRAFTING)+QStringLiteral("recipes.xml"),items.item);
     crafingRecipes=multipleVariables.first;
     itemToCrafingRecipes=multipleVariables.second;
-    qDebug() << QString("%1 crafting recipe(s) loaded").arg(crafingRecipes.size());
+    qDebug() << QStringLiteral("%1 crafting recipe(s) loaded").arg(crafingRecipes.size());
 }
 
 void CommonDatapack::parsePlants()
 {
-    plants=DatapackGeneralLoader::loadPlants(datapackPath+DATAPACK_BASE_PATH_PLANTS+"plants.xml");
-    qDebug() << QString("%1 plant(s) loaded").arg(plants.size());
+    plants=DatapackGeneralLoader::loadPlants(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLANTS)+QStringLiteral("plants.xml"));
+    qDebug() << QStringLiteral("%1 plant(s) loaded").arg(plants.size());
 }
 
 void CommonDatapack::parseQuests()
 {
-    quests=DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS);
-    qDebug() << QString("%1 quest(s) loaded").arg(quests.size());
+    quests=DatapackGeneralLoader::loadQuests(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_QUESTS));
+    qDebug() << QStringLiteral("%1 quest(s) loaded").arg(quests.size());
 }
 
 void CommonDatapack::parseReputation()
 {
-    reputation=DatapackGeneralLoader::loadReputation(datapackPath+DATAPACK_BASE_PATH_PLAYER+"reputation.xml");
-    qDebug() << QString("%1 reputation(s) loaded").arg(reputation.size());
+    reputation=DatapackGeneralLoader::loadReputation(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("reputation.xml"));
+    qDebug() << QStringLiteral("%1 reputation(s) loaded").arg(reputation.size());
 }
 
 void CommonDatapack::parseBuff()
 {
-    monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"buff.xml");
-    qDebug() << QString("%1 monster buff(s) loaded").arg(monsterBuffs.size());
+    monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("buff.xml"));
+    qDebug() << QStringLiteral("%1 monster buff(s) loaded").arg(monsterBuffs.size());
 }
 
 void CommonDatapack::parseSkills()
 {
-    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"skill.xml",monsterBuffs,types);
-    qDebug() << QString("%1 monster skill(s) loaded").arg(monsterSkills.size());
+    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("skill.xml"),monsterBuffs,types);
+    qDebug() << QStringLiteral("%1 monster skill(s) loaded").arg(monsterSkills.size());
 }
 
 void CommonDatapack::parseMonsters()
 {
-    monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS+"monster.xml",monsterSkills,types,items.item);
-    qDebug() << QString("%1 monster(s) loaded").arg(monsters.size());
+    monsters=FightLoader::loadMonster(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("monster.xml"),monsterSkills,types,items.item);
+    qDebug() << QStringLiteral("%1 monster(s) loaded").arg(monsters.size());
 }
 
 void CommonDatapack::parseMonstersEvolutionItems()
 {
     items.evolutionItem=FightLoader::loadMonsterEvolutionItems(monsters);
-    qDebug() << QString("%1 monster evolution items(s) loaded").arg(items.evolutionItem.size());
+    qDebug() << QStringLiteral("%1 monster evolution items(s) loaded").arg(items.evolutionItem.size());
 }
 
 void CommonDatapack::parseBotFights()
 {
-    botFights=FightLoader::loadFight(datapackPath+DATAPACK_BASE_PATH_FIGHT, monsters, monsterSkills);
-    qDebug() << QString("%1 bot fight(s) loaded").arg(botFights.size());
+    botFights=FightLoader::loadFight(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_FIGHT), monsters, monsterSkills);
+    qDebug() << QStringLiteral("%1 bot fight(s) loaded").arg(botFights.size());
 }
 
 void CommonDatapack::parseProfileList()
 {
-    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+DATAPACK_BASE_PATH_PLAYER+"start.xml").second;
-    qDebug() << QString("%1 profile(s) loaded").arg(profileList.size());
+    profileList=DatapackGeneralLoader::loadProfileList(datapackPath,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYER)+QStringLiteral("start.xml")).second;
+    qDebug() << QStringLiteral("%1 profile(s) loaded").arg(profileList.size());
 }
 
 void CommonDatapack::unload()
@@ -150,6 +150,7 @@ void CommonDatapack::unload()
     industries.clear();
     profileList.clear();
     types.clear();
+    DatapackGeneralLoader::xmlLoadedFile.clear();
     isParsed=false;
 }
 
