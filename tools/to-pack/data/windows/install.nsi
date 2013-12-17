@@ -1,7 +1,7 @@
 !include Library.nsh
 
 ; HM NIS Edit Wizard helper defines
-!define PRODUCT_NAME "CatchChallenger"
+!define PRODUCT_NAME "CatchChallenger CATCHCHALLENGER_SUBVERSION"
 !define PRODUCT_VERSION "X.X.X.X"
 !define PRODUCT_PUBLISHER "CatchChallenger"
 !define PRODUCT_WEB_SITE "http://catchchallenger.first-world.info/"
@@ -46,7 +46,7 @@ SetCompressor /FINAL /SOLID lzma
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 OutFile "setup.exe"
-InstallDir "$PROGRAMFILES\CatchChallenger"
+InstallDir "$PROGRAMFILES\CatchChallenger-CATCHCHALLENGER_SUBVERSION"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ShowInstDetails show
 ShowUnInstDetails show
@@ -55,8 +55,8 @@ Section "SectionPrincipale" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite on
   File "catchchallenger-CATCHCHALLENGER_SUBVERSION.exe"
-  CreateDirectory "$SMPROGRAMS\CatchChallenger"
-  CreateShortCut "$SMPROGRAMS\CatchChallenger\CatchChallenger.lnk" "$INSTDIR\catchchallenger-CATCHCHALLENGER_SUBVERSION.exe"
+  CreateDirectory "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION"
+  CreateShortCut "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION\CatchChallenger.lnk" "$INSTDIR\catchchallenger-CATCHCHALLENGER_SUBVERSION.exe"
   File /r /x *.nsi /x setup.exe *
 SectionEnd
 
@@ -116,7 +116,7 @@ done:
 FunctionEnd
 
 Function un.onInit
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Êtes-vous certains de vouloir désinstaller totalement $(^Name) et tous ses composants ?" IDYES +2
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely uninstall $(^Name) and all of its components?" IDYES +2
   Abort
 FunctionEnd
 
@@ -136,11 +136,10 @@ Section Uninstall
 
   NotLaunched:
 
-  DeleteRegKey HKCU "Software\CatchChallenger"
-  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "catchchallenger"
-  Delete "$SMPROGRAMS\CatchChallenger\Uninstall.lnk"
-  Delete "$SMPROGRAMS\CatchChallenger\CatchChallenger.lnk"
-  RMDir /REBOOTOK /r "$SMPROGRAMS\CatchChallenger"
+  DeleteRegKey HKCU "Software\CatchChallenger\client-CATCHCHALLENGER_SUBVERSION"
+  Delete "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION\Uninstall.lnk"
+  Delete "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION\CatchChallenger.lnk"
+  RMDir /REBOOTOK /r "$SMPROGRAMS\CatchChallenger-CATCHCHALLENGER_SUBVERSION"
   RMDir /REBOOTOK /r "$INSTDIR"
 
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"

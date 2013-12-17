@@ -198,6 +198,16 @@
         <translation>Titre inconnu</translation>
     </message>
     <message>
+        <location filename="../../solo/SoloWindow.cpp" line="515"/>
+        <source>New name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../solo/SoloWindow.cpp" line="515"/>
+        <source>Write the new name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../../solo/SoloWindow.cpp" line="553"/>
         <source>Copy of %1</source>
         <translation>Copie de %1</translation>

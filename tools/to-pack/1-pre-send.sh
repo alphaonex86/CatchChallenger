@@ -25,6 +25,12 @@ source sub-script/assemble-source-version.sh
 cd ${BASE_PWD}
 echo "Assemble source version... done"
 
+echo "Get datapack..."
+source sub-script/get-datapack.sh
+cd ${BASE_PWD}
+echo "Get datapack... done"
+
+
 
 
 

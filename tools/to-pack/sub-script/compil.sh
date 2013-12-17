@@ -72,7 +72,7 @@ function compil {
 		upx --lzma -9 catchchallenger*.exe > /dev/null 2>&1
 	fi
 	mv ${COMPIL_FOLDER}/catchchallenger*.exe ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ 
-	/usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" \) -exec rm -f {} \;
+	/usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" -or -name "*.png" \) -exec rm -f {} \;
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1

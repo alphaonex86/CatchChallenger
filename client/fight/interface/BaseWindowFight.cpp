@@ -1052,6 +1052,7 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         CatchChallenger::ClientFightEngine::fightEngine.useSkill(0);
     else
         CatchChallenger::ClientFightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()]);
+    displayAttackProgression=0;
     if(battleType!=BattleType_OtherPlayer)
         doNextAction();
     else
@@ -1927,6 +1928,7 @@ void BaseWindow::displayAttack()
                     .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack)
                     .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
                     .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success);
+        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
     }
 
     //if start, display text
@@ -1952,7 +1954,8 @@ void BaseWindow::displayAttack()
                     .arg(attackReturn.addBuffEffectMonster.size())
                     .arg(attackReturn.removeBuffEffectMonster.size())
                     .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size()));
-        doNextAction();
+        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+        //doNextAction();
         return;
     }
 

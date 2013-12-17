@@ -18,7 +18,9 @@ function assemble {
 	if [ ! -e ${FINAL_ARCHIVE} ]; then
 		echo "creating the archive ${TARGET}..."
 		find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -iname "*.a" -exec rm {} \; > /dev/null 2>&1
-		mv ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/client/${TARGET}/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
+		rsync -art ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/client/${TARGET}/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/
+		rsync -art ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/client/base/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/
+		rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/en/
 #		cp -Rf ${CATCHCHALLENGERSOURCESPATH}/README ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/README.txt
 #		cp -Rf ${CATCHCHALLENGERSOURCESPATH}/COPYING ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/COPYING.txt
 		upx --lzma -9 ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/catchchallenger*.exe > /dev/null 2>&1
