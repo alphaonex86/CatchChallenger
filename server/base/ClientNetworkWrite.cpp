@@ -18,11 +18,11 @@ void ClientNetworkWrite::sendFullPacket(const quint8 &mainCodeType,const quint16
 {
     if(!player_informations->isConnected)
     {
-        emit message(QString("sendPacket(%1,%2,%3) when is not connected").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
+        emit message(QStringLiteral("sendPacket(%1,%2,%3) when is not connected").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("sendPacket(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
+    emit message(QStringLiteral("sendPacket(%1,%2,%3)").arg(mainCodeType).arg(subCodeType).arg(QString(data.toHex())));
     #endif
     if(!ProtocolParsingOutput::packFullOutcommingData(mainCodeType,subCodeType,data))
         return;
@@ -37,11 +37,11 @@ void ClientNetworkWrite::sendPacket(const quint8 &mainCodeType,const QByteArray 
 {
     if(!player_informations->isConnected)
     {
-        emit message(QString("sendPacket(%1,%2) when is not connected").arg(mainCodeType).arg(QString(data.toHex())));
+        emit message(QStringLiteral("sendPacket(%1,%2) when is not connected").arg(mainCodeType).arg(QString(data.toHex())));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("sendPacket(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
+    emit message(QStringLiteral("sendPacket(%1,%2)").arg(mainCodeType).arg(QString(data.toHex())));
     #endif
     if(!ProtocolParsingOutput::packOutcommingData(mainCodeType,data))
         return;
@@ -56,11 +56,11 @@ void ClientNetworkWrite::sendQuery(const quint8 &mainIdent,const quint16 &subIde
 {
     if(!player_informations->isConnected)
     {
-        emit message(QString("sendQuery(%1,%2,%3,%4) when is not connected").arg(mainIdent).arg(subIdent).arg(queryNumber).arg(QString(data.toHex())));
+        emit message(QStringLiteral("sendQuery(%1,%2,%3,%4) when is not connected").arg(mainIdent).arg(subIdent).arg(queryNumber).arg(QString(data.toHex())));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("sendQuery(%1,%2,%3)").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
+    emit message(QStringLiteral("sendQuery(%1,%2,%3)").arg(mainIdent).arg(subIdent).arg(QString(data.toHex())));
     #endif
     if(!ProtocolParsingOutput::packFullOutcommingQuery(mainIdent,subIdent,queryNumber,data))
         return;
@@ -76,15 +76,15 @@ void ClientNetworkWrite::postReply(const quint8 &queryNumber,const QByteArray &d
 {
     if(!player_informations->isConnected)
     {
-        emit message(QString("postReply(%1,%2) when is not connected").arg(queryNumber).arg(QString(data.toHex())));
+        emit message(QStringLiteral("postReply(%1,%2) when is not connected").arg(queryNumber).arg(QString(data.toHex())));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
-    emit message(QString("postReply(%1,%2)").arg(queryNumber).arg(QString(data.toHex())));
+    emit message(QStringLiteral("postReply(%1,%2)").arg(queryNumber).arg(QString(data.toHex())));
     #endif
     if(!ProtocolParsingOutput::postReplyData(queryNumber,data))
     {
-        emit message(QString("can't' send reply: postReply(%1,%2)").arg(queryNumber).arg(QString(data.toHex())));
+        emit message(QStringLiteral("can't' send reply: postReply(%1,%2)").arg(queryNumber).arg(QString(data.toHex())));
         return;
     }
     if(!socket->isValid())

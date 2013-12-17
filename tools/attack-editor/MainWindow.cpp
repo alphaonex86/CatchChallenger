@@ -80,12 +80,12 @@ void MainWindow::on_openItemFile_clicked()
     {
         if(!child.hasAttribute("id"))
         {
-            qDebug() << QString("Has not attribute \"id\" or \"price\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QStringLiteral("Has not attribute \"id\" or \"price\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
             error=true;
         }
         else if(!child.isElement())
         {
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
             error=true;
         }
         else
@@ -95,7 +95,7 @@ void MainWindow::on_openItemFile_clicked()
                 skills[id]=child;
             else
             {
-                qDebug() << QString("Attribute \"id\" is not a number: Item.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Attribute \"id\" is not a number: Item.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
                 error=true;
             }
         }
@@ -251,9 +251,9 @@ void MainWindow::on_itemListDelete_clicked()
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
-            qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         else if(!child.isElement())
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
         else
         {
             quint8 tempId=child.attribute("id").toUShort(&ok);
@@ -266,7 +266,7 @@ void MainWindow::on_itemListDelete_clicked()
                 }
             }
             else
-                qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
         child = child.nextSiblingElement("skill");
     }
@@ -462,7 +462,7 @@ void MainWindow::on_nameEditLanguageAdd_clicked()
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,lang);
     item->setData(98,name);
-    item->setText(QString("%1: %2").arg(lang).arg(name));
+    item->setText(QStringLiteral("%1: %2").arg(lang).arg(name));
     QDomElement newXmlElement=domDocument.createElement("name");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(name);
@@ -506,7 +506,7 @@ void MainWindow::on_descriptionEditLanguageAdd_clicked()
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,lang);
     item->setData(98,description);
-    item->setText(QString("%1: %2").arg(lang).arg(description));
+    item->setText(QStringLiteral("%1: %2").arg(lang).arg(description));
     QDomElement newXmlElement=domDocument.createElement("description");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(description);
@@ -660,9 +660,9 @@ void MainWindow::updateBuffList()
         while(!child.isNull())
         {
             if(!child.hasAttribute("id"))
-                qDebug() << QString("Has not attribute \"quantity\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Has not attribute \"quantity\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
             else if(!child.isElement())
-                qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
             else
             {
                 int success=100;
@@ -674,12 +674,12 @@ void MainWindow::updateBuffList()
                     success=successText.toUShort(&ok);
                     if(!ok)
                     {
-                        qDebug() << QString("success not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                        qDebug() << QStringLiteral("success not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
                         success=100;
                     }
                     else if(success<=0 || success>100)
                     {
-                        qDebug() << QString("success not in range >0 && <=100: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                        qDebug() << QStringLiteral("success not in range >0 && <=100: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
                         success=100;
                     }
                 }
@@ -690,7 +690,7 @@ void MainWindow::updateBuffList()
                     level=child.attribute("level").toUShort(&ok);
                     if(!ok)
                     {
-                        qDebug() << QString("level not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                        qDebug() << QStringLiteral("level not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
                         level=1;
                     }
                 }
@@ -709,7 +709,7 @@ void MainWindow::updateBuffList()
                     else
                     {
                         child.removeAttribute("applyOn");
-                        qDebug() << QString("Attribute \"applyOn\" wrong: %3 child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(applyOn);
+                        qDebug() << QStringLiteral("Attribute \"applyOn\" wrong: %3 child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(applyOn);
                         applyOn="aloneEnemy";
                     }
                 }
@@ -740,9 +740,9 @@ void MainWindow::updateLifeList()
         while(!child.isNull())
         {
             if(!child.hasAttribute("quantity"))
-                qDebug() << QString("Has not attribute \"quantity\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Has not attribute \"quantity\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
             else if(!child.isElement())
-                qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
             else
             {
                 int success=100;
@@ -754,12 +754,12 @@ void MainWindow::updateLifeList()
                     success=successText.toUShort(&ok);
                     if(!ok)
                     {
-                        qDebug() << QString("success not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                        qDebug() << QStringLiteral("success not a number: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
                         success=100;
                     }
                     else if(success<=0 || success>100)
                     {
-                        qDebug() << QString("success not in range >0 && <=100: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+                        qDebug() << QStringLiteral("success not in range >0 && <=100: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
                         success=100;
                     }
                 }
@@ -778,7 +778,7 @@ void MainWindow::updateLifeList()
                     else
                     {
                         child.removeAttribute("applyOn");
-                        qDebug() << QString("Attribute \"applyOn\" wrong: %3 child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(applyOn);
+                        qDebug() << QStringLiteral("Attribute \"applyOn\" wrong: %3 child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(applyOn);
                         applyOn="aloneEnemy";
                     }
                 }
@@ -1027,7 +1027,7 @@ void MainWindow::on_life_quantity_editingFinished()
     if(ui->life_quantity_type->currentIndex()==0)
         currentLifeInfo.setAttribute("quantity",ui->life_quantity->value());
     else
-        currentLifeInfo.setAttribute("quantity",QString("%1%").arg(ui->life_quantity->value()));
+        currentLifeInfo.setAttribute("quantity",QStringLiteral("%1%").arg(ui->life_quantity->value()));
 }
 
 void MainWindow::on_life_quantity_type_currentIndexChanged(int index)
@@ -1037,7 +1037,7 @@ void MainWindow::on_life_quantity_type_currentIndexChanged(int index)
     if(ui->life_quantity_type->currentIndex()==0)
         currentLifeInfo.setAttribute("quantity",ui->life_quantity->value());
     else
-        currentLifeInfo.setAttribute("quantity",QString("%1%").arg(ui->life_quantity->value()));
+        currentLifeInfo.setAttribute("quantity",QStringLiteral("%1%").arg(ui->life_quantity->value()));
 }
 
 void MainWindow::on_life_success_editingFinished()
@@ -1046,7 +1046,7 @@ void MainWindow::on_life_success_editingFinished()
     if(ui->life_success->value()==100)
         currentLifeInfo.removeAttribute("success");
     else
-        currentLifeInfo.setAttribute("success",QString("%1%").arg(ui->life_success->value()));
+        currentLifeInfo.setAttribute("success",QStringLiteral("%1%").arg(ui->life_success->value()));
 }
 
 void MainWindow::on_life_apply_on_currentIndexChanged(int index)
@@ -1091,7 +1091,7 @@ void MainWindow::on_buff_success_editingFinished()
     if(ui->buff_success->value()==100)
         currentBuffInfo.removeAttribute("success");
     else
-        currentBuffInfo.setAttribute("success",QString("%1%").arg(ui->buff_success->value()));
+        currentBuffInfo.setAttribute("success",QStringLiteral("%1%").arg(ui->buff_success->value()));
 }
 
 void MainWindow::on_buff_apply_on_currentIndexChanged(int index)

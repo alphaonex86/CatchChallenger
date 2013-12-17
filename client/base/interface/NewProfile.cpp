@@ -93,7 +93,7 @@ void NewProfile::loadProfileText()
         }
         if(profile.name.isEmpty())
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
             startItem = startItem.nextSiblingElement("start");
             continue;
         }
@@ -131,7 +131,7 @@ void NewProfile::loadProfileText()
         }
         if(profile.description.isEmpty())
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem.tagName()).arg(startItem.lineNumber()));
             startItem = startItem.nextSiblingElement("start");
             continue;
         }

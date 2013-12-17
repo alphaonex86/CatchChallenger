@@ -63,10 +63,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT `id`,`password` FROM `account` WHERE `login`='%1'").arg(QString(login.toHex()));
+                queryText=QStringLiteral("SELECT `id`,`password` FROM `account` WHERE `login`='%1'").arg(QString(login.toHex()));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                queryText=QString("SELECT id,password FROM account WHERE login='%1'").arg(QString(login.toHex()));
+                queryText=QStringLiteral("SELECT id,password FROM account WHERE login='%1'").arg(QString(login.toHex()));
             break;
         }
         QSqlQuery accountQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -83,16 +83,16 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        dbQuery(QString("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+                        dbQuery(QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        dbQuery(QString("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+                        dbQuery(QStringLiteral("INSERT INTO account(id,login,password,date) VALUES(%1,'%2','%3',%4);").arg(player_informations->account_id).arg(QString(login.toHex())).arg(QString(pass.toHex())).arg(QDateTime::currentMSecsSinceEpoch()/1000));
                     break;
                 }
             }
             else
             {
-                loginIsWrong(query_id,"Bad login",QString("Bad login for: %1 (%2), pass: %3 (%4)")
+                loginIsWrong(query_id,"Bad login",QStringLiteral("Bad login for: %1 (%2), pass: %3 (%4)")
                              .arg(QString(login.toHex()))
                              .arg(QString(login_org.toHex()))
                               .arg(QString(pass.toHex()))
@@ -103,7 +103,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         }
         else if(QString(pass.toHex())!=accountQuery.value(1).toString())
         {
-            loginIsWrong(query_id,"Wrong login/pass",QString("Password wrong: %1 (%2) for the login: %3").arg(QString(pass.toHex())).arg(QString(pass_org.toHex())).arg(QString(login.toHex())));
+            loginIsWrong(query_id,"Wrong login/pass",QStringLiteral("Password wrong: %1 (%2) for the login: %3").arg(QString(pass.toHex())).arg(QString(pass_org.toHex())).arg(QString(login.toHex())));
             return;
         }
         else
@@ -119,7 +119,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     }
 
     //send signals into the server
-    emit message(QString("Logged the account %1").arg(player_informations->account_id));
+    emit message(QStringLiteral("Logged the account %1").arg(player_informations->account_id));
     //send the network reply
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -169,10 +169,10 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
+                queryText=QStringLiteral("SELECT `id`,`pseudo`,`skin`,`time_to_delete`,`played_time`,`last_connect`,`map` FROM `character` WHERE `account`=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                queryText=QString("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
+                queryText=QStringLiteral("SELECT id,pseudo,skin,time_to_delete,played_time,last_connect,map FROM character WHERE account=%1 LIMIT 0,%2").arg(player_informations->account_id).arg(max_character);
             break;
         }
         QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -190,19 +190,19 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
                 quint32 time_to_delete=characterQuery.value(3).toUInt(&ok);
                 if(!ok)
                 {
-                    emit message(QString("time_to_delete is not number: %1 for %2 fixed by 0").arg(characterQuery.value(3).toString()).arg(player_informations->account_id));
+                    emit message(QStringLiteral("time_to_delete is not number: %1 for %2 fixed by 0").arg(characterQuery.value(3).toString()).arg(player_informations->account_id));
                     time_to_delete=0;
                 }
                 characterEntry.played_time=characterQuery.value(4).toUInt(&ok);
                 if(!ok)
                 {
-                    emit message(QString("played_time is not number: %1 for %2 fixed by 0").arg(characterQuery.value(4).toString()).arg(player_informations->account_id));
+                    emit message(QStringLiteral("played_time is not number: %1 for %2 fixed by 0").arg(characterQuery.value(4).toString()).arg(player_informations->account_id));
                     characterEntry.played_time=0;
                 }
                 characterEntry.last_connect=characterQuery.value(5).toUInt(&ok);
                 if(!ok)
                 {
-                    emit message(QString("last_connect is not number: %1 for %2 fixed by 0").arg(characterQuery.value(5).toString()).arg(player_informations->account_id));
+                    emit message(QStringLiteral("last_connect is not number: %1 for %2 fixed by 0").arg(characterQuery.value(5).toString()).arg(player_informations->account_id));
                     characterEntry.last_connect=current_time;
                 }
                 if(current_time>=time_to_delete && time_to_delete!=0)
@@ -220,7 +220,7 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
                 }
             }
             else
-                emit message(QString("Character id is not number: %1 for %2").arg(characterQuery.value(0).toString()).arg(player_informations->account_id));
+                emit message(QStringLiteral("Character id is not number: %1 for %2").arg(characterQuery.value(0).toString()).arg(player_informations->account_id));
         }
         if(CommonSettings::commonSettings.max_character==0)
         {
@@ -258,10 +258,10 @@ void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id` FROM `monster` WHERE `character`=%1").arg(characterId);
+            queryText=QStringLiteral("SELECT `id` FROM `monster` WHERE `character`=%1").arg(characterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id FROM monster WHERE character=%1").arg(characterId);
+            queryText=QStringLiteral("SELECT id FROM monster WHERE character=%1").arg(characterId);
         break;
     }
     bool ok;
@@ -277,12 +277,12 @@ void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("DELETE FROM `monster_buff` WHERE monster=%1")
+                    dbQuery(QStringLiteral("DELETE FROM `monster_buff` WHERE monster=%1")
                                  .arg(monsterId)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                    dbQuery(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
                                  .arg(monsterId)
                                  );
                 break;
@@ -291,12 +291,12 @@ void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("DELETE FROM `monster_skill` WHERE monster=%1")
+                    dbQuery(QStringLiteral("DELETE FROM `monster_skill` WHERE monster=%1")
                                  .arg(monsterId)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("DELETE FROM monster_skill WHERE monster=%1")
+                    dbQuery(QStringLiteral("DELETE FROM monster_skill WHERE monster=%1")
                                  .arg(monsterId)
                                  );
                 break;
@@ -307,24 +307,24 @@ void ClientHeavyLoad::deleteCharacterNow(const quint32 &characterId)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            dbQuery(QString("DELETE FROM `bot_already_beaten` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `character` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `item` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `monster` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `plant` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `quest` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `recipes` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `reputation` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `bot_already_beaten` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `character` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `item` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `monster` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `plant` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `quest` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `recipes` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `reputation` WHERE `character`=%1").arg(characterId));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            dbQuery(QString("DELETE FROM `bot_already_beaten` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `character` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `item` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `monster` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `plant` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `quest` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `recipes` WHERE `character`=%1").arg(characterId));
-            dbQuery(QString("DELETE FROM `reputation` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `bot_already_beaten` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `character` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `item` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `monster` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `plant` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `quest` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `recipes` WHERE `character`=%1").arg(characterId));
+            dbQuery(QStringLiteral("DELETE FROM `reputation` WHERE `character`=%1").arg(characterId));
         break;
     }
 }
@@ -345,13 +345,13 @@ void ClientHeavyLoad::askLoginBot(const quint8 &query_id)
             player_informations->public_and_private_informations.clan=0;
             player_informations->public_and_private_informations.clan_leader=false;
             player_informations->character_id=999999999-GlobalServerData::serverPrivateVariables.number_of_bots_logged;
-            player_informations->public_and_private_informations.public_informations.pseudo=QString("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
+            player_informations->public_and_private_informations.public_informations.pseudo=QStringLiteral("bot_%1").arg(player_informations->public_and_private_informations.public_informations.simplifiedId);
             player_informations->public_and_private_informations.public_informations.skinId=0x00;//use the first skin by alaphabetic order
             player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
             player_informations->public_and_private_informations.cash=0;
             player_informations->public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
             if(!loadTheRawUTF8String())
-                loginIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8 at bot: %1").arg(QString("bot_%1").arg(player_informations->character_id)));
+                loginIsWrong(query_id,"Convert into utf8 have wrong size",QStringLiteral("Unable to convert the pseudo to utf8 at bot: %1").arg(QStringLiteral("bot_%1").arg(player_informations->character_id)));
             else
             //all is rights
             {
@@ -375,28 +375,28 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
 {
     if(player_informations->number_of_character>=CommonSettings::commonSettings.max_character)
     {
-        emit error(QString("You can't create more account, you have already %1 on %2 allowed").arg(player_informations->number_of_character).arg(CommonSettings::commonSettings.max_character));
+        emit error(QStringLiteral("You can't create more account, you have already %1 on %2 allowed").arg(player_informations->number_of_character).arg(CommonSettings::commonSettings.max_character));
         return;
     }
     if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
     {
-        emit error(QString("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
+        emit error(QStringLiteral("profile index: %1 out of range (profileList size: %2)").arg(profileIndex).arg(CommonDatapack::commonDatapack.profileList.size()));
         return;
     }
     if(pseudo.size()>CommonSettings::commonSettings.max_pseudo_size)
     {
-        emit error(QString("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettings::commonSettings.max_pseudo_size));
+        emit error(QStringLiteral("pseudo size is too big: %1 because is greater than %2").arg(pseudo.size()).arg(CommonSettings::commonSettings.max_pseudo_size));
         return;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
     if(!profile.forcedskin.isEmpty() && !profile.forcedskin.contains(skin))
     {
-        emit error(QString("skin provided: %1 is not into profile forced skin list: %2").arg(skin).arg(profile.forcedskin.join(";")));
+        emit error(QStringLiteral("skin provided: %1 is not into profile forced skin list: %2").arg(skin).arg(profile.forcedskin.join(";")));
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.skinList.contains(skin))
     {
-        emit error(QString("skin provided: %1 is not into skin listed").arg(skin));
+        emit error(QStringLiteral("skin provided: %1 is not into skin listed").arg(skin));
         return;
     }
 
@@ -406,10 +406,10 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id` FROM `character` WHERE `pseudo`='%1'").arg(SqlFunction::quoteSqlVariable(pseudo));
+            queryText=QStringLiteral("SELECT `id` FROM `character` WHERE `pseudo`='%1'").arg(SqlFunction::quoteSqlVariable(pseudo));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id FROM character WHERE pseudo='%1'").arg(SqlFunction::quoteSqlVariable(pseudo));
+            queryText=QStringLiteral("SELECT id FROM character WHERE pseudo='%1'").arg(SqlFunction::quoteSqlVariable(pseudo));
         break;
     }
     QSqlQuery monstersQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -444,7 +444,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-            dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+","+QString::number(profileIndex)+");")
+            dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",0,'',0,0,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+QString::number(profileIndex)+QStringLiteral(");")
                         .arg(characterId)
                         .arg(player_informations->account_id)
                         .arg(pseudo)
@@ -453,11 +453,11 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         .arg(profile.y)
                         .arg(profile.map)
                         .arg(profile.cash)
-                        .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
+                        .arg(QStringLiteral("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
                         );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+",0,'',0,0,0,0,"+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+","+QString::number(profileIndex)+");")
+                dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",0,'',0,0,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+QString::number(profileIndex)+QStringLiteral(");")
                         .arg(characterId)
                         .arg(player_informations->account_id)
                         .arg(pseudo)
@@ -466,7 +466,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         .arg(profile.y)
                         .arg(profile.map)
                         .arg(profile.cash)
-                        .arg(QString("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
+                        .arg(QStringLiteral("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
                         );
             break;
         }
@@ -510,7 +510,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
+                    dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
                        .arg(monster_id)
                        .arg(stat.hp)
                        .arg(characterId)
@@ -522,7 +522,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
+                    dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`,`market_price`,`market_bitcoin`) VALUES(%1,%2,%3,%4,%5,0,0,%6,'%7',0,%3,'wear',%8,0,0);")
                        .arg(monster_id)
                        .arg(stat.hp)
                        .arg(characterId)
@@ -547,7 +547,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
+                    dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
                        .arg(monster_id)
                        .arg(skills[sub_index].skill)
                        .arg(skills[sub_index].level)
@@ -555,7 +555,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                             );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
+                    dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
                        .arg(monster_id)
                        .arg(skills[sub_index].skill)
                        .arg(skills[sub_index].level)
@@ -574,7 +574,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(QString("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
+                dbQuery(QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
                    .arg(characterId)
                    .arg(profile.reputation.at(index).type)
                    .arg(profile.reputation.at(index).point)
@@ -582,7 +582,7 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
                         );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
+                dbQuery(QStringLiteral("INSERT INTO `reputation`(`character`,`type`,`point`,`level`) VALUES(%1,'%2',%3,%4);")
                    .arg(characterId)
                    .arg(profile.reputation.at(index).type)
                    .arg(profile.reputation.at(index).point)
@@ -599,14 +599,14 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(QString("INSERT INTO `item`(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'wear');")
+                dbQuery(QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'wear');")
                    .arg(profile.items.at(index).id)
                    .arg(characterId)
                    .arg(profile.items.at(index).quantity)
                         );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("INSERT INTO `item`(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'wear');")
+                dbQuery(QStringLiteral("INSERT INTO `item`(`item`,`character`,`quantity`,`place`) VALUES(%1,%2,%3,'wear');")
                    .arg(profile.items.at(index).id)
                    .arg(characterId)
                    .arg(profile.items.at(index).quantity)
@@ -631,10 +631,10 @@ void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &cha
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `account``time_to_delete` FROM `character` WHERE `id`=%1").arg(characterId);
+            queryText=QStringLiteral("SELECT `account``time_to_delete` FROM `character` WHERE `id`=%1").arg(characterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT account,time_to_delete FROM character WHERE id=%1").arg(characterId);
+            queryText=QStringLiteral("SELECT account,time_to_delete FROM character WHERE id=%1").arg(characterId);
         break;
     }
     QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -652,28 +652,28 @@ void ClientHeavyLoad::removeCharacter(const quint8 &query_id, const quint32 &cha
     const quint32 &account_id=characterQuery.value(0).toUInt(&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,"Character not found",QString("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
+        characterSelectionIsWrong(query_id,"Character not found",QStringLiteral("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
         return;
     }
     if(player_informations->account_id!=account_id)
     {
-        characterSelectionIsWrong(query_id,"Character not found",QString("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
+        characterSelectionIsWrong(query_id,"Character not found",QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
         return;
     }
     const quint32 &time_to_delete=characterQuery.value(1).toUInt(&ok);
     if(ok && time_to_delete>0)
     {
-        characterSelectionIsWrong(query_id,"Already in deleting",QString("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(player_informations->account_id));
+        characterSelectionIsWrong(query_id,"Already in deleting",QStringLiteral("Character: %1 is already in deleting for the account: %2").arg(characterId).arg(player_informations->account_id));
         return;
     }
     switch(GlobalServerData::serverSettings.database.type)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            dbQuery(QString("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1").arg(characterId).arg(CommonSettings::commonSettings.character_delete_time));
+            dbQuery(QStringLiteral("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1").arg(characterId).arg(CommonSettings::commonSettings.character_delete_time));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            dbQuery(QString("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1").arg(characterId).arg(CommonSettings::commonSettings.character_delete_time));
+            dbQuery(QStringLiteral("UPDATE `character` SET `time_to_delete`=%2 WHERE `id`=%1").arg(characterId).arg(CommonSettings::commonSettings.character_delete_time));
         break;
     }
     QByteArray outputData;
@@ -695,10 +695,10 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`market_cash`,`market_bitcoin`,`time_to_delete` FROM `character` WHERE `id`=%1").arg(characterId);
+            queryText=QStringLiteral("SELECT `account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`market_cash`,`market_bitcoin`,`time_to_delete` FROM `character` WHERE `id`=%1").arg(characterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader,bitcoin_offset,market_cash,market_bitcoin,time_to_delete FROM character WHERE id=%1").arg(characterId);
+            queryText=QStringLiteral("SELECT account,pseudo,skin,x,y,orientation,map,type,clan,cash,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,warehouse_cash,allow,clan_leader,bitcoin_offset,market_cash,market_bitcoin,time_to_delete FROM character WHERE id=%1").arg(characterId);
         break;
     }
     QSqlQuery characterQuery(*GlobalServerData::serverPrivateVariables.db);
@@ -716,12 +716,12 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     const quint32 &account_id=characterQuery.value(0).toUInt(&ok);
     if(!ok)
     {
-        characterSelectionIsWrong(query_id,"Character not found",QString("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
+        characterSelectionIsWrong(query_id,"Character not found",QStringLiteral("Account for character: %1 is not an id").arg(characterQuery.value(0).toString()));
         return;
     }
     if(player_informations->account_id!=account_id)
     {
-        characterSelectionIsWrong(query_id,"Character not found",QString("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
+        characterSelectionIsWrong(query_id,"Character not found",QStringLiteral("Character: %1 is not owned by the account: %2").arg(characterId).arg(player_informations->account_id));
         return;
     }
     if(player_informations->character_loaded)
@@ -742,15 +742,15 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     if(!loadTheRawUTF8String())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8 for character id: %1").arg(player_informations->character_id));
+            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QStringLiteral("Unable to convert the pseudo to utf8 for character id: %1").arg(player_informations->character_id));
         else
-            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QString("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+            characterSelectionIsWrong(query_id,"Convert into utf8 have wrong size",QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return;
     }
     if(GlobalServerData::serverSettings.anonymous)
-        emit message(QString("Charater id is logged: %1").arg(characterId));
+        emit message(QStringLiteral("Charater id is logged: %1").arg(characterId));
     else
-        emit message(QString("Charater is logged: %1").arg(characterQuery.value(1).toString()));
+        emit message(QStringLiteral("Charater is logged: %1").arg(characterQuery.value(1).toString()));
     const quint32 &time_to_delete=characterQuery.value(24).toUInt(&ok);
     if(!ok || time_to_delete>0)
     {
@@ -758,10 +758,10 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                dbQuery(QString("UPDATE `character` SET `time_to_delete`=0 WHERE `id`=%1").arg(characterId));
+                dbQuery(QStringLiteral("UPDATE `character` SET `time_to_delete`=0 WHERE `id`=%1").arg(characterId));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QString("UPDATE character SET time_to_delete=0 WHERE id=%1").arg(characterId));
+                dbQuery(QStringLiteral("UPDATE character SET time_to_delete=0 WHERE id=%1").arg(characterId));
             break;
         }
     }
@@ -769,23 +769,23 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            dbQuery(QString("UPDATE `character` SET `last_connect`=%2 WHERE `id`=%1").arg(characterId).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+            dbQuery(QStringLiteral("UPDATE `character` SET `last_connect`=%2 WHERE `id`=%1").arg(characterId).arg(QDateTime::currentMSecsSinceEpoch()/1000));
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            dbQuery(QString("UPDATE character SET last_connect=%2 WHERE id=%1").arg(characterId).arg(QDateTime::currentMSecsSinceEpoch()/1000));
+            dbQuery(QStringLiteral("UPDATE character SET last_connect=%2 WHERE id=%1").arg(characterId).arg(QDateTime::currentMSecsSinceEpoch()/1000));
         break;
     }
 
     player_informations->public_and_private_informations.clan=characterQuery.value(8).toUInt(&ok);
     if(!ok)
     {
-        emit message(QString("clan id is not an number, clan disabled"));
+        emit message(QStringLiteral("clan id is not an number, clan disabled"));
         player_informations->public_and_private_informations.clan=0;//no clan
     }
     player_informations->public_and_private_informations.clan_leader=(characterQuery.value(20).toUInt(&ok)==1);
     if(!ok)
     {
-        emit message(QString("clan_leader id is not an number, clan_leader disabled"));
+        emit message(QStringLiteral("clan_leader id is not an number, clan_leader disabled"));
         player_informations->public_and_private_informations.clan_leader=false;//no clan
     }
     player_informations->public_and_private_informations.public_informations.pseudo=characterQuery.value(1).toString();
@@ -794,7 +794,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         player_informations->public_and_private_informations.public_informations.skinId=GlobalServerData::serverPrivateVariables.skinList[skinString];
     else
     {
-        emit message(QString("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
+        emit message(QStringLiteral("Skin not found, or out of the 255 first folder, default of the first by order alphabetic if have"));
         player_informations->public_and_private_informations.public_informations.skinId=0;
     }
     QString type=characterQuery.value(7).toString();
@@ -808,19 +808,19 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         player_informations->public_and_private_informations.public_informations.type=Player_type_dev;
     else
     {
-        emit message(QString("Mysql wrong type value").arg(type));
+        emit message(QStringLiteral("Mysql wrong type value").arg(type));
         player_informations->public_and_private_informations.public_informations.type=Player_type_normal;
     }
     player_informations->public_and_private_informations.cash=characterQuery.value(9).toUInt(&ok);
     if(!ok)
     {
-        emit message(QString("cash id is not an number, cash set to 0"));
+        emit message(QStringLiteral("cash id is not an number, cash set to 0"));
         player_informations->public_and_private_informations.cash=0;
     }
     player_informations->public_and_private_informations.warehouse_cash=characterQuery.value(18).toUInt(&ok);
     if(!ok)
     {
-        emit message(QString("warehouse cash id is not an number, warehouse cash set to 0"));
+        emit message(QStringLiteral("warehouse cash id is not an number, warehouse cash set to 0"));
         player_informations->public_and_private_informations.warehouse_cash=0;
     }
     if(GlobalServerData::serverPrivateVariables.bitcoin.enabled)
@@ -828,20 +828,20 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         double bitcoin_offset=characterQuery.value(21).toDouble(&ok);
         if(!ok)
         {
-            emit message(QString("bitcoin offset is not an number (double), bitconi disabled"));
+            emit message(QStringLiteral("bitcoin offset is not an number (double), bitconi disabled"));
             player_informations->public_and_private_informations.bitcoin=-1.0;
         }
         else
         {
             QProcess process;
             process.start(GlobalServerData::serverSettings.bitcoin.binaryPath,QStringList()
-                                                                           << QString("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
-                                                                           << QString("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
-                                                                           << QString("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
-                                                                           << QString("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
-                                                                           << QString("getbalance")
-                                                                           << QString("CatchChallenger_player_%1").arg(characterId)
-                                                                           << QString("20")//number of confirmation
+                                                                           << QStringLiteral("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
+                                                                           << QStringLiteral("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                           << QStringLiteral("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                           << QStringLiteral("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
+                                                                           << QStringLiteral("getbalance")
+                                                                           << QStringLiteral("CatchChallenger_player_%1").arg(characterId)
+                                                                           << QStringLiteral("20")//number of confirmation
                    );
             process.waitForStarted();
             process.waitForFinished();
@@ -855,7 +855,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
             else if(process.exitStatus()!=QProcess::NormalExit || process.exitCode()!=0)
             {
                 player_informations->public_and_private_informations.bitcoin=-1.0;
-                emit message(QString("Bitcoin requester client have wrong exit code or status, exit code: %1, error code: %2").arg(process.exitCode()).arg((int)process.error()));
+                emit message(QStringLiteral("Bitcoin requester client have wrong exit code or status, exit code: %1, error code: %2").arg(process.exitCode()).arg((int)process.error()));
             }
             else
             {
@@ -864,12 +864,12 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
                 if(!errorRaw.isEmpty())
                 {
                     player_informations->public_and_private_informations.bitcoin=-1.0;
-                    emit message(QString("The bitcoin requester client have reported an error: %1").arg(QString::fromLocal8Bit(errorRaw)));
+                    emit message(QStringLiteral("The bitcoin requester client have reported an error: %1").arg(QString::fromLocal8Bit(errorRaw)));
                 }
                 else if(outputRaw.isEmpty())
                 {
                     player_informations->public_and_private_informations.bitcoin=-1.0;
-                    emit message(QString("The bitcoin requester client have empty output"));
+                    emit message(QStringLiteral("The bitcoin requester client have empty output"));
                 }
                 else
                 {
@@ -878,12 +878,12 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
                     if(!ok)
                     {
                         player_informations->public_and_private_informations.bitcoin=-1.0;
-                        emit message(QString("The bitcoin requester have not returned a double: %1").arg(stringOutput));
+                        emit message(QStringLiteral("The bitcoin requester have not returned a double: %1").arg(stringOutput));
                     }
                     else if((bitcoin_real_balance+bitcoin_offset)<0)
                     {
                         player_informations->public_and_private_informations.bitcoin=-1.0;
-                        emit message(QString("Bitcoin amount is negative, bitcoind sync?"));
+                        emit message(QStringLiteral("Bitcoin amount is negative, bitcoind sync?"));
                     }
                     else
                         player_informations->public_and_private_informations.bitcoin=bitcoin_real_balance+bitcoin_offset;
@@ -893,12 +893,12 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
             {
                 QProcess process;
                 process.start(GlobalServerData::serverSettings.bitcoin.binaryPath,QStringList()
-                                                                               << QString("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
-                                                                               << QString("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
-                                                                               << QString("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
-                                                                               << QString("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
-                                                                               << QString("getaccountaddress")
-                                                                               << QString("CatchChallenger_player_%1").arg(player_informations->character_id)
+                                                                               << QStringLiteral("-datadir=%1").arg(GlobalServerData::serverSettings.bitcoin.workingPath)
+                                                                               << QStringLiteral("-port=%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                               << QStringLiteral("-bind=127.0.0.1:%1").arg(GlobalServerData::serverSettings.bitcoin.port)
+                                                                               << QStringLiteral("-rpcport=%1").arg(GlobalServerData::serverSettings.bitcoin.port+1)
+                                                                               << QStringLiteral("getaccountaddress")
+                                                                               << QStringLiteral("CatchChallenger_player_%1").arg(player_informations->character_id)
                        );
                 process.waitForStarted();
                 process.waitForFinished();
@@ -912,7 +912,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
                 else if(process.exitStatus()!=QProcess::NormalExit || process.exitCode()!=0)
                 {
                     player_informations->public_and_private_informations.bitcoin=-1.0;
-                    emit message(QString("Bitcoin requester client have wrong exit code or status, exit code: %1, error code: %2").arg(process.exitCode()).arg((int)process.error()));
+                    emit message(QStringLiteral("Bitcoin requester client have wrong exit code or status, exit code: %1, error code: %2").arg(process.exitCode()).arg((int)process.error()));
                 }
                 else
                 {
@@ -921,12 +921,12 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
                     if(!errorRaw.isEmpty())
                     {
                         player_informations->public_and_private_informations.bitcoin=-1.0;
-                        emit message(QString("The bitcoin requester client have reported an error: %1").arg(QString::fromLocal8Bit(errorRaw)));
+                        emit message(QStringLiteral("The bitcoin requester client have reported an error: %1").arg(QString::fromLocal8Bit(errorRaw)));
                     }
                     else if(outputRaw.isEmpty())
                     {
                         player_informations->public_and_private_informations.bitcoin=-1.0;
-                        emit message(QString("The bitcoin requester client have empty output"));
+                        emit message(QStringLiteral("The bitcoin requester client have empty output"));
                     }
                     else
                     {
@@ -945,7 +945,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     player_informations->market_cash=characterQuery.value(22).toULongLong(&ok);
     if(!ok)
     {
-        loginIsWrong(query_id,"Wrong account data",QString("Market cash wrong: %1").arg(characterQuery.value(22).toString()));
+        loginIsWrong(query_id,"Wrong account data",QStringLiteral("Market cash wrong: %1").arg(characterQuery.value(22).toString()));
         return;
     }
     player_informations->market_bitcoin=0;
@@ -954,7 +954,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
         player_informations->market_cash=characterQuery.value(23).toDouble(&ok);
         if(!ok)
         {
-            loginIsWrong(query_id,"Wrong account data",QString("Market bitcoin wrong: %1").arg(characterQuery.value(23).toString()));
+            loginIsWrong(query_id,"Wrong account data",QStringLiteral("Market bitcoin wrong: %1").arg(characterQuery.value(23).toString()));
             return;
         }
     }
@@ -978,7 +978,7 @@ void ClientHeavyLoad::selectCharacter(const quint8 &query_id, const quint32 &cha
     else
     {
         orentation=Orientation_bottom;
-        emit message(QString("Wrong orientation corrected with bottom"));
+        emit message(QStringLiteral("Wrong orientation corrected with bottom"));
     }
     player_informations->public_and_private_informations.allow=FacilityLib::StringToAllow(characterQuery.value(19).toString());
     //all is rights
@@ -1033,7 +1033,7 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
 {
     if(!GlobalServerData::serverPrivateVariables.map_list.contains(rescue_map.toString()))
     {
-        emit message(QString("rescue map ,not found"));
+        emit message(QStringLiteral("rescue map ,not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -1041,26 +1041,26 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     quint8 rescue_new_x=rescue_x.toUInt(&ok);
     if(!ok)
     {
-        emit message(QString("rescue x coord is not a number"));
+        emit message(QStringLiteral("rescue x coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     quint8 rescue_new_y=rescue_y.toUInt(&ok);
     if(!ok)
     {
-        emit message(QString("rescue y coord is not a number"));
+        emit message(QStringLiteral("rescue y coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->width)
     {
-        emit message(QString("rescue x to out of map"));
+        emit message(QStringLiteral("rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->height)
     {
-        emit message(QString("rescue y to out of map"));
+        emit message(QStringLiteral("rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -1077,37 +1077,37 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     else
     {
         rescue_new_orientation=Orientation_bottom;
-        emit message(QString("Wrong rescue orientation corrected with bottom"));
+        emit message(QStringLiteral("Wrong rescue orientation corrected with bottom"));
     }
     if(!GlobalServerData::serverPrivateVariables.map_list.contains(unvalidated_rescue_map.toString()))
     {
-        emit message(QString("unvalidated rescue map ,not found"));
+        emit message(QStringLiteral("unvalidated rescue map ,not found"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     quint8 unvalidated_rescue_new_x=unvalidated_rescue_x.toUInt(&ok);
     if(!ok)
     {
-        emit message(QString("unvalidated rescue x coord is not a number"));
+        emit message(QStringLiteral("unvalidated rescue x coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     quint8 unvalidated_rescue_new_y=unvalidated_rescue_y.toUInt(&ok);
     if(!ok)
     {
-        emit message(QString("unvalidated rescue y coord is not a number"));
+        emit message(QStringLiteral("unvalidated rescue y coord is not a number"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_x>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->width)
     {
-        emit message(QString("unvalidated rescue x to out of map"));
+        emit message(QStringLiteral("unvalidated rescue x to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_new_y>=GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()]->height)
     {
-        emit message(QString("unvalidated rescue y to out of map"));
+        emit message(QStringLiteral("unvalidated rescue y to out of map"));
         loginIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
@@ -1124,7 +1124,7 @@ void ClientHeavyLoad::loginIsRightWithRescue(const quint8 &query_id, quint32 cha
     else
     {
         unvalidated_rescue_new_orientation=Orientation_bottom;
-        emit message(QString("Wrong unvalidated rescue orientation corrected with bottom"));
+        emit message(QStringLiteral("Wrong unvalidated rescue orientation corrected with bottom"));
     }
     loginIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,
                                  GlobalServerData::serverPrivateVariables.map_list[rescue_map.toString()],rescue_new_x,rescue_new_y,rescue_new_orientation,
@@ -1171,18 +1171,18 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
         else
         {
             clanConnectedCount[player_informations->public_and_private_informations.clan]=1;
-            emit message(QString("First client of the clan: %1, get the info").arg(player_informations->public_and_private_informations.clan));
+            emit message(QStringLiteral("First client of the clan: %1, get the info").arg(player_informations->public_and_private_informations.clan));
             //do the query
             QString queryText;
             switch(GlobalServerData::serverSettings.database.type)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                queryText=QString("SELECT `name`,`cash` FROM `clan` WHERE `id`=%1")
+                queryText=QStringLiteral("SELECT `name`,`cash` FROM `clan` WHERE `id`=%1")
                         .arg(player_informations->public_and_private_informations.clan);
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                queryText=QString("SELECT name,cash FROM clan WHERE id=%1")
+                queryText=QStringLiteral("SELECT name,cash FROM clan WHERE id=%1")
                         .arg(player_informations->public_and_private_informations.clan);
                 break;
             }
@@ -1297,7 +1297,7 @@ void ClientHeavyLoad::loginIsRightWithParsedRescue(const quint8 &query_id, quint
     player_informations->unvalidated_rescue.orientation=unvalidated_rescue_orientation;
 
     //send signals into the server
-    emit message(QString("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
+    emit message(QStringLiteral("Logged: %1 on the map: %2 (%3,%4)").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(map->map_file).arg(x).arg(y));
     emit send_player_informations();
     emit isLogged();
     emit put_on_the_map(
@@ -1354,7 +1354,7 @@ bool ClientHeavyLoad::loadTheRawUTF8String()
     player_informations->rawPseudo=FacilityLib::toUTF8(player_informations->public_and_private_informations.public_informations.pseudo);
     if(player_informations->rawPseudo.isEmpty())
     {
-        emit message(QString("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
+        emit message(QStringLiteral("Unable to convert the pseudo to utf8: %1").arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return false;
     }
     return true;
@@ -1403,12 +1403,12 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
             quint32 mtime=timestamps.at(index);
             if(fileName.contains("./") || fileName.contains("\\") || fileName.contains("//"))
             {
-                emit error(QString("file name contains illegale char: %1").arg(fileName));
+                emit error(QStringLiteral("file name contains illegale char: %1").arg(fileName));
                 return;
             }
             if(fileName.contains(QRegularExpression("^[a-zA-Z]:/")) || fileName.startsWith("/"))
             {
-                emit error(QString("start with wrong string: %1").arg(fileName));
+                emit error(QStringLiteral("start with wrong string: %1").arg(fileName));
                 return;
             }
             if(filesList.contains(fileName))
@@ -1600,7 +1600,7 @@ bool ClientHeavyLoad::sendFile(const QString &fileName,const quint64 &mtime)
     if(file.open(QIODevice::ReadOnly))
     {
         const QByteArray &content=file.readAll();
-        /*emit message(QString("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
+        /*emit message(QStringLiteral("send the file: %1, checkMtime: %2, mtime: %3, file server mtime: %4")
                  .arg(fileName)
                  .arg(checkMtime)
                  .arg(mtime)
@@ -1660,7 +1660,7 @@ void ClientHeavyLoad::dbQuery(const QString &queryText)
 {
     if(player_informations->isFake)
     {
-        emit message(QString("Query canceled because is fake: %1").arg(queryText));
+        emit message(QStringLiteral("Query canceled because is fake: %1").arg(queryText));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
@@ -1680,11 +1680,11 @@ void ClientHeavyLoad::loadReputation()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT `type`,`point`,`level` FROM `reputation` WHERE `character`=%1")
+        queryText=QStringLiteral("SELECT `type`,`point`,`level` FROM `reputation` WHERE `character`=%1")
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QString("SELECT `type`,`point`,level FROM reputation WHERE character=%1")
+        queryText=QStringLiteral("SELECT `type`,`point`,level FROM reputation WHERE character=%1")
                 .arg(player_informations->character_id);
         break;
     }
@@ -1699,30 +1699,30 @@ void ClientHeavyLoad::loadReputation()
         qint32 point=reputationQuery.value(1).toInt(&ok);
         if(!ok)
         {
-            emit message(QString("point is not a number, skip: %1").arg(type));
+            emit message(QStringLiteral("point is not a number, skip: %1").arg(type));
             continue;
         }
         qint32 level=reputationQuery.value(2).toInt(&ok);
         if(!ok)
         {
-            emit message(QString("level is not a number, skip: %1").arg(type));
+            emit message(QStringLiteral("level is not a number, skip: %1").arg(type));
             continue;
         }
         if(level<-100 || level>100)
         {
-            emit message(QString("level is <100 or >100, skip: %1").arg(type));
+            emit message(QStringLiteral("level is <100 or >100, skip: %1").arg(type));
             continue;
         }
         if(!CommonDatapack::commonDatapack.reputation.contains(type))
         {
-            emit message(QString("The reputation: %1 don't exist").arg(type));
+            emit message(QStringLiteral("The reputation: %1 don't exist").arg(type));
             continue;
         }
         if(level>=0)
         {
             if(level>=CommonDatapack::commonDatapack.reputation[type].reputation_positive.size())
             {
-                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.size()));
+                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.size()));
                 continue;
             }
         }
@@ -1730,7 +1730,7 @@ void ClientHeavyLoad::loadReputation()
         {
             if((-level)>CommonDatapack::commonDatapack.reputation[type].reputation_negative.size())
             {
-                emit message(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.size()));
+                emit message(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(type).arg(level).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.size()));
                 continue;
             }
         }
@@ -1738,12 +1738,12 @@ void ClientHeavyLoad::loadReputation()
         {
             if(CommonDatapack::commonDatapack.reputation[type].reputation_positive.size()==(level+1))//start at level 0 in positive
             {
-                emit message(QString("The reputation level is already at max, drop point"));
+                emit message(QStringLiteral("The reputation level is already at max, drop point"));
                 point=0;
             }
             if(point>=CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(level+1))//start at level 0 in positive
             {
-                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(level)));
+                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_positive.at(level)));
                 continue;
             }
         }
@@ -1751,12 +1751,12 @@ void ClientHeavyLoad::loadReputation()
         {
             if(CommonDatapack::commonDatapack.reputation[type].reputation_negative.size()==-level)//start at level -1 in negative
             {
-                emit message(QString("The reputation level is already at min, drop point"));
+                emit message(QStringLiteral("The reputation level is already at min, drop point"));
                 point=0;
             }
             if(point<CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-level))//start at level -1 in negative
             {
-                emit message(QString("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(level)));
+                emit message(QStringLiteral("The reputation point %1 is greater than max %2").arg(point).arg(CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(level)));
                 continue;
             }
         }
@@ -1773,11 +1773,11 @@ void ClientHeavyLoad::loadQuests()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT `quest`,`finish_one_time`,`step` FROM `quest` WHERE `character`=%1")
+        queryText=QStringLiteral("SELECT `quest`,`finish_one_time`,`step` FROM `quest` WHERE `character`=%1")
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QString("SELECT quest,finish_one_time,step FROM quest WHERE character=%1")
+        queryText=QStringLiteral("SELECT quest,finish_one_time,step FROM quest WHERE character=%1")
                 .arg(player_informations->character_id);
         break;
     }
@@ -1794,22 +1794,22 @@ void ClientHeavyLoad::loadQuests()
         playerQuest.step=questsQuery.value(2).toUInt(&ok2);
         if(!ok || !ok2)
         {
-            emit message(QString("wrong value type for quest, skip: %1").arg(id));
+            emit message(QStringLiteral("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
         if(!CommonDatapack::commonDatapack.quests.contains(id))
         {
-            emit message(QString("quest is not into the quests list, skip: %1").arg(id));
+            emit message(QStringLiteral("quest is not into the quests list, skip: %1").arg(id));
             continue;
         }
         if((playerQuest.step<=0 && !playerQuest.finish_one_time) || playerQuest.step>CommonDatapack::commonDatapack.quests[id].steps.size())
         {
-            emit message(QString("step out of quest range, skip: %1").arg(id));
+            emit message(QStringLiteral("step out of quest range, skip: %1").arg(id));
             continue;
         }
         if(playerQuest.step<=0 && !playerQuest.finish_one_time)
         {
-            emit message(QString("can't be to step 0 if have never finish the quest, skip: %1").arg(id));
+            emit message(QStringLiteral("can't be to step 0 if have never finish the quest, skip: %1").arg(id));
             continue;
         }
         player_informations->public_and_private_informations.quests[id]=playerQuest;

@@ -12,15 +12,15 @@ WithAnotherPlayer::WithAnotherPlayer(QWidget *parent,const WithAnotherPlayerType
     switch(type)
     {
         case WithAnotherPlayerType_Battle:
-        ui->question->setText(tr("Do you want battle with the player %1?").arg(QString("<b>%1</b>").arg(pseudo)));
+        ui->question->setText(tr("Do you want battle with the player %1?").arg(QStringLiteral("<b>%1</b>").arg(pseudo)));
         setWindowTitle(tr("Battle"));
         break;
         case WithAnotherPlayerType_Trade:
-        ui->question->setText(tr("Do you want trade with the player %1?").arg(QString("<b>%1</b>").arg(pseudo)));
+        ui->question->setText(tr("Do you want trade with the player %1?").arg(QStringLiteral("<b>%1</b>").arg(pseudo)));
         setWindowTitle(tr("Trade"));
         break;
         default:
-        ui->question->setText(tr("Do you want do an action with the player %1?").arg(QString("<b>%1</b>").arg(pseudo)));
+        ui->question->setText(tr("Do you want do an action with the player %1?").arg(QStringLiteral("<b>%1</b>").arg(pseudo)));
         setWindowTitle(tr("Action"));
         break;
     }

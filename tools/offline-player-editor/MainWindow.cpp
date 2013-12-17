@@ -81,7 +81,7 @@ void MainWindow::try_connect()
     if(!db.open())
     {
         QMessageBox::warning(this,"Warning",
-                             QString("Unable to connect to the database: %1, database text: %2")
+                             QStringLiteral("Unable to connect to the database: %1, database text: %2")
                              .arg(db.lastError().driverText())
                              .arg(db.lastError().databaseText())
                              );
@@ -107,10 +107,10 @@ void MainWindow::updatePlayerList()
     {
         default:
         case db_type_mysql:
-            queryText=QString("SELECT pseudo,id,skin FROM player");
+            queryText=QStringLiteral("SELECT pseudo,id,skin FROM player");
         break;
         case db_type_sqlite:
-            queryText=QString("SELECT pseudo,id,skin FROM player");
+            queryText=QStringLiteral("SELECT pseudo,id,skin FROM player");
         break;
     }
     QSqlQuery listQuery(queryText);
@@ -169,16 +169,16 @@ void MainWindow::on_playerList_itemActivated(QListWidgetItem *item)
     {
         default:
         case db_type_mysql:
-            queryText=QString("SELECT cash FROM player WHERE id=%1").arg(player_id);
+            queryText=QStringLiteral("SELECT cash FROM player WHERE id=%1").arg(player_id);
         break;
         case db_type_sqlite:
-            queryText=QString("SELECT cash FROM player WHERE id=%1").arg(player_id);
+            queryText=QStringLiteral("SELECT cash FROM player WHERE id=%1").arg(player_id);
         break;
     }
     QSqlQuery infoPlayer(queryText);
     if(infoPlayer.isValid())
     {
-        QMessageBox::warning(this,"Warning",QString("The player can't be loaded: %1\nQuery: %2").arg(infoPlayer.lastError().text()).arg(queryText));
+        QMessageBox::warning(this,"Warning",QStringLiteral("The player can't be loaded: %1\nQuery: %2").arg(infoPlayer.lastError().text()).arg(queryText));
         return;
     }
 
@@ -197,10 +197,10 @@ void MainWindow::on_playerList_itemActivated(QListWidgetItem *item)
     {
         default:
         case db_type_mysql:
-            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1").arg(player_id);
+            queryText=QStringLiteral("SELECT item_id,quantity FROM item WHERE player_id=%1").arg(player_id);
         break;
         case db_type_sqlite:
-            queryText=QString("SELECT item_id,quantity FROM item WHERE player_id=%1").arg(player_id);
+            queryText=QStringLiteral("SELECT item_id,quantity FROM item WHERE player_id=%1").arg(player_id);
         break;
     }
     QSqlQuery itemsPlayer(queryText);
@@ -238,10 +238,10 @@ void MainWindow::on_cash_editingFinished()
     {
         default:
         case db_type_mysql:
-            queryText=QString("UPDATE player SET cash=%1 WHERE id=%2").arg(ui->cash->value()).arg(player_id);
+            queryText=QStringLiteral("UPDATE player SET cash=%1 WHERE id=%2").arg(ui->cash->value()).arg(player_id);
         break;
         case db_type_sqlite:
-            queryText=QString("UPDATE player SET cash=%1 WHERE id=%2").arg(ui->cash->value()).arg(player_id);
+            queryText=QStringLiteral("UPDATE player SET cash=%1 WHERE id=%2").arg(ui->cash->value()).arg(player_id);
         break;
     }
     QSqlQuery updateCashPlayer(queryText);
@@ -280,12 +280,12 @@ void MainWindow::load_inventory()
         if(DatapackClientLoader::items.contains(i.key()))
         {
             item->setIcon(DatapackClientLoader::items[i.key()].image);
-            item->setText(QString("%1 (%2)").arg(DatapackClientLoader::items[i.key()].name).arg(i.value()));
+            item->setText(QStringLiteral("%1 (%2)").arg(DatapackClientLoader::items[i.key()].name).arg(i.value()));
         }
         else
         {
             item->setIcon(datapackLoader.defaultInventoryImage());
-            item->setText(QString("??? (id: %1, x%2)").arg(i.key()).arg(i.value()));
+            item->setText(QStringLiteral("??? (id: %1, x%2)").arg(i.key()).arg(i.value()));
         }
         item->setToolTip(DatapackClientLoader::items[i.key()].description);
         ui->items->addItem(item);
@@ -307,10 +307,10 @@ void MainWindow::on_add_item_clicked()
         {
             default:
             case db_type_mysql:
-                queryText=QString("UPDATE item SET quantity=%1 WHERE player_id=%2 AND item_id=%3").arg(items[itemDialog.itemId()]).arg(player_id).arg(itemDialog.itemId());
+                queryText=QStringLiteral("UPDATE item SET quantity=%1 WHERE player_id=%2 AND item_id=%3").arg(items[itemDialog.itemId()]).arg(player_id).arg(itemDialog.itemId());
             break;
             case db_type_sqlite:
-                queryText=QString("UPDATE item SET quantity=%1 WHERE player_id=%2 AND item_id=%3").arg(items[itemDialog.itemId()]).arg(player_id).arg(itemDialog.itemId());
+                queryText=QStringLiteral("UPDATE item SET quantity=%1 WHERE player_id=%2 AND item_id=%3").arg(items[itemDialog.itemId()]).arg(player_id).arg(itemDialog.itemId());
             break;
         }
     }
@@ -321,10 +321,10 @@ void MainWindow::on_add_item_clicked()
         {
             default:
             case db_type_mysql:
-                queryText=QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);").arg(itemDialog.itemId()).arg(player_id).arg(items[itemDialog.itemId()]);
+                queryText=QStringLiteral("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);").arg(itemDialog.itemId()).arg(player_id).arg(items[itemDialog.itemId()]);
             break;
             case db_type_sqlite:
-                queryText=QString("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);").arg(itemDialog.itemId()).arg(player_id).arg(items[itemDialog.itemId()]);
+                queryText=QStringLiteral("INSERT INTO item(item_id,player_id,quantity) VALUES(%1,%2,%3);").arg(itemDialog.itemId()).arg(player_id).arg(items[itemDialog.itemId()]);
             break;
         }
     }
@@ -347,10 +347,10 @@ void MainWindow::on_remove_item_clicked()
     {
         default:
         case db_type_mysql:
-            queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2").arg(player_id).arg(items_graphical[ui->items->selectedItems().first()]);
+            queryText=QStringLiteral("DELETE FROM item WHERE player_id=%1 AND item_id=%2").arg(player_id).arg(items_graphical[ui->items->selectedItems().first()]);
         break;
         case db_type_sqlite:
-            queryText=QString("DELETE FROM item WHERE player_id=%1 AND item_id=%2").arg(player_id).arg(items_graphical[ui->items->selectedItems().first()]);
+            queryText=QStringLiteral("DELETE FROM item WHERE player_id=%1 AND item_id=%2").arg(player_id).arg(items_graphical[ui->items->selectedItems().first()]);
         break;
     }
     QSqlQuery updateItemPlayer(queryText);

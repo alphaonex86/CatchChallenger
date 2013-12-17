@@ -210,7 +210,7 @@ void MainWindow::update_the_info()
         quint16 player_current,player_max;
         player_current=server.player_current();
         player_max=server.player_max();
-        ui->label_player->setText(QString("%1/%2").arg(player_current).arg(player_max));
+        ui->label_player->setText(QStringLiteral("%1/%2").arg(player_current).arg(player_max));
         ui->progressBar_player->setMaximum(player_max);
         ui->progressBar_player->setValue(player_current);
     }
@@ -442,18 +442,18 @@ void MainWindow::load_settings()
         int capture_time_hours=0,capture_time_minutes=0;
         QStringList capture_time_string_list=settings->value("capture_time").toString().split(":");
         if(capture_time_string_list.size()!=2)
-            settings->setValue("capture_time",QString("0:0"));
+            settings->setValue("capture_time",QStringLiteral("0:0"));
         else
         {
             bool ok;
             capture_time_hours=capture_time_string_list.first().toUInt(&ok);
             if(!ok)
-                settings->setValue("capture_time",QString("0:0"));
+                settings->setValue("capture_time",QStringLiteral("0:0"));
             else
             {
                 capture_time_minutes=capture_time_string_list.last().toUInt(&ok);
                 if(!ok)
-                    settings->setValue("capture_time",QString("0:0"));
+                    settings->setValue("capture_time",QStringLiteral("0:0"));
             }
         }
         settings->endGroup();
@@ -947,7 +947,7 @@ void CatchChallenger::MainWindow::on_timeEdit_city_capture_time_editingFinished(
 {
     settings->beginGroup("city");
     QTime time=ui->timeEdit_city_capture_time->time();
-    settings->setValue("capture_time",QString("%1:%2").arg(time.hour()).arg(time.minute()));
+    settings->setValue("capture_time",QStringLiteral("%1:%2").arg(time.hour()).arg(time.minute()));
     settings->endGroup();
 }
 

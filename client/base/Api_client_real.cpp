@@ -72,7 +72,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         }
                         if(boolList.size()<datapackFilesList.size())
                         {
-                            emit newError(tr("Procotol wrong or corrupted"),QString("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            emit newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
                         int index=0;
@@ -80,10 +80,10 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         {
                             if(boolList.first())
                             {
-                                DebugClass::debugConsole(QString("remove the file: %1").arg(mDatapack+"/"+datapackFilesList.at(index)));
+                                DebugClass::debugConsole(QStringLiteral("remove the file: %1").arg(mDatapack+"/"+datapackFilesList.at(index)));
                                 QFile file(mDatapack+"/"+datapackFilesList.at(index));
                                 if(!file.remove())
-                                    DebugClass::debugConsole(QString("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
+                                    DebugClass::debugConsole(QStringLiteral("unable to remove the file: %1: %2").arg(datapackFilesList.at(index)).arg(file.errorString()));
                                 //emit removeFile(datapackFilesList.at(index));
                             }
                             boolList.removeFirst();
@@ -93,7 +93,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
                         cleanDatapack("");
                         if(boolList.size()>=8)
                         {
-                            emit newError(tr("Procotol wrong or corrupted"),QString("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                            emit newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                             return;
                         }
                         emit haveTheDatapack();
@@ -115,7 +115,7 @@ void Api_client_real::parseFullReplyData(const quint8 &mainCodeType,const quint1
     if((in.device()->size()-in.device()->pos())!=0)
     {
         QByteArray data_remaining=data.right(data.size()-in.device()->pos());
-        parseError(tr("Procotol wrong or corrupted"),QString("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data_remaining.toHex())));
+        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg(subCodeType).arg(queryNumber).arg(QString(data_remaining.toHex())));
         return;
     }
 }
@@ -140,7 +140,7 @@ void Api_client_real::tryConnect(QString host,quint16 port)
 {
     if(socket==NULL)
         return;
-    DebugClass::debugConsole(QString("Try connect on: %1:%2").arg(host).arg(port));
+    DebugClass::debugConsole(QStringLiteral("Try connect on: %1:%2").arg(host).arg(port));
     this->host=host;
     this->port=port;
     socket->connectToHost(host,port);
@@ -164,18 +164,18 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
     if(file.exists())
         if(!file.remove())
         {
-            DebugClass::debugConsole(QString("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
+            DebugClass::debugConsole(QStringLiteral("Can't remove: %1: %2").arg(fileName).arg(file.errorString()));
             return;
         }
     if(!file.open(QIODevice::WriteOnly))
     {
-        DebugClass::debugConsole(QString("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
+        DebugClass::debugConsole(QStringLiteral("Can't open: %1: %2").arg(fileName).arg(file.errorString()));
         return;
     }
     if(file.write(data)!=data.size())
     {
         file.close();
-        DebugClass::debugConsole(QString("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
+        DebugClass::debugConsole(QStringLiteral("Can't write: %1: %2").arg(fileName).arg(file.errorString()));
         return;
     }
     file.close();
@@ -187,7 +187,7 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
     time_t modtime=mtime;
     if(modtime<0)
     {
-        DebugClass::debugConsole(QString("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
+        DebugClass::debugConsole(QStringLiteral("Last modified date is wrong: %1: %2").arg(fileName).arg(mtime));
         return;
     }
     emit newDatapackFile(data.size());
@@ -201,7 +201,7 @@ void Api_client_real::writeNewFile(const QString &fileName,const QByteArray &dat
             return;
         else
         {
-            DebugClass::debugConsole(QString("Can't set time: %1").arg(fileName));
+            DebugClass::debugConsole(QStringLiteral("Can't set time: %1").arg(fileName));
             return;
         }
     #else
@@ -239,7 +239,7 @@ void Api_client_real::sendDatapackContent()
 {
     if(wait_datapack_content)
     {
-        DebugClass::debugConsole(QString("already in wait of datapack content"));
+        DebugClass::debugConsole(QStringLiteral("already in wait of datapack content"));
         return;
     }
     wait_datapack_content=true;
@@ -282,10 +282,10 @@ const QStringList Api_client_real::listDatapack(QString suffix)
             //is invalid
             else
             {
-                DebugClass::debugConsole(QString("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
+                DebugClass::debugConsole(QStringLiteral("listDatapack(): remove invalid file: %1").arg(suffix+fileInfo.fileName()));
                 QFile file(mDatapack+suffix+fileInfo.fileName());
                 if(!file.remove())
-                    DebugClass::debugConsole(QString("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
+                    DebugClass::debugConsole(QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(suffix+fileInfo.fileName()).arg(file.errorString()));
             }
         }
     }

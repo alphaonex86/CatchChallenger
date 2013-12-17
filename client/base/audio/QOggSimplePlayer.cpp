@@ -73,9 +73,9 @@ void QOggSimplePlayer::open()
             fprintf(stderr,"%s\n",*ptr);
             ++ptr;
         }
-        qDebug() << QString("Bitstream is %1 channel, %2Hz").arg(vi->channels).arg(vi->rate);
-        qDebug() << QString("Encoded by: %1").arg(ov_comment(&vf,-1)->vendor);
-        qDebug() << QString("Play on: %1").arg(QAudioDeviceInfo::defaultOutputDevice().deviceName());
+        qDebug() << QStringLiteral("Bitstream is %1 channel, %2Hz").arg(vi->channels).arg(vi->rate);
+        qDebug() << QStringLiteral("Encoded by: %1").arg(ov_comment(&vf,-1)->vendor);
+        qDebug() << QStringLiteral("Play on: %1").arg(QAudioDeviceInfo::defaultOutputDevice().deviceName());
         format.setChannelCount(vi->channels);
         format.setSampleRate(vi->rate);
     }
@@ -88,7 +88,7 @@ void QOggSimplePlayer::open()
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(format)) {
-        qDebug() << QString("raw audio format not supported by backend, cannot play audio: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
+        qDebug() << QStringLiteral("raw audio format not supported by backend, cannot play audio: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
                     .arg(format.sampleRate())
                     .arg(format.channelCount())
                     .arg(format.sampleSize())
@@ -97,7 +97,7 @@ void QOggSimplePlayer::open()
                     .arg(format.sampleType())
                     ;
         QAudioFormat preferedFormat=info.preferredFormat();
-        qDebug() << QString("prefered format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
+        qDebug() << QStringLiteral("prefered format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
                     .arg(preferedFormat.sampleRate())
                     .arg(preferedFormat.channelCount())
                     .arg(preferedFormat.sampleSize())
@@ -106,7 +106,7 @@ void QOggSimplePlayer::open()
                     .arg(preferedFormat.sampleType())
                     ;
         QAudioFormat nearestFormat=info.nearestFormat(format);
-        qDebug() << QString("nearest format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
+        qDebug() << QStringLiteral("nearest format: SampleRate: %1, ChannelCount: %2, SampleSize: %3, Codec: %4, ByteOrder: %5, SampleType: %6")
                     .arg(nearestFormat.sampleRate())
                     .arg(nearestFormat.channelCount())
                     .arg(nearestFormat.sampleSize())

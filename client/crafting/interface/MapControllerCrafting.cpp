@@ -35,7 +35,7 @@ void MapController::insert_plant(const quint32 &mapId, const quint8 &x, const qu
     const QString &map=QFileInfo(datapackMapPath+DatapackClientLoader::datapackLoader.maps[mapId]).absoluteFilePath();
     if(!haveMapInMemory(map) || !mapItem->haveMap(all_map[map]->tiledMap))
     {
-        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(map);
+        qDebug() << QStringLiteral("map (%1) not show or not loaded, delay it").arg(map);
         DelayedPlantInsert tempItem;
         tempItem.mapId=mapId;
         tempItem.x=x;
@@ -82,12 +82,12 @@ void MapController::insert_plant_full(const QString &map,const quint8 &x,const q
 
     map_full->logicalMap.plantList << plant;
     #ifdef DEBUG_CLIENT_PLANTS
-    qDebug() << QString("insert_plant(), map: %1 at: %2,%3").arg(map).arg(x).arg(y);
+    qDebug() << QStringLiteral("insert_plant(), map: %1 at: %2,%3").arg(map).arg(x).arg(y);
     #endif
     if(ObjectGroupItem::objectGroupLink.contains(all_map[map]->objectGroup))
         ObjectGroupItem::objectGroupLink[all_map[map]->objectGroup]->addObject(plant->mapObject);
     else
-        qDebug() << QString("insert_plant(), all_map[map]->objectGroup not contains current_map->objectGroup");
+        qDebug() << QStringLiteral("insert_plant(), all_map[map]->objectGroup not contains current_map->objectGroup");
     MapObjectItem::objectLink[plant->mapObject]->setZValue(y);
 }
 
@@ -166,7 +166,7 @@ void MapController::remove_plant(const quint32 &mapId, const quint8 &x, const qu
 void MapController::remove_plant_full(const QString &map, const quint8 &x, const quint8 &y)
 {
     #ifdef DEBUG_CLIENT_PLANTS
-    qDebug() << QString("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
+    qDebug() << QStringLiteral("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
     #endif
     if(!all_map.contains(map))
     {
@@ -176,12 +176,12 @@ void MapController::remove_plant_full(const QString &map, const quint8 &x, const
             i.next();
             map_list << i.key();
         }
-        qDebug() << QString("map (%1) is not into map list: %2, ignore it").arg(map).arg(map_list.join(";"));
+        qDebug() << QStringLiteral("map (%1) is not into map list: %2, ignore it").arg(map).arg(map_list.join(";"));
         return;
     }
     if(!mapItem->haveMap(all_map[map]->tiledMap))
     {
-        qDebug() << QString("map (%1) not show, ignore it").arg(map);
+        qDebug() << QStringLiteral("map (%1) not show, ignore it").arg(map);
         return;
     }
     MapVisualiserThread::Map_full * map_full=all_map[map];
@@ -194,7 +194,7 @@ void MapController::remove_plant_full(const QString &map, const quint8 &x, const
             if(ObjectGroupItem::objectGroupLink.contains(map_full->logicalMap.plantList.at(index)->mapObject->objectGroup()))
                 ObjectGroupItem::objectGroupLink[map_full->logicalMap.plantList.at(index)->mapObject->objectGroup()]->removeObject(map_full->logicalMap.plantList.at(index)->mapObject);
             else
-                qDebug() << QString("remove_plant(), ObjectGroupItem::objectGroupLink not contains map_full->logicalMap.plantList.at(index).mapObject->objectGroup()");
+                qDebug() << QStringLiteral("remove_plant(), ObjectGroupItem::objectGroupLink not contains map_full->logicalMap.plantList.at(index).mapObject->objectGroup()");
             delete map_full->logicalMap.plantList.at(index)->mapObject;
             delete map_full->logicalMap.plantList.at(index);
             map_full->logicalMap.plantList.removeAt(index);

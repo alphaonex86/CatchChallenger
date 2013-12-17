@@ -17,7 +17,7 @@ void LocalClientHandler::registerTradeRequest(LocalClientHandler * otherPlayerTr
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("%1 have requested trade with you").arg(otherPlayerTrade->player_informations->public_and_private_informations.public_informations.pseudo));
+    emit message(QStringLiteral("%1 have requested trade with you").arg(otherPlayerTrade->player_informations->public_and_private_informations.public_informations.pseudo));
     #endif
     this->otherPlayerTrade=otherPlayerTrade;
     QByteArray outputData;
@@ -150,13 +150,13 @@ void LocalClientHandler::addExistingMonster(QList<PlayerMonster> tradeMonster)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;")
+                emit dbQuery(QStringLiteral("UPDATE `monster` SET `character`=%2 WHERE `id`=%1;")
                              .arg(tradeMonster.at(index).id)
                              .arg(player_informations->character_id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET character=%2 WHERE id=%1;")
+                emit dbQuery(QStringLiteral("UPDATE monster SET character=%2 WHERE id=%1;")
                              .arg(tradeMonster.at(index).id)
                              .arg(player_informations->character_id)
                              );
@@ -190,7 +190,7 @@ void LocalClientHandler::tradeAddTradeCash(const quint64 &cash)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("Add cash to trade: %1").arg(cash));
+    emit message(QStringLiteral("Add cash to trade: %1").arg(cash));
     #endif
     tradeCash+=cash;
     player_informations->public_and_private_informations.cash-=cash;
@@ -221,11 +221,11 @@ void LocalClientHandler::tradeAddTradeObject(const quint32 &item,const quint32 &
     }
     if(quantity>objectQuantity(item))
     {
-        emit error(QString("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
+        emit error(QStringLiteral("Trade object %1 in quantity %2 superior to the actual quantity").arg(item).arg(quantity));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
+    emit message(QStringLiteral("Add object to trade: %1 (quantity: %2)").arg(item).arg(quantity));
     #endif
     if(tradeObjects.contains(item))
         tradeObjects[item]+=quantity;
@@ -266,7 +266,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("Add monster to trade: %1").arg(monsterId));
+    emit message(QStringLiteral("Add monster to trade: %1").arg(monsterId));
     #endif
     int index=0;
     while(index<player_informations->public_and_private_informations.playerMonster.size())
@@ -321,13 +321,13 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
+                        emit dbQuery(QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+                        emit dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
                                      .arg(index+1)
                                      .arg(playerMonster.id)
                                      );
@@ -375,7 +375,7 @@ void LocalClientHandler::internalTradeCanceled(const bool &send)
         if(tradeIsValidated)
             emit sendFullPacket(0xD0,0x0006);
         else
-            emit receiveSystemText(QString("Trade declined"));
+            emit receiveSystemText(QStringLiteral("Trade declined"));
     }
     tradeIsValidated=false;
 }

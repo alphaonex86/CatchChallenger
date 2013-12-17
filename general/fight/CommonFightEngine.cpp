@@ -15,7 +15,7 @@ bool CommonFightEngine::canEscape() const
 {
     if(!isInFight())//check if is in fight
     {
-        emit error(QString("error: tryEscape() when is not in fight"));
+        emit error(QStringLiteral("error: tryEscape() when is not in fight"));
         return false;
     }
     if(wildMonsters.isEmpty())
@@ -218,7 +218,7 @@ bool CommonFightEngine::canDoRandomFight(const Map &map,const quint8 &x,const qu
 {
     if(isInFight())
     {
-        emit message(QString("map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y));
+        emit message(QStringLiteral("map: %1 (%2,%3), is in fight").arg(map.map_file).arg(x).arg(y));
         return false;
     }
     if(CatchChallenger::MoveOnTheMap::isGrass(map,x,y) && !map.grassMonster.empty())
@@ -229,7 +229,7 @@ bool CommonFightEngine::canDoRandomFight(const Map &map,const quint8 &x,const qu
         return randomSeeds.size()>=CATCHCHALLENGER_MIN_RANDOM_TO_FIGHT;
 
     /// no fight in this zone
-    emit message(QString("map: %1 (%2,%3), no fight in this zone").arg(map.map_file).arg(x).arg(y));
+    emit message(QStringLiteral("map: %1 (%2,%3), no fight in this zone").arg(map.map_file).arg(x).arg(y));
     return true;
 }
 
@@ -266,7 +266,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
     {
         if(monsterList.isEmpty())
         {
-            emit error(QString("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+            emit error(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
             *ok=false;
             playerMonster.monster=0;
             playerMonster.level=0;
@@ -275,7 +275,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monst
         }
         else
         {
-            emit message(QString("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
+            emit message(QStringLiteral("error: no wild monster selected, with: randomMonsterInt: %1").arg(randomMonsterInt));
             playerMonster.monster=monsterList.first().id;
             //select the level
             if(monsterList.first().maxLevel==monsterList.first().minLevel)
@@ -368,13 +368,13 @@ void CommonFightEngine::updateCanDoFight()
 {
     if(isInBattle())
     {
-        emit error(QString("Can't auto select the next monster when is in battle"));
+        emit error(QStringLiteral("Can't auto select the next monster when is in battle"));
         return;
     }
     ableToFight=false;
     if(player_informations==NULL)
     {
-        emit error(QString("player_informations is NULL"));
+        emit error(QStringLiteral("player_informations is NULL"));
         return;
     }
     int index=0;
@@ -420,7 +420,7 @@ PlayerMonster * CommonFightEngine::getCurrentMonster() const
 {
     if(player_informations==NULL)
     {
-        emit error(QString("player_informations is NULL"));
+        emit error(QStringLiteral("player_informations is NULL"));
         return NULL;
     }
     int playerMonsterSize=player_informations->playerMonster.size();
@@ -428,7 +428,7 @@ PlayerMonster * CommonFightEngine::getCurrentMonster() const
         return &player_informations->playerMonster[selectedMonster];
     else
     {
-        emit error(QString("selectedMonster is out of range, max: %1").arg(playerMonsterSize));
+        emit error(QStringLiteral("selectedMonster is out of range, max: %1").arg(playerMonsterSize));
         return NULL;
     }
 }
@@ -648,12 +648,12 @@ int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, Public
 {
     if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
     {
-        emit error(QString("apply a unknown buff"));
+        emit error(QStringLiteral("apply a unknown buff"));
         return -4;
     }
     if(effect.level>CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.size())
     {
-        emit error(QString("apply buff level out of range"));
+        emit error(QStringLiteral("apply buff level out of range"));
         return -4;
     }
     PlayerBuff tempBuff;
@@ -711,12 +711,12 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
 {
     if(!CommonDatapack::commonDatapack.monsterBuffs.contains(effect.buff))
     {
-        emit error(QString("apply a unknown buff"));
+        emit error(QStringLiteral("apply a unknown buff"));
         return;
     }
     if(effect.level>CommonDatapack::commonDatapack.monsterBuffs[effect.buff].level.size())
     {
-        emit error(QString("apply buff level out of range"));
+        emit error(QStringLiteral("apply buff level out of range"));
         return;
     }
     int index=0;
@@ -736,7 +736,7 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
                 if(otherMonster->buffs.at(index).buff==effect.buff)
                 {
                     if(otherMonster->buffs.at(index).level!=effect.level)
-                        emit message(QString("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(otherMonster->buffs.at(index).level).arg(effect.level));
+                        emit message(QStringLiteral("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(otherMonster->buffs.at(index).level).arg(effect.level));
                     otherMonster->buffs.removeAt(index);
                     return;
                 }
@@ -758,7 +758,7 @@ void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
                 if(currentMonster->buffs.at(index).buff==effect.buff)
                 {
                     if(currentMonster->buffs.at(index).level!=effect.level)
-                        emit message(QString("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(currentMonster->buffs.at(index).level).arg(effect.level));
+                        emit message(QStringLiteral("the buff removed %1 have not the same level %2!=%3").arg(effect.buff).arg(currentMonster->buffs.at(index).level).arg(effect.level));
                     currentMonster->buffs.removeAt(index);
                     return;
                 }
@@ -796,20 +796,20 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
 {
     if(!haveThisMonster(monster))
     {
-        emit error(QString("have not this monster: %1").arg(object));
+        emit error(QStringLiteral("have not this monster: %1").arg(object));
         return false;
     }
     PlayerMonster * playerMonster=monsterById(monster);
     if(genericMonsterIsKO(playerMonster))
     {
-        emit error(QString("can't be applyied on KO monster: %1").arg(object));
+        emit error(QStringLiteral("can't be applyied on KO monster: %1").arg(object));
         return false;
     }
     if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.contains(object))
     {
         if(!CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem[object].contains(playerMonster->monster))
         {
-            emit error(QString("this item %1 can't be applyed on this monster %2").arg(object).arg(playerMonster->monster));
+            emit error(QStringLiteral("this item %1 can't be applyed on this monster %2").arg(object).arg(playerMonster->monster));
             return false;
         }
         confirmEvolutionTo(playerMonster,CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem[object][playerMonster->monster]);
@@ -817,7 +817,7 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
     }
     if(!CommonDatapack::commonDatapack.items.monsterItemEffect.contains(object))
     {
-        emit error(QString("This object can't be applyed on monster: %1").arg(object));
+        emit error(QStringLiteral("This object can't be applyed on monster: %1").arg(object));
         return false;
     }
     const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[playerMonster->monster],playerMonster->level);
@@ -841,7 +841,7 @@ bool CommonFightEngine::useObjectOnMonster(const quint32 &object,const quint32 &
                     removeAllBuffOnMonster(playerMonster);
             break;
             default:
-                emit message(QString("Item %1 have unknown effect").arg(object));
+                emit message(QStringLiteral("Item %1 have unknown effect").arg(object));
             break;
         }
         index++;
@@ -887,12 +887,12 @@ bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
         return false;
     if(player_informations==NULL)
     {
-        emit error(QString("player_informations is NULL"));
+        emit error(QStringLiteral("player_informations is NULL"));
         return false;
     }
     if(getCurrentMonster()->id==monsterId)
     {
-        emit error(QString("try change monster but is already on the current monster"));
+        emit error(QStringLiteral("try change monster but is already on the current monster"));
         return false;
     }
     int index=0;
@@ -916,7 +916,7 @@ bool CommonFightEngine::changeOfMonsterInFight(const quint32 &monsterId)
         }
         index++;
     }
-    emit error(QString("unable to locate the new monster to change"));
+    emit error(QStringLiteral("unable to locate the new monster to change"));
     return false;
 }
 
@@ -993,13 +993,13 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
                     bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
                 else
                 {
-                    emit error(QString("Buff level for wild monter not found: %1 at level %2").arg(playerBuff.buff).arg(playerBuff.level));
+                    emit error(QStringLiteral("Buff level for wild monter not found: %1 at level %2").arg(playerBuff.buff).arg(playerBuff.level));
                     bonusStat+=1.0;
                 }
             }
             else
             {
-                emit error(QString("Buff for wild monter not found: %1").arg(playerBuff.buff));
+                emit error(QStringLiteral("Buff for wild monter not found: %1").arg(playerBuff.buff));
                 bonusStat+=1.0;
             }
             index++;
@@ -1031,7 +1031,7 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
     if(internalTryCapture(CommonDatapack::commonDatapack.items.trap[item]))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("capture is successful"));
+        emit message(QStringLiteral("capture is successful"));
         #endif
         PlayerMonster newMonster;
         newMonster.buffs=wildMonsters.first().buffs;
@@ -1050,7 +1050,7 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("capture is failed"));
+        emit message(QStringLiteral("capture is failed"));
         #endif
         generateOtherAttack();//Skill::AttackReturn attackReturn=
         return 0;
@@ -1177,7 +1177,7 @@ void CommonFightEngine::wildDrop(const quint32 &monster)
 
 bool CommonFightEngine::checkKOOtherMonstersForGain()
 {
-    emit message(QString("checkKOOtherMonstersForGain()"));
+    emit message(QStringLiteral("checkKOOtherMonstersForGain()"));
     bool winTheTurn=false;
     if(!wildMonsters.isEmpty())
     {
@@ -1185,7 +1185,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
         {
             winTheTurn=true;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
+            emit message(QStringLiteral("The wild monster (%1) is KO").arg(wildMonsters.first().monster));
             #endif
             //drop the drop item here
             wildDrop(wildMonsters.first().monster);
@@ -1195,7 +1195,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             int xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            emit message(QStringLiteral("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
             #endif
         }
     }
@@ -1205,7 +1205,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
         {
             winTheTurn=true;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("The wild monster (%1) is KO").arg(botFightMonsters.first().monster));
+            emit message(QStringLiteral("The wild monster (%1) is KO").arg(botFightMonsters.first().monster));
             #endif
             //don't drop item because it's not a wild fight
             //give xp/sp here
@@ -1214,7 +1214,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             int xp=wildmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+            emit message(QStringLiteral("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
             #endif
         }
     }
@@ -1256,7 +1256,7 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
         haveChangeOfLevel=true;
         monster->hp+=new_max_hp-old_max_hp;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("You pass to the level %1").arg(level));
+        emit message(QStringLiteral("You pass to the level %1").arg(level));
         #endif
         if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
         {
@@ -1286,7 +1286,7 @@ bool CommonFightEngine::tryEscape()
     if(internalTryEscape())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("escape is successful"));
+        emit message(QStringLiteral("escape is successful"));
         #endif
         wildMonsters.clear();
         return true;
@@ -1294,7 +1294,7 @@ bool CommonFightEngine::tryEscape()
     else
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("escape is failed"));
+        emit message(QStringLiteral("escape is failed"));
         #endif
         generateOtherAttack();//Skill::AttackReturn attackReturn=
         return false;
@@ -1520,7 +1520,7 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
             skillLevel=1;
         else
         {
-            emit error(QString("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
+            emit error(QStringLiteral("Unable to fight because the current monster (%1, level: %2) have not the skill %3").arg(currentMonster->monster).arg(currentMonster->level).arg(skill));
             return false;
         }
     }
@@ -1532,12 +1532,12 @@ bool CommonFightEngine::useSkill(const quint32 &skill)
     Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[otherMonster->monster],otherMonster->level);
     if(currentMonster->hp>currentMonsterStat.hp)
     {
-        emit error(QString("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
+        emit error(QStringLiteral("The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
         return false;
     }
     if(otherMonster->hp>otherMonsterStat.hp)
     {
-        emit error(QString("The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
+        emit error(QStringLiteral("The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
         return false;
     }
     #endif
@@ -1623,21 +1623,21 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
     bool ok;
     if(isInFight())
     {
-        emit error(QString("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+        emit error(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
     }
     if(CatchChallenger::MoveOnTheMap::isGrass(*map,x,y) && !map->grassMonster.empty())
     {
         if(!ableToFight)
         {
-            emit error(QString("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+            emit error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
             return false;
         }
         if(stepFight_Grass==0)
         {
             if(randomSeeds.size()==0)
             {
-                emit error(QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+                emit error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
                 return false;
             }
             else
@@ -1651,13 +1651,13 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
             if(ok)
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QString("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
+                emit message(QStringLiteral("Start grass fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
                 #endif
                 startTheFight();
                 wildMonsters << monster;
             }
             else
-                emit error(QString("error: no more random seed here to have the get"));
+                emit error(QStringLiteral("error: no more random seed here to have the get"));
             return ok;
         }
         else
@@ -1667,14 +1667,14 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
     {
         if(!ableToFight)
         {
-            emit error(QString("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+            emit error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
             return false;
         }
         if(stepFight_Water==0)
         {
             if(randomSeeds.size()==0)
             {
-                emit error(QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+                emit error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
                 return false;
             }
             else
@@ -1688,13 +1688,13 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
             if(ok)
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QString("Start water fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
+                emit message(QStringLiteral("Start water fight with monster id %1 level %2").arg(monster.monster).arg(monster.level));
                 #endif
                 startTheFight();
                 wildMonsters << monster;
             }
             else
-                emit error(QString("error: no more random seed here to have the get"));
+                emit error(QStringLiteral("error: no more random seed here to have the get"));
             return ok;
         }
         else
@@ -1704,14 +1704,14 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
     {
         if(!ableToFight)
         {
-            emit error(QString("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
+            emit error(QStringLiteral("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: %1(%2,%3)").arg(map->map_file).arg(x).arg(y));
             return false;
         }
         if(stepFight_Cave==0)
         {
             if(randomSeeds.size()==0)
             {
-                emit error(QString("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+                emit error(QStringLiteral("error: no more random seed here, map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
                 return false;
             }
             else
@@ -1725,13 +1725,13 @@ bool CommonFightEngine::generateWildFightIfCollision(Map *map,const COORD_TYPE &
             if(ok)
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-                emit message(QString("Start cave fight with monseter id: %1 level %2").arg(monster.monster).arg(monster.level));
+                emit message(QStringLiteral("Start cave fight with monseter id: %1 level %2").arg(monster.monster).arg(monster.level));
                 #endif
                 startTheFight();
                 wildMonsters << monster;
             }
             else
-                emit error(QString("error: no more random seed here to have the get"));
+                emit error(QStringLiteral("error: no more random seed here to have the get"));
             return ok;
         }
         else
@@ -1781,7 +1781,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(position>=otherMonster->skills.size())
     {
-        emit message(QString("Position out of range: %1 on %2 total skill(s)")
+        emit message(QStringLiteral("Position out of range: %1 on %2 total skill(s)")
                      .arg(position)
                      .arg(otherMonster->skills.size())
                      );
@@ -1789,7 +1789,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     }
     #endif
     const PlayerMonster::PlayerSkill &otherMonsterSkill=otherMonster->skills.at(position);
-    emit message(QString("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
+    emit message(QStringLiteral("Generated bot/wild attack: %1 (position: %2) at level %3 on %4 total skill(s)")
                  .arg(otherMonsterSkill.skill)
                  .arg(position)
                  .arg(otherMonsterSkill.level)
@@ -1809,7 +1809,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     const Skill &skillDef=CommonDatapack::commonDatapack.monsterSkills[skill];
     const Skill::SkillList &skillList=skillDef.level.at(skillLevel-1);
     #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-    emit message(QString("You use skill %1 at level %2").arg(skill).arg(skillLevel));
+    emit message(QStringLiteral("You use skill %1 at level %2").arg(skill).arg(skillLevel));
     #endif
     int index;
     //do the skill
@@ -1881,14 +1881,14 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                 success=(getOneSeed(100)<buff.success);
                 #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
                 if(success)
-                    emit message(QString("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+                    emit message(QStringLiteral("Add successfull buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
                 #endif
             }
             if(success)
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
                 if(success)
-                    emit message(QString("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
+                    emit message(QStringLiteral("Add buff: %1 at level: %2 on %3").arg(buff.effect.buff).arg(buff.effect.level).arg(buff.effect.on));
                 #endif
                 if(addBuffEffectFull(buff.effect,currentMonster,otherMonster)>=-2)//0 to X, update buff, -1 added, -2 updated same buff at same level
                 {

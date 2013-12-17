@@ -55,7 +55,7 @@ void FakeBot::tryLink()
 
 void FakeBot::doStep()
 {
-    //DebugClass::debugConsole(QString("FakeBot::doStep(), do_step: %1, socket.isValid():%2, map!=NULL: %3").arg(do_step).arg(socket.isValid()).arg(map!=NULL));
+    //DebugClass::debugConsole(QStringLiteral("FakeBot::doStep(), do_step: %1, socket.isValid():%2, map!=NULL: %3").arg(do_step).arg(socket.isValid()).arg(map!=NULL));
     if(do_step && socket.isValid() && map!=NULL)
     {
         random_new_step();
@@ -74,7 +74,7 @@ void FakeBot::random_new_step()
     Direction final_direction;
     while(predefinied_step.size()>0 && !canGoTo(predefinied_step.first(),*map,x,y,true))
     {
-        DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), unable to go on: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MoveOnTheMap::directionToString(predefinied_step.first())));
+        DebugClass::debugConsole(QStringLiteral("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), unable to go on: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MoveOnTheMap::directionToString(predefinied_step.first())));
         predefinied_step.removeFirst();
     }
     if(predefinied_step.size()>0)
@@ -103,7 +103,7 @@ void FakeBot::random_new_step()
                 directions_allowed_string << MoveOnTheMap::directionToString(directions_allowed.at(index_loop));
                 index_loop++;
             }
-            DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), directions_allowed_string: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(directions_allowed_string.join(", ")));
+            DebugClass::debugConsole(QStringLiteral("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), directions_allowed_string: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(directions_allowed_string.join(", ")));
         }
         if(loop_size<=0)
             return;
@@ -115,12 +115,12 @@ void FakeBot::random_new_step()
     //to do the real move
     if(!move(final_direction,(Map **)&map,&x,&y))
     {
-        DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 2, id: %1, x: %2, y:%3, can't move on direction of: %4").arg(api.getId()).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
+        DebugClass::debugConsole(QStringLiteral("FakeBot::random_new_step(), step 2, id: %1, x: %2, y:%3, can't move on direction of: %4").arg(api.getId()).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
         map=NULL;
         return;
     }
     if(details)
-        DebugClass::debugConsole(QString("FakeBot::random_new_step(), step 3, id: %1, map: %2 (%3,%4) after move: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
+        DebugClass::debugConsole(QStringLiteral("FakeBot::random_new_step(), step 3, id: %1, map: %2 (%3,%4) after move: %5").arg(api.getId()).arg(map->map_file).arg(x).arg(y).arg(MoveOnTheMap::directionToString(final_direction)));
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
@@ -133,24 +133,24 @@ void FakeBot::insert_player(const CatchChallenger::Player_public_informations &p
         return;
     }
     if(details)
-        DebugClass::debugConsole(QString("FakeBot::insert_player() id: %1, mapName: %2 (%3,%4), api.getId(): %5").arg(player.simplifiedId).arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]).arg(x).arg(y).arg(api.getId()));
+        DebugClass::debugConsole(QStringLiteral("FakeBot::insert_player() id: %1, mapName: %2 (%3,%4), api.getId(): %5").arg(player.simplifiedId).arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]).arg(x).arg(y).arg(api.getId()));
     if(player.simplifiedId==api.getId())
     {
         if(details)
-            DebugClass::debugConsole(QString("FakeBot::insert_player() register id: %1, mapName: %2 (%3,%4)").arg(player.simplifiedId).arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]).arg(x).arg(y));
+            DebugClass::debugConsole(QStringLiteral("FakeBot::insert_player() register id: %1, mapName: %2 (%3,%4)").arg(player.simplifiedId).arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]).arg(x).arg(y));
         if(!GlobalServerData::serverPrivateVariables.map_list.contains(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]))
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), map not found: %1").arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]));
+            DebugClass::debugConsole(QStringLiteral("FakeBot::insert_player(), map not found: %1").arg(GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]));
             return;
         }
         if(x>=GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->width)
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(x).arg(GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->width));
+            DebugClass::debugConsole(QStringLiteral("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(x).arg(GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->width));
             return;
         }
         if(y>=GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->height)
         {
-            DebugClass::debugConsole(QString("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(y).arg(GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->height));
+            DebugClass::debugConsole(QStringLiteral("FakeBot::insert_player(), x>=GlobalServerData::serverPrivateVariables.map_list[mapName]->width: %1>=%2").arg(y).arg(GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]]->height));
             return;
         }
         this->map=GlobalServerData::serverPrivateVariables.map_list[GlobalServerData::serverPrivateVariables.id_map_to_map[mapId]];
@@ -163,19 +163,19 @@ void FakeBot::insert_player(const CatchChallenger::Player_public_informations &p
 void FakeBot::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
     Q_UNUSED(informations);
-//    DebugClass::debugConsole(QString("FakeBot::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
+//    DebugClass::debugConsole(QStringLiteral("FakeBot::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
 }
 
 void FakeBot::newError(QString error,QString detailedError)
 {
-    DebugClass::debugConsole(QString("FakeBot::newError() error: %1, detailedError: %2").arg(error).arg(detailedError));
+    DebugClass::debugConsole(QStringLiteral("FakeBot::newError() error: %1, detailedError: %2").arg(error).arg(detailedError));
     socket.disconnectFromHost();
     this->map=NULL;
 }
 
 void FakeBot::newSocketError(QAbstractSocket::SocketError error)
 {
-    DebugClass::debugConsole(QString("FakeBot::newError() error: %1").arg(error));
+    DebugClass::debugConsole(QStringLiteral("FakeBot::newError() error: %1").arg(error));
     this->map=NULL;
 }
 
@@ -194,7 +194,7 @@ void FakeBot::stop()
 void FakeBot::show_details()
 {
     details=true;
-    DebugClass::debugConsole(QString("FakeBot::show_details(), x: %1, y:%2").arg(x).arg(y));
+    DebugClass::debugConsole(QStringLiteral("FakeBot::show_details(), x: %1, y:%2").arg(x).arg(y));
 }
 
 quint64 FakeBot::get_TX_size()

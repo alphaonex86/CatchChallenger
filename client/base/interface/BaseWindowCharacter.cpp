@@ -41,7 +41,7 @@ void BaseWindow::newProfileFinished()
     {
         if(characterEntryList.isEmpty() && CommonSettings::commonSettings.min_character>0)
             CatchChallenger::Api_client_real::client->tryDisconnect();
-        QMessageBox::critical(this,tr("Error"),QString("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
+        QMessageBox::critical(this,tr("Error"),QStringLiteral("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
         return;
     }
     nameGame.exec();
@@ -96,7 +96,7 @@ void BaseWindow::updateCharacterList()
         QListWidgetItem * item=new QListWidgetItem();
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
-        QString text=characterEntry.pseudo+"\n"+QString("%1 played").arg(FacilityLib::timeToString(characterEntry.played_time));
+        QString text=characterEntry.pseudo+"\n"+QStringLiteral("%1 played").arg(FacilityLib::timeToString(characterEntry.played_time));
         if(characterEntry.delete_time_left>0)
             text+="\n"+tr("%1 to be deleted").arg(FacilityLib::timeToString(characterEntry.delete_time_left));
         item->setText(text);

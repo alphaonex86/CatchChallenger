@@ -104,7 +104,7 @@ void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const QStri
             tempPoint.x=map_to_send.bot_spawn_points.at(index_sub).x;
             tempPoint.y=map_to_send.bot_spawn_points.at(index_sub).y;
             GlobalServerData::serverPrivateVariables.botSpawn << tempPoint;
-            DebugClass::debugConsole(QString("BotSpawn (bot_spawn_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
+            DebugClass::debugConsole(QStringLiteral("BotSpawn (bot_spawn_points): %1,%2").arg(tempPoint.x).arg(tempPoint.y));
             index_sub++;
         }
     }
@@ -138,14 +138,14 @@ void NormalServer::start_internal_server()
         {
             if(process.exitCode()!=0)
             {
-                DebugClass::debugConsole(QString("return code: %1, output: %2, error: %3, error string: %4, exitStatus: %5").arg(process.exitCode()).arg(QString::fromLocal8Bit(process.readAll())).arg(process.error()).arg(process.errorString()).arg(process.exitStatus()));
-                DebugClass::debugConsole(QString("for start: %1 %2").arg(opensslAppPath).arg(args.join(" ")));
+                DebugClass::debugConsole(QStringLiteral("return code: %1, output: %2, error: %3, error string: %4, exitStatus: %5").arg(process.exitCode()).arg(QString::fromLocal8Bit(process.readAll())).arg(process.error()).arg(process.errorString()).arg(process.exitStatus()));
+                DebugClass::debugConsole(QStringLiteral("for start: %1 %2").arg(opensslAppPath).arg(args.join(" ")));
             }
             process.kill();
-            DebugClass::debugConsole(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+            DebugClass::debugConsole(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
             stat=Down;
             emit is_started(false);
-            emit error(QString("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
+            emit error(QStringLiteral("Certificate for the ssl connexion not found, buy or generate self signed, and put near the application"));
             return;
         }
         process.kill();
@@ -156,10 +156,10 @@ void NormalServer::start_internal_server()
     QFile key(QCoreApplication::applicationDirPath()+"/server.key");
     if(!key.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to access to the server key: %1").arg(key.errorString()));
+        DebugClass::debugConsole(QStringLiteral("Unable to access to the server key: %1").arg(key.errorString()));
         stat=Down;
         emit is_started(false);
-        emit error(QString("Unable to access to the server key"));
+        emit error(QStringLiteral("Unable to access to the server key"));
         return;
     }
     QByteArray keyData=key.readAll();
@@ -167,10 +167,10 @@ void NormalServer::start_internal_server()
     QSslKey sslKey(keyData,QSsl::Rsa);
     if(sslKey.isNull())
     {
-        DebugClass::debugConsole(QString("Server key is wrong"));
+        DebugClass::debugConsole(QStringLiteral("Server key is wrong"));
         stat=Down;
         emit is_started(false);
-        emit error(QString("Server key is wrong"));
+        emit error(QStringLiteral("Server key is wrong"));
         return;
     }
 
@@ -179,10 +179,10 @@ void NormalServer::start_internal_server()
     QFile certificate(QCoreApplication::applicationDirPath()+"/server.crt");
     if(!certificate.open(QIODevice::ReadOnly))
     {
-        DebugClass::debugConsole(QString("Unable to access to the server certificate: %1").arg(certificate.errorString()));
+        DebugClass::debugConsole(QStringLiteral("Unable to access to the server certificate: %1").arg(certificate.errorString()));
         stat=Down;
         emit is_started(false);
-        emit error(QString("Unable to access to the server certificate"));
+        emit error(QStringLiteral("Unable to access to the server certificate"));
         return;
     }
     QByteArray certificateData=certificate.readAll();
@@ -190,10 +190,10 @@ void NormalServer::start_internal_server()
     QSslCertificate sslCertificate(certificateData);
     if(sslCertificate.isNull())
     {
-        DebugClass::debugConsole(QString("Server certificate is wrong"));
+        DebugClass::debugConsole(QStringLiteral("Server certificate is wrong"));
         stat=Down;
         emit is_started(false);
-        emit error(QString("Server certificate is wrong"));
+        emit error(QStringLiteral("Server certificate is wrong"));
         return;
     }
 
@@ -205,8 +205,8 @@ void NormalServer::start_internal_server()
     }
     if(server->isListening())
     {
-        DebugClass::debugConsole(QString("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
-        emit error(QString("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
+        DebugClass::debugConsole(QStringLiteral("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
+        emit error(QStringLiteral("Already listening on %1").arg(listenIpAndPort(server->serverAddress().toString(),server->serverPort())));
         return;
     }
     if(oneInstanceRunning)
@@ -234,23 +234,23 @@ void NormalServer::start_internal_server()
     }
     if(!server->listen(address,GlobalServerData::serverSettings.server_port))
     {
-        DebugClass::debugConsole(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
+        DebugClass::debugConsole(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         stat=Down;
         emit is_started(false);
-        emit error(QString("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
+        emit error(QStringLiteral("Unable to listen: %1, errror: %2").arg(listenIpAndPort(GlobalServerData::serverSettings.server_ip,GlobalServerData::serverSettings.server_port)).arg(server->errorString()));
         return;
     }
     if(!QFakeServer::server.listen())
     {
-        DebugClass::debugConsole(QString("Unable to listen the internal server"));
+        DebugClass::debugConsole(QStringLiteral("Unable to listen the internal server"));
         stat=Down;
         emit is_started(false);
-        emit error(QString("Unable to listen the internal server"));
+        emit error(QStringLiteral("Unable to listen the internal server"));
         return;
     }
 
     if(GlobalServerData::serverSettings.server_ip.isEmpty())
-        DebugClass::debugConsole(QString("Listen *:%1").arg(GlobalServerData::serverSettings.server_port));
+        DebugClass::debugConsole(QStringLiteral("Listen *:%1").arg(GlobalServerData::serverSettings.server_port));
     else
         DebugClass::debugConsole("Listen "+GlobalServerData::serverSettings.server_ip+":"+QString::number(GlobalServerData::serverSettings.server_port));
 
@@ -264,11 +264,11 @@ void NormalServer::start_internal_server()
 
     if(!GlobalServerData::serverPrivateVariables.db->open())
     {
-        DebugClass::debugConsole(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
+        DebugClass::debugConsole(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         server->close();
         stat=Down;
         emit is_started(false);
-        emit error(QString("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
+        emit error(QStringLiteral("Unable to connect to the database: %1, with the login: %2, database text: %3").arg(GlobalServerData::serverPrivateVariables.db->lastError().driverText()).arg(GlobalServerData::serverSettings.database.mysql.login).arg(GlobalServerData::serverPrivateVariables.db->lastError().databaseText()));
         return;
     }
     BaseServer::start_internal_server();
@@ -496,10 +496,10 @@ void NormalServer::serverCommand(const QString &command, const QString &extraTex
             removeBots();
         }
         else
-            DebugClass::debugConsole(QString("unknow command in bots case: %1").arg(command));
+            DebugClass::debugConsole(QStringLiteral("unknow command in bots case: %1").arg(command));
     }
     else
-        DebugClass::debugConsole(QString("unknow command: %1").arg(command));
+        DebugClass::debugConsole(QStringLiteral("unknow command: %1").arg(command));
 }
 
 //////////////////////////////////// Function secondary //////////////////////////////
@@ -520,13 +520,13 @@ void NormalServer::newConnection()
             //to know if need login or not
             if(GlobalServerData::serverPrivateVariables.botSockets.contains(socket->getTheOtherSocket()))
             {
-                DebugClass::debugConsole(QString("new client connected by fake socket"));
+                DebugClass::debugConsole(QStringLiteral("new client connected by fake socket"));
                 GlobalServerData::serverPrivateVariables.botSockets.remove(socket->getTheOtherSocket());
                 connect_the_last_client(new Client(new ConnectedSocket(socket),true,getClientMapManagement()));
             }
             else
             {
-                DebugClass::debugConsole(QString("new bot connected by fake socket"));
+                DebugClass::debugConsole(QStringLiteral("new bot connected by fake socket"));
                 connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
             }
         }
@@ -540,7 +540,7 @@ void NormalServer::newConnection()
             connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
             if(socket!=NULL)
             {
-                DebugClass::debugConsole(QString("new client connected by tcp socket"));
+                DebugClass::debugConsole(QStringLiteral("new client connected by tcp socket"));
                 connect_the_last_client(new Client(new ConnectedSocket(socket),false,getClientMapManagement()));
             }
             else
@@ -553,7 +553,7 @@ void NormalServer::sslErrors(const QList<QSslError> &errors)
     int index=0;
     while(index<errors.size())
     {
-        DebugClass::debugConsole(QString("Ssl error: %1").arg(errors.at(index).errorString()));
+        DebugClass::debugConsole(QStringLiteral("Ssl error: %1").arg(errors.at(index).errorString()));
         index++;
     }
 }

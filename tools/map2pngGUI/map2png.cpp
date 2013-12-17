@@ -244,7 +244,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     if (!tempMapObject->tiledMap)
     {
         mLastError=reader.errorString();
-        qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
+        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
         return QString();
     }
     int index=0;
@@ -278,12 +278,12 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                     else
                     {
                         Tiled::Tileset * tileset=NULL;
-                        QString tilesetPath=QString("%2/../skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
+                        QString tilesetPath=QStringLiteral("%2/../skin/fighter/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
                         if(QFile(tilesetPath).exists())
                             tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
                         else
                         {
-                            tilesetPath=QString("%2/../skin/bot/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
+                            tilesetPath=QStringLiteral("%2/../skin/bot/%1/trainer.png").arg(objects.at(index2)->property("skin")).arg(QFileInfo(fileName).absolutePath());
                             if(QFile(tilesetPath).exists())
                                 tileset=Map2Png::getTileset(tempMapObject->tiledMap,tilesetPath);
                         }
@@ -319,7 +319,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     if(!map_loader.tryLoadMap(resolvedFileName))
     {
         mLastError=map_loader.errorString();
-        qDebug() << QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString());
+        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString());
         delete tempMapObject->tiledMap;
         return QString();
     }
@@ -377,11 +377,11 @@ QString Map2Png::loadOtherMap(const QString &fileName)
 
 void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
 {
-    qDebug() << QString("loadCurrentMap(%1)").arg(fileName);
+    qDebug() << QStringLiteral("loadCurrentMap(%1)").arg(fileName);
     Map_full *tempMapObject;
     if(!other_map.contains(fileName))
     {
-        qDebug() << QString("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
+        qDebug() << QStringLiteral("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
         return;
     }
     else
@@ -511,7 +511,7 @@ void Map2Png::viewMap(const QString &fileName)
     newImage.fill(Qt::transparent);
     QPainter painter(&newImage);
     mScene->render(&painter);//,mScene->sceneRect()
-    qDebug() << QString("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
+    qDebug() << QStringLiteral("mScene size: %1,%2").arg(mScene->sceneRect().size().width()).arg(mScene->sceneRect().size().height());
 
     QString destination;
     const QStringList &arguments=QCoreApplication::arguments();
@@ -533,23 +533,23 @@ void Map2Png::viewMap(const QString &fileName)
         if(destination.isEmpty() || destination.isNull() || destination=="")
             return;
     }
-    qDebug() << QString("save as: %1").arg(destination);
+    qDebug() << QStringLiteral("save as: %1").arg(destination);
     if(!destination.endsWith(".png"))
         destination+=".png";
     if(!newImage.save(destination))
     {
         QMessageBox::critical(NULL,"Error","Unable to save the image");
-        qDebug() << QString("Unable to save the image");
+        qDebug() << QStringLiteral("Unable to save the image");
     }
 }
 
 void Map2Png::displayMap()
 {
-    qDebug() << QString("displayMap()");
+    qDebug() << QStringLiteral("displayMap()");
 
     QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
      while (i != other_map.constEnd()) {
-         qDebug() << QString("displayMap(): %1 at %2,%3").arg(i.key()).arg(i.value()->x).arg(i.value()->y);
+         qDebug() << QStringLiteral("displayMap(): %1 at %2,%3").arg(i.key()).arg(i.value()->x).arg(i.value()->y);
          mapItem->addMap(i.value()->tiledMap,i.value()->tiledRender);
          mapItem->setMapPosition(i.value()->tiledMap,i.value()->x,i.value()->y);
          ++i;

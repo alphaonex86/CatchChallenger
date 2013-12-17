@@ -65,7 +65,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         return;
     if(!ObjectGroupItem::objectGroupLink.contains(parsedMap->objectGroup))
     {
-        qDebug() << QString("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
+        qDebug() << QStringLiteral("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
         return;
     }
     CatchChallenger::Direction direction;
@@ -88,7 +88,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     else
     {
         if(lookAt!=QStringLiteral("bottom"))
-            CatchChallenger::DebugClass::debugConsole(QString("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
     }
@@ -129,7 +129,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                 if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightid))
                 {
                     #ifdef DEBUG_CLIENT_BOT
-                    CatchChallenger::DebugClass::debugConsole(QString("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
                     #endif
                     quint8 temp_x=x,temp_y=y;
                     int index_botfight_range=0;
@@ -149,7 +149,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                     }
                 }
                 else
-                    CatchChallenger::DebugClass::debugConsole(QString("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid));
             }
         }
     }

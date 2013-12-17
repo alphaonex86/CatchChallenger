@@ -100,7 +100,7 @@ void MainWindow::on_openMapMetaFile_clicked()
             QListWidgetItem * item=new QListWidgetItem();
             item->setData(99,lang);
             item->setData(98,child.text());
-            item->setText(QString("%1: %2").arg(lang).arg(child.text()));
+            item->setText(QStringLiteral("%1: %2").arg(lang).arg(child.text()));
             ui->nameList->addItem(item);
             child = child.nextSiblingElement("name");
         }
@@ -201,9 +201,9 @@ void MainWindow::on_openMapMetaFile_clicked()
                 item->setData(97,maxLevel);
                 item->setData(96,luck);
                 if(minLevel==maxLevel)
-                    item->setText(QString("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
+                    item->setText(QStringLiteral("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
                 else
-                    item->setText(QString("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
+                    item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
                 ui->grassList->addItem(item);
                 monster = monster.nextSiblingElement("monster");
             }
@@ -321,9 +321,9 @@ void MainWindow::on_openMapMetaFile_clicked()
                 item->setData(97,maxLevel);
                 item->setData(96,luck);
                 if(minLevel==maxLevel)
-                    item->setText(QString("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
+                    item->setText(QStringLiteral("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
                 else
-                    item->setText(QString("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
+                    item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
                 ui->watherList->addItem(item);
                 monster = monster.nextSiblingElement("monster");
             }
@@ -441,9 +441,9 @@ void MainWindow::on_openMapMetaFile_clicked()
                 item->setData(97,maxLevel);
                 item->setData(96,luck);
                 if(minLevel==maxLevel)
-                    item->setText(QString("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
+                    item->setText(QStringLiteral("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
                 else
-                    item->setText(QString("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
+                    item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
                 ui->caveList->addItem(item);
                 monster = monster.nextSiblingElement("monster");
             }
@@ -481,7 +481,7 @@ void MainWindow::on_nameAdd_clicked()
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,lang);
     item->setData(98,name);
-    item->setText(QString("%1: %2").arg(lang).arg(name));
+    item->setText(QStringLiteral("%1: %2").arg(lang).arg(name));
     ui->nameList->addItem(item);
     QDomElement newXmlElement=domDocument.createElement("name");
     newXmlElement.setAttribute("lang",lang);
@@ -590,13 +590,13 @@ void MainWindow::on_grassAdd_clicked()
     if(minLevel==maxLevel)
     {
         monster.setAttribute("level",minLevel);
-        item->setText(QString("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
+        item->setText(QStringLiteral("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
     }
     else
     {
         monster.setAttribute("minLevel",minLevel);
         monster.setAttribute("maxLevel",maxLevel);
-        item->setText(QString("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
+        item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
     }
     monster.setAttribute("luck",luck);
     ui->grassList->addItem(item);
@@ -676,13 +676,13 @@ void MainWindow::on_watherAdd_clicked()
     if(minLevel==maxLevel)
     {
         monster.setAttribute("level",minLevel);
-        item->setText(QString("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
+        item->setText(QStringLiteral("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
     }
     else
     {
         monster.setAttribute("minLevel",minLevel);
         monster.setAttribute("maxLevel",maxLevel);
-        item->setText(QString("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
+        item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
     }
     monster.setAttribute("luck",luck);
     ui->watherList->addItem(item);
@@ -762,13 +762,13 @@ void MainWindow::on_caveAdd_clicked()
     if(minLevel==maxLevel)
     {
         monster.setAttribute("level",minLevel);
-        item->setText(QString("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
+        item->setText(QStringLiteral("Monster %1, level: %2, luck: %3").arg(id).arg(minLevel).arg(luck));
     }
     else
     {
         monster.setAttribute("minLevel",minLevel);
         monster.setAttribute("maxLevel",maxLevel);
-        item->setText(QString("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
+        item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
     }
     monster.setAttribute("luck",luck);
     ui->caveList->addItem(item);

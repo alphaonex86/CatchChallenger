@@ -204,7 +204,7 @@ void BaseWindow::have_current_player_info()
     ui->player_informations_pseudo->setText(informations.public_informations.pseudo);
     ui->tradePlayerPseudo->setText(informations.public_informations.pseudo);
     ui->warehousePlayerPseudo->setText(informations.public_informations.pseudo);
-    ui->player_informations_cash->setText(QString("%1$").arg(informations.cash));
+    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(informations.cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(informations.cash));
     if(informations.bitcoin>=0)
     {
@@ -214,7 +214,7 @@ void BaseWindow::have_current_player_info()
         ui->label_bitcoin_point->setVisible(true);
         ui->bitcoin->setVisible(true);
         ui->bitcoinAddress->setVisible(true);
-        ui->bitcoin->setText(QString("%1&#3647;").arg(informations.bitcoin));
+        ui->bitcoin->setText(QStringLiteral("%1&#3647;").arg(informations.bitcoin));
         ui->bitcoinAddress->setText(informations.bitcoinAddress);
     }
     else
@@ -227,7 +227,7 @@ void BaseWindow::have_current_player_info()
         ui->bitcoinAddress->setVisible(false);
     }
     CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());
-    DebugClass::debugConsole(QString("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
+    DebugClass::debugConsole(QStringLiteral("%1 is logged with id: %2, cash: %3").arg(informations.public_informations.pseudo).arg(informations.public_informations.simplifiedId).arg(informations.cash));
     updateConnectingStatus();
     updateClanDisplay();
 }
@@ -331,9 +331,9 @@ void BaseWindow::load_inventory()
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
                 if(i.value()>1)
-                    item->setText(QString("id: %1 (x%2)").arg(i.key()).arg(i.value()));
+                    item->setText(QStringLiteral("id: %1 (x%2)").arg(i.key()).arg(i.value()));
                 else
-                    item->setText(QString("id: %1").arg(i.key()));
+                    item->setText(QStringLiteral("id: %1").arg(i.key()));
             }
             ui->inventory->addItem(item);
         }
@@ -397,7 +397,7 @@ void BaseWindow::updateConnectingStatus()
             return;
         load_monsters();
         show_reputation();
-        this->setWindowTitle(QString("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
+        this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         ui->stackedWidget->setCurrentWidget(ui->page_map);
         showTip(tr("Welcome <b><i>%1</i></b> on <i>CatchChallenger</i>").arg(CatchChallenger::Api_client_real::client->getPseudo()));
         return;
@@ -417,19 +417,19 @@ bool BaseWindow::check_senddata()
         i.next();
         if(i.value().level<-100 || i.value().level>100)
         {
-            error(QString("level is <100 or >100, skip"));
+            error(QStringLiteral("level is <100 or >100, skip"));
             return false;
         }
         if(!CatchChallenger::CommonDatapack::commonDatapack.reputation.contains(i.key()))
         {
-            error(QString("The reputation: %1 don't exist").arg(i.key()));
+            error(QStringLiteral("The reputation: %1 don't exist").arg(i.key()));
             return false;
         }
         if(i.value().level>=0)
         {
             if(i.value().level>=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size())
             {
-                error(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size()));
+                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 > max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size()));
                 return false;
             }
         }
@@ -437,7 +437,7 @@ bool BaseWindow::check_senddata()
         {
             if((-i.value().level)>CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size())
             {
-                error(QString("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size()));
+                error(QStringLiteral("The reputation level %1 is wrong because is out of range (reputation level: %2 < max level: %3)").arg(i.key()).arg(i.value().level).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size()));
                 return false;
             }
         }
@@ -445,12 +445,12 @@ bool BaseWindow::check_senddata()
         {
             if(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size()==i.value().level)//start at level 0 in positive
             {
-                emit message(QString("The reputation level is already at max, drop point"));
+                emit message(QStringLiteral("The reputation level is already at max, drop point"));
                 return false;
             }
             if(i.value().point>=CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.at(i.value().level+1))//start at level 0 in positive
             {
-                error(QString("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.at(i.value().level)));
+                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.at(i.value().level)));
                 return false;
             }
         }
@@ -458,12 +458,12 @@ bool BaseWindow::check_senddata()
         {
             if(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size()==-i.value().level)//start at level -1 in negative
             {
-                error(QString("The reputation level is already at min, drop point"));
+                error(QStringLiteral("The reputation level is already at min, drop point"));
                 return false;
             }
             if(i.value().point<CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.at(-i.value().level))//start at level -1 in negative
             {
-                error(QString("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.at(i.value().level)));
+                error(QStringLiteral("The reputation point %1 is greater than max %2").arg(i.value().point).arg(CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.at(i.value().level)));
                 return false;
             }
         }
@@ -481,7 +481,7 @@ void BaseWindow::show_reputation()
         if(i.value().level>=0)
         {
             if((i.value().level+1)==CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_positive.size())
-                html+=QString("<li>100% %1</li>")
+                html+=QStringLiteral("<li>100% %1</li>")
                     .arg(DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_positive.last());
             else
             {
@@ -492,13 +492,13 @@ void BaseWindow::show_reputation()
                     return;
                 }
                 QString text=DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_positive.at(i.value().level);
-                html+=QString("<li>%1% %2</li>").arg((i.value().point*100)/next_level_xp).arg(text);
+                html+=QStringLiteral("<li>%1% %2</li>").arg((i.value().point*100)/next_level_xp).arg(text);
             }
         }
         else
         {
             if((-i.value().level)==CatchChallenger::CommonDatapack::commonDatapack.reputation[i.key()].reputation_negative.size())
-                html+=QString("<li>100% %1</li>")
+                html+=QStringLiteral("<li>100% %1</li>")
                     .arg(DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_negative.last());
             else
             {
@@ -509,7 +509,7 @@ void BaseWindow::show_reputation()
                     return;
                 }
                 QString text=DatapackClientLoader::datapackLoader.reputationExtra[i.key()].reputation_negative.at(-i.value().level-1);
-                html+=QString("<li>%1% %2</li>")
+                html+=QStringLiteral("<li>%1% %2</li>")
                     .arg((i.value().point*100)/next_level_xp)
                     .arg(text);
             }
@@ -546,12 +546,12 @@ QPixmap BaseWindow::getBackSkin(const quint32 &skinId) const
 QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) const
 {
     {
-        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.png").arg(type));
+        QFileInfo pnfFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
         if(pnfFile.exists())
             return pnfFile.absoluteFilePath();
     }
     {
-        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QString("/%1.gif").arg(type));
+        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }
@@ -671,7 +671,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             else
             {
                 image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
-                name=QString("id: %1").arg(items.at(index).item);
+                name=QStringLiteral("id: %1").arg(items.at(index).item);
             }
 
             image=image.scaled(24,24);
@@ -681,15 +681,15 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             if(objects.size()<16)
             {
                 if(items.at(index).quantity>1)
-                    objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(items.at(index).quantity).arg(name);
+                    objects << QStringLiteral("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(items.at(index).quantity).arg(name);
                 else
-                    objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
+                    objects << QStringLiteral("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
             }
             index++;
         }
         if(objects.size()==16)
             objects << "...";
-        stepRequirements+=tr("Step requirements: ")+QString("%1<br />").arg(objects.join(", "));
+        stepRequirements+=tr("Step requirements: ")+QStringLiteral("%1<br />").arg(objects.join(", "));
     }
     QString finalRewards;
     if(DatapackClientLoader::datapackLoader.questsExtra[questId].showRewards
@@ -715,7 +715,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
                 else
                 {
                     image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
-                    name=QString("id: %1").arg(items.at(index).item);
+                    name=QStringLiteral("id: %1").arg(items.at(index).item);
                 }
                 image=image.scaled(24,24);
                 QByteArray byteArray;
@@ -724,9 +724,9 @@ void BaseWindow::on_questsList_itemSelectionChanged()
                 if(objects.size()<16)
                 {
                     if(items.at(index).quantity>1)
-                        objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(items.at(index).quantity).arg(name);
+                        objects << QStringLiteral("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(items.at(index).quantity).arg(name);
                     else
-                        objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
+                        objects << QStringLiteral("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
                 }
                 index++;
             }
@@ -795,9 +795,9 @@ QListWidgetItem * BaseWindow::itemToGraphic(const quint32 &id,const quint32 &qua
     {
         item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         if(quantity>1)
-            item->setText(QString("id: %1 (x%2)").arg(id).arg(quantity));
+            item->setText(QStringLiteral("id: %1 (x%2)").arg(id).arg(quantity));
         else
-            item->setText(QString("id: %1").arg(id));
+            item->setText(QStringLiteral("id: %1").arg(id));
     }
     return item;
 }

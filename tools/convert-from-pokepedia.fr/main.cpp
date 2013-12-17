@@ -583,7 +583,7 @@ void parseItemsExtra()
     QByteArray xmlContent;
     if(!itemsFile.open(QIODevice::ReadWrite))
     {
-        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
         return;
     }
     xmlContent=itemsFile.readAll();
@@ -592,13 +592,13 @@ void parseItemsExtra()
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="items")
     {
-        qDebug() << QString("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
         return;
     }
 
@@ -675,13 +675,13 @@ void parseItemsExtra()
                     }
                 }
                 else
-                    qDebug() << QString("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         }
         else
-            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         item = item.nextSiblingElement("item");
     }
 
@@ -694,8 +694,8 @@ void parseItemsExtra()
             QDomElement item=domDocument.createElement("item");
             item.setAttribute("id",maxId);
             QFileInfo fileInfo(i.value().image);
-            QString fileName=QString("%1.%2").arg(maxId).arg(fileInfo.suffix());
-            QString destinationImage=datapackPath+QString("items/%1").arg(fileName);
+            QString fileName=QStringLiteral("%1.%2").arg(maxId).arg(fileInfo.suffix());
+            QString destinationImage=datapackPath+QStringLiteral("items/%1").arg(fileName);
             if(!QFile(destinationImage).exists())
             {
                 if(fileInfo.exists())
@@ -744,7 +744,7 @@ void parseMonstersExtra()
     QByteArray xmlContent;
     if(!itemsFile.open(QIODevice::ReadWrite))
     {
-        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
         return;
     }
     xmlContent=itemsFile.readAll();
@@ -753,13 +753,13 @@ void parseMonstersExtra()
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")
     {
-        qDebug() << QString("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
         return;
     }
 
@@ -820,13 +820,13 @@ void parseMonstersExtra()
                     }
                 }
                 else
-                    qDebug() << QString("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         }
         else
-            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         item = item.nextSiblingElement("monster");
     }
     itemsFile.seek(0);
@@ -843,7 +843,7 @@ void parseSkillsExtra()
     QByteArray xmlContent;
     if(!itemsFile.open(QIODevice::ReadWrite))
     {
-        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
         return;
     }
     xmlContent=itemsFile.readAll();
@@ -852,13 +852,13 @@ void parseSkillsExtra()
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="list")
     {
-        qDebug() << QString("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
         return;
     }
 
@@ -933,13 +933,13 @@ void parseSkillsExtra()
                     }
                 }
                 else
-                    qDebug() << QString("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         }
         else
-            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         item = item.nextSiblingElement("skill");
     }
     itemsFile.seek(0);

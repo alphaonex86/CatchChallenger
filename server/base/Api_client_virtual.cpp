@@ -14,7 +14,7 @@ Api_client_virtual::Api_client_virtual(ConnectedSocket *socket, const QString &f
     Api_protocol(socket)
 {
     this->forcedDatapack=forcedDatapack;
-    mDatapack=QString("%1/datapack/").arg(QCoreApplication::applicationDirPath());
+    mDatapack=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath());
 }
 
 Api_client_virtual::~Api_client_virtual()

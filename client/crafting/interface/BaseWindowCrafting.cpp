@@ -143,7 +143,7 @@ void BaseWindow::load_plant_inventory()
             else
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-                item->setText(QString("item id: %1").arg(i.key())+"\n"+tr("Quantity: %1").arg(i.value()));
+                item->setText(QStringLiteral("item id: %1").arg(i.key())+"\n"+tr("Quantity: %1").arg(i.value()));
             }
             ui->listPlantList->addItem(item);
         }
@@ -182,7 +182,7 @@ void BaseWindow::load_crafting_inventory()
             ui->listCraftingList->addItem(item);
         }
         else
-            qDebug() << QString("BaseWindow::load_crafting_inventory(), crafting id not found into crafting recipe").arg(recipe);
+            qDebug() << QStringLiteral("BaseWindow::load_crafting_inventory(), crafting id not found into crafting recipe").arg(recipe);
     }
     on_listCraftingList_itemSelectionChanged();
 }
@@ -345,7 +345,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         name=tr("Unknow item (%1)").arg(content.doItemId);
         ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
     }
-    ui->labelCraftingDetails->setText(QString("Name: <b>%1</b><br /><br />Success: <b>%2%</b><br /><br />Result: <b>%3</b>").arg(name).arg(content.success).arg(content.quantity));
+    ui->labelCraftingDetails->setText(QStringLiteral("Name: <b>%1</b><br /><br />Success: <b>%2%</b><br /><br />Result: <b>%3</b>").arg(name).arg(content.success).arg(content.quantity));
 
     //load the materials
     bool haveMaterials=true;

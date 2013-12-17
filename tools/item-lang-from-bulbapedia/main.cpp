@@ -123,7 +123,7 @@ bool loadItems(const QString &path,QString data)
             itemList[englishName]=item;
         }
         else
-            qDebug() << QString("item ignored");
+            qDebug() << QStringLiteral("item ignored");
 
         index++;
     }
@@ -139,7 +139,7 @@ void parseItemsExtra()
     QByteArray xmlContent;
     if(!itemsFile.open(QIODevice::ReadWrite))
     {
-        qDebug() << QString("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
         return;
     }
     xmlContent=itemsFile.readAll();
@@ -148,13 +148,13 @@ void parseItemsExtra()
     int errorLine,errorColumn;
     if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
     {
-        qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!="items")
     {
-        qDebug() << QString("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
         return;
     }
 
@@ -198,9 +198,9 @@ void parseItemsExtra()
                     if(!englishName.isEmpty() && itemList.contains(englishName))
                     {
                         if(QFile(itemList[englishName].image).exists())
-                            QFile::remove(datapackPath+QString("items/%1.png").arg(id));
-                        if(QFile::copy(itemList[englishName].image,datapackPath+QString("items/%1.png").arg(id)))
-                            item.setAttribute("image",QString("%1.png").arg(id));
+                            QFile::remove(datapackPath+QStringLiteral("items/%1.png").arg(id));
+                        if(QFile::copy(itemList[englishName].image,datapackPath+QStringLiteral("items/%1.png").arg(id)))
+                            item.setAttribute("image",QStringLiteral("%1.png").arg(id));
                         if(!itemList[englishName].nameEn.isEmpty())
                         {
                             bool found=false;
@@ -441,13 +441,13 @@ void parseItemsExtra()
                     }
                 }
                 else
-                    qDebug() << QString("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         }
         else
-            qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
+            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
         item = item.nextSiblingElement("item");
     }
 
@@ -460,9 +460,9 @@ void parseItemsExtra()
             QDomElement item=domDocument.createElement("item");
             item.setAttribute("id",maxId);
             if(QFile(itemList[i.key()].image).exists())
-                QFile::remove(datapackPath+QString("items/%1.png").arg(maxId));
-            if(QFile::copy(itemList[i.key()].image,datapackPath+QString("items/%1.png").arg(maxId)))
-                item.setAttribute("image",QString("%1.png").arg(maxId));
+                QFile::remove(datapackPath+QStringLiteral("items/%1.png").arg(maxId));
+            if(QFile::copy(itemList[i.key()].image,datapackPath+QStringLiteral("items/%1.png").arg(maxId)))
+                item.setAttribute("image",QStringLiteral("%1.png").arg(maxId));
             if(!itemList[i.key()].nameEn.isEmpty())
             {
                 QDomElement name=domDocument.createElement("name");

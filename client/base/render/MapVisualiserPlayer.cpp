@@ -265,7 +265,7 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         break;
         default:
-        qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction").arg(moveStep);
+        qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction").arg(moveStep);
         return;
     }
 
@@ -331,7 +331,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 direction=CatchChallenger::MoveOnTheMap::directionToDirectionLook(direction);
             break;
             default:
-                qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(moveStep).arg(direction);
+                qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(moveStep).arg(direction);
             return;
         }
         //if the map have changed
@@ -418,7 +418,7 @@ void MapVisualiserPlayer::finalPlayerStep()
                 direction=CatchChallenger::Direction_move_at_bottom;
             break;
             default:
-                qDebug() << QString("moveStepSlot(): direction: %1, wrong direction").arg(direction);
+                qDebug() << QStringLiteral("moveStepSlot(): direction: %1, wrong direction").arg(direction);
             return;
         }
         moveStep=0;
@@ -552,7 +552,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&map,&x,&y,false))
-                qDebug() << QString("can't go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -561,7 +561,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&map,&x,&y,false))
-                qDebug() << QString("can't go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -570,7 +570,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&map,&x,&y,false))
-                qDebug() << QString("can't go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -579,7 +579,7 @@ void MapVisualiserPlayer::parseStop()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&x,&y,false))
-                qDebug() << QString("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -600,7 +600,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&map,&x,&y,false))
-                qDebug() << QString("can't go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -609,7 +609,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&map,&x,&y,false))
-                qDebug() << QString("can't go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -618,7 +618,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&map,&x,&y,false))
-                qDebug() << QString("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -627,7 +627,7 @@ void MapVisualiserPlayer::parseAction()
         if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
         {
             if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&x,&y,false))
-                qDebug() << QString("can't go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
+                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(map->map_file).arg(x).arg(y);
             else
                 emit actionOn(static_cast<CatchChallenger::Map_client *>(map),x,y);
         }
@@ -691,7 +691,7 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         default:
-        qDebug() << QString("transformLookToMove(): wrong direction");
+        qDebug() << QStringLiteral("transformLookToMove(): wrong direction");
         return;
     }
 }
@@ -837,7 +837,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
     if(!all_map.contains(current_map))
     {
-        qDebug() << QString("all_map have not the current map: %1").arg(current_map);
+        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(current_map);
         return;
     }
     Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
@@ -847,12 +847,12 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(playerMapObject);
         //currentGroup->removeObject(playerMapObject);
         if(currentGroup!=all_map[current_map]->objectGroup)
-            qDebug() << QString("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+            qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
     if(ObjectGroupItem::objectGroupLink.contains(all_map[current_map]->objectGroup))
         ObjectGroupItem::objectGroupLink[all_map[current_map]->objectGroup]->addObject(playerMapObject);
     else
-        qDebug() << QString("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+        qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
     mLastLocation=all_map[current_map]->logicalMap.map_file;
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -872,7 +872,7 @@ void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
     if(ObjectGroupItem::objectGroupLink.contains(playerMapObject->objectGroup()))
         ObjectGroupItem::objectGroupLink[playerMapObject->objectGroup()]->removeObject(playerMapObject);
     else
-        qDebug() << QString("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
+        qDebug() << QStringLiteral("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
 }
 
 /*void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &direction)

@@ -237,7 +237,7 @@ ProtocolParsingInput::ProtocolParsingInput(ConnectedSocket * socket,PacketModeTr
     canStartReadData=false;
     RXSize=0;
     if(!connect(socket,&ConnectedSocket::readyRead,this,&ProtocolParsingInput::parseIncommingData))
-        DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::ProtocolParsingInput(): can't connect the object"));
     isClient=(packetModeTransmission==PacketModeTransmission_Client);
     dataClear();
 }
@@ -255,12 +255,12 @@ bool ProtocolParsingInput::checkStringIntegrity(const QByteArray & data)
     in >> stringSize;
     if(stringSize>65535)
     {
-        emit error(QString("String size is wrong: %1").arg(stringSize));
+        emit error(QStringLiteral("String size is wrong: %1").arg(stringSize));
         return false;
     }
     if(data.size()<stringSize)
     {
-        emit error(QString("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
+        emit error(QStringLiteral("String size is greater than the data: %1>%2").arg(data.size()).arg(stringSize));
         return false;
     }
     return true;
@@ -281,7 +281,7 @@ ProtocolParsingOutput::ProtocolParsingOutput(ConnectedSocket * socket,PacketMode
 void ProtocolParsingInput::parseIncommingData()
 {
     #ifdef PROTOCOLPARSINGDEBUG
-    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): socket->bytesAvailable(): %1").arg(socket->bytesAvailable()));
+    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): socket->bytesAvailable(): %1").arg(socket->bytesAvailable()));
     #endif
     if(!canStartReadData)
         return;
@@ -298,7 +298,7 @@ void ProtocolParsingInput::parseIncommingData()
                 return;
             in >> mainCodeType;
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !haveData, mainCodeType: %1").arg(mainCodeType));
             #endif
             haveData=true;
             haveData_dataSize=false;
@@ -316,18 +316,18 @@ void ProtocolParsingInput::parseIncommingData()
         if(!have_subCodeType)
         {
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !have_subCodeType"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !have_subCodeType"));
             #endif
             if(!need_subCodeType)
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_subCodeType"));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !need_subCodeType"));
                 #endif
                 //if is a reply
                 if((isClient && mainCodeType==replyCodeServerToClient) || (!isClient && mainCodeType==replyCodeClientToServer))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true"));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true"));
                     #endif
                     is_reply=true;
                     need_query_number=true;
@@ -342,7 +342,7 @@ void ProtocolParsingInput::parseIncommingData()
                         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
                         {
                             #ifdef PROTOCOLPARSINGDEBUG
-                            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true, query with reply"));
+                            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply"));
                             #endif
                             need_query_number=true;
                         }
@@ -374,7 +374,7 @@ void ProtocolParsingInput::parseIncommingData()
             else
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_subCodeType"));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_subCodeType"));
                 #endif
                 if(socket->bytesAvailable()<(int)sizeof(quint16))//ignore because first int is cuted!
                 {
@@ -386,13 +386,13 @@ void ProtocolParsingInput::parseIncommingData()
                 if(isClient)
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): isClient"));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): isClient"));
                     #endif
                     //if is query with reply
                     if(mainCode_IsQueryServerToClient.contains(mainCodeType))
                     {
                         #ifdef PROTOCOLPARSINGDEBUG
-                        DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
+                        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryServerToClient)"));
                         #endif
                         need_query_number=true;
                     }
@@ -411,13 +411,13 @@ void ProtocolParsingInput::parseIncommingData()
                 else
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !isClient"));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !isClient"));
                     #endif
                     //if is query with reply
                     if(mainCode_IsQueryClientToServer.contains(mainCodeType))
                     {
                         #ifdef PROTOCOLPARSINGDEBUG
-                        DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
+                        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number=true, query with reply (mainCode_IsQueryClientToServer)"));
                         #endif
                         need_query_number=true;
                     }
@@ -440,12 +440,12 @@ void ProtocolParsingInput::parseIncommingData()
         }
         #ifdef PROTOCOLPARSINGDEBUG
         else
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have_subCodeType"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): have_subCodeType"));
         #endif
         if(!have_query_number && need_query_number)
         {
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number"));
             #endif
             if(socket->bytesAvailable()<(int)sizeof(quint8))
             {
@@ -458,7 +458,7 @@ void ProtocolParsingInput::parseIncommingData()
             if(is_reply)
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): it's reply, resolv size"));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): it's reply, resolv size"));
                 #endif
                 if(replySize.contains(queryNumber))
                 {
@@ -476,12 +476,12 @@ void ProtocolParsingInput::parseIncommingData()
         }
         #ifdef PROTOCOLPARSINGDEBUG
         else
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not need_query_number"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): not need_query_number"));
         #endif
         if(!haveData_dataSize)
         {
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !haveData_dataSize"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !haveData_dataSize"));
             #endif
             //temp data
             quint8 temp_size_8Bits;
@@ -507,18 +507,18 @@ void ProtocolParsingInput::parseIncommingData()
                             dataSize=temp_size_8Bits;
                             haveData_dataSize=true;
                             #ifdef PROTOCOLPARSINGDEBUG
-                            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 8Bits data size"));
+                            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): have 8Bits data size"));
                             #endif
                         }
                         else
                         {
                             #ifdef PROTOCOLPARSINGDEBUG
-                            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 8Bits data size: %1, temp_size_8Bits: %2").arg(QString(data_size.toHex())).arg(temp_size_8Bits));
+                            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): have not 8Bits data size: %1, temp_size_8Bits: %2").arg(QString(data_size.toHex())).arg(temp_size_8Bits));
                             #endif
                             if(data_size.size()==0)
                             {
                                 RXSize+=in.device()->pos();
-                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): internal infinity packet read prevent"));
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
                                 return;
                             }
                         }
@@ -548,18 +548,18 @@ void ProtocolParsingInput::parseIncommingData()
                             dataSize=temp_size_16Bits;
                             haveData_dataSize=true;
                             #ifdef PROTOCOLPARSINGDEBUG
-                            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have 16Bits data size: %1, temp_size_16Bits: %2").arg(QString(data_size.toHex())).arg(dataSize));
+                            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): have 16Bits data size: %1, temp_size_16Bits: %2").arg(QString(data_size.toHex())).arg(dataSize));
                             #endif
                         }
                         else
                         {
                             #ifdef PROTOCOLPARSINGDEBUG
-                            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): have not 16Bits data size"));
+                            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): have not 16Bits data size"));
                             #endif
                             if(data_size.size()==sizeof(quint8))
                             {
                                 RXSize+=in.device()->pos();
-                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): internal infinity packet read prevent"));
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): internal infinity packet read prevent"));
                                 return;
                             }
                         }
@@ -590,14 +590,14 @@ void ProtocolParsingInput::parseIncommingData()
                     }
                     break;
                     default:
-                    emit error(QString("size not understand, internal bug: %1").arg(data_size.size()));
+                    emit error(QStringLiteral("size not understand, internal bug: %1").arg(data_size.size()));
                     return;
                 }
             }
         }
         #ifdef PROTOCOLPARSINGDEBUG
         else
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): haveData_dataSize"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): haveData_dataSize"));
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!haveData_dataSize)
@@ -607,7 +607,7 @@ void ProtocolParsingInput::parseIncommingData()
         }
         #endif
         #ifdef PROTOCOLPARSINGDEBUG
-        DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): header informations is ready, dataSize: %1").arg(dataSize));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): header informations is ready, dataSize: %1").arg(dataSize));
         #endif
         if(dataSize>16*1024*1024)
         {
@@ -625,7 +625,7 @@ void ProtocolParsingInput::parseIncommingData()
                     RXSize+=dataSize-data.size();
                     data.append(socket->read(dataSize-data.size()));
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): remaining data: %1").arg(socket->bytesAvailable()));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): remaining data: %1").arg(socket->bytesAvailable()));
                     #endif
                 }
                 else //if need more data
@@ -635,21 +635,21 @@ void ProtocolParsingInput::parseIncommingData()
                         if(!need_query_number)
                         {
                             if(!need_subCodeType)
-                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
                             else
-                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                         }
                         else
                         {
                             if(!is_reply)
                             {
                                 if(!need_subCodeType)
-                                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
+                                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
                                 else
-                                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                             }
                             else
-                                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data corruption: need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data corruption: need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
                         }
                         dataClear();
                         return;
@@ -657,7 +657,7 @@ void ProtocolParsingInput::parseIncommingData()
                     RXSize+=socket->bytesAvailable();
                     data.append(socket->readAll());
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need more to recompose: %1").arg(dataSize-data.size()));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need more to recompose: %1").arg(dataSize-data.size()));
                     #endif
                 }
             } while(
@@ -671,9 +671,9 @@ void ProtocolParsingInput::parseIncommingData()
             {
                 #ifdef PROTOCOLPARSINGDEBUG
                 if(!need_subCodeType)
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1, wait more tcp packet").arg(mainCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): not suffisent data: %1, wait more tcp packet").arg(mainCodeType));
                 else
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): not suffisent data: %1,%2, wait more tcp packet").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): not suffisent data: %1,%2, wait more tcp packet").arg(mainCodeType).arg(subCodeType));
                 #endif
 
                 return;
@@ -682,11 +682,11 @@ void ProtocolParsingInput::parseIncommingData()
         else
         {
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): no need data"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): no need data"));
             #endif
         }
         #ifdef PROTOCOLPARSINGDEBUG
-        DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data.size(): %1").arg(data.size()));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data.size(): %1").arg(data.size()));
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(dataSize!=(quint32)data.size())
@@ -697,12 +697,12 @@ void ProtocolParsingInput::parseIncommingData()
         #endif
         #ifdef PROTOCOLPARSINGINPUTDEBUG
         if(isClient)
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): parse message as client"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): parse message as client"));
         else
-            DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): parse message as server"));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): parse message as server"));
         #endif
         #ifdef PROTOCOLPARSINGINPUTDEBUG
-        DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): data: %1").arg(QString(data.toHex())));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): data: %1").arg(QString(data.toHex())));
         #endif
         //message
         if(!need_query_number)
@@ -710,14 +710,14 @@ void ProtocolParsingInput::parseIncommingData()
             if(!need_subCodeType)
             {
                 #ifdef PROTOCOLPARSINGINPUTDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !need_query_number && !need_subCodeType, mainCodeType: %1").arg(mainCodeType));
                 #endif
                 parseMessage(mainCodeType,data);
             }
             else
             {
                 #ifdef PROTOCOLPARSINGINPUTDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): !need_query_number && need_subCodeType, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                 #endif
                 if(isClient)
                 {
@@ -764,7 +764,7 @@ void ProtocolParsingInput::parseIncommingData()
                 if(!need_subCodeType)
                 {
                     #ifdef PROTOCOLPARSINGINPUTDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1").arg(mainCodeType));
                     #endif
                     emit newInputQuery(mainCodeType,queryNumber);
                     parseQuery(mainCodeType,queryNumber,data);
@@ -772,7 +772,7 @@ void ProtocolParsingInput::parseIncommingData()
                 else
                 {
                     #ifdef PROTOCOLPARSINGINPUTDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && !is_reply, mainCodeType: %1, subCodeType: %2").arg(mainCodeType).arg(subCodeType));
                     #endif
                     if(isClient)
                     {
@@ -825,7 +825,7 @@ void ProtocolParsingInput::parseIncommingData()
                     mainCodeType=reply_mainCodeType[queryNumber];
                     reply_mainCodeType.remove(queryNumber);
                     #ifdef PROTOCOLPARSINGINPUTDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
                     #endif
                     if(isClient)
                     {
@@ -868,7 +868,7 @@ void ProtocolParsingInput::parseIncommingData()
                     reply_mainCodeType.remove(queryNumber);
                     reply_subCodeType.remove(queryNumber);
                     #ifdef PROTOCOLPARSINGINPUTDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
                     #endif
                     if(isClient)
                     {
@@ -911,7 +911,7 @@ void ProtocolParsingInput::parseIncommingData()
         dataClear();
     }
     #ifdef PROTOCOLPARSINGDEBUG
-    DebugClass::debugConsole(QString::number(isClient)+QString(" parseIncommingData(): finish parse the input"));
+    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" parseIncommingData(): finish parse the input"));
     #endif
 
 }
@@ -945,7 +945,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -954,7 +954,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
             replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
-                DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
             #endif
         }
     }
@@ -963,7 +963,7 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -972,12 +972,12 @@ void ProtocolParsingInput::newOutputQuery(const quint8 &mainCodeType,const quint
             replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
-                DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType));
             #endif
         }
     }
     #ifdef PROTOCOLPARSINGINPUTDEBUG
-    DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
+    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2").arg(queryNumber).arg(mainCodeType));
     #endif
     reply_mainCodeType[queryNumber]=mainCodeType;
 }
@@ -994,7 +994,7 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1005,7 +1005,7 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             #endif
         }
     }
@@ -1014,7 +1014,7 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1025,12 +1025,12 @@ void ProtocolParsingInput::newFullOutputQuery(const quint8 &mainCodeType,const q
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3 compression disabled because have fixed size").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             #endif
         }
     }
     #ifdef PROTOCOLPARSINGINPUTDEBUG
-    DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::newOutputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
     #endif
     reply_mainCodeType[queryNumber]=mainCodeType;
     reply_subCodeType[queryNumber]=subCodeType;
@@ -1041,7 +1041,7 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray d
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!queryReceived.contains(queryNumber))
     {
-        DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingInput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingInput::postReplyData(): try reply to queryNumber: %1, but this query is not into the list").arg(queryNumber));
         return false;
     }
     else
@@ -1061,7 +1061,7 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray d
         if(replyCompression.contains(queryNumber))
         {
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1) is now compressed").arg(queryNumber));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1) is now compressed").arg(queryNumber));
             #endif
             switch(compressionType)
             {
@@ -1079,7 +1079,7 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray d
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(data.size()==0)
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) dropped because can be size==0 if not fixed size").arg(queryNumber));
             return false;
         }
         #endif
@@ -1090,11 +1090,11 @@ bool ProtocolParsingOutput::postReplyData(const quint8 &queryNumber,QByteArray d
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(replyCompression.contains(queryNumber))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) compression disabled because have fixed size").arg(queryNumber));
         }
         if(data.size()!=replySize[queryNumber])
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" postReplyData(%1,{}) dropped because can be size!=fixed size").arg(queryNumber));
             return false;
         }
         #endif
@@ -1113,7 +1113,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
-        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) query with same id previously say").arg(mainCodeType).arg(queryNumber));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2) query with same id previously say").arg(mainCodeType).arg(queryNumber));
     queryReceived << queryNumber;
     #endif
     if(replySize.contains(queryNumber))
@@ -1126,7 +1126,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1134,7 +1134,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
             #endif
             replySize[queryNumber]=replySizeOnlyMainCodePacketClientToServer[mainCodeType];
         }
@@ -1143,7 +1143,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
             if(replyComressionOnlyMainCodePacketClientToServer.contains(mainCodeType))
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
                 #endif
                 replyCompression << queryNumber;
             }
@@ -1154,7 +1154,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return;
         }
         #endif
@@ -1162,7 +1162,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2) compression can't be enabled with fixed size").arg(mainCodeType).arg(queryNumber));
             #endif
             replySize[queryNumber]=replySizeOnlyMainCodePacketServerToClient[mainCodeType];
         }
@@ -1171,7 +1171,7 @@ void ProtocolParsingOutput::newInputQuery(const quint8 &mainCodeType,const quint
             if(replyComressionOnlyMainCodePacketServerToClient.contains(mainCodeType))
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2) compression enabled").arg(mainCodeType).arg(queryNumber));
                 #endif
                 replyCompression << queryNumber;
             }
@@ -1183,7 +1183,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(queryReceived.contains(queryNumber))
-        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) query with same id previously say").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) query with same id previously say").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
     queryReceived << queryNumber;
     #endif
     if(replySize.contains(queryNumber))
@@ -1196,7 +1196,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1205,25 +1205,25 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
             if(replySizeMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 replySize[queryNumber]=replySizeMultipleCodePacketClientToServer[mainCodeType][subCodeType];
             }
             else
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                     {
                         #ifdef PROTOCOLPARSINGDEBUG
-                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         #endif
                         replyCompression << queryNumber;
                     }
@@ -1232,13 +1232,13 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
         else
         {
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
             if(replyComressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     replyCompression << queryNumber;
                 }
@@ -1249,7 +1249,7 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::newInputQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return;
         }
         #endif
@@ -1258,25 +1258,25 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
             if(replySizeMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
-                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) compression can't be enabled with fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 replySize[queryNumber]=replySizeMultipleCodePacketServerToClient[mainCodeType][subCodeType];
             }
             else
             {
                 #ifdef PROTOCOLPARSINGDEBUG
-                DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                 #endif
                 if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                     if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                     {
                         #ifdef PROTOCOLPARSINGDEBUG
-                        DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                        DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                         #endif
                         replyCompression << queryNumber;
                     }
@@ -1285,13 +1285,13 @@ void ProtocolParsingOutput::newFullInputQuery(const quint8 &mainCodeType,const q
         else
         {
             #ifdef PROTOCOLPARSINGDEBUG
-            DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) 1) not fixed reply size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             #endif
             if(replyComressionMultipleCodePacketServerToClient.contains(mainCodeType))
                 if(replyComressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" newInputQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     replyCompression << queryNumber;
                }
@@ -1311,12 +1311,12 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return false;
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return false;
         }
         #endif
@@ -1326,7 +1326,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                 if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionType)
                     {
@@ -1344,7 +1344,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1356,7 +1356,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                 if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression enabled").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionType)
                     {
@@ -1374,7 +1374,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1385,10 +1385,10 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
             if(data.size()!=sizeMultipleCodePacketClientToServer[mainCodeType][subCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1399,12 +1399,12 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, subCodeType: %2, try send with sub code, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return false;
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, subCodeType: %2, try send as normal data, but not registred as is").arg(mainCodeType).arg(subCodeType));
             return false;
         }
         #endif
@@ -1414,7 +1414,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                 if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionType)
                     {
@@ -1432,7 +1432,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1444,7 +1444,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
                 if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
                     #endif
                     switch(compressionType)
                     {
@@ -1462,7 +1462,7 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1473,10 +1473,10 @@ bool ProtocolParsingOutput::packFullOutcommingData(const quint8 &mainCodeType,co
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType));
             if(data.size()!=sizeMultipleCodePacketServerToClient[mainCodeType][subCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1497,12 +1497,12 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return false;
         }
         if(mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
             return false;
         }
         #endif
@@ -1511,7 +1511,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1522,7 +1522,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()!=sizeOnlyMainCodePacketClientToServer[mainCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1533,12 +1533,12 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingData(): mainCodeType: %1, try send without sub code, but not registred as is").arg(mainCodeType));
             return false;
         }
         if(mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): mainCodeType: %1, try send as normal data, but not registred as is").arg(mainCodeType));
             return false;
         }
         #endif
@@ -1547,7 +1547,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1558,7 +1558,7 @@ bool ProtocolParsingOutput::packOutcommingData(const quint8 &mainCodeType,const 
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()!=sizeOnlyMainCodePacketServerToClient[mainCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingData(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1580,12 +1580,12 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return false;
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return false;
         }
         #endif
@@ -1594,7 +1594,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1605,7 +1605,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()!=sizeOnlyMainCodePacketClientToServer[mainCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1616,12 +1616,12 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send without sub code, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return false;
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType));
             return false;
         }
         #endif
@@ -1630,7 +1630,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1641,7 +1641,7 @@ bool ProtocolParsingOutput::packOutcommingQuery(const quint8 &mainCodeType,const
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()!=sizeOnlyMainCodePacketServerToClient[mainCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,{}) dropped because can be size!=fixed size").arg(mainCodeType));
                 return false;
             }
             #endif
@@ -1665,12 +1665,12 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return false;
         }
         if(!mainCode_IsQueryClientToServer.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return false;
         }
         #endif
@@ -1680,7 +1680,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                 if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionType)
                     {
@@ -1698,7 +1698,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1710,7 +1710,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                 if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionType)
                     {
@@ -1728,7 +1728,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1739,10 +1739,10 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(compressionMultipleCodePacketClientToServer.contains(mainCodeType))
                 if(compressionMultipleCodePacketClientToServer[mainCodeType].contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             if(data.size()!=sizeMultipleCodePacketClientToServer[mainCodeType][subCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1753,12 +1753,12 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mainCodeWithoutSubCodeTypeServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send with sub code, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return false;
         }
         if(!mainCode_IsQueryServerToClient.contains(mainCodeType))
         {
-            DebugClass::debugConsole(QString::number(isClient)+QString(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
+            DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" ProtocolParsingOutput::packOutcommingQuery(): queryNumber: %1, mainCodeType: %2, subCodeType: %3, try send as query, but not registred as is").arg(queryNumber).arg(mainCodeType).arg(subCodeType));
             return false;
         }
         #endif
@@ -1768,7 +1768,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                 if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionType)
                     {
@@ -1786,7 +1786,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1798,7 +1798,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
                 if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
                 {
                     #ifdef PROTOCOLPARSINGDEBUG
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression enabled").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
                     #endif
                     switch(compressionType)
                     {
@@ -1816,7 +1816,7 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(data.size()==0)
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size==0 if not fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1827,10 +1827,10 @@ bool ProtocolParsingOutput::packFullOutcommingQuery(const quint8 &mainCodeType,c
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(compressionMultipleCodePacketServerToClient.contains(mainCodeType))
                 if(compressionMultipleCodePacketServerToClient[mainCodeType].contains(subCodeType))
-                    DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
+                    DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,%3) compression can't be enabled due to fixed size").arg(mainCodeType).arg(subCodeType).arg(queryNumber));
             if(data.size()!=sizeMultipleCodePacketServerToClient[mainCodeType][subCodeType])
             {
-                DebugClass::debugConsole(QString::number(isClient)+QString(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
+                DebugClass::debugConsole(QString::number(isClient)+QStringLiteral(" packOutcommingQuery(%1,%2,{}) dropped because can be size!=fixed size").arg(mainCodeType).arg(subCodeType));
                 return false;
             }
             #endif
@@ -1847,7 +1847,7 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
     DebugClass::debugConsole("internalPackOutcommingData(): start");
     #endif
     #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
-    emit message(QString("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
+    emit message(QStringLiteral("Sended packet size: %1: %2").arg(data.size()).arg(QString(data.toHex())));
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     QByteArray dataToSend;
     while(!data.isEmpty())
@@ -1860,8 +1860,8 @@ bool ProtocolParsingOutput::internalPackOutcommingData(QByteArray data)
         byteWriten = socket->write(dataToSend);
         if(dataToSend.size()!=byteWriten)
         {
-            DebugClass::debugConsole(QString("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
-            emit error(QString("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+            DebugClass::debugConsole(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
+            emit error(QStringLiteral("All the bytes have not be written: %1, byteWriten: %2").arg(socket->errorString()).arg(byteWriten));
             return false;
         }
         data.remove(0,dataToSend.size());

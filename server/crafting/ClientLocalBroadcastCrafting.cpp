@@ -11,11 +11,11 @@ using namespace CatchChallenger;
 void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
+    emit message(QStringLiteral("plantSeed(%1,%2)").arg(query_id).arg(plant_id));
     #endif
     if(!CommonDatapack::commonDatapack.plants.contains(plant_id))
     {
-        emit error(QString("plant_id not found: %1").arg(plant_id));
+        emit error(QStringLiteral("plant_id not found: %1").arg(plant_id));
         return;
     }
     Map *map=this->map;
@@ -29,7 +29,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("plantSeed() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -44,7 +44,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("plantSeed() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -59,7 +59,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("plantSeed() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -74,7 +74,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    emit error(QString("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("plantSeed() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -123,7 +123,7 @@ void ClientLocalBroadcast::plantSeed(const quint8 &query_id,const quint8 &plant_
 void ClientLocalBroadcast::seedValidated()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("seedValidated()"));
+    emit message(QStringLiteral("seedValidated()"));
     #endif
     /* useless, clean the protocol
     if(!ok)
@@ -167,7 +167,7 @@ void ClientLocalBroadcast::seedValidated()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("INSERT INTO `plant`(`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QStringLiteral("INSERT INTO `plant`(`map`,`x`,`y`,`plant`,`character`,`plant_timestamps`) VALUES('%1',%2,%3,%4,%5,%6);")
                          .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
                          .arg(plantOnMap.x)
                          .arg(plantOnMap.y)
@@ -177,7 +177,7 @@ void ClientLocalBroadcast::seedValidated()
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("INSERT INTO plant(map,x,y,plant,character,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
+            emit dbQuery(QStringLiteral("INSERT INTO plant(map,x,y,plant,character,plant_timestamps) VALUES('%1',%2,%3,%4,%5,%6);")
                      .arg(SqlFunction::quoteSqlVariable(plant_list_in_waiting.first().map->map_file))
                      .arg(plantOnMap.x)
                      .arg(plantOnMap.y)
@@ -221,7 +221,7 @@ void ClientLocalBroadcast::receiveSeed(const MapServerCrafting::PlantOnMap &plan
         out << (quint16)0;
     else if((plantOnMap.mature_at-current_time)>65535)
     {
-        emit message(QString("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
+        emit message(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plantOnMap.plant));
         out << (quint16)(65535);
     }
     else
@@ -275,7 +275,7 @@ void ClientLocalBroadcast::sendNearPlant()
             out << (quint16)0;
         else if((plant.mature_at-current_time)>65535)
         {
-            emit message(QString("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plant.plant));
+            emit message(QStringLiteral("sendNearPlant(): remaining seconds to mature is greater than the possibility: map: %1 (%2,%3), plant: %4").arg(map->map_file).arg(x).arg(y).arg(plant.plant));
             out << (quint16)(65535);
         }
         else
@@ -286,7 +286,7 @@ void ClientLocalBroadcast::sendNearPlant()
             remaining_seconds_to_mature=0;
         else
             remaining_seconds_to_mature=(plant.mature_at-current_time);
-        emit message(QString("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
+        emit message(QStringLiteral("insert near plant: map: %1 (%2,%3), plant: %4, seconds to mature: %5 (current_time: %6, plant.mature_at: %7)").arg(map->map_file).arg(x).arg(y).arg(plant.plant).arg(remaining_seconds_to_mature).arg(current_time).arg(plant.mature_at));
         #endif
         index++;
     }
@@ -319,7 +319,7 @@ void ClientLocalBroadcast::removeNearPlant()
         out << plant.x;
         out << plant.y;
         #if defined(DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE) && defined(DEBUG_MESSAGE_MAP_PLANTS)
-        emit message(QString("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+        emit message(QStringLiteral("remove near plant: map: %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
         #endif
         index++;
     }
@@ -329,7 +329,7 @@ void ClientLocalBroadcast::removeNearPlant()
 void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("collectPlant(%1)").arg(query_id));
+    emit message(QStringLiteral("collectPlant(%1)").arg(query_id));
     #endif
     Map *map=this->map;
     quint8 x=this->x;
@@ -342,7 +342,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
                 {
-                    emit error(QString("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("collectPlant() Can't move at top from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -357,7 +357,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
                 {
-                    emit error(QString("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("collectPlant() Can't move at right from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -372,7 +372,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
                 {
-                    emit error(QString("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("collectPlant() Can't move at bottom from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -387,7 +387,7 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
             {
                 if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
                 {
-                    emit error(QString("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
+                    emit error(QStringLiteral("collectPlant() Can't move at left from %1 (%2,%3)").arg(map->map_file).arg(x).arg(y));
                     return;
                 }
             }
@@ -435,14 +435,14 @@ void ClientLocalBroadcast::collectPlant(const quint8 &query_id)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("DELETE FROM `plant` WHERE `map`=\'%1\' AND `x`=%2 AND `y`=%3")
+                        emit dbQuery(QStringLiteral("DELETE FROM `plant` WHERE `map`=\'%1\' AND `x`=%2 AND `y`=%3")
                                      .arg(SqlFunction::quoteSqlVariable(map->map_file))
                                      .arg(x)
                                      .arg(y)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
+                        emit dbQuery(QStringLiteral("DELETE FROM plant WHERE map=\'%1\' AND x=%2 AND y=%3")
                                  .arg(SqlFunction::quoteSqlVariable(map->map_file))
                                  .arg(x)
                                  .arg(y)
