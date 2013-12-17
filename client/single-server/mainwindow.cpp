@@ -33,28 +33,28 @@ MainWindow::MainWindow(QWidget *parent) :
     server_name=SERVER_NAME;
     server_dns_or_ip=SERVER_DNS_OR_IP;
     server_port=SERVER_PORT;
-    QString settingsServerPath=QCoreApplication::applicationDirPath()+"/server.conf";
+    QString settingsServerPath=QCoreApplication::applicationDirPath()+QStringLiteral("/server.conf");
     if(QFile(settingsServerPath).exists())
     {
         QSettings settingsServer(settingsServerPath,QSettings::IniFormat);
-        if(settingsServer.contains("server_dns_or_ip") && settingsServer.contains("server_port") && settingsServer.contains("proxy_port"))
+        if(settingsServer.contains(QStringLiteral("server_dns_or_ip")) && settingsServer.contains(QStringLiteral("server_port")) && settingsServer.contains(QStringLiteral("proxy_port")))
         {
             bool ok,ok2;
-            quint16 server_port_temp=settingsServer.value("server_port").toString().toUShort(&ok);
-            quint16 proxy_port_temp=settingsServer.value("proxy_port").toString().toUShort(&ok2);
-            if(settingsServer.value("server_dns_or_ip").toString().contains(QRegularExpression("^([a-zA-Z0-9]{8}\\.onion|.*\\.i2p)$")) && ok && ok2 && server_port_temp>0 && proxy_port_temp>0)
+            quint16 server_port_temp=settingsServer.value(QStringLiteral("server_port")).toString().toUShort(&ok);
+            quint16 proxy_port_temp=settingsServer.value(QStringLiteral("proxy_port")).toString().toUShort(&ok2);
+            if(settingsServer.value(QStringLiteral("server_dns_or_ip")).toString().contains(QRegularExpression(QStringLiteral("^([a-zA-Z0-9]{8}\\.onion|.*\\.i2p)$"))) && ok && ok2 && server_port_temp>0 && proxy_port_temp>0)
             {
                 server_name=tr("Hidden server");
-                if(settingsServer.contains("server_name"))
-                    server_name=settingsServer.value("server_name").toString();
-                server_dns_or_ip=settingsServer.value("server_dns_or_ip").toString();
-                proxy_dns_or_ip="localhost";
+                if(settingsServer.contains(QStringLiteral("server_name")))
+                    server_name=settingsServer.value(QStringLiteral("server_name")).toString();
+                server_dns_or_ip=settingsServer.value(QStringLiteral("server_dns_or_ip")).toString();
+                proxy_dns_or_ip=QStringLiteral("localhost");
                 server_port=server_port_temp;
                 proxy_port=proxy_port_temp;
-                if(settingsServer.contains("proxy_dns_or_ip"))
-                    proxy_dns_or_ip=settingsServer.value("proxy_dns_or_ip").toString();
-                ui->label_login_register->setStyleSheet(ui->label_login_register->styleSheet()+"text-decoration:line-through;");
-                ui->label_login_website->setStyleSheet(ui->label_login_website->styleSheet()+"text-decoration:line-through;");
+                if(settingsServer.contains(QStringLiteral("proxy_dns_or_ip")))
+                    proxy_dns_or_ip=settingsServer.value(QStringLiteral("proxy_dns_or_ip")).toString();
+                ui->label_login_register->setStyleSheet(ui->label_login_register->styleSheet()+QStringLiteral("text-decoration:line-through;"));
+                ui->label_login_website->setStyleSheet(ui->label_login_website->styleSheet()+QStringLiteral("text-decoration:line-through;"));
                 ui->label_login_register->setText(tr("Register"));
                 ui->label_login_website->setText(tr("Web site"));
             }
@@ -66,11 +66,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList);
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
-    if(settings.contains("login"))
-        ui->lineEditLogin->setText(settings.value("login").toString());
-    if(settings.contains("pass"))
+    if(settings.contains(QStringLiteral("login")))
+        ui->lineEditLogin->setText(settings.value(QStringLiteral("login")).toString());
+    if(settings.contains(QStringLiteral("pass")))
     {
-        ui->lineEditPass->setText(settings.value("pass").toString());
+        ui->lineEditPass->setText(settings.value(QStringLiteral("pass")).toString());
         ui->checkBoxRememberPassword->setChecked(true);
     }
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&MainWindow::protocol_is_good);
@@ -90,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
-    setWindowTitle("CatchChallenger - "+server_name);
+    setWindowTitle(QStringLiteral("CatchChallenger - ")+server_name);
 }
 
 MainWindow::~MainWindow()
@@ -119,7 +119,7 @@ void MainWindow::resetAll()
     else
         ui->pushButtonTryLogin->setFocus();
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
-    setWindowTitle("CatchChallenger - "+server_name);
+    setWindowTitle(QStringLiteral("CatchChallenger - ")+server_name);
 }
 
 void MainWindow::sslErrors(const QList<QSslError> &errors)
@@ -129,7 +129,7 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
     int index=0;
     while(index<errors.size())
     {
-        qDebug() << "Ssl error:" << errors.at(index).errorString();
+        qDebug() << QStringLiteral("Ssl error:") << errors.at(index).errorString();
         sslErrors << errors.at(index).errorString();
         index++;
     }
@@ -173,11 +173,11 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
         return;
     }
-    settings.setValue("login",ui->lineEditLogin->text());
+    settings.setValue(QStringLiteral("login"),ui->lineEditLogin->text());
     if(ui->checkBoxRememberPassword->isChecked())
-        settings.setValue("pass",ui->lineEditPass->text());
+        settings.setValue(QStringLiteral("pass"),ui->lineEditPass->text());
     else
-        settings.remove("pass");
+        settings.remove(QStringLiteral("pass"));
 
     QString host=server_dns_or_ip;
     quint16 port=server_port;
@@ -191,7 +191,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         proxy.setType(QNetworkProxy::Socks5Proxy);
         realSocket->setProxy(proxy);
     }
-    QDir datapack(QString("%1/datapack/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
+    QDir datapack(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/datapack/"));
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
         {
@@ -205,7 +205,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
-    qDebug() << "socketState:" << (int)socketState;
+    qDebug() << QStringLiteral("socketState:") << (int)socketState;
     if(socketState==QAbstractSocket::UnconnectedState)
     {
         if(!isVisible())
@@ -222,7 +222,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 
 void MainWindow::error(QAbstractSocket::SocketError socketError)
 {
-    qDebug() << "socketError:" << (int)socketError;
+    qDebug() << QStringLiteral("socketError:") << (int)socketError;
     resetAll();
     switch(socketError)
     {
@@ -282,7 +282,7 @@ void MainWindow::needQuit()
 
 void MainWindow::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
-    setWindowTitle(QString("CatchChallenger - %1 - %2").arg(server_name).arg(informations.public_informations.pseudo));
+    setWindowTitle(QStringLiteral("CatchChallenger - %1 - %2").arg(server_name).arg(informations.public_informations.pseudo));
 }
 
 void MainWindow::on_languages_clicked()
@@ -322,7 +322,7 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
 {
     if(entryList.isEmpty())
         return;
-    if(entryList.size()==0)
+    if(entryList.size()==1)
         ui->news->setText(tr("Latest news:")+QStringLiteral(" ")+QStringLiteral("<a href=\"%1\">%2</a>").arg(entryList.at(0).link).arg(entryList.at(0).title));
     else
     {
@@ -333,7 +333,7 @@ void MainWindow::rssEntryList(const QList<RssNews::RssEntry> &entryList)
             entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>").arg(entryList.at(index).link).arg(entryList.at(index).title);
             index++;
         }
-        ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
+        ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join(QStringLiteral("<br />")));
     }
     ui->news->setVisible(true);
 }

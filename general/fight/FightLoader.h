@@ -6,6 +6,7 @@
 #include <QMultiHash>
 
 #include "../base/GeneralStructures.h"
+#include "../base/DatapackGeneralLoader.h"
 
 namespace CatchChallenger {
 class FightLoader

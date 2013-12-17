@@ -70,43 +70,43 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     }
     CatchChallenger::Direction direction;
     int baseTile=-1;
-    if(lookAt=="left")
+    if(lookAt==QStringLiteral("left"))
     {
         baseTile=10;
         direction=CatchChallenger::Direction_move_at_left;
     }
-    else if(lookAt=="right")
+    else if(lookAt==QStringLiteral("right"))
     {
         baseTile=4;
         direction=CatchChallenger::Direction_move_at_right;
     }
-    else if(lookAt=="top")
+    else if(lookAt==QStringLiteral("top"))
     {
         baseTile=1;
         direction=CatchChallenger::Direction_move_at_top;
     }
     else
     {
-        if(lookAt!="bottom")
+        if(lookAt!=QStringLiteral("bottom"))
             CatchChallenger::DebugClass::debugConsole(QString("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
     }
     parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject=new Tiled::MapObject();
-    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset=new Tiled::Tileset("bot",16,24);
-    QString skinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+"/"+skin+"/trainer.png";
+    parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset=new Tiled::Tileset(QStringLiteral("bot"),16,24);
+    QString skinPath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+QStringLiteral("/")+skin+QStringLiteral("/trainer.png");
     if(!QFile(skinPath).exists())
-        skinPath=datapackPath+DATAPACK_BASE_PATH_SKINBOT+"/"+skin+"/trainer.png";
+        skinPath=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKINBOT)+QStringLiteral("/")+skin+QStringLiteral("/trainer.png");
     if(!QFile(skinPath).exists())
     {
         qDebug() << "Unable the load the bot tileset (not found):" << skinPath;
-        if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
+        if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
     else if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(skinPath),skinPath))
     {
         qDebug() << "Unable the load the bot tileset";
-        if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
+        if(!parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
     Tiled::Cell cell=parsedMap->logicalMap.botsDisplay[QPair<quint8,quint8>(x,y)].mapObject->cell();
@@ -120,10 +120,10 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     if(parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].step.contains(1))
     {
         QDomElement stepBot=parsedMap->logicalMap.bots[QPair<quint8,quint8>(x,y)].step[1];
-        if(stepBot.hasAttribute("type") && stepBot.attribute("type")=="fight" && stepBot.hasAttribute("fightid"))
+        if(stepBot.hasAttribute(QStringLiteral("type")) && stepBot.attribute(QStringLiteral("type"))==QStringLiteral("fight") && stepBot.hasAttribute(QStringLiteral("fightid")))
         {
             bool ok;
-            quint32 fightid=stepBot.attribute("fightid").toUInt(&ok);
+            quint32 fightid=stepBot.attribute(QStringLiteral("fightid")).toUInt(&ok);
             if(ok)
             {
                 if(CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightid))

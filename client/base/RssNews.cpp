@@ -43,11 +43,11 @@ void RssNews::httpFinished()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (reply->error())
     {
-        CatchChallenger::DebugClass::debugConsole(QString("get the new update failed: %1").arg(reply->errorString()));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
         return;
     } else if (!redirectionTarget.isNull()) {
-        CatchChallenger::DebugClass::debugConsole(QString("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
         reply->deleteLater();
         return;
     }
@@ -62,7 +62,7 @@ void RssNews::loadRss(const QByteArray &data)
     int errorLine,errorColumn;
     if (!domDocument.setContent(data, false, &errorStr,&errorLine,&errorColumn))
     {
-        qDebug() << QString("Unable to open the rss, Parse error at line %1, column %2: %3").arg(errorLine).arg(errorColumn).arg(errorStr);
+        qDebug() << QStringLiteral("Unable to open the rss, Parse error at line %1, column %2: %3").arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
     QDomElement root = domDocument.documentElement();
