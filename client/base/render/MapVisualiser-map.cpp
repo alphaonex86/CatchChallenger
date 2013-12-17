@@ -88,7 +88,7 @@ void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(!QFileInfo(resolvedFileName).exists())
-        CatchChallenger::DebugClass::debugConsole(QString("file not found to async: %1").arg(resolvedFileName));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("file not found to async: %1").arg(resolvedFileName));
     #endif
     asyncMap << resolvedFileName;
     emit loadOtherMapAsync(resolvedFileName);
@@ -123,18 +123,18 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         while (i.hasNext()) {
             i.next();
             QString skin;
-            if(i.value().properties.contains("skin"))
-                skin=i.value().properties["skin"];
+            if(i.value().properties.contains(QStringLiteral("skin")))
+                skin=i.value().properties[QStringLiteral("skin")];
             else
                 skin=QString();
             QString direction;
-            if(i.value().properties.contains("lookAt"))
-                direction=i.value().properties["lookAt"];
+            if(i.value().properties.contains(QStringLiteral("lookAt")))
+                direction=i.value().properties[QStringLiteral("lookAt")];
             else
             {
                 if(!skin.isEmpty())
                     qDebug() << QString("asyncDetectBorder(): lookAt: missing, fixed to bottom: %1").arg(tempMapObject->logicalMap.map_file);
-                direction="bottom";
+                direction=QStringLiteral("bottom");
             }
             loadBotOnTheMap(tempMapObject,i.value().botId,i.key().first,i.key().second,direction,skin);
         }
@@ -160,7 +160,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
     if(all_map.contains(fileName))
     {
         asyncMap.removeOne(fileName);
-        CatchChallenger::DebugClass::debugConsole(QString("seam already loaded by sync call, internal bug on: %1").arg(fileName));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("seam already loaded by sync call, internal bug on: %1").arg(fileName));
         return false;
     }
     if(tempMapObject!=NULL)

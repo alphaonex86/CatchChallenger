@@ -44,7 +44,7 @@ void MapControllerMP::connectAllSignals()
 
 void MapControllerMP::resetAll()
 {
-    if(!playerTileset->loadFromImage(QImage(":/images/player_default/trainer.png"),":/images/player_default/trainer.png"))
+    if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
         qDebug() << "Unable the load the default player tileset";
 
     unloadPlayerFromCurrentMap();
@@ -127,11 +127,11 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         //the player skin
         if(player.skinId<skinFolderList.size())
         {
-            QImage image(datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+            QImage image(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+skinFolderList.at(player.skinId)+QStringLiteral("/trainer.png"));
             if(!image.isNull())
-                playerTileset->loadFromImage(image,datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+                playerTileset->loadFromImage(image,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+skinFolderList.at(player.skinId)+QStringLiteral("/trainer.png"));
             else
-                qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png";
+                qDebug() << "Unable to load the player tilset: "+datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+skinFolderList.at(player.skinId)+QStringLiteral("/trainer.png");
         }
         else
             qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapControllerMP::insert_player()";
@@ -215,22 +215,22 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         //the player skin
         if(player.skinId<skinFolderList.size())
         {
-            QImage image(datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+            QImage image(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+skinFolderList.at(player.skinId)+QStringLiteral("/trainer.png"));
             if(!image.isNull())
             {
                 tempPlayer.playerMapObject = new Tiled::MapObject();
                 tempPlayer.playerTileset = new Tiled::Tileset(skinFolderList.at(player.skinId),16,24);
-                tempPlayer.playerTileset->loadFromImage(image,datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png");
+                tempPlayer.playerTileset->loadFromImage(image,datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+skinFolderList.at(player.skinId)+QStringLiteral("/trainer.png"));
             }
             else
             {
-                qDebug() << "Unable to load the player tilset: "+datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png";
+                qDebug() << "Unable to load the player tilset: "+datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN)+skinFolderList.at(player.skinId)+QStringLiteral("/trainer.png");
                 return;
             }
         }
         else
         {
-            qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapControllerMP::insert_player()";
+            qDebug() << QStringLiteral("The skin id: ")+QString::number(player.skinId)+QStringLiteral(", into a list of: ")+QString::number(skinFolderList.size())+QStringLiteral(" item(s) info MapControllerMP::insert_player()");
             return;
         }
         tempPlayer.current_map=mapPath;
@@ -274,7 +274,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
             default:
                 delete tempPlayer.playerMapObject;
                 delete tempPlayer.playerTileset;
-                qDebug() << "The direction send by the server is wrong";
+                qDebug() << QStringLiteral("The direction send by the server is wrong");
             return;
         }
 
@@ -320,7 +320,7 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(otherPlayer.playerMapObject);
         if(currentGroup!=otherPlayer.presumed_map->objectGroup)
-            qDebug() << QString("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+            qDebug() << QStringLiteral("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -432,7 +432,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
         if(!haveMapInMemory(mapPath))
         {
             /// \todo this case
-            qDebug() << QString("move_player(%1), map not already loaded").arg(id).arg(otherPlayerList[id].current_map);
+            qDebug() << QStringLiteral("move_player(%1), map not already loaded").arg(id).arg(otherPlayerList[id].current_map);
             return;
         }
         loadOtherMap(mapPath);
@@ -480,7 +480,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
             {
                 loadOtherMap(map->map_file);
                 if(!all_map.contains(map->map_file))
-                    qDebug() << QString("map changed not located: %1").arg(map->map_file);
+                    qDebug() << QStringLiteral("map changed not located: %1").arg(map->map_file);
                 else
                 {
                     unloadOtherPlayerFromMap(otherPlayerList[id]);
@@ -585,7 +585,7 @@ void MapControllerMP::remove_player(const quint16 &id)
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QString("remove_player(%1)").arg(id);
+    qDebug() << QStringLiteral("remove_player(%1)").arg(id);
     #endif
     unloadOtherPlayerFromMap(otherPlayerList[id]);
 
@@ -876,13 +876,13 @@ void MapControllerMP::setDatapackPath(const QString &path)
     qDebug() << QString("MapControllerMP::setDatapackPath()");
     #endif
 
-    if(path.endsWith("/") || path.endsWith("\\"))
+    if(path.endsWith(QStringLiteral("/")) || path.endsWith(QStringLiteral("\\")))
         datapackPath=path;
     else
         datapackPath=path+"/";
-    datapackMapPath=QFileInfo(datapackPath+DATAPACK_BASE_PATH_MAP).absoluteFilePath();
-    if(!datapackMapPath.endsWith("/") && !datapackMapPath.endsWith("\\"))
-        datapackMapPath+="/";
+    datapackMapPath=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAP)).absoluteFilePath();
+    if(!datapackMapPath.endsWith(QStringLiteral("/")) && !datapackMapPath.endsWith(QStringLiteral("\\")))
+        datapackMapPath+=QStringLiteral("/");
     mLastLocation.clear();
 }
 
@@ -896,7 +896,7 @@ void MapControllerMP::datapackParsed()
         return;
     mHaveTheDatapack=true;
 
-    skinFolderList=CatchChallenger::FacilityLib::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
+    skinFolderList=CatchChallenger::FacilityLib::skinIdList(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_SKIN));
 
     if(player_informations_is_set)
         reinject_signals();
@@ -1023,7 +1023,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         }
         break;
         default:
-        qDebug() << QString("moveOtherPlayerStepSlot(): moveStep: %1, wrong direction").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
+        qDebug() << QStringLiteral("moveOtherPlayerStepSlot(): moveStep: %1, wrong direction").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
         timer->stop();
         return;
     }
@@ -1083,7 +1083,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
                 CatchChallenger::MoveOnTheMap::move(otherPlayerList[otherPlayerListByTimer[timer]].presumed_direction,&map,&x,&y);
             break;
             default:
-            qDebug() << QString("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
+            qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);
             return;
         }
         otherPlayerList[otherPlayerListByTimer[timer]].presumed_x=x;
@@ -1093,7 +1093,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         {
             loadOtherMap(map->map_file);
             if(!all_map.contains(map->map_file))
-                qDebug() << QString("map changed not located: %1").arg(map->map_file);
+                qDebug() << QStringLiteral("map changed not located: %1").arg(map->map_file);
             else
             {
                 unloadOtherPlayerFromMap(otherPlayerList[otherPlayerListByTimer[timer]]);

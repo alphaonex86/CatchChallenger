@@ -799,7 +799,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(ledgesRight || ledgesBottom || ledgesTop)
                     {
-                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for left"));
                         map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
                     }
                     else
@@ -809,7 +809,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(ledgesLeft || ledgesBottom || ledgesTop)
                     {
-                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for right"));
                         map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
                     }
                     else
@@ -819,7 +819,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(ledgesRight || ledgesBottom || ledgesLeft)
                     {
-                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for top"));
                         map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
                     }
                     else
@@ -829,7 +829,7 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                 {
                     if(ledgesRight || ledgesLeft || ledgesTop)
                     {
-                        DebugClass::debugConsole("Multiple ledges at the same place, do colision");
+                        DebugClass::debugConsole(QStringLiteral("Multiple ledges at the same place, do colision for bottom"));
                         map_to_send.parsed_layer.walkable[x+y*map_to_send.width]=false;
                     }
                     else

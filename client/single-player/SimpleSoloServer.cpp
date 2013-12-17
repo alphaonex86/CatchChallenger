@@ -7,11 +7,11 @@ SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
     ui(new Ui::SimpleSoloServer)
 {
     ui->setupUi(this);
-    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+"/datapack/",QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/savegames/",true);
+    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),true);
     connect(solowindow,&SoloWindow::play,this,&SimpleSoloServer::play);
 
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
-    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+"/datapack/");
+    CatchChallenger::Api_client_real::client=new CatchChallenger::Api_client_virtual(socket,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
     internalServer=new CatchChallenger::InternalServer();
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&SimpleSoloServer::is_started,Qt::QueuedConnection);
     connect(internalServer,&CatchChallenger::InternalServer::error,this,&SimpleSoloServer::serverError,Qt::QueuedConnection);
@@ -28,7 +28,7 @@ SimpleSoloServer::SimpleSoloServer(QWidget *parent) :
     ui->stackedWidget->addWidget(solowindow);
     ui->stackedWidget->setCurrentWidget(solowindow);
     //solowindow->show();
-    setWindowTitle("CatchChallenger");
+    setWindowTitle(QStringLiteral("CatchChallenger"));
 }
 
 SimpleSoloServer::~SimpleSoloServer()
@@ -54,15 +54,15 @@ void SimpleSoloServer::play(const QString &savegamesPath)
     internalServer->start();
     ui->stackedWidget->setCurrentWidget(CatchChallenger::BaseWindow::baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
-    QSettings metaData(savegamesPath+"metadata.conf",QSettings::IniFormat);
-    if(!metaData.contains("pass"))
+    QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+    if(!metaData.contains(QStringLiteral("pass")))
     {
         QMessageBox::critical(NULL,tr("Error"),tr("Unable to load internal value"));
         return;
     }
     launchedGamePath=savegamesPath;
     haveLaunchedGame=true;
-    pass=metaData.value("pass").toString();
+    pass=metaData.value(QStringLiteral("pass")).toString();
 
     CatchChallenger::BaseWindow::baseWindow->serverIsLoading();
 }
@@ -81,7 +81,7 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
     formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
 
     formatedServerSettings.database.type=CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
-    formatedServerSettings.database.sqlite.file=savegamesPath+"catchchallenger.db.sqlite";
+    formatedServerSettings.database.sqlite.file=savegamesPath+QStringLiteral("catchchallenger.db.sqlite");
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithm_none;
     formatedServerSettings.bitcoin.enabled=false;
     formatedServerSettings.datapack_basePath=CatchChallenger::Api_client_real::client->datapackPath();
@@ -91,8 +91,8 @@ void SimpleSoloServer::sendSettings(CatchChallenger::InternalServer * internalSe
 
 void SimpleSoloServer::protocol_is_good()
 {
-    CatchChallenger::Api_client_real::client->setDatapackPath(QString("%1/datapack/").arg(QCoreApplication::applicationDirPath()));
-    CatchChallenger::Api_client_real::client->tryLogin("admin",pass);
+    CatchChallenger::Api_client_real::client->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
+    CatchChallenger::Api_client_real::client->tryLogin(QStringLiteral("admin"),pass);
 }
 
 void SimpleSoloServer::disconnected(QString reason)
@@ -140,7 +140,7 @@ void SimpleSoloServer::is_started(bool started)
     else
     {
         CatchChallenger::BaseWindow::baseWindow->serverIsReady();
-        socket->connectToHost("localhost",9999);
+        socket->connectToHost(QStringLiteral("localhost"),9999);
     }
 }
 
@@ -152,7 +152,7 @@ void SimpleSoloServer::saveTime()
     if(haveLaunchedGame)
     {
         bool settingOk=false;
-        QSettings metaData(launchedGamePath+"metadata.conf",QSettings::IniFormat);
+        QSettings metaData(launchedGamePath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
         if(metaData.isWritable())
         {
             if(metaData.status()==QSettings::NoError)
@@ -162,10 +162,10 @@ void SimpleSoloServer::saveTime()
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
-                    metaData.setValue("location",locaction);
+                    metaData.setValue(QStringLiteral("location"),locaction);
                 quint64 current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
                 if(current_date_time>timeLaunched)
-                    metaData.setValue("time_played",metaData.value("time_played").toUInt()+(current_date_time-timeLaunched));
+                    metaData.setValue(QStringLiteral("time_played"),metaData.value(QStringLiteral("time_played")).toUInt()+(current_date_time-timeLaunched));
                 settingOk=true;
             }
             else
