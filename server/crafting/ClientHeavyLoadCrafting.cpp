@@ -15,10 +15,10 @@ void ClientHeavyLoad::loadRecipes()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `recipe` FROM `recipes` WHERE `character`=%1").arg(player_informations->character_id);
+            queryText=QStringLiteral("SELECT `recipe` FROM `recipes` WHERE `character`=%1").arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT recipe FROM recipes WHERE character=%1").arg(player_informations->character_id);
+            queryText=QStringLiteral("SELECT recipe FROM recipes WHERE character=%1").arg(player_informations->character_id);
         break;
     }
     bool ok;
@@ -34,10 +34,10 @@ void ClientHeavyLoad::loadRecipes()
             if(CommonDatapack::commonDatapack.crafingRecipes.contains(recipeId))
                 player_informations->public_and_private_informations.recipes << recipeId;
             else
-                emit message(QString("recipeId: %1 is not into recipe list").arg(recipeId));
+                emit message(QStringLiteral("recipeId: %1 is not into recipe list").arg(recipeId));
         }
         else
-            emit message(QString("recipeId: %1 is not a number").arg(recipesQuery.value(0).toString()));
+            emit message(QStringLiteral("recipeId: %1 is not a number").arg(recipesQuery.value(0).toString()));
     }
 }
 
@@ -49,11 +49,11 @@ void ClientHeavyLoad::loadItems()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `item`,`quantity`,`place` FROM `item` WHERE `character`=%1")
+            queryText=QStringLiteral("SELECT `item`,`quantity`,`place` FROM `item` WHERE `character`=%1")
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT item,quantity,place FROM item WHERE character=%1")
+            queryText=QStringLiteral("SELECT item,quantity,place FROM item WHERE character=%1")
                 .arg(player_informations->character_id);
         break;
     }
@@ -67,18 +67,18 @@ void ClientHeavyLoad::loadItems()
         quint32 id=itemQuery.value(0).toUInt(&ok);
         if(!ok)
         {
-            emit message(QString("item id is not a number, skip"));
+            emit message(QStringLiteral("item id is not a number, skip"));
             continue;
         }
         quint32 quantity=itemQuery.value(1).toUInt(&ok);
         if(!ok)
         {
-            emit message(QString("quantity is not a number, skip"));
+            emit message(QStringLiteral("quantity is not a number, skip"));
             continue;
         }
         if(itemQuery.value(2).toString().isEmpty())
         {
-            emit message(QString("item warehouse is not a number, skip"));
+            emit message(QStringLiteral("item warehouse is not a number, skip"));
             continue;
         }
         bool warehouse;
@@ -92,7 +92,7 @@ void ClientHeavyLoad::loadItems()
                 continue;
             else
             {
-                emit message(QString("unknow wear type: %1 for item %2 and player %3").arg(itemQuery.value(9).toString()).arg(id).arg(player_informations->character_id));
+                emit message(QStringLiteral("unknow wear type: %1 for item %2 and player %3").arg(itemQuery.value(9).toString()).arg(id).arg(player_informations->character_id));
                 continue;
             }
         }
@@ -103,24 +103,24 @@ void ClientHeavyLoad::loadItems()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    queryText=QString("DELETE FROM `item` WHERE `character`=%1 AND `item`=%2 AND `place`='%3'")
+                    queryText=QStringLiteral("DELETE FROM `item` WHERE `character`=%1 AND `item`=%2 AND `place`='%3'")
                                          .arg(player_informations->character_id)
                                          .arg(id)
                                          .arg(itemQuery.value(2).toString());
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    queryText=QString("DELETE FROM item WHERE character=%1 AND item=%2 AND place='%3'")
+                    queryText=QStringLiteral("DELETE FROM item WHERE character=%1 AND item=%2 AND place='%3'")
                                          .arg(player_informations->character_id)
                                          .arg(id)
                                          .arg(itemQuery.value(2).toString());
                 break;
             }
-            emit message(QString("The item %1 have been dropped because the quantity is 0").arg(id));
+            emit message(QStringLiteral("The item %1 have been dropped because the quantity is 0").arg(id));
             continue;
         }
         if(!CommonDatapack::commonDatapack.items.item.contains(id))
         {
-            emit message(QString("The item %1 is ignored because it's not into the items list").arg(id));
+            emit message(QStringLiteral("The item %1 is ignored because it's not into the items list").arg(id));
             continue;
         }
         if(!warehouse)

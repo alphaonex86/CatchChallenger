@@ -26,7 +26,7 @@ void DatapackClientLoader::parseMonstersExtra()
         QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml monster extra file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml monster extra file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return;
         }
         xmlContent=xmlFile.readAll();
@@ -35,14 +35,14 @@ void DatapackClientLoader::parseMonstersExtra()
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return;
         }
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("list"))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
     }
 
@@ -58,16 +58,16 @@ void DatapackClientLoader::parseMonstersExtra()
             {
                 quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
                 if(!ok)
-                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
                     if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(id))
-                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
                         DatapackClientLoader::MonsterExtra monsterExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
-                        CatchChallenger::DebugClass::debugConsole(QString("monster extra loading: %1").arg(id));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
                         {
                             bool found=false;
@@ -85,7 +85,7 @@ void DatapackClientLoader::parseMonstersExtra()
                                         }
                                     }
                                     else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                     name = name.nextSiblingElement(QStringLiteral("name"));
                                 }
                             if(!found)
@@ -102,7 +102,7 @@ void DatapackClientLoader::parseMonstersExtra()
                                         }
                                     }
                                     else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                     name = name.nextSiblingElement(QStringLiteral("name"));
                                 }
                             }
@@ -123,7 +123,7 @@ void DatapackClientLoader::parseMonstersExtra()
                                         }
                                     }
                                     else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                     description = description.nextSiblingElement(QStringLiteral("description"));
                                 }
                             if(!found)
@@ -140,8 +140,8 @@ void DatapackClientLoader::parseMonstersExtra()
                                         }
                                     }
                                     else
-                                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    description = description.nextSiblingElement("description");
+                                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    description = description.nextSiblingElement(QStringLiteral("description"));
                                 }
                             }
                         }
@@ -222,11 +222,11 @@ void DatapackClientLoader::parseMonstersExtra()
                             monsterExtraEntry.name=tr("Unknown");
                         if(monsterExtraEntry.description.isEmpty())
                             monsterExtraEntry.description=tr("Unknown");
-                        monsterExtraEntry.frontPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("/")+QString::number(id)+QStringLiteral("front.png");
+                        monsterExtraEntry.frontPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("front.png");
                         monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                         if(monsterExtraEntry.front.isNull())
                         {
-                            monsterExtraEntry.frontPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("/")+QString::number(id)+QStringLiteral("front.gif");
+                            monsterExtraEntry.frontPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("front.gif");
                             monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                             if(monsterExtraEntry.front.isNull())
                             {
@@ -234,11 +234,11 @@ void DatapackClientLoader::parseMonstersExtra()
                                 monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
                             }
                         }
-                        monsterExtraEntry.backPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("/")+QString::number(id)+QStringLiteral("back.png");
+                        monsterExtraEntry.backPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("back.png");
                         monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                         if(monsterExtraEntry.back.isNull())
                         {
-                            monsterExtraEntry.backPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("/")+QString::number(id)+QStringLiteral("back.gif");
+                            monsterExtraEntry.backPath=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("back.gif");
                             monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                             if(monsterExtraEntry.back.isNull())
                             {
@@ -246,10 +246,10 @@ void DatapackClientLoader::parseMonstersExtra()
                                 monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
                             }
                         }
-                        monsterExtraEntry.thumb=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("/")+QString::number(id)+QStringLiteral("small.png");
+                        monsterExtraEntry.thumb=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("small.png");
                         if(monsterExtraEntry.thumb.isNull())
                         {
-                            monsterExtraEntry.thumb=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("/")+QString::number(id)+QStringLiteral("small.gif");
+                            monsterExtraEntry.thumb=datapackPath+QStringLiteral("/")+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QString::number(id)+QStringLiteral("/")+QStringLiteral("small.gif");
                             if(monsterExtraEntry.thumb.isNull())
                                 monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
                         }
@@ -258,10 +258,10 @@ void DatapackClientLoader::parseMonstersExtra()
                 }
             }
             else
-                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the monster id at monster extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the monster id at monster extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement(QStringLiteral("monster"));
     }
 
@@ -271,7 +271,7 @@ void DatapackClientLoader::parseMonstersExtra()
         i.next();
         if(!DatapackClientLoader::datapackLoader.monsterExtra.contains(i.key()))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
             DatapackClientLoader::MonsterExtra monsterExtraEntry;
             monsterExtraEntry.name=tr("Unknown");
             monsterExtraEntry.description=tr("Unknown");
@@ -298,7 +298,7 @@ void DatapackClientLoader::parseTypesExtra()
         QByteArray xmlContent;
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
-            qDebug() << QString("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
+            qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
             return;
         }
         xmlContent=itemsFile.readAll();
@@ -307,14 +307,14 @@ void DatapackClientLoader::parseTypesExtra()
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            qDebug() << QString("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+            qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
             return;
         }
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("types"))
     {
-        qDebug() << QString("Unable to open the file: %1, \"list\" root balise not found for the xml file").arg(file);
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"list\" root balise not found for the xml file").arg(file);
         return;
     }
 
@@ -349,7 +349,7 @@ void DatapackClientLoader::parseTypesExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
                                 nameItem = nameItem.nextSiblingElement(QStringLiteral("name"));
                             }
                         if(!found)
@@ -366,20 +366,20 @@ void DatapackClientLoader::parseTypesExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
                                 nameItem = nameItem.nextSiblingElement(QStringLiteral("name"));
                             }
                         }
                         DatapackClientLoader::datapackLoader.typeExtra[DatapackClientLoader::datapackLoader.typeExtra.size()]=type;
                     }
                     else
-                        qDebug() << QString("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                        qDebug() << QStringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
                 }
                 else
-                    qDebug() << QString("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
             }
             else
-                qDebug() << QString("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
             typeItem = typeItem.nextSiblingElement(QStringLiteral("type"));
         }
     }
@@ -400,7 +400,7 @@ void DatapackClientLoader::parseBuffExtra()
         QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return;
         }
         xmlContent=xmlFile.readAll();
@@ -409,14 +409,14 @@ void DatapackClientLoader::parseBuffExtra()
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return;
         }
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("list"))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
     }
 
@@ -432,11 +432,11 @@ void DatapackClientLoader::parseBuffExtra()
             {
                 quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
                 if(!ok)
-                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
                     if(!CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.contains(id))
-                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
                         DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
@@ -458,7 +458,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement(QStringLiteral("name"));
                             }
                         if(!found)
@@ -475,7 +475,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement(QStringLiteral("name"));
                             }
                         }
@@ -494,7 +494,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement(QStringLiteral("description"));
                             }
                         if(!found)
@@ -511,7 +511,7 @@ void DatapackClientLoader::parseBuffExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement(QStringLiteral("description"));
                             }
                         }
@@ -533,10 +533,10 @@ void DatapackClientLoader::parseBuffExtra()
                 }
             }
             else
-                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the buff id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the buff id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement(QStringLiteral("buff"));
     }
 
@@ -546,7 +546,7 @@ void DatapackClientLoader::parseBuffExtra()
         i.next();
         if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(i.key()))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
             DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown");
             monsterBuffExtraEntry.description=tr("Unknown");
@@ -571,7 +571,7 @@ void DatapackClientLoader::parseSkillsExtra()
         QByteArray xmlContent;
         if(!xmlFile.open(QIODevice::ReadOnly))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
             return;
         }
         xmlContent=xmlFile.readAll();
@@ -580,14 +580,14 @@ void DatapackClientLoader::parseSkillsExtra()
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
             return;
         }
     }
     QDomElement root = domDocument.documentElement();
     if(root.tagName()!=QStringLiteral("list"))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
         return;
     }
 
@@ -604,16 +604,16 @@ void DatapackClientLoader::parseSkillsExtra()
             {
                 quint32 id=item.attribute(QStringLiteral("id")).toUInt(&ok);
                 if(!ok)
-                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 else
                 {
                     if(!CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.contains(id))
-                        CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id not into monster list: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
                         DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
-                        CatchChallenger::DebugClass::debugConsole(QString("monster extra loading: %1").arg(id));
+                        CatchChallenger::DebugClass::debugConsole(QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
                         found=false;
                         QDomElement name = item.firstChildElement(QStringLiteral("name"));
@@ -630,7 +630,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement(QStringLiteral("name"));
                             }
                         if(!found)
@@ -647,7 +647,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 name = name.nextSiblingElement(QStringLiteral("name"));
                             }
                         }
@@ -666,7 +666,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement(QStringLiteral("description"));
                             }
                         if(!found)
@@ -683,7 +683,7 @@ void DatapackClientLoader::parseSkillsExtra()
                                     }
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 description = description.nextSiblingElement(QStringLiteral("description"));
                             }
                         }
@@ -696,10 +696,10 @@ void DatapackClientLoader::parseSkillsExtra()
                 }
             }
             else
-                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, have not the skill id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, have not the skill id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         }
         else
-            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         item = item.nextSiblingElement(QStringLiteral("skill"));
     }
 
@@ -709,7 +709,7 @@ void DatapackClientLoader::parseSkillsExtra()
         i.next();
         if(!monsterSkillsExtra.contains(i.key()))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
             DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
             monsterSkillExtraEntry.name=tr("Unknown");
             monsterSkillExtraEntry.description=tr("Unknown");
@@ -742,7 +742,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                 QByteArray xmlContent;
                 if(!xmlFile.open(QIODevice::ReadOnly))
                 {
-                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
                     index_file++;
                     continue;
                 }
@@ -752,7 +752,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                 int errorLine,errorColumn;
                 if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
                 {
-                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
                     index_file++;
                     continue;
                 }
@@ -760,7 +760,7 @@ void DatapackClientLoader::parseBotFightsExtra()
             QDomElement root = domDocument.documentElement();
             if(root.tagName()!=QStringLiteral("fights"))
             {
-                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file").arg(file));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file").arg(file));
                 index_file++;
                 continue;
             }
@@ -800,7 +800,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                                 start = start.nextSiblingElement(QStringLiteral("start"));
                                             }
                                         if(!found)
@@ -817,7 +817,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                                 start = start.nextSiblingElement(QStringLiteral("start"));
                                             }
                                         }
@@ -836,7 +836,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                                 win = win.nextSiblingElement(QStringLiteral("win"));
                                             }
                                         if(!found)
@@ -853,7 +853,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                     }
                                                 }
                                                 else
-                                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                                 win = win.nextSiblingElement(QStringLiteral("win"));
                                             }
                                         }
@@ -861,17 +861,17 @@ void DatapackClientLoader::parseBotFightsExtra()
                                     botFightsExtra[id]=botFightExtra;
                                 }
                                 else
-                                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is already into the botFight extra, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id is already into the botFight extra, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                             }
                             else
-                                CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, bot fights have not the id %4, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id));
+                                CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, bot fights have not the id %4, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id));
                         }
                         else
-                            CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, id is not a number to parse bot fight extra, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, id is not a number to parse bot fight extra, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                 }
                 else
-                    CatchChallenger::DebugClass::debugConsole(QString("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                 item = item.nextSiblingElement(QStringLiteral("fight"));
             }
             index_file++;
@@ -884,7 +884,7 @@ void DatapackClientLoader::parseBotFightsExtra()
         i.next();
         if(!botFightsExtra.contains(i.key()))
         {
-            CatchChallenger::DebugClass::debugConsole(QString("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i.key()));
             BotFightExtra botFightExtra;
             botFightExtra.start=tr("Ready for the fight?");
             botFightExtra.win=tr("You are so strong for me!");

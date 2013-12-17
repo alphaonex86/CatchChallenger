@@ -80,12 +80,12 @@ void MainWindow::on_openItemFile_clicked()
     {
         if(!child.hasAttribute("id") || !child.hasAttribute("price"))
         {
-            qDebug() << QString("Has not attribute \"id\" or \"price\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QStringLiteral("Has not attribute \"id\" or \"price\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
             error=true;
         }
         else if(!child.isElement())
         {
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
             error=true;
         }
         else
@@ -95,7 +95,7 @@ void MainWindow::on_openItemFile_clicked()
                 items[id]=child;
             else
             {
-                qDebug() << QString("Attribute \"id\" is not a number: Item.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Attribute \"id\" is not a number: Item.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
                 error=true;
             }
         }
@@ -220,9 +220,9 @@ void MainWindow::on_itemListDelete_clicked()
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
-            qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         else if(!child.isElement())
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
         else
         {
             quint8 tempId=child.attribute("id").toUShort(&ok);
@@ -235,7 +235,7 @@ void MainWindow::on_itemListDelete_clicked()
                 }
             }
             else
-                qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
         child = child.nextSiblingElement("item");
     }
@@ -431,7 +431,7 @@ void MainWindow::on_nameEditLanguageAdd_clicked()
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,lang);
     item->setData(98,name);
-    item->setText(QString("%1: %2").arg(lang).arg(name));
+    item->setText(QStringLiteral("%1: %2").arg(lang).arg(name));
     QDomElement newXmlElement=domDocument.createElement("name");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(name);
@@ -475,7 +475,7 @@ void MainWindow::on_descriptionEditLanguageAdd_clicked()
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,lang);
     item->setData(98,description);
-    item->setText(QString("%1: %2").arg(lang).arg(description));
+    item->setText(QStringLiteral("%1: %2").arg(lang).arg(description));
     QDomElement newXmlElement=domDocument.createElement("description");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(description);

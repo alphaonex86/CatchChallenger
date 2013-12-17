@@ -104,7 +104,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         multiplex.type=DelayedType_Insert;
         delayedActions << multiplex;
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QString("delayed: insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(mapId).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+        qDebug() << QStringLiteral("delayed: insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(mapId).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
         #endif
         return;
     }
@@ -115,7 +115,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QString("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     #endif
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
@@ -195,7 +195,7 @@ void MapControllerMP::insert_player(const CatchChallenger::Player_public_informa
     {
         if(otherPlayerList.contains(player.simplifiedId))
         {
-            qDebug() << QString("Other player (%1) already loaded on the map").arg(player.simplifiedId);
+            qDebug() << QStringLiteral("Other player (%1) already loaded on the map").arg(player.simplifiedId);
             return;
         }
         OtherPlayer tempPlayer;
@@ -347,17 +347,17 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
     {
         ObjectGroupItem::objectGroupLink[otherPlayer.presumed_map->objectGroup]->addObject(otherPlayer.playerMapObject);
         if(!MapObjectItem::objectLink.contains(otherPlayer.playerMapObject))
-            qDebug() << QString("loadOtherPlayerFromMap(), MapObjectItem::objectLink don't have otherPlayer.playerMapObject");
+            qDebug() << QStringLiteral("loadOtherPlayerFromMap(), MapObjectItem::objectLink don't have otherPlayer.playerMapObject");
         else
         {
             if(MapObjectItem::objectLink[otherPlayer.playerMapObject]==NULL)
-                qDebug() << QString("loadOtherPlayerFromMap(), MapObjectItem::objectLink[otherPlayer.playerMapObject]==NULL");
+                qDebug() << QStringLiteral("loadOtherPlayerFromMap(), MapObjectItem::objectLink[otherPlayer.playerMapObject]==NULL");
             else
                 MapObjectItem::objectLink[otherPlayer.playerMapObject]->setZValue(otherPlayer.y);
         }
     }
     else
-        qDebug() << QString("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+        qDebug() << QStringLiteral("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -367,7 +367,7 @@ void MapControllerMP::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
     if(ObjectGroupItem::objectGroupLink.contains(otherPlayer.playerMapObject->objectGroup()))
         ObjectGroupItem::objectGroupLink[otherPlayer.playerMapObject->objectGroup()]->removeObject(otherPlayer.playerMapObject);
     else
-        qDebug() << QString("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.playerMapObject->objectGroup()");
+        qDebug() << QStringLiteral("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.playerMapObject->objectGroup()");
 
     QSetIterator<QString> i(otherPlayer.mapUsed);
     while (i.hasNext())
@@ -380,7 +380,7 @@ void MapControllerMP::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
                 mapUsedByOtherPlayer.remove(map);
         }
         else
-            qDebug() << QString("map not found into mapUsedByOtherPlayer for player: %1, map: %2").arg(otherPlayer.informations.simplifiedId).arg(map);
+            qDebug() << QStringLiteral("map not found into mapUsedByOtherPlayer for player: %1, map: %2").arg(otherPlayer.informations.simplifiedId).arg(map);
     }
 }
 
@@ -404,7 +404,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     }
     if(!otherPlayerList.contains(id))
     {
-        qDebug() << QString("Other player (%1) not loaded on the map").arg(id);
+        qDebug() << QStringLiteral("Other player (%1) not loaded on the map").arg(id);
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -413,11 +413,11 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
     while(index_temp<movement.size())
     {
         QPair<quint8, CatchChallenger::Direction> move=movement.at(index_temp);
-        moveString << QString("{%1,%2}").arg(move.first).arg(CatchChallenger::MoveOnTheMap::directionToString(move.second));
+        moveString << QStringLiteral("{%1,%2}").arg(move.first).arg(CatchChallenger::MoveOnTheMap::directionToString(move.second));
         index_temp++;
     }
 
-    qDebug() << QString("move_player(%1,%2), previous direction: %3").arg(id).arg(moveString.join(";")).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList[id].direction));
+    qDebug() << QStringLiteral("move_player(%1,%2), previous direction: %3").arg(id).arg(moveString.join(";")).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList[id].direction));
     #endif
 
 
@@ -467,12 +467,12 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
                     CatchChallenger::MoveOnTheMap::move(otherPlayerList[id].presumed_direction,&map,&x,&y);
                 else
                 {
-                    qDebug() << QString("move_player(): at %1(%2,%3) can't go to %4").arg(map->map_file).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList[id].presumed_direction));
+                    qDebug() << QStringLiteral("move_player(): at %1(%2,%3) can't go to %4").arg(map->map_file).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList[id].presumed_direction));
                     return;
                 }
                 break;
                 default:
-                qDebug() << QString("move_player(): moveStep: %1, wrong direction: %2").arg(move.first).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList[id].presumed_direction));
+                qDebug() << QStringLiteral("move_player(): moveStep: %1, wrong direction: %2").arg(move.first).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList[id].presumed_direction));
                 return;
             }
             //if the map have changed
@@ -545,7 +545,7 @@ void MapControllerMP::move_player(const quint16 &id, const QList<QPair<quint8, C
         }
         break;
         default:
-            qDebug() << QString("move_player(): player: %1 (%2), wrong direction: %3").arg(otherPlayerList[id].informations.pseudo).arg(id).arg(otherPlayerList[id].presumed_direction);
+            qDebug() << QStringLiteral("move_player(): player: %1 (%2), wrong direction: %3").arg(otherPlayerList[id].informations.pseudo).arg(id).arg(otherPlayerList[id].presumed_direction);
         return;
     }
     switch(otherPlayerList[id].presumed_direction)
@@ -566,7 +566,7 @@ void MapControllerMP::remove_player(const quint16 &id)
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         #ifdef DEBUG_CLIENT_LOAD_ORDER
-        qDebug() << QString("delayed: MapControllerMP::remove_player(%1)").arg(id);
+        qDebug() << QStringLiteral("delayed: MapControllerMP::remove_player(%1)").arg(id);
         #endif
         DelayedMultiplex multiplex;
         multiplex.remove=id;
@@ -581,7 +581,7 @@ void MapControllerMP::remove_player(const quint16 &id)
     }
     if(!otherPlayerList.contains(id))
     {
-        qDebug() << QString("Other player (%1) not exists").arg(id);
+        qDebug() << QStringLiteral("Other player (%1) not exists").arg(id);
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -597,7 +597,7 @@ void MapControllerMP::remove_player(const quint16 &id)
         if(ObjectGroupItem::objectGroupLink.contains(currentGroup))
             ObjectGroupItem::objectGroupLink[currentGroup]->removeObject(otherPlayerList[id].playerMapObject);
         if(currentGroup!=otherPlayerList[id].presumed_map->objectGroup)
-            qDebug() << QString("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+            qDebug() << QStringLiteral("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
         currentGroup->removeObject(otherPlayerList[id].playerMapObject);
     }
 
@@ -613,7 +613,7 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         #ifdef DEBUG_CLIENT_LOAD_ORDER
-        qDebug() << QString("delayed: MapControllerMP::reinsert_player(%1)").arg(id);
+        qDebug() << QStringLiteral("delayed: MapControllerMP::reinsert_player(%1)").arg(id);
         #endif
         DelayedReinsertSingle tempItem;
         tempItem.id=id;
@@ -633,11 +633,11 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
     }
     if(!otherPlayerList.contains(id))
     {
-        qDebug() << QString("Other player (%1) not exists").arg(id);
+        qDebug() << QStringLiteral("Other player (%1) not exists").arg(id);
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QString("reinsert_player(%1)").arg(id);
+    qDebug() << QStringLiteral("reinsert_player(%1)").arg(id);
     #endif
 
     CatchChallenger::Player_public_informations informations=otherPlayerList[id].informations;
@@ -649,7 +649,7 @@ void MapControllerMP::reinsert_player(const quint16 &id,const quint8 &x,const qu
     }
     quint32 mapId=(quint32)all_map[otherPlayerList[id].current_map]->logicalMap.id;
     if(mapId==0)
-        qDebug() << QString("supected NULL map then error");
+        qDebug() << QStringLiteral("supected NULL map then error");
     remove_player(id);
     insert_player(informations,mapId,x,y,direction);
 }
@@ -659,7 +659,7 @@ void MapControllerMP::full_reinsert_player(const quint16 &id,const quint32 &mapI
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         #ifdef DEBUG_CLIENT_LOAD_ORDER
-        qDebug() << QString("delayed: MapControllerMP::reinsert_player(%1)").arg(id);
+        qDebug() << QStringLiteral("delayed: MapControllerMP::reinsert_player(%1)").arg(id);
         #endif
         DelayedReinsertFull tempItem;
         tempItem.id=id;
@@ -680,11 +680,11 @@ void MapControllerMP::full_reinsert_player(const quint16 &id,const quint32 &mapI
     }
     if(!otherPlayerList.contains(id))
     {
-        qDebug() << QString("Other player (%1) not exists").arg(id);
+        qDebug() << QStringLiteral("Other player (%1) not exists").arg(id);
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QString("reinsert_player(%1)").arg(id);
+    qDebug() << QStringLiteral("reinsert_player(%1)").arg(id);
     #endif
 
     CatchChallenger::Player_public_informations informations=otherPlayerList[id].informations;
@@ -697,7 +697,7 @@ void MapControllerMP::dropAllPlayerOnTheMap()
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         #ifdef DEBUG_CLIENT_LOAD_ORDER
-        qDebug() << QString("delayed: MapControllerMP::dropAllPlayerOnTheMap()");
+        qDebug() << QStringLiteral("delayed: MapControllerMP::dropAllPlayerOnTheMap()");
         #endif
         DelayedMultiplex multiplex;
         multiplex.type=DelayedType_Drop_all;
@@ -705,7 +705,7 @@ void MapControllerMP::dropAllPlayerOnTheMap()
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QString("dropAllPlayerOnTheMap()");
+    qDebug() << QStringLiteral("dropAllPlayerOnTheMap()");
     #endif
     QList<quint16> temIdList;
     QHashIterator<quint16,OtherPlayer> i(otherPlayerList);
@@ -732,7 +732,7 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
         tempItem.direction=direction;
         delayedTeleportTo << tempItem;
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QString("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
         #endif
         return;
     }
@@ -742,8 +742,8 @@ void MapControllerMP::teleportTo(const quint32 &mapId,const quint16 &x,const qui
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QString("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
-    qDebug() << QString("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
+    qDebug() << QStringLiteral("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+    qDebug() << QStringLiteral("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
     #endif
     //the direction
     this->direction=direction;
@@ -854,7 +854,7 @@ void MapControllerMP::finalPlayerStep()
 void MapControllerMP::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
     #ifdef DEBUG_CLIENT_LOAD_ORDER
-    qDebug() << QString("MapControllerMP::have_current_player_info()");
+    qDebug() << QStringLiteral("MapControllerMP::have_current_player_info()");
     #endif
 
     if(player_informations_is_set)
@@ -873,7 +873,7 @@ void MapControllerMP::have_current_player_info(const CatchChallenger::Player_pri
 void MapControllerMP::setDatapackPath(const QString &path)
 {
     #ifdef DEBUG_CLIENT_LOAD_ORDER
-    qDebug() << QString("MapControllerMP::setDatapackPath()");
+    qDebug() << QStringLiteral("MapControllerMP::setDatapackPath()");
     #endif
 
     if(path.endsWith(QStringLiteral("/")) || path.endsWith(QStringLiteral("\\")))
@@ -889,7 +889,7 @@ void MapControllerMP::setDatapackPath(const QString &path)
 void MapControllerMP::datapackParsed()
 {
     #ifdef DEBUG_CLIENT_LOAD_ORDER
-    qDebug() << QString("MapControllerMP::datapackParsed()");
+    qDebug() << QStringLiteral("MapControllerMP::datapackParsed()");
     #endif
 
     if(mHaveTheDatapack)
@@ -905,14 +905,14 @@ void MapControllerMP::datapackParsed()
 void MapControllerMP::reinject_signals()
 {
     #ifdef DEBUG_CLIENT_LOAD_ORDER
-    qDebug() << QString("MapControllerMP::reinject_signals()");
+    qDebug() << QStringLiteral("MapControllerMP::reinject_signals()");
     #endif
     int index;
 
     if(mHaveTheDatapack && player_informations_is_set)
     {
         #ifdef DEBUG_CLIENT_LOAD_ORDER
-        qDebug() << QString("MapControllerMP::reinject_signals(): mHaveTheDatapack && player_informations_is_set");
+        qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): mHaveTheDatapack && player_informations_is_set");
         #endif
         index=0;
         while(index<delayedActions.size())
@@ -953,7 +953,7 @@ void MapControllerMP::reinject_signals()
         delayedTeleportTo.clear();
     }
     else
-        qDebug() << QString("MapControllerMP::reinject_signals(): should not pass here because all is not previously loaded");
+        qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): should not pass here because all is not previously loaded");
 }
 
 void MapControllerMP::moveOtherPlayerStepSlot()
@@ -965,7 +965,7 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         return;
     }
     #ifdef DEBUG_CLIENT_OTHER_PLAYER_MOVE_STEP
-    qDebug() << QString("moveOtherPlayerStepSlot() player: %1 (%2), moveStep: %3")
+    qDebug() << QStringLiteral("moveOtherPlayerStepSlot() player: %1 (%2), moveStep: %3")
             .arg(otherPlayerList[otherPlayerListByTimer[timer]].informations.pseudo)
             .arg(otherPlayerList[otherPlayerListByTimer[timer]].informations.simplifiedId)
             .arg(otherPlayerList[otherPlayerListByTimer[timer]].moveStep);

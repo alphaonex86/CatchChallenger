@@ -63,9 +63,9 @@ QString ChatParsing::new_chat_message(QString pseudo,Player_type player_type,Cha
         break;
     }
     if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
-        returned_html+=QString("%1").arg(text);
+        returned_html+=QStringLiteral("%1").arg(text);
     else
-        returned_html+=QString("%1: %2").arg(pseudo).arg(toSmilies(toHtmlEntities(text)));
+        returned_html+=QStringLiteral("%1: %2").arg(pseudo).arg(toSmilies(toHtmlEntities(text)));
     returned_html+="</div>";
     return returned_html;
 }

@@ -15,10 +15,10 @@ void ClientHeavyLoad::loadMonsters()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`place` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC").arg(player_informations->character_id);
+            queryText=QStringLiteral("SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`place` FROM `monster` WHERE `character`=%1 ORDER BY `position` ASC").arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE character=%1 ORDER BY position ASC").arg(player_informations->character_id);
+            queryText=QStringLiteral("SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,place FROM monster WHERE character=%1 ORDER BY position ASC").arg(player_informations->character_id);
         break;
     }
 
@@ -32,7 +32,7 @@ void ClientHeavyLoad::loadMonsters()
         PlayerMonster playerMonster;
         playerMonster.id=monstersQuery.value(0).toUInt(&ok);
         if(!ok)
-            emit message(QString("monsterId: %1 is not a number").arg(monstersQuery.value(0).toString()));
+            emit message(QStringLiteral("monsterId: %1 is not a number").arg(monstersQuery.value(0).toString()));
         if(ok)
         {
             playerMonster.monster=monstersQuery.value(2).toUInt(&ok);
@@ -41,11 +41,11 @@ void ClientHeavyLoad::loadMonsters()
                 if(!CommonDatapack::commonDatapack.monsters.contains(playerMonster.monster))
                 {
                     ok=false;
-                    emit message(QString("monster: %1 is not into monster list").arg(playerMonster.monster));
+                    emit message(QStringLiteral("monster: %1 is not into monster list").arg(playerMonster.monster));
                 }
             }
             else
-                emit message(QString("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
+                emit message(QStringLiteral("monster: %1 is not a number").arg(monstersQuery.value(2).toString()));
         }
         if(ok)
         {
@@ -54,12 +54,12 @@ void ClientHeavyLoad::loadMonsters()
             {
                 if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                 {
-                    emit message(QString("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
+                    emit message(QStringLiteral("level: %1 greater than %2, truncated").arg(playerMonster.level).arg(CATCHCHALLENGER_MONSTER_LEVEL_MAX));
                     playerMonster.level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
                 }
             }
             else
-                emit message(QString("level: %1 is not a number").arg(monstersQuery.value(3).toString()));
+                emit message(QStringLiteral("level: %1 is not a number").arg(monstersQuery.value(3).toString()));
         }
         if(ok)
         {
@@ -68,18 +68,18 @@ void ClientHeavyLoad::loadMonsters()
             {
                 if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1))
                 {
-                    emit message(QString("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
+                    emit message(QStringLiteral("monster xp: %1 greater than %2, truncated").arg(playerMonster.remaining_xp).arg(CommonDatapack::commonDatapack.monsters[playerMonster.monster].level_to_xp.at(playerMonster.level-1)));
                     playerMonster.remaining_xp=0;
                 }
             }
             else
-                emit message(QString("monster xp: %1 is not a number").arg(monstersQuery.value(4).toString()));
+                emit message(QStringLiteral("monster xp: %1 is not a number").arg(monstersQuery.value(4).toString()));
         }
         if(ok)
         {
             playerMonster.sp=monstersQuery.value(5).toUInt(&ok);
             if(!ok)
-                emit message(QString("monster sp: %1 is not a number").arg(monstersQuery.value(5).toString()));
+                emit message(QStringLiteral("monster sp: %1 is not a number").arg(monstersQuery.value(5).toString()));
         }
         if(ok)
         {
@@ -87,10 +87,10 @@ void ClientHeavyLoad::loadMonsters()
             if(ok)
             {
                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.captured_with))
-                    emit message(QString("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
+                    emit message(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
             }
             else
-                emit message(QString("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));
+                emit message(QStringLiteral("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));
         }
         if(ok)
         {
@@ -103,7 +103,7 @@ void ClientHeavyLoad::loadMonsters()
             else
             {
                 playerMonster.gender=Gender_Unknown;
-                emit message(QString("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
+                emit message(QStringLiteral("unknown monster gender: %1").arg(monstersQuery.value(7).toString()));
                 ok=false;
             }
         }
@@ -111,7 +111,7 @@ void ClientHeavyLoad::loadMonsters()
         {
             playerMonster.egg_step=monstersQuery.value(8).toUInt(&ok);
             if(!ok)
-                emit message(QString("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
+                emit message(QStringLiteral("monster egg_step: %1 is not a number").arg(monstersQuery.value(8).toString()));
         }
         if(ok)
         {
@@ -125,7 +125,7 @@ void ClientHeavyLoad::loadMonsters()
                     continue;
                 else
                 {
-                    emit message(QString("unknow wear type: %1 for monster %2").arg(monstersQuery.value(9).toString()).arg(playerMonster.id));
+                    emit message(QStringLiteral("unknow wear type: %1 for monster %2").arg(monstersQuery.value(9).toString()).arg(playerMonster.id));
                     continue;
                 }
             }
@@ -137,12 +137,12 @@ void ClientHeavyLoad::loadMonsters()
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    dbQuery(QString("UPDATE `monster` SET `place`='warehouse' WHERE `id`=%1;")
+                    dbQuery(QStringLiteral("UPDATE `monster` SET `place`='warehouse' WHERE `id`=%1;")
                                  .arg(playerMonster.id)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    dbQuery(QString("UPDATE monster SET place='warehouse' WHERE id=%1;")
+                    dbQuery(QStringLiteral("UPDATE monster SET place='warehouse' WHERE id=%1;")
                                  .arg(playerMonster.id)
                                  );
                 break;
@@ -157,7 +157,7 @@ void ClientHeavyLoad::loadMonsters()
                 const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters[playerMonster.monster],playerMonster.level);
                 if(playerMonster.hp>stat.hp)
                 {
-                    emit message(QString("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
+                    emit message(QStringLiteral("monster hp: %1 greater than max hp %2 for the level %3 of the monster %4, truncated")
                                  .arg(playerMonster.hp)
                                  .arg(stat.hp)
                                  .arg(playerMonster.level)
@@ -167,7 +167,7 @@ void ClientHeavyLoad::loadMonsters()
                 }
             }
             else
-                emit message(QString("monster hp: %1 is not a number").arg(monstersQuery.value(1).toString()));
+                emit message(QStringLiteral("monster hp: %1 is not a number").arg(monstersQuery.value(1).toString()));
         }
         //finish it
         if(ok)
@@ -190,10 +190,10 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`=%1").arg(monsterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT buff,level FROM monster_buff WHERE monster=%1").arg(monsterId);
         break;
     }
 
@@ -210,11 +210,11 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
             if(!CommonDatapack::commonDatapack.monsterBuffs.contains(buff.buff))
             {
                 ok=false;
-                emit message(QString("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
+                emit message(QStringLiteral("buff %1 for monsterId: %2 is not found into buff list").arg(buff.buff).arg(monsterId));
             }
         }
         else
-            emit message(QString("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
+            emit message(QStringLiteral("buff id: %1 is not a number").arg(monsterBuffsQuery.value(0).toString()));
         if(ok)
         {
             buff.level=monsterBuffsQuery.value(1).toUInt(&ok);
@@ -223,18 +223,18 @@ QList<PlayerBuff> ClientHeavyLoad::loadMonsterBuffs(const quint32 &monsterId)
                 if(buff.level>CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.size())
                 {
                     ok=false;
-                    emit message(QString("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
+                    emit message(QStringLiteral("buff %1 for monsterId: %2 have not the level: %3").arg(buff.buff).arg(monsterId).arg(buff.level));
                 }
             }
             else
-                emit message(QString("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
+                emit message(QStringLiteral("buff level: %1 is not a number").arg(monsterBuffsQuery.value(2).toString()));
         }
         if(ok)
         {
             if(CommonDatapack::commonDatapack.monsterBuffs[buff.buff].level.at(buff.level-1).duration!=Buff::Duration_Always)
             {
                 ok=false;
-                DebugClass::debugConsole(QString("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
+                DebugClass::debugConsole(QStringLiteral("buff %1 for monsterId: %2 can't be loaded from the db if is not permanent").arg(buff.buff).arg(monsterId));
             }
         }
         if(ok)
@@ -251,10 +251,10 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            queryText=QString("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`=%1").arg(monsterId);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            queryText=QString("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
+            queryText=QStringLiteral("SELECT skill,level,endurance FROM monster_skill WHERE monster=%1").arg(monsterId);
         break;
     }
 
@@ -271,11 +271,11 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
             if(!CommonDatapack::commonDatapack.monsterSkills.contains(skill.skill))
             {
                 ok=false;
-                emit message(QString("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
+                emit message(QStringLiteral("skill %1 for monsterId: %2 is not found into skill list").arg(skill.skill).arg(monsterId));
             }
         }
         else
-            emit message(QString("skill id: %1 is not a number").arg(monsterSkillsQuery.value(0).toString()));
+            emit message(QStringLiteral("skill id: %1 is not a number").arg(monsterSkillsQuery.value(0).toString()));
         if(ok)
         {
             skill.level=monsterSkillsQuery.value(1).toUInt(&ok);
@@ -284,11 +284,11 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
                 if(skill.level>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.size())
                 {
                     ok=false;
-                    emit message(QString("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
+                    emit message(QStringLiteral("skill %1 for monsterId: %2 have not the level: %3").arg(skill.skill).arg(monsterId).arg(skill.level));
                 }
             }
             else
-                emit message(QString("skill level: %1 is not a number").arg(monsterSkillsQuery.value(1).toString()));
+                emit message(QStringLiteral("skill level: %1 is not a number").arg(monsterSkillsQuery.value(1).toString()));
         }
         if(ok)
         {
@@ -298,11 +298,11 @@ QList<PlayerMonster::PlayerSkill> ClientHeavyLoad::loadMonsterSkills(const quint
                 if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance)
                 {
                     skill.endurance=CommonDatapack::commonDatapack.monsterSkills[skill.skill].level.at(skill.level-1).endurance;
-                    emit message(QString("skill %1 for monsterId: %2 have too hight endurance, lowered to: %3").arg(skill.skill).arg(monsterId).arg(skill.endurance));
+                    emit message(QStringLiteral("skill %1 for monsterId: %2 have too hight endurance, lowered to: %3").arg(skill.skill).arg(monsterId).arg(skill.endurance));
                 }
             }
             else
-                emit message(QString("skill endurance: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
+                emit message(QStringLiteral("skill endurance: %1 is not a number").arg(monsterSkillsQuery.value(2).toString()));
         }
         if(ok)
             skills << skill;
@@ -333,11 +333,11 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-        queryText=QString("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1")
+        queryText=QStringLiteral("SELECT `botfight_id` FROM `bot_already_beaten` WHERE `character`=%1")
                 .arg(player_informations->character_id);
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-        queryText=QString("SELECT botfight_id FROM bot_already_beaten WHERE character=%1")
+        queryText=QStringLiteral("SELECT botfight_id FROM bot_already_beaten WHERE character=%1")
                 .arg(player_informations->character_id);
         break;
     }
@@ -351,12 +351,12 @@ void ClientHeavyLoad::loadBotAlreadyBeaten()
         quint32 id=botAlreadyBeatenQuery.value(0).toUInt(&ok);
         if(!ok)
         {
-            emit message(QString("wrong value type for quest, skip: %1").arg(id));
+            emit message(QStringLiteral("wrong value type for quest, skip: %1").arg(id));
             continue;
         }
         if(!CommonDatapack::commonDatapack.botFights.contains(id))
         {
-            emit message(QString("fights is not into the fights list, skip: %1").arg(id));
+            emit message(QStringLiteral("fights is not into the fights list, skip: %1").arg(id));
             continue;
         }
         player_informations->public_and_private_informations.bot_already_beaten << id;

@@ -31,7 +31,7 @@ void ItemDialog::displayItems()
             QListWidgetItem *item=new QListWidgetItem();
             items_graphical[item]=i.key();
             item->setIcon(DatapackClientLoader::items[i.key()].image);
-            item->setText(QString("%1").arg(DatapackClientLoader::items[i.key()].name));
+            item->setText(QStringLiteral("%1").arg(DatapackClientLoader::items[i.key()].name));
             item->setToolTip(DatapackClientLoader::items[i.key()].description);
             ui->items->addItem(item);
         }

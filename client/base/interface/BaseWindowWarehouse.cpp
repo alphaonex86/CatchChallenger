@@ -210,7 +210,7 @@ void BaseWindow::on_warehouseValidate_clicked()
     }
     //validate the change here
     cash+=temp_warehouse_cash;
-    ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
     ui->tradePlayerCash->setMaximum(this->cash);
     warehouse_cash-=temp_warehouse_cash;
     {

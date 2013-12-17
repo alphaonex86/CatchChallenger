@@ -271,7 +271,7 @@ QString ProcessControler::adaptString(float size)
 
 void ProcessControler::benchmark_result(int latency,double TX_speed,double RX_speed,double TX_size,double RX_size,double second)
 {
-    DebugClass::debugConsole(QString("The latency of the benchmark: %1\nTX_speed: %2/s, RX_speed %3/s\nTX_size: %4, RX_size: %5, in %6s\nThis latency is cumulated latency of different point. That's not show the database performance.")
+    DebugClass::debugConsole(QStringLiteral("The latency of the benchmark: %1\nTX_speed: %2/s, RX_speed %3/s\nTX_size: %4, RX_size: %5, in %6s\nThis latency is cumulated latency of different point. That's not show the database performance.")
                  .arg(latency)
                  .arg(sizeToString(TX_speed))
                  .arg(sizeToString(RX_speed))

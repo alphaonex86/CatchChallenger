@@ -30,7 +30,7 @@ QString Dialog::loadMap(const QString &fileName)
     CatchChallenger::Map_loader map_loader;
     if(!map_loader.tryLoadMap(resolvedFileName))
     {
-        CatchChallenger::DebugClass::debugConsole(QString("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString()));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(map_loader.errorString()));
         return QString();
     }
 
@@ -65,13 +65,13 @@ QString Dialog::loadMap(const QString &fileName)
             else
             {
                 other_map[resolvedFileName].map.border_semi.bottom.fileName.clear();
-                CatchChallenger::DebugClass::debugConsole(QString("the map: %1 is not linked with the border bottom, because the map at the bottom have not this map as border").arg(resolvedFileName));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 is not linked with the border bottom, because the map at the bottom have not this map as border").arg(resolvedFileName));
             }
         }
         else
         {
             other_map[resolvedFileName].map.border_semi.bottom.fileName.clear();
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.bottom.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.bottom.fileName));
         }
     }
 
@@ -91,13 +91,13 @@ QString Dialog::loadMap(const QString &fileName)
             else
             {
                 other_map[resolvedFileName].map.border_semi.top.fileName.clear();
-                CatchChallenger::DebugClass::debugConsole(QString("the map: %1 is not linked with the border top, because the map at the top have not this map as border").arg(resolvedFileName));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 is not linked with the border top, because the map at the top have not this map as border").arg(resolvedFileName));
             }
         }
         else
         {
             other_map[resolvedFileName].map.border_semi.top.fileName.clear();
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.top.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.top.fileName));
         }
     }
 
@@ -117,13 +117,13 @@ QString Dialog::loadMap(const QString &fileName)
             else
             {
                 other_map[resolvedFileName].map.border_semi.left.fileName.clear();
-                CatchChallenger::DebugClass::debugConsole(QString("the map: %1 is not linked with the border left, because the map at the left have not this map as border").arg(resolvedFileName));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 is not linked with the border left, because the map at the left have not this map as border").arg(resolvedFileName));
             }
         }
         else
         {
             other_map[resolvedFileName].map.border_semi.left.fileName.clear();
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.left.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.left.fileName));
         }
     }
 
@@ -143,13 +143,13 @@ QString Dialog::loadMap(const QString &fileName)
             else
             {
                 other_map[resolvedFileName].map.border_semi.right.fileName.clear();
-                CatchChallenger::DebugClass::debugConsole(QString("the map: %1 is not linked with the border right the map at the right have not this map as border").arg(resolvedFileName));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 is not linked with the border right the map at the right have not this map as border").arg(resolvedFileName));
             }
         }
         else
         {
             other_map[resolvedFileName].map.border_semi.right.fileName.clear();
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.right.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 can't load the border: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.right.fileName));
         }
     }
 
@@ -166,17 +166,17 @@ QString Dialog::loadMap(const QString &fileName)
             {
             }
             else
-                CatchChallenger::DebugClass::debugConsole(QString("the map: %1 have teleporter witch point out of the map %2").arg(resolvedFileName).arg(mapIndex));
+                CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 have teleporter witch point out of the map %2").arg(resolvedFileName).arg(mapIndex));
         }
         else
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 have teleporter with wrong destination %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.teleport_semi[index].map));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 have teleporter with wrong destination %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.teleport_semi[index].map));
         index++;
     }
 
     //load the map
     Tiled::Map *tiledMap = reader.readMap(resolvedFileName);
     if(!tiledMap)
-        CatchChallenger::DebugClass::debugConsole(QString("the map: %1 have bug into the render with tiled: %2").arg(resolvedFileName).arg(reader.errorString()));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 have bug into the render with tiled: %2").arg(resolvedFileName).arg(reader.errorString()));
     else
         delete tiledMap;
 
@@ -216,7 +216,7 @@ void Dialog::loadPosition(const QString &fileName)
                     ||
                     other_map[bottom].y!=other_map[resolvedFileName].y+other_map[resolvedFileName].map.height
                     )
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 have the bottom border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.bottom.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 have the bottom border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.bottom.fileName));
         }
     }
 
@@ -237,7 +237,7 @@ void Dialog::loadPosition(const QString &fileName)
                     ||
                     other_map[top].y!=other_map[resolvedFileName].y-other_map[top].map.height
                     )
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 have the top border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.top.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 have the top border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.top.fileName));
         }
     }
 
@@ -258,7 +258,7 @@ void Dialog::loadPosition(const QString &fileName)
                     ||
                     other_map[right].y!=other_map[resolvedFileName].y+(other_map[resolvedFileName].map.border_semi.right.y_offset-other_map[right].map.border_semi.left.y_offset)
                     )
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 have the right border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.right.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 have the right border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.right.fileName));
         }
     }
 
@@ -279,7 +279,7 @@ void Dialog::loadPosition(const QString &fileName)
                     ||
                     other_map[left].y!=other_map[resolvedFileName].y+(other_map[resolvedFileName].map.border_semi.left.y_offset-other_map[left].map.border_semi.right.y_offset)
                     )
-            CatchChallenger::DebugClass::debugConsole(QString("the map: %1 have the left border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.left.fileName));
+            CatchChallenger::DebugClass::debugConsole(QStringLiteral("the map: %1 have the left border at the wrong position: %2").arg(resolvedFileName).arg(other_map[resolvedFileName].map.border_semi.left.fileName));
         }
     }
 }

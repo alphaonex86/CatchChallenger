@@ -128,7 +128,7 @@ void BaseWindow::clanInformations(const QString &name)
 
 void BaseWindow::clanInvite(const quint32 &clanId,const QString &name)
 {
-    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?").arg(QString("<b>%1</b>").arg(name)));
+    QMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?").arg(QStringLiteral("<b>%1</b>").arg(name)));
     CatchChallenger::Api_client_real::client->inviteAccept(button==QMessageBox::Yes);
     if(button==QMessageBox::Yes)
     {

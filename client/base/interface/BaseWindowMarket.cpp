@@ -48,13 +48,13 @@ void BaseWindow::marketList(const quint64 &price,const double &bitcoin,const QLi
         if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
         {
             item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].thumb);
-            item->setText(QString("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
+            item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
             item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].description);
         }
         else
         {
             item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-            item->setText(QString("Unknown item with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
+            item->setText(QStringLiteral("Unknown item with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
         }
         ui->marketMonster->addItem(item);
     }
@@ -97,13 +97,13 @@ void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
     if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
     {
         item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].thumb);
-        item->setText(QString("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
+        item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].name).arg(marketMonster.level).arg(price));
         item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra[marketMonster.monster].description);
     }
     else
     {
         item->setIcon(QIcon(":/images/monsters/default/small.png"));
-        item->setText(QString("Unknown monster with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
+        item->setText(QStringLiteral("Unknown monster with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
     }
     ui->marketOwnMonster->addItem(item);
 }
@@ -264,17 +264,17 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
         price=tr("Price: Free");
     QString quantity;
     if(marketObject.quantity>1)
-        quantity=QString(", ")+tr("quantity: %1").arg(marketObject.quantity);
+        quantity=QStringLiteral(", ")+tr("quantity: %1").arg(marketObject.quantity);
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.objectId))
     {
         item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].image);
-        item->setText(QString("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].name).arg(quantity).arg(price));
+        item->setText(QStringLiteral("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].name).arg(quantity).arg(price));
         item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra[marketObject.objectId].description);
     }
     else
     {
         item->setIcon(QIcon(":/images/monsters/default/small.png"));
-        item->setText(QString("Unknown item with id %1%2\n%3").arg(marketObject.objectId).arg(quantity).arg(price));
+        item->setText(QStringLiteral("Unknown item with id %1%2\n%3").arg(marketObject.objectId).arg(quantity).arg(price));
     }
 }
 

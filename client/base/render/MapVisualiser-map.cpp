@@ -133,7 +133,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
             else
             {
                 if(!skin.isEmpty())
-                    qDebug() << QString("asyncDetectBorder(): lookAt: missing, fixed to bottom: %1").arg(tempMapObject->logicalMap.map_file);
+                    qDebug() << QStringLiteral("asyncDetectBorder(): lookAt: missing, fixed to bottom: %1").arg(tempMapObject->logicalMap.map_file);
                 direction=QStringLiteral("bottom");
             }
             loadBotOnTheMap(tempMapObject,i.value().botId,i.key().first,i.key().second,direction,skin);
@@ -223,7 +223,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
                     }
                 }
                 if(all_map.contains(tempMapObject->logicalMap.border_semi.bottom.fileName))
@@ -252,7 +252,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
                     }
                 }
                 if(all_map.contains(tempMapObject->logicalMap.border_semi.right.fileName))
@@ -281,7 +281,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
                     }
                 }
                 if(all_map.contains(tempMapObject->logicalMap.border_semi.left.fileName))
@@ -310,7 +310,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             }
                         }
                         else
-                            qDebug() << QString("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
+                            qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(tempMapObject->logicalMap.map_file);
                     }
                 }
             }
