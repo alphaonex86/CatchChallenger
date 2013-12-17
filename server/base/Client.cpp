@@ -36,7 +36,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     localClientHandler=new LocalClientHandler();
     clientLocalBroadcast=new ClientLocalBroadcast();
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QString("creating object time: %1").arg(time.elapsed()));
+    normalOutput(QStringLiteral("creating object time: %1").arg(time.elapsed()));
     time.restart();
     #endif
     this->clientMapManagement=clientMapManagement;
@@ -227,7 +227,7 @@ Client::Client(ConnectedSocket *socket,bool isFake,ClientMapManagement *clientMa
     connect(this,&Client::askIfIsReadyToStop,clientLocalBroadcast,      &MapBasicMove::askIfIsReadyToStop,          Qt::QueuedConnection);
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QString("connecting object time: %1").arg(time.elapsed()));
+    normalOutput(QStringLiteral("connecting object time: %1").arg(time.elapsed()));
     #endif
 
     stopped_object=0;
@@ -275,7 +275,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
     }
     if(error!=QAbstractSocket::RemoteHostClosedError)
     {
-        normalOutput(QString("error detected for the client: %1").arg(error));
+        normalOutput(QStringLiteral("error detected for the client: %1").arg(error));
         socket->disconnectFromHost();
     }
 }
@@ -345,7 +345,7 @@ void Client::disconnectNextStep()
     }
     if(stopped_object>(OBJECTTOSTOP*2))
     {
-        DebugClass::debugConsole(QString("remove count error"));
+        DebugClass::debugConsole(QStringLiteral("remove count error"));
         return;
     }
 }
@@ -371,9 +371,9 @@ void Client::normalOutput(const QString &message)
     if(!player_informations.public_and_private_informations.public_informations.pseudo.isEmpty())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            DebugClass::debugConsole(QString("%1: %2").arg(player_informations.character_id).arg(message));
+            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(player_informations.character_id).arg(message));
         else
-            DebugClass::debugConsole(QString("%1: %2").arg(player_informations.public_and_private_informations.public_informations.pseudo).arg(message));
+            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(player_informations.public_and_private_informations.public_informations.pseudo).arg(message));
     }
     else
     {
@@ -384,27 +384,27 @@ void Client::normalOutput(const QString &message)
         {
             QHostAddress hostAddress=socket->peerAddress();
             if(hostAddress==QHostAddress::LocalHost || hostAddress==QHostAddress::LocalHostIPv6)
-                ip=QString("localhost:%1").arg(socket->peerPort());
+                ip=QStringLiteral("localhost:%1").arg(socket->peerPort());
             else if(hostAddress==QHostAddress::Null || hostAddress==QHostAddress::Any || hostAddress==QHostAddress::AnyIPv4 || hostAddress==QHostAddress::AnyIPv6 || hostAddress==QHostAddress::Broadcast)
                 ip="internal";
             else
-                ip=QString("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
+                ip=QStringLiteral("%1:%2").arg(hostAddress.toString()).arg(socket->peerPort());
         }
         if(GlobalServerData::serverSettings.anonymous)
         {
             QCryptographicHash hash(QCryptographicHash::Sha1);
             hash.addData(ip.toUtf8());
-            DebugClass::debugConsole(QString("%1: %2").arg(QString(hash.result().toHex())).arg(message));
+            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(QString(hash.result().toHex())).arg(message));
         }
         else
-            DebugClass::debugConsole(QString("%1: %2").arg(ip).arg(message));
+            DebugClass::debugConsole(QStringLiteral("%1: %2").arg(ip).arg(message));
     }
 }
 
 void Client::send_player_informations()
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(QString("load the normal player id: %1, simplified id: %2").arg(player_informations.character_id).arg(player_informations.public_and_private_informations.public_informations.simplifiedId));
+    normalOutput(QStringLiteral("load the normal player id: %1, simplified id: %2").arg(player_informations.character_id).arg(player_informations.public_and_private_informations.public_informations.simplifiedId));
     #endif
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(player_informations);
     this->player_informations=player_informations;

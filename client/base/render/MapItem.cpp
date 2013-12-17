@@ -25,7 +25,7 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
     }
     //align zIndex to "Dyna management" Layer
     int index=-playerLayerIndex;
-    QList<Tiled::Layer *> layers=map->layers();
+    const QList<Tiled::Layer *> &layers=map->layers();
 
     QImage image;
     QGraphicsItem * graphicsItem=NULL;
@@ -35,6 +35,7 @@ void MapItem::addMap(Tiled::Map *map, Tiled::MapRenderer *renderer,const int &pl
     int index2=0;
     while(index2<loopSize)
     {
+        qDebug() << "layers size: " << layers.size();
         mapNameList << layers.at(index2)->name();
         if (Tiled::TileLayer *tileLayer = layers.at(index2)->asTileLayer()) {
             graphicsItem=new TileLayerItem(tileLayer, renderer, this);

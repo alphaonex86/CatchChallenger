@@ -36,9 +36,9 @@ void InternalServer::start_internal_server()
 
     if(!QFakeServer::server.listen())
     {
-        DebugClass::debugConsole(QString("Unable to listen the internal server"));
+        DebugClass::debugConsole(QStringLiteral("Unable to listen the internal server"));
         stat=Down;
-        emit error(QString("Unable to listen the internal server"));
+        emit error(QStringLiteral("Unable to listen the internal server"));
         emit is_started(false);
         return;
     }

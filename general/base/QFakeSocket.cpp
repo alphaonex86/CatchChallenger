@@ -30,7 +30,7 @@ QFakeSocket::~QFakeSocket()
 void QFakeSocket::abort()
 {
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(QString("QFakeSocket::abort()"));
+    DebugClass::debugConsole(QStringLiteral("QFakeSocket::abort()"));
     #endif
     disconnectFromHost();
 }
@@ -40,7 +40,7 @@ void QFakeSocket::disconnectFromHost()
     if(theOtherSocket==NULL)
         return;
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(QString("QFakeSocket::disconnectFromHost()"));
+    DebugClass::debugConsole(QStringLiteral("QFakeSocket::disconnectFromHost()"));
     #endif
     QFakeSocket *tempOtherSocket=theOtherSocket;
     theOtherSocket=NULL;
@@ -58,7 +58,7 @@ void QFakeSocket::disconnectFromFakeServer()
     if(theOtherSocket==NULL)
         return;
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(QString("QFakeSocket::disconnectFromFakeServer()"));
+    DebugClass::debugConsole(QStringLiteral("QFakeSocket::disconnectFromFakeServer()"));
     #endif
     theOtherSocket=NULL;
     {
@@ -72,7 +72,7 @@ void QFakeSocket::disconnectFromFakeServer()
 void QFakeSocket::connectToHost()
 {
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(QString("QFakeSocket::connectToHost()"));
+    DebugClass::debugConsole(QStringLiteral("QFakeSocket::connectToHost()"));
     #endif
     if(theOtherSocket!=NULL)
         return;
@@ -87,7 +87,7 @@ qint64	QFakeSocket::bytesAvailableWithMutex()
     {
         QMutexLocker lock(&mutex);
         #ifdef FAKESOCKETDEBUG
-        DebugClass::debugConsole(QString("bytesAvailable(): data.size(): %1").arg(data.size()));
+        DebugClass::debugConsole(QStringLiteral("bytesAvailable(): data.size(): %1").arg(data.size()));
         #endif
         size=data.size();
     }
@@ -144,7 +144,7 @@ qint64	QFakeSocket::readData(char * rawData, qint64 maxSize)
     QMutexLocker lock(&mutex);
     QByteArray extractedData=this->data.mid(0,maxSize);
     #ifdef FAKESOCKETDEBUG
-    DebugClass::debugConsole(QString("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(QString(extractedData.toHex())));
+    DebugClass::debugConsole(QStringLiteral("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(QString(extractedData.toHex())));
     #endif
     memcpy(rawData,extractedData.data(),extractedData.size());
     this->data.remove(0,extractedData.size());
@@ -163,7 +163,7 @@ qint64	QFakeSocket::writeData(const char * rawData, qint64 size)
     {
         QMutexLocker lock(&mutex);
         #ifdef FAKESOCKETDEBUG
-        DebugClass::debugConsole(QString("writeData(): size: %1").arg(size));
+        DebugClass::debugConsole(QStringLiteral("writeData(): size: %1").arg(size));
         #endif
         dataToSend=QByteArray(rawData,size);
     }
@@ -176,7 +176,7 @@ void QFakeSocket::internal_writeData(QByteArray rawData)
     {
         QMutexLocker lock(&mutex);
         #ifdef FAKESOCKETDEBUG
-        DebugClass::debugConsole(QString("internal_writeData(): size: %1").arg(rawData.size()));
+        DebugClass::debugConsole(QStringLiteral("internal_writeData(): size: %1").arg(rawData.size()));
         #endif
         RX_size+=rawData.size();
         this->data+=rawData;

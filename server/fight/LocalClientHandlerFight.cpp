@@ -70,7 +70,7 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster],monster.level);
         if(monster.hp>currentMonsterStat.hp)
         {
-            emit error(QString("saveMonsterStat() The hp %1 of current monster %2 is greater than the max %3").arg(monster.hp).arg(monster.monster).arg(currentMonsterStat.hp));
+            emit error(QStringLiteral("saveMonsterStat() The hp %1 of current monster %2 is greater than the max %3").arg(monster.hp).arg(monster.monster).arg(currentMonsterStat.hp));
             return;
         }
     }
@@ -82,7 +82,7 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4,`sp`=%5 WHERE `id`=%1;")
+                emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%2,`xp`=%3,`level`=%4,`sp`=%5 WHERE `id`=%1;")
                              .arg(monster.id)
                              .arg(monster.hp)
                              .arg(monster.remaining_xp)
@@ -91,7 +91,7 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
+                emit dbQuery(QStringLiteral("UPDATE monster SET hp=%2,xp=%3,level=%4,sp=%5 WHERE id=%1;")
                              .arg(monster.id)
                              .arg(monster.hp)
                              .arg(monster.remaining_xp)
@@ -108,14 +108,14 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                        emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
                                      .arg(j.value())
                                      .arg(i.key())
                                      .arg(j.key())
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                        emit dbQuery(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
                                      .arg(j.value())
                                      .arg(i.key())
                                      .arg(j.key())
@@ -147,7 +147,7 @@ bool LocalClientHandlerFight::checkKOCurrentMonsters()
     if(getCurrentMonster()->hp==0)
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("You current monster (%1) is KO").arg(getCurrentMonster()->monster));
+        emit message(QStringLiteral("You current monster (%1) is KO").arg(getCurrentMonster()->monster));
         #endif
         saveStat();
         return true;
@@ -171,7 +171,7 @@ bool LocalClientHandlerFight::checkLoose()
     if(!haveAnotherMonsterOnThePlayerToFight())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QString("You have lost, tp to %1 (%2,%3) and heal").arg(player_informations->rescue.map->map_file).arg(player_informations->rescue.x).arg(player_informations->rescue.y));
+        emit message(QStringLiteral("You have lost, tp to %1 (%2,%3) and heal").arg(player_informations->rescue.map->map_file).arg(player_informations->rescue.x).arg(player_informations->rescue.y));
         #endif
         doTurnIfChangeOfMonster=true;
         //teleport
@@ -186,7 +186,7 @@ bool LocalClientHandlerFight::checkLoose()
         emit message("You lost the battle");
         if(!ableToFight)
         {
-            emit error(QString("after lost in fight, remain unable to do a fight"));
+            emit error(QStringLiteral("after lost in fight, remain unable to do a fight"));
             return true;
         }
         #endif
@@ -212,13 +212,13 @@ void LocalClientHandlerFight::healAllMonsters()
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2;")
+                        emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2;")
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+                        emit dbQuery(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2;")
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].hp)
                                      .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                      );
@@ -231,12 +231,12 @@ void LocalClientHandlerFight::healAllMonsters()
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("DELETE FROM `monster_buff` WHERE `monster`=%1")
+                        emit dbQuery(QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1")
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                  );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                        emit dbQuery(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
                                  .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                  );
                     break;
@@ -256,14 +256,14 @@ void LocalClientHandlerFight::healAllMonsters()
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                            emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
                                          .arg(endurance)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
                                          );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                            emit dbQuery(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
                                          .arg(endurance)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].id)
                                          .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index].skill)
@@ -304,13 +304,13 @@ void LocalClientHandlerFight::saveStat()
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                emit error(QString("saveStat() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
+                emit error(QStringLiteral("saveStat() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
                 return;
             }
         if(otherMonster!=NULL)
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                emit error(QString("saveStat() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
+                emit error(QStringLiteral("saveStat() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
                 return;
             }
     }
@@ -319,13 +319,13 @@ void LocalClientHandlerFight::saveStat()
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2;")
+            emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2;")
                          .arg(getCurrentMonster()->hp)
                          .arg(getCurrentMonster()->id)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2;")
+            emit dbQuery(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2;")
                          .arg(getCurrentMonster()->hp)
                          .arg(getCurrentMonster()->id)
                          );
@@ -337,7 +337,7 @@ bool LocalClientHandlerFight::botFightCollision(Map *map,const COORD_TYPE &x,con
 {
     if(isInFight())
     {
-        emit error(QString("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
+        emit error(QStringLiteral("error: map: %1 (%2,%3), is in fight").arg(map->map_file).arg(x).arg(y));
         return false;
     }
     if(player_informations->isFake)
@@ -349,7 +349,7 @@ bool LocalClientHandlerFight::botFightCollision(Map *map,const COORD_TYPE &x,con
         const quint32 &botFightId=botList.at(index);
         if(!player_informations->public_and_private_informations.bot_already_beaten.contains(botFightId))
         {
-            emit message(QString("is now in fight on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(botFightId));
+            emit message(QStringLiteral("is now in fight on map %1 (%2,%3) with the bot %4").arg(map->map_file).arg(x).arg(y).arg(botFightId));
             botFightStart(botFightId);
             return true;
         }
@@ -364,18 +364,18 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
 {
     if(isInFight())
     {
-        emit error(QString("error: is already in fight"));
+        emit error(QStringLiteral("error: is already in fight"));
         return false;
     }
     if(!CommonDatapack::commonDatapack.botFights.contains(botFightId))
     {
-        emit error(QString("error: bot id %1 not found").arg(botFightId));
+        emit error(QStringLiteral("error: bot id %1 not found").arg(botFightId));
         return false;
     }
     const BotFight &botFight=CommonDatapack::commonDatapack.botFights[botFightId];
     if(botFight.monsters.isEmpty())
     {
-        emit error(QString("error: bot id %1 have no monster to fight").arg(botFightId));
+        emit error(QStringLiteral("error: bot id %1 have no monster to fight").arg(botFightId));
         return false;
     }
     startTheFight();
@@ -391,7 +391,7 @@ bool LocalClientHandlerFight::botFightStart(const quint32 &botFightId)
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(botFightMonsters.isEmpty())
     {
-        emit error(QString("error: after the bot add, remaing empty").arg(botFightId));
+        emit error(QStringLiteral("error: after the bot add, remaing empty").arg(botFightId));
         return false;
     }
     #endif
@@ -455,7 +455,7 @@ void LocalClientHandlerFight::wildDrop(const quint32 &monster)
             else
                 quantity=rand()%(drops.at(index).quantity_max-drops.at(index).quantity_min+1)+drops.at(index).quantity_min;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            emit message(QString("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
+            emit message(QStringLiteral("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
             #endif
             emit addObjectAndSend(drops.at(index).item,quantity);
         }
@@ -496,7 +496,7 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                         quint32 sp=CommonDatapack::commonDatapack.monsterSkills[learn.learnSkill].level.at(learn.learnSkillLevel).sp_to_learn;
                         if(sp>monster.sp)
                         {
-                            emit error(QString("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));
+                            emit error(QStringLiteral("The attack require %1 sp to be learned, you have only %2").arg(sp).arg(monster.sp));
                             return false;
                         }
                         player_informations->public_and_private_informations.playerMonster[index].sp-=sp;
@@ -504,13 +504,13 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                         {
                             default:
                             case ServerSettings::Database::DatabaseType_Mysql:
-                                emit dbQuery(QString("UPDATE `monster` SET `sp`=%1 WHERE `id`=%2;")
+                                emit dbQuery(QStringLiteral("UPDATE `monster` SET `sp`=%1 WHERE `id`=%2;")
                                              .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
                                              .arg(monsterId)
                                              );
                             break;
                             case ServerSettings::Database::DatabaseType_SQLite:
-                                emit dbQuery(QString("UPDATE monster SET sp=%1 WHERE id=%2;")
+                                emit dbQuery(QStringLiteral("UPDATE monster SET sp=%1 WHERE id=%2;")
                                              .arg(player_informations->public_and_private_informations.playerMonster[index].sp)
                                              .arg(monsterId)
                                              );
@@ -527,14 +527,14 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                             {
                                 default:
                                 case ServerSettings::Database::DatabaseType_Mysql:
-                                    emit dbQuery(QString("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,1,%3);")
+                                    emit dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,1,%3);")
                                                  .arg(monsterId)
                                                  .arg(temp.skill)
                                                  .arg(temp.endurance)
                                                  );
                                 break;
                                 case ServerSettings::Database::DatabaseType_SQLite:
-                                    emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,1,%3);")
+                                    emit dbQuery(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,1,%3);")
                                                  .arg(monsterId)
                                                  .arg(temp.skill)
                                                  .arg(temp.endurance)
@@ -549,14 +549,14 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                             {
                                 default:
                                 case ServerSettings::Database::DatabaseType_Mysql:
-                                    emit dbQuery(QString("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                                    emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3;")
                                                  .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index2].level)
                                                  .arg(monsterId)
                                                  .arg(skill)
                                                  );
                                 break;
                                 case ServerSettings::Database::DatabaseType_SQLite:
-                                    emit dbQuery(QString("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
+                                    emit dbQuery(QStringLiteral("UPDATE monster_skill SET level=%1 WHERE monster=%2 AND skill=%3;")
                                                  .arg(player_informations->public_and_private_informations.playerMonster[index].skills[sub_index2].level)
                                                  .arg(monsterId)
                                                  .arg(skill)
@@ -569,12 +569,12 @@ bool LocalClientHandlerFight::learnSkillInternal(const quint32 &monsterId,const 
                 }
                 sub_index++;
             }
-            emit error(QString("The skill %1 is not into learn skill list for the monster").arg(skill));
+            emit error(QStringLiteral("The skill %1 is not into learn skill list for the monster").arg(skill));
             return false;
         }
         index++;
     }
-    emit error(QString("The monster is not found: %1").arg(monsterId));
+    emit error(QStringLiteral("The monster is not found: %1").arg(monsterId));
     return false;
 }
 
@@ -591,7 +591,7 @@ void LocalClientHandlerFight::registerBattleRequest(LocalClientHandlerFight * ot
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    emit message(QString("%1 have requested battle with you").arg(otherPlayerBattle->player_informations->public_and_private_informations.public_informations.pseudo));
+    emit message(QStringLiteral("%1 have requested battle with you").arg(otherPlayerBattle->player_informations->public_and_private_informations.public_informations.pseudo));
     #endif
     this->otherPlayerBattle=otherPlayerBattle;
     otherPlayerBattle->otherPlayerBattle=this;
@@ -682,7 +682,7 @@ void LocalClientHandlerFight::internalBattleCanceled(const bool &send)
     if(send)
     {
             emit sendFullPacket(0xE0,0x0007);
-            emit receiveSystemText(QString("Battle declined"));
+            emit receiveSystemText(QStringLiteral("Battle declined"));
     }
     battleIsValidated=false;
     mHaveCurrentSkill=false;
@@ -883,7 +883,7 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE `monster` SET `level`=%2,`hp`=%3,`xp`=%2,`sp`=%3 WHERE `id`=%1;")
+                    emit dbQuery(QStringLiteral("UPDATE `monster` SET `level`=%2,`hp`=%3,`xp`=%2,`sp`=%3 WHERE `id`=%1;")
                                  .arg(getCurrentMonster()->id)
                                  .arg(getCurrentMonster()->level)
                                  .arg(getCurrentMonster()->hp)
@@ -892,7 +892,7 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET level=%2,hp=%3,xp=%2,sp=%3 WHERE id=%1;")
+                    emit dbQuery(QStringLiteral("UPDATE monster SET level=%2,hp=%3,xp=%2,sp=%3 WHERE id=%1;")
                                  .arg(getCurrentMonster()->id)
                                  .arg(getCurrentMonster()->level)
                                  .arg(getCurrentMonster()->hp)
@@ -906,14 +906,14 @@ bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
             {
                 default:
                 case ServerSettings::Database::DatabaseType_Mysql:
-                    emit dbQuery(QString("UPDATE `monster` SET `xp`=%2,`sp`=%3 WHERE `id`=%1;")
+                    emit dbQuery(QStringLiteral("UPDATE `monster` SET `xp`=%2,`sp`=%3 WHERE `id`=%1;")
                                  .arg(getCurrentMonster()->id)
                                  .arg(getCurrentMonster()->remaining_xp)
                                  .arg(getCurrentMonster()->sp)
                                  );
                 break;
                 case ServerSettings::Database::DatabaseType_SQLite:
-                    emit dbQuery(QString("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
+                    emit dbQuery(QStringLiteral("UPDATE monster SET xp=%2,sp=%3 WHERE id=%1;")
                                  .arg(getCurrentMonster()->id)
                                  .arg(getCurrentMonster()->remaining_xp)
                                  .arg(getCurrentMonster()->sp)
@@ -948,13 +948,13 @@ bool LocalClientHandlerFight::finishTheTurn(const bool &isBot)
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("INSERT INTO `bot_already_beaten`(`character`,`botfight_id`) VALUES(%1,%2);")
+                            emit dbQuery(QStringLiteral("INSERT INTO `bot_already_beaten`(`character`,`botfight_id`) VALUES(%1,%2);")
                                          .arg(player_informations->character_id)
                                          .arg(botFightId)
                                          );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2);")
+                            emit dbQuery(QStringLiteral("INSERT INTO bot_already_beaten(character,botfight_id) VALUES(%1,%2);")
                                          .arg(player_informations->character_id)
                                          .arg(botFightId)
                                          );
@@ -962,10 +962,10 @@ bool LocalClientHandlerFight::finishTheTurn(const bool &isBot)
                     }
                 }
                 emit fightOrBattleFinish(win,botFightId);
-                emit message(QString("Register the win against the bot fight: %1").arg(botFightId));
+                emit message(QStringLiteral("Register the win against the bot fight: %1").arg(botFightId));
             }
             else
-                emit message(QString("Have win agains a wild monster"));
+                emit message(QStringLiteral("Have win agains a wild monster"));
         }
         emit fightOrBattleFinish(win,0);
     }
@@ -974,7 +974,7 @@ bool LocalClientHandlerFight::finishTheTurn(const bool &isBot)
 
 bool LocalClientHandlerFight::useSkill(const quint32 &skill)
 {
-    emit message(QString("use the skill: %1").arg(skill));
+    emit message(QStringLiteral("use the skill: %1").arg(skill));
     if(!isInBattle())//wild or bot
     {
         bool isBot=!botFightMonsters.isEmpty();
@@ -1020,7 +1020,7 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
         {
             dropKOCurrentMonster();
             dropKOOtherMonster();
-            emit message(QString("Have win agains the current monster"));
+            emit message(QStringLiteral("Have win agains the current monster"));
         }
         else
         {
@@ -1031,7 +1031,7 @@ bool LocalClientHandlerFight::checkIfCanDoTheTurn()
             LocalClientHandlerFight *tempOtherPlayerBattle=otherPlayerBattle;
             checkLoose();
             tempOtherPlayerBattle->checkLoose();
-            emit message(QString("Have win the battle"));
+            emit message(QStringLiteral("Have win the battle"));
             if(youWin)
                 emitBattleWin();
             if(theOtherWin)
@@ -1098,8 +1098,8 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`) VALUES(%1,%2);")
-                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
+            emit dbQuery(QStringLiteral("INSERT INTO `monster`(`id`,`hp`,`character`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`place`,`position`) VALUES(%1,%2);")
+                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(monster_id)
                               .arg(newMonster.hp)
                               .arg(player_informations->character_id)
@@ -1110,7 +1110,7 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
                               .arg(newMonster.captured_with)
                               .arg(FacilityLib::genderToString(newMonster.gender))
                               )
-                         .arg(QString("%1,%2,%3,%4")
+                         .arg(QStringLiteral("%1,%2,%3,%4")
                               .arg(newMonster.egg_step)
                               .arg(player_informations->character_id)
                               .arg(place)
@@ -1119,8 +1119,8 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,place,position) VALUES(%1,%2);")
-                         .arg(QString("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
+            emit dbQuery(QStringLiteral("INSERT INTO monster(id,hp,character,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,place,position) VALUES(%1,%2);")
+                         .arg(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,\"%9\"")
                               .arg(monster_id)
                               .arg(newMonster.hp)
                               .arg(player_informations->character_id)
@@ -1131,7 +1131,7 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
                               .arg(newMonster.captured_with)
                               .arg(FacilityLib::genderToString(newMonster.gender))
                               )
-                         .arg(QString("%1,%2,%3,%4")
+                         .arg(QStringLiteral("%1,%2,%3,%4")
                               .arg(newMonster.egg_step)
                               .arg(player_informations->character_id)
                               .arg(place)
@@ -1147,7 +1147,7 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
+                emit dbQuery(QStringLiteral("INSERT INTO `monster_skill`(`monster`,`skill`,`level`,`endurance`) VALUES(%1,%2,%3,%4);")
                              .arg(monster_id)
                              .arg(newMonster.skills.at(index).skill)
                              .arg(newMonster.skills.at(index).level)
@@ -1155,7 +1155,7 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
+                emit dbQuery(QStringLiteral("INSERT INTO monster_skill(monster,skill,level,endurance) VALUES(%1,%2,%3,%4);")
                              .arg(monster_id)
                              .arg(newMonster.skills.at(index).skill)
                              .arg(newMonster.skills.at(index).level)
@@ -1172,14 +1172,14 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
+                emit dbQuery(QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
                              .arg(monster_id)
                              .arg(newMonster.buffs.at(index).buff)
                              .arg(newMonster.buffs.at(index).level)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
+                emit dbQuery(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
                              .arg(monster_id)
                              .arg(newMonster.buffs.at(index).buff)
                              .arg(newMonster.buffs.at(index).level)
@@ -1229,14 +1229,14 @@ int LocalClientHandlerFight::addCurrentBuffEffect(const Skill::BuffEffect &effec
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
+                            emit dbQuery(QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
                                      .arg(otherPlayerBattle->getCurrentMonster()->id)
                                      .arg(effect.buff)
                                      .arg(effect.level)
                                      );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
+                            emit dbQuery(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
                                      .arg(otherPlayerBattle->getCurrentMonster()->id)
                                      .arg(effect.buff)
                                      .arg(effect.level)
@@ -1250,14 +1250,14 @@ int LocalClientHandlerFight::addCurrentBuffEffect(const Skill::BuffEffect &effec
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
+                        emit dbQuery(QStringLiteral("INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3);")
                                  .arg(getCurrentMonster()->id)
                                  .arg(effect.buff)
                                  .arg(effect.level)
                                  );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
+                        emit dbQuery(QStringLiteral("INSERT INTO monster_buff(monster,buff,level) VALUES(%1,%2,%3);")
                                  .arg(getCurrentMonster()->id)
                                  .arg(effect.buff)
                                  .arg(effect.level)
@@ -1279,14 +1279,14 @@ int LocalClientHandlerFight::addCurrentBuffEffect(const Skill::BuffEffect &effec
                     {
                         default:
                         case ServerSettings::Database::DatabaseType_Mysql:
-                            emit dbQuery(QString("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND buff=%2;")
+                            emit dbQuery(QStringLiteral("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND buff=%2;")
                                          .arg(otherPlayerBattle->getCurrentMonster()->id)
                                          .arg(effect.buff)
                                          .arg(effect.level)
                                          );
                         break;
                         case ServerSettings::Database::DatabaseType_SQLite:
-                            emit dbQuery(QString("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
+                            emit dbQuery(QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
                                          .arg(otherPlayerBattle->getCurrentMonster()->id)
                                          .arg(effect.buff)
                                          .arg(effect.level)
@@ -1300,14 +1300,14 @@ int LocalClientHandlerFight::addCurrentBuffEffect(const Skill::BuffEffect &effec
                 {
                     default:
                     case ServerSettings::Database::DatabaseType_Mysql:
-                        emit dbQuery(QString("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND `buff`=%2;")
+                        emit dbQuery(QStringLiteral("UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND `buff`=%2;")
                                      .arg(getCurrentMonster()->id)
                                      .arg(effect.buff)
                                      .arg(effect.level)
                                      );
                     break;
                     case ServerSettings::Database::DatabaseType_SQLite:
-                        emit dbQuery(QString("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
+                        emit dbQuery(QStringLiteral("UPDATE monster SET level=%3 WHERE monster=%1 AND buff=%2;")
                                      .arg(getCurrentMonster()->id)
                                      .arg(effect.buff)
                                      .arg(effect.level)
@@ -1357,13 +1357,13 @@ void LocalClientHandlerFight::saveMonsterPosition(const quint32 &monsterId,const
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
+            emit dbQuery(QStringLiteral("UPDATE `monster` SET `position`=%1 WHERE `id`=%2;")
                          .arg(monsterPosition)
                          .arg(monsterId)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("UPDATE monster SET position=%1 WHERE id=%2;")
+            emit dbQuery(QStringLiteral("UPDATE monster SET position=%1 WHERE id=%2;")
                          .arg(monsterPosition)
                          .arg(monsterId)
                          );
@@ -1429,7 +1429,7 @@ Skill::AttackReturn LocalClientHandlerFight::generateOtherAttack()
             skillLevel=1;
         else
         {
-            emit error(QString("Unable to fight because the current monster have not the skill %3").arg(skill));
+            emit error(QStringLiteral("Unable to fight because the current monster have not the skill %3").arg(skill));
             return attackReturnTemp;
         }
     }
@@ -1467,14 +1467,14 @@ quint8 LocalClientHandlerFight::decreaseSkillEndurance(const quint32 &skill)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
+                emit dbQuery(QStringLiteral("UPDATE `monster_skill` SET `endurance`=%1 WHERE `monster`=%2 AND `skill`=%3;")
                              .arg(newEndurance)
                              .arg(currentMonster->id)
                              .arg(skill)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
+                emit dbQuery(QStringLiteral("UPDATE monster_skill SET endurance=%1 WHERE monster=%2 AND skill=%3;")
                              .arg(newEndurance)
                              .arg(currentMonster->id)
                              .arg(skill)
@@ -1500,13 +1500,13 @@ void LocalClientHandlerFight::confirmEvolutionTo(PlayerMonster * playerMonster,c
     if(currentMonster!=NULL)
         if(currentMonster->hp>currentMonsterStat.hp)
         {
-            emit error(QString("confirmEvolutionTo() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
+            emit error(QStringLiteral("confirmEvolutionTo() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->hp).arg(currentMonster->monster).arg(currentMonsterStat.hp));
             return;
         }
     if(otherMonster!=NULL)
         if(otherMonster->hp>otherMonsterStat.hp)
         {
-            emit error(QString("confirmEvolutionTo() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
+            emit error(QStringLiteral("confirmEvolutionTo() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->hp).arg(otherMonster->monster).arg(otherMonsterStat.hp));
             return;
         }
     #endif
@@ -1515,14 +1515,14 @@ void LocalClientHandlerFight::confirmEvolutionTo(PlayerMonster * playerMonster,c
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE `monster` SET `hp`=%1,`monster`=%2 WHERE `id`=%3")
+            emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%1,`monster`=%2 WHERE `id`=%3")
                          .arg(playerMonster->hp)
                          .arg(playerMonster->monster)
                          .arg(playerMonster->id)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3;")
+            emit dbQuery(QStringLiteral("UPDATE monster SET hp=%1,monster=%2 WHERE id=%3;")
                          .arg(playerMonster->hp)
                          .arg(playerMonster->monster)
                          .arg(playerMonster->id)
@@ -1572,13 +1572,13 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                emit error(QString("hpChange() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QStringLiteral("hpChange() The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
         if(otherMonster!=NULL)
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                emit error(QString("hpChange() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
+                emit error(QStringLiteral("hpChange() The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
     }
@@ -1593,13 +1593,13 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
         if(currentMonster!=NULL)
             if(currentMonster->hp>currentMonsterStat.hp)
             {
-                emit error(QString("hpChange() after The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
+                emit error(QStringLiteral("hpChange() after The hp %1 of current monster %2 is greater than the max %3").arg(currentMonster->monster).arg(currentMonster->hp).arg(currentMonsterStat.hp));
                 return;
             }
         if(otherMonster!=NULL)
             if(otherMonster->hp>otherMonsterStat.hp)
             {
-                emit error(QString("hpChange() after The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
+                emit error(QStringLiteral("hpChange() after The hp %1 of other monster %2 is greater than the max %3").arg(otherMonster->monster).arg(otherMonster->hp).arg(otherMonsterStat.hp));
                 return;
             }
     }
@@ -1608,13 +1608,13 @@ void LocalClientHandlerFight::hpChange(PlayerMonster * currentMonster, const qui
     {
         default:
         case ServerSettings::Database::DatabaseType_Mysql:
-            emit dbQuery(QString("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2")
+            emit dbQuery(QStringLiteral("UPDATE `monster` SET `hp`=%1 WHERE `id`=%2")
                          .arg(newHpValue)
                          .arg(currentMonster->id)
                          );
         break;
         case ServerSettings::Database::DatabaseType_SQLite:
-            emit dbQuery(QString("UPDATE monster SET hp=%1 WHERE id=%2")
+            emit dbQuery(QStringLiteral("UPDATE monster SET hp=%1 WHERE id=%2")
                          .arg(newHpValue)
                          .arg(currentMonster->id)
                          );
@@ -1631,13 +1631,13 @@ bool LocalClientHandlerFight::removeBuffOnMonster(PlayerMonster * currentMonster
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2")
+                emit dbQuery(QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2")
                              .arg(currentMonster->id)
                              .arg(buffId)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2")
+                emit dbQuery(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1 AND buff=%2")
                              .arg(currentMonster->id)
                              .arg(buffId)
                              );
@@ -1656,12 +1656,12 @@ bool LocalClientHandlerFight::removeAllBuffOnMonster(PlayerMonster * currentMons
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-                emit dbQuery(QString("DELETE FROM `monster_buff` WHERE `monster`=%1")
+                emit dbQuery(QStringLiteral("DELETE FROM `monster_buff` WHERE `monster`=%1")
                              .arg(currentMonster->id)
                              );
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                emit dbQuery(QString("DELETE FROM monster_buff WHERE monster=%1")
+                emit dbQuery(QStringLiteral("DELETE FROM monster_buff WHERE monster=%1")
                              .arg(currentMonster->id)
                              );
             break;

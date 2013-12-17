@@ -104,7 +104,7 @@ bool ClientFightEngine::haveWin()
         }
         else
         {
-            emit message(QString("remain %1 wild monsters").arg(wildMonsters.size()));
+            emit message(QStringLiteral("remain %1 wild monsters").arg(wildMonsters.size()));
             return false;
         }
     }
@@ -125,7 +125,7 @@ bool ClientFightEngine::haveWin()
         }
         else
         {
-            emit message(QString("remain %1 bot monsters").arg(botFightMonsters.size()));
+            emit message(QStringLiteral("remain %1 bot monsters").arg(botFightMonsters.size()));
             return false;
         }
     }
@@ -146,7 +146,7 @@ bool ClientFightEngine::haveWin()
         }
         else
         {
-            emit message(QString("remain %1 battle monsters").arg(battleCurrentMonster.size()));
+            emit message(QStringLiteral("remain %1 battle monsters").arg(battleCurrentMonster.size()));
             return false;
         }
     }

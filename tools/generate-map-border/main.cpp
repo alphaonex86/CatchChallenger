@@ -172,7 +172,7 @@ int createBorder(QString file)
     {
         QString mapBorderFile;
         //check the left map
-        mapBorderFile=QString("%1.%2.tmx").arg(x-1).arg(y);
+        mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x-1).arg(y);
         if(mapHeight.contains(mapBorderFile))
         {
             if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
@@ -236,7 +236,7 @@ int createBorder(QString file)
             }
         }
         //check the right map
-        mapBorderFile=QString("%1.%2.tmx").arg(x+1).arg(y);
+        mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x+1).arg(y);
         if(mapHeight.contains(mapBorderFile))
         {
             if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
@@ -267,7 +267,7 @@ int createBorder(QString file)
             }
         }
         //check the top map
-        mapBorderFile=QString("%1.%2.tmx").arg(x).arg(y-1);
+        mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x).arg(y-1);
         if(mapWidth.contains(mapBorderFile))
         {
             if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
@@ -298,7 +298,7 @@ int createBorder(QString file)
             }
         }
         //check the bottom map
-        mapBorderFile=QString("%1.%2.tmx").arg(x).arg(y+1);
+        mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x).arg(y+1);
         if(mapWidth.contains(mapBorderFile))
         {
             if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
@@ -455,7 +455,7 @@ int createBorder(QString file)
                             warpDescriptor.destY=values.at(3).toInt(&ok);
                             if(!ok)
                                 continue;
-                            warpDescriptor.destMap=QString("%1.%2.tmx").arg(values.at(4)).arg(values.at(5));
+                            warpDescriptor.destMap=QStringLiteral("%1.%2.tmx").arg(values.at(4)).arg(values.at(5));
                             if(!warpList.contains(QPair<int,int>(warpDescriptor.x,warpDescriptor.y)))
                                 warpList[QPair<int,int>(warpDescriptor.x,warpDescriptor.y)]=warpDescriptor;
                             values.clear();
@@ -500,20 +500,20 @@ int createBorder(QString file)
         QFile tempFile(botsFile);
         if(tempFile.open(QIODevice::WriteOnly))
         {
-            tempFile.write(QString("<bots>\n").toUtf8());
+            tempFile.write(QStringLiteral("<bots>\n").toUtf8());
             int index=0;
             while(index<botList.size())
             {
-                tempFile.write(QString("  <bot id=\"%1\">\n").arg(botId).toUtf8());
+                tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
                 if(botList.at(index).fightMonsterId.isEmpty())
                 {
-                    tempFile.write(QString("    <step id=\"1\" type=\"text\">\n").toUtf8());
-                    tempFile.write(QString("      <text><![CDATA[%1]]></text>\n").arg(botList.at(index).text.join("<br />")).toUtf8());
-                    tempFile.write(QString("    </step>\n").toUtf8());
+                    tempFile.write(QStringLiteral("    <step id=\"1\" type=\"text\">\n").toUtf8());
+                    tempFile.write(QStringLiteral("      <text><![CDATA[%1]]></text>\n").arg(botList.at(index).text.join("<br />")).toUtf8());
+                    tempFile.write(QStringLiteral("    </step>\n").toUtf8());
                 }
                 else
                 {
-                    tempFile.write(QString("    <step type=\"fight\" id=\"1\" fightid=\"%1\" />\n").arg(fightid).toUtf8());
+                    tempFile.write(QStringLiteral("    <step type=\"fight\" id=\"1\" fightid=\"%1\" />\n").arg(fightid).toUtf8());
                     FightDescriptor fightDescriptor;
                     if(botList.at(index).text.size()>=1)
                         fightDescriptor.start=botList.at(index).text.first();
@@ -530,7 +530,7 @@ int createBorder(QString file)
                     fightList << fightDescriptor;
                     fightid++;
                 }
-                tempFile.write(QString("  </bot>\n").toUtf8());
+                tempFile.write(QStringLiteral("  </bot>\n").toUtf8());
                 {
                     Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botList.at(index).x,botList.at(index).y+1),QSizeF(1,1));
                     mapObject->setProperty("file",botsFile);
@@ -559,7 +559,7 @@ int createBorder(QString file)
                 botId++;
                 index++;
             }
-            tempFile.write(QString("</bots>").toUtf8());
+            tempFile.write(QStringLiteral("</bots>").toUtf8());
             tempFile.close();
         }
     }
@@ -571,25 +571,25 @@ int createBorder(QString file)
         QFile tempFile("../fight/"+fightsFile);
         if(tempFile.open(QIODevice::WriteOnly))
         {
-            tempFile.write(QString("<fights>\n").toUtf8());
+            tempFile.write(QStringLiteral("<fights>\n").toUtf8());
             int index=0;
             while(index<fightList.size())
             {
-                tempFile.write(QString("  <fight id=\"%1\">\n").arg(fightList.at(index).id).toUtf8());
+                tempFile.write(QStringLiteral("  <fight id=\"%1\">\n").arg(fightList.at(index).id).toUtf8());
                 if(!fightList.at(index).start.isEmpty())
-                    tempFile.write(QString("    <start><![CDATA[%1]]></start>\n").arg(fightList.at(index).start).toUtf8());
+                    tempFile.write(QStringLiteral("    <start><![CDATA[%1]]></start>\n").arg(fightList.at(index).start).toUtf8());
                 if(!fightList.at(index).win.isEmpty())
-                    tempFile.write(QString("    <win><![CDATA[%1]]></win>\n").arg(fightList.at(index).win).toUtf8());
+                    tempFile.write(QStringLiteral("    <win><![CDATA[%1]]></win>\n").arg(fightList.at(index).win).toUtf8());
                 int sub_index=0;
                 while(sub_index<fightList.at(index).fightMonsterId.size())
                 {
-                    tempFile.write(QString("    <monster id=\"%1\" level=\"%2\" />\n").arg(fightList.at(index).fightMonsterId.at(sub_index)).arg(fightList.at(index).fightMonsterLevel.at(sub_index)).toUtf8());
+                    tempFile.write(QStringLiteral("    <monster id=\"%1\" level=\"%2\" />\n").arg(fightList.at(index).fightMonsterId.at(sub_index)).arg(fightList.at(index).fightMonsterLevel.at(sub_index)).toUtf8());
                     sub_index++;
                 }
-                tempFile.write(QString("  </fight>\n").toUtf8());
+                tempFile.write(QStringLiteral("  </fight>\n").toUtf8());
                 index++;
             }
-            tempFile.write(QString("</fights>").toUtf8());
+            tempFile.write(QStringLiteral("</fights>").toUtf8());
             tempFile.close();
         }
     }
@@ -698,7 +698,7 @@ int main(int argc, char *argv[])
         while (!mapNames.atEnd()) {
             QStringList values=QString::fromUtf8(mapNames.readLine()).split(",");
             if(values.size()==3)
-                fileToName[QString("%1.%2.tmx").arg(values.at(0)).arg(values.at(1))]=values.at(2);
+                fileToName[QStringLiteral("%1.%2.tmx").arg(values.at(0)).arg(values.at(1))]=values.at(2);
         }
         mapNames.close();
     }

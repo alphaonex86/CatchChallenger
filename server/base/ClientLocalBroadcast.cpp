@@ -25,7 +25,7 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
         return;
     if(this->player_informations==NULL)
         return;
-    emit message(QString("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+    emit message(QStringLiteral("[chat local] %1: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_local,text);
 
     int size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
@@ -41,7 +41,7 @@ void ClientLocalBroadcast::sendLocalChatText(const QString &text)
 void ClientLocalBroadcast::receiveChatText(const QString &text,const Player_internal_informations *sender_informations)
 {
     /* Multiple message when multiple player connected
-    emit message(QString("receiveChatText(), text: %1, sender_character: %2, to player: %3").arg(text).arg(sender_character).arg(player_informations.id)); */
+    emit message(QStringLiteral("receiveChatText(), text: %1, sender_character: %2, to player: %3").arg(text).arg(sender_character).arg(player_informations.id)); */
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);
@@ -59,7 +59,7 @@ bool ClientLocalBroadcast::singleMove(const Direction &direction)
 {
     if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
     {
-        emit error(QString("ClientLocalBroadcast::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
+        emit error(QStringLiteral("ClientLocalBroadcast::singleMove(), can go into this direction: %1 with map: %2(%3,%4)").arg(MoveOnTheMap::directionToString(direction)).arg(map->map_file).arg(x).arg(y));
         return false;
     }
     Map *old_map=map;
@@ -79,7 +79,7 @@ void ClientLocalBroadcast::insertClient(Map *map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.contains(this))
-        emit message(QString("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
+        emit message(QStringLiteral("static_cast<MapServer *>(map)->clientsForBroadcast already have this"));
     else
     #endif
     static_cast<MapServer *>(map)->clientsForBroadcast << this;
@@ -91,7 +91,7 @@ void ClientLocalBroadcast::removeClient(Map *map, const bool &withDestroy)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1)
-        emit message(QString("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: %1").arg(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)));
+        emit message(QStringLiteral("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: %1").arg(static_cast<MapServer *>(map)->clientsForBroadcast.count(this)));
     #endif
     static_cast<MapServer *>(map)->clientsForBroadcast.removeOne(this);
 

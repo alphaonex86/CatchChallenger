@@ -73,16 +73,16 @@ void ClientBroadCast::sendPM(const QString &text,const QString &pseudo)
     }
     if(!playerByPseudo.contains(pseudo))
     {
-        receiveSystemText(QString("unable to found the connected player: pseudo: \"%1\"").arg(pseudo),false);
+        receiveSystemText(QStringLiteral("unable to found the connected player: pseudo: \"%1\"").arg(pseudo),false);
         if(GlobalServerData::serverSettings.anonymous)
-            emit message(QString("%1 have try send message to not connected user").arg(this->player_informations->character_id));
+            emit message(QStringLiteral("%1 have try send message to not connected user").arg(this->player_informations->character_id));
         else
-            emit message(QString("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
+            emit message(QStringLiteral("%1 have try send message to not connected user: %2").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo));
         return;
     }
     if(!GlobalServerData::serverSettings.anonymous)
-        emit message(QString("[chat PM]: %1 -> %2: %3").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
-    BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QString("to %1: %2").arg(pseudo).arg(text));
+        emit message(QStringLiteral("[chat PM]: %1 -> %2: %3").arg(this->player_informations->public_and_private_informations.public_informations.pseudo).arg(pseudo).arg(text));
+    BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->player_informations->public_and_private_informations.public_informations.pseudo,Chat_type_pm,QStringLiteral("to %1: %2").arg(pseudo).arg(text));
     playerByPseudo[pseudo]->receiveChatText(Chat_type_pm,text,this->player_informations);
 }
 
@@ -132,7 +132,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
         else
         {
             if(!GlobalServerData::serverSettings.anonymous)
-                emit message(QString("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(clan).arg(text));
+                emit message(QStringLiteral("[chat] %1: To the clan %2: %3").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(clan).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             QList<ClientBroadCast *> playerWithSameClan = playerByClan.values(clan);
             int size=playerWithSameClan.size();
@@ -152,7 +152,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
         if(player_informations->public_and_private_informations.public_informations.type==Player_type_gm || player_informations->public_and_private_informations.public_informations.type==Player_type_dev)
         {
             if(!GlobalServerData::serverSettings.anonymous)
-                emit message(QString("[chat] %1: To the system chat: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+                emit message(QStringLiteral("[chat] %1: To the system chat: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
             BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
             QSetIterator<ClientBroadCast *> i(clientBroadCastList);
             while (i.hasNext())
@@ -169,7 +169,7 @@ void ClientBroadCast::sendChatText(const Chat_type &chatType,const QString &text
     else
     {
         if(!GlobalServerData::serverSettings.anonymous)
-            emit message(QString("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
+            emit message(QStringLiteral("[chat all] %1: %2").arg(player_informations->public_and_private_informations.public_informations.pseudo).arg(text));
         BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(player_informations->public_and_private_informations.public_informations.pseudo,chatType,text);
         int size=clientBroadCastList.size();
         int index=0;
@@ -218,14 +218,14 @@ void ClientBroadCast::kick()
 
 void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString &extraText)
 {
-    emit message(QString("command: %1, text: %2").arg(command).arg(extraText));
+    emit message(QStringLiteral("command: %1, text: %2").arg(command).arg(extraText));
     if(command=="chat")
     {
         QStringList list=extraText.split(' ');
         if(list.size()<2)
         {
-            receiveSystemText(QString("command not understand").arg(extraText));
-            emit message(QString("command not understand").arg(extraText));
+            receiveSystemText(QStringLiteral("command not understand").arg(extraText));
+            emit message(QStringLiteral("command not understand").arg(extraText));
             return;
         }
         if(list.first()=="system")
@@ -242,8 +242,8 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
         }
         else
         {
-            receiveSystemText(QString("command not understand").arg(extraText));
-            emit message(QString("command not understand").arg(extraText));
+            receiveSystemText(QStringLiteral("command not understand").arg(extraText));
+            emit message(QStringLiteral("command not understand").arg(extraText));
             return;
         }
     }
@@ -252,14 +252,14 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
         QStringList list=extraText.split(' ');
         if(list.size()!=2)
         {
-            receiveSystemText(QString("command not understand").arg(extraText));
-            emit message(QString("command not understand").arg(extraText));
+            receiveSystemText(QStringLiteral("command not understand").arg(extraText));
+            emit message(QStringLiteral("command not understand").arg(extraText));
             return;
         }
         if(!playerByPseudo.contains(list.first()))
         {
-            receiveSystemText(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
-            emit message(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
+            receiveSystemText(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
+            emit message(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
             return;
         }
         if(list.last()=="normal")
@@ -272,15 +272,15 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             playerByPseudo[extraText]->setRights(Player_type_dev);
         else
         {
-            receiveSystemText(QString("unable to found this rights level: \"%1\"").arg(list.last()));
-            emit message(QString("unable to found this rights level: \"%1\"").arg(list.last()));
+            receiveSystemText(QStringLiteral("unable to found this rights level: \"%1\"").arg(list.last()));
+            emit message(QStringLiteral("unable to found this rights level: \"%1\"").arg(list.last()));
             return;
         }
     }
     else if(command=="playerlist")
     {
         if(playerByPseudo.size()==1)
-            receiveSystemText(QString("You are alone on the server!"));
+            receiveSystemText(QStringLiteral("You are alone on the server!"));
         else
         {
             QStringList playerStringList;
@@ -291,16 +291,16 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
                 playerStringList << "<b>"+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+"</b>";
                 ++i_playerByPseudo;
             }
-            receiveSystemText(QString("players connected: %1").arg(playerStringList.join(", ")));
+            receiveSystemText(QStringLiteral("players connected: %1").arg(playerStringList.join(", ")));
         }
         return;
     }
     else if(command=="playernumber")
     {
         if(playerByPseudo.size()==1)
-            receiveSystemText(QString("You are alone on the server!"));
+            receiveSystemText(QStringLiteral("You are alone on the server!"));
         else
-            receiveSystemText(QString("<b>%1</b> players connected").arg(playerByPseudo.size()));
+            receiveSystemText(QStringLiteral("<b>%1</b> players connected").arg(playerByPseudo.size()));
         return;
     }
     else if(command=="kick")
@@ -308,16 +308,16 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
         //drop, and do the command here to separate the loop
         if(!playerByPseudo.contains(extraText))
         {
-            receiveSystemText(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
-            emit message(QString("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
+            receiveSystemText(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
+            emit message(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(extraText));
             return;
         }
         playerByPseudo[extraText]->kick();
-        sendSystemMessage(QString("%1 have been kicked by %2").arg(extraText).arg(player_informations->public_and_private_informations.public_informations.pseudo));
+        sendSystemMessage(QStringLiteral("%1 have been kicked by %2").arg(extraText).arg(player_informations->public_and_private_informations.public_informations.pseudo));
         return;
     }
     else
-        emit message(QString("unknow command: %1, text: %2").arg(command).arg(extraText));
+        emit message(QStringLiteral("unknow command: %1, text: %2").arg(command).arg(extraText));
 }
 
 void ClientBroadCast::setRights(const Player_type& type)

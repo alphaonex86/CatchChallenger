@@ -63,7 +63,7 @@ void NewGame::updateSkin()
     QImage skin=QImage(path);
     if(skin.isNull())
     {
-        QMessageBox::critical(this,tr("Error"),QString("But the skin can't be loaded: %1").arg(path));
+        QMessageBox::critical(this,tr("Error"),QStringLiteral("But the skin can't be loaded: %1").arg(path));
         return;
     }
     QImage scaledSkin=skin.scaled(160,160,Qt::IgnoreAspectRatio);

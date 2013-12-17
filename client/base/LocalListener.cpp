@@ -22,7 +22,7 @@ LocalListener::~LocalListener()
     if(localServer.isListening())
     {
         localServer.close();
-        QLocalServer::removeServer(ExtraSocket::pathSocket(QString("CatchChallenger-Client-%1").arg(count)));
+        QLocalServer::removeServer(ExtraSocket::pathSocket(QStringLiteral("CatchChallenger-Client-%1").arg(count)));
     }
 }
 
@@ -32,7 +32,7 @@ bool LocalListener::tryListen()
     while(count<16)
     {
         QLocalSocket localSocket;
-        localSocket.connectToServer(ExtraSocket::pathSocket(QString("CatchChallenger-Client-%1").arg(count)),QIODevice::WriteOnly);
+        localSocket.connectToServer(ExtraSocket::pathSocket(QStringLiteral("CatchChallenger-Client-%1").arg(count)),QIODevice::WriteOnly);
         if(localSocket.waitForConnected(1000) && localSocket.isValid())
         {}
         else
@@ -49,11 +49,11 @@ bool LocalListener::tryListen()
 
 void LocalListener::listenServer(const quint8 &count)
 {
-    QLocalServer::removeServer(ExtraSocket::pathSocket(QString("CatchChallenger-Client-%1").arg(count)));
+    QLocalServer::removeServer(ExtraSocket::pathSocket(QStringLiteral("CatchChallenger-Client-%1").arg(count)));
     #ifndef Q_OS_MAC
     localServer.setSocketOptions(QLocalServer::UserAccessOption);
     #endif
-    if(localServer.listen(ExtraSocket::pathSocket(QString("CatchChallenger-Client-%1").arg(count))))
+    if(localServer.listen(ExtraSocket::pathSocket(QStringLiteral("CatchChallenger-Client-%1").arg(count))))
         connect(&localServer, &QLocalServer::newConnection, this, &LocalListener::newConnexion);
 }
 
@@ -70,7 +70,7 @@ void LocalListener::quitAllRunningInstance()
     while(count<16)
     {
         QLocalSocket localSocket;
-        localSocket.connectToServer(ExtraSocket::pathSocket(QString("CatchChallenger-Client-%1").arg(count)),QIODevice::WriteOnly);
+        localSocket.connectToServer(ExtraSocket::pathSocket(QStringLiteral("CatchChallenger-Client-%1").arg(count)),QIODevice::WriteOnly);
         if(localSocket.waitForConnected(1000) && localSocket.isValid())
         {
             localSocket.write(data);

@@ -323,7 +323,7 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
             else
                 productionTime+=tr("%n minute(s)","",remainingProductionTime/60);
         }
-        ui->factoryStatText->setText(QString("%1<br />%2").arg(tr("In production")).arg(productionTime));
+        ui->factoryStatText->setText(QStringLiteral("%1<br />%2").arg(tr("In production")).arg(productionTime));
         #else
         ui->factoryStatText->setText(tr("In production"));
         #endif
@@ -340,9 +340,9 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
     QFont MissingQuantity;
     MissingQuantity.setItalic(true);
     if(item->data(97).toUInt()>1)
-        item->setText(QString("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
+        item->setText(QStringLiteral("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
     else
-        item->setText(QString("%1$").arg(item->data(98).toUInt()));
+        item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
     {
         item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].image);
@@ -371,9 +371,9 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
     QFont MissingQuantity;
     MissingQuantity.setItalic(true);
     if(item->data(97).toUInt()>1)
-        item->setText(QString("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
+        item->setText(QStringLiteral("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
     else
-        item->setText(QString("%1$").arg(item->data(98).toUInt()));
+        item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
     {
         item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[item->data(99).toUInt()].image);
