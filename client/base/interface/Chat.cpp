@@ -141,7 +141,7 @@ void Chat::removeNumberForFlood()
 void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
 {
     #ifdef DEBUG_BASEWINDOWS
-    qDebug() << QString("new_system_text: %1").arg(text);
+    qDebug() << QStringLiteral("new_system_text: %1").arg(text);
     #endif
     chat_list_player_type << Player_type_normal;
     chat_list_player_pseudo << "";
@@ -160,7 +160,7 @@ void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
 void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QString pseudo,CatchChallenger::Player_type type)
 {
     #ifdef DEBUG_BASEWINDOWS
-    qDebug() << QString("new_chat_text: %1 by %2").arg(text).arg(pseudo);
+    qDebug() << QStringLiteral("new_chat_text: %1 by %2").arg(text).arg(pseudo);
     #endif
     chat_list_player_type << type;
     chat_list_player_pseudo << pseudo;

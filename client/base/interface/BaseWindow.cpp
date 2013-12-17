@@ -444,7 +444,7 @@ void BaseWindow::message(QString message)
 void BaseWindow::number_of_player(quint16 number,quint16 max)
 {
     ui->frame_main_display_interface_player->show();
-    ui->label_interface_number_of_player->setText(QString("%1/%2").arg(number).arg(max));
+    ui->label_interface_number_of_player->setText(QStringLiteral("%1/%2").arg(number).arg(max));
 }
 
 void BaseWindow::on_toolButton_interface_quit_clicked()
@@ -811,7 +811,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             if(havePlant(&MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap,MapController::mapController->getX(),MapController::mapController->getY())>=0)
             {
                 qDebug() << "Too slow to select a seed, have plant now";
-                showTip(QString("Sorry, but now the dirt is not free to plant"));
+                showTip(QStringLiteral("Sorry, but now the dirt is not free to plant"));
                 return;
             }
             ui->stackedWidget->setCurrentWidget(ui->page_map);
@@ -840,11 +840,11 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             {
                 load_plant_inventory();
                 load_inventory();
-                qDebug() << QString("send seed for: %1").arg(plant);
+                qDebug() << QStringLiteral("send seed for: %1").arg(plant);
                 emit useSeed(plant);
             }
             else
-                qDebug() << QString("seed not found for item: %1").arg(itemId);
+                qDebug() << QStringLiteral("seed not found for item: %1").arg(itemId);
         }
         break;
         case ObjectType_UseInFight:
@@ -928,7 +928,7 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool
             else
             {
                 image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
-                name=QString("id: %1").arg(i.key());
+                name=QStringLiteral("id: %1").arg(i.key());
             }
 
             image=image.scaled(24,24);
@@ -938,9 +938,9 @@ void BaseWindow::add_to_inventory(const QHash<quint32,quint32> &items,const bool
             if(objects.size()<16)
             {
                 if(i.value()>1)
-                    objects << QString("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
+                    objects << QStringLiteral("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
                 else
-                    objects << QString("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
+                    objects << QStringLiteral("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
             }
         }
         if(objects.size()==16)
@@ -1409,26 +1409,26 @@ void BaseWindow::updateRXTX()
     double RXSpeed=(RXSize-previousRXSize)*1000/updateRXTXTimeElapsed;
     double TXSpeed=(TXSize-previousTXSize)*1000/updateRXTXTimeElapsed;
     if(RXSpeed<1024)
-        ui->labelInput->setText(QString("%1B/s").arg(RXSpeed,0,'g',0));
+        ui->labelInput->setText(QStringLiteral("%1B/s").arg(RXSpeed,0,'g',0));
     else if(RXSpeed<10240)
-        ui->labelInput->setText(QString("%1KB/s").arg(RXSpeed/1024,0,'g',1));
+        ui->labelInput->setText(QStringLiteral("%1KB/s").arg(RXSpeed/1024,0,'g',1));
     else
-        ui->labelInput->setText(QString("%1KB/s").arg(RXSpeed/1024,0,'g',0));
+        ui->labelInput->setText(QStringLiteral("%1KB/s").arg(RXSpeed/1024,0,'g',0));
     if(TXSpeed<1024)
-        ui->labelOutput->setText(QString("%1B/s").arg(TXSpeed,0,'g',0));
+        ui->labelOutput->setText(QStringLiteral("%1B/s").arg(TXSpeed,0,'g',0));
     else if(TXSpeed<10240)
-        ui->labelOutput->setText(QString("%1KB/s").arg(TXSpeed/1024,0,'g',1));
+        ui->labelOutput->setText(QStringLiteral("%1KB/s").arg(TXSpeed/1024,0,'g',1));
     else
-        ui->labelOutput->setText(QString("%1KB/s").arg(TXSpeed/1024,0,'g',0));
+        ui->labelOutput->setText(QStringLiteral("%1KB/s").arg(TXSpeed/1024,0,'g',0));
     #ifdef DEBUG_CLIENT_NETWORK_USAGE
     if(RXSpeed>0 && TXSpeed>0)
-        qDebug() << QString("received: %1B/s, transmited: %2B/s").arg(RXSpeed).arg(TXSpeed);
+        qDebug() << QStringLiteral("received: %1B/s, transmited: %2B/s").arg(RXSpeed).arg(TXSpeed);
     else
     {
         if(RXSpeed>0)
-            qDebug() << QString("received: %1B/s").arg(RXSpeed);
+            qDebug() << QStringLiteral("received: %1B/s").arg(RXSpeed);
         if(TXSpeed>0)
-            qDebug() << QString("transmited: %1B/s").arg(TXSpeed);
+            qDebug() << QStringLiteral("transmited: %1B/s").arg(TXSpeed);
     }
     #endif
     updateRXTXTime.restart();
@@ -1439,7 +1439,7 @@ void BaseWindow::updateRXTX()
 bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const
 {
     #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << QString("haveNextStepQuestRequirements for quest: %1").arg(questId);
+    qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1").arg(questId);
     #endif
     if(!quests.contains(quest.id))
     {
@@ -1453,7 +1453,7 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
         return false;
     }
     #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << QString("haveNextStepQuestRequirements for quest: %1, step: %2").arg(questId).arg(step);
+    qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1, step: %2").arg(questId).arg(step);
     #endif
     const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
     int index=0;
@@ -1626,7 +1626,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
         return;
     if(!CatchChallenger::CommonDatapack::commonDatapack.reputation.contains(type))
     {
-        emit error(QString("Unknow reputation: %1").arg(type));
+        emit error(QStringLiteral("Unknow reputation: %1").arg(type));
         return;
     }
     PlayerReputation playerReputation;
@@ -1635,7 +1635,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
     if(CatchChallenger::Api_client_real::client->player_informations.reputation.contains(type))
         playerReputation=CatchChallenger::Api_client_real::client->player_informations.reputation[type];
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    emit message(QString("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
     playerReputation.point+=point;
     do
@@ -1662,7 +1662,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
             else
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-                emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
+                emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
                 playerReputation.point=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(-playerReputation.level);
             }
@@ -1678,7 +1678,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
             else
             {
                 #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-                emit message(QString("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
+                emit message(QStringLiteral("Reputation %1 at level max: %2").arg(type).arg(playerReputation.level));
                 #endif
                 playerReputation.point=CatchChallenger::CommonDatapack::commonDatapack.reputation[type].reputation_negative.at(playerReputation.level);
             }
@@ -1687,7 +1687,7 @@ void BaseWindow::appendReputationPoint(const QString &type,const qint32 &point)
     } while(false);
     CatchChallenger::Api_client_real::client->player_informations.reputation[type]=playerReputation;
     #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    emit message(QString("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
+    emit message(QStringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
     #endif
 }
 
@@ -2006,7 +2006,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
             while(index<quests.size())
             {
                 QPair<quint32,QString> quest=quests.at(index);
-                textToShow+=QString("<a href=\"quest_%1\">%2</a>").arg(quest.first).arg(quest.second);
+                textToShow+=QStringLiteral("<a href=\"quest_%1\">%2</a>").arg(quest.first).arg(quest.second);
                 index++;
             }
             if(quests.isEmpty())
@@ -2023,12 +2023,12 @@ void BaseWindow::goToBotStep(const quint8 &step)
         if(clan==0)
         {
             if(allow.contains(ActionAllow_Clan))
-                textToShow=QString("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create"));
+                textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create"));
             else
-                textToShow=QString("<center>You can't create your clan</center>");
+                textToShow=QStringLiteral("<center>You can't create your clan</center>");
         }
         else
-            textToShow=QString("<center>%1</center>").arg(tr("You are already into a clan. Use the clan dongle into the player information."));
+            textToShow=QStringLiteral("<center>%1</center>").arg(tr("You are already into a clan. Use the clan dongle into the player information."));
         ui->IG_dialog_text->setText(textToShow);
         ui->IG_dialog->setVisible(true);
         return;
@@ -2110,7 +2110,7 @@ void BaseWindow::goToBotStep(const quint8 &step)
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
         {
             zonecaptureName=DatapackClientLoader::datapackLoader.zonesExtra[zone].name;
-            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(zonecaptureName)));
+            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QStringLiteral("<b>%1</b>").arg(zonecaptureName)));
         }
         else
         {
@@ -2411,7 +2411,7 @@ void BaseWindow::on_inventoryInformation_clicked()
     {
         if(!plants_items_to_graphical.contains(DatapackClientLoader::datapackLoader.itemToPlants[items_graphical[item]]))
         {
-            qDebug() << QString("on_inventoryInformation_clicked() is not into plant list: item: %1, plant: %2").arg(items_graphical[item]).arg(DatapackClientLoader::datapackLoader.itemToPlants[items_graphical[item]]);
+            qDebug() << QStringLiteral("on_inventoryInformation_clicked() is not into plant list: item: %1, plant: %2").arg(items_graphical[item]).arg(DatapackClientLoader::datapackLoader.itemToPlants[items_graphical[item]]);
             return;
         }
         ui->listPlantList->reset();
@@ -2443,7 +2443,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
         if(link.startsWith("http://") || link.startsWith("https://"))
         {
             if(!QDesktopServices::openUrl(QUrl(link)))
-                showTip(QString("Unable to open the url: %1").arg(link));
+                showTip(QStringLiteral("Unable to open the url: %1").arg(link));
             index++;
             continue;
         }
@@ -2455,7 +2455,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             quint32 questId=tempLink.toUShort(&ok);
             if(!ok)
             {
-                showTip(QString("Unable to open the link: %1").arg(link));
+                showTip(QStringLiteral("Unable to open the link: %1").arg(link));
                 index++;
                 continue;
             }
@@ -2494,7 +2494,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
         quint8 step=link.toUShort(&ok);
         if(!ok)
         {
-            showTip(QString("Unable to open the link: %1").arg(link));
+            showTip(QStringLiteral("Unable to open the link: %1").arg(link));
             index++;
             continue;
         }
@@ -2563,7 +2563,7 @@ void BaseWindow::getTextEntryPoint()
 {
     if(!isInQuest)
     {
-        showTip(QString("Internal error: Is not in quest"));
+        showTip(QStringLiteral("Internal error: Is not in quest"));
         return;
     }
     QScriptEngine engine;
@@ -2678,7 +2678,7 @@ void BaseWindow::showQuestText(const quint32 &textId)
 {
     if(!DatapackClientLoader::datapackLoader.questsText.contains(questId))
     {
-        qDebug() << QString("No quest text for this quest: %1").arg(questId);
+        qDebug() << QStringLiteral("No quest text for this quest: %1").arg(questId);
         showTip(tr("No quest text for this quest"));
         return;
     }
@@ -2697,7 +2697,7 @@ void BaseWindow::showQuestText(const quint32 &textId)
 void BaseWindow::addCash(const quint32 &cash)
 {
     this->cash+=cash;
-    ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(this->cash));
     ui->tradePlayerCash->setMaximum(this->cash);
 }
@@ -2705,7 +2705,7 @@ void BaseWindow::addCash(const quint32 &cash)
 void BaseWindow::removeCash(const quint32 &cash)
 {
     this->cash-=cash;
-    ui->player_informations_cash->setText(QString("%1$").arg(this->cash));
+    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(this->cash));
     ui->tradePlayerCash->setMaximum(this->cash);
 }
@@ -2713,13 +2713,13 @@ void BaseWindow::removeCash(const quint32 &cash)
 void BaseWindow::addBitcoin(const double &bitcoin)
 {
     this->bitcoin+=bitcoin;
-    ui->bitcoin->setText(QString("%1&#3647;").arg(this->bitcoin));
+    ui->bitcoin->setText(QStringLiteral("%1&#3647;").arg(this->bitcoin));
 }
 
 void BaseWindow::removeBitcoin(const double &bitcoin)
 {
     this->bitcoin-=bitcoin;
-    ui->bitcoin->setText(QString("%1&#3647;").arg(this->bitcoin));
+    ui->bitcoin->setText(QStringLiteral("%1&#3647;").arg(this->bitcoin));
 }
 
 void BaseWindow::on_pushButton_interface_monsters_clicked()

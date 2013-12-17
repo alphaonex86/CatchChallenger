@@ -105,12 +105,12 @@ void MainWindow::on_openBotFile_clicked()
     {
         if(!child.hasAttribute("id"))
         {
-            qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
             error=true;
         }
         else if(!child.isElement())
         {
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
             error=true;
         }
         else
@@ -123,17 +123,17 @@ void MainWindow::on_openBotFile_clicked()
                 {
                     if(!step.hasAttribute("id"))
                     {
-                        qDebug() << QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber());
+                        qDebug() << QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber());
                         error=true;
                     }
                     else if(!step.hasAttribute("type"))
                     {
-                        qDebug() << QString("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber());
+                        qDebug() << QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(step.tagName()).arg(step.lineNumber());
                         error=true;
                     }
                     else if(!step.isElement())
                     {
-                        qDebug() << QString("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber()));
+                        qDebug() << QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(step.tagName().arg(step.attribute("type")).arg(step.lineNumber()));
                         error=true;
                     }
                     else
@@ -150,7 +150,7 @@ void MainWindow::on_openBotFile_clicked()
             }
             else
             {
-                qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
                 error=true;
             }
         }
@@ -219,9 +219,9 @@ void MainWindow::on_botListDelete_clicked()
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
-            qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         else if(!child.isElement())
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
         else
         {
             quint8 tempId=child.attribute("id").toUShort(&ok);
@@ -234,7 +234,7 @@ void MainWindow::on_botListDelete_clicked()
                 }
             }
             else
-                qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
         child = child.nextSiblingElement("bot");
     }
@@ -293,9 +293,9 @@ void MainWindow::on_stepListAdd_clicked()
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
-            qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+            qDebug() << QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         else if(!child.isElement())
-            qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
+            qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute("name")).arg(child.lineNumber()));
         else
         {
             quint8 tempId=child.attribute("id").toUShort(&ok);
@@ -308,7 +308,7 @@ void MainWindow::on_stepListAdd_clicked()
                 }
             }
             else
-                qDebug() << QString("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
+                qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
         child = child.nextSiblingElement("bot");
     }
@@ -406,12 +406,12 @@ void MainWindow::editStep(quint8 id,bool newStep)
         {
             if(!text.hasAttribute("lang"))
             {
-                qDebug() << QString("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(text.tagName()).arg(text.lineNumber());
+                qDebug() << QStringLiteral("Has not attribute \"id\": child.tagName(): %1 (at line: %2)").arg(text.tagName()).arg(text.lineNumber());
                 error=true;
             }
             else if(!text.isElement())
             {
-                qDebug() << QString("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(text.tagName().arg(text.attribute("name")).arg(text.lineNumber()));
+                qDebug() << QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(text.tagName().arg(text.attribute("name")).arg(text.lineNumber()));
                 error=true;
             }
             else

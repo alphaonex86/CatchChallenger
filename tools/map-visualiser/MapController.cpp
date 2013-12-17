@@ -101,7 +101,7 @@ bool MapController::botMoveStepSlot(Bot *bot)
         }
         break;
         default:
-        qDebug() << QString("botMoveStepSlot(): moveStep: %1, wrong direction").arg(bot->moveStep);
+        qDebug() << QStringLiteral("botMoveStepSlot(): moveStep: %1, wrong direction").arg(bot->moveStep);
         return false;
     }
 
@@ -152,7 +152,7 @@ bool MapController::botMoveStepSlot(Bot *bot)
             CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&bot->x,&bot->y);
             break;
             default:
-            qDebug() << QString("botMoveStepSlot(): bot->moveStep: %1, wrong direction when bot->moveStep>2").arg(bot->moveStep);
+            qDebug() << QStringLiteral("botMoveStepSlot(): bot->moveStep: %1, wrong direction when bot->moveStep>2").arg(bot->moveStep);
             return false;
         }
         //if the map have changed
@@ -162,7 +162,7 @@ bool MapController::botMoveStepSlot(Bot *bot)
             if(ObjectGroupItem::objectGroupLink.contains(all_map[old_map->map_file]->objectGroup))
                 ObjectGroupItem::objectGroupLink[all_map[old_map->map_file]->objectGroup]->removeObject(bot->mapObject);
             else
-                qDebug() << QString("botMoveStepSlot(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
+                qDebug() << QStringLiteral("botMoveStepSlot(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
             //add bot
             if(ObjectGroupItem::objectGroupLink.contains(all_map[map->map_file]->objectGroup))
                 ObjectGroupItem::objectGroupLink[all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
@@ -237,7 +237,7 @@ void MapController::botMove()
                         botMoveStepSlot(&botList[index]);
                     break;
                     default:
-                    qDebug() << QString("transformLookToMove(): wrong direction");
+                    qDebug() << QStringLiteral("transformLookToMove(): wrong direction");
                     return;
                 }
             }
@@ -280,7 +280,7 @@ void MapController::botManagement()
                 if(ObjectGroupItem::objectGroupLink.contains(all_map[botList.at(index).map]->objectGroup))
                     ObjectGroupItem::objectGroupLink[all_map[botList.at(index).map]->objectGroup]->removeObject(botList.at(index).mapObject);
                 else
-                    qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains botList.at(index).mapObject at remove random bot");
+                    qDebug() << QStringLiteral("botManagement(), ObjectGroupItem::objectGroupLink not contains botList.at(index).mapObject at remove random bot");
                 delete botList.at(index).mapObject;
             }
             else
@@ -312,7 +312,7 @@ void MapController::botManagement()
             if(ObjectGroupItem::objectGroupLink.contains(all_map[bot.map]->objectGroup))
                 ObjectGroupItem::objectGroupLink[all_map[bot.map]->objectGroup]->addObject(bot.mapObject);
             else
-                qDebug() << QString("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
+                qDebug() << QStringLiteral("botManagement(), ObjectGroupItem::objectGroupLink not contains bot.map->objectGroup");
 
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             bot.mapObject->setPosition(QPoint(bot.x,bot.y+1));

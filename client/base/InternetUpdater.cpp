@@ -44,25 +44,25 @@ void InternetUpdater::downloadFile()
     QString name="CatchChallenger";
     QString catchChallengerVersion;
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    catchChallengerVersion=QString("%1 Ultimate/%2").arg(name).arg(CATCHCHALLENGER_VERSION);
+    catchChallengerVersion=QStringLiteral("%1 Ultimate/%2").arg(name).arg(CATCHCHALLENGER_VERSION);
     #else
-    catchChallengerVersion=QString("%1/%2").arg(name).arg(CATCHCHALLENGER_VERSION);
+    catchChallengerVersion=QStringLiteral("%1/%2").arg(name).arg(CATCHCHALLENGER_VERSION);
     #endif
     #ifdef CATCHCHALLENGER_VERSION_PORTABLE
         #ifdef CATCHCHALLENGER_PLUGIN_ALL_IN_ONE
-             catchChallengerVersion+=QString(" portable/all-in-one");
+             catchChallengerVersion+=QStringLiteral(" portable/all-in-one");
         #else
-             catchChallengerVersion+=QString(" portable");
+             catchChallengerVersion+=QStringLiteral(" portable");
         #endif
     #else
         #ifdef CATCHCHALLENGER_PLUGIN_ALL_IN_ONE
-            catchChallengerVersion+=QString(" all-in-one");
+            catchChallengerVersion+=QStringLiteral(" all-in-one");
         #endif
     #endif
     #if defined(Q_OS_WIN32) || defined(Q_OS_MAC)
-    catchChallengerVersion+=QString(" (OS: %1)").arg(GetOSDisplayString());
+    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(GetOSDisplayString());
     #endif
-    QNetworkRequest networkRequest(QString("%1?platform=%2").arg(CATCHCHALLENGER_UPDATER_URL).arg(CATCHCHALLENGER_PLATFORM_CODE));
+    QNetworkRequest networkRequest(QStringLiteral("%1?platform=%2").arg(CATCHCHALLENGER_UPDATER_URL).arg(CATCHCHALLENGER_PLATFORM_CODE));
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
     reply = qnam.get(networkRequest);
     connect(reply, &QNetworkReply::finished, this, &InternetUpdater::httpFinished);
@@ -73,11 +73,11 @@ void InternetUpdater::httpFinished()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (reply->error())
     {
-        CatchChallenger::DebugClass::debugConsole(QString("get the new update failed: %1").arg(reply->errorString()));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
         return;
     } else if (!redirectionTarget.isNull()) {
-        CatchChallenger::DebugClass::debugConsole(QString("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        CatchChallenger::DebugClass::debugConsole(QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
         reply->deleteLater();
         return;
     }
@@ -123,7 +123,7 @@ QString InternetUpdater::getText(const QString &version)
     #else
         url="http://catchchallenger.first-world.info/shop/en/order-history";
     #endif
-        return QString("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>").arg(url).arg(tr("New version: %1").arg(QString("<b>%1</b>").arg(version))+"<br />"+
+        return QStringLiteral("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>").arg(url).arg(tr("New version: %1").arg(QStringLiteral("<b>%1</b>").arg(version))+"<br />"+
                            #if !defined(CATCHCHALLENGER_VERSION_ULTIMATE)
                                tr("Click here to go on download page")
                            #else
@@ -184,8 +184,8 @@ QString InternetUpdater::GetOSDisplayString()
             break;
             default:
                  if(osvi.wProductType==VER_NT_WORKSTATION)
-                    Os+=QString("Windows (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
-                 else Os+=QString("Windows Server (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
+                    Os+=QStringLiteral("Windows (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
+                 else Os+=QStringLiteral("Windows Server (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
             break;
           }
 
@@ -323,15 +323,15 @@ QString InternetUpdater::GetOSDisplayString()
         else
         {
             if(osvi.wProductType==VER_NT_WORKSTATION)
-                Os+=QString("Windows (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
-            else Os+=QString("Windows Server (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
+                Os+=QStringLiteral("Windows (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
+            else Os+=QStringLiteral("Windows Server (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
         }
 
         // Include service pack (if any) and build number.
         QString QszCSDVersion=QString::fromUtf16((ushort*)osvi.szCSDVersion);
         if(!QszCSDVersion.isEmpty())
-            Os+=QString(" %1").arg(QszCSDVersion);
-        Os+=QString(" (build %1)").arg(osvi.dwBuildNumber);
+            Os+=QStringLiteral(" %1").arg(QszCSDVersion);
+        Os+=QStringLiteral(" (build %1)").arg(osvi.dwBuildNumber);
         if(osvi.dwMajorVersion >= 6)
         {
             if(si.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_AMD64)
@@ -343,8 +343,8 @@ QString InternetUpdater::GetOSDisplayString()
     else
     {
        if(osvi.wProductType==VER_NT_WORKSTATION)
-           Os+=QString("Windows (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
-       else Os+=QString("Windows Server (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
+           Os+=QStringLiteral("Windows (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
+       else Os+=QStringLiteral("Windows Server (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
     }
     return Os;
 }
