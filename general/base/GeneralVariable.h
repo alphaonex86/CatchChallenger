@@ -1,8 +1,8 @@
 #ifndef CATCHCHALLENGER_GENERALVARIABLE_H
 #define CATCHCHALLENGER_GENERALVARIABLE_H
 
-#define PROTOCOL_HEADER "catchchallenger-0.2.0.0"
-#define CATCHCHALLENGER_VERSION "0.2.0.0"
+#define PROTOCOL_HEADER "catchchallenger-0.2.0.1"
+#define CATCHCHALLENGER_VERSION "0.2.0.1"
 #define CATCHCHALLENGER_SERVER_LIST_URL "http://catchchallenger.first-world.info/server_list.xml"
 #define CATCHCHALLENGER_UPDATER_URL "http://catchchallenger.first-world.info/updater.php"
 #define CATCHCHALLENGER_RSS_URL "http://catchchallenger.first-world.info/rss_global.xml"

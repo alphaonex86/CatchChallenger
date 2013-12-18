@@ -1418,6 +1418,7 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
         }
         index++;
     }
+    botIdLoaded.clear();
 
     DebugClass::debugConsole(QStringLiteral("%1 learn point(s) on map loaded").arg(learnpoint_number));
     DebugClass::debugConsole(QStringLiteral("%1 zonecapture point(s) on map loaded").arg(zonecapturepoint_number));
@@ -1534,6 +1535,9 @@ void BaseServer::loadBotFile(const QString &file)
             quint32 id=child.attribute(QStringLiteral("id")).toUInt(&ok);
             if(ok)
             {
+                if(botIdLoaded.contains(id))
+                    CatchChallenger::DebugClass::debugConsole(QStringLiteral("Bot %3 into file %4 have same id as another bot: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()).arg(id).arg(file));
+                botIdLoaded << id;
                 botFiles[file][id];
                 QDomElement step = child.firstChildElement(QStringLiteral("step"));
                 while(!step.isNull())
@@ -1638,6 +1642,7 @@ void BaseServer::unload_the_map()
     }
     GlobalServerData::serverPrivateVariables.map_list.clear();
     GlobalServerData::serverPrivateVariables.botSpawn.clear();
+    botIdLoaded.clear();
 }
 
 void BaseServer::unload_the_skin()

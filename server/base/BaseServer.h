@@ -130,6 +130,7 @@ protected:
     bool dataLoaded;
 
     QHash<QString/*name*/,QHash<quint8/*bot id*/,CatchChallenger::Bot> > botFiles;
+    QSet<quint32> botIdLoaded;
 };
 }
 
