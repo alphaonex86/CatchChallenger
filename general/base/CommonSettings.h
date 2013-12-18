@@ -15,6 +15,7 @@ public:
 
     //rates
     float rates_xp;
+    float rates_xp_pow;
     float rates_drop;
     float rates_gold;
 

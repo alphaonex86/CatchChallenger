@@ -49,13 +49,15 @@ void ProcessControler::send_settings()
 
     //fight
     //CommonSettings::commonSettings.pvp			= settings->value("pvp").toBool();
-    formatedServerSettings.sendPlayerNumber		= settings->value("sendPlayerNumber").toBool();
+    formatedServerSettings.sendPlayerNumber         = settings->value("sendPlayerNumber").toBool();
 
     //rates
     settings->beginGroup("rates");
-    CommonSettings::commonSettings.rates_xp			= settings->value("xp_normal").toReal();
-    //formatedServerSettings.rates_xp_premium                         = settings->value("xp_premium").toReal();
+    CommonSettings::commonSettings.rates_xp             = settings->value("xp_normal").toReal();
     CommonSettings::commonSettings.rates_gold			= settings->value("gold_normal").toReal();
+    CommonSettings::commonSettings.rates_xp_pow			= settings->value("xp_pow_normal").toReal();
+    CommonSettings::commonSettings.rates_drop			= settings->value("drop_normal").toReal();
+    //formatedServerSettings.rates_xp_premium                         = settings->value("xp_premium").toReal();
     //formatedServerSettings.rates_gold_premium                       = settings->value("gold_premium").toReal();
     /*CommonSettings::commonSettings.rates_shiny		= settings->value("shiny_normal").toReal();
     formatedServerSettings.rates_shiny_premium                      = settings->value("shiny_premium").toReal();*/
