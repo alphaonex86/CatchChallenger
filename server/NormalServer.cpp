@@ -671,9 +671,13 @@ void NormalServer::checkSettingsFile(QSettings *settings)
 
     settings->beginGroup("rates");
     if(!settings->contains("xp_normal"))
-        settings->setValue("xp_normal",1.0);
+        settings->setValue("xp_normal",0.1);
     if(!settings->contains("gold_normal"))
         settings->setValue("gold_normal",1.0);
+    if(!settings->contains("drop_normal"))
+        settings->setValue("drop_normal",1.0);
+    if(!settings->contains("xp_pow_normal"))
+        settings->setValue("xp_pow_normal",1.6);
     settings->endGroup();
 
     settings->beginGroup("chat");
