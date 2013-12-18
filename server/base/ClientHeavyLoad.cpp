@@ -154,6 +154,8 @@ void ClientHeavyLoad::askLogin(const quint8 &query_id,const QByteArray &login_or
     out << (quint32)CommonSettings::commonSettings.character_delete_time;
     out << (float)CommonSettings::commonSettings.rates_xp;
     out << (float)CommonSettings::commonSettings.rates_gold;
+    out << (float)CommonSettings::commonSettings.rates_xp_pow;
+    out << (float)CommonSettings::commonSettings.rates_drop;
     out << (quint8)CommonSettings::commonSettings.chat_allow_all;
     out << (quint8)CommonSettings::commonSettings.chat_allow_local;
     out << (quint8)CommonSettings::commonSettings.chat_allow_private;

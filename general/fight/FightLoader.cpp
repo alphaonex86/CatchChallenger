@@ -292,19 +292,31 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                     }
                     if(item.hasAttribute(QStringLiteral("type")))
                     {
-                        if(typeNameToId.contains(item.attribute(QStringLiteral("type"))))
-                            monster.type << typeNameToId[item.attribute(QStringLiteral("type"))];
-                        else
-                            DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QStringLiteral("type"))));
+                        const QStringList &typeList=item.attribute(QStringLiteral("type")).split(QStringLiteral(";"));
+                        int index=0;
+                        while(index<typeList.size())
+                        {
+                            if(typeNameToId.contains(typeList.at(index)))
+                                monster.type << typeNameToId[typeList.at(index)];
+                            else
+                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QStringLiteral("type"))));
+                            index++;
+                        }
                     }
                     if(item.hasAttribute(QStringLiteral("type2")))
                     {
-                        if(typeNameToId.contains(item.attribute(QStringLiteral("type2"))))
-                            monster.type << typeNameToId[item.attribute(QStringLiteral("type2"))];
-                        else
-                            DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute("type2")));
+                        const QStringList &typeList=item.attribute(QStringLiteral("type2")).split(QStringLiteral(";"));
+                        int index=0;
+                        while(index<typeList.size())
+                        {
+                            if(typeNameToId.contains(typeList.at(index)))
+                                monster.type << typeNameToId[typeList.at(index)];
+                            else
+                                DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, type not found into the list: %4 child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(item.attribute(QStringLiteral("type2"))));
+                            index++;
+                        }
                     }
-                    qreal pow=3;
+                    qreal pow=1.0;
                     if(ok)
                     {
                         if(item.hasAttribute(QStringLiteral("pow")))
@@ -312,22 +324,23 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                             pow=item.attribute(QStringLiteral("pow")).toDouble(&ok);
                             if(!ok)
                             {
-                                pow=3;
+                                pow=1.0;
                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, pow is not a double: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                                 ok=true;
                             }
-                            if(pow<=1)
+                            if(pow<=1.0)
                             {
-                                pow=3;
+                                pow=1.0;
                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, pow is too low: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                             }
-                            if(pow>=5)
+                            if(pow>=10.0)
                             {
-                                pow=3;
+                                pow=1.0;
                                 DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, pow is too hight: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                             }
                         }
                     }
+                    pow=qPow(pow,CommonSettings::commonSettings.rates_xp_pow);
                     if(ok)
                     {
                         monster.egg_step=item.attribute(QStringLiteral("egg_step")).toUInt(&ok);

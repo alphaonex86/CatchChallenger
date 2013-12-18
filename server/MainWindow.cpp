@@ -357,25 +357,33 @@ void MainWindow::load_settings()
         break;
     }
 
-    settings->beginGroup("rates");
-    double rates_xp_normal=settings->value("xp_normal").toFloat();
-    double rates_gold_normal=settings->value("gold_normal").toFloat();
-    settings->endGroup();
+    {
+        settings->beginGroup("rates");
+        double rates_xp_normal=settings->value("xp_normal").toFloat();
+        double rates_gold_normal=settings->value("gold_normal").toFloat();
+        double rates_xp_pow_normal=settings->value("xp_pow_normal").toFloat();
+        double rates_drop_normal=settings->value("drop_normal").toFloat();
+        settings->endGroup();
 
-    ui->rates_xp_normal->setValue(rates_xp_normal);
-    ui->rates_gold_normal->setValue(rates_gold_normal);
+        ui->rates_xp_normal->setValue(rates_xp_normal);
+        ui->rates_gold_normal->setValue(rates_gold_normal);
+        ui->rates_xp_pow_normal->setValue(rates_xp_pow_normal);
+        ui->rates_drop_normal->setValue(rates_drop_normal);
+    }
 
-    settings->beginGroup("chat");
-    bool chat_allow_all=settings->value("allow-all").toBool();
-    bool chat_allow_local=settings->value("allow-local").toBool();
-    bool chat_allow_private=settings->value("allow-private").toBool();
-    bool chat_allow_clan=settings->value("allow-clan").toBool();
-    settings->endGroup();
+    {
+        settings->beginGroup("chat");
+        bool chat_allow_all=settings->value("allow-all").toBool();
+        bool chat_allow_local=settings->value("allow-local").toBool();
+        bool chat_allow_private=settings->value("allow-private").toBool();
+        bool chat_allow_clan=settings->value("allow-clan").toBool();
+        settings->endGroup();
 
-    ui->chat_allow_all->setChecked(chat_allow_all);
-    ui->chat_allow_local->setChecked(chat_allow_local);
-    ui->chat_allow_private->setChecked(chat_allow_private);
-    ui->chat_allow_clan->setChecked(chat_allow_clan);
+        ui->chat_allow_all->setChecked(chat_allow_all);
+        ui->chat_allow_local->setChecked(chat_allow_local);
+        ui->chat_allow_private->setChecked(chat_allow_private);
+        ui->chat_allow_clan->setChecked(chat_allow_clan);
+    }
 
     settings->beginGroup("db");
     QString db_type=settings->value("type").toString();
@@ -566,7 +574,9 @@ void MainWindow::send_settings()
 
     //rates
     CommonSettings::commonSettings.rates_xp			= ui->rates_xp_normal->value();
-    CommonSettings::commonSettings.rates_gold			= ui->rates_xp_normal->value();
+    CommonSettings::commonSettings.rates_gold		= ui->rates_gold_normal->value();
+    CommonSettings::commonSettings.rates_xp_pow     = ui->rates_xp_pow_normal->value();
+    CommonSettings::commonSettings.rates_drop		= ui->rates_drop_normal->value();
 
     //chat allowed
     CommonSettings::commonSettings.chat_allow_all		= ui->chat_allow_all->isChecked();
@@ -1143,4 +1153,18 @@ void CatchChallenger::MainWindow::on_dontSendPlayerType_toggled(bool checked)
 {
     Q_UNUSED(checked);
     settings->setValue("dontSendPlayerType",ui->dontSendPlayerType->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_rates_xp_pow_normal_valueChanged(double arg1)
+{
+    settings->beginGroup("rates");
+    settings->setValue("xp_pow_normal",arg1);
+    settings->endGroup();
+}
+
+void CatchChallenger::MainWindow::on_rates_drop_normal_valueChanged(double arg1)
+{
+    settings->beginGroup("rates");
+    settings->setValue("drop_normal",arg1);
+    settings->endGroup();
 }
