@@ -90,7 +90,7 @@ PublicPlayerMonster FacilityLib::playerMonsterToPublicPlayerMonster(const Player
 {
     PublicPlayerMonster returnVar;
     returnVar.buffs=playerMonster.buffs;
-    returnVar.captured_with=playerMonster.captured_with;
+    returnVar.catched_with=playerMonster.catched_with;
     returnVar.gender=playerMonster.gender;
     returnVar.hp=playerMonster.hp;
     returnVar.level=playerMonster.level;
@@ -106,7 +106,7 @@ QByteArray FacilityLib::publicPlayerMonsterToBinary(const PublicPlayerMonster &p
     out << (quint32)publicPlayerMonster.monster;
     out << (quint8)publicPlayerMonster.level;
     out << (quint32)publicPlayerMonster.hp;
-    out << (quint32)publicPlayerMonster.captured_with;
+    out << (quint32)publicPlayerMonster.catched_with;
     out << (quint8)publicPlayerMonster.gender;
     out << (quint32)publicPlayerMonster.buffs.size();
     int index=0;
@@ -127,7 +127,7 @@ QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster)
     out << (quint32)playerMonster.monster;
     out << (quint8)playerMonster.level;
     out << (quint32)playerMonster.hp;
-    out << (quint32)playerMonster.captured_with;
+    out << (quint32)playerMonster.catched_with;
     out << (quint8)playerMonster.gender;
     out << (quint32)playerMonster.buffs.size();
     int index=0;
@@ -143,7 +143,7 @@ QByteArray playerMonsterToBinary(const PlayerMonster &playerMonster)
 PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFightMonster &botFightMonster,const Monster::Stat &stat)
 {
     PlayerMonster tempPlayerMonster;
-    tempPlayerMonster.captured_with=0;
+    tempPlayerMonster.catched_with=0;
     tempPlayerMonster.egg_step=0;
     tempPlayerMonster.gender=Gender_Unknown;
     tempPlayerMonster.hp=stat.hp;
@@ -255,7 +255,7 @@ QByteArray FacilityLib::privateMonsterToBinary(const PlayerMonster &monster)
     out << (quint32)monster.remaining_xp;
     out << (quint32)monster.hp;
     out << (quint32)monster.sp;
-    out << (quint32)monster.captured_with;
+    out << (quint32)monster.catched_with;
     out << (quint8)monster.gender;
     out << (quint32)monster.egg_step;
     int sub_index=0;

@@ -427,9 +427,7 @@ void BaseWindow::on_craftingUse_clicked()
         QPair<quint32,quint32> pair;
         pair.first=content.materials.at(index).item;
         pair.second=content.materials.at(index).quantity;
-        items[pair.first]-=pair.second;
-        if(items[pair.first]==0)
-            items.remove(pair.first);
+        remove_to_inventory(pair.first,pair.second);
         recipeUsage << pair;
         index++;
     }
@@ -485,10 +483,7 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
     {
         case RecipeUsage_ok:
             materialOfRecipeInUsing.removeFirst();
-            if(items.contains(productOfRecipeInUsing.first().first))
-                items[productOfRecipeInUsing.first().first]+=productOfRecipeInUsing.first().second;
-            else
-                items[productOfRecipeInUsing.first().first]=productOfRecipeInUsing.first().second;
+            add_to_inventory(productOfRecipeInUsing.first().first,productOfRecipeInUsing.first().second);
             productOfRecipeInUsing.removeFirst();
             //update the UI
             load_inventory();
@@ -500,10 +495,7 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
             int index=0;
             while(index<materialOfRecipeInUsing.first().size())
             {
-                if(items.contains(materialOfRecipeInUsing.first().at(index).first))
-                    items[materialOfRecipeInUsing.first().at(index).first]+=materialOfRecipeInUsing.first().at(index).first;
-                else
-                    items[materialOfRecipeInUsing.first().at(index).first]=materialOfRecipeInUsing.first().at(index).first;
+                add_to_inventory(materialOfRecipeInUsing.first().at(index).first,materialOfRecipeInUsing.first().at(index).first,false);
                 index++;
             }
             materialOfRecipeInUsing.removeFirst();

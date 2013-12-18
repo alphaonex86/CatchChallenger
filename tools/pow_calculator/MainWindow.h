@@ -20,6 +20,8 @@ private slots:
     void on_pow_valueChanged(double arg1);
     void on_level_valueChanged(int arg1);
     void updateTheValue();
+    void on_giveXp_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
 };

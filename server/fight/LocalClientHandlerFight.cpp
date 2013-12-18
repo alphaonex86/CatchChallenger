@@ -40,12 +40,12 @@ bool LocalClientHandlerFight::tryEscape()
 
 quint32 LocalClientHandlerFight::tryCapture(const quint32 &item)
 {
-    bool captureSuccess=CommonFightEngine::tryCapture(item);
-    if(captureSuccess)//check if is in fight
+    quint32 captureSuccessId=CommonFightEngine::tryCapture(item);
+    if(captureSuccessId!=0)//if success
         saveCurrentMonsterStat();
     else
         finishTheTurn(false);
-    return captureSuccess;
+    return captureSuccessId;
 }
 
 bool LocalClientHandlerFight::getBattleIsValidated()
@@ -67,6 +67,11 @@ void LocalClientHandlerFight::saveMonsterStat(const PlayerMonster &monster)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
+        if(!CatchChallenger::CommonDatapack::commonDatapack.monsters.contains(monster.monster))
+        {
+            emit error(QStringLiteral("saveMonsterStat() The monster %1 is not into the monster list (%2)").arg(monster.monster).arg(CatchChallenger::CommonDatapack::commonDatapack.monsters.size()));
+            return;
+        }
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[monster.monster],monster.level);
         if(monster.hp>currentMonsterStat.hp)
         {
@@ -439,21 +444,26 @@ void LocalClientHandlerFight::wildDrop(const quint32 &monster)
     quint32 quantity;
     while(index<drops.size())
     {
-        if(drops.at(index).luck==100)
+        const quint32 &tempLuck=drops.at(index).luck;
+        const quint32 &quantity_min=drops.at(index).quantity_min;
+        const quint32 &quantity_max=drops.at(index).quantity_max;
+        if(tempLuck==100)
             success=true;
         else
         {
-            if(rand()%100<(qint8)drops.at(index).luck)
+            if(rand()%100<(qint32)tempLuck)
                 success=true;
             else
                 success=false;
         }
         if(success)
         {
-            if(drops.at(index).quantity_max==1)
+            if(quantity_max==1)
                 quantity=1;
+            else if(quantity_min==quantity_max)
+                quantity=quantity_min;
             else
-                quantity=rand()%(drops.at(index).quantity_max-drops.at(index).quantity_min+1)+drops.at(index).quantity_min;
+                quantity=rand()%(quantity_max-quantity_min+1)+quantity_min;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message(QStringLiteral("Win %1 item: %2").arg(quantity).arg(drops.at(index).item));
             #endif
@@ -872,7 +882,7 @@ void LocalClientHandlerFight::sendBattleMonsterChange()
     emit sendFullPacket(0xE0,0x0006,outputData+binarypublicPlayerMonster);
 }
 
-//return true if change level
+//return true if change level, multiplicator do at datapack loading
 bool LocalClientHandlerFight::giveXPSP(int xp,int sp)
 {
     bool haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
@@ -1068,7 +1078,7 @@ bool LocalClientHandlerFight::dropKOOtherMonster()
     return commonReturn || battleReturn;
 }
 
-quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
+quint32 LocalClientHandlerFight::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
     int position=999999;
     quint32 monster_id;
@@ -1107,7 +1117,7 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
                               .arg(newMonster.level)
                               .arg(newMonster.remaining_xp)
                               .arg(newMonster.sp)
-                              .arg(newMonster.captured_with)
+                              .arg(newMonster.catched_with)
                               .arg(FacilityLib::genderToString(newMonster.gender))
                               )
                          .arg(QStringLiteral("%1,%2,%3,%4")
@@ -1128,7 +1138,7 @@ quint32 LocalClientHandlerFight::captureAWild(const bool &toStorage, const Playe
                               .arg(newMonster.level)
                               .arg(newMonster.remaining_xp)
                               .arg(newMonster.sp)
-                              .arg(newMonster.captured_with)
+                              .arg(newMonster.catched_with)
                               .arg(FacilityLib::genderToString(newMonster.gender))
                               )
                          .arg(QStringLiteral("%1,%2,%3,%4")

@@ -292,7 +292,7 @@ void LocalClientHandler::tradeAddTradeMonster(const quint32 &monsterId)
             out << (quint32)monster.remaining_xp;
             out << (quint32)monster.hp;
             out << (quint32)monster.sp;
-            out << (quint32)monster.captured_with;
+            out << (quint32)monster.catched_with;
             out << (quint8)monster.gender;
             out << (quint32)monster.egg_step;
             int sub_index=0;

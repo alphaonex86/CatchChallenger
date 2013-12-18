@@ -283,7 +283,7 @@ private slots:
     //clan/city
     void cityCapture(const quint32 &remainingTime,const quint8 &type);
     void cityCaptureUpdateTime();
-    void updatePageZonecapture();
+    void updatePageZoneCatch();
 
     //learn
     bool showLearnSkill(const quint32 &monsterId);
@@ -578,12 +578,12 @@ private:
     bool useTheRescueSkill;
 
     //city
-    QTimer nextCityCaptureTimer;
+    QTimer nextCityCatchTimer;
     City city;
-    QTimer updater_page_zonecapture;
-    QDateTime nextCapture,nextCaptureOnScreen;
-    QString zonecaptureName;
-    bool zonecapture;
+    QTimer updater_page_zonecatch;
+    QDateTime nextCatch,nextCatchOnScreen;
+    QString zonecatchName;
+    bool zonecatch;
 
     //trade
     TradeOtherStat tradeOtherStat;
