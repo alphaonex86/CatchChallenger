@@ -50,7 +50,7 @@
         <string notr="true"/>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -5161,7 +5161,7 @@ border-image: url(:/images/empty.png);
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_zonecapture">
+       <widget class="QWidget" name="page_zonecatch">
         <property name="styleSheet">
          <string notr="true">#page_zonecapture{background-image: url(:/images/inventory/background.png);}</string>
         </property>
@@ -5624,7 +5624,7 @@ border-image: url(:/images/empty.png);
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
-           <widget class="QLabel" name="monsterDetailsCaptured">
+           <widget class="QLabel" name="monsterDetailsCatched">
             <property name="geometry">
              <rect>
               <x>30</x>

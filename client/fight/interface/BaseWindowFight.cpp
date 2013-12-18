@@ -70,19 +70,19 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                 ui->monsterDetailsImage->setPixmap(front);
             }
             {
-                QPixmap capture;
-                if(DatapackClientLoader::datapackLoader.itemsExtra.contains(monster.captured_with))
+                QPixmap catchPixmap;
+                if(DatapackClientLoader::datapackLoader.itemsExtra.contains(monster.catched_with))
                 {
-                    capture=DatapackClientLoader::datapackLoader.itemsExtra[monster.captured_with].image;
-                    ui->monsterDetailsCaptured->setToolTip(tr("Captured with %1").arg(DatapackClientLoader::datapackLoader.itemsExtra[monster.captured_with].name));
+                    catchPixmap=DatapackClientLoader::datapackLoader.itemsExtra[monster.catched_with].image;
+                    ui->monsterDetailsCatched->setToolTip(tr("catched with %1").arg(DatapackClientLoader::datapackLoader.itemsExtra[monster.catched_with].name));
                 }
                 else
                 {
-                    capture=DatapackClientLoader::datapackLoader.defaultInventoryImage();
-                    ui->monsterDetailsCaptured->setToolTip(tr("Captured with unknown item: %1").arg(monster.captured_with));
+                    catchPixmap=DatapackClientLoader::datapackLoader.defaultInventoryImage();
+                    ui->monsterDetailsCatched->setToolTip(tr("catched with unknown item: %1").arg(monster.catched_with));
                 }
-                capture=capture.scaled(48,48);
-                ui->monsterDetailsCaptured->setPixmap(capture);
+                catchPixmap=catchPixmap.scaled(48,48);
+                ui->monsterDetailsCatched->setPixmap(catchPixmap);
             }
             if(monster.gender==Gender_Male)
             {
@@ -1307,8 +1307,8 @@ void BaseWindow::win()
             return;
         }
     #endif
-    if(zonecapture)
-        ui->stackedWidget->setCurrentWidget(ui->page_zonecapture);
+    if(zonecatch)
+        ui->stackedWidget->setCurrentWidget(ui->page_zonecatch);
     else
         ui->stackedWidget->setCurrentWidget(ui->page_map);
     fightTimerFinish=false;
@@ -1318,7 +1318,7 @@ void BaseWindow::win()
     switch(battleType)
     {
         case BattleType_Bot:
-            if(!zonecapture)
+            if(!zonecatch)
             {
                 if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
                 {
@@ -1921,7 +1921,8 @@ void BaseWindow::displayAttack()
             CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.isEmpty() &&
             CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffLifeEffectMonster.isEmpty() &&
             CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.isEmpty() &&
-            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.isEmpty()
+            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.isEmpty() &&
+            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success
             )
     {
         qDebug() << QStringLiteral("displayAttack(): strange: display an empty lifeEffect list into attack return, attack: %1, doByTheCurrentMonster: %2, success: %3")
@@ -1929,6 +1930,8 @@ void BaseWindow::displayAttack()
                     .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
                     .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success);
         CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+        doNextAction();
+        return;
     }
 
     //if start, display text
@@ -2239,7 +2242,7 @@ void BaseWindow::displayTrap()
                     qDebug() << QStringLiteral("movie loaded is not valid for: %1").arg(fileAnimation);
             }
         }
-        ui->labelFightEnter->setText(QStringLiteral("Try capture the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+        ui->labelFightEnter->setText(QStringLiteral("Try catch the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         displayTrapProgression=1;
         ui->labelFightTrap->show();
@@ -2256,7 +2259,7 @@ void BaseWindow::displayTrap()
                     );
     else
         ui->labelFightTrap->move(ui->labelFightMonsterTop->pos().x(),ui->labelFightMonsterTop->pos().y());
-    if(!CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.isEmpty())
+    if(!CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.isEmpty())
         return;
     if((quint32)updateTrapTime.elapsed()>animationTime)
     {
@@ -2311,11 +2314,11 @@ void BaseWindow::displayTrap()
         {
             if(trapSuccess)
             {
-                CatchChallenger::ClientFightEngine::fightEngine.captureIsDone();//why? do at the screen change to return on the map, not here!
-                displayText(QStringLiteral("You have captured the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+                CatchChallenger::ClientFightEngine::fightEngine.catchIsDone();//why? do at the screen change to return on the map, not here!
+                displayText(tr("You have catched the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
             }
             else
-                displayText(QStringLiteral("You have failed the capture of the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
+                displayText(tr("You have failed the catch of the wild %1").arg(DatapackClientLoader::datapackLoader.monsterExtra[otherMonster->monster].name));
             ui->labelFightTrap->hide();
             return;
         }
@@ -2571,14 +2574,13 @@ void BaseWindow::useTrap(const quint32 &itemId)
     updateTrapTime.restart();
     displayTrapProgression=0;
     trapItemId=itemId;
-    CatchChallenger::ClientFightEngine::fightEngine.tryCaptureClient(itemId);
+    CatchChallenger::ClientFightEngine::fightEngine.tryCatchClient(itemId);
     displayTrap();
-    remove_to_inventory(itemId);
 }
 
 void BaseWindow::monsterCatch(const quint32 &newMonsterId)
 {
-    if(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.isEmpty())
+    if(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.isEmpty())
     {
         emit error("Internal bug: cupture monster list is emtpy");
         return;
@@ -2587,26 +2589,26 @@ void BaseWindow::monsterCatch(const quint32 &newMonsterId)
     {
         trapSuccess=false;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QStringLiteral("capture is failed"));
+        emit message(QStringLiteral("catch is failed"));
         #endif
         CatchChallenger::ClientFightEngine::fightEngine.generateOtherAttack();
     }
     else
     {
-        trapSuccess=false;
+        trapSuccess=true;
         #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-        emit message(QStringLiteral("capture is success"));
+        emit message(QStringLiteral("catch is success"));
         #endif
-        CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first().id=newMonsterId;
+        CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.first().id=newMonsterId;
         if(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().count()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER)
-            warehouse_playerMonster << CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first();
+            warehouse_playerMonster << CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.first();
         else
         {
-            CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.first());
+            CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.first());
             load_monsters();
         }
     }
-    CatchChallenger::ClientFightEngine::fightEngine.playerMonster_captureInProgress.removeFirst();
+    CatchChallenger::ClientFightEngine::fightEngine.playerMonster_catchInProgress.removeFirst();
     displayTrap();
 }
 

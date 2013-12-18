@@ -219,7 +219,7 @@ class PublicPlayerMonster
     quint32 monster;
     quint8 level;
     quint32 hp;
-    quint32 captured_with;
+    quint32 catched_with;
     Gender gender;
     QList<PlayerBuff> buffs;
 };

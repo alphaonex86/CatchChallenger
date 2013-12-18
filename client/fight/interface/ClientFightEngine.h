@@ -30,7 +30,7 @@ public:
     QList<quint8> battleStat,botMonstersStat;
     QList<quint8> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
     QList<quint32> otherMonsterAttack;
-    QList<PlayerMonster> playerMonster_captureInProgress;
+    QList<PlayerMonster> playerMonster_catchInProgress;
     void fightFinished();
     void setBattleMonster(const QList<quint8> &stat,const quint8 &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
@@ -54,9 +54,9 @@ public:
     bool haveBattleOtherMonster() const;
     virtual bool useSkill(const quint32 &skill);
     bool dropKOOtherMonster();
-    void tryCaptureClient(const quint32 &item);
-    virtual quint32 captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
-    void captureIsDone();
+    void tryCatchClient(const quint32 &item);
+    virtual quint32 catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    void catchIsDone();
     bool doTheOtherMonsterTurn();
     PlayerMonster * evolutionByLevelUp();
     void confirmEvolution(const quint32 &monterId);

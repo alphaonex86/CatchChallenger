@@ -69,12 +69,12 @@ void BaseWindow::resetAll()
     actionClan.clear();
     clanName.clear();
     haveClanInformations=false;
-    nextCityCaptureTimer.stop();
+    nextCityCatchTimer.stop();
     battleInformationsList.clear();
     botFightList.clear();
     buffToGraphicalItemTop.clear();
     buffToGraphicalItemBottom.clear();
-    zonecapture=false;
+    zonecatch=false;
     marketBuyInSuspend=false;
     marketBuyObjectList.clear();
     marketBuyCashInSuspend=0;
@@ -919,11 +919,11 @@ void BaseWindow::cityCapture(const quint32 &remainingTime,const quint8 &type)
 {
     if(remainingTime==0)
     {
-        nextCityCaptureTimer.stop();
+        nextCityCatchTimer.stop();
         return;//disabled
     }
-    nextCityCaptureTimer.start(remainingTime*1000);
-    nextCapture=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+remainingTime*1000);
+    nextCityCatchTimer.start(remainingTime*1000);
+    nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+remainingTime*1000);
     city.capture.frenquency=(City::Capture::Frequency)type;
     city.capture.day=(City::Capture::Day)QDateTime::currentDateTime().addSecs(remainingTime).date().dayOfWeek();
     city.capture.hour=QDateTime::currentDateTime().addSecs(remainingTime).time().hour();

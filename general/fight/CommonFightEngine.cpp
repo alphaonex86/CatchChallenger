@@ -236,7 +236,7 @@ bool CommonFightEngine::canDoRandomFight(const Map &map,const quint8 &x,const qu
 PlayerMonster CommonFightEngine::getRandomMonster(const QList<MapMonster> &monsterList,bool *ok)
 {
     PlayerMonster playerMonster;
-    playerMonster.captured_with=0;
+    playerMonster.catched_with=0;
     playerMonster.egg_step=0;
     playerMonster.remaining_xp=0;
     playerMonster.sp=0;
@@ -1006,13 +1006,24 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         }
         bonusStat/=wildMonsters.first().buffs.size();
     }
-    const quint32 maxTempRate=5;
-    const quint32 minTempRate=3;
+    const quint32 maxTempRate=12;
+    const quint32 minTempRate=5;
     const quint32 tryCapture=4;
-    quint32 tempRate=((quint32)CatchChallenger::CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster].catch_rate*(wildMonsterStat.hp*maxTempRate-minTempRate*wildMonsters.first().hp)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
+    const quint32 catch_rate=(quint32)CatchChallenger::CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster].catch_rate;
+    quint32 tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-wildMonsters.first().hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
     if(tempRate>255)
         return true;
-    quint32 realRate=65535*qPow(tempRate/255,0.25);
+    quint32 realRate=65535*qPow((float)tempRate/(float)255,0.25);
+
+    emit message(QStringLiteral("Formule: (%1*(%2-%3)*%4*%5)/(%6), realRate: %7")
+                 .arg(catch_rate)
+                 .arg(wildMonsterStat.hp*maxTempRate)
+                 .arg(minTempRate*wildMonsters.first().hp)
+                 .arg(bonusStat)
+                 .arg(trap.bonus_rate)
+                 .arg(wildMonsterStat.hp*maxTempRate)
+                 .arg(realRate)
+                 );
 
     quint32 index=0;
     while(index<tryCapture)
@@ -1035,7 +1046,7 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
         #endif
         PlayerMonster newMonster;
         newMonster.buffs=wildMonsters.first().buffs;
-        newMonster.captured_with=item;
+        newMonster.catched_with=item;
         newMonster.egg_step=0;
         newMonster.gender=wildMonsters.first().gender;
         newMonster.hp=wildMonsters.first().hp;
@@ -1045,7 +1056,8 @@ quint32 CommonFightEngine::tryCapture(const quint32 &item)
         newMonster.remaining_xp=0;
         newMonster.skills=wildMonsters.first().skills;
         newMonster.sp=0;
-        return captureAWild(player_informations->playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
+        newMonster.id=catchAWild(player_informations->playerMonster.size()>=CATCHCHALLENGER_MONSTER_MAX_WEAR_ON_PLAYER,newMonster);
+        return newMonster.id;
     }
     else
     {
@@ -1191,6 +1203,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             wildDrop(wildMonsters.first().monster);
             //give xp/sp here
             const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[wildMonsters.first().monster];
+            //multiplicator do at datapack loading
             int sp=wildmonster.give_sp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             int xp=wildmonster.give_xp*wildMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
@@ -1209,9 +1222,10 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             #endif
             //don't drop item because it's not a wild fight
             //give xp/sp here
-            const Monster &wildmonster=CommonDatapack::commonDatapack.monsters[botFightMonsters.first().monster];
-            int sp=wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            int xp=wildmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            const Monster &botmonster=CommonDatapack::commonDatapack.monsters[botFightMonsters.first().monster];
+            //multiplicator do at datapack loading
+            int sp=botmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            int xp=botmonster.give_xp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
             emit message(QStringLiteral("You win %1 xp and %2 sp").arg(give_xp).arg(wildmonster.give_sp*botFightMonsters.first().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX));
@@ -1232,7 +1246,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
     return winTheTurn;
 }
 
-//return true if change level
+//return true if change level, multiplicator do at datapack loading
 bool CommonFightEngine::giveXPSP(int xp,int sp)
 {
     bool haveChangeOfLevel=false;

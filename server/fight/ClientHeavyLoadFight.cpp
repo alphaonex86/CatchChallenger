@@ -83,11 +83,11 @@ void ClientHeavyLoad::loadMonsters()
         }
         if(ok)
         {
-            playerMonster.captured_with=monstersQuery.value(6).toUInt(&ok);
+            playerMonster.catched_with=monstersQuery.value(6).toUInt(&ok);
             if(ok)
             {
-                if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.captured_with))
-                    emit message(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
+                if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
+                    emit message(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
             }
             else
                 emit message(QStringLiteral("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));

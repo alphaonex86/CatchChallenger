@@ -222,13 +222,13 @@ bool ClientFightEngine::internalTryEscape()
     return CommonFightEngine::internalTryEscape();
 }
 
-void ClientFightEngine::tryCaptureClient(const quint32 &item)
+void ClientFightEngine::tryCatchClient(const quint32 &item)
 {
     emit message("ClientFightEngine::tryCapture(): emit tryCapture()");
     CatchChallenger::Api_client_real::client->useObject(item);
     PlayerMonster newMonster;
     newMonster.buffs=wildMonsters.first().buffs;
-    newMonster.captured_with=item;
+    newMonster.catched_with=item;
     newMonster.egg_step=0;
     newMonster.gender=wildMonsters.first().gender;
     newMonster.hp=wildMonsters.first().hp;
@@ -238,10 +238,10 @@ void ClientFightEngine::tryCaptureClient(const quint32 &item)
     newMonster.remaining_xp=0;
     newMonster.skills=wildMonsters.first().skills;
     newMonster.sp=0;
-    playerMonster_captureInProgress << newMonster;
+    playerMonster_catchInProgress << newMonster;
 }
 
-quint32 ClientFightEngine::captureAWild(const bool &toStorage, const PlayerMonster &newMonster)
+quint32 ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
     Q_UNUSED(toStorage);
     Q_UNUSED(newMonster);
@@ -512,7 +512,7 @@ bool ClientFightEngine::useSkill(const quint32 &skill)
     return CommonFightEngine::useSkill(skill);
 }
 
-void ClientFightEngine::captureIsDone()
+void ClientFightEngine::catchIsDone()
 {
     wildMonsters.removeFirst();
 }
@@ -580,7 +580,7 @@ void ClientFightEngine::confirmEvolution(const quint32 &monterId)
     qDebug() << "Monster for evolution not found";
 }
 
-//return true if change level
+//return true if change level, multiplicator do at datapack loading
 bool ClientFightEngine::giveXPSP(int xp,int sp)
 {
     bool haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);

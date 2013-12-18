@@ -1,6 +1,7 @@
 #include "FightLoader.h"
 #include "../base/DebugClass.h"
 #include "../base/GeneralVariable.h"
+#include "../base/CommonSettings.h"
 
 #include <QFile>
 #include <QByteArray>
@@ -377,13 +378,13 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                     }
                     if(ok)
                     {
-                        monster.give_xp=item.attribute(QStringLiteral("give_xp")).toUInt(&ok);
+                        monster.give_xp=item.attribute(QStringLiteral("give_xp")).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, give_xp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
                     if(ok)
                     {
-                        monster.give_sp=item.attribute(QStringLiteral("give_sp")).toUInt(&ok);
+                        monster.give_sp=item.attribute(QStringLiteral("give_sp")).toUInt(&ok)*CommonSettings::commonSettings.rates_xp;
                         if(!ok)
                             DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, give_sp is not number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     }
@@ -618,7 +619,10 @@ QHash<quint32,Monster> FightLoader::loadMonster(const QString &file, const QHash
                             quint64 xp_for_this_level=qPow(index+1,pow);
                             quint64 xp_for_max_level=monster.xp_for_max_level;
                             quint64 max_xp=qPow(CATCHCHALLENGER_MONSTER_LEVEL_MAX,pow);
-                            monster.level_to_xp << xp_for_this_level*xp_for_max_level/max_xp;
+                            quint64 tempXp=xp_for_this_level*xp_for_max_level/max_xp;
+                            if(tempXp<1)
+                                tempXp=1;
+                            monster.level_to_xp << tempXp;
                             index++;
                         }
                         #ifdef DEBUG_MESSAGE_MONSTER_XP_LOAD
@@ -913,7 +917,7 @@ QHash<quint32,BotFight> FightLoader::loadFight(const QString &folder, const QHas
                                         CatchChallenger::DebugClass::debugConsole(QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(gain.tagName().arg(gain.attribute(QStringLiteral("type"))).arg(gain.lineNumber())));
                                     else
                                     {
-                                        quint32 cash=gain.attribute(QStringLiteral("cash")).toUInt(&ok);
+                                        quint32 cash=gain.attribute(QStringLiteral("cash")).toUInt(&ok)*CommonSettings::commonSettings.rates_gold;
                                         if(ok)
                                             botFight.cash+=cash;
                                         else
