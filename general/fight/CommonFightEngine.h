@@ -94,7 +94,7 @@ protected:
     virtual void levelUp(const quint8 &level,const quint8 &monsterIndex);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const quint32 &skill, const quint8 &skillLevel);
     Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const quint32 &skill, const quint8 &skillLevel);
-    virtual quint32 captureAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
+    virtual quint32 catchAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
     virtual void startTheFight();
 signals:
     void error(const QString &error) const;

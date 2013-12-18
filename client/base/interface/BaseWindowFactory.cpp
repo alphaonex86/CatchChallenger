@@ -117,9 +117,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     tempItem.quantity=i;
     tempItem.price=price;
     itemsToSell << tempItem;
-    items[id]-=i;
-    if(items[id]==0)
-        items.remove(id);
+    remove_to_inventory(id,i);
     CatchChallenger::Api_client_real::client->sellFactoryResource(factoryId,id,i,price);
 }
 
@@ -212,19 +210,13 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const quint32 &newPr
             showTip(tr("Item sold at better price"));
         break;
         case SoldStat_WrongQuantity:
-            if(items.contains(itemsToSell.first().object))
-                items[itemsToSell.first().object]+=itemsToSell.first().quantity;
-            else
-                items[itemsToSell.first().object]=itemsToSell.first().quantity;
+            add_to_inventory(itemsToSell.first().object,itemsToSell.first().quantity,false);
             load_inventory();
             load_plant_inventory();
             QMessageBox::information(this,tr("Information"),tr("Sorry but have not the quantity of this item"));
         break;
         case SoldStat_PriceHaveChanged:
-            if(items.contains(itemsToSell.first().object))
-                items[itemsToSell.first().object]+=itemsToSell.first().quantity;
-            else
-                items[itemsToSell.first().object]=itemsToSell.first().quantity;
+            add_to_inventory(itemsToSell.first().object,itemsToSell.first().quantity,false);
             load_inventory();
             load_plant_inventory();
             QMessageBox::information(this,tr("Information"),tr("Sorry but now the price is worse"));

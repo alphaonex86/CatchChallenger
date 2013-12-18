@@ -74,6 +74,7 @@ BaseServer::BaseServer()
     CommonSettings::commonSettings.min_character          = 0;
     CommonSettings::commonSettings.max_pseudo_size        = 20;
     CommonSettings::commonSettings.rates_gold             = 1.0;
+    CommonSettings::commonSettings.rates_drop             = 1.0;
     CommonSettings::commonSettings.rates_xp               = 1.0;
     CommonSettings::commonSettings.factoryPriceChange     = 20;
     CommonSettings::commonSettings.character_delete_time  = 604800; // 7 day
@@ -537,11 +538,11 @@ void BaseServer::preload_market_monsters()
          }
          if(ok)
          {
-             playerMonster.captured_with=monstersQuery.value(6).toUInt(&ok);
+             playerMonster.catched_with=monstersQuery.value(6).toUInt(&ok);
              if(ok)
              {
-                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.captured_with))
-                     DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.captured_with));
+                 if(!CommonDatapack::commonDatapack.items.item.contains(playerMonster.catched_with))
+                     DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not is not into items list").arg(playerMonster.catched_with));
              }
              else
                  DebugClass::debugConsole(QStringLiteral("captured_with: %1 is not a number").arg(monstersQuery.value(6).toString()));

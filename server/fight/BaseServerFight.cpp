@@ -267,7 +267,21 @@ QHash<quint32,MonsterDrops> BaseServerFight::loadMonsterDrop(const QString &file
                                             }
                                         }
                                         if(ok)
+                                        {
+                                            if(CommonSettings::commonSettings.rates_drop!=1.0)
+                                            {
+                                                dropVar.luck=dropVar.luck*CommonSettings::commonSettings.rates_drop;
+                                                float targetAverage=((float)dropVar.quantity_min+(float)dropVar.quantity_max)/2.0;
+                                                targetAverage=(targetAverage*dropVar.luck)/100.0;
+                                                while(dropVar.luck>100)
+                                                {
+                                                    dropVar.quantity_max++;
+                                                    float currentAverage=((float)dropVar.quantity_min+(float)dropVar.quantity_max)/2.0;
+                                                    dropVar.luck=(100.0*targetAverage)/currentAverage;
+                                                }
+                                            }
                                             monsterDrops.insert(id,dropVar);
+                                        }
                                     }
                                     else
                                         DebugClass::debugConsole(QStringLiteral("Unable to open the xml file: %1, as not item attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
