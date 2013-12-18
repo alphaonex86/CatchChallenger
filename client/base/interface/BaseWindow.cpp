@@ -118,8 +118,8 @@ BaseWindow::BaseWindow() :
 
     connect(&tip_timeout,&QTimer::timeout,              this,&BaseWindow::tipTimeout);
     connect(&gain_timeout,&QTimer::timeout,             this,&BaseWindow::gainTimeout);
-    connect(&nextCityCaptureTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
-    connect(&updater_page_zonecapture,&QTimer::timeout, this,&BaseWindow::updatePageZonecapture);
+    connect(&nextCityCatchTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime);
+    connect(&updater_page_zonecatch,&QTimer::timeout, this,&BaseWindow::updatePageZoneCatch);
     connect(&animationControl,&AnimationControl::animationFinished,this,&BaseWindow::animationFinished,Qt::QueuedConnection);
 
     renderFrame = new QFrame(ui->page_map);
@@ -135,8 +135,8 @@ BaseWindow::BaseWindow() :
     renderFrame->lower();
     renderFrame->lower();
     ui->labelFightTrap->hide();
-    nextCityCaptureTimer.setSingleShot(true);
-    updater_page_zonecapture.setSingleShot(false);
+    nextCityCatchTimer.setSingleShot(true);
+    updater_page_zonecatch.setSingleShot(false);
 
     Chat::chat->setGeometry(QRect(0, 0, 250, 400));
 
@@ -599,9 +599,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 qDebug() << "item id have not the quantity";
                 break;
             }
-            items[itemId]-=quantity;
-            if(items[itemId]==0)
-                items.remove(itemId);
+            remove_to_inventory(itemId,quantity);
             ItemToSellOrBuy tempItem;
             tempItem.object=itemId;
             tempItem.quantity=quantity;
@@ -638,9 +636,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
             CatchChallenger::Api_client_real::client->putMarketObject(itemId,quantity,getPrice.price(),getPrice.bitcoin());
             marketPutCashInSuspend=getPrice.price();
             marketPutBitcoinInSuspend=getPrice.bitcoin();
-            items[itemId]-=quantity;
-            if(items[itemId]==0)
-                items.remove(itemId);
+            remove_to_inventory(itemId,quantity);
             QPair<quint32,quint32> pair;
             pair.first=itemId;
             pair.second=quantity;
@@ -824,9 +820,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            items[itemId]--;
-            if(items[itemId]==0)
-                items.remove(itemId);
+            remove_to_inventory(itemId);
             SeedInWaiting seedInWaiting;
             seedInWaiting.map=MapController::mapController->current_map;
             seedInWaiting.x=MapController::mapController->getX();
@@ -863,9 +857,7 @@ void BaseWindow::objectSelection(const bool &ok, const quint32 &itemId, const qu
                 qDebug() << "item id have not the quantity";
                 break;
             }
-            items[itemId]-=quantity;
-            if(items[itemId]==0)
-                items.remove(itemId);
+            remove_to_inventory(itemId);
             useTrap(itemId);
         }
         break;
@@ -2109,20 +2101,20 @@ void BaseWindow::goToBotStep(const quint8 &step)
         QString zone=actualBot.step[step].attribute("zone");
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
         {
-            zonecaptureName=DatapackClientLoader::datapackLoader.zonesExtra[zone].name;
-            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QStringLiteral("<b>%1</b>").arg(zonecaptureName)));
+            zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra[zone].name;
+            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QStringLiteral("<b>%1</b>").arg(zonecatchName)));
         }
         else
         {
-            zonecaptureName.clear();
+            zonecatchName.clear();
             ui->zonecaptureWaitText->setText(tr("You are waiting to capture a zone"));
         }
-        updater_page_zonecapture.start(1000);
-        nextCaptureOnScreen=nextCapture;
-        zonecapture=true;
-        ui->stackedWidget->setCurrentWidget(ui->page_zonecapture);
+        updater_page_zonecatch.start(1000);
+        nextCatchOnScreen=nextCatch;
+        zonecatch=true;
+        ui->stackedWidget->setCurrentWidget(ui->page_zonecatch);
         CatchChallenger::Api_client_real::client->waitingForCityCapture(false);
-        updatePageZonecapture();
+        updatePageZoneCatch();
         return;
     }
     else if(actualBot.step[step].attribute("type")=="script")
@@ -2370,10 +2362,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
     if(this->items[itemId]<quantity)
         quantity=this->items[itemId];
     emit destroyObject(itemId,quantity);
-    if(this->items[itemId]<=quantity)
-        this->items.remove(itemId);
-    else
-        this->items[itemId]-=quantity;
+    remove_to_inventory(this->items[itemId],quantity);
     load_inventory();
     load_plant_inventory();
 }

@@ -186,8 +186,7 @@ void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
     switch(stat)
     {
         case BuyStat_Done:
-            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
-            add_to_inventory(items);
+            add_to_inventory(itemToSellOrBuy.object,itemToSellOrBuy.quantity);
         break;
         case BuyStat_BetterPrice:
             if(newPrice==0)
@@ -197,8 +196,7 @@ void BaseWindow::haveBuyObject(const BuyStat &stat,const quint32 &newPrice)
             }
             addCash(itemToSellOrBuy.price);
             removeCash(newPrice*itemToSellOrBuy.quantity);
-            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
-            add_to_inventory(items);
+            add_to_inventory(itemToSellOrBuy.object,itemToSellOrBuy.quantity);
         break;
         case BuyStat_HaveNotQuantity:
             addCash(itemToSellOrBuy.price);
@@ -234,19 +232,13 @@ void BaseWindow::haveSellObject(const SoldStat &stat,const quint32 &newPrice)
             showTip(tr("Item sold at better price"));
         break;
         case SoldStat_WrongQuantity:
-            if(items.contains(itemsToSell.first().object))
-                items[itemsToSell.first().object]+=itemsToSell.first().quantity;
-            else
-                items[itemsToSell.first().object]=itemsToSell.first().quantity;
+            add_to_inventory(itemsToSell.first().object,itemsToSell.first().quantity,false);
             load_inventory();
             load_plant_inventory();
             showTip(tr("Sorry but have not the quantity of this item"));
         break;
         case SoldStat_PriceHaveChanged:
-            if(items.contains(itemsToSell.first().object))
-                items[itemsToSell.first().object]+=itemsToSell.first().quantity;
-            else
-                items[itemsToSell.first().object]=itemsToSell.first().quantity;
+            add_to_inventory(itemsToSell.first().object,itemsToSell.first().quantity,false);
             load_inventory();
             load_plant_inventory();
             showTip(tr("Sorry but now the price is worse"));

@@ -94,7 +94,7 @@ protected:
     bool bothRealPlayerIsReady() const;
     bool checkIfCanDoTheTurn();
     bool dropKOOtherMonster();
-    quint32 captureAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    quint32 catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
     bool haveCurrentSkill() const;
     quint32 getCurrentSkill() const;
     bool haveMonsterChange() const;

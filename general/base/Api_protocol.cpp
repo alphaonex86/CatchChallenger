@@ -1306,7 +1306,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
                                 return;
                             }
-                            in >> monster.captured_with;
+                            in >> monster.catched_with;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
@@ -1755,7 +1755,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                             return;
                         }
-                        in >> publicPlayerMonster.captured_with;
+                        in >> publicPlayerMonster.catched_with;
                         if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -1914,7 +1914,7 @@ void Api_protocol::parseFullMessage(const quint8 &mainCodeType,const quint16 &su
                         parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
                         return;
                     }
-                    in >> publicPlayerMonster.captured_with;
+                    in >> publicPlayerMonster.catched_with;
                     if((in.device()->size()-in.device()->pos())<(int)(sizeof(quint8)))
                     {
                         parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(mainCodeType).arg(subCodeType).arg(__LINE__));
@@ -2792,7 +2792,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
                                 return;
                             }
-                            in >> monster.captured_with;
+                            in >> monster.catched_with;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
@@ -2930,7 +2930,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
                                 return;
                             }
-                            in >> monster.captured_with;
+                            in >> monster.catched_with;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
@@ -3736,7 +3736,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
                             return;
                         }
-                        in >> monster.captured_with;
+                        in >> monster.catched_with;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
@@ -3957,7 +3957,7 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
                                 return;
                             }
-                            in >> monster.captured_with;
+                            in >> monster.catched_with;
                             if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                             {
                                 parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(__LINE__));
