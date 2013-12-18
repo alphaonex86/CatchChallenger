@@ -117,6 +117,8 @@ private slots:
     void on_speed_editingFinished();
     void on_dontSendPseudo_toggled(bool checked);
     void on_dontSendPlayerType_toggled(bool checked);
+    void on_rates_xp_pow_normal_valueChanged(double arg1);
+    void on_rates_drop_normal_valueChanged(double arg1);
 signals:
     void record_latency();
 };

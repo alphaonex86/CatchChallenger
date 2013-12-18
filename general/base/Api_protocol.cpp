@@ -2495,6 +2495,18 @@ void Api_protocol::parseFullReplyData(const quint8 &mainCodeType,const quint16 &
                             return;
                         }
                         in >> CommonSettings::commonSettings.rates_gold;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(float))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.rates_xp_pow;
+                        if((in.device()->size()-in.device()->pos())<(int)sizeof(float))
+                        {
+                            parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the rates_gold, line: %1").arg(__LINE__));
+                            return;
+                        }
+                        in >> CommonSettings::commonSettings.rates_drop;
                         if((in.device()->size()-in.device()->pos())<(int)sizeof(quint8))
                         {
                             parseError(tr("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the chat_allow_all, line: %1").arg(__LINE__));

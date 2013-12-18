@@ -76,6 +76,7 @@ BaseServer::BaseServer()
     CommonSettings::commonSettings.rates_gold             = 1.0;
     CommonSettings::commonSettings.rates_drop             = 1.0;
     CommonSettings::commonSettings.rates_xp               = 1.0;
+    CommonSettings::commonSettings.rates_xp_pow           = 1.0;
     CommonSettings::commonSettings.factoryPriceChange     = 20;
     CommonSettings::commonSettings.character_delete_time  = 604800; // 7 day
     GlobalServerData::serverSettings.database.type                              = ServerSettings::Database::DatabaseType_Mysql;
