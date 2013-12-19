@@ -149,6 +149,7 @@ private:
 
     static QRegularExpression commandRegExp;
     static QRegularExpression commandRegExpWithArgs;
+    static QRegularExpression isolateTheMainCommand;
 };
 }
 

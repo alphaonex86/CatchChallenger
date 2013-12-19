@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    settings=new QSettings(QCoreApplication::applicationDirPath()+"/server.properties",QSettings::IniFormat);
+    settings=new QSettings(QCoreApplication::applicationDirPath()+QStringLiteral("/server.properties"),QSettings::IniFormat);
     NormalServer::checkSettingsFile(settings);
     ui->setupUi(this);
     on_MapVisibilityAlgorithm_currentIndexChanged(0);

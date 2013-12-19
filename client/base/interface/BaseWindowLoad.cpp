@@ -55,6 +55,7 @@ void BaseWindow::resetAll()
     ui->inventoryDestroy->setVisible(false);
     previousRXSize=0;
     previousTXSize=0;
+    attack_quantity_changed=0;
     previousAnimationWidget=NULL;
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);

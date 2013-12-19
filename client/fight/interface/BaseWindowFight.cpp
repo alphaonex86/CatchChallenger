@@ -1053,6 +1053,7 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
     else
         CatchChallenger::ClientFightEngine::fightEngine.useSkill(fight_attacks_graphical[itemsList.first()]);
     displayAttackProgression=0;
+    attack_quantity_changed=0;
     if(battleType!=BattleType_OtherPlayer)
         doNextAction();
     else
@@ -1447,10 +1448,17 @@ void BaseWindow::doNextAction()
     if(CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
     {
         quint32 returnedLastGivenXP=CatchChallenger::ClientFightEngine::fightEngine.lastGivenXP();
+        if(returnedLastGivenXP>4294000000)
+        {
+            newError(tr("Internal error"),QStringLiteral("returnedLastGivenXP is negative"));
+            doNextAction();
+            return;
+        }
         if(returnedLastGivenXP>0 || mLastGivenXP>0)
         {
             if(returnedLastGivenXP>0)
                 mLastGivenXP=returnedLastGivenXP;
+            displayAttackProgression=0;
             displayExperienceGain();
             return;
         }
@@ -2084,6 +2092,7 @@ void BaseWindow::displayAttack()
             }
         }
         displayAttackProgression=0;
+        attack_quantity_changed=0;
         if(!attackReturn.lifeEffectMonster.isEmpty())
             CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
         else
@@ -2128,7 +2137,7 @@ void BaseWindow::displayAttack()
 
 void BaseWindow::displayExperienceGain()
 {
-    PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    PlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(currentMonster==NULL)
     {
         mLastGivenXP=0;
@@ -2151,16 +2160,42 @@ void BaseWindow::displayExperienceGain()
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         ui->labelFightEnter->setText(tr("You %1 gain %2 of experience").arg(DatapackClientLoader::datapackLoader.monsterExtra[currentMonster->monster].name).arg(mLastGivenXP));
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(mLastGivenXP>4294000000)
+    {
+        newError(tr("Internal error"),QStringLiteral("mLastGivenXP is negative"));
+        doNextAction();
+        return;
+    }
+    if(currentMonsterLevel>currentMonster->level)
+    {
+        newError(tr("Internal error"),QStringLiteral("displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
+        mLastGivenXP=0;
+        doNextAction();
+        return;
+    }
+    if(currentMonsterLevel==currentMonster->level && (quint32)ui->progressBarFightBottomExp->value()>currentMonster->remaining_xp)
+    {
+        newError(tr("Internal error"),QStringLiteral("displayed xp greater than the real xp: %1>%2").arg(ui->progressBarFightBottomExp->value()).arg(currentMonster->remaining_xp));
+        mLastGivenXP=0;
+        doNextAction();
+        return;
+    }
+    #endif
 
-    int xp_to_change;
+    quint32 xp_to_change;
     xp_to_change=ui->progressBarFightBottomExp->maximum()/200;//0.5%
     if(xp_to_change==0)
         xp_to_change=1;
+    if(xp_to_change>mLastGivenXP)
+        xp_to_change=mLastGivenXP;
 
     quint32 maxXp=ui->progressBarFightBottomExp->maximum();
-    if((ui->progressBarFightBottomExp->value()+xp_to_change)>=(qint32)maxXp)
+    if(((quint32)ui->progressBarFightBottomExp->value()+xp_to_change)>=(quint32)maxXp)
     {
         xp_to_change=maxXp-ui->progressBarFightBottomExp->value();
+        if(xp_to_change>mLastGivenXP)
+            xp_to_change=mLastGivenXP;
         const Monster::Stat &oldStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
         currentMonsterLevel++;
         const Monster::Stat &newStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters[currentMonster->monster],currentMonsterLevel);
@@ -2173,6 +2208,28 @@ void BaseWindow::displayExperienceGain()
         ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.monsters[currentMonster->monster].level_to_xp.at(currentMonsterLevel-1));
         ui->progressBarFightBottomExp->setValue(maxXp);
         ui->labelFightBottomLevel->setText(tr("Level %1").arg(currentMonsterLevel));
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(mLastGivenXP>4294000000)
+        {
+            newError(tr("Internal error"),QStringLiteral("mLastGivenXP is negative"));
+            doNextAction();
+            return;
+        }
+        if(currentMonsterLevel>currentMonster->level)
+        {
+            newError(tr("Internal error"),QStringLiteral("displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
+            mLastGivenXP=0;
+            doNextAction();
+            return;
+        }
+        if(currentMonsterLevel==currentMonster->level && (quint32)ui->progressBarFightBottomExp->value()>currentMonster->remaining_xp)
+        {
+            newError(tr("Internal error"),QStringLiteral("displayed xp greater than the real xp: %1>%2").arg(ui->progressBarFightBottomExp->value()).arg(currentMonster->remaining_xp));
+            mLastGivenXP=0;
+            doNextAction();
+            return;
+        }
+        #endif
         if(currentMonsterLevel>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
         {
             mLastGivenXP=0;
@@ -2182,7 +2239,32 @@ void BaseWindow::displayExperienceGain()
     }
     else
         ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->value()+xp_to_change);
-    mLastGivenXP-=xp_to_change;
+    if(mLastGivenXP>xp_to_change)
+        mLastGivenXP-=xp_to_change;
+    else
+        mLastGivenXP=0;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(mLastGivenXP>4294000000)
+    {
+        newError(tr("Internal error"),QStringLiteral("mLastGivenXP is negative"));
+        doNextAction();
+        return;
+    }
+    if(currentMonsterLevel>currentMonster->level)
+    {
+        newError(tr("Internal error"),QStringLiteral("displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
+        mLastGivenXP=0;
+        doNextAction();
+        return;
+    }
+    if(currentMonsterLevel==currentMonster->level && (quint32)ui->progressBarFightBottomExp->value()>currentMonster->remaining_xp)
+    {
+        newError(tr("Internal error"),QStringLiteral("displayed xp greater than the real xp: %1>%2").arg(ui->progressBarFightBottomExp->value()).arg(currentMonster->remaining_xp));
+        mLastGivenXP=0;
+        doNextAction();
+        return;
+    }
+    #endif
 
     displayExpTimer.start();
     displayAttackProgression++;
