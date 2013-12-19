@@ -98,8 +98,8 @@ void InternetUpdater::httpFinished()
 
 bool InternetUpdater::versionIsNewer(const QString &version)
 {
-    QStringList versionANumber=version.split(".");
-    QStringList versionBNumber=QString(CATCHCHALLENGER_VERSION).split(".");
+    QStringList versionANumber=version.split(QStringLiteral("."));
+    QStringList versionBNumber=QStringLiteral(CATCHCHALLENGER_VERSION).split(QStringLiteral("."));
     int index=0;
     int defaultReturnValue=true;
     while(index<versionANumber.size() && index<versionBNumber.size())

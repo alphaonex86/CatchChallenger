@@ -55,11 +55,11 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.pvp                                    = true;
 
     GlobalServerData::serverSettings.database.type                              = CatchChallenger::ServerSettings::Database::DatabaseType_SQLite;
-    GlobalServerData::serverSettings.database.sqlite.file                       = "";
+    GlobalServerData::serverSettings.database.sqlite.file                       = QStringLiteral("");
     GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithm_none;
 
-    GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+"/datapack/";
-    GlobalServerData::serverSettings.server_ip                                  = "";
+    GlobalServerData::serverSettings.datapack_basePath                          = QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/");
+    GlobalServerData::serverSettings.server_ip                                  = QStringLiteral("");
     GlobalServerData::serverSettings.server_port                                = 42489;
     GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
     GlobalServerData::serverSettings.anonymous                                  = false;
@@ -90,13 +90,13 @@ BaseServer::BaseServer()
     GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
     GlobalServerData::serverSettings.city.capture.minute                        = 0;
-    GlobalServerData::serverSettings.bitcoin.address                            = "1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ";
+    GlobalServerData::serverSettings.bitcoin.address                            = QStringLiteral("1Hz3GtkiDBpbWxZixkQPuTGDh2DUy9bQUJ");
     #ifdef Q_OS_WIN32
-    GlobalServerData::serverSettings.bitcoin.binaryPath                         = "%application_path%/bitcoin/bitcoind.exe";
-    GlobalServerData::serverSettings.bitcoin.workingPath                        = "%application_path%/bitcoin-storage/";
+    GlobalServerData::serverSettings.bitcoin.binaryPath                         = QStringLiteral("%application_path%/bitcoin/bitcoind.exe");
+    GlobalServerData::serverSettings.bitcoin.workingPath                        = QStringLiteral("%application_path%/bitcoin-storage/");
     #else
-    GlobalServerData::serverSettings.bitcoin.binaryPath                         = "/usr/bin/bitcoind";
-    GlobalServerData::serverSettings.bitcoin.workingPath                        = QDir::homePath()+"/.config/CatchChallenger/server/bitcoin/";
+    GlobalServerData::serverSettings.bitcoin.binaryPath                         = QStringLiteral("/usr/bin/bitcoind");
+    GlobalServerData::serverSettings.bitcoin.workingPath                        = QDir::homePath()+QStringLiteral("/.config/CatchChallenger/server/bitcoin/");
     #endif
     GlobalServerData::serverSettings.bitcoin.enabled                            = false;
     GlobalServerData::serverSettings.bitcoin.fee                                = 1.0;
@@ -185,11 +185,12 @@ void BaseServer::preload_the_data()
 
 void BaseServer::preload_zone()
 {
-    QRegularExpression regexXmlFile("^[a-zA-Z0-9\\- _]+\\.xml$");
+    QRegularExpression regexXmlFile(QStringLiteral("^[a-zA-Z0-9\\- _]+\\.xml$"));
     //open and quick check the file
     QFileInfoList entryList=QDir(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_ZONE).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
     int index=0;
-    while(index<entryList.size())
+    const int &listsize=entryList.size();
+    while(index<listsize)
     {
         if(!entryList.at(index).isFile())
         {
@@ -254,9 +255,10 @@ void BaseServer::preload_zone()
                 bool ok;
                 const QStringList &fightIdStringList=capture.attribute(QStringLiteral("fightId")).split(QStringLiteral(";"));
                 int sub_index=0;
-                while(sub_index<fightIdStringList.size())
+                const int &listsize=fightIdStringList.size();
+                while(sub_index<listsize)
                 {
-                    quint32 fightId=fightIdStringList.at(sub_index).toUInt(&ok);
+                    const quint32 &fightId=fightIdStringList.at(sub_index).toUInt(&ok);
                     if(ok)
                     {
                         if(!CatchChallenger::CommonDatapack::commonDatapack.botFights.contains(fightId))
@@ -266,7 +268,7 @@ void BaseServer::preload_zone()
                     }
                     sub_index++;
                 }
-                if(sub_index==fightIdStringList.size() && !fightIdList.isEmpty())
+                if(sub_index==listsize && !fightIdList.isEmpty())
                     GlobalServerData::serverPrivateVariables.captureFightIdList[zoneCodeName]=fightIdList;
                 break;
             }
@@ -340,7 +342,8 @@ void BaseServer::preload_industries()
         {
             QStringList resourcesStringList=industryStatusQuery.value(1).toString().split(QStringLiteral(";"));
             int index=0;
-            while(index<resourcesStringList.size())
+            const int &listsize=resourcesStringList.size();
+            while(index<listsize)
             {
                 QStringList itemStringList=resourcesStringList.at(index).split(QStringLiteral("->"));
                 if(itemStringList.size()!=2)
@@ -369,13 +372,14 @@ void BaseServer::preload_industries()
                 }
                 const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[id]];
                 int indexItem=0;
-                while(indexItem<industry.resources.size())
+                const int &resourceslistsize=industry.resources.size();
+                while(indexItem<resourceslistsize)
                 {
                     if(industry.resources.at(indexItem).item==item)
                         break;
                     indexItem++;
                 }
-                if(indexItem==industry.resources.size())
+                if(indexItem==resourceslistsize)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: item in db not found"));
                     ok=false;
@@ -391,7 +395,8 @@ void BaseServer::preload_industries()
         {
             QStringList productsStringList=industryStatusQuery.value(2).toString().split(QStringLiteral(";"));
             int index=0;
-            while(index<productsStringList.size())
+            const int &listsize=productsStringList.size();
+            while(index<listsize)
             {
                 QStringList itemStringList=productsStringList.at(index).split(QStringLiteral("->"));
                 if(itemStringList.size()!=2)
@@ -419,13 +424,14 @@ void BaseServer::preload_industries()
                     break;
                 }const Industry &industry=CommonDatapack::commonDatapack.industries[CommonDatapack::commonDatapack.industriesLink[id]];
                 int indexItem=0;
-                while(indexItem<industry.products.size())
+                const int &productlistsize=industry.products.size();
+                while(indexItem<productlistsize)
                 {
                     if(industry.products.at(indexItem).item==item)
                         break;
                     indexItem++;
                 }
-                if(indexItem==industry.products.size())
+                if(indexItem==productlistsize)
                 {
                     DebugClass::debugConsole(QStringLiteral("preload_industries: item in db not found"));
                     ok=false;
@@ -610,6 +616,7 @@ void BaseServer::preload_market_monsters()
 void BaseServer::preload_market_items()
 {
     LocalClientHandler::marketObjectIdList.clear();
+    LocalClientHandler::marketObjectIdList.reserve(65535);
     int index=0;
     while(index<=65535)
     {
@@ -837,7 +844,7 @@ void BaseServer::preload_the_map()
     while(index<size)
     {
         QString fileName=returnList.at(index);
-        fileName.replace('\\','/');
+        fileName.replace(QStringLiteral("\\"),QStringLiteral("/"));
         if(fileName.contains(mapFilter) && GlobalServerData::serverPrivateVariables.filesList.contains(DATAPACK_BASE_PATH_MAP+fileName))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
@@ -894,7 +901,8 @@ void BaseServer::preload_the_map()
                 }
 
                 sub_index=0;
-                while(sub_index<map_temp.map_to_send.teleport.size())
+                const int &listsize=map_temp.map_to_send.teleport.size();
+                while(sub_index<listsize)
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
                     sub_index++;
@@ -916,22 +924,22 @@ void BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        if(semi_loaded_map.at(index).border.bottom.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
+        if(!semi_loaded_map.at(index).border.bottom.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.bottom.fileName))
             semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.bottom.fileName];
         else
             semi_loaded_map[index].map->border.bottom.map=NULL;
 
-        if(semi_loaded_map.at(index).border.top.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
+        if(!semi_loaded_map.at(index).border.top.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.top.fileName))
             semi_loaded_map[index].map->border.top.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.top.fileName];
         else
             semi_loaded_map[index].map->border.top.map=NULL;
 
-        if(semi_loaded_map.at(index).border.left.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
+        if(!semi_loaded_map.at(index).border.left.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.left.fileName))
             semi_loaded_map[index].map->border.left.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.left.fileName];
         else
             semi_loaded_map[index].map->border.left.map=NULL;
 
-        if(semi_loaded_map.at(index).border.right.fileName!=QStringLiteral("") && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
+        if(!semi_loaded_map.at(index).border.right.fileName.isEmpty() && GlobalServerData::serverPrivateVariables.map_list.contains(semi_loaded_map.at(index).border.right.fileName))
             semi_loaded_map[index].map->border.right.map=GlobalServerData::serverPrivateVariables.map_list[semi_loaded_map.at(index).border.right.fileName];
         else
             semi_loaded_map[index].map->border.right.map=NULL;
@@ -1153,13 +1161,14 @@ void BaseServer::preload_the_skin()
 {
     QStringList skinFolderList=FacilityLib::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     int index=0;
-    while(index<skinFolderList.size())
+    const int &listsize=skinFolderList.size();
+    while(index<listsize)
     {
         GlobalServerData::serverPrivateVariables.skinList[skinFolderList.at(index)]=index;
         index++;
     }
 
-    DebugClass::debugConsole(QStringLiteral("%1 skin(s) loaded").arg(GlobalServerData::serverPrivateVariables.skinList.size()));
+    DebugClass::debugConsole(QStringLiteral("%1 skin(s) loaded").arg(listsize));
 }
 
 void BaseServer::preload_the_datapack()
@@ -1198,6 +1207,7 @@ void BaseServer::preload_the_datapack()
 void BaseServer::preload_the_players()
 {
     ClientHeavyLoad::simplifiedIdList.clear();
+    LocalClientHandler::marketObjectIdList.reserve(GlobalServerData::serverSettings.max_players);
     int index=0;
     while(index<GlobalServerData::serverSettings.max_players)
     {
@@ -1237,13 +1247,14 @@ void BaseServer::preload_the_bots(const QList<Map_semi> &semi_loaded_map)
     int botfights_number=0;
     int botfightstigger_number=0;
     //resolv the botfights, bots, shops, learn, heal, zonecapture, market
-    int size=semi_loaded_map.size();
+    const int &size=semi_loaded_map.size();
     int index=0;
     bool ok;
     while(index<size)
     {
         int sub_index=0;
-        while(sub_index<semi_loaded_map[index].old_map.bots.size())
+        const int &botssize=semi_loaded_map[index].old_map.bots.size();
+        while(sub_index<botssize)
         {
             bots_number++;
             Map_to_send::Bot_Semi bot_Semi=semi_loaded_map[index].old_map.bots.at(sub_index);
@@ -1707,7 +1718,8 @@ void BaseServer::loadAndFixSettings()
     while(GlobalServerData::serverPrivateVariables.server_message.size()>16)
         GlobalServerData::serverPrivateVariables.server_message.removeLast();
     int index=0;
-    while(index<GlobalServerData::serverPrivateVariables.server_message.size())
+    const int &listsize=GlobalServerData::serverPrivateVariables.server_message.size();
+    while(index<listsize)
     {
         GlobalServerData::serverPrivateVariables.server_message[index].truncate(128);
         index++;

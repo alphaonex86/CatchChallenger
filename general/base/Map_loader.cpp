@@ -65,19 +65,19 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         return false;
     }
     QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="map")
+    if(root.tagName()!=QStringLiteral("map"))
     {
         error=QStringLiteral("\"map\" root balise not found for the xml file");
         return false;
     }
 
     //get the width
-    if(!root.hasAttribute("width"))
+    if(!root.hasAttribute(QStringLiteral("width")))
     {
         error=QStringLiteral("the root node has not the attribute \"width\"");
         return false;
     }
-    map_to_send.width=root.attribute("width").toUInt(&ok);
+    map_to_send.width=root.attribute(QStringLiteral("width")).toUInt(&ok);
     if(!ok)
     {
         error=QStringLiteral("the root node has wrong attribute \"width\"");
@@ -85,12 +85,12 @@ bool Map_loader::tryLoadMap(const QString &fileName)
     }
 
     //get the height
-    if(!root.hasAttribute("height"))
+    if(!root.hasAttribute(QStringLiteral("height")))
     {
         error=QStringLiteral("the root node has not the attribute \"height\"");
         return false;
     }
-    map_to_send.height=root.attribute("height").toUInt(&ok);
+    map_to_send.height=root.attribute(QStringLiteral("height")).toUInt(&ok);
     if(!ok)
     {
         error=QStringLiteral("the root node has wrong attribute \"height\"");
@@ -513,8 +513,9 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                         Walkable=data;
                     else
                     {
+                        const int &layersize=Walkable.size();
                         int index=0;
-                        while(index<Walkable.size())
+                        while(index<layersize)
                         {
                             Walkable[index]=Walkable[index] || data[index];
                             index++;
@@ -528,7 +529,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<Collisions.size())
+                        const int &layersize=Collisions.size();
+                        while(index<layersize)
                         {
                             Collisions[index]=Collisions[index] || data[index];
                             index++;
@@ -542,7 +544,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<Water.size())
+                        const int &layersize=Water.size();
+                        while(index<layersize)
                         {
                             Water[index]=Water[index] || data[index];
                             index++;
@@ -556,7 +559,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<Grass.size())
+                        const int &layersize=Grass.size();
+                        while(index<layersize)
                         {
                             Grass[index]=Grass[index] || data[index];
                             index++;
@@ -570,7 +574,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<Dirt.size())
+                        const int &layersize=Dirt.size();
+                        while(index<layersize)
                         {
                             Dirt[index]=Dirt[index] || data[index];
                             index++;
@@ -584,7 +589,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<LedgesRight.size())
+                        const int &layersize=LedgesRight.size();
+                        while(index<layersize)
                         {
                             LedgesRight[index]=LedgesRight[index] || data[index];
                             index++;
@@ -598,7 +604,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<LedgesLeft.size())
+                        const int &layersize=LedgesLeft.size();
+                        while(index<layersize)
                         {
                             LedgesLeft[index]=LedgesLeft[index] || data[index];
                             index++;
@@ -612,7 +619,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<LedgesBottom.size())
+                        const int &layersize=LedgesBottom.size();
+                        while(index<layersize)
                         {
                             LedgesBottom[index]=LedgesBottom[index] || data[index];
                             index++;
@@ -626,7 +634,8 @@ bool Map_loader::tryLoadMap(const QString &fileName)
                     else
                     {
                         int index=0;
-                        while(index<LedgesTop.size())
+                        const int &layersize=LedgesTop.size();
+                        while(index<layersize)
                         {
                             LedgesTop[index]=LedgesTop[index] || data[index];
                             index++;
@@ -841,25 +850,31 @@ bool Map_loader::tryLoadMap(const QString &fileName)
         x++;
     }
 
+    const int &teleportlistsize=map_to_send.teleport.size();
     if(Walkable.size()>0)
     {
         int index=0;
-        while(index<map_to_send.teleport.size())
         {
-            map_to_send.parsed_layer.walkable[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
-            index++;
+            while(index<teleportlistsize)
+            {
+                map_to_send.parsed_layer.walkable[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
+                index++;
+            }
         }
         index=0;
-        while(index<map_to_send.bots.size())
         {
-            map_to_send.parsed_layer.walkable[map_to_send.bots.at(index).point.x+map_to_send.bots.at(index).point.y*map_to_send.width]=false;
-            index++;
+            const int &listsize=map_to_send.bots.size();
+            while(index<listsize)
+            {
+                map_to_send.parsed_layer.walkable[map_to_send.bots.at(index).point.x+map_to_send.bots.at(index).point.y*map_to_send.width]=false;
+                index++;
+            }
         }
     }
     if(Water.size()>0)
     {
         int index=0;
-        while(index<map_to_send.teleport.size())
+        while(index<teleportlistsize)
         {
             map_to_send.parsed_layer.water[map_to_send.teleport.at(index).source_x+map_to_send.teleport.at(index).source_y*map_to_send.width]=true;
             index++;
@@ -1115,7 +1130,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                 }
                 else
                     qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                monsters = monsters.nextSiblingElement("monster");
+                monsters = monsters.nextSiblingElement(QStringLiteral("monster"));
             }
         }
         else
@@ -1231,7 +1246,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                 }
                 else
                     qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                monsters = monsters.nextSiblingElement("monster");
+                monsters = monsters.nextSiblingElement(QStringLiteral("monster"));
             }
         }
         else
@@ -1347,7 +1362,7 @@ bool Map_loader::loadMonsterMap(const QString &fileName)
                 }
                 else
                     qDebug() << QStringLiteral("Is not an element: child.tagName(): %1 (at line: %2)").arg(monsters.tagName()).arg(monsters.lineNumber());
-                monsters = monsters.nextSiblingElement("monster");
+                monsters = monsters.nextSiblingElement(QStringLiteral("monster"));
             }
         }
         else

@@ -15,7 +15,7 @@ class FacilityLib
 {
 public:
     static QByteArray toUTF8(const QString &text);
-    static QStringList listFolder(const QString& folder,const QString& suffix="");
+    static QStringList listFolder(const QString& folder,const QString& suffix=QStringLiteral(""));
     static QString randomPassword(const QString& string,const quint8& length);
     static QStringList skinIdList(const QString& skinPath);
     static QString secondsToString(const quint64 &seconds);
