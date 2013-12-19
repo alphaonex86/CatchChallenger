@@ -16,6 +16,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QDir>
+#include <QRegularExpression>
 
 #include "ServerStructures.h"
 #include "../VariableServer.h"
@@ -85,6 +86,7 @@ private:
     void sendInventory();
     QList<PlayerBuff> loadMonsterBuffs(const quint32 &monsterId);
     QList<PlayerMonster::PlayerSkill> loadMonsterSkills(const quint32 &monsterId);
+    static QRegularExpression fileNameStartStringRegex;
 signals:
     //normal signals
     void error(const QString &error) const;

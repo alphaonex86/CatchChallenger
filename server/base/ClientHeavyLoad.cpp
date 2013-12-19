@@ -27,6 +27,7 @@ int ClientHeavyLoad::rawFilesCount;
 int ClientHeavyLoad::compressedFilesCount;
 QSet<QString> ClientHeavyLoad::compressedExtension;
 QHash<quint32,quint16> ClientHeavyLoad::clanConnectedCount;
+QRegularExpression ClientHeavyLoad::fileNameStartStringRegex=QRegularExpression(QStringLiteral("^[a-zA-Z]:/"));
 
 ClientHeavyLoad::ClientHeavyLoad()
 {
@@ -442,46 +443,53 @@ void ClientHeavyLoad::addCharacter(const quint8 &query_id, const quint8 &profile
     int index=0;
     int monster_position=1;
     {
+        const QString &mapQuery=QStringLiteral("'")+profile.map+QStringLiteral("',")+QString::number(profile.x)+QStringLiteral(",")+QString::number(profile.y)+QStringLiteral(",'bottom'");
         switch(GlobalServerData::serverSettings.database.type)
         {
             default:
             case ServerSettings::Database::DatabaseType_Mysql:
-            dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",0,'',0,0,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+QString::number(profileIndex)+QStringLiteral(");")
-                        .arg(characterId)
-                        .arg(player_informations->account_id)
-                        .arg(pseudo)
-                        .arg(skin)
-                        .arg(profile.x)
-                        .arg(profile.y)
-                        .arg(profile.map)
-                        .arg(profile.cash)
-                        .arg(QStringLiteral("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
-                        );
+                dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(")+
+                        QString::number(characterId)+QStringLiteral(",")+
+                        QString::number(player_informations->account_id)+QStringLiteral(",'")+
+                        pseudo+QStringLiteral("','")+
+                        skin+QStringLiteral("',")+
+                        mapQuery+QStringLiteral(",")+
+                        QStringLiteral("'normal',0,")+
+                        QString::number(profile.cash)+QStringLiteral(",")+
+                        mapQuery+QStringLiteral(",")+
+                        mapQuery+QStringLiteral(",")+
+                        QStringLiteral("0,0,")+
+                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+
+                        QStringLiteral("0,'',0,0,0,0,0,")+
+                        QString::number(profileIndex)+QStringLiteral(");"));
             break;
             case ServerSettings::Database::DatabaseType_SQLite:
-                dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`x`,`y`,`orientation`,`map`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(%1,'%2','%3','%4',%5,%6,'bottom','%7','normal',0,%8,%9,%9,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",0,'',0,0,0,0,")+QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+QString::number(profileIndex)+QStringLiteral(");")
-                        .arg(characterId)
-                        .arg(player_informations->account_id)
-                        .arg(pseudo)
-                        .arg(skin)
-                        .arg(profile.x)
-                        .arg(profile.y)
-                        .arg(profile.map)
-                        .arg(profile.cash)
-                        .arg(QStringLiteral("'%1',%2,%3,'bottom'").arg(profile.map).arg(profile.x).arg(profile.y))
-                        );
+                dbQuery(QStringLiteral("INSERT INTO `character`(`id`,`account`,`pseudo`,`skin`,`map`,`x`,`y`,`orientation`,`type`,`clan`,`cash`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,`market_bitcoin`,`date`,`warehouse_cash`,`allow`,`clan_leader`,`bitcoin_offset`,`time_to_delete`,`played_time`,`last_connect`,`starter`) VALUES(")+
+                        QString::number(characterId)+QStringLiteral(",")+
+                        QString::number(player_informations->account_id)+QStringLiteral(",'")+
+                        pseudo+QStringLiteral("','")+
+                        skin+QStringLiteral("',")+
+                        mapQuery+QStringLiteral(",")+
+                        QStringLiteral("'normal',0,")+
+                        QString::number(profile.cash)+QStringLiteral(",")+
+                        mapQuery+QStringLiteral(",")+
+                        mapQuery+QStringLiteral(",")+
+                        QStringLiteral("0,0,")+
+                        QString::number(QDateTime::currentMSecsSinceEpoch()/1000)+QStringLiteral(",")+
+                        QStringLiteral("0,'',0,0,0,0,0,")+
+                        QString::number(profileIndex)+QStringLiteral(");"));
             break;
         }
     }
     while(index<profile.monsters.size())
     {
-        QString gender="unknown";
+        QString gender=QStringLiteral("unknown");
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender!=-1)
         {
             if(rand()%101<CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id].ratio_gender)
-                gender="female";
+                gender=QStringLiteral("female");
             else
-                gender="male";
+                gender=QStringLiteral("male");
         }
         CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters[profile.monsters.at(index).id],profile.monsters.at(index).level);
         QList<CatchChallenger::PlayerMonster::PlayerSkill> skills;
@@ -1403,12 +1411,12 @@ void ClientHeavyLoad::datapackList(const quint8 &query_id,const QStringList &fil
         {
             QString fileName=files.at(index);
             quint32 mtime=timestamps.at(index);
-            if(fileName.contains("./") || fileName.contains("\\") || fileName.contains("//"))
+            if(fileName.contains(QStringLiteral("./")) || fileName.contains(QStringLiteral("\\")) || fileName.contains(QStringLiteral("//")))
             {
                 emit error(QStringLiteral("file name contains illegale char: %1").arg(fileName));
                 return;
             }
-            if(fileName.contains(QRegularExpression("^[a-zA-Z]:/")) || fileName.startsWith("/"))
+            if(fileName.contains(fileNameStartStringRegex) || fileName.startsWith(QStringLiteral("/")))
             {
                 emit error(QStringLiteral("start with wrong string: %1").arg(fileName));
                 return;

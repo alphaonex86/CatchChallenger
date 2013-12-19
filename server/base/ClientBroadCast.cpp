@@ -219,25 +219,25 @@ void ClientBroadCast::kick()
 void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString &extraText)
 {
     emit message(QStringLiteral("command: %1, text: %2").arg(command).arg(extraText));
-    if(command=="chat")
+    if(command==QStringLiteral("chat"))
     {
-        QStringList list=extraText.split(' ');
+        QStringList list=extraText.split(QStringLiteral(" "));
         if(list.size()<2)
         {
             receiveSystemText(QStringLiteral("command not understand").arg(extraText));
             emit message(QStringLiteral("command not understand").arg(extraText));
             return;
         }
-        if(list.first()=="system")
+        if(list.first()==QStringLiteral("system"))
         {
             list.removeFirst();
-            sendChatText(Chat_type_system,list.join(" "));
+            sendChatText(Chat_type_system,list.join(QStringLiteral(" ")));
             return;
         }
-        if(list.first()=="system_important")
+        if(list.first()==QStringLiteral("system_important"))
         {
             list.removeFirst();
-            sendChatText(Chat_type_system_important,list.join(" "));
+            sendChatText(Chat_type_system_important,list.join(QStringLiteral(" ")));
             return;
         }
         else
@@ -247,9 +247,9 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             return;
         }
     }
-    else if(command=="setrights")
+    else if(command==QStringLiteral("setrights"))
     {
-        QStringList list=extraText.split(' ');
+        QStringList list=extraText.split(QStringLiteral(" "));
         if(list.size()!=2)
         {
             receiveSystemText(QStringLiteral("command not understand").arg(extraText));
@@ -262,13 +262,13 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             emit message(QStringLiteral("unable to found the connected player to kick: pseudo: \"%1\"").arg(list.first()));
             return;
         }
-        if(list.last()=="normal")
+        if(list.last()==QStringLiteral("normal"))
             playerByPseudo[extraText]->setRights(Player_type_normal);
-        else if(list.last()=="premium")
+        else if(list.last()==QStringLiteral("premium"))
             playerByPseudo[extraText]->setRights(Player_type_premium);
-        else if(list.last()=="gm")
+        else if(list.last()==QStringLiteral("gm"))
             playerByPseudo[extraText]->setRights(Player_type_gm);
-        else if(list.last()=="dev")
+        else if(list.last()==QStringLiteral("dev"))
             playerByPseudo[extraText]->setRights(Player_type_dev);
         else
         {
@@ -277,7 +277,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             return;
         }
     }
-    else if(command=="playerlist")
+    else if(command==QStringLiteral("playerlist"))
     {
         if(playerByPseudo.size()==1)
             receiveSystemText(QStringLiteral("You are alone on the server!"));
@@ -288,14 +288,14 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             QHash<QString,ClientBroadCast *>::const_iterator i_playerByPseudo_end=playerByPseudo.constEnd();
             while (i_playerByPseudo != i_playerByPseudo_end)
             {
-                playerStringList << "<b>"+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+"</b>";
+                playerStringList << QStringLiteral("<b>")+i_playerByPseudo.value()->player_informations->public_and_private_informations.public_informations.pseudo+QStringLiteral("</b>");
                 ++i_playerByPseudo;
             }
-            receiveSystemText(QStringLiteral("players connected: %1").arg(playerStringList.join(", ")));
+            receiveSystemText(QStringLiteral("players connected: %1").arg(playerStringList.join(QStringLiteral(", "))));
         }
         return;
     }
-    else if(command=="playernumber")
+    else if(command==QStringLiteral("playernumber"))
     {
         if(playerByPseudo.size()==1)
             receiveSystemText(QStringLiteral("You are alone on the server!"));
@@ -303,7 +303,7 @@ void ClientBroadCast::sendBroadCastCommand(const QString &command,const QString 
             receiveSystemText(QStringLiteral("<b>%1</b> players connected").arg(playerByPseudo.size()));
         return;
     }
-    else if(command=="kick")
+    else if(command==QStringLiteral("kick"))
     {
         //drop, and do the command here to separate the loop
         if(!playerByPseudo.contains(extraText))
