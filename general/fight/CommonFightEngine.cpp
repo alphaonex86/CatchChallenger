@@ -1843,6 +1843,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                 if(success)
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    //don't use pointer  here because the value of currentMonster->hp will change
                     const quint32 currentMonsterHp=currentMonster->hp;
                     const quint32 otherMonsterHp=otherMonster->hp;
                     #endif
@@ -1854,7 +1855,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                     {
                         if(currentMonster->hp!=(currentMonsterHp+lifeEffectReturn.quantity))
                         {
-                            emit error("Returned damage don't match with the real effect");
+                            emit error(QStringLiteral("life effect: Returned damage don't match with the real effect on current monster: %1!=(%2+%3)").arg(currentMonster->hp).arg(currentMonsterHp).arg(lifeEffectReturn.quantity));
                             return attackReturn;
                         }
                     }
@@ -1862,7 +1863,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                     {
                         if(otherMonster->hp!=(otherMonsterHp+lifeEffectReturn.quantity))
                         {
-                            emit error("Returned damage don't match with the real effect");
+                            emit error(QStringLiteral("life effect: Returned damage don't match with the real effect on other monster: %1!=(%2+%3)").arg(otherMonster->hp).arg(otherMonsterHp).arg(lifeEffectReturn.quantity));
                             return attackReturn;
                         }
                     }
@@ -1917,6 +1918,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     if(!genericMonsterIsKO(currentMonster))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        //don't use pointer  here because the value of currentMonster->hp will change
         quint32 currentMonsterHp=currentMonster->hp;
         quint32 otherMonsterHp=otherMonster->hp;
         #endif
@@ -1934,12 +1936,12 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
         }
         if(currentMonster->hp!=currentMonsterHp)
         {
-            emit error("Returned damage don't match with the real effect");
+            emit error(QStringLiteral("buff effect: Returned damage don't match with the real effect on current monster: %1!=(%2+%3)").arg(currentMonster->hp).arg(currentMonsterHp).arg(lifeEffectMonster.at(index).quantity));
             return attackReturn;
         }
         if(otherMonster->hp!=otherMonsterHp)
         {
-            emit error("Returned damage don't match with the real effect");
+            emit error(QStringLiteral("buff effect: Returned damage don't match with the real effect on other monster: %1!=(%2+%3)").arg(otherMonster->hp).arg(otherMonsterHp).arg(lifeEffectMonster.at(index).quantity));
             return attackReturn;
         }
         #endif

@@ -77,7 +77,7 @@ BaseWindow::BaseWindow() :
     displayAttackTimer.setSingleShot(true);
     displayAttackTimer.setInterval(50);
     displayExpTimer.setSingleShot(true);
-    displayExpTimer.setInterval(50);
+    displayExpTimer.setInterval(20);
     displayTrapTimer.setSingleShot(true);
     displayTrapTimer.setInterval(50);
     doNextActionTimer.setSingleShot(true);
